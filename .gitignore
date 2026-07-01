@@ -1,0 +1,11 @@
+# Build outputs
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Spec Kit artifacts and local agent skills
+specs/
+.specify/
+.agents/skills/

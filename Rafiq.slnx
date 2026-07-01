@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Rafiq.Domain/Rafiq.Domain.csproj" />
+    <Project Path="src/Rafiq.Application/Rafiq.Application.csproj" />
+    <Project Path="src/Rafiq.Infrastructure/Rafiq.Infrastructure.csproj" />
+    <Project Path="src/Rafiq.API/Rafiq.API.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Rafiq.Domain.Tests/Rafiq.Domain.Tests.csproj" />
+    <Project Path="tests/Rafiq.Application.Tests/Rafiq.Application.Tests.csproj" />
+    <Project Path="tests/Rafiq.API.Tests/Rafiq.API.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Rafiq.Application</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Rafiq.Application.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="12.*" />
+    <PackageReference Include="FluentValidation" Version="11.*" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.*" />
+    <PackageReference Include="Mapster" Version="7.*" />
+    <PackageReference Include="Mapster.DependencyInjection" Version="1.*" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rafiq.Domain\Rafiq.Domain.csproj" />
+  </ItemGroup>
+</Project>
