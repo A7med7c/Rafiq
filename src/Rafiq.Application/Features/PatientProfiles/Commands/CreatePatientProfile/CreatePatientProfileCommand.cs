@@ -8,7 +8,7 @@ namespace Rafiq.Application.Features.PatientProfiles.Commands.CreatePatientProfi
 
 public sealed record CreatePatientProfileCommand(
     string FullName,
-    DateTime DateOfBirth,
+    DateOnly DateOfBirth,
     string Gender,
     string? BloodType,
     string? Allergies,

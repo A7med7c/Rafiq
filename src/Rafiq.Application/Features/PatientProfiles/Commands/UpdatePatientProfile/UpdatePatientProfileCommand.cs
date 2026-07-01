@@ -9,7 +9,7 @@ namespace Rafiq.Application.Features.PatientProfiles.Commands.UpdatePatientProfi
 public sealed record UpdatePatientProfileCommand(
     Guid PatientProfileId,
     string FullName,
-    DateTime DateOfBirth,
+    DateOnly DateOfBirth,
     string Gender,
     string? BloodType,
     string? Allergies,

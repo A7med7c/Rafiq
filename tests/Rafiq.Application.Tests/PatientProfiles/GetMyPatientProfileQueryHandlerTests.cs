@@ -14,7 +14,7 @@ public sealed class GetMyPatientProfileQueryHandlerTests
     public async Task Handle_WhenCurrentUserHasProfile_ReturnsProfile()
     {
         var userId = Guid.NewGuid();
-        var profile = new PatientProfile("Ahmed Ragab", DateTime.UtcNow.Date.AddYears(-30), Gender.Male, null, null, null, "Emergency", "+201001234567", userId);
+        var profile = new PatientProfile("Ahmed Ragab", DateOnly.FromDateTime(DateTime.UtcNow.Date.AddYears(-30)), Gender.Male, null, null, null, "Emergency", "+201001234567", userId);
         var currentUserService = new Mock<ICurrentUserService>();
         var repository = new Mock<IPatientProfileRepository>();
         currentUserService.SetupGet(x => x.UserId).Returns(userId);

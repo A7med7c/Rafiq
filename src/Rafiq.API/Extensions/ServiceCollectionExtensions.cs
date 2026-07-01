@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Rafiq.Application.Common.Models;
 using System.Text;
 
@@ -7,6 +8,34 @@ namespace Rafiq.API.Extensions;
 
 public static class ServiceCollectionExtensions
 {
+    public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
+    {
+        services.AddEndpointsApiExplorer();
+        services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "Rafiq API",
+                Version = "v1",
+                Description = "Interactive API documentation for testing Rafiq authentication and patient profile endpoints."
+            });
+
+            options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                Scheme = JwtBearerDefaults.AuthenticationScheme,
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "Enter a valid JWT access token. The Bearer prefix is added automatically."
+            });
+
+            options.OperationFilter<SwaggerAuthorizeOperationFilter>();
+        });
+
+        return services;
+    }
+
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var secret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? configuration["Jwt:SecretKey"];

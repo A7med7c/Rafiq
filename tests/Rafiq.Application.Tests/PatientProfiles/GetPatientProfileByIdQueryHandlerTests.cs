@@ -12,7 +12,7 @@ public sealed class GetPatientProfileByIdQueryHandlerTests
     [Fact]
     public async Task Handle_WhenProfileExists_ReturnsProfile()
     {
-        var profile = new PatientProfile("Ahmed Ragab", DateTime.UtcNow.Date.AddYears(-30), Gender.Male, BloodType.OPositive, null, null, "Emergency", "+201001234567", Guid.NewGuid());
+        var profile = new PatientProfile("Ahmed Ragab", DateOnly.FromDateTime(DateTime.UtcNow.Date.AddYears(-30)), Gender.Male, BloodType.OPositive, null, null, "Emergency", "+201001234567", Guid.NewGuid());
         var repository = new Mock<IPatientProfileRepository>();
         repository.Setup(x => x.GetByIdAsync(profile.Id, It.IsAny<CancellationToken>())).ReturnsAsync(profile);
 

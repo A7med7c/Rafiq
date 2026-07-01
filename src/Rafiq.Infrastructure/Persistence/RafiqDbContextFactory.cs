@@ -17,7 +17,7 @@ public sealed class RafiqDbContextFactory : IDesignTimeDbContextFactory<RafiqDbC
             .Build();
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Server=(localdb)\\mssqllocaldb;Database=RafiqDbTwo;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True";
+            ?? "Server=LAPTOP-M0P8U45N\\SQLEXPRESS;Database=RafiqDbTwo;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True";
 
         var optionsBuilder = new DbContextOptionsBuilder<RafiqDbContext>();
         optionsBuilder.UseSqlServer(connectionString);

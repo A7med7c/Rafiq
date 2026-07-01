@@ -9,7 +9,7 @@ public class PatientProfile : BaseEntity
 
     public PatientProfile(
         string fullName,
-        DateTime dateOfBirth,
+        DateOnly dateOfBirth,
         Gender gender,
         BloodType? bloodType,
         string? allergies,
@@ -30,7 +30,7 @@ public class PatientProfile : BaseEntity
     }
 
     public string FullName { get; private set; } = string.Empty;
-    public DateTime DateOfBirth { get; private set; }
+    public DateOnly DateOfBirth { get; private set; }
     public Gender Gender { get; private set; }
     public BloodType? BloodType { get; private set; }
     public string? Allergies { get; private set; }
@@ -49,7 +49,7 @@ public class PatientProfile : BaseEntity
 
     public void Update(
         string fullName,
-        DateTime dateOfBirth,
+        DateOnly dateOfBirth,
         Gender gender,
         BloodType? bloodType,
         string? allergies,

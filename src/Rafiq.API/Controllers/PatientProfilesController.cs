@@ -12,14 +12,8 @@ namespace Rafiq.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/patient-profiles")]
-public sealed class PatientProfilesController : ControllerBase
+public sealed class PatientProfilesController(IMediator _mediator) : ControllerBase
 {
-    private readonly IMediator _mediator;
-
-    public PatientProfilesController(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatePatientProfileCommand command, CancellationToken cancellationToken)
@@ -70,7 +64,7 @@ public sealed class PatientProfilesController : ControllerBase
 
 public sealed record UpdatePatientProfileRequest(
     string FullName,
-    DateTime DateOfBirth,
+    DateOnly DateOfBirth,
     string Gender,
     string? BloodType,
     string? Allergies,

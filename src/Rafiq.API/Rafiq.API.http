@@ -1,6 +1,25 @@
-@Rafiq.Api_HostAddress = http://localhost:5293
+@Rafiq.API_HostAddress = https://localhost:7082
 
-GET {{Rafiq.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+###
+
+POST {{Rafiq.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  //LoginCommand
+}
+
+###
+
+POST {{Rafiq.API_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+   Email: "Test@test.com",
+   PhoneNumber: "011123581616",
+    Password:"123456",
+    ConfirmPassword :"123456",
+    Role : "user"
+}
 
 ###

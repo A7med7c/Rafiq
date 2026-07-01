@@ -7,7 +7,8 @@ internal sealed class RegisterCommandValidator : AbstractValidator<RegisterComma
     public RegisterCommandValidator()
     {
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
-        RuleFor(x => x.PhoneNumber).NotEmpty().MaximumLength(20).Matches(@"^\+[1-9]\d{1,14}$");
+        RuleFor(x => x.PhoneNumber).NotEmpty().Matches(@"^01[0125][0-9]{8}$").WithMessage("Phone number must be a valid Egyptian mobile number.");
+
         RuleFor(x => x.Password)
             .NotEmpty()
             .MinimumLength(8)

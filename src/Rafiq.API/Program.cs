@@ -13,7 +13,7 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddControllers();
-        builder.Services.AddOpenApi();
+        builder.Services.AddSwaggerDocumentation();
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
         builder.Services.AddJwtAuthentication(builder.Configuration);
@@ -26,7 +26,12 @@ public class Program
 
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
+            app.UseSwagger();
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", "Rafiq API v1");
+                options.RoutePrefix = "swagger";
+            });
         }
 
         app.UseHttpsRedirection();

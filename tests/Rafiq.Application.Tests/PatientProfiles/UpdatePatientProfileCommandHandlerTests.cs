@@ -12,13 +12,13 @@ public sealed class UpdatePatientProfileCommandHandlerTests
     [Fact]
     public async Task Handle_WhenProfileExists_UpdatesProfile()
     {
-        var profile = new PatientProfile("Old Name", DateTime.UtcNow.Date.AddYears(-40), Gender.Male, null, null, null, "Old Contact", "+201001234567", Guid.NewGuid());
+        var profile = new PatientProfile("Old Name", DateOnly.FromDateTime(DateTime.UtcNow.Date.AddYears(-40)), Gender.Male, null, null, null, "Old Contact", "+201001234567", Guid.NewGuid());
         var repository = new Mock<IPatientProfileRepository>();
         var unitOfWork = new Mock<IUnitOfWork>();
         repository.Setup(x => x.GetByIdAsync(profile.Id, It.IsAny<CancellationToken>())).ReturnsAsync(profile);
 
         var handler = new UpdatePatientProfileCommandHandler(repository.Object, unitOfWork.Object, TestMapperFactory.Create());
-        var command = new UpdatePatientProfileCommand(profile.Id, "New Name", DateTime.UtcNow.Date.AddYears(-35), "Female", "APositive", "None", "None", "New Contact", "+201009876543");
+        var command = new UpdatePatientProfileCommand(profile.Id, "New Name", DateOnly.FromDateTime(DateTime.UtcNow.Date.AddYears(-35)), "Female", "APositive", "None", "None", "New Contact", "+201009876543");
 
         var response = await handler.Handle(command, CancellationToken.None);
 

@@ -12,7 +12,7 @@ public sealed class DeletePatientProfileCommandHandlerTests
     [Fact]
     public async Task Handle_WhenProfileExists_RemovesProfileThroughRepository()
     {
-        var profile = new PatientProfile("Ahmed Ragab", DateTime.UtcNow.Date.AddYears(-30), Gender.Male, null, null, null, "Emergency", "+201001234567", Guid.NewGuid());
+        var profile = new PatientProfile("Ahmed Ragab", DateOnly.FromDateTime(DateTime.UtcNow.Date.AddYears(-30)), Gender.Male, null, null, null, "Emergency", "+201001234567", Guid.NewGuid());
         var repository = new Mock<IPatientProfileRepository>();
         var unitOfWork = new Mock<IUnitOfWork>();
         repository.Setup(x => x.GetByIdAsync(profile.Id, It.IsAny<CancellationToken>())).ReturnsAsync(profile);

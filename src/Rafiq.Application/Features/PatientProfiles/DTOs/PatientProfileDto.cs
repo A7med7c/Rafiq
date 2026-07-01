@@ -4,7 +4,7 @@ public sealed record PatientProfileDto(
     Guid Id,
     Guid? UserId,
     string FullName,
-    DateTime DateOfBirth,
+    DateOnly DateOfBirth,
     string Gender,
     string? BloodType,
     string? Allergies,

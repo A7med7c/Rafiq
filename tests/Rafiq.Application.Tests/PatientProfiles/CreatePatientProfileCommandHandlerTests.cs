@@ -24,7 +24,7 @@ public sealed class CreatePatientProfileCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         var handler = new CreatePatientProfileCommandHandler(currentUserService.Object, repository.Object, unitOfWork.Object, TestMapperFactory.Create());
-        var command = new CreatePatientProfileCommand("Ahmed Ragab", DateTime.UtcNow.Date.AddYears(-30), "Male", "OPositive", null, null, "Emergency", "+201001234567");
+        var command = new CreatePatientProfileCommand("Ahmed Ragab", DateOnly.FromDateTime(DateTime.UtcNow.Date.AddYears(-30)), "Male", "OPositive", null, null, "Emergency", "+201001234567");
 
         var response = await handler.Handle(command, CancellationToken.None);
 
