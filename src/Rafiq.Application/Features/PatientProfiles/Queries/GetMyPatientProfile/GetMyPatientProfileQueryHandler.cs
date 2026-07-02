@@ -9,22 +9,11 @@ using UnauthorizedException = Rafiq.Domain.Exceptions.UnauthorizedException;
 
 namespace Rafiq.Application.Features.PatientProfiles.Queries.GetMyPatientProfile;
 
-public sealed class GetMyPatientProfileQueryHandler : IRequestHandler<GetMyPatientProfileQuery, ApiResponse<PatientProfileDto>>
+public sealed class GetMyPatientProfileQueryHandler(
+    ICurrentUserService _currentUserService,
+    IPatientProfileRepository _patientProfileRepository,
+    IMapper _mapper) : IRequestHandler<GetMyPatientProfileQuery, ApiResponse<PatientProfileDto>>
 {
-    private readonly ICurrentUserService _currentUserService;
-    private readonly IPatientProfileRepository _patientProfileRepository;
-    private readonly IMapper _mapper;
-
-    public GetMyPatientProfileQueryHandler(
-        ICurrentUserService currentUserService,
-        IPatientProfileRepository patientProfileRepository,
-        IMapper mapper)
-    {
-        _currentUserService = currentUserService;
-        _patientProfileRepository = patientProfileRepository;
-        _mapper = mapper;
-    }
-
     public async Task<ApiResponse<PatientProfileDto>> Handle(GetMyPatientProfileQuery request, CancellationToken cancellationToken)
     {
         var currentUserId = _currentUserService.UserId

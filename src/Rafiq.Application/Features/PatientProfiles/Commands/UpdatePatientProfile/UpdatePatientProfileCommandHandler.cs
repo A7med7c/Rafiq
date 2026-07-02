@@ -2,48 +2,59 @@ using MapsterMapper;
 using MediatR;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.PatientProfiles.DTOs;
-using Rafiq.Domain.Enums;
+using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Application.Features.PatientProfiles.Commands.UpdatePatientProfile;
 
-public sealed class UpdatePatientProfileCommandHandler : IRequestHandler<UpdatePatientProfileCommand, ApiResponse<PatientProfileDto>>
+public sealed class UpdatePatientProfileCommandHandler(
+    IPatientProfileRepository patientProfileRepository,
+    IUnitOfWork unitOfWork,
+    IMapper mapper)
+    : IRequestHandler<UpdatePatientProfileCommand, ApiResponse<PatientProfileDto>>
 {
-    private readonly IPatientProfileRepository _patientProfileRepository;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
-
-    public UpdatePatientProfileCommandHandler(
-        IPatientProfileRepository patientProfileRepository,
-        IUnitOfWork unitOfWork,
-        IMapper mapper)
+    public async Task<ApiResponse<PatientProfileDto>> Handle(
+        UpdatePatientProfileCommand request,
+        CancellationToken cancellationToken)
     {
-        _patientProfileRepository = patientProfileRepository;
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
-    }
-
-    public async Task<ApiResponse<PatientProfileDto>> Handle(UpdatePatientProfileCommand request, CancellationToken cancellationToken)
-    {
-        var patientProfile = await _patientProfileRepository.GetByIdAsync(request.PatientProfileId, cancellationToken)
+        var profile = await patientProfileRepository.GetByIdAsync(
+            request.PatientProfileId,
+            cancellationToken)
             ?? throw new NotFoundException("PatientProfile", request.PatientProfileId);
 
-        patientProfile.Update(
-            request.FullName,
+        profile.Update(
+            request.Gender,
             request.DateOfBirth,
-            Enum.Parse<Gender>(request.Gender),
-            string.IsNullOrWhiteSpace(request.BloodType) ? null : Enum.Parse<BloodType>(request.BloodType),
-            request.Allergies,
-            request.ChronicConditions,
-            request.EmergencyContactName,
-            request.EmergencyContactPhone);
+            request.Height,
+            request.Weight,
+            request.BloodType);
 
-        _patientProfileRepository.Update(patientProfile);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        profile.Allergies.Clear();
+
+        foreach (var allergy in request.Allergies)
+        {
+            profile.Allergies.Add(new Allergy(
+                allergy.Name,
+                allergy.Severity));
+        }
+
+        profile.ChronicDiseases.Clear();
+
+        foreach (var disease in request.ChronicDiseases)
+        {
+            profile.ChronicDiseases.Add(new ChronicDisease(
+                disease.Name,
+                disease.DiagnosedAt,
+                disease.Status));
+        }
+
+        patientProfileRepository.Update(profile);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<PatientProfileDto>.SuccessResponse(
-            _mapper.Map<PatientProfileDto>(patientProfile),
+            mapper.Map<PatientProfileDto>(profile),
             "Patient profile updated successfully.");
     }
 }

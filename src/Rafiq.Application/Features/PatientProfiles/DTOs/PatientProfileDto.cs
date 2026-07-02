@@ -2,14 +2,15 @@ namespace Rafiq.Application.Features.PatientProfiles.DTOs;
 
 public sealed record PatientProfileDto(
     Guid Id,
-    Guid? UserId,
-    string FullName,
+    Guid UserId,
     DateOnly DateOfBirth,
     string Gender,
-    string? BloodType,
-    string? Allergies,
-    string? ChronicConditions,
-    string EmergencyContactName,
-    string EmergencyContactPhone,
+    string BloodType,
+    decimal Height,
+    decimal Weight,
+    IReadOnlyList<AllergyDto> Allergies,
+    IReadOnlyList<ChronicDiseaseDto> ChronicDiseases,
     DateTime CreatedAt,
-    DateTime? UpdatedAt);
+    DateTime? UpdatedAt
+);
+

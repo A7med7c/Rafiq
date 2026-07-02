@@ -37,20 +37,16 @@ public sealed class PatientProfilesController(IMediator _mediator) : ControllerB
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePatientProfileRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(
+    Guid id,
+    [FromBody] UpdatePatientProfileCommand command,
+    CancellationToken cancellationToken)
     {
-        var command = new UpdatePatientProfileCommand(
-            id,
-            request.FullName,
-            request.DateOfBirth,
-            request.Gender,
-            request.BloodType,
-            request.Allergies,
-            request.ChronicConditions,
-            request.EmergencyContactName,
-            request.EmergencyContactPhone);
+        if (id != command.PatientProfileId)
+            return BadRequest("Route id doesn't match body id.");
 
         var result = await _mediator.Send(command, cancellationToken);
+
         return Ok(result);
     }
 
@@ -62,12 +58,3 @@ public sealed class PatientProfilesController(IMediator _mediator) : ControllerB
     }
 }
 
-public sealed record UpdatePatientProfileRequest(
-    string FullName,
-    DateOnly DateOfBirth,
-    string Gender,
-    string? BloodType,
-    string? Allergies,
-    string? ChronicConditions,
-    string EmergencyContactName,
-    string EmergencyContactPhone);

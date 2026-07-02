@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Rafiq.Application.Common.Interfaces;
@@ -36,9 +36,8 @@ public static class DependencyInjection
             .AddDefaultTokenProviders();
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<RafiqDbContext>());
-        services.AddScoped<IPatientProfileRepository, PatientProfileRepository>();
+        services.AddScoped<IPatientProfileRepository, UserHealthProfileRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddHttpContextAccessor();

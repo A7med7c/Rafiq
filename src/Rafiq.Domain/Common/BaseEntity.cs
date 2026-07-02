@@ -2,11 +2,15 @@ namespace Rafiq.Domain.Common;
 
 public abstract class BaseEntity
 {
-    public Guid Id { get; private set; } = Guid.NewGuid();
-    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
-    public DateTime? UpdatedAt { get; private set; }
-    public bool IsDeleted { get; private set; }
-    public DateTime? DeletedAt { get; private set; }
+    public Guid Id { get; protected set; } = Guid.NewGuid();
+
+    public DateTime CreatedAt { get; protected set; } = DateTime.UtcNow;
+
+    public DateTime? UpdatedAt { get; protected set; }
+
+    public bool IsDeleted { get; protected set; }
+
+    public DateTime? DeletedAt { get; protected set; }
 
     public virtual void SoftDelete()
     {
@@ -15,7 +19,7 @@ public abstract class BaseEntity
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void MarkUpdated()
+    public virtual void MarkUpdated()
     {
         UpdatedAt = DateTime.UtcNow;
     }

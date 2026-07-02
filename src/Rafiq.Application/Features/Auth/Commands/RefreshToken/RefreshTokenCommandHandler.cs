@@ -7,38 +7,23 @@ using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Application.Features.Auth.Commands.RefreshToken;
 
-public sealed class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, ApiResponse<AuthResponseDto>>
+public sealed class RefreshTokenCommandHandler(
+    IRefreshTokenRepository _refreshTokenRepository,
+    IIdentityService _identityService,
+    ITokenService _tokenService,
+    IUnitOfWork _unitOfWork) : IRequestHandler<RefreshTokenCommand, ApiResponse<AuthResponseDto>>
 {
-    private readonly IRefreshTokenRepository _refreshTokenRepository;
-    private readonly IIdentityService _identityService;
-    private readonly ITokenService _tokenService;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public RefreshTokenCommandHandler(
-        IRefreshTokenRepository refreshTokenRepository,
-        IIdentityService identityService,
-        ITokenService tokenService,
-        IUnitOfWork unitOfWork)
-    {
-        _refreshTokenRepository = refreshTokenRepository;
-        _identityService = identityService;
-        _tokenService = tokenService;
-        _unitOfWork = unitOfWork;
-    }
 
     public async Task<ApiResponse<AuthResponseDto>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
         var tokenHash = _tokenService.HashRefreshToken(request.RefreshToken);
-        var existingToken = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash, cancellationToken);
-
-        if (existingToken is null)
-        {
-            throw new UnauthorizedException("Invalid or expired refresh token.");
-        }
+        var existingToken = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash, cancellationToken)
+        ?? throw new UnauthorizedException("Invalid or expired refresh token.");
 
         if (!existingToken.IsActive)
         {
-            await _refreshTokenRepository.RevokeAllByUserIdAsync(existingToken.UserId, request.IpAddress, cancellationToken);
+            await _refreshTokenRepository.RevokeAllByUserIdAsync(existingToken.UserId, request.IpAddress,
+             cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             throw new UnauthorizedException("Invalid or expired refresh token.");
         }

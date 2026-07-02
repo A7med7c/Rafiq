@@ -3,58 +3,70 @@ using MediatR;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.PatientProfiles.DTOs;
-using Rafiq.Domain.Entities;
+using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Enums;
 using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Application.Features.PatientProfiles.Commands.CreatePatientProfile;
 
-public sealed class CreatePatientProfileCommandHandler : IRequestHandler<CreatePatientProfileCommand, ApiResponse<PatientProfileDto>>
+public sealed class CreatePatientProfileCommandHandler(
+    ICurrentUserService currentUserService,
+    IPatientProfileRepository patientProfileRepository,
+    IUnitOfWork unitOfWork,
+    IMapper mapper)
+    : IRequestHandler<CreatePatientProfileCommand, ApiResponse<PatientProfileDto>>
 {
-    private readonly ICurrentUserService _currentUserService;
-    private readonly IPatientProfileRepository _patientProfileRepository;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
-
-    public CreatePatientProfileCommandHandler(
-        ICurrentUserService currentUserService,
-        IPatientProfileRepository patientProfileRepository,
-        IUnitOfWork unitOfWork,
-        IMapper mapper)
+    public async Task<ApiResponse<PatientProfileDto>> Handle(
+        CreatePatientProfileCommand request,
+        CancellationToken cancellationToken)
     {
-        _currentUserService = currentUserService;
-        _patientProfileRepository = patientProfileRepository;
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
-    }
+        var currentUserId = currentUserService.UserId
+            ?? throw new UnauthorizedException("Authentication is required.");
 
-    public async Task<ApiResponse<PatientProfileDto>> Handle(CreatePatientProfileCommand request, CancellationToken cancellationToken)
-    {
-        var currentUserId = _currentUserService.UserId ?? throw new UnauthorizedException("Authentication is required.");
+        var profileExists = await patientProfileRepository
+            .ExistsByUserIdAsync(currentUserId, cancellationToken);
 
-        if (!request.IsDependent && await _patientProfileRepository.ExistsByUserIdAsync(currentUserId, cancellationToken))
-        {
+        if (profileExists)
             throw new ConflictException("A patient profile already exists for this user.");
+
+        var profile = new UserHealthProfile
+        {
+            UserId = currentUserId,
+            Gender = request.Gender,
+            DateOfBirth = request.DateOfBirth,
+            Height = request.Height,
+            Weight = request.Weight,
+            BloodType = request.BloodType,
+        };
+
+        foreach (var allergy in request.Allergies)
+        {
+            profile.Allergies.Add(new Allergy
+            {
+                Name = allergy.Name,
+                Severity = Enum.Parse<AllergySeverity>(allergy.Severity, true),
+            });
         }
 
-        var patientProfile = new PatientProfile(
-            request.FullName,
-            request.DateOfBirth,
-            Enum.Parse<Gender>(request.Gender),
-            string.IsNullOrWhiteSpace(request.BloodType) ? null : Enum.Parse<BloodType>(request.BloodType),
-            request.Allergies,
-            request.ChronicConditions,
-            request.EmergencyContactName,
-            request.EmergencyContactPhone,
-            request.IsDependent ? null : currentUserId);
+        foreach (var disease in request.ChronicDiseases)
+        {
+            profile.ChronicDiseases.Add(new ChronicDisease
+            {
+                Name = disease.Name,
+                DiagnosedAt = disease.DiagnosedAt,
+                Status = Enum.Parse<DiseaseStatus>(disease.Status, true)
+            });
+        }
 
-        await _patientProfileRepository.AddAsync(patientProfile, cancellationToken);
-        request.SetEntityId(patientProfile.Id);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await patientProfileRepository.AddAsync(profile, cancellationToken);
+
+        request.SetEntityId(profile.Id);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<PatientProfileDto>.SuccessResponse(
-            _mapper.Map<PatientProfileDto>(patientProfile),
+            mapper.Map<PatientProfileDto>(profile),
             "Patient profile created successfully.");
     }
 }

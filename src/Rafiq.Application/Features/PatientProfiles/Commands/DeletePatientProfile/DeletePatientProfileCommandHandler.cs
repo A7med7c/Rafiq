@@ -5,17 +5,8 @@ using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Application.Features.PatientProfiles.Commands.DeletePatientProfile;
 
-public sealed class DeletePatientProfileCommandHandler : IRequestHandler<DeletePatientProfileCommand, ApiResponse<object>>
+public sealed class DeletePatientProfileCommandHandler(IPatientProfileRepository _patientProfileRepository, IUnitOfWork _unitOfWork) : IRequestHandler<DeletePatientProfileCommand, ApiResponse<object>>
 {
-    private readonly IPatientProfileRepository _patientProfileRepository;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public DeletePatientProfileCommandHandler(IPatientProfileRepository patientProfileRepository, IUnitOfWork unitOfWork)
-    {
-        _patientProfileRepository = patientProfileRepository;
-        _unitOfWork = unitOfWork;
-    }
-
     public async Task<ApiResponse<object>> Handle(DeletePatientProfileCommand request, CancellationToken cancellationToken)
     {
         var patientProfile = await _patientProfileRepository.GetByIdAsync(request.PatientProfileId, cancellationToken)

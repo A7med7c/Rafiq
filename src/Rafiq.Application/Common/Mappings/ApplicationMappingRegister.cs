@@ -1,7 +1,6 @@
 using Mapster;
-using Rafiq.Application.Features.Auth.DTOs;
 using Rafiq.Application.Features.PatientProfiles.DTOs;
-using Rafiq.Domain.Entities;
+using Rafiq.Domain.Entities.User;
 
 namespace Rafiq.Application.Common.Mappings;
 
@@ -9,8 +8,14 @@ public sealed class ApplicationMappingRegister : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        config.NewConfig<PatientProfile, PatientProfileDto>()
-            .Map(dest => dest.Gender, src => src.Gender.ToString())
-            .Map(dest => dest.BloodType, src => src.BloodType.HasValue ? src.BloodType.Value.ToString() : null);
+        config.NewConfig<UserHealthProfile, PatientProfileDto>()
+     .Map(dest => dest.Gender, src => src.Gender.ToString())
+     .Map(dest => dest.BloodType, src => src.BloodType.ToString());
+
+        config.NewConfig<Allergy, AllergyDto>()
+            .Map(dest => dest.Severity, src => src.Severity.ToString());
+
+        config.NewConfig<ChronicDisease, ChronicDiseaseDto>()
+            .Map(dest => dest.Status, src => src.Status.ToString());
     }
 }

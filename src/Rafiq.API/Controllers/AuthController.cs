@@ -33,7 +33,8 @@ public sealed class AuthController(IMediator _mediator) : ControllerBase
     }
 
     [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command,
+     CancellationToken cancellationToken)
     {
         var enrichedCommand = command with
         {
@@ -46,7 +47,8 @@ public sealed class AuthController(IMediator _mediator) : ControllerBase
 
     [Authorize]
     [HttpPost("revoke-token")]
-    public async Task<IActionResult> RevokeToken([FromBody] RevokeTokenCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> RevokeToken([FromBody] RevokeTokenCommand command,
+     CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command with { IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() }, cancellationToken);
         return Ok(result);

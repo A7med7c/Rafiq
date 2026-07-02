@@ -1,8 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Rafiq.Domain.Common;
 using Rafiq.Domain.Entities;
+using Rafiq.Domain.Entities.Documents;
+using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Repositories;
 using Rafiq.Infrastructure.Persistence.Identity;
 using System.Linq.Expressions;
@@ -20,46 +22,79 @@ public sealed class RafiqDbContext : IdentityDbContext<
     IdentityUserToken<Guid>,
     IdentityUserPasskey<Guid>>, IUnitOfWork
 {
-    public RafiqDbContext(DbContextOptions<RafiqDbContext> options) : base(options) { }
+    public RafiqDbContext(DbContextOptions<RafiqDbContext> options)
+        : base(options)
+    {
+    }
 
-    public DbSet<PatientProfile> PatientProfiles => Set<PatientProfile>();
-    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-    public DbSet<CaregiverLink> CaregiverLinks => Set<CaregiverLink>();
-    public DbSet<Document> Documents => Set<Document>();
-    public DbSet<ExtractedEntity> ExtractedEntities => Set<ExtractedEntity>();
-    public DbSet<Medication> Medications => Set<Medication>();
-    public DbSet<MedicationSchedule> MedicationSchedules => Set<MedicationSchedule>();
-    public DbSet<Appointment> Appointments => Set<Appointment>();
+    #region User
+
+    public DbSet<UserHealthProfile> UserHealthProfiles => Set<UserHealthProfile>();
+
+    public DbSet<Allergy> Allergies => Set<Allergy>();
+
+    public DbSet<ChronicDisease> ChronicDiseases => Set<ChronicDisease>();
+
+    #endregion
+
+    #region Medical Documents
+
+    public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
+
+    public DbSet<MedicalDocument> MedicalDocuments => Set<MedicalDocument>();
+
+    public DbSet<Prescription> Prescriptions => Set<Prescription>();
+
+    public DbSet<Medicine> Medicines => Set<Medicine>();
+
+    public DbSet<MedicineReminder> MedicineReminders => Set<MedicineReminder>();
+
+    public DbSet<LabReport> LabReports => Set<LabReport>();
+
     public DbSet<LabResult> LabResults => Set<LabResult>();
-    public DbSet<HealthcareProvider> HealthcareProviders => Set<HealthcareProvider>();
-    public DbSet<ChatSession> ChatSessions => Set<ChatSession>();
-    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
-    public DbSet<KnowledgeSource> KnowledgeSources => Set<KnowledgeSource>();
-    public DbSet<ChatMessageCitation> ChatMessageCitations => Set<ChatMessageCitation>();
-    public DbSet<Notification> Notifications => Set<Notification>();
-    public DbSet<Consent> Consents => Set<Consent>();
-    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    public DbSet<ImagingReport> ImagingReports => Set<ImagingReport>();
+
+    public DbSet<MedicalReport> MedicalReports => Set<MedicalReport>();
+
+    #endregion
+
+    #region Identity
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(RafiqDbContext).Assembly);
+
+        // Use Table-Per-Type for MedicalDocument inheritance
+        modelBuilder.Entity<MedicalDocument>()
+            .UseTptMappingStrategy();
+
         ApplySoftDeleteFilters(modelBuilder);
+
         ApplyDateTimeConventions(modelBuilder);
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default)
     {
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
         {
-            if (entry.State == EntityState.Deleted)
+            switch (entry.State)
             {
-                entry.State = EntityState.Modified;
-                entry.Entity.SoftDelete();
-            }
-            else if (entry.State == EntityState.Modified)
-            {
-                entry.Entity.MarkUpdated();
+                case EntityState.Deleted:
+                    entry.State = EntityState.Modified;
+                    entry.Entity.SoftDelete();
+                    break;
+
+                case EntityState.Modified:
+                    entry.Entity.MarkUpdated();
+                    break;
             }
         }
 
@@ -70,15 +105,21 @@ public sealed class RafiqDbContext : IdentityDbContext<
     {
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            if (!typeof(BaseEntity).IsAssignableFrom(entityType.ClrType) || entityType.ClrType == typeof(AuditLog))
-            {
+            if (!typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
                 continue;
-            }
 
             var parameter = Expression.Parameter(entityType.ClrType, "e");
-            var property = Expression.Property(parameter, nameof(BaseEntity.IsDeleted));
-            var filter = Expression.Lambda(Expression.Equal(property, Expression.Constant(false)), parameter);
-            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
+
+            var property = Expression.Property(
+                parameter,
+                nameof(BaseEntity.IsDeleted));
+
+            var body = Expression.Equal(
+                property,
+                Expression.Constant(false));
+
+            modelBuilder.Entity(entityType.ClrType)
+                .HasQueryFilter(Expression.Lambda(body, parameter));
         }
     }
 
@@ -87,7 +128,9 @@ public sealed class RafiqDbContext : IdentityDbContext<
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             foreach (var property in entityType.GetProperties()
-                         .Where(p => p.ClrType == typeof(DateTime) || p.ClrType == typeof(DateTime?)))
+                         .Where(p =>
+                             p.ClrType == typeof(DateTime) ||
+                             p.ClrType == typeof(DateTime?)))
             {
                 property.SetColumnType("datetime2(7)");
             }
