@@ -1,0 +1,245 @@
+.hero{
+
+    min-height:100vh;
+
+    display:flex;
+
+    align-items:center;
+
+    background:#F8FDFF;
+
+}
+
+.hero .container{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+.hero-content{
+
+    width:48%;
+
+}
+
+.hero-image{
+
+    width:52%;
+
+    display:flex;
+
+    justify-content:center;
+
+}
+
+.hero-image img{
+
+    width:500px;
+
+}
+
+.subtitle{
+
+    color:#49d7ff;
+
+    font-weight:600;
+
+    margin-bottom:20px;
+
+}
+
+.hero h1{
+
+    font-size:70px;
+
+    line-height:80px;
+
+    color:#111;
+
+}
+
+.description{
+
+    margin-top:30px;
+
+    width:450px;
+
+    line-height:30px;
+
+    color:#666;
+
+}
+
+.hero-btn{
+
+    margin-top:40px;
+
+    border:none;
+
+    background:#4EDCFF;
+
+    color:white;
+
+    padding:16px 40px;
+
+    border-radius:50px;
+
+    font-size:16px;
+
+    cursor:pointer;
+    transition:.3s;
+
+}
+
+.hero-btn:hover{
+    transform:translateY(-2px);
+
+    box-shadow:0 10px 20px rgba(0,0,0,.1);
+}
+
+.robot-container{
+
+    position:relative;
+
+    width:550px;
+    height:550px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+.glow{
+
+    position:absolute;
+
+    width:420px;
+    height:420px;
+
+    border-radius:50%;
+
+    background:#53D9FF;
+
+    filter:blur(90px);
+
+    opacity:.7;
+
+    z-index:0;
+
+}
+
+.glass-circle{
+    z-index:1;
+}
+
+.robot{
+
+    width:430px;
+
+    position:relative;
+
+    z-index:2;
+
+    animation:floatRobot 4s ease-in-out infinite;
+}
+
+@keyframes floatRobot{
+
+    0%{
+
+        transform:translateY(0px);
+
+    }
+
+    50%{
+
+        transform:translateY(-15px);
+
+    }
+
+    100%{
+
+        transform:translateY(0px);
+
+    }
+
+}
+
+.robot-container::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:380px;
+
+    height:380px;
+
+    border-radius:50%;
+
+    background:white;
+
+    opacity:.4;
+
+    backdrop-filter:blur(10px);
+
+    z-index:1;
+
+}
+
+.circle{
+
+    position:absolute;
+
+    border-radius:50%;
+
+    background:#BFF6FF;
+
+    opacity:.6;
+    z-index: 3;
+
+}
+
+.one{
+
+    width:18px;
+
+    height:18px;
+
+    top:50px;
+
+    left:80px;
+
+}
+
+.two{
+
+    width:30px;
+
+    height:30px;
+
+    right:90px;
+
+    top:120px;
+
+}
+
+.three{
+
+    width:14px;
+
+    height:14px;
+
+    right:70px;
+
+    bottom:100px;
+
+}
+
