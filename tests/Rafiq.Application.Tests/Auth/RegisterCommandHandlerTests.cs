@@ -17,7 +17,7 @@ public sealed class RegisterCommandHandlerTests
             .ReturnsAsync(true);
 
         var handler = new RegisterCommandHandler(identityService.Object);
-        var command = new RegisterCommand("patient@example.com", "+201001234567", "Password1!", "Password1!", "Patient");
+        var command = new RegisterCommand("Patient", "User", "patient@example.com", "01001234567", "Password1!", "Password1!", "Patient");
 
         await handler.Invoking(x => x.Handle(command, CancellationToken.None))
             .Should().ThrowAsync<ConflictException>();
@@ -29,15 +29,17 @@ public sealed class RegisterCommandHandlerTests
         var identityService = new Mock<IIdentityService>();
         var userId = Guid.NewGuid();
         identityService.Setup(x => x.RegisterAsync(
+                "Patient",
+                "User",
                 "patient@example.com",
-                "+201001234567",
+                "01001234567",
                 "Password1!",
                 "Patient",
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RegisterResponseDto(userId, "patient@example.com", "+201001234567", "Patient"));
+            .ReturnsAsync(new RegisterResponseDto(userId, "patient@example.com", "01001234567", "Patient"));
 
         var handler = new RegisterCommandHandler(identityService.Object);
-        var command = new RegisterCommand("patient@example.com", "+201001234567", "Password1!", "Password1!", "Patient");
+        var command = new RegisterCommand("Patient", "User", "patient@example.com", "01001234567", "Password1!", "Password1!", "Patient");
 
         var response = await handler.Handle(command, CancellationToken.None);
 
@@ -45,6 +47,6 @@ public sealed class RegisterCommandHandlerTests
         response.Data!.UserId.Should().Be(userId);
         response.Data.Email.Should().Be("patient@example.com");
         response.Data.Role.Should().Be("Patient");
-        identityService.Verify(x => x.RegisterAsync(command.Email, command.PhoneNumber, command.Password, command.Role, It.IsAny<CancellationToken>()), Times.Once);
+        identityService.Verify(x => x.RegisterAsync(command.FirstName, command.LastName, command.Email, command.PhoneNumber, command.Password, command.Role, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

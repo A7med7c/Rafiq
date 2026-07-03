@@ -30,6 +30,8 @@ public sealed class IdentityService : IIdentityService
         => _userManager.Users.AnyAsync(x => x.PhoneNumber == phoneNumber, cancellationToken);
 
     public async Task<RegisterResponseDto> RegisterAsync(
+        string firstName,
+        string lastName,
         string email,
         string phoneNumber,
         string password,
@@ -41,6 +43,8 @@ public sealed class IdentityService : IIdentityService
         var user = new ApplicationUser
         {
             Id = Guid.NewGuid(),
+            FirstName = firstName,
+            LastName = lastName,
             Email = email,
             UserName = email,
             PhoneNumber = phoneNumber,

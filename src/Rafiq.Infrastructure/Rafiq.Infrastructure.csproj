@@ -20,4 +20,7 @@
     <ProjectReference Include="..\Rafiq.Application\Rafiq.Application.csproj" />
     <ProjectReference Include="..\Rafiq.Domain\Rafiq.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Persistence\Migrations\" />
+  </ItemGroup>
 </Project>

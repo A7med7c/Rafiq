@@ -101,11 +101,15 @@ public sealed class RafiqDbContext : IdentityDbContext<
         return base.SaveChangesAsync(cancellationToken);
     }
 
+
     private static void ApplySoftDeleteFilters(ModelBuilder modelBuilder)
     {
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (!typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+                continue;
+
+            if (entityType.BaseType != null)
                 continue;
 
             var parameter = Expression.Parameter(entityType.ClrType, "e");
@@ -122,7 +126,6 @@ public sealed class RafiqDbContext : IdentityDbContext<
                 .HasQueryFilter(Expression.Lambda(body, parameter));
         }
     }
-
     private static void ApplyDateTimeConventions(ModelBuilder modelBuilder)
     {
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

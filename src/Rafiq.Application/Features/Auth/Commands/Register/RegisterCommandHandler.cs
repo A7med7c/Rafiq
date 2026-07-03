@@ -28,6 +28,8 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Ap
         }
 
         var user = await _identityService.RegisterAsync(
+            request.FirstName,
+            request.LastName,
             request.Email,
             request.PhoneNumber,
             request.Password,

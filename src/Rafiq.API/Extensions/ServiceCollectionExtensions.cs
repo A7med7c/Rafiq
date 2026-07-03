@@ -24,13 +24,14 @@ public static class ServiceCollectionExtensions
             {
                 Name = "Authorization",
                 Type = SecuritySchemeType.Http,
-                Scheme = JwtBearerDefaults.AuthenticationScheme,
+                Scheme = "bearer",
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
                 Description = "Enter a valid JWT access token. The Bearer prefix is added automatically."
             });
 
             options.OperationFilter<SwaggerAuthorizeOperationFilter>();
+            options.DocumentFilter<SwaggerAuthorizeDocumentFilter>();
         });
 
         return services;

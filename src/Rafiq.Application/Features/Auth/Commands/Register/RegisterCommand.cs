@@ -4,7 +4,9 @@ using Rafiq.Application.Features.Auth.DTOs;
 
 namespace Rafiq.Application.Features.Auth.Commands.Register;
 
-public sealed record RegisterCommand(
+public record RegisterCommand(
+    string FirstName,
+    string LastName,
     string Email,
     string PhoneNumber,
     string Password,

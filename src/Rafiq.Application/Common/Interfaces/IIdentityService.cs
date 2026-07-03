@@ -7,6 +7,8 @@ public interface IIdentityService
     Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
     Task<bool> PhoneNumberExistsAsync(string phoneNumber, CancellationToken cancellationToken = default);
     Task<RegisterResponseDto> RegisterAsync(
+        string firstName,
+        string lastName,
         string email,
         string phoneNumber,
         string password,
