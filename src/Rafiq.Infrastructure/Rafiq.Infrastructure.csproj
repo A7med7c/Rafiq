@@ -21,6 +21,7 @@
     <ProjectReference Include="..\Rafiq.Domain\Rafiq.Domain.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Migrations\" />
     <Folder Include="Persistence\Migrations\" />
   </ItemGroup>
 </Project>

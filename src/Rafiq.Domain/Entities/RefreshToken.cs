@@ -2,45 +2,62 @@ using Rafiq.Domain.Common;
 
 namespace Rafiq.Domain.Entities;
 
-public class RefreshToken : BaseEntity
+public sealed class RefreshToken : BaseEntity
 {
-    private RefreshToken() { }
+    private RefreshToken() { } // EF Core
 
     public RefreshToken(
-        string token,
-        string jtiAccessToken,
+        string tokenHash,
+        string accessTokenJti,
         Guid userId,
         DateTime expiresAt,
-        string? deviceInfo,
-        string? ipAddress)
+        string? deviceInfo = null,
+        string? ipAddress = null)
     {
-        Token = token;
-        JtiAccessToken = jtiAccessToken;
+        TokenHash = tokenHash;
+        AccessTokenJti = accessTokenJti;
         UserId = userId;
         ExpiresAt = expiresAt;
         DeviceInfo = deviceInfo;
         IpAddress = ipAddress;
     }
 
-    public string Token { get; private set; } = string.Empty;
-    public string JtiAccessToken { get; private set; } = string.Empty;
-    public string? DeviceInfo { get; private set; }
-    public DateTime ExpiresAt { get; private set; }
-    public bool IsRevoked { get; private set; }
-    public DateTime? RevokedAt { get; private set; }
-    public string? RevokedByIp { get; private set; }
-    public string? ReplacedByToken { get; private set; }
-    public string? IpAddress { get; private set; }
     public Guid UserId { get; private set; }
 
-    public bool IsActive => !IsRevoked && ExpiresAt > DateTime.UtcNow;
+    public string TokenHash { get; private set; } = null!;
 
-    public void Revoke(string? revokedByIp = null, string? replacedByToken = null)
+    public string AccessTokenJti { get; private set; } = null!;
+
+    public DateTime ExpiresAt { get; private set; }
+
+    public string? DeviceInfo { get; private set; }
+
+    public string? IpAddress { get; private set; }
+
+    public bool IsRevoked { get; private set; }
+
+    public DateTime? RevokedAt { get; private set; }
+
+    public string? RevokedByIp { get; private set; }
+
+    public string? ReplacedByTokenHash { get; private set; }
+
+    public bool IsExpired => DateTime.UtcNow >= ExpiresAt;
+
+    public bool IsActive => !IsRevoked && !IsExpired;
+
+    public void Revoke(
+        string? revokedByIp = null,
+        string? replacedByTokenHash = null)
     {
+        if (IsRevoked)
+            return;
+
         IsRevoked = true;
         RevokedAt = DateTime.UtcNow;
         RevokedByIp = revokedByIp;
-        ReplacedByToken = replacedByToken;
+        ReplacedByTokenHash = replacedByTokenHash;
+
         MarkUpdated();
     }
 }

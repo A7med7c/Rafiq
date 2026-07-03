@@ -1,20 +1,21 @@
 namespace Rafiq.Application.Common.Models;
 
-public sealed class ApiResponse<T> : ApiResponseBase
+public class ApiResponseBase
 {
-    public T? Data { get; init; }
+    public bool Success { get; init; }
 
-    public new static ApiResponse<T> SuccessResponse(
-        T? data,
-        string message = "OK")
+    public string Message { get; init; } = string.Empty;
+
+    public IReadOnlyList<string>? Errors { get; init; }
+
+    public static ApiResponseBase SuccessResponse(string message = "OK")
         => new()
         {
             Success = true,
-            Data = data,
             Message = message
         };
 
-    public new static ApiResponse<T> FailureResponse(
+    public static ApiResponseBase FailureResponse(
         string message,
         IReadOnlyList<string>? errors = null)
         => new()

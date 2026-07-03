@@ -42,7 +42,7 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, TokenService>();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
-
+        services.AddScoped<ITokenHasher, Sha256TokenHasher>();
         return services;
     }
 }

@@ -13,24 +13,51 @@ public sealed class RefreshTokenRepository : IRefreshTokenRepository
         _dbContext = dbContext;
     }
 
-    public Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default)
-        => _dbContext.RefreshTokens.FirstOrDefaultAsync(x => x.Token == tokenHash, cancellationToken);
-
-    public async Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
-        => await _dbContext.RefreshTokens
-            .Where(x => x.UserId == userId && !x.IsRevoked && x.ExpiresAt > DateTime.UtcNow)
-            .ToListAsync(cancellationToken);
-
-    public Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default)
-        => _dbContext.RefreshTokens.AddAsync(refreshToken, cancellationToken).AsTask();
-
-    public async Task RevokeAllByUserIdAsync(Guid userId, string? revokedByIp = null, CancellationToken cancellationToken = default)
+    public Task<RefreshToken?> GetByTokenHashAsync(
+        string tokenHash,
+        CancellationToken cancellationToken = default)
     {
-        var activeTokens = await _dbContext.RefreshTokens
-            .Where(x => x.UserId == userId && !x.IsRevoked && x.ExpiresAt > DateTime.UtcNow)
-            .ToListAsync(cancellationToken);
+        return _dbContext.RefreshTokens
+            .FirstOrDefaultAsync(
+                x => x.TokenHash == tokenHash,
+                cancellationToken);
+    }
 
-        foreach (var token in activeTokens)
+    public async Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.RefreshTokens
+            .Where(x => x.UserId == userId &&
+                        !x.IsRevoked &&
+                        x.ExpiresAt > DateTime.UtcNow)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task AddAsync(
+        RefreshToken refreshToken,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.RefreshTokens
+            .AddAsync(refreshToken, cancellationToken)
+            .AsTask();
+    }
+
+    public void Update(RefreshToken refreshToken)
+    {
+        _dbContext.RefreshTokens.Update(refreshToken);
+    }
+
+    public async Task RevokeAllByUserIdAsync(
+        Guid userId,
+        string? revokedByIp = null,
+        CancellationToken cancellationToken = default)
+    {
+        var tokens = await GetActiveByUserIdAsync(
+            userId,
+            cancellationToken);
+
+        foreach (var token in tokens)
         {
             token.Revoke(revokedByIp);
         }

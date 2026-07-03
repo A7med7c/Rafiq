@@ -17,11 +17,6 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Ap
 
     public async Task<ApiResponse<RegisterResponseDto>> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        if (await _identityService.EmailExistsAsync(request.Email, cancellationToken))
-        {
-            throw new ConflictException("An account with this email already exists.");
-        }
-
         if (await _identityService.PhoneNumberExistsAsync(request.PhoneNumber, cancellationToken))
         {
             throw new ConflictException("An account with this phone number already exists.");

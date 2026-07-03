@@ -378,6 +378,11 @@ namespace Rafiq.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AccessTokenJti")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2(7)");
 
@@ -399,14 +404,11 @@ namespace Rafiq.Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsRevoked")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
-                    b.Property<string>("JtiAccessToken")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<string>("ReplacedByToken")
+                    b.Property<string>("ReplacedByTokenHash")
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
 
@@ -417,7 +419,7 @@ namespace Rafiq.Infrastructure.Migrations
                         .HasMaxLength(45)
                         .HasColumnType("nvarchar(45)");
 
-                    b.Property<string>("Token")
+                    b.Property<string>("TokenHash")
                         .IsRequired()
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
@@ -430,14 +432,14 @@ namespace Rafiq.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("JtiAccessToken");
+                    b.HasIndex("AccessTokenJti");
 
-                    b.HasIndex("Token")
+                    b.HasIndex("TokenHash")
                         .IsUnique();
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "IsRevoked", "ExpiresAt");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.User.Allergy", b =>

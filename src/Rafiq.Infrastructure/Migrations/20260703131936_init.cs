@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Rafiq.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class intial11 : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -47,16 +47,16 @@ namespace Rafiq.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Token = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: false),
-                    JtiAccessToken = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    DeviceInfo = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    TokenHash = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: false),
+                    AccessTokenJti = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ExpiresAt = table.Column<DateTime>(type: "datetime2(7)", nullable: false),
-                    IsRevoked = table.Column<bool>(type: "bit", nullable: false),
+                    DeviceInfo = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    IpAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
+                    IsRevoked = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
                     RevokedAt = table.Column<DateTime>(type: "datetime2(7)", nullable: true),
                     RevokedByIp = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
-                    ReplacedByToken = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
-                    IpAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ReplacedByTokenHash = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2(7)", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2(7)", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
@@ -546,20 +546,20 @@ namespace Rafiq.Infrastructure.Migrations
                 column: "PrescriptionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RefreshTokens_JtiAccessToken",
+                name: "IX_RefreshTokens_AccessTokenJti",
                 table: "RefreshTokens",
-                column: "JtiAccessToken");
+                column: "AccessTokenJti");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RefreshTokens_Token",
+                name: "IX_RefreshTokens_TokenHash",
                 table: "RefreshTokens",
-                column: "Token",
+                column: "TokenHash",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_RefreshTokens_UserId",
+                name: "IX_RefreshTokens_UserId_IsRevoked_ExpiresAt",
                 table: "RefreshTokens",
-                column: "UserId");
+                columns: new[] { "UserId", "IsRevoked", "ExpiresAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserHealthProfiles_UserId",
