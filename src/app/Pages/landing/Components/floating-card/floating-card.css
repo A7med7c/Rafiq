@@ -1,0 +1,39 @@
+.floating-card{
+
+    width:180px;
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:15px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+}
+
+.icon{
+
+    width:45px;
+
+    height:45px;
+
+    border-radius:12px;
+
+    background:#EAFBFF;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:22px;
+
+}
