@@ -8,18 +8,17 @@
 
                 <span class="number">1</span>
 
-                <h3>Smart Vitals Sync</h3>
+                <h3>{{ t.items[0].title }}</h3>
 
                 <p>
-                    Smart vitals monitor and healthcare AI
-                    to track your health in real-time.
+                    {{ t.items[0].description }}
                 </p>
 
             </div>
 
             <div class="feature-image">
 
-                <img src="images/sync.png">
+                <img src="images/sync.png" [alt]="t.items[0].alt">
 
             </div>
 
@@ -31,17 +30,17 @@
 
                 <span class="number">2</span>
 
-                <h3>Medication Reminder</h3>
+                <h3>{{ t.items[1].title }}</h3>
 
                 <p>
-                    Never miss a medicine with smart reminders and schedules.
+                    {{ t.items[1].description }}
                 </p>
 
             </div>
 
             <div class="feature-image">
 
-                <img src="images/reminder.png" alt="Reminder">
+                <img src="images/reminder.png" [alt]="t.items[1].alt">
 
             </div>
 
@@ -53,17 +52,17 @@
 
                 <span class="number">3</span>
 
-                <h3>Family Health Records</h3>
+                <h3>{{ t.items[2].title }}</h3>
 
                 <p>
-                    Store and share your family's medical records securely.
+                    {{ t.items[2].description }}
                 </p>
 
             </div>
 
             <div class="feature-image">
 
-                <img src="images/record.png" alt="HealthRecords">
+                <img src="images/record.png" [alt]="t.items[2].alt">
 
             </div>
 

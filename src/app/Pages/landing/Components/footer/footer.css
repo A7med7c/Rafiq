@@ -132,6 +132,19 @@
 
 }
 
+:host-context(.rtl) .footer{
+    direction:rtl;
+}
+
+:host-context(.rtl) .footer-brand,
+:host-context(.rtl) .footer-links{
+    text-align:right;
+}
+
+:host-context(.rtl) .footer-links a:hover{
+    transform:translateX(-5px);
+}
+
 .copyright{
 
     text-align:center;
@@ -142,4 +155,16 @@
 
     color:#9FB3C8;
 
+}
+
+@media (max-width: 900px){
+    .footer-top h2{
+        font-size:34px;
+    }
+
+    .footer-content{
+        grid-template-columns:1fr;
+        gap:30px;
+        padding:42px 20px;
+    }
 }

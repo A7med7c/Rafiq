@@ -1,70 +1,49 @@
 <footer class="footer">
-
     <div class="footer-top">
+        <h2>{{ t.headline }}</h2>
 
-        <h2>Ready to Transform Your Healthcare?</h2>
-
-        <p>
-            Store, analyze and manage your medical records with AI.
-        </p>
+        <p>{{ t.subhead }}</p>
 
         <button class="footer-btn">
-            Get Started
+            {{ t.cta }}
         </button>
-
     </div>
 
     <div class="footer-content container">
-
         <div class="footer-brand">
-
             <img src="images/RafiqLogo.png" alt="Logo">
 
-            <h3>Rafiq</h3>
+            <h3>{{ t.brand }}</h3>
 
-            <p>
-                AI Healthcare Companion helping you manage your health
-                smarter and faster.
-            </p>
-
+            <p>{{ t.brandText }}</p>
         </div>
 
         <div class="footer-links">
+            <h4>{{ t.quickLinks }}</h4>
 
-            <h4>Quick Links</h4>
-
-            <a href="#">Home</a>
-            <a href="#">About</a>
-            <a href="#">Features</a>
-            <a href="#">Contact</a>
-
+            <a href="#">{{ t.links[0] }}</a>
+            <a href="#">{{ t.links[1] }}</a>
+            <a href="#">{{ t.links[2] }}</a>
+            <a href="#">{{ t.links[3] }}</a>
         </div>
 
         <div class="footer-links">
+            <h4>{{ t.services }}</h4>
 
-            <h4>Services</h4>
-
-            <a href="#">Medical Records</a>
-            <a href="#">Medication Reminder</a>
-            <a href="#">Family Health</a>
-
+            <a href="#">{{ t.serviceLinks[0] }}</a>
+            <a href="#">{{ t.serviceLinks[1] }}</a>
+            <a href="#">{{ t.serviceLinks[2] }}</a>
         </div>
 
         <div class="footer-links">
-
-            <h4>Contact</h4>
+            <h4>{{ t.contact }}</h4>
 
             <a href="#">support@rafiq.ai</a>
             <a href="#">+20 100 000 0000</a>
-
         </div>
-
     </div>
 
     <div class="copyright">
-
-        © 2026 Rafiq. All Rights Reserved.
-
+        {{ t.copyright }}
     </div>
-
 </footer>

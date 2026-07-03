@@ -190,3 +190,23 @@ body{
 
     overflow-x:hidden;
 }
+
+:host-context(.rtl) .feature-card{
+    direction:rtl;
+}
+
+:host-context(.rtl) .feature-content{
+    align-items:flex-start;
+    text-align:right;
+}
+
+:host-context(.rtl) .feature-card::before{
+    right:auto;
+    left:-80px;
+}
+
+@media (max-width: 1000px){
+    .features .container{
+        grid-template-columns:1fr;
+    }
+}

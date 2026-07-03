@@ -1,7 +1,12 @@
-<app-navbar></app-navbar>
+<main class="landing-page" [class.rtl]="language === 'ar'" [attr.dir]="language === 'ar' ? 'rtl' : 'ltr'">
+  <app-navbar
+    [language]="language"
+    (languageChange)="setLanguage($event)">
+  </app-navbar>
 
-<app-hero></app-hero>
+  <app-hero [language]="language"></app-hero>
 
-<app-features></app-features>
+  <app-features [language]="language"></app-features>
 
-<app-footer></app-footer>
+  <app-footer [language]="language"></app-footer>
+</main>
