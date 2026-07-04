@@ -1,7 +1,22 @@
 namespace Rafiq.Domain.Entities.Documents;
 
-public class ImagingReport : MedicalDocument
+public class ImagingReport
 {
+    protected ImagingReport() { }
+
+    public ImagingReport(
+        Guid userId,
+        byte[] reportImage)
+    {
+        ReportId = Guid.NewGuid();
+        UserId = userId;
+        ReportImage = reportImage;
+    }
+
+    public Guid ReportId { get; private set; }
+
+    public Guid UserId { get; private set; }
+
     public string ImagingType { get; set; } = null!;
 
     public string BodyPart { get; set; } = null!;
@@ -10,5 +25,11 @@ public class ImagingReport : MedicalDocument
 
     public string Impression { get; set; } = null!;
 
+    public string DoctorName { get; set; } = null!;
+
     public DateOnly ReportDate { get; set; }
+
+    public string AiSummary { get; set; } = null!;
+
+    public byte[] ReportImage { get; private set; } = null!;
 }
