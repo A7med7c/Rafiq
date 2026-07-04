@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using Rafiq.Domain.Entities.Documents;
 using Rafiq.Domain.Entities.User;
 
 namespace Rafiq.Infrastructure.Persistence.Identity;

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Rafiq.Application.Common.Interfaces;
 
-namespace Rafiq.Infrastructure.Services;
+namespace Rafiq.Infrastructure.Services.auth;
 
 public sealed class CurrentUserService : ICurrentUserService
 {

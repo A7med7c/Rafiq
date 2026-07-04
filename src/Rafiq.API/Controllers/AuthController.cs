@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Rafiq.Application.Features.Auth.Commands.ExternalLogin;
 using Rafiq.Application.Features.Auth.Commands.Login;
 using Rafiq.Application.Features.Auth.Commands.Logout;
 using Rafiq.Application.Features.Auth.Commands.PhoneNumber;
@@ -40,6 +41,15 @@ public sealed class AuthController(IMediator _mediator) : ControllerBase
 
         return Ok(result);
     }
+
+    [AllowAnonymous]
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginCommand command, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
     [HttpPost("verify-phone")]
     public async Task<IActionResult> VerifyPhone([FromBody] VerifyPhoneCommand command, CancellationToken cancellationToken)
     {

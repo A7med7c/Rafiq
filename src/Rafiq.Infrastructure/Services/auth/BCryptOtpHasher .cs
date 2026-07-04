@@ -1,7 +1,7 @@
 ﻿using Rafiq.Application.Common.Interfaces;
 
 
-namespace Rafiq.Infrastructure.Services
+namespace Rafiq.Infrastructure.Services.auth
 {
     internal class BCryptOtpHasher : IOtpHasher
     {
