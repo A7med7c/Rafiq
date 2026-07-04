@@ -15,14 +15,9 @@ public sealed class LoginCommandHandler(
     IUnitOfWork unitOfWork)
     : IRequestHandler<LoginCommand, ApiResponse<AuthResponseDto>>
 {
-    public async Task<ApiResponse<AuthResponseDto>> Handle(
-        LoginCommand request,
-        CancellationToken cancellationToken)
+    public async Task<ApiResponse<AuthResponseDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await identityService.ValidateCredentialsAsync(
-            request.Email,
-            request.Password,
-            cancellationToken)
+        var user = await identityService.ValidateCredentialsAsync(request.Email, request.Password, cancellationToken)
             ?? throw new AuthenticationException("Invalid email or password.");
 
         if (!user.PhoneNumberConfirmed)

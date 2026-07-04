@@ -66,15 +66,12 @@ public sealed class IdentityService(
     {
         var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
         if (user is null || !user.IsActive)
-        {
             return null;
-        }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
         if (!result.Succeeded)
-        {
             return null;
-        }
+
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
 

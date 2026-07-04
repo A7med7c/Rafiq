@@ -37,10 +37,7 @@ public sealed class PatientProfilesController(IMediator _mediator) : ControllerB
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(
-    Guid id,
-    [FromBody] UpdatePatientProfileCommand command,
-    CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePatientProfileCommand command, CancellationToken cancellationToken)
     {
         if (id != command.PatientProfileId)
             return BadRequest("Route id doesn't match body id.");

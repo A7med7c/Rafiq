@@ -41,19 +41,19 @@ public class UserHealthProfile : BaseEntity
 
     public ICollection<ChronicDisease> ChronicDiseases { get; set; }
         = new List<ChronicDisease>();
-        public void Update(
-    Gender gender,
-    DateOnly dateOfBirth,
-    decimal height,
-    decimal weight,
-    BloodType bloodType)
-{
-    Gender = gender;
-    DateOfBirth = dateOfBirth;
-    Height = height;
-    Weight = weight;
-    BloodType = bloodType;
+    public void Update(
+Gender gender,
+DateOnly dateOfBirth,
+decimal height,
+decimal weight,
+BloodType bloodType)
+    {
+        Gender = gender;
+        DateOfBirth = dateOfBirth;
+        Height = height;
+        Weight = weight;
+        BloodType = bloodType;
 
-    MarkUpdated();
-}
+        MarkUpdated();
+    }
 }

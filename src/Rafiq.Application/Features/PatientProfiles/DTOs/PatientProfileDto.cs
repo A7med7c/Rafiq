@@ -13,4 +13,3 @@ public sealed record PatientProfileDto(
     DateTime CreatedAt,
     DateTime? UpdatedAt
 );
-

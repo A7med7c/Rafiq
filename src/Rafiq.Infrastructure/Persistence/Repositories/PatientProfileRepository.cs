@@ -13,12 +13,21 @@ public sealed class UserHealthProfileRepository : IPatientProfileRepository
         _dbContext = dbContext;
     }
 
-    public Task<UserHealthProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => _dbContext.UserHealthProfiles.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    public Task<UserHealthProfile?> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+        => _dbContext.UserHealthProfiles
+            .Include(x => x.Allergies)
+            .Include(x => x.ChronicDiseases)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-    public Task<UserHealthProfile?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
-        => _dbContext.UserHealthProfiles.FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
-
+    public Task<UserHealthProfile?> GetByUserIdAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+        => _dbContext.UserHealthProfiles
+            .Include(x => x.Allergies)
+            .Include(x => x.ChronicDiseases)
+            .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
     public Task<bool> ExistsByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
         => _dbContext.UserHealthProfiles.AnyAsync(x => x.UserId == userId, cancellationToken);
 
