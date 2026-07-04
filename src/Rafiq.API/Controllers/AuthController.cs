@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rafiq.Application.Features.Auth.Commands.Login;
 using Rafiq.Application.Features.Auth.Commands.Logout;
+using Rafiq.Application.Features.Auth.Commands.PhoneNumber;
 using Rafiq.Application.Features.Auth.Commands.RefreshToken;
 using Rafiq.Application.Features.Auth.Commands.Register;
 using Rafiq.Application.Features.Auth.Commands.RevokeToken;
@@ -34,6 +35,21 @@ public sealed class AuthController(IMediator _mediator) : ControllerBase
     }
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutCommand command, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(command, cancellationToken);
+
+        return Ok(result);
+    }
+    [HttpPost("verify-phone")]
+    public async Task<IActionResult> VerifyPhone([FromBody] VerifyPhoneCommand command, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(command, cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpPost("resend-phone-code")]
+    public async Task<IActionResult> ResendPhoneCode([FromBody] ResendPhoneCodeCommand command, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);
 

@@ -7,29 +7,18 @@ using Rafiq.Infrastructure.Persistence.Identity;
 
 namespace Rafiq.Infrastructure.Services;
 
-public sealed class IdentityService : IIdentityService
+public sealed class IdentityService(
+    UserManager<ApplicationUser> _userManager,
+    SignInManager<ApplicationUser> _signInManager,
+    RoleManager<IdentityRole<Guid>> _roleManager) : IIdentityService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly RoleManager<IdentityRole<Guid>> _roleManager;
-
-    public IdentityService(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        RoleManager<IdentityRole<Guid>> roleManager)
-    {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _roleManager = roleManager;
-    }
-
     public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
         => _userManager.Users.AnyAsync(x => x.Email == email, cancellationToken);
 
     public Task<bool> PhoneNumberExistsAsync(string phoneNumber, CancellationToken cancellationToken = default)
         => _userManager.Users.AnyAsync(x => x.PhoneNumber == phoneNumber, cancellationToken);
 
-    public async Task<RegisterResponseDto> RegisterAsync(
+    public async Task<RegisterResponseDto> CreateUserAsync(
         string firstName,
         string lastName,
         string email,
@@ -49,25 +38,27 @@ public sealed class IdentityService : IIdentityService
             UserName = email,
             PhoneNumber = phoneNumber,
             EmailConfirmed = true,
-            PhoneNumberConfirmed = true,
+            PhoneNumberConfirmed = false,
             IsActive = true
         };
 
         var createResult = await _userManager.CreateAsync(user, password);
+
         if (!createResult.Succeeded)
-        {
             throw new ValidationException(createResult.Errors.Select(x => x.Description));
-        }
 
         var roleResult = await _userManager.AddToRoleAsync(user, role);
+
         if (!roleResult.Succeeded)
-        {
             throw new ValidationException(roleResult.Errors.Select(x => x.Description));
-        }
 
-        return new RegisterResponseDto(user.Id, user.Email!, user.PhoneNumber!, role);
+        return new RegisterResponseDto(
+            user.Id,
+            user.Email!,
+            user.PhoneNumber!,
+            role,
+            user.PhoneNumberConfirmed);
     }
-
     public async Task<IdentityUserDto?> ValidateCredentialsAsync(
         string email,
         string password,
@@ -86,7 +77,13 @@ public sealed class IdentityService : IIdentityService
         }
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
-        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role);
+
+        return new IdentityUserDto(
+            user.Id,
+            user.Email!,
+            user.PhoneNumber!,
+            role,
+            user.PhoneNumberConfirmed);
     }
 
     public async Task<IdentityUserDto?> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -98,7 +95,37 @@ public sealed class IdentityService : IIdentityService
         }
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
-        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role);
+        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed);
+    }
+
+    public async Task<IdentityUserDto?> GetByPhoneAsync(string phoneNumber, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.Users.FirstOrDefaultAsync(x => x.PhoneNumber == phoneNumber,
+            cancellationToken);
+        if (user is null || !user.IsActive)
+            return null;
+
+
+        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
+        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed);
+    }
+
+    public async Task ConfirmPhoneNumberAsync(
+    Guid userId,
+    CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+
+        if (user is null)
+            throw new NotFoundException("User", user.Id);
+
+        user.PhoneNumberConfirmed = true;
+
+        var result = await _userManager.UpdateAsync(user);
+
+        if (!result.Succeeded)
+            throw new ValidationException(result.Errors.Select(x => x.Description));
     }
 
     private async Task EnsureRoleExistsAsync(string role, CancellationToken cancellationToken)
@@ -114,4 +141,5 @@ public sealed class IdentityService : IIdentityService
             throw new ValidationException(result.Errors.Select(x => x.Description));
         }
     }
+
 }

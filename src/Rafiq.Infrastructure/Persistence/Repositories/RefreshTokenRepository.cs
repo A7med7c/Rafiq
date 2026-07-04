@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Rafiq.Domain.Entities;
+using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Infrastructure.Persistence.Repositories;

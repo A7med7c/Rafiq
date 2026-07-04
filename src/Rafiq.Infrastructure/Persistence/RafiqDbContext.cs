@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Rafiq.Domain.Common;
-using Rafiq.Domain.Entities;
 using Rafiq.Domain.Entities.Documents;
 using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Repositories;
@@ -32,6 +31,7 @@ public sealed class RafiqDbContext : IdentityDbContext<
     public DbSet<UserHealthProfile> UserHealthProfiles => Set<UserHealthProfile>();
 
     public DbSet<Allergy> Allergies => Set<Allergy>();
+    public DbSet<PhoneVerification> PhoneVerifications => Set<PhoneVerification>();
 
     public DbSet<ChronicDisease> ChronicDiseases => Set<ChronicDisease>();
 

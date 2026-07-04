@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Rafiq.Domain.Entities;
+using Rafiq.Domain.Entities.User;
 using Rafiq.Infrastructure.Persistence.Identity;
 
 namespace Rafiq.Infrastructure.Persistence.Configurations;

@@ -1,4 +1,4 @@
-using Rafiq.Domain.Entities;
+using Rafiq.Domain.Entities.User;
 
 public interface IRefreshTokenRepository
 {

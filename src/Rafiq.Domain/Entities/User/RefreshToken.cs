@@ -1,6 +1,6 @@
 using Rafiq.Domain.Common;
 
-namespace Rafiq.Domain.Entities;
+namespace Rafiq.Domain.Entities.User;
 
 public sealed class RefreshToken : BaseEntity
 {

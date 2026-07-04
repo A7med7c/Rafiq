@@ -66,7 +66,7 @@ public sealed class RefreshTokenCommandHandler(
 
         var refreshTokenHash = tokenHasher.Hash(refreshToken);
 
-        var newRefreshToken = new Domain.Entities.RefreshToken(
+        var newRefreshToken = new Domain.Entities.User.RefreshToken(
             refreshTokenHash,
             accessTokenJti,
             existingToken.UserId,

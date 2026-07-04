@@ -25,6 +25,9 @@ public sealed class LoginCommandHandler(
             cancellationToken)
             ?? throw new AuthenticationException("Invalid email or password.");
 
+        if (!user.PhoneNumberConfirmed)
+            throw new AuthenticationException("Please verify your phone number before logging in.");
+
         var accessTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
         var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
 
@@ -41,7 +44,7 @@ public sealed class LoginCommandHandler(
 
         var refreshTokenHash = tokenHasher.Hash(refreshToken);
 
-        var refreshTokenEntity = new Domain.Entities.RefreshToken(
+        var refreshTokenEntity = new Domain.Entities.User.RefreshToken(
             refreshTokenHash,
             accessTokenJti,
             user.UserId,

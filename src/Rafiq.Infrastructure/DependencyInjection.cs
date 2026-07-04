@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Rafiq.Application.Common.Interfaces;
+using Rafiq.Application.Common.Models;
 using Rafiq.Domain.Repositories;
 using Rafiq.Infrastructure.Persistence;
 using Rafiq.Infrastructure.Persistence.Identity;
@@ -38,11 +39,19 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<RafiqDbContext>());
         services.AddScoped<IPatientProfileRepository, UserHealthProfileRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<INotificationsService, NotificationsService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITokenHasher, Sha256TokenHasher>();
+        services.AddScoped<IOtpHasher, BCryptOtpHasher>();
+        services.AddScoped<IOtpGenerator, OtpGenerator>();
+
+
+        services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
+
+        services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
         return services;
     }
 }
