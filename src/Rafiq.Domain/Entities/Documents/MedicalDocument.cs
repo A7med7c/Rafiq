@@ -2,6 +2,7 @@ using Rafiq.Domain.Common;
 
 public abstract class MedicalDocument : BaseEntity
 {
+    public Guid Id { get; set; }
     public Guid UserId { get; protected set; }
 
     public Guid DocumentTypeId { get; protected set; }

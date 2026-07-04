@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Rafiq.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Rafiq.Infrastructure.Persistence;
 namespace Rafiq.Infrastructure.Migrations
 {
     [DbContext(typeof(RafiqDbContext))]
-    partial class RafiqDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260704220055_DecoupleLabReportFromMedicalDocument")]
+    partial class DecoupleLabReportFromMedicalDocument
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -260,10 +263,9 @@ namespace Rafiq.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<byte[]>("ImageData")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("varbinary(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");

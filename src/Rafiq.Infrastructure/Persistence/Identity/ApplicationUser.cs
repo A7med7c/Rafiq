@@ -25,4 +25,7 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     public ICollection<MedicalDocument> MedicalDocuments { get; set; }
         = new List<MedicalDocument>();
+
+    public ICollection<LabReport> LabReports { get; set; }
+        = new List<LabReport>();
 }
