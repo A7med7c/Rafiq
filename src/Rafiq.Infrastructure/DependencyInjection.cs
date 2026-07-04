@@ -47,9 +47,14 @@ public static class DependencyInjection
         services.AddScoped<ITokenHasher, Sha256TokenHasher>();
         services.AddScoped<IOtpHasher, BCryptOtpHasher>();
         services.AddScoped<IOtpGenerator, OtpGenerator>();
-
-
         services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
+
+        // ── Bedrock ────────────────────────────────────────────────────────
+        services.Configure<BedrockSettings>(configuration.GetSection("Bedrock"));
+        services.AddHttpClient<IBedrockService, BedrockService>();
+
+        // ── Documents ─────────────────────────────────────────────────────
+        services.AddScoped<ILabReportRepository, LabReportRepository>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
         return services;

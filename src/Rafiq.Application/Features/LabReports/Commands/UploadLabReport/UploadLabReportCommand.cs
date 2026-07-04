@@ -1,0 +1,14 @@
+using MediatR;
+using Microsoft.AspNetCore.Http;
+using Rafiq.Application.Common.Models;
+using Rafiq.Application.Features.LabReports.DTOs;
+
+namespace Rafiq.Application.Features.LabReports.Commands.UploadLabReport;
+
+/// <summary>
+/// Uploads a lab report image, analyzes it with Bedrock,
+/// saves the extracted data, and returns the result.
+/// UserId is NEVER accepted from the client — it comes from the JWT.
+/// </summary>
+public sealed record UploadLabReportCommand(IFormFile Image)
+    : IRequest<ApiResponse<LabReportResponseDto>>;
