@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Rafiq.Domain.Entities.Documents;
 using Rafiq.Infrastructure.Persistence.Identity;
 
 namespace Rafiq.Infrastructure.Persistence.Configurations;
@@ -21,9 +20,9 @@ public sealed class MedicalDocumentConfiguration
         builder.Property(x => x.Description)
             .HasMaxLength(2000);
 
-        builder.Property(x => x.ImageUrl)
-            .HasMaxLength(500)
-            .IsRequired();
+        //builder.Property(x => x.ImageUrl)
+        //    .HasMaxLength(500)
+        //    .isNULL();
 
         builder.Property(x => x.OCRText)
             .HasColumnType("nvarchar(max)");

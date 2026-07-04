@@ -14,5 +14,7 @@ public class LabResult : BaseEntity
 
     public string NormalRange { get; set; } = null!;
 
+    public string? Status { get; set; }
+
     public LabReport LabReport { get; set; } = null!;
 }

@@ -8,6 +8,7 @@ using Rafiq.Domain.Repositories;
 using Rafiq.Infrastructure.Persistence;
 using Rafiq.Infrastructure.Persistence.Identity;
 using Rafiq.Infrastructure.Persistence.Repositories;
+using Rafiq.Infrastructure.Services;
 using Rafiq.Infrastructure.Services.auth;
 using Rafiq.Infrastructure.Services.Notifications;
 
@@ -48,10 +49,15 @@ public static class DependencyInjection
         services.AddScoped<ITokenHasher, Sha256TokenHasher>();
         services.AddScoped<IOtpHasher, BCryptOtpHasher>();
         services.AddScoped<IOtpGenerator, OtpGenerator>();
-        services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
-
 
         services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
+
+        // ── Bedrock ────────────────────────────────────────────────────────
+        services.Configure<BedrockSettings>(configuration.GetSection("Bedrock"));
+        services.AddHttpClient<IBedrockService, BedrockService>();
+
+        // ── Documents ─────────────────────────────────────────────────────
+        services.AddScoped<ILabReportRepository, LabReportRepository>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
         return services;
