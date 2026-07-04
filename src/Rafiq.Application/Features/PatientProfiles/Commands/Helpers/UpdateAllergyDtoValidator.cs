@@ -13,9 +13,6 @@ internal sealed class UpdateAllergyDtoValidator
         RuleFor(x => x.Severity)
             .IsInEnum();
 
-        RuleFor(x => x.Reaction)
-            .MaximumLength(500);
-
         RuleFor(x => x.Notes)
             .MaximumLength(1000);
     }

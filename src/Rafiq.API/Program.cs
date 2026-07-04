@@ -3,6 +3,7 @@ using Rafiq.API.Extensions;
 using Rafiq.API.Middleware;
 using Rafiq.Application;
 using Rafiq.Infrastructure;
+using System.Text.Json.Serialization;
 
 namespace Rafiq.API;
 
@@ -12,7 +13,12 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(
+                    new JsonStringEnumConverter());
+            });
         builder.Services.AddSwaggerDocumentation();
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
