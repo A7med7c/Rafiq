@@ -4,7 +4,7 @@ using Rafiq.Application.Common.Models;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 
-namespace Rafiq.Infrastructure.Services
+namespace Rafiq.Infrastructure.Services.Notifications
 {
     public class NotificationsService(IOptions<TwilioSettings> TwilioOptions) : INotificationsService
     {

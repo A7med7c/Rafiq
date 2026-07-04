@@ -26,6 +26,17 @@ public class Program
         builder.Services.AddAuthorization();
         builder.Services.AddHealthChecks();
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("Angular", policy =>
+            {
+                policy
+                    .WithOrigins("http://localhost:4200")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
+
         var app = builder.Build();
 
         app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
@@ -41,6 +52,7 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+        app.UseCors("Angular");
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

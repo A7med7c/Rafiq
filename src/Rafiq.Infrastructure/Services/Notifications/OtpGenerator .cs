@@ -1,7 +1,7 @@
 ﻿using Rafiq.Application.Common.Interfaces;
 using System.Security.Cryptography;
 
-namespace Rafiq.Infrastructure.Services
+namespace Rafiq.Infrastructure.Services.Notifications
 {
     public sealed class OtpGenerator : IOtpGenerator
     {
