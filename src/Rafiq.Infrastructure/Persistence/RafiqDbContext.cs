@@ -39,19 +39,15 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     #region Medical Documents
 
-
     public DbSet<Prescription> Prescriptions => Set<Prescription>();
 
-    public DbSet<Medicine> Medicines => Set<Medicine>();
-
-    public DbSet<MedicineReminder> MedicineReminders => Set<MedicineReminder>();
+    public DbSet<PrescriptionMedicine> PrescriptionMedicines => Set<PrescriptionMedicine>();
 
     public DbSet<LabReport> LabReports => Set<LabReport>();
 
     public DbSet<LabResult> LabResults => Set<LabResult>();
 
     public DbSet<ImagingReport> ImagingReports => Set<ImagingReport>();
-
 
     #endregion
 

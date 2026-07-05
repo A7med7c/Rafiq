@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Rafiq.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Rafiq.Infrastructure.Persistence;
 namespace Rafiq.Infrastructure.Migrations
 {
     [DbContext(typeof(RafiqDbContext))]
-    partial class RafiqDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260705121127_inital")]
+    partial class inital
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -327,6 +330,97 @@ namespace Rafiq.Infrastructure.Migrations
                     b.ToTable("LabResults", (string)null);
                 });
 
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Medicine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<string>("Dose")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DrugName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Duration")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Frequency")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Instructions")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("PrescriptionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PrescriptionId");
+
+                    b.ToTable("Medicines");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicineReminder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MedicineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<TimeOnly>("ReminderTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("RepeatType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicineId");
+
+                    b.ToTable("MedicineReminders");
+                });
+
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Prescription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -344,86 +438,21 @@ namespace Rafiq.Infrastructure.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<string>("ImagePath")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
-
-                    b.Property<string>("PatientName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateOnly>("PrescriptionDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Prescriptions", (string)null);
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.PrescriptionMedicine", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<string>("Dosage")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Duration")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Frequency")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("MedicineName")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("PrescriptionId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
+                    b.Property<DateOnly>("VisitDate")
+                        .HasColumnType("date");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("PrescriptionId");
-
-                    b.ToTable("PrescriptionMedicines", (string)null);
+                    b.ToTable("Prescriptions", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.User.Allergy", b =>
@@ -854,16 +883,7 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("LabReport");
                 });
 
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Prescription", b =>
-                {
-                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
-                        .WithMany("Prescriptions")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.PrescriptionMedicine", b =>
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Medicine", b =>
                 {
                     b.HasOne("Rafiq.Domain.Entities.Documents.Prescription", "Prescription")
                         .WithMany("Medicines")
@@ -872,6 +892,17 @@ namespace Rafiq.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Prescription");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicineReminder", b =>
+                {
+                    b.HasOne("Rafiq.Domain.Entities.Documents.Medicine", "Medicine")
+                        .WithMany("Reminders")
+                        .HasForeignKey("MedicineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Medicine");
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.User.Allergy", b =>
@@ -937,6 +968,11 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("Results");
                 });
 
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Medicine", b =>
+                {
+                    b.Navigation("Reminders");
+                });
+
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Prescription", b =>
                 {
                     b.Navigation("Medicines");
@@ -954,8 +990,6 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("ImagingReports");
 
                     b.Navigation("LabReports");
-
-                    b.Navigation("Prescriptions");
                 });
 #pragma warning restore 612, 618
         }
