@@ -1,10 +1,11 @@
 ﻿using Rafiq.Domain.Common;
+using Rafiq.Domain.Enums;
 
 namespace Rafiq.Domain.Entities.User;
 
-public sealed class PhoneVerification : BaseEntity
+public sealed class OtpVerification : BaseEntity
 {
-    private PhoneVerification() { }
+    private OtpVerification() { }
 
     public Guid UserId { get; private set; }
 
@@ -21,13 +22,14 @@ public sealed class PhoneVerification : BaseEntity
     public DateTime LastSentAt { get; private set; }
 
     public int ResendCount { get; private set; }
-
-    public static PhoneVerification Create(
-        Guid userId,
-        string codeHash,
-        DateTime expiresAt)
+    public OtpPurpose Purpose { get; private set; }
+    public static OtpVerification Create(
+    Guid userId,
+    string codeHash,
+    OtpPurpose purpose,
+    DateTime expiresAt)
     {
-        return new PhoneVerification
+        return new OtpVerification
         {
             UserId = userId,
             CodeHash = codeHash,
@@ -36,7 +38,8 @@ public sealed class PhoneVerification : BaseEntity
             LastSentAt = DateTime.UtcNow,
             Attempts = 0,
             ResendCount = 0,
-            IsUsed = false
+            IsUsed = false,
+            Purpose = purpose
         };
     }
 

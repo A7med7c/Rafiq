@@ -61,20 +61,40 @@ public sealed class IdentityService(
             user.PhoneNumberConfirmed);
     }
     public async Task<IdentityUserDto?> ValidateCredentialsAsync(
-        string email,
-        string password,
-        CancellationToken cancellationToken = default)
+     string loginIdentifier,
+     string password,
+     CancellationToken cancellationToken)
     {
-        var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
+        ApplicationUser? user;
+
+        if (loginIdentifier.Contains('@'))
+        {
+            user = await _userManager.Users
+                .FirstOrDefaultAsync(
+                    x => x.Email == loginIdentifier,
+                    cancellationToken);
+        }
+        else
+        {
+            user = await _userManager.Users
+                .FirstOrDefaultAsync(
+                    x => x.PhoneNumber == loginIdentifier,
+                    cancellationToken);
+        }
+
         if (user is null || !user.IsActive)
             return null;
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+        var result = await _signInManager.CheckPasswordSignInAsync(
+            user,
+            password,
+            lockoutOnFailure: true);
+
         if (!result.Succeeded)
             return null;
 
-
-        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
+        var role = (await _userManager.GetRolesAsync(user))
+            .FirstOrDefault() ?? string.Empty;
 
         return new IdentityUserDto(
             user.Id,
@@ -205,6 +225,19 @@ public sealed class IdentityService(
 
         return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, role!);
     }
+
+    public async Task ResetPasswordAsync(Guid userId, string newPassword, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+             ?? throw new NotFoundException("User", userId);
+
+        var identityToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+        var result = await _userManager.ResetPasswordAsync(user, identityToken, newPassword);
+        if (!result.Succeeded)
+            throw new ValidationException(result.Errors.Select(x => x.Description));
+
+    }
     private async Task EnsureRoleExistsAsync(string role, CancellationToken cancellationToken)
     {
         if (await _roleManager.RoleExistsAsync(role))
@@ -218,4 +251,5 @@ public sealed class IdentityService(
             throw new ValidationException(result.Errors.Select(x => x.Description));
         }
     }
+
 }
