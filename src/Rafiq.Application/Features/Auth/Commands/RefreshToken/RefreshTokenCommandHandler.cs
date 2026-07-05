@@ -30,7 +30,6 @@ public sealed class RefreshTokenCommandHandler(
         {
             await refreshTokenRepository.RevokeAllByUserIdAsync(
                 existingToken.UserId,
-                request.IpAddress,
                 cancellationToken);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);

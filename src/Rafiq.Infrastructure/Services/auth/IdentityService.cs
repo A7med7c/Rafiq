@@ -205,6 +205,19 @@ public sealed class IdentityService(
 
         return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, role!);
     }
+
+    public async Task ResetPasswordAsync(Guid userId, string newPassword, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+             ?? throw new NotFoundException("User", userId);
+
+        var identityToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+        var result = await _userManager.ResetPasswordAsync(user, identityToken, newPassword);
+        if (!result.Succeeded)
+            throw new ValidationException(result.Errors.Select(x => x.Description));
+
+    }
     private async Task EnsureRoleExistsAsync(string role, CancellationToken cancellationToken)
     {
         if (await _roleManager.RoleExistsAsync(role))
@@ -218,4 +231,5 @@ public sealed class IdentityService(
             throw new ValidationException(result.Errors.Select(x => x.Description));
         }
     }
+
 }

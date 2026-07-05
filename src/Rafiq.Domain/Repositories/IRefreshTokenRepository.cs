@@ -18,6 +18,5 @@ public interface IRefreshTokenRepository
 
     Task RevokeAllByUserIdAsync(
         Guid userId,
-        string? revokedByIp = null,
         CancellationToken cancellationToken = default);
 }

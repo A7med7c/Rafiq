@@ -10,6 +10,7 @@ using Rafiq.Infrastructure.Persistence.Identity;
 using Rafiq.Infrastructure.Persistence.Repositories;
 using Rafiq.Infrastructure.Services;
 using Rafiq.Infrastructure.Services.auth;
+using Rafiq.Infrastructure.Services.Auth;
 using Rafiq.Infrastructure.Services.Notifications;
 
 namespace Rafiq.Infrastructure;
@@ -41,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<RafiqDbContext>());
         services.AddScoped<IPatientProfileRepository, UserHealthProfileRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IOtpRepository, OtpRepository>();
         services.AddScoped<INotificationsService, NotificationsService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<ITokenService, TokenService>();
@@ -49,10 +51,11 @@ public static class DependencyInjection
         services.AddScoped<ITokenHasher, Sha256TokenHasher>();
         services.AddScoped<IOtpHasher, BCryptOtpHasher>();
         services.AddScoped<IOtpGenerator, OtpGenerator>();
-        services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
+        services.AddScoped<IOtpVerificationRepository, OtpVerificationRepository>();
         services.AddScoped<ITokenIssuingService, TokenIssuingService>();
         services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
-
+        services.AddScoped<IOtpService, OtpService>();
+        services.AddScoped<IResetTokenService, ResetTokenService>();
         // ── Bedrock ────────────────────────────────────────────────────────
         services.Configure<BedrockSettings>(configuration.GetSection("Bedrock"));
         services.AddHttpClient<IBedrockService, BedrockService>();
