@@ -2,7 +2,9 @@
 using Rafiq.API.Extensions;
 using Rafiq.API.Middleware;
 using Rafiq.Application;
+using Rafiq.Application.Common.Interfaces;
 using Rafiq.Infrastructure;
+using Rafiq.Infrastructure.Services.auth;
 using System.Text.Json.Serialization;
 
 namespace Rafiq.API;
@@ -25,6 +27,9 @@ public class Program
         builder.Services.AddJwtAuthentication(builder.Configuration);
         builder.Services.AddAuthorization();
         builder.Services.AddHealthChecks();
+        builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
+
+
 
         builder.Services.AddCors(options =>
         {

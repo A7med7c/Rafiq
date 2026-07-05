@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -48,20 +47,20 @@ public static class ServiceCollectionExtensions
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-             .AddCookie().AddGoogle(options =>
-             {
-                 var clientId = configuration["Authentication:Google:ClientId"];
-                 if (clientId is null)
-                     throw new ArgumentNullException(nameof(clientId));
+         // .AddCookie().AddGoogle(options =>
+         // {
+         //     var clientId = configuration["Authentication:Google:ClientId"];
+         //     if (clientId is null)
+         //         throw new ArgumentNullException(nameof(clientId));
 
 
-                 var clientSecret = configuration["Authentication:Google:ClientSecret"];
-                 if (clientSecret is null)
-                     throw new ArgumentNullException(nameof(clientId));
-                 options.ClientId = clientId;
-                 options.ClientSecret = clientSecret;
-                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-             }).AddJwtBearer(options =>
+         //     var clientSecret = configuration["Authentication:Google:ClientSecret"];
+         //     if (clientSecret is null)
+         //         throw new ArgumentNullException(nameof(clientId));
+         //     options.ClientId = clientId;
+         //     options.ClientSecret = clientSecret;
+         //     options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;})
+         .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {

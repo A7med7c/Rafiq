@@ -39,9 +39,6 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     #region Medical Documents
 
-    public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
-
-    public DbSet<MedicalDocument> MedicalDocuments => Set<MedicalDocument>();
 
     public DbSet<Prescription> Prescriptions => Set<Prescription>();
 
@@ -55,7 +52,6 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<ImagingReport> ImagingReports => Set<ImagingReport>();
 
-    public DbSet<MedicalReport> MedicalReports => Set<MedicalReport>();
 
     #endregion
 
@@ -72,8 +68,6 @@ public sealed class RafiqDbContext : IdentityDbContext<
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(RafiqDbContext).Assembly);
 
         // Use Table-Per-Type for MedicalDocument inheritance
-        modelBuilder.Entity<MedicalDocument>()
-            .UseTptMappingStrategy();
 
         ApplySoftDeleteFilters(modelBuilder);
 

@@ -1,6 +1,8 @@
+using Rafiq.Domain.Common;
+
 namespace Rafiq.Domain.Entities.Documents;
 
-public class Prescription : MedicalDocument
+public class Prescription : BaseEntity
 {
     public string DoctorName { get; set; } = null!;
 
