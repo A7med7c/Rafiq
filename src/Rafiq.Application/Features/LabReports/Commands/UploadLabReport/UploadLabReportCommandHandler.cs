@@ -38,9 +38,6 @@ public sealed class UploadLabReportCommandHandler(
             cancellationToken)
             ?? throw new Exception("Bedrock returned no data. Please try again.");
 
-        if (extracted.Tests.Count == 0)
-            throw new Exception("No laboratory tests could be extracted from the uploaded image.");
-
         // ── 4. Resolve the DocumentType (lazy-create if first time) ────────
         var documentTypeId = await labReportRepository
             .GetOrCreateDocumentTypeIdAsync("Lab Report", cancellationToken);

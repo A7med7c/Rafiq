@@ -6,11 +6,11 @@ public class ImagingReport
 
     public ImagingReport(
         Guid userId,
-        byte[] reportImage)
+        string reportImagePath)
     {
         ReportId = Guid.NewGuid();
         UserId = userId;
-        ReportImage = reportImage;
+        ReportImagePath = reportImagePath;
     }
 
     public Guid ReportId { get; private set; }
@@ -31,5 +31,5 @@ public class ImagingReport
 
     public string AiSummary { get; set; } = null!;
 
-    public byte[] ReportImage { get; private set; } = null!;
+    public string ReportImagePath { get; private set; } = null!;
 }

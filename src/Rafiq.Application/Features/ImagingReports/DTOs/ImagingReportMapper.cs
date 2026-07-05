@@ -16,6 +16,6 @@ internal static class ImagingReportMapper
             ReportDate = report.ReportDate.ToString("yyyy-MM-dd"),
             AiSummary = report.AiSummary,
             UserId = report.UserId,
-            ReportImage = report.ReportImage
+            ReportImagePath = report.ReportImagePath
         };
 }

@@ -35,9 +35,9 @@ namespace Rafiq.Infrastructure.Persistence.Configurations
             builder.Property(x => x.DoctorName)
                 .IsRequired();
 
-            builder.Property(x => x.ReportImage)
+            builder.Property(x => x.ReportImagePath)
                 .IsRequired()
-                .HasColumnType("varbinary(max)");
+                .HasMaxLength(500);
 
             builder.HasOne<ApplicationUser>()
                 .WithMany()

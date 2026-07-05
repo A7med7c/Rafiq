@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Hosting;
 using Rafiq.Application.AI.Prompts;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
@@ -14,7 +15,8 @@ public sealed class UploadImagingReportCommandHandler(
     ICurrentUserService currentUserService,
     IBedrockService bedrockService,
     IImagingReportRepository imagingReportRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IWebHostEnvironment webHostEnvironment)
     : IRequestHandler<UploadImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
 {
     public async Task<ApiResponse<ImagingReportResponseDto>> Handle(
@@ -37,9 +39,26 @@ public sealed class UploadImagingReportCommandHandler(
 
         var reportDate = ParseReportDate(extracted.ReportDate);
 
+        var webRootPath = string.IsNullOrWhiteSpace(webHostEnvironment.WebRootPath)
+            ? Path.Combine(webHostEnvironment.ContentRootPath, "wwwroot")
+            : webHostEnvironment.WebRootPath;
+
+        var uploadDirectory = Path.Combine(webRootPath, "imaging-reports");
+        Directory.CreateDirectory(uploadDirectory);
+
+        var fileName = $"{Guid.NewGuid():N}{Path.GetExtension(request.Image.FileName)}";
+        var physicalPath = Path.Combine(uploadDirectory, fileName);
+
+        await using (var fileStream = new FileStream(physicalPath, FileMode.Create, FileAccess.Write, FileShare.None))
+        {
+            await request.Image.CopyToAsync(fileStream, cancellationToken);
+        }
+
+        var reportImagePath = $"/imaging-reports/{fileName}";
+
         var imagingReport = new ImagingReport(
             userId: userId,
-            reportImage: imageBytes)
+            reportImagePath: reportImagePath)
         {
             ImagingType = extracted.ImagingType ?? string.Empty,
             BodyPart = extracted.BodyPart ?? string.Empty,

@@ -20,5 +20,5 @@ public sealed class ImagingReportResponseDto
 
     public Guid UserId { get; init; }
 
-    public byte[] ReportImage { get; init; } = [];
+    public string ReportImagePath { get; init; } = string.Empty;
 }
