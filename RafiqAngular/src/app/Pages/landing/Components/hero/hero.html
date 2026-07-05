@@ -1,9 +1,8 @@
-<section class="hero">
+<section class="hero" [class.hero-ar]="language === 'ar'">
 
     <div class="container">
 
         <!-- Left Side -->
-
         <div class="hero-content">
 
             <p class="subtitle">
@@ -23,7 +22,6 @@
             <button class="hero-btn">
                 {{ t.cta }}
             </button>
-
         </div>
 
         <!-- Right Side -->
