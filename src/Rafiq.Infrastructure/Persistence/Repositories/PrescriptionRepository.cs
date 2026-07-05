@@ -49,4 +49,15 @@ public sealed class PrescriptionRepository : IPrescriptionRepository
         prescription.SoftDelete();
         return true;
     }
+
+    public async Task<List<PrescriptionMedicine>> GetMedicinesByIdsAsync(
+        IEnumerable<Guid> ids, 
+        Guid userId, 
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.PrescriptionMedicines
+            .Include(m => m.Prescription)
+            .Where(m => ids.Contains(m.Id) && m.Prescription.UserId == userId && !m.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
 }
