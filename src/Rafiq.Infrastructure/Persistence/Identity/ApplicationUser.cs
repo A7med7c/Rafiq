@@ -31,4 +31,7 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     public ICollection<Prescription> Prescriptions { get; set; }
         = new List<Prescription>();
+
+    public ICollection<UserMedicine> UserMedicines { get; set; }
+        = new List<UserMedicine>();
 }

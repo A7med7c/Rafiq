@@ -10,5 +10,7 @@ public interface IPrescriptionRepository
 
     Task<IReadOnlyList<Prescription>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    Task<List<PrescriptionMedicine>> GetMedicinesByIdsAsync(IEnumerable<Guid> ids, Guid userId, CancellationToken cancellationToken = default);
+
     Task<bool> DeleteAsync(Guid id, Guid userId, CancellationToken cancellationToken = default);
 }

@@ -43,6 +43,8 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<PrescriptionMedicine> PrescriptionMedicines => Set<PrescriptionMedicine>();
 
+    public DbSet<UserMedicine> UserMedicines => Set<UserMedicine>();
+
     public DbSet<LabReport> LabReports => Set<LabReport>();
 
     public DbSet<LabResult> LabResults => Set<LabResult>();
