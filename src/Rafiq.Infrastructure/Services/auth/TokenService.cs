@@ -6,7 +6,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Rafiq.Infrastructure.Services;
+namespace Rafiq.Infrastructure.Services.auth;
 
 public sealed class TokenService : ITokenService
 {

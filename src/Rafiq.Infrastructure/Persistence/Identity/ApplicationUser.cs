@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using Rafiq.Domain.Entities.Documents;
 using Rafiq.Domain.Entities.User;
 
 namespace Rafiq.Infrastructure.Persistence.Identity;
@@ -25,4 +24,7 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     public ICollection<MedicalDocument> MedicalDocuments { get; set; }
         = new List<MedicalDocument>();
+
+    public ICollection<LabReport> LabReports { get; set; }
+        = new List<LabReport>();
 }

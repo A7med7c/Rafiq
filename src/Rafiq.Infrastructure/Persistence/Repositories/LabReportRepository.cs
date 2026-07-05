@@ -27,31 +27,11 @@ public sealed class LabReportRepository : ILabReportRepository
             .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId, cancellationToken);
 
     public async Task<IReadOnlyList<LabReport>> GetAllByUserIdAsync(
-    Guid userId,
-    CancellationToken cancellationToken = default)
-    => await _context.LabReports
-        .Include(r => r.Results)
-        .Where(r => r.UserId == userId)
-        .OrderByDescending(r => r.CreatedAt)
-        .ToListAsync(cancellationToken);
-
-    /// <summary>
-    /// Looks up the DocumentType by name.
-    /// If it does not exist yet, creates it and adds it to the change tracker.
-    /// It will be persisted together with the LabReport in the same SaveChangesAsync call.
-    /// </summary>
-    public async Task<Guid> GetOrCreateDocumentTypeIdAsync(
-        string name,
+        Guid userId,
         CancellationToken cancellationToken = default)
-    {
-        var existing = await _context.DocumentTypes
-            .FirstOrDefaultAsync(dt => dt.Name == name, cancellationToken);
-
-        if (existing is not null)
-            return existing.Id;
-
-        var newDocType = new DocumentType(name, $"Medical document type: {name}");
-        await _context.DocumentTypes.AddAsync(newDocType, cancellationToken);
-        return newDocType.Id;
-    }
+        => await _context.LabReports
+            .Include(r => r.Results)
+            .Where(r => r.UserId == userId)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync(cancellationToken);
 }

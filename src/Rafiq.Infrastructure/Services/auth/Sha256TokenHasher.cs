@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Rafiq.Application.Common.Interfaces;
 
-namespace Rafiq.Infrastructure.Services
+namespace Rafiq.Infrastructure.Services.auth
 {
     public sealed class Sha256TokenHasher : ITokenHasher
     {

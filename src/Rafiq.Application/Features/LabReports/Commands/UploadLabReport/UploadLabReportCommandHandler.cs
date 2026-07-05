@@ -14,6 +14,7 @@ public sealed class UploadLabReportCommandHandler(
     ICurrentUserService currentUserService,
     IBedrockService bedrockService,
     ILabReportRepository labReportRepository,
+    IFileStorageService fileStorageService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<UploadLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
@@ -25,22 +26,34 @@ public sealed class UploadLabReportCommandHandler(
         var userId = currentUserService.UserId
             ?? throw new UnauthorizedException("Authentication is required.");
 
-        // ── 2. Convert the uploaded image to Base64 ────────────────────────
-        using var memoryStream = new MemoryStream();
-        await request.Image.CopyToAsync(memoryStream, cancellationToken);
-        var imageBytes = memoryStream.ToArray();
-        var base64Image = Convert.ToBase64String(imageBytes);
+        // ── 2. Save physical file via IFileStorageService ─────────────────
+        var fileExtension = Path.GetExtension(request.Image.FileName);
+        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
 
-        // ── 3. Analyze with Bedrock ────────────────────────────────────────
+        using var imageStream = request.Image.OpenReadStream();
+        var imageUrl = await fileStorageService.UploadFileAsync(
+            imageStream,
+            uniqueFileName,
+            "labs",
+            cancellationToken);
+
+        // ── 3. Convert to Base64 ONLY for sending to Bedrock ──────────────
+        // We still need the base64 string because the multimodal API needs it,
+        // but we DO NOT save it in the database.
+        using var memoryStream = new MemoryStream();
+        imageStream.Position = 0; // Reset position to read again
+        await imageStream.CopyToAsync(memoryStream, cancellationToken);
+        var base64Image = Convert.ToBase64String(memoryStream.ToArray());
+
+        // ── 4. Analyze with Bedrock ────────────────────────────────────────
         var extracted = await bedrockService.AnalyzeAsync<BedrockLabReportDto>(
             base64Image,
             LabReportPrompt.Build(),
             cancellationToken)
             ?? throw new Exception("Bedrock returned no data. Please try again.");
 
-        // ── 4. Resolve the DocumentType (lazy-create if first time) ────────
-        var documentTypeId = await labReportRepository
-            .GetOrCreateDocumentTypeIdAsync("Lab Report", cancellationToken);
+        if (extracted.Tests.Count == 0)
+            throw new Exception("No laboratory tests could be extracted from the uploaded image.");
 
         // ── 5. Parse the report date ───────────────────────────────────────
         var reportDate = DateOnly.TryParseExact(
@@ -52,21 +65,16 @@ public sealed class UploadLabReportCommandHandler(
             ? parsed
             : DateOnly.FromDateTime(DateTime.UtcNow);
 
-        var title = $"Lab Report — {extracted.LabName ?? "Unknown Lab"} — {reportDate:yyyy-MM-dd}";
-
-        // ── 6. Build the domain entity ─────────────────────────────────────
+        // ── 6. Build the domain entity (storing only relative path) ────────
         var labReport = new LabReport(
             userId: userId,
-            documentTypeId: documentTypeId,
-            title: title,
-            imageData: imageBytes,
-            description: extracted.Summary,
-            ocrText: extracted.OcrText)
-        {
-            LabName = extracted.LabName ?? string.Empty,
-            DoctorName = extracted.DoctorName ?? string.Empty,
-            ReportDate = reportDate
-        };
+            doctorName: extracted.DoctorName ?? string.Empty,
+            labName: extracted.LabName ?? string.Empty,
+            reportDate: reportDate,
+            imageUrl: imageUrl,
+            ocrText: extracted.OcrText,
+            description: extracted.Summary
+        );
 
         // ── 7. Map every extracted test into LabResult entities ────────────
         foreach (var test in extracted.Tests)
@@ -90,6 +98,7 @@ public sealed class UploadLabReportCommandHandler(
             ToDto(labReport),
             "Lab report uploaded and analyzed successfully.");
     }
+
     // ── Mapping helper ─────────────────────────────────────────────────────
     private static LabReportResponseDto ToDto(LabReport report) =>
         new()
@@ -98,9 +107,9 @@ public sealed class UploadLabReportCommandHandler(
             LabName = report.LabName,
             DoctorName = report.DoctorName,
             ReportDate = report.ReportDate.ToString("yyyy-MM-dd"),
-            //ImageUrl = report.ImageUrl,
             OCRText = report.OCRText,
             Summary = report.Description,
+            ImageUrl = report.ImageUrl,
             CreatedAt = report.CreatedAt,
             Results = report.Results.Select(r => new LabResultResponseDto
             {

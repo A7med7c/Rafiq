@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Rafiq.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Rafiq.Infrastructure.Persistence;
 namespace Rafiq.Infrastructure.Migrations
 {
     [DbContext(typeof(RafiqDbContext))]
-    partial class RafiqDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260704225923_MigrateLabImageToLocalFileStorage")]
+    partial class MigrateLabImageToLocalFileStorage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -239,33 +242,6 @@ namespace Rafiq.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.ImagingReport", b =>
-                {
-                    b.Property<Guid>("ReportId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AiSummary")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BodyPart")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DoctorName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Findings")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImagingType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Impression")
-                        .IsRequired()
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
                 {
                     b.Property<Guid>("Id")
@@ -837,7 +813,6 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateOnly>("ReportDate")
                         .HasColumnType("date");
 
-                    b.ToTable("LabReports", (string)null);
                     b.ToTable("ImagingReports", (string)null);
                 });
 
@@ -955,10 +930,10 @@ namespace Rafiq.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.ImagingReport", b =>
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
                 {
                     b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
-                        .WithMany()
+                        .WithMany("LabReports")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

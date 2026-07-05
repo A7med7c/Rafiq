@@ -5,12 +5,13 @@ using Rafiq.Application.Features.Auth.DTOs;
 using Rafiq.Domain.Exceptions;
 using Rafiq.Infrastructure.Persistence.Identity;
 
-namespace Rafiq.Infrastructure.Services;
+namespace Rafiq.Infrastructure.Services.auth;
 
 public sealed class IdentityService(
     UserManager<ApplicationUser> _userManager,
     SignInManager<ApplicationUser> _signInManager,
-    RoleManager<IdentityRole<Guid>> _roleManager) : IIdentityService
+    RoleManager<IdentityRole<Guid>> _roleManager,
+    IGoogleTokenValidator _googleTokenValidator) : IIdentityService
 {
     public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
         => _userManager.Users.AnyAsync(x => x.Email == email, cancellationToken);
@@ -124,6 +125,43 @@ public sealed class IdentityService(
         if (!result.Succeeded)
             throw new ValidationException(result.Errors.Select(x => x.Description));
     }
+    public async Task<IdentityUserDto> LoginWithGoogleAsync(string IdToken, CancellationToken cancellationToken = default)
+    {
+        var googleUser = await _googleTokenValidator.ValidateAsync(IdToken, cancellationToken);
+        if (!googleUser.EmailVerified)
+            throw new AuthenticationException("Google email is not verified.");
+
+        var user = await _userManager.FindByEmailAsync(googleUser.Email);
+        if (user is null)
+        {
+            await EnsureRoleExistsAsync("Patient", cancellationToken);
+            user = new ApplicationUser
+            {
+                Id = Guid.NewGuid(),
+                Email = googleUser.Email,
+                UserName = googleUser.Email,
+                FirstName = googleUser.FirstName,
+                LastName = googleUser.LastName,
+                EmailConfirmed = true,
+                PhoneNumberConfirmed = true,
+                IsActive = true
+            };
+            var createResult = await _userManager.CreateAsync(user);
+            if (!createResult.Succeeded)
+                throw new ValidationException(createResult.Errors.Select(x => x.Description));
+
+            var roleResult = await _userManager.AddToRoleAsync(user, "Patient");
+            if (!roleResult.Succeeded)
+                throw new ValidationException(createResult.Errors.Select(x => x.Description));
+        }
+        if (!user.IsActive)
+            throw new AuthenticationException("Your account has been disabled.");
+
+        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
+
+        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed);
+
+    }
 
     private async Task EnsureRoleExistsAsync(string role, CancellationToken cancellationToken)
     {
@@ -138,5 +176,4 @@ public sealed class IdentityService(
             throw new ValidationException(result.Errors.Select(x => x.Description));
         }
     }
-
 }

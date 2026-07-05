@@ -21,6 +21,8 @@ public sealed class LabReportResponseDto
     /// </summary>
     public string? Summary { get; init; }
 
+    public string? ImageUrl { get; init; } // Relative URL path
+
     public DateTime CreatedAt { get; init; }
 
     public List<LabResultResponseDto> Results { get; init; } = new();

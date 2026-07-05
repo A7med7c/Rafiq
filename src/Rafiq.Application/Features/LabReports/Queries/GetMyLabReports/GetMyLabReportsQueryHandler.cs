@@ -28,9 +28,9 @@ public sealed class GetMyLabReportsQueryHandler(
             LabName = report.LabName,
             DoctorName = report.DoctorName,
             ReportDate = report.ReportDate.ToString("yyyy-MM-dd"),
-            //ImageUrl   = report.ImageUrl,
             OCRText = report.OCRText,
             Summary = report.Description,
+            ImageUrl = report.ImageUrl,
             CreatedAt = report.CreatedAt,
             Results = report.Results.Select(r => new LabResultResponseDto
             {
