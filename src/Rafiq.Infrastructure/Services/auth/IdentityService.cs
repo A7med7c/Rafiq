@@ -61,20 +61,40 @@ public sealed class IdentityService(
             user.PhoneNumberConfirmed);
     }
     public async Task<IdentityUserDto?> ValidateCredentialsAsync(
-        string email,
-        string password,
-        CancellationToken cancellationToken = default)
+     string loginIdentifier,
+     string password,
+     CancellationToken cancellationToken)
     {
-        var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
+        ApplicationUser? user;
+
+        if (loginIdentifier.Contains('@'))
+        {
+            user = await _userManager.Users
+                .FirstOrDefaultAsync(
+                    x => x.Email == loginIdentifier,
+                    cancellationToken);
+        }
+        else
+        {
+            user = await _userManager.Users
+                .FirstOrDefaultAsync(
+                    x => x.PhoneNumber == loginIdentifier,
+                    cancellationToken);
+        }
+
         if (user is null || !user.IsActive)
             return null;
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+        var result = await _signInManager.CheckPasswordSignInAsync(
+            user,
+            password,
+            lockoutOnFailure: true);
+
         if (!result.Succeeded)
             return null;
 
-
-        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
+        var role = (await _userManager.GetRolesAsync(user))
+            .FirstOrDefault() ?? string.Empty;
 
         return new IdentityUserDto(
             user.Id,

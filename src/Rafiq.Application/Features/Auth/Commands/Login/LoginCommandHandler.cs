@@ -12,8 +12,8 @@ public sealed class LoginCommandHandler(
 {
     public async Task<ApiResponse<AuthResponseDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await identityService.ValidateCredentialsAsync(request.Email, request.Password, cancellationToken)
-            ?? throw new AuthenticationException("Invalid email or password.");
+        var user = await identityService.ValidateCredentialsAsync(request.LoginIdentifier, request.Password, cancellationToken)
+            ?? throw new AuthenticationException("Invalid email / phone number or password.");
 
         if (!user.PhoneNumberConfirmed)
             throw new AuthenticationException("Please verify your phone number before logging in.");

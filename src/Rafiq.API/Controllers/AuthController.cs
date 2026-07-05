@@ -31,12 +31,7 @@ public sealed class AuthController(IMediator _mediator) : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginCommand command, CancellationToken cancellationToken)
     {
-        var enrichedCommand = command with
-        {
-            DeviceInfo = Request.Headers.UserAgent.ToString(),
-            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
-        };
-        var result = await _mediator.Send(enrichedCommand, cancellationToken);
+        var result = await _mediator.Send(command, cancellationToken);
         return Ok(result);
     }
     [HttpPost("logout")]
