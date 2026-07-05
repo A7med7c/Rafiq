@@ -49,8 +49,9 @@ public static class DependencyInjection
         services.AddScoped<ITokenHasher, Sha256TokenHasher>();
         services.AddScoped<IOtpHasher, BCryptOtpHasher>();
         services.AddScoped<IOtpGenerator, OtpGenerator>();
-
         services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
+        services.AddScoped<ITokenIssuingService, TokenIssuingService>();
+        services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 
         // ── Bedrock ────────────────────────────────────────────────────────
         services.Configure<BedrockSettings>(configuration.GetSection("Bedrock"));

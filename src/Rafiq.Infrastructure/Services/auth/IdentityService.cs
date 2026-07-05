@@ -163,6 +163,48 @@ public sealed class IdentityService(
 
     }
 
+
+    public async Task ChangePasswordAsync(Guid userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.Users
+                .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+                ?? throw new NotFoundException("User", userId);
+
+        var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+        if (!result.Succeeded)
+            throw new ValidationException(result.Errors.Select(x => x.Description));
+    }
+
+    public async Task<AccountDto> GetAccountAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var user = _userManager.Users
+                            .FirstOrDefault(x => x.Id == userId)
+                            ?? throw new NotFoundException("User", userId);
+
+        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, role!);
+    }
+
+    public async Task<AccountDto> UpdateAccountAsync(Guid userId, string firstName, string lastName, string phoneNumber, CancellationToken cancellationToken = default)
+    {
+        var user = _userManager.Users
+                           .FirstOrDefault(x => x.Id == userId)
+                           ?? throw new NotFoundException("User", userId);
+        user.FirstName = firstName;
+        user.LastName = lastName;
+        user.PhoneNumber = phoneNumber;
+
+        var result = await _userManager.UpdateAsync(user);
+
+        if (!result.Succeeded)
+            throw new ValidationException(
+                result.Errors.Select(x => x.Description));
+
+        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+
+        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, role!);
+    }
     private async Task EnsureRoleExistsAsync(string role, CancellationToken cancellationToken)
     {
         if (await _roleManager.RoleExistsAsync(role))

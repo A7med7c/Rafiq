@@ -1,17 +1,11 @@
 using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
 using Rafiq.Application.Common.Interfaces;
+using System.Security.Claims;
 
 namespace Rafiq.Infrastructure.Services.auth;
 
-public sealed class CurrentUserService : ICurrentUserService
+public sealed class CurrentUserService(IHttpContextAccessor _httpContextAccessor) : ICurrentUserService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public CurrentUserService(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
 
     public Guid? UserId
     {
@@ -23,7 +17,6 @@ public sealed class CurrentUserService : ICurrentUserService
         }
     }
 
-    public string? IpAddress => _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
     public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true;
     public bool IsInRole(string role) => _httpContextAccessor.HttpContext?.User.IsInRole(role) == true;
 }
