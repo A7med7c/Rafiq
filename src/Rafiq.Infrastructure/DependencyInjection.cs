@@ -52,11 +52,12 @@ public static class DependencyInjection
 
         services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
 
+        // ── Bedrock ────────────────────────────────────────────────────────
         services.Configure<BedrockSettings>(configuration.GetSection("Bedrock"));
         services.AddHttpClient<IBedrockService, BedrockService>();
 
+        // ── Documents ─────────────────────────────────────────────────────
         services.AddScoped<ILabReportRepository, LabReportRepository>();
-        services.AddScoped<IImagingReportRepository, ImagingReportRepository>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
