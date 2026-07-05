@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Rafiq.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Rafiq.Infrastructure.Persistence;
 namespace Rafiq.Infrastructure.Migrations
 {
     [DbContext(typeof(RafiqDbContext))]
-    partial class RafiqDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260705002305_SaveImagingReportsToFileSystem")]
+    partial class SaveImagingReportsToFileSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -266,59 +269,24 @@ namespace Rafiq.Infrastructure.Migrations
 
                     b.Property<string>("Impression")
                         .IsRequired()
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("DoctorName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LabName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("OCRText")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateOnly>("ReportDate")
                         .HasColumnType("date");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2(7)");
+                    b.Property<string>("ReportImagePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
+                    b.HasKey("ReportId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("LabReports", (string)null);
+                    b.ToTable("ImagingReports", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabResult", b =>
@@ -812,33 +780,23 @@ namespace Rafiq.Infrastructure.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.ImagingReport", b =>
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
                 {
                     b.HasBaseType("MedicalDocument");
 
-                    b.Property<string>("BodyPart")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Findings")
+                    b.Property<string>("DoctorName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImagingType")
+                    b.Property<string>("LabName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Impression")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateOnly>("ReportDate")
                         .HasColumnType("date");
 
                     b.ToTable("LabReports", (string)null);
-                    b.ToTable("ImagingReports", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicalReport", b =>
@@ -1055,11 +1013,11 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("HealthProfile");
                 });
 
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.ImagingReport", b =>
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
                 {
                     b.HasOne("MedicalDocument", null)
                         .WithOne()
-                        .HasForeignKey("Rafiq.Domain.Entities.Documents.ImagingReport", "Id")
+                        .HasForeignKey("Rafiq.Domain.Entities.Documents.LabReport", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1087,11 +1045,6 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("Documents");
                 });
 
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
-                {
-                    b.Navigation("Results");
-                });
-
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Medicine", b =>
                 {
                     b.Navigation("Reminders");
@@ -1106,9 +1059,12 @@ namespace Rafiq.Infrastructure.Migrations
 
             modelBuilder.Entity("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", b =>
                 {
-                    b.Navigation("LabReports");
-
                     b.Navigation("MedicalDocuments");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
+                {
+                    b.Navigation("Results");
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Prescription", b =>
