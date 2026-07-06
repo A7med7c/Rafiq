@@ -46,6 +46,8 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<UserMedicine> UserMedicines => Set<UserMedicine>();
 
+    public DbSet<MedicineReminder> MedicineReminders => Set<MedicineReminder>();
+
     public DbSet<LabReport> LabReports => Set<LabReport>();
 
     public DbSet<LabResult> LabResults => Set<LabResult>();
