@@ -9,12 +9,17 @@ namespace Rafiq.Infrastructure.Services.auth
     {
         public async Task<GoogleUserInfoDto> ValidateAsync(string IdToken, CancellationToken cancellationToken)
         {
+            var clientId = _configuration["Authentication:Google:ClientId"].Trim();
+
+            Console.WriteLine($"[{clientId}]");
+            Console.WriteLine(clientId.Length);
+
             var payload = await GoogleJsonWebSignature.ValidateAsync(IdToken,
                 new GoogleJsonWebSignature.ValidationSettings
                 {
                     Audience = new[]
                     {
-                        _configuration["Authentication:Google:ClientId"]
+                        _configuration["Authentication:Google:ClientId"]?.Trim()
                     }
                 });
 

@@ -41,7 +41,8 @@
     font-size:18px;
 }
 
-form{
+form,
+.verification-panel{
 
     display:flex;
 
@@ -92,7 +93,8 @@ form{
     box-shadow:0 0 0 3px rgba(78,137,184,.15);
 }
 
-input{
+input,
+select{
 
     flex:1;
 
@@ -103,6 +105,13 @@ input{
     background:transparent;
 
     font-size:15px;
+}
+
+select{
+
+    color:#333;
+
+    cursor:pointer;
 }
 
 input::placeholder{
@@ -117,19 +126,6 @@ input::placeholder{
     background:none;
 
     color:#999;
-
-    cursor:pointer;
-}
-
-.forgot{
-
-    align-self:flex-end;
-
-    color:#4E89B8;
-
-    text-decoration:none;
-
-    font-size:14px;
 
     cursor:pointer;
 }
@@ -163,6 +159,39 @@ input::placeholder{
 }
 
 .submit-button:disabled{
+
+    opacity:.65;
+
+    cursor:not-allowed;
+}
+
+.secondary-button{
+
+    height:56px;
+
+    border-radius:28px;
+
+    border:1px solid #bdbdbd;
+
+    background:#fff;
+
+    color:#666;
+
+    font-size:18px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.3s;
+}
+
+.secondary-button:hover:not(:disabled){
+
+    background:#fafafa;
+}
+
+.secondary-button:disabled{
 
     opacity:.65;
 
@@ -224,43 +253,15 @@ input::placeholder{
     border:1px solid #f0bcbc;
 }
 
-.google-button{
+.verification-text{
 
-    margin-top:12px;
-
-    height:56px;
-
-    border-radius:28px;
-
-    border:1px solid #bdbdbd;
-
-    background:#fff;
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    gap:12px;
-
-    cursor:pointer;
-
-    font-size:18px;
+    margin:0;
 
     color:#666;
 
-    transition:.3s;
-}
+    font-size:15px;
 
-.google-button:hover{
-
-    background:#fafafa;
-}
-
-.google-button img{
-
-    width:22px;
+    line-height:1.5;
 }
 
 .register{
@@ -314,7 +315,7 @@ input::placeholder{
     }
 
     .submit-button,
-    .google-button{
+    .secondary-button{
 
         height:52px;
 
