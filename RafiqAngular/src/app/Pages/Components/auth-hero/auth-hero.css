@@ -1,12 +1,13 @@
 :host {
-    min-height: calc(100svh - 76px);
+    min-height: 0;
     display: block;
 }
 
 .auth-hero {
     position: relative;
     height: 100%;
-    padding: 60px;
+    min-height: min(620px, calc(100svh - 48px));
+    padding: clamp(28px, 5vh, 50px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -45,7 +46,7 @@
     min-height: 0;
     text-align: center;
     gap: clamp(6px, 1.5vh, 16px);
-    padding-top: 90px;
+    padding-top: clamp(56px, 10vh, 86px);
     overflow: hidden;
 }
 
@@ -78,62 +79,19 @@
     color: #08264a;
 }
 
-hero-copy p {
+.hero-copy p {
     margin-top: 12px;
     font-size: clamp(16px, 2.2vh, 26px);
     line-height: 1.4;
     color: #395a7c;
 }
 
-.benefits {
-    position: relative;
-    z-index: 2;
-    display: grid;
-    gap: 22px;
-    margin: 54px 0 0;
-    padding: 0;
-    list-style: none;
-}
-
-.benefits li {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-}
-
-.benefit-icon {
-    width: 58px;
-    height: 58px;
-    display: grid;
-    place-items: center;
-    flex: 0 0 auto;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, .58);
-    color: #1977ff;
-    font-size: 28px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .78), 0 16px 32px rgba(32, 151, 214, .13);
-}
-
-.benefits strong {
-    display: block;
-    color: #08264a;
-    font-size: 17px;
-    line-height: 1.4;
-}
-
-.benefits small {
-    display: block;
-    margin-top: 5px;
-    color: #587291;
-    font-size: 14px;
-}
-
 .robot-stage {
     position: relative;
     right: 0;
     top: 0;
-    width: clamp(220px, 42vh, 480px);
-    height: clamp(220px, 42vh, 480px);
+    width: clamp(200px, 36vh, 420px);
+    height: clamp(200px, 36vh, 420px);
     margin-top: 6px;
     flex-shrink: 1;
 }
@@ -235,39 +193,6 @@ hero-copy p {
     bottom: 42%;
 }
 
-.secure-note {
-    margin-top: 40px;
-
-    position: static;
-
-    transform: none;
-
-    justify-content: flex-start;
-
-    position: absolute;
-    z-index: 2;
-    left: 50%;
-    bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0;
-    color: #587291;
-    font-size: 14px;
-    white-space: nowrap;
-}
-
-.shield {
-    width: 28px;
-    height: 28px;
-    display: grid;
-    place-items: center;
-    border: 1px solid rgba(33, 115, 194, .28);
-    border-radius: 50%;
-    color: #2173c2;
-    background: rgba(255, 255, 255, .42);
-}
-
 @keyframes robotFloat {
 
     0%,
@@ -296,30 +221,50 @@ hero-copy p {
 
 @media (max-width: 960px) {
     :host {
-        min-height: 620px;
+        min-height: 0;
     }
 
     .auth-hero {
-        padding: 8px 0 24px;
+        min-height: 220px;
+        padding: 8px 0 10px;
+    }
+
+    .brand{
+        position:relative;
+        top:auto;
+        left:auto;
+        margin:0 auto;
+    }
+
+    .brand img{
+        width:40px;
+        height:40px;
     }
 
     .hero-copy {
-        margin-top: 44px;
+        margin-top: 10px;
     }
 
-    .benefits {
-        margin-top: 34px;
+    .hero-main{
+        gap:8px;
+        padding-top: 18px;
+    }
+
+    .hero-copy h1{
+        font-size:28px;
+    }
+
+    .hero-copy p{
+        font-size:15px;
     }
 
     .robot-stage {
         right: auto;
-        left: 50%;
-        bottom: 22px;
-        width: min(320px, 80vw);
-        transform: translateX(-50%);
+        left: auto;
+        bottom: auto;
+        width: min(160px, 44vw);
+        height: min(160px, 44vw);
+        transform:none;
     }
 
-    .secure-note {
-        display: none;
-    }
 }

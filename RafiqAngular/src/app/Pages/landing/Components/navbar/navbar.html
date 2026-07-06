@@ -1,16 +1,21 @@
 <nav class="navbar">
   <div class="container">
-    <div class="logo">
-      <img src="images/RafiqLogo.png" alt="logo">
+    <button type="button" class="logo" (click)="navigateToSection('home')" [attr.aria-label]="t.home">
+      <img src="images/RafiqLogo.png" alt="Rafiq logo">
       <span>{{ t.brand }}</span>
-    </div>
+    </button>
 
     <div class="right-side">
       <ul class="nav-links">
-        <li>{{ t.home }}</li>
-        <li>{{ t.about }}</li>
-        <li>{{ t.contact }}</li>
-        <li routerLink="/login">{{ t.login }}</li>
+        <li>
+          <button type="button" (click)="navigateToSection('home')">{{ t.home }}</button>
+        </li>
+        <li>
+          <button type="button" (click)="navigateToSection('about')">{{ t.about }}</button>
+        </li>
+        <li>
+          <button type="button" (click)="navigateToSection('contact')">{{ t.contact }}</button>
+        </li>
       </ul>
 
       <div class="language-toggle" aria-label="Language switcher">
@@ -28,7 +33,23 @@
         </button>
       </div>
 
-      <button class="btn">{{ t.cta }}</button>
+      @if (isAuthenticated) {
+        <div class="auth-actions authenticated">
+          <span class="account-name">{{ displayName }}</span>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="signOut()"
+            [disabled]="isSigningOut()">
+            {{ isSigningOut() ? t.signingOut : t.signOut }}
+          </button>
+        </div>
+      } @else {
+        <div class="auth-actions">
+          <a class="nav-login" routerLink="/login">{{ t.login }}</a>
+          <a class="btn" routerLink="/register">{{ t.cta }}</a>
+        </div>
+      }
     </div>
   </div>
 </nav>

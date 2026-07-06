@@ -11,7 +11,6 @@
     width:1200px;
     max-width:90%;
     margin:auto;
-
     display:flex;
     justify-content:space-between;
     align-items:center;
@@ -28,6 +27,11 @@
     display:flex;
     align-items:center;
     gap:10px;
+    border:0;
+    background:transparent;
+    color:inherit;
+    cursor:pointer;
+    font:inherit;
 }
 
 .logo img{
@@ -42,13 +46,25 @@
 .nav-links{
     display:flex;
     gap:28px;
+    align-items:center;
     list-style:none;
     font-size:15px;
     color:#444;
-    cursor:pointer;
 }
 
-.nav-links li:hover{
+.nav-links button,
+.nav-login{
+    border:0;
+    background:transparent;
+    color:inherit;
+    cursor:pointer;
+    font:inherit;
+    text-decoration:none;
+    transition:.2s;
+}
+
+.nav-links button:hover,
+.nav-login:hover{
     color:#39c7ff;
 }
 
@@ -86,29 +102,57 @@
     color:#17B7FF;
 }
 
-.btn{
+.auth-actions{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
 
+.auth-actions.authenticated{
+    gap:12px;
+}
+
+.account-name{
+    max-width:160px;
+    color:#31516f;
+    font-size:14px;
+    font-weight:700;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
     border:none;
     padding:12px 28px;
     border-radius:30px;
-
     background:#4EDCFF;
-
     color:white;
-
     font-weight:600;
-
+    text-decoration:none;
     cursor:pointer;
-
     transition:.3s;
+    white-space:nowrap;
 }
 
-.btn:hover{
+.btn-secondary{
+    border:1px solid rgba(57,199,255,.38);
+    background:rgba(255,255,255,.72);
+    color:#31516f;
+}
 
+.btn:hover:not(:disabled){
     transform:translateY(-2px);
-
     box-shadow:0 10px 20px rgba(0,0,0,.1);
+}
 
+.btn:disabled{
+    cursor:not-allowed;
+    opacity:.7;
 }
 
 :host-context(.rtl) .right-side{
@@ -131,5 +175,25 @@
 
     .btn{
         padding:10px 18px;
+    }
+}
+
+@media (max-width: 640px){
+    .container{
+        align-items:flex-start;
+    }
+
+    .right-side{
+        flex-wrap:wrap;
+        justify-content:flex-end;
+    }
+
+    .auth-actions{
+        width:100%;
+        justify-content:flex-end;
+    }
+
+    .account-name{
+        max-width:120px;
     }
 }
