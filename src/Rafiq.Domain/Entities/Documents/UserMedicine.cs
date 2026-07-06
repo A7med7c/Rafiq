@@ -43,4 +43,6 @@ public class UserMedicine : BaseEntity
     public string? ImagePath { get; private set; }
 
     public MedicineSource Source { get; private set; }
+
+    public virtual ICollection<MedicineReminder> Reminders { get; private set; } = new List<MedicineReminder>();
 }
