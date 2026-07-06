@@ -76,7 +76,7 @@ export class LoginFormComponent implements OnInit {
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (response) => {
         this.successMessage = response.message;
-        this.router.navigate(['/']);
+        this.router.navigate(['/dashboard']);
       },
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error);
@@ -100,7 +100,7 @@ export class LoginFormComponent implements OnInit {
     this.authService.loginWithGoogle(idToken).subscribe({
       next: (response) => {
         this.successMessage = response.message;
-        this.router.navigate(['/']);
+        this.router.navigate(['/dashboard']);
       },
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error);

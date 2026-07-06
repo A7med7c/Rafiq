@@ -1,0 +1,357 @@
+<div class="dashboard">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="brand">
+        <img src="images/RafiqLogo.png" alt="Rafiq logo" class="brand-logo">
+        <div class="brand-text">
+          <span class="brand-name">Rafiq AI</span>
+          <span class="brand-sub">Family Health Assistant</span>
+        </div>
+      </div>
+
+      <p class="greeting">Hello, {{ displayName }}</p>
+
+      <nav class="sidebar-nav" aria-label="Dashboard navigation">
+        <a class="nav-item active" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M3 3h8v8H3zm0 10h8v8H3zm10-10h8v8h-8zm0 10h8v8h-8z"/>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a class="nav-item" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Medical Records</span>
+        </a>
+        <a class="nav-item" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+          </svg>
+          <span>AI Assistant</span>
+        </a>
+        <a class="nav-item" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Analytics</span>
+        </a>
+        <a class="nav-item" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+          <span>Medications</span>
+        </a>
+        <a class="nav-item" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span>Family Profiles</span>
+        </a>
+        <a class="nav-item" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>SOS</span>
+        </a>
+        <a class="nav-item" href="#">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Settings</span>
+        </a>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Header / Top Bar -->
+    <header class="top-bar">
+      <div class="search-container">
+        <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" placeholder="Search records, health tips, or symptoms..." class="search-input">
+        <button type="button" class="ask-ai-button">Ask AI</button>
+      </div>
+
+      <div class="top-bar-actions">
+        <button type="button" class="notification-button" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </button>
+
+        <div class="user-profile">
+          <img src="images/user_avatar.png" alt="User avatar" class="user-avatar">
+          <svg class="dropdown-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+    </header>
+
+    <!-- Welcome Row & Emergency SOS -->
+    <div class="welcome-container">
+      <div class="welcome-message">
+        <h1>Good Morning, Ahmed</h1>
+        <div class="health-status">
+          <svg class="status-success-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          <span>All 4 family members are healthy and up to date.</span>
+        </div>
+      </div>
+
+      <button type="button" class="sos-hub-button">
+        <span class="sos-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <line x1="7.05" y1="7.05" x2="16.95" y2="16.95"></line>
+            <line x1="7.05" y1="16.95" x2="16.95" y2="7.05"></line>
+          </svg>
+        </span>
+        <div class="sos-text">
+          <span class="sos-title">QUICK SOS</span>
+          <span class="sos-sub">Emergency Hub</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Insights & System Status Grid -->
+    <div class="insights-grid">
+      <!-- AI Insights Card -->
+      <div class="card insights-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <svg class="sparkle-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M9 21.5L7.75 16.5L2.75 15.25L7.75 14L9 9L10.25 14L15.25 15.25L10.25 16.5L9 21.5ZM19 12L18.2 6.8L13 6L18.2 5.2L19 0L19.8 5.2L25 6L19.8 6.8L19 12Z"/>
+            </svg>
+            <h2>Rafiq AI Insights</h2>
+          </div>
+          <span class="badge badge-blue">Requests Enabled</span>
+        </div>
+        
+        <p class="insights-content">
+          "Based on recent labs, Sarah's hydration levels are improving significantly. However, the local pollen count is <span class="highlight-danger">High (8.4)</span> today—ensure Dad stays indoors or uses his prescribed antihistamine."
+        </p>
+
+        <div class="insights-badges">
+          <div class="insight-badge badge-teal">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            </svg>
+            <span>Hydration Tracking +15%</span>
+          </div>
+          <div class="insight-badge badge-red-soft">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span>Pollen Alert: High</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Status Card -->
+      <div class="card system-status-card">
+        <div class="card-header">
+          <h2>SYSTEM STATUS</h2>
+          <span class="badge badge-blue">Requests Enabled</span>
+        </div>
+
+        <div class="status-metrics">
+          <div class="status-metric-row">
+            <span class="metric-label">AI Processing</span>
+            <span class="metric-value text-green">Optimal</span>
+          </div>
+          <div class="status-metric-row">
+            <span class="metric-label">Data Sync</span>
+            <span class="metric-value">2 mins ago</span>
+          </div>
+        </div>
+
+        <!-- Sparkline SVG chart -->
+        <div class="sparkline-container">
+          <svg class="sparkline" viewBox="0 0 200 60" preserveAspectRatio="none">
+            <path d="M 0 45 C 30 35, 45 48, 70 30 C 95 12, 110 50, 130 18 C 150 5, 170 38, 200 12" fill="none" stroke="#4e89b8" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <span class="chart-caption">Average Family Heart Rate (7 days)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Family Grid (4 Cards) -->
+    <div class="family-grid">
+      <!-- Member 1: Ahmed -->
+      <div class="member-card primary-border">
+        <div class="member-profile-header">
+          <div class="avatar-container">
+            <img src="images/ahmed_avatar.png" alt="Ahmed" class="member-avatar">
+            <span class="status-dot dot-green"></span>
+          </div>
+          <div class="member-identity">
+            <h3>Ahmed</h3>
+            <span class="member-sub">(You)</span>
+            <span class="status-pill pill-green">Stable</span>
+          </div>
+        </div>
+        
+        <div class="member-details">
+          <div class="detail-row">
+            <span class="detail-label">Blood Pressure</span>
+            <span class="detail-value">118/76</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar bar-teal" style="width: 70%;"></div>
+          </div>
+          
+          <div class="detail-row spacer-top">
+            <span class="detail-label">Glucose</span>
+            <span class="detail-value">92 mg/dL</span>
+          </div>
+        </div>
+
+        <button type="button" class="checkin-button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Check-in</span>
+        </button>
+      </div>
+
+      <!-- Member 2: Sarah -->
+      <div class="member-card primary-border">
+        <div class="member-profile-header">
+          <div class="avatar-container">
+            <img src="images/sarah_avatar.png" alt="Sarah" class="member-avatar">
+            <span class="status-dot dot-green"></span>
+          </div>
+          <div class="member-identity">
+            <h3>Sarah</h3>
+            <span class="status-pill pill-green">Healthy</span>
+          </div>
+        </div>
+        
+        <div class="member-details">
+          <div class="detail-row">
+            <span class="detail-label">Heart Rate</span>
+            <span class="detail-value">68 bpm</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar bar-teal" style="width: 60%;"></div>
+          </div>
+          
+          <div class="detail-row spacer-top">
+            <span class="detail-label">Sleep Quality</span>
+            <span class="detail-value text-bold">Excellent</span>
+          </div>
+        </div>
+
+        <button type="button" class="checkin-button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Check-in</span>
+        </button>
+      </div>
+
+      <!-- Member 3: Zaid -->
+      <div class="member-card teal-border">
+        <div class="member-profile-header">
+          <div class="avatar-container">
+            <img src="images/zaid_avatar.png" alt="Zaid" class="member-avatar">
+            <span class="status-dot dot-blue"></span>
+          </div>
+          <div class="member-identity">
+            <h3>Zaid</h3>
+            <span class="status-pill pill-blue">Active</span>
+          </div>
+        </div>
+        
+        <div class="member-details">
+          <div class="detail-row">
+            <span class="detail-label">Temperature</span>
+            <span class="detail-value">98.6 °F</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar bar-blue" style="width: 50%;"></div>
+          </div>
+          
+          <div class="detail-row spacer-top">
+            <div class="detail-vaccination">
+              <span class="detail-label">Vaccination</span>
+              <div class="vaccine-schedule">
+                <span class="vaccine-prefix">Next:</span>
+                <span class="vaccine-date">Oct 12</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="checkin-button flex-align-end">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Check-in</span>
+        </button>
+      </div>
+
+      <!-- Member 4: Dad -->
+      <div class="member-card red-border">
+        <div class="member-profile-header">
+          <div class="avatar-container">
+            <img src="images/dad_avatar.png" alt="Dad" class="member-avatar">
+            <span class="status-dot dot-red"></span>
+          </div>
+          <div class="member-identity">
+            <h3>Dad</h3>
+            <span class="status-pill pill-red">Checkup</span>
+          </div>
+        </div>
+        
+        <div class="member-details">
+          <div class="detail-row">
+            <span class="detail-label">BP Trend</span>
+            <span class="detail-value text-red">High (138/92)</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar bar-red" style="width: 90%;"></div>
+          </div>
+          
+          <div class="detail-row spacer-top">
+            <span class="detail-label">Medication</span>
+            <span class="detail-value text-bold">Taken 8 AM</span>
+          </div>
+        </div>
+
+        <button type="button" class="checkin-button bg-red-soft">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Check-in</span>
+        </button>
+      </div>
+    </div>
+  </main>
+</div>

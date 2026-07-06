@@ -67,7 +67,7 @@ form{
 }
 
 .input-shell:focus-within{
-    border-color:#4E89B8;
+    border-color:#49d7ff;
     box-shadow:0 0 0 3px rgba(78,137,184,.15);
 }
 
@@ -100,7 +100,7 @@ input::placeholder{
 
 .icon-button:hover{
     background:rgba(78,137,184,.1);
-    color:#4E89B8;
+    color:#49d7ff;
 }
 
 .eye-icon{
@@ -128,7 +128,7 @@ input::placeholder{
     width:100%;
     border:none;
     border-radius:16px;
-    background:linear-gradient(135deg, #4E89B8 0%, #3f7fab 100%);
+    background:#49d7ff;
     color:#fff;
     font-size:17px;
     font-weight:700;
