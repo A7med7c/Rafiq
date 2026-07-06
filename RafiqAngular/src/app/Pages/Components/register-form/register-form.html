@@ -1,0 +1,204 @@
+<section class="login-container" dir="ltr">
+    <div class="login-card">
+
+        <div class="card-header">
+            <h2>Sign Up</h2>
+            <p>Create your Rafiq account.</p>
+        </div>
+
+        @if (successMessage) {
+            <div class="alert alert-success" role="status">
+                {{ successMessage }}
+            </div>
+        }
+
+        @if (apiErrors.length) {
+            <div class="alert alert-error" role="alert">
+                @for (error of apiErrors; track error) {
+                    <p>{{ error }}</p>
+                }
+            </div>
+        }
+
+        @if (!registeredUser) {
+            <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+
+                <div class="field">
+                    <label for="firstName">First Name</label>
+                    <div class="input-shell" [class.invalid]="isInvalid('firstName')">
+                        <input
+                            id="firstName"
+                            type="text"
+                            formControlName="firstName"
+                            placeholder="Enter your first name"
+                            autocomplete="given-name">
+                    </div>
+                    @if (isInvalid('firstName')) {
+                        <p class="field-error">First name is required.</p>
+                    }
+                </div>
+
+                <div class="field">
+                    <label for="lastName">Last Name</label>
+                    <div class="input-shell" [class.invalid]="isInvalid('lastName')">
+                        <input
+                            id="lastName"
+                            type="text"
+                            formControlName="lastName"
+                            placeholder="Enter your last name"
+                            autocomplete="family-name">
+                    </div>
+                    @if (isInvalid('lastName')) {
+                        <p class="field-error">Last name is required.</p>
+                    }
+                </div>
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <div class="input-shell" [class.invalid]="isInvalid('email')">
+                        <input
+                            id="email"
+                            type="email"
+                            formControlName="email"
+                            placeholder="Enter your email"
+                            autocomplete="email">
+                    </div>
+                    @if (isInvalid('email')) {
+                        <p class="field-error">Enter a valid email address.</p>
+                    }
+                </div>
+
+                <div class="field">
+                    <label for="phoneNumber">Phone Number</label>
+                    <div class="input-shell" [class.invalid]="isInvalid('phoneNumber')">
+                        <input
+                            id="phoneNumber"
+                            type="tel"
+                            formControlName="phoneNumber"
+                            placeholder="01XXXXXXXXX"
+                            autocomplete="tel">
+                    </div>
+                    @if (isInvalid('phoneNumber')) {
+                        <p class="field-error">Enter a valid Egyptian mobile number.</p>
+                    }
+                </div>
+
+                <div class="field">
+                    <label for="role">Role</label>
+                    <div class="input-shell" [class.invalid]="isInvalid('role')">
+                        <select id="role" formControlName="role">
+                            @for (role of roles; track role) {
+                                <option [value]="role">{{ role }}</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="input-shell" [class.invalid]="isInvalid('password')">
+                        <input
+                            id="password"
+                            [type]="showPassword ? 'text' : 'password'"
+                            formControlName="password"
+                            placeholder="Enter your password"
+                            autocomplete="new-password">
+                        <button
+                            type="button"
+                            class="icon-button"
+                            (click)="togglePasswordVisibility('password')"
+                            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+                            <i [class]="showPassword ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash'"></i>
+                        </button>
+                    </div>
+                    @if (isInvalid('password')) {
+                        <p class="field-error">
+                            Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
+                        </p>
+                    }
+                </div>
+
+                <div class="field">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <div class="input-shell" [class.invalid]="isInvalid('confirmPassword') || hasPasswordMismatch()">
+                        <input
+                            id="confirmPassword"
+                            [type]="showConfirmPassword ? 'text' : 'password'"
+                            formControlName="confirmPassword"
+                            placeholder="Confirm your password"
+                            autocomplete="new-password">
+                        <button
+                            type="button"
+                            class="icon-button"
+                            (click)="togglePasswordVisibility('confirmPassword')"
+                            [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'">
+                            <i [class]="showConfirmPassword ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash'"></i>
+                        </button>
+                    </div>
+                    @if (hasPasswordMismatch()) {
+                        <p class="field-error">Passwords do not match.</p>
+                    }
+                </div>
+
+                <button
+                    class="submit-button"
+                    type="submit"
+                    [disabled]="isSubmitting">
+                    @if (isSubmitting) {
+                        Creating account...
+                    } @else {
+                        Sign Up
+                    }
+                </button>
+            </form>
+        } @else {
+            <div class="verification-panel">
+                <p class="verification-text">
+                    Enter the verification code sent to {{ registeredUser.phoneNumber }}.
+                </p>
+
+                <div class="field">
+                    <label for="verificationCode">Verification Code</label>
+                    <div class="input-shell">
+                        <input
+                            id="verificationCode"
+                            type="text"
+                            [value]="verificationCode"
+                            (input)="verificationCode = $any($event.target).value"
+                            placeholder="Enter verification code">
+                    </div>
+                </div>
+
+                <button
+                    class="submit-button"
+                    type="button"
+                    (click)="verifyPhone()"
+                    [disabled]="isVerifying">
+                    @if (isVerifying) {
+                        Verifying...
+                    } @else {
+                        Verify Phone
+                    }
+                </button>
+
+                <button
+                    class="secondary-button"
+                    type="button"
+                    (click)="resendCode()"
+                    [disabled]="isResending">
+                    @if (isResending) {
+                        Sending...
+                    } @else {
+                        Resend Code
+                    }
+                </button>
+            </div>
+        }
+
+        <p class="register">
+            Already have an account?
+            <a routerLink="/login">Log In</a>
+        </p>
+
+    </div>
+</section>

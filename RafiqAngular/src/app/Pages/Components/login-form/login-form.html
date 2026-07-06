@@ -6,38 +6,74 @@
             <p>Log in to your account.</p>
         </div>
 
-        <form>
+        @if (successMessage) {
+            <div class="alert alert-success" role="status">
+                {{ successMessage }}
+            </div>
+        }
+
+        @if (apiErrors.length) {
+            <div class="alert alert-error" role="alert">
+                @for (error of apiErrors; track error) {
+                    <p>{{ error }}</p>
+                }
+            </div>
+        }
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
 
             <div class="field">
-                <label>Email</label>
+                <label for="loginIdentifier">Email or Phone</label>
 
-                <div class="input-shell">
+                <div class="input-shell" [class.invalid]="isInvalid('loginIdentifier')">
                     <input
-                        type="email"
-                        placeholder="Enter your email">
+                        id="loginIdentifier"
+                        type="text"
+                        formControlName="loginIdentifier"
+                        placeholder="Enter your email or phone number"
+                        autocomplete="username">
                 </div>
+
+                @if (isInvalid('loginIdentifier')) {
+                    <p class="field-error">
+                        @if (loginForm.controls.loginIdentifier.errors?.['required']) {
+                            Email or phone number is required.
+                        } @else {
+                            Enter a valid email or Egyptian phone number.
+                        }
+                    </p>
+                }
             </div>
 
 
             <div class="field">
 
-                <label>Password</label>
+                <label for="password">Password</label>
 
-                <div class="input-shell">
+                <div class="input-shell" [class.invalid]="isInvalid('password')">
 
                     <input
-                        type="password"
-                        placeholder="Enter your password">
+                        id="password"
+                        [type]="showPassword ? 'text' : 'password'"
+                        formControlName="password"
+                        placeholder="Enter your password"
+                        autocomplete="current-password">
 
                     <button
                         type="button"
-                        class="icon-button">
+                        class="icon-button"
+                        (click)="togglePasswordVisibility()"
+                        [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
 
-                        <i class="fa-regular fa-eye-slash"></i>
+                        <i [class]="showPassword ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash'"></i>
 
                     </button>
 
                 </div>
+
+                @if (isInvalid('password')) {
+                    <p class="field-error">Password is required.</p>
+                }
 
             </div>
 
@@ -47,20 +83,19 @@
             </a>
 
 
-            <button class="submit-button">
-                Log In
+            <button
+                class="submit-button"
+                type="submit"
+                [disabled]="isSubmitting">
+                @if (isSubmitting) {
+                    Logging in...
+                } @else {
+                    Log In
+                }
             </button>
 
 
-            <!-- <button class="google-button">
-
-                <img
-                    src="images/google.svg"
-                    alt="">
-
-                Log in with Google
-
-            </button> -->
+            <div id="google-button"></div>
 
         </form>
 
@@ -69,7 +104,7 @@
 
             Don't have an account?
 
-            <a>Sign Up</a>
+            <a routerLink="/register">Sign Up</a>
 
         </p>
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Account } from '../Modles/account';
-import { AuthResponse } from '../Modles/auth-response';
+import { AuthTokens } from '../Modles/auth-response';
 
 @Injectable({
   providedIn: 'root'
@@ -11,17 +11,11 @@ export class TokenStorageService {
   private readonly refreshTokenKey = 'refreshToken';
   private readonly userKey = 'currentUser';
 
-  setTokens(tokens: AuthResponse['data']): void {
+  setTokens(tokens: AuthTokens): void {
     localStorage.setItem(this.accessTokenKey, tokens.accessToken);
     localStorage.setItem(this.refreshTokenKey, tokens.refreshToken);
-  }
-
-  getAccessToken(): string | null {
-    return localStorage.getItem(this.accessTokenKey);
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem(this.refreshTokenKey);
+    localStorage.setItem('accessTokenExpiresAt', tokens.accessTokenExpiresAt);
+    localStorage.setItem('refreshTokenExpiresAt', tokens.refreshTokenExpiresAt);
   }
 
   setUser(user: Account): void {
@@ -30,7 +24,6 @@ export class TokenStorageService {
 
   getUser(): Account | null {
     const raw = localStorage.getItem(this.userKey);
-
     if (!raw) {
       return null;
     }
@@ -42,9 +35,19 @@ export class TokenStorageService {
     }
   }
 
+  getAccessToken(): string | null {
+    return localStorage.getItem(this.accessTokenKey);
+  }
+
+  getRefreshToken(): string | null {
+    return localStorage.getItem(this.refreshTokenKey);
+  }
+
   clear(): void {
     localStorage.removeItem(this.accessTokenKey);
     localStorage.removeItem(this.refreshTokenKey);
+    localStorage.removeItem('accessTokenExpiresAt');
+    localStorage.removeItem('refreshTokenExpiresAt');
     localStorage.removeItem(this.userKey);
   }
 

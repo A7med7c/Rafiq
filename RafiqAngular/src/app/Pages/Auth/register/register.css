@@ -1,0 +1,26 @@
+.login-page{
+    width:100%;
+    min-height:100vh;
+    display:grid;
+    min-height:100svh;
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) minmax(360px, 470px);
+    gap:42px;
+    align-items:center;
+    padding:38px 7vw;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at 18% 72%, rgba(75, 219, 255, .24), transparent 24%),
+        radial-gradient(circle at 80% 12%, rgba(255, 255, 255, .95), transparent 18%),
+        linear-gradient(135deg, #eef8ff 0%, #dff5ff 44%, #f7fcff 100%);
+    color:#08264a;
+    font-family:"Inter", "Segoe UI", Tahoma, Arial, sans-serif;
+}
+
+@media (max-width: 960px){
+    .login-page{
+        grid-template-columns:1fr;
+        gap:26px;
+        padding:22px;
+    }
+}
