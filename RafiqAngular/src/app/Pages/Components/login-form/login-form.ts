@@ -11,6 +11,7 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GoogleService } from '../../../Services/google-service';
 import { AuthService } from '../../../Services/auth-service';
+import { TokenStorageService } from '../../../Services/token-storage-service';
 import { environment } from '../../../Environments/Environment';
 import { getApiErrorMessages } from '../../../Utils/api-error.util';
 
@@ -39,6 +40,7 @@ export class LoginFormComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly googleService = inject(GoogleService);
   private readonly authService = inject(AuthService);
+  private readonly tokenStorage = inject(TokenStorageService);
   private readonly router = inject(Router);
 
   isSubmitting = false;
@@ -76,7 +78,7 @@ export class LoginFormComponent implements OnInit {
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (response) => {
         this.successMessage = response.message;
-        this.router.navigate(['/dashboard']);
+        this.navigateAfterLogin();
       },
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error);
@@ -100,7 +102,7 @@ export class LoginFormComponent implements OnInit {
     this.authService.loginWithGoogle(idToken).subscribe({
       next: (response) => {
         this.successMessage = response.message;
-        this.router.navigate(['/dashboard']);
+        this.navigateAfterLogin();
       },
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error);
@@ -108,6 +110,19 @@ export class LoginFormComponent implements OnInit {
       },
       complete: () => {
         this.isSubmitting = false;
+      }
+    });
+  }
+
+  private navigateAfterLogin(): void {
+    // Wait for getMe() to load the user profile, then check onboarding status
+    this.authService.currentUser$.subscribe((user) => {
+      if (user) {
+        if (this.tokenStorage.isOnboardingCompleted()) {
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.router.navigate(['/onboarding/welcome']);
+        }
       }
     });
   }

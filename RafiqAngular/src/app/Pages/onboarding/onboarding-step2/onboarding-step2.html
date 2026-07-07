@@ -1,0 +1,172 @@
+<div class="step-page">
+
+  <!-- Top navigation bar -->
+  <header class="step-header">
+    <button class="back-btn" (click)="goBack()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Back
+    </button>
+    <h1 class="header-title">Create Your Health Profile</h1>
+    <div class="header-spacer"></div>
+  </header>
+
+  <div class="onboarding-layout">
+
+    <!-- Progress stepper -->
+    <div class="stepper-wrapper">
+      <div class="stepper">
+        @for (step of steps; track $index) {
+          <div class="step-item"
+               [class.active]="$index === 1"
+               [class.done]="$index < 1">
+            <div class="step-circle">
+              @if ($index < 1) {
+                <!-- Checkmark for done steps -->
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              } @else {
+                <span class="step-number">{{ $index + 1 }}</span>
+              }
+            </div>
+            <span class="step-label">{{ step.label }}</span>
+          </div>
+          @if ($index < steps.length - 1) {
+            <div class="step-connector" [class.filled]="$index < 1"></div>
+          }
+        }
+      </div>
+    </div>
+
+  <!-- Form card -->
+  <div class="form-card">
+    <p class="step-indicator">Step 2 of 4</p>
+    <h2 class="form-title">Do you have any allergies?</h2>
+    <p class="form-description">This helps us keep you safe and provide better recommendations.</p>
+
+    <!-- Yes / No selector -->
+    <div class="yn-selector">
+
+      <button type="button"
+              class="yn-card"
+              [class.yn-selected]="hasAllergies === 'no'"
+              (click)="selectHasAllergies('no')">
+        <div class="yn-radio" [class.yn-radio-selected]="hasAllergies === 'no'">
+          @if (hasAllergies === 'no') {
+            <div class="yn-radio-dot"></div>
+          }
+        </div>
+        <div class="yn-text">
+          <span class="yn-main">No</span>
+          <span class="yn-sub">I don't have any allergies</span>
+        </div>
+      </button>
+
+      <button type="button"
+              class="yn-card"
+              [class.yn-selected]="hasAllergies === 'yes'"
+              (click)="selectHasAllergies('yes')">
+        <div class="yn-text">
+          <span class="yn-main">Yes</span>
+          <span class="yn-sub">I have allergies</span>
+        </div>
+        @if (hasAllergies === 'yes') {
+          <div class="yn-check">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+        }
+      </button>
+
+    </div>
+
+    <!-- Allergies list — visible only when "Yes" -->
+    @if (hasAllergies === 'yes') {
+      <div class="allergy-list-section" [formGroup]="form">
+        <div class="allergy-list-header">
+          <span class="list-title">List your allergies</span>
+        </div>
+
+        <div class="allergy-table">
+          <!-- Column headers -->
+          <div class="allergy-row allergy-col-header">
+            <span class="col-label">Allergy Name</span>
+            <span class="col-label">Severity</span>
+            <span class="col-delete-spacer"></span>
+          </div>
+
+          <!-- Allergy rows -->
+          <ng-container formArrayName="allergies">
+            @for (allergyGroup of allergiesArray.controls; track $index) {
+              <div class="allergy-row" [formGroupName]="$index">
+
+                <div class="allergy-name-field" [class.invalid]="isNameInvalid($index)">
+                  <input
+                    type="text"
+                    class="allergy-input"
+                    formControlName="name"
+                    placeholder="e.g. Penicillin"
+                  />
+                </div>
+
+                <div class="severity-field">
+                  <div class="severity-shell" [ngClass]="severityClass(getSeverityValue($index))">
+                    <select class="severity-select" formControlName="severity">
+                      @for (opt of severityOptions; track opt.value) {
+                        <option [value]="opt.value">{{ opt.label }}</option>
+                      }
+                    </select>
+                    <svg class="severity-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <button type="button" class="delete-btn" (click)="removeAllergy($index)" aria-label="Remove allergy">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                  </svg>
+                </button>
+
+              </div>
+            }
+          </ng-container>
+
+          <!-- Add row -->
+          <button type="button" class="add-allergy-btn" (click)="addAllergy()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add another allergy
+          </button>
+        </div>
+      </div>
+    }
+
+  </div>
+
+  <!-- Bottom action bar -->
+  <div class="action-bar">
+    <button type="button" class="btn-back" (click)="goBack()">Back</button>
+    <button type="button" class="btn-continue" (click)="continue()">
+      Continue
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Bottom progress bar -->
+  <div class="progress-footer">
+    <div class="progress-track">
+      <div class="progress-fill" style="width: 50%"></div>
+    </div>
+    <span class="progress-label">Step 2 of 4</span>
+  </div>
+
+  </div> <!-- /onboarding-layout -->
+
+</div>
