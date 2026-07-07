@@ -67,6 +67,7 @@ public static class DependencyInjection
         services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
         services.AddScoped<IUserMedicineRepository, UserMedicineRepository>();
         services.AddScoped<IMedicineReminderRepository, MedicineReminderRepository>();
+        services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
