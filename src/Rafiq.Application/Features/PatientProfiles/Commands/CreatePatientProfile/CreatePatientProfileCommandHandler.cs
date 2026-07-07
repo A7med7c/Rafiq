@@ -45,7 +45,7 @@ public sealed class CreatePatientProfileCommandHandler(
             profile.Allergies.Add(new Allergy
             {
                 Name = allergy.Name,
-                Severity = Enum.Parse<AllergySeverity>(allergy.Severity, true),
+                Severity = allergy.Severity
             });
         }
 
@@ -55,7 +55,7 @@ public sealed class CreatePatientProfileCommandHandler(
             {
                 Name = disease.Name,
                 DiagnosedAt = disease.DiagnosedAt,
-                Status = Enum.Parse<DiseaseStatus>(disease.Status, true)
+                Status = disease.Status
             });
         }
 

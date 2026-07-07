@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -12,7 +12,7 @@ import { Gender, BloodType } from '../../../Modles/health-profile-enums';
   templateUrl: './onboarding-step1.html',
   styleUrl: './onboarding-step1.css',
 })
-export class OnboardingStep1 {
+export class OnboardingStep1 implements OnInit {
 
   private readonly router = inject(Router);
   private readonly fb     = inject(FormBuilder);
@@ -47,6 +47,18 @@ export class OnboardingStep1 {
     weight:      ['', [Validators.required, Validators.min(1), Validators.max(500)]],
     bloodType:   ['', Validators.required],
   });
+
+  ngOnInit(): void {
+    const saved = sessionStorage.getItem('onboarding_step1');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        this.form.patchValue(data);
+      } catch (e) {
+        console.error('Error parsing onboarding_step1 from sessionStorage', e);
+      }
+    }
+  }
 
   goBack(): void {
     this.router.navigate(['/onboarding/welcome']);

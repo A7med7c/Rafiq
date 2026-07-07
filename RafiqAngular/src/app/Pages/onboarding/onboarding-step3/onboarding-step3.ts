@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -11,7 +11,7 @@ import { DiseaseStatus } from '../../../Modles/health-profile-enums';
   templateUrl: './onboarding-step3.html',
   styleUrl: './onboarding-step3.css',
 })
-export class OnboardingStep3 {
+export class OnboardingStep3 implements OnInit {
 
   private readonly router = inject(Router);
   private readonly fb     = inject(FormBuilder);
@@ -35,6 +35,30 @@ export class OnboardingStep3 {
   readonly form: FormGroup = this.fb.group({
     conditions: this.fb.array([]),
   });
+
+  ngOnInit(): void {
+    const saved = sessionStorage.getItem('onboarding_step3');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        this.hasConditions = data.hasConditions || 'no';
+        if (data.conditions && Array.isArray(data.conditions)) {
+          this.conditionsArray.clear();
+          data.conditions.forEach((condition: any) => {
+            this.conditionsArray.push(
+              this.fb.group({
+                name:        [condition.name || '', Validators.required],
+                diagnosedAt: [condition.diagnosedAt || '', Validators.required],
+                status:      [condition.status !== undefined ? Number(condition.status) : DiseaseStatus.Active, Validators.required],
+              })
+            );
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing onboarding_step3 from sessionStorage', e);
+      }
+    }
+  }
 
   get conditionsArray(): FormArray {
     return this.form.get('conditions') as FormArray;
