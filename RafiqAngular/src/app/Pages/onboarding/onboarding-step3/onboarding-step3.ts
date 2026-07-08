@@ -130,4 +130,14 @@ export class OnboardingStep3 implements OnInit {
     );
     this.router.navigate(['/onboarding/step4']);
   }
+
+  skip(): void {
+    this.hasConditions = 'no';
+    this.conditionsArray.clear();
+    sessionStorage.setItem(
+      'onboarding_step3',
+      JSON.stringify({ hasConditions: 'no', conditions: [] })
+    );
+    this.router.navigate(['/onboarding/step4']);
+  }
 }

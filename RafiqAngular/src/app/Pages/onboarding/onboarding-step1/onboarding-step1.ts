@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { Gender, BloodType } from '../../../Modles/health-profile-enums';
@@ -16,6 +16,8 @@ export class OnboardingStep1 implements OnInit {
 
   private readonly router = inject(Router);
   private readonly fb     = inject(FormBuilder);
+
+  readonly today = new Date().toISOString().slice(0, 10);
 
   readonly steps = [
     { label: 'Basic Info' },
@@ -41,7 +43,7 @@ export class OnboardingStep1 implements OnInit {
   ];
 
   readonly form: FormGroup = this.fb.group({
-    dateOfBirth: ['', Validators.required],
+    dateOfBirth: ['', [Validators.required, this.notFutureDateValidator]],
     gender:      ['', Validators.required],
     height:      ['', [Validators.required, Validators.min(50), Validators.max(300)]],
     weight:      ['', [Validators.required, Validators.min(1), Validators.max(500)]],
@@ -74,8 +76,31 @@ export class OnboardingStep1 implements OnInit {
     this.router.navigate(['/onboarding/step2']);
   }
 
+  getDateOfBirthError(): string {
+    const ctrl = this.form.get('dateOfBirth');
+    if (ctrl?.hasError('required')) {
+      return 'Date of birth is required';
+    }
+    if (ctrl?.hasError('futureDate')) {
+      return 'Date of birth cannot be in the future';
+    }
+    return 'Enter a valid date of birth';
+  }
+
   isInvalid(field: 'dateOfBirth' | 'gender' | 'height' | 'weight' | 'bloodType'): boolean {
     const ctrl = this.form.get(field);
     return !!ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched);
+  }
+
+  private notFutureDateValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null;
+    }
+
+    const selectedDate = new Date(`${control.value}T00:00:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return selectedDate > today ? { futureDate: true } : null;
   }
 }

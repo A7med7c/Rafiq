@@ -122,6 +122,13 @@ export class OnboardingStep2 implements OnInit {
     this.router.navigate(['/onboarding/step3']);
   }
 
+  skip(): void {
+    this.hasAllergies = 'no';
+    this.allergiesArray.clear();
+    sessionStorage.setItem('onboarding_step2', JSON.stringify({ hasAllergies: 'no', allergies: [] }));
+    this.router.navigate(['/onboarding/step3']);
+  }
+
   isNameInvalid(index: number): boolean {
     const ctrl = this.allergiesArray.at(index).get('name');
     return !!ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched);
