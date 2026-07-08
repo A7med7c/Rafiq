@@ -50,10 +50,10 @@ public sealed class UploadLabReportCommandHandler(
             base64Image,
             LabReportPrompt.Build(),
             cancellationToken)
-            ?? throw new Exception("Bedrock returned no data. Please try again.");
+            ?? throw new BadRequestException("No lab report data could be extracted from the uploaded image.");
 
         if (extracted.Tests.Count == 0)
-            throw new Exception("No laboratory tests could be extracted from the uploaded image.");
+            throw new BadRequestException("No laboratory tests could be extracted from the uploaded image.");
 
         // ── 5. Parse the report date ───────────────────────────────────────
         var reportDate = DateOnly.TryParseExact(

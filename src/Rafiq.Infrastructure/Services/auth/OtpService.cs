@@ -1,8 +1,8 @@
 ﻿using Rafiq.Application.Common.Interfaces;
 using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Enums;
+using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
-using System.ComponentModel.DataAnnotations;
 
 namespace Rafiq.Infrastructure.Services.auth
 {

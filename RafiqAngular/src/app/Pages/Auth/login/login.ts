@@ -5,7 +5,7 @@ import { Hero } from "../../landing/Components/hero/hero";
 
 @Component({
   selector: 'app-login',
-  imports: [AuthHero, LoginFormComponent, Hero],
+  imports: [AuthHero, LoginFormComponent],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

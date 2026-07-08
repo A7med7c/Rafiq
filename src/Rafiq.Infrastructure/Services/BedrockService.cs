@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
+using Rafiq.Domain.Exceptions;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -73,7 +74,9 @@ public sealed class BedrockService : IBedrockService
         var responseBody = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
 
         if (!httpResponse.IsSuccessStatusCode)
-            throw new Exception($"Bedrock API returned {(int)httpResponse.StatusCode}: {responseBody}");
+            throw new ExternalServiceException(
+                "Bedrock",
+                $"Request failed with status code {(int)httpResponse.StatusCode}.");
 
         var gatewayResponse = JsonSerializer.Deserialize<BedrockGatewayResponse>(responseBody);
 

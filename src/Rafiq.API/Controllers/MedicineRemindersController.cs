@@ -7,6 +7,7 @@ using Rafiq.Application.Features.MedicineReminders.Commands.ToggleMedicineRemind
 using Rafiq.Application.Features.MedicineReminders.Commands.UpdateMedicineReminder;
 using Rafiq.Application.Features.MedicineReminders.Queries.GetMedicineReminderById;
 using Rafiq.Application.Features.MedicineReminders.Queries.GetMedicineReminders;
+using Rafiq.Domain.Exceptions;
 
 namespace Rafiq.API.Controllers;
 
@@ -20,7 +21,7 @@ public class MedicineRemindersController(ISender sender) : ControllerBase
     {
         if (medicineId != command.UserMedicineId)
         {
-            return BadRequest("MedicineId in URL must match UserMedicineId in body.");
+            throw new BadRequestException("MedicineId in URL must match UserMedicineId in body.");
         }
         var result = await sender.Send(command);
         return Ok(result);
@@ -45,7 +46,7 @@ public class MedicineRemindersController(ISender sender) : ControllerBase
     {
         if (id != command.Id)
         {
-            return BadRequest("Id in URL must match Id in body.");
+            throw new BadRequestException("Id in URL must match Id in body.");
         }
         var result = await sender.Send(command);
         return Ok(result);

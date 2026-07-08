@@ -50,10 +50,10 @@ public sealed class UploadPrescriptionCommandHandler(
             base64Image,
             PrescriptionPrompt.Build(),
             cancellationToken)
-            ?? throw new Exception("Bedrock returned no data. Please try again.");
+            ?? throw new BadRequestException("No prescription data could be extracted from the uploaded image.");
 
         if (extracted.Medicines.Count == 0)
-            throw new Exception("No medicines could be extracted from the uploaded prescription image.");
+            throw new BadRequestException("No medicines could be extracted from the uploaded prescription image.");
 
         // ── 5. Parse the prescription date ────────────────────────────────
         var prescriptionDate = DateOnly.TryParseExact(
