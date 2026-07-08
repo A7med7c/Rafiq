@@ -468,12 +468,13 @@
   width: 100%;
   max-width: 100%;
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 1fr 2fr;
   gap: 12px;
   padding: 20px 0 0;
 }
 
-.btn-back {
+.btn-back,
+.btn-skip {
   min-height: 52px;
   border: 1.5px solid #d4e5f2;
   border-radius: 14px;
@@ -486,10 +487,16 @@
   transition: all 0.2s ease;
 }
 
-.btn-back:hover {
+.btn-back:hover,
+.btn-skip:hover {
   background: #f0f7ff;
   border-color: #4E89B8;
   color: #08264a;
+}
+
+.btn-skip {
+  background: rgba(255, 255, 255, .72);
+  color: #8baec8;
 }
 
 .btn-continue {
@@ -593,7 +600,7 @@
 
   .action-bar {
     padding: 16px 12px 0;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 1fr 1fr 2fr;
   }
 
   .step-connector {
