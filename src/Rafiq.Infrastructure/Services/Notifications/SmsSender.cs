@@ -13,7 +13,6 @@ namespace Rafiq.Infrastructure.Services.Notifications
         public Task SendSMSAsync(string phoneNumber, string message, CancellationToken cancellationToken)
         {
             TwilioClient.Init(_twilioSettings.AccountSID, _twilioSettings.AuthToken);
-
             return MessageResource.CreateAsync(
                 body: message,
                 from: new Twilio.Types.PhoneNumber(_twilioSettings.TwilioPhoneNumber),
@@ -37,6 +36,16 @@ namespace Rafiq.Infrastructure.Services.Notifications
                 return $"+2{phoneNumber}";
 
             // Fallback
+            return $"+2{phoneNumber}";
+        }
+
+        private static string FormatPhoneNumberForTwilio(string phoneNumber)
+        {
+            if (phoneNumber.StartsWith('+'))
+            {
+                return phoneNumber;
+            }
+
             return $"+2{phoneNumber}";
         }
     }

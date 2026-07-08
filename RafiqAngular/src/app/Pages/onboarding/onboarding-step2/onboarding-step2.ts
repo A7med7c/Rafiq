@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -12,7 +12,7 @@ import { AllergySeverity } from '../../../Modles/health-profile-enums';
   templateUrl: './onboarding-step2.html',
   styleUrl: './onboarding-step2.css',
 })
-export class OnboardingStep2 {
+export class OnboardingStep2 implements OnInit {
 
   private readonly router = inject(Router);
   private readonly fb     = inject(FormBuilder);
@@ -36,6 +36,29 @@ export class OnboardingStep2 {
   readonly form: FormGroup = this.fb.group({
     allergies: this.fb.array([]),
   });
+
+  ngOnInit(): void {
+    const saved = sessionStorage.getItem('onboarding_step2');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        this.hasAllergies = data.hasAllergies || 'no';
+        if (data.allergies && Array.isArray(data.allergies)) {
+          this.allergiesArray.clear();
+          data.allergies.forEach((allergy: any) => {
+            this.allergiesArray.push(
+              this.fb.group({
+                name:     [allergy.name || '', Validators.required],
+                severity: [allergy.severity !== undefined ? Number(allergy.severity) : AllergySeverity.Moderate, Validators.required],
+              })
+            );
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing onboarding_step2 from sessionStorage', e);
+      }
+    }
+  }
 
   get allergiesArray(): FormArray {
     return this.form.get('allergies') as FormArray;

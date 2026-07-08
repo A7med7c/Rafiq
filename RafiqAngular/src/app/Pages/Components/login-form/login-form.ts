@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -42,6 +42,7 @@ export class LoginFormComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly router = inject(Router);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   isSubmitting = false;
   showPassword = false;
@@ -50,7 +51,7 @@ export class LoginFormComponent implements OnInit {
 
   readonly loginForm = this.formBuilder.nonNullable.group({
     loginIdentifier: ['', [Validators.required, loginIdentifierValidator]],
-    password: ['', [Validators.required]]
+    password: ['', [Validators.required, Validators.minLength(8)]]
   });
 
   ngOnInit(): void {
@@ -82,6 +83,8 @@ export class LoginFormComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error);
+        this.isSubmitting = false;
+        this.changeDetector.detectChanges();
       },
       complete: () => {
         this.isSubmitting = false;
@@ -107,6 +110,7 @@ export class LoginFormComponent implements OnInit {
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error);
         this.isSubmitting = false;
+        this.changeDetector.detectChanges();
       },
       complete: () => {
         this.isSubmitting = false;

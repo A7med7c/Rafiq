@@ -167,7 +167,7 @@
                 <button
                     class="submit-button"
                     type="submit"
-                    [disabled]="isSubmitting">
+                    [disabled]="isSubmitting || registerForm.invalid">
                     @if (isSubmitting) {
                         Creating account...
                     } @else {
