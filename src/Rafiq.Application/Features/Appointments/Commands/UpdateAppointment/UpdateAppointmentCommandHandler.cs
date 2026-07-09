@@ -43,8 +43,7 @@ public sealed class UpdateAppointmentCommandHandler(
             request.Provider,
             request.AppointmentDateTime,
             request.ReminderOffsetMinutes,
-            request.Notes,
-            request.Status);
+            request.Notes);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

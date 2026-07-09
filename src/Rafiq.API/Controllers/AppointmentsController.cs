@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Rafiq.Application.Features.Appointments.Commands.CreateAppointment;
 using Rafiq.Application.Features.Appointments.Commands.DeleteAppointment;
 using Rafiq.Application.Features.Appointments.Commands.UpdateAppointment;
+using Rafiq.Application.Features.Appointments.Commands.CompleteAppointment;
+using Rafiq.Application.Features.Appointments.Commands.CancelAppointment;
 using Rafiq.Application.Features.Appointments.Queries.GetAppointmentById;
 using Rafiq.Application.Features.Appointments.Queries.GetAppointments;
 using Rafiq.Application.Features.Appointments.Queries.GetTodayAppointments;
@@ -69,8 +71,7 @@ public sealed class AppointmentsController(IMediator mediator) : ControllerBase
                 body.Provider,
                 body.AppointmentDateTime,
                 body.ReminderOffsetMinutes,
-                body.Notes,
-                body.Status),
+                body.Notes),
             cancellationToken);
 
         return Ok(result);
@@ -82,6 +83,20 @@ public sealed class AppointmentsController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(new DeleteAppointmentCommand(id), cancellationToken);
         return Ok(result);
     }
+
+    [HttpPatch("{id:guid}/complete")]
+    public async Task<IActionResult> Complete(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new CompleteAppointmentCommand(id), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPatch("{id:guid}/cancel")]
+    public async Task<IActionResult> Cancel(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new CancelAppointmentCommand(id), cancellationToken);
+        return Ok(result);
+    }
 }
 
 public sealed record UpdateAppointmentRequest(
@@ -91,5 +106,4 @@ public sealed record UpdateAppointmentRequest(
     string Provider,
     DateTime AppointmentDateTime,
     int? ReminderOffsetMinutes,
-    string? Notes,
-    AppointmentStatus Status);
+    string? Notes);

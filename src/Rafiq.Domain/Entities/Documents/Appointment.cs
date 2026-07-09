@@ -53,8 +53,7 @@ public class Appointment : BaseEntity
         string provider,
         DateTime appointmentDateTime,
         int? reminderOffsetMinutes,
-        string? notes,
-        AppointmentStatus status)
+        string? notes)
     {
         AppointmentType = appointmentType;
         CustomType = appointmentType == AppointmentType.Other ? customType : null;
@@ -63,6 +62,35 @@ public class Appointment : BaseEntity
         AppointmentDateTime = appointmentDateTime;
         ReminderOffsetMinutes = reminderOffsetMinutes;
         Notes = notes;
-        Status = status;
+    }
+
+    public void MarkAsCompleted()
+    {
+        if (Status != AppointmentStatus.Upcoming)
+            throw new Rafiq.Domain.Exceptions.BadRequestException("Only upcoming appointments can be marked as completed.");
+
+        if (AppointmentDateTime > DateTime.UtcNow)
+            throw new Rafiq.Domain.Exceptions.BadRequestException("A future appointment cannot be marked as completed.");
+
+        if (DateTime.UtcNow > AppointmentDateTime.AddHours(3))
+            throw new Rafiq.Domain.Exceptions.BadRequestException("The 3-hour completion grace period has expired.");
+
+        Status = AppointmentStatus.Completed;
+    }
+
+    public void MarkAsCancelled()
+    {
+        if (Status != AppointmentStatus.Upcoming)
+            throw new Rafiq.Domain.Exceptions.BadRequestException("Only upcoming appointments can be cancelled.");
+
+        Status = AppointmentStatus.Cancelled;
+    }
+
+    public void MarkAsMissed()
+    {
+        if (Status != AppointmentStatus.Upcoming)
+            throw new Rafiq.Domain.Exceptions.BadRequestException("Only upcoming appointments can be marked as missed.");
+
+        Status = AppointmentStatus.Missed;
     }
 }

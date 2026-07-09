@@ -13,6 +13,5 @@ public sealed record UpdateAppointmentCommand(
     string Provider,
     DateTime AppointmentDateTime,
     int? ReminderOffsetMinutes,
-    string? Notes,
-    AppointmentStatus Status)
+    string? Notes)
     : IRequest<ApiResponse<AppointmentResponseDto>>;

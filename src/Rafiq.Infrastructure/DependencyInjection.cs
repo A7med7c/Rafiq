@@ -12,6 +12,7 @@ using Rafiq.Infrastructure.Services;
 using Rafiq.Infrastructure.Services.auth;
 using Rafiq.Infrastructure.Services.Auth;
 using Rafiq.Infrastructure.Services.Notifications;
+using Rafiq.Infrastructure.Services.BackgroundJobs;
 
 namespace Rafiq.Infrastructure;
 
@@ -73,6 +74,9 @@ public static class DependencyInjection
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
+
+        services.AddHostedService<MissedAppointmentsBackgroundService>();
+
         return services;
     }
 }

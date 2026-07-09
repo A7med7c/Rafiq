@@ -10,3 +10,8 @@ specs/
 .specify/
 .agents/skills/
 src/Rafiq.API/appsettings.json
+src/Rafiq.API/appsettings.Development.json
+node_modules/
+**/node_modules/
+src/Rafiq.API/wwwroot/uploads/
+RafiqAngular/node_modules/
