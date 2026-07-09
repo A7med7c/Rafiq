@@ -107,3 +107,23 @@ export interface ReminderDisplayItem {
   isEnabled: boolean;
   repeatType: string;
 }
+
+// ===== Medicine Box Scan (matches ScanMedicineBoxResponseDto) =====
+export interface ScanMedicineBoxResponse {
+  medicineName: string | null;
+  strength: string | null;
+  dosageForm: string | null;
+  manufacturer: string | null;
+  imagePath: string;
+}
+
+// ===== Add UserMedicine Payload =====
+export interface AddUserMedicinePayload {
+  medicineName: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  notes?: string;
+  imagePath?: string;
+  source: number; // 1=Manual, 2=Prescription, 3=MedicineBox
+}

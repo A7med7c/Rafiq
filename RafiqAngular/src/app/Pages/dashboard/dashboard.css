@@ -34,7 +34,7 @@
   --r:            16px;
   --r-sm:         10px;
   --r-xs:         8px;
-  --sb-w:         200px;
+  --sb-w:         220px;
 }
 
 /* ── Base reset ────────────────────────────── */
@@ -53,7 +53,7 @@ a { text-decoration: none; }
   font-family: 'Inter', 'Outfit', sans-serif;
   color: var(--text);
   font-size: 14px;
-  transition: grid-template-columns 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: grid-template-columns 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* ═══════════════════════════════════════════════
@@ -68,18 +68,19 @@ a { text-decoration: none; }
   height: 100vh;
   position: sticky;
   top: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   width: var(--sb-w);
-  transition: width 280ms cubic-bezier(0.4, 0, 0.2, 1), padding 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94), padding 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: width;
 }
 
 /* Sidebar collapsed states */
 .dsh.sb-collapsed {
-  --sb-w: 68px;
+  --sb-w: 70px;
 }
 .dsh.sb-collapsed .dsh-sb {
   padding: 22px 8px 20px;
+  overflow: hidden;
 }
 
 .sb-logo-text {
@@ -153,13 +154,18 @@ a { text-decoration: none; }
   width: 38px;
   height: 38px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #7C3AED 0%, #4A7CF7 100%);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--white);
-  font-size: 18px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sb-logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
 }
 
 .sb-logo-title {
@@ -378,6 +384,15 @@ a { text-decoration: none; }
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  position: relative;
+  border-radius: var(--r-xs);
+  padding: 4px 8px 4px 4px;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+
+.hdr-user:hover {
+  background: var(--border-lt);
 }
 
 .hdr-avatar {
@@ -397,7 +412,124 @@ a { text-decoration: none; }
 .hdr-chevron {
   font-size: 11px;
   color: var(--text-3);
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.hdr-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* ── User Dropdown ────────────────────────── */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 230px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06);
+  z-index: 999;
+  padding: 8px;
+  animation: dropdown-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top right;
+}
+
+@keyframes dropdown-in {
+  from { opacity: 0; transform: scale(0.93) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0); }
+}
+
+.user-dropdown-hdr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 12px;
+}
+
+.user-dropdown-av {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+
+.user-dropdown-av img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-dropdown-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+}
+
+.user-dropdown-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-dropdown-email {
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.user-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-xs);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.user-dropdown-item i {
+  width: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-3);
+  transition: color 0.12s ease;
+}
+
+.user-dropdown-item:hover {
+  background: var(--blue-lt);
+  color: var(--blue);
+}
+
+.user-dropdown-item:hover i {
+  color: var(--blue);
+}
+
+.user-dropdown-item--danger { color: var(--red); }
+.user-dropdown-item--danger i { color: var(--red); }
+.user-dropdown-item--danger:hover { background: var(--red-lt); color: var(--red); }
+.user-dropdown-item--danger:hover i { color: var(--red); }
 
 /* ── Body (scrollable) ─────────────────────── */
 .dsh-body {

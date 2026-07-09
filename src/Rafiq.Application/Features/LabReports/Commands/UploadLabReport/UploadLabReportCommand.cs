@@ -7,7 +7,7 @@ namespace Rafiq.Application.Features.LabReports.Commands.UploadLabReport;
 
 /// <summary>
 /// Uploads a lab report image, analyzes it with Bedrock,
-/// saves the extracted data, and returns the result.
+/// returns the extracted data for review.
 /// UserId is NEVER accepted from the client — it comes from the JWT.
 /// </summary>
 public sealed record UploadLabReportCommand(IFormFile Image)
