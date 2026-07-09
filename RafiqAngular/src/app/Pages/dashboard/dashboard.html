@@ -1,16 +1,22 @@
 <div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
 
   <!-- ═══════════ SIDEBAR ═══════════ -->
-  <aside class="dsh-sb" (mouseenter)="sidebarCollapsed.set(false)" (mouseleave)="sidebarCollapsed.set(true)">
+  <aside class="dsh-sb">
     <!-- Logo -->
-    <div class="sb-logo">
-      <div class="sb-logo-icon">
-        <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
+    <div class="sb-top">
+      <div class="sb-logo">
+        <div class="sb-logo-icon">
+          <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
+        </div>
+        <div class="sb-logo-text">
+          <span class="sb-logo-title">Rafiq AI</span>
+          <span class="sb-logo-sub">Family Health Assistant</span>
+        </div>
       </div>
-      <div class="sb-logo-text">
-        <span class="sb-logo-title">Rafiq AI</span>
-        <span class="sb-logo-sub">Family Health Assistant</span>
-      </div>
+      <button type="button" class="sb-toggle" [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+        (click)="toggleSidebar()">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
     </div>
 
     <!-- Navigation -->
@@ -47,10 +53,10 @@
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>Family Profiles</span>
       </a>
-      <a class="sb-link" href="#">
+      <!-- <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-regular fa-comment"></i></span>
         <span>Messages</span>
-      </a>
+      </a> -->
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
         <span>Settings</span>

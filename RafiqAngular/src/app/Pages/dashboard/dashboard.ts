@@ -22,8 +22,7 @@ export class Dashboard implements OnInit {
   readonly reminders        = signal<ReminderDisplayItem[]>([]);
   readonly recordsLoading   = signal(true);
   readonly remindersLoading = signal(true);
-  // Sidebar starts collapsed — expands only on hover
-  readonly sidebarCollapsed = signal(true);
+  readonly sidebarCollapsed = signal(false);
   readonly dropdownOpen     = signal(false);
   readonly today            = new Date();
 
@@ -45,6 +44,8 @@ export class Dashboard implements OnInit {
   }
 
   ngOnInit(): void {
+    this.applyResponsiveSidebar();
+
     this.dashboardService.getMedicalRecords().subscribe({
       next:  d => { this.records.set(d); this.recordsLoading.set(false); },
       error: () => { this.records.set([]); this.recordsLoading.set(false); },
@@ -54,6 +55,19 @@ export class Dashboard implements OnInit {
       next:  d => { this.reminders.set(d); this.remindersLoading.set(false); },
       error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
     });
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.applyResponsiveSidebar();
+  }
+
+  private applyResponsiveSidebar(): void {
+    if (window.innerWidth <= 768) this.sidebarCollapsed.set(true);
+  }
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed.update(v => !v);
   }
 
   /** Close dropdown when clicking anywhere outside the hdr-user element */

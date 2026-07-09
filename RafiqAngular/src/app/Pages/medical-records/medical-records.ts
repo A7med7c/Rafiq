@@ -37,6 +37,8 @@ export interface ReviewLabResult {
 
 export interface ReviewForm {
   type: 'lab' | 'imaging' | 'prescription';
+  mode: 'create' | 'edit';
+  recordId?: string;
   imagePath: string;
   summary: string;
   ocrText: string;
@@ -101,9 +103,14 @@ export class MedicalRecords implements OnInit, OnDestroy {
   readonly loading = signal(true);
   readonly searchQuery = signal('');
   readonly activeTab = signal<'all' | 'lab' | 'prescription' | 'imaging' | 'medicine'>('all');
-  readonly sidebarCollapsed = signal(true);
+  readonly sidebarCollapsed = signal(false);
   readonly selectedRecord = signal<UnifiedMedicalRecord | null>(null);
   readonly dropdownOpen = signal(false);
+  readonly actionMenuOpen = signal<string | null>(null);
+  readonly deleteTarget = signal<UnifiedMedicalRecord | null>(null);
+  readonly deleting = signal(false);
+  readonly tabDirection = signal<'left' | 'right'>('left');
+  readonly tabAnimating = signal(false);
 
   readonly lightboxUrl = signal<string | null>(null);
   readonly detailImageFailed = signal(false);
@@ -130,6 +137,8 @@ export class MedicalRecords implements OnInit, OnDestroy {
   readonly scanLoading = signal(false);
   readonly scanResult = signal<ScanMedicineBoxResponse | null>(null);
   readonly scanSaving = signal(false);
+  readonly scanMode = signal<'create' | 'edit'>('create');
+  readonly scanRecordId = signal<string | null>(null);
   scanForm: ScanForm = this.emptyScanForm();
 
   readonly currentPage = signal(1);
@@ -198,15 +207,20 @@ export class MedicalRecords implements OnInit, OnDestroy {
     return pages;
   });
 
-  ngOnInit(): void { this.loadData(); }
+  ngOnInit(): void {
+    this.applyResponsiveSidebar();
+    this.loadData();
+  }
   ngOnDestroy(): void {}
 
   @HostListener('document:keydown.escape')
   onEsc(): void {
     if (this.lightboxUrl()) { this.lightboxUrl.set(null); return; }
+    if (this.deleteTarget() && !this.deleting()) { this.closeDeleteModal(); return; }
     if (this.scanResult()) { this.cancelScanReview(); return; }
-    if (this.reviewForm()) { this.cancelReview(); return; }
+    if (this.reviewForm() && !this.reviewSaving()) { this.cancelReview(); return; }
     if (this.selectedRecord()) { this.closeDetails(); return; }
+    this.actionMenuOpen.set(null);
     this.dropdownOpen.set(false);
   }
 
@@ -215,6 +229,22 @@ export class MedicalRecords implements OnInit, OnDestroy {
     if (!(event.target as HTMLElement).closest('.hdr-user')) {
       this.dropdownOpen.set(false);
     }
+    if (!(event.target as HTMLElement).closest('.record-actions')) {
+      this.actionMenuOpen.set(null);
+    }
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.applyResponsiveSidebar();
+  }
+
+  private applyResponsiveSidebar(): void {
+    if (window.innerWidth <= 768) this.sidebarCollapsed.set(true);
+  }
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed.update(v => !v);
   }
 
   toggleDropdown(): void { this.dropdownOpen.update(v => !v); }
@@ -253,8 +283,16 @@ export class MedicalRecords implements OnInit, OnDestroy {
   }
 
   setTab(tab: 'all' | 'lab' | 'prescription' | 'imaging' | 'medicine'): void {
+    if (tab === this.activeTab()) return;
+    const order: Array<'all' | 'lab' | 'prescription' | 'imaging' | 'medicine'> = ['all', 'lab', 'prescription', 'imaging', 'medicine'];
+    const currentIndex = order.indexOf(this.activeTab());
+    const nextIndex = order.indexOf(tab);
+    this.tabDirection.set(nextIndex >= currentIndex ? 'left' : 'right');
     this.activeTab.set(tab);
     this.currentPage.set(1);
+    this.tabAnimating.set(false);
+    setTimeout(() => this.tabAnimating.set(true));
+    setTimeout(() => this.tabAnimating.set(false), 260);
   }
 
   getRecordIcon(type: string): string {
@@ -280,6 +318,69 @@ export class MedicalRecords implements OnInit, OnDestroy {
   viewDetails(record: UnifiedMedicalRecord): void {
     this.detailImageFailed.set(false);
     this.selectedRecord.set(record);
+  }
+
+  toggleActionMenu(recordId: string, event: MouseEvent): void {
+    event.stopPropagation();
+    this.actionMenuOpen.update(openId => openId === recordId ? null : recordId);
+  }
+
+  openDeleteModal(record: UnifiedMedicalRecord): void {
+    this.actionMenuOpen.set(null);
+    this.deleteTarget.set(record);
+  }
+
+  closeDeleteModal(): void {
+    if (this.deleting()) return;
+    this.deleteTarget.set(null);
+  }
+
+  deleteRecord(): void {
+    const record = this.deleteTarget();
+    if (!record) return;
+    this.deleting.set(true);
+    this.recordsService.deleteRecord(record).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.deleteTarget.set(null);
+        this.showToast('Record deleted successfully.', 'success');
+        this.loadData();
+      },
+      error: err => {
+        this.deleting.set(false);
+        this.showToast(err?.error?.message || 'Failed to delete record. Please try again.', 'error');
+      },
+    });
+  }
+
+  editRecord(record: UnifiedMedicalRecord): void {
+    if (record.type === 'medicine') {
+      this.actionMenuOpen.set(null);
+      this.scanForm = {
+        medicineName: record.rawRecord.medicineName ?? '',
+        dosage: record.rawRecord.dosage ?? '',
+        dosageForm: record.rawRecord.dosageForm ?? '',
+        manufacturer: record.rawRecord.manufacturer ?? '',
+        frequency: record.rawRecord.frequency ?? '',
+        duration: record.rawRecord.duration ?? '',
+        notes: record.rawRecord.notes ?? '',
+        imagePath: record.rawRecord.imagePath ?? '',
+      };
+      this.scanImageFailed.set(false);
+      this.scanMode.set('edit');
+      this.scanRecordId.set(record.id);
+      this.scanResult.set({
+        medicineName: this.scanForm.medicineName,
+        strength: this.scanForm.dosage,
+        dosageForm: this.scanForm.dosageForm,
+        manufacturer: this.scanForm.manufacturer,
+        imagePath: this.scanForm.imagePath,
+      });
+      return;
+    }
+    this.actionMenuOpen.set(null);
+    this.selectedRecord.set(null);
+    this.openReviewModal(record.type, record.rawRecord, 'edit', record.id);
   }
 
   private readonly pdfService = inject(PdfService);
@@ -372,9 +473,16 @@ export class MedicalRecords implements OnInit, OnDestroy {
     });
   }
 
-  private openReviewModal(type: 'lab' | 'imaging' | 'prescription', data: any): void {
+  private openReviewModal(
+    type: 'lab' | 'imaging' | 'prescription',
+    data: any,
+    mode: 'create' | 'edit' = 'create',
+    recordId?: string
+  ): void {
     const form: ReviewForm = {
       type,
+      mode,
+      recordId,
       imagePath: data.imageUrl ?? data.imagePath ?? '',
       summary: data.summary ?? data.aiSummary ?? '',
       ocrText: data.ocrText ?? '',
@@ -454,7 +562,7 @@ export class MedicalRecords implements OnInit, OnDestroy {
 
     let request$;
     if (rf.type === 'lab') {
-      request$ = this.http.post(`${this.base}/documents/labs`, {
+      const payload = {
         labName: rf.labName,
         doctorName: rf.doctorName,
         reportDate: rf.reportDate,
@@ -468,9 +576,12 @@ export class MedicalRecords implements OnInit, OnDestroy {
           normalRange: r.normalRange,
           status: r.status,
         })),
-      });
+      };
+      request$ = rf.mode === 'edit' && rf.recordId
+        ? this.http.put(`${this.base}/documents/labs/${rf.recordId}`, payload)
+        : this.http.post(`${this.base}/documents/labs`, payload);
     } else if (rf.type === 'imaging') {
-      request$ = this.http.post(`${this.base}/documents/imaging`, {
+      const payload = {
         imagingType: rf.imagingType,
         bodyPart: rf.bodyPart,
         findings: rf.findings,
@@ -480,9 +591,12 @@ export class MedicalRecords implements OnInit, OnDestroy {
         summary: rf.summary,
         ocrText: rf.ocrText,
         imageUrl: rf.imagePath,
-      });
+      };
+      request$ = rf.mode === 'edit' && rf.recordId
+        ? this.http.put(`${this.base}/documents/imaging/${rf.recordId}`, payload)
+        : this.http.post(`${this.base}/documents/imaging`, payload);
     } else {
-      request$ = this.http.post(`${this.base}/prescriptions`, {
+      const payload = {
         doctorName: rf.doctorName,
         patientName: rf.patientName,
         prescriptionDate: rf.prescriptionDate,
@@ -494,14 +608,17 @@ export class MedicalRecords implements OnInit, OnDestroy {
           duration: m.duration,
           instructions: m.instructions,
         })),
-      });
+      };
+      request$ = rf.mode === 'edit' && rf.recordId
+        ? this.http.put(`${this.base}/prescriptions/${rf.recordId}`, payload)
+        : this.http.post(`${this.base}/prescriptions`, payload);
     }
 
     request$.subscribe({
       next: () => {
         this.reviewSaving.set(false);
         this.reviewForm.set(null);
-        this.showToast('Record confirmed and saved.', 'success');
+        this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : 'Record confirmed and saved.', 'success');
         this.loadData();
       },
       error: err => {
@@ -533,6 +650,8 @@ export class MedicalRecords implements OnInit, OnDestroy {
           imagePath: data.imagePath ?? '',
         };
         this.scanImageFailed.set(false);
+        this.scanMode.set('create');
+        this.scanRecordId.set(null);
         this.scanResult.set(data);
       },
       error: err => {
@@ -545,6 +664,8 @@ export class MedicalRecords implements OnInit, OnDestroy {
 
   cancelScanReview(): void {
     this.scanResult.set(null);
+    this.scanMode.set('create');
+    this.scanRecordId.set(null);
     this.scanForm = this.emptyScanForm();
   }
 
@@ -561,12 +682,19 @@ export class MedicalRecords implements OnInit, OnDestroy {
       source: 3,
     };
 
-    this.http.post(`${this.base}/user-medicines`, payload).subscribe({
+    const mode = this.scanMode();
+    const request$ = mode === 'edit' && this.scanRecordId()
+      ? this.http.put(`${this.base}/user-medicines/${this.scanRecordId()}`, payload)
+      : this.http.post(`${this.base}/user-medicines`, payload);
+
+    request$.subscribe({
       next: () => {
         this.scanSaving.set(false);
         this.scanResult.set(null);
+        this.scanMode.set('create');
+        this.scanRecordId.set(null);
         this.scanForm = this.emptyScanForm();
-        this.showToast('Medicine saved to your records.', 'success');
+        this.showToast(mode === 'edit' ? 'Medicine record updated successfully.' : 'Medicine saved to your records.', 'success');
         this.loadData();
       },
       error: err => {
