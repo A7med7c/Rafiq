@@ -10,6 +10,7 @@ import { AuthService } from '../../Services/auth-service';
 import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medical-records.service';
 import { ScanMedicineBoxResponse, AddUserMedicinePayload } from '../../Modles/dashboard.models';
 import { environment } from '../../Environments/Environment';
+import { PdfService } from '../../Services/pdf.service';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine';
 
@@ -281,8 +282,10 @@ export class MedicalRecords implements OnInit, OnDestroy {
     this.selectedRecord.set(record);
   }
 
+  private readonly pdfService = inject(PdfService);
+
   closeDetails(): void { this.selectedRecord.set(null); }
-  downloadRecord(record: UnifiedMedicalRecord): void { console.log('TODO download', record.id); }
+  downloadRecord(record: UnifiedMedicalRecord): void { this.pdfService.download(record) }
 
   getImageUrl(rawUrl: string | undefined | null): string | null {
     if (!rawUrl) return null;
