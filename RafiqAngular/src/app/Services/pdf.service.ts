@@ -25,6 +25,10 @@ export class PdfService {
       case 'medicine':
         this.generateMedicineBoxPdf(record);
         break;
+
+      case 'general':
+        this.generateGeneralDocumentPdf(record);
+        break;
     }
   }
 
@@ -453,6 +457,52 @@ private async generateMedicineBoxPdf(record: any) {
 
   doc.save(
     `Medicine-${record.rawRecord.medicineName ?? "Record"}.pdf`
+  );
+}
+
+private async generateGeneralDocumentPdf(record: any) {
+
+  const doc = new jsPDF();
+
+  let y = await this.addHeader(
+    doc,
+    record.rawRecord.title ?? record.name ?? "Medical Document"
+  );
+
+  doc.setFontSize(12);
+
+  [
+    `Document Type: ${record.rawRecord.documentType ?? "-"}`,
+    `Doctor Name: ${record.rawRecord.doctorName ?? "-"}`,
+    `Hospital/Clinic: ${record.rawRecord.hospitalOrClinic ?? "-"}`,
+    `Document Date: ${record.rawRecord.documentDate ?? record.date ?? "-"}`,
+  ].forEach(line => {
+    doc.text(line, 15, y);
+    y += 8;
+  });
+
+  y += 7;
+
+  if (record.rawRecord.description) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("Description", 15, y);
+    y += 8;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    const description = doc.splitTextToSize(record.rawRecord.description, 180);
+    doc.text(description, 15, y);
+    y += description.length * 6 + 10;
+  }
+
+  if (record.summary || record.rawRecord.aiSummary) {
+    y = this.addSummary(doc, record.summary || record.rawRecord.aiSummary, y);
+  }
+
+  this.addFooter(doc);
+
+  doc.save(
+    `Document-${record.rawRecord.title ?? "Record"}.pdf`
   );
 }
 }

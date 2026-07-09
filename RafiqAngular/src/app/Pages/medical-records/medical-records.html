@@ -46,7 +46,7 @@
         <span>Analytics</span>
       </a>
       <a class="sb-link sb-sos" href="#">
-        <span class="sb-ico"><i class="fasolid fa-circle-exclamation"></i></span>
+        <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
         <span>SOS &amp; Emergency</span>
       </a>
       <a class="sb-link" href="#">
@@ -138,9 +138,36 @@
           <p class="records-sub">Manage, upload and view all your family health reports and prescriptions.</p>
         </div>
         <div class="title-right">
-          <button type="button" class="add-record-btn" (click)="triggerUpload('General')">
-            <i class="fa-solid fa-plus"></i> Add Record
-          </button>
+          <div class="add-record-menu-wrap">
+            <button type="button" class="add-record-btn" [class.menu-open]="addRecordMenuOpen()"
+              (click)="toggleAddRecordMenu($event)">
+              <i class="fa-solid fa-plus"></i> Add Record
+            </button>
+            @if (addRecordMenuOpen()) {
+            <div class="add-record-menu">
+              <button type="button" class="dropdown-menu-item" (click)="selectUploadType('Lab Analysis')">
+                <i class="fa-solid fa-flask"></i>
+                <span>Lab Analysis</span>
+              </button>
+              <button type="button" class="dropdown-menu-item" (click)="selectUploadType('Prescription')">
+                <i class="fa-solid fa-prescription-bottle-medical"></i>
+                <span>Prescription</span>
+              </button>
+              <button type="button" class="dropdown-menu-item" (click)="selectUploadType('X-Ray & Imaging')">
+                <i class="fa-solid fa-x-ray"></i>
+                <span>X-Ray &amp; Imaging</span>
+              </button>
+              <button type="button" class="dropdown-menu-item" (click)="selectUploadType('Medicine Box')">
+                <i class="fa-solid fa-pills"></i>
+                <span>Medicine Box</span>
+              </button>
+              <button type="button" class="dropdown-menu-item" (click)="selectUploadType('General Medical Document')">
+                <i class="fa-solid fa-file-medical"></i>
+                <span>Other Medical Document</span>
+              </button>
+            </div>
+            }
+          </div>
         </div>
       </section>
 
@@ -153,6 +180,8 @@
         (change)="onImagingFileSelected($event)">
       <input #medicineInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
         (change)="onMedicineFileSelected($event)">
+      <input #generalInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
+        (change)="onGeneralFileSelected($event)">
 
       <!-- UPLOAD CARDS GRID -->
       <section class="upload-grid">
@@ -260,6 +289,7 @@
             }
           </button>
         </div>
+       
       </section>
 
       <!-- TABS BAR -->
@@ -275,6 +305,8 @@
             (click)="setTab('imaging')">X-Rays &amp; Imaging</button>
           <button type="button" class="tab-link" [class.active]="activeTab() === 'medicine'"
             (click)="setTab('medicine')">Medicine Boxes</button>
+          <button type="button" class="tab-link" [class.active]="activeTab() === 'general'"
+            (click)="setTab('general')">Other Documents</button>
         </div>
 
         <div class="records-table-tools">
@@ -282,11 +314,93 @@
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
             <input type="text" placeholder="Search records..." [(ngModel)]="searchQueryValue" class="search-input">
           </div>
-          <button type="button" class="filter-btn">
-            <i class="fa-solid fa-sliders"></i> Filter
-          </button>
+          <div class="filter-menu-wrap">
+            <button type="button" class="filter-btn" [class.menu-open]="filterMenuOpen()"
+              (click)="toggleFilterMenu($event)">
+              <i class="fa-solid fa-sliders"></i> Filter
+            </button>
+            @if (filterMenuOpen()) {
+            <div class="filter-popover">
+              <div class="filter-section">
+                <p class="filter-section-title">Record Type</p>
+                @for (item of recordTypeOptions; track item.value) {
+                <label class="filter-option">
+                  <input type="radio" name="recordTypeFilter" [checked]="draftFilters().type === item.value"
+                    (change)="updateDraftFilter('type', item.value)">
+                  <span>{{ item.label }}</span>
+                </label>
+                }
+              </div>
+
+              <div class="filter-section">
+                <p class="filter-section-title">AI Status</p>
+                @for (item of aiStatusOptions; track item.value) {
+                <label class="filter-option">
+                  <input type="radio" name="aiStatusFilter" [checked]="draftFilters().aiStatus === item.value"
+                    (change)="updateDraftFilter('aiStatus', item.value)">
+                  <span>{{ item.label }}</span>
+                </label>
+                }
+              </div>
+
+              <div class="filter-section">
+                <p class="filter-section-title">Uploaded By</p>
+                @for (item of uploadedByOptions; track item.value) {
+                <label class="filter-option">
+                  <input type="radio" name="uploadedByFilter" [checked]="draftFilters().uploadedBy === item.value"
+                    (change)="updateDraftFilter('uploadedBy', item.value)">
+                  <span>{{ item.label }}</span>
+                </label>
+                }
+              </div>
+
+              <div class="filter-section">
+                <p class="filter-section-title">Date Range</p>
+                <div class="date-filter-grid">
+                  <label class="date-filter-field">
+                    <span>From</span>
+                    <input type="date" [ngModel]="draftFilters().fromDate"
+                      (ngModelChange)="updateDraftFilter('fromDate', $event)">
+                  </label>
+                  <label class="date-filter-field">
+                    <span>To</span>
+                    <input type="date" [ngModel]="draftFilters().toDate"
+                      (ngModelChange)="updateDraftFilter('toDate', $event)">
+                  </label>
+                </div>
+              </div>
+
+              <div class="filter-section">
+                <p class="filter-section-title">Sort By</p>
+                <select class="sort-select" [ngModel]="draftFilters().sortBy"
+                  (ngModelChange)="updateDraftFilter('sortBy', $event)">
+                  @for (item of sortOptions; track item.value) {
+                  <option [value]="item.value">{{ item.label }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="filter-actions">
+                <button type="button" class="filter-action-btn filter-action-btn--ghost" (click)="resetFilters()">Reset Filters</button>
+                <button type="button" class="filter-action-btn filter-action-btn--primary" (click)="applyFilters()">Apply Filters</button>
+              </div>
+            </div>
+            }
+          </div>
         </div>
       </section>
+
+      @if (activeFilterChips().length > 0) {
+      <section class="active-filter-chips">
+        @for (chip of activeFilterChips(); track chip.key) {
+        <button type="button" class="filter-chip" (click)="removeFilterChip(chip.key)">
+          <span>{{ chip.label }}</span>
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        }
+        <button type="button" class="clear-filters-btn" (click)="clearAllFilters()">Clear All</button>
+      </section>
+      }
 
       <!-- RECORDS TABLE AREA -->
       <section class="table-card" [class.tab-animating]="tabAnimating()" [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
@@ -482,6 +596,21 @@
         </div>
         }
 
+        @if (rec.type === 'general') {
+        <div class="detail-info-grid">
+          <div><span>Document Type</span><strong>{{ rec.rawRecord.documentType || '-' }}</strong></div>
+          <div><span>Doctor Name</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
+          <div><span>Hospital/Clinic</span><strong>{{ rec.rawRecord.hospitalOrClinic || '-' }}</strong></div>
+          <div><span>Document Date</span><strong>{{ rec.rawRecord.documentDate || rec.date || '-' }}</strong></div>
+        </div>
+        @if (rec.rawRecord.description) {
+        <div class="detail-section">
+          <h4 class="detail-h4"><i class="fa-solid fa-align-left"></i> Description</h4>
+          <p class="detail-summary-text">{{ rec.rawRecord.description }}</p>
+        </div>
+        }
+        }
+
         <div class="detail-section">
           <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> AI Summary</h4>
           <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
@@ -603,6 +732,65 @@
           Deleting...
           } @else {
           <i class="fa-solid fa-trash-can"></i> Delete
+          }
+        </button>
+      </footer>
+    </div>
+  </div>
+  }
+
+  @if (generalUploadFormOpen()) {
+  <div class="modal-overlay" (click)="cancelGeneralUpload()">
+    <div class="modal-card scan-review-modal" (click)="$event.stopPropagation()">
+      <header class="modal-hdr">
+        <div class="modal-hdr-left">
+          <div class="modal-ico rec-ico-gray">
+            <i class="fa-solid fa-file-medical"></i>
+          </div>
+          <div>
+            <h3 class="modal-title">Upload Other Medical Document</h3>
+            <p class="modal-sub">Add an image and optional description before analysis.</p>
+          </div>
+        </div>
+        <button type="button" class="close-modal-btn" [disabled]="uploadLoading()" (click)="cancelGeneralUpload()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </header>
+
+      <div class="modal-body scan-form-body">
+        <div class="scan-form-grid">
+          <div class="scan-field scan-field--full">
+            <label class="scan-label">Document Image <span class="scan-required">*</span></label>
+            <input type="file" class="scan-input" accept=".jpg,.jpeg,.png,.webp"
+              [disabled]="uploadLoading()" (change)="onGeneralFileSelected($event)">
+            @if (generalUploadForm.fileName) {
+            <p class="scan-file-name"><i class="fa-regular fa-file-image"></i> {{ generalUploadForm.fileName }}</p>
+            }
+          </div>
+
+          <div class="scan-field scan-field--full">
+            <label class="scan-label">Description <span class="scan-optional">(optional)</span></label>
+            <textarea class="scan-input scan-textarea" [(ngModel)]="generalUploadForm.description"
+              [disabled]="uploadLoading()" rows="4"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <footer class="modal-ftr">
+        <button type="button" class="modal-btn modal-btn-secondary" [disabled]="uploadLoading()" (click)="cancelGeneralUpload()">Cancel</button>
+        <button type="button" class="modal-btn modal-btn-primary" [disabled]="uploadLoading() || !generalUploadForm.file"
+          [class.modal-btn--saving]="uploadLoading()" (click)="submitGeneralUpload()">
+          @if (uploadLoading()) {
+          <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+              [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+              stroke-linecap="round" transform="rotate(-90 18 18)" />
+          </svg>
+          Analysing...
+          } @else {
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          Analyze Document
           }
         </button>
       </footer>
@@ -732,15 +920,44 @@
           </div>
           }
 
+          @if (rf.type === 'general') {
+          <div class="scan-field">
+            <label class="scan-label">Document Title</label>
+            <input type="text" class="scan-input" [(ngModel)]="rf.title">
+          </div>
+          <div class="scan-field">
+            <label class="scan-label">Document Type</label>
+            <input type="text" class="scan-input" [ngModel]="rf.documentType" readonly>
+          </div>
+          <div class="scan-field">
+            <label class="scan-label">Doctor Name</label>
+            <input type="text" class="scan-input" [ngModel]="rf.doctorName" readonly>
+          </div>
+          <div class="scan-field">
+            <label class="scan-label">Hospital/Clinic</label>
+            <input type="text" class="scan-input" [ngModel]="rf.hospitalOrClinic" readonly>
+          </div>
+          <div class="scan-field">
+            <label class="scan-label">Document Date</label>
+            <input type="text" class="scan-input" [ngModel]="rf.documentDate" readonly>
+          </div>
+          <div class="scan-field scan-field--full">
+            <label class="scan-label">Description</label>
+            <textarea class="scan-input scan-textarea" [(ngModel)]="rf.description" rows="3"></textarea>
+          </div>
+          }
+
           <div class="scan-field scan-field--full">
             <label class="scan-label">AI Summary</label>
             <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
           </div>
 
+          @if (rf.type !== 'general') {
           <div class="scan-field scan-field--full">
             <label class="scan-label">OCR Text</label>
             <textarea class="scan-input scan-textarea" [(ngModel)]="rf.ocrText" rows="5"></textarea>
           </div>
+          }
         </div>
 
         @if (rf.type === 'lab') {

@@ -9,12 +9,13 @@ import {
   Prescription,
   UserMedicine,
   MedicalRecord,
+  GeneralMedicalDocument,
 } from '../Modles/dashboard.models';
 
 export interface UnifiedMedicalRecord {
   id: string;
   name: string;
-  type: 'lab' | 'imaging' | 'prescription' | 'medicine';
+  type: 'lab' | 'imaging' | 'prescription' | 'medicine' | 'general';
   typeLabel: string;
   date: string;
   uploadedBy: string;
@@ -34,6 +35,7 @@ export class MedicalRecordsService {
     imaging: ImagingReport[];
     prescriptions: Prescription[];
     medicines: UserMedicine[];
+    generalDocuments: GeneralMedicalDocument[];
   }> {
     const labs$ = this.http.get<ApiResponse<LabReport[]>>(`${this.base}/documents/labs`).pipe(
       map(r => r.data ?? []),
@@ -51,12 +53,17 @@ export class MedicalRecordsService {
       map(r => r.data ?? []),
       catchError(() => of([] as UserMedicine[]))
     );
+    const generalDocuments$ = this.http.get<ApiResponse<GeneralMedicalDocument[]>>(`${this.base}/documents/general`).pipe(
+      map(r => r.data ?? []),
+      catchError(() => of([] as GeneralMedicalDocument[]))
+    );
 
     return forkJoin({
       labs: labs$,
       imaging: imaging$,
       prescriptions: prescriptions$,
       medicines: medicines$,
+      generalDocuments: generalDocuments$,
     });
   }
 
@@ -66,6 +73,7 @@ export class MedicalRecordsService {
     imaging: ImagingReport[];
     prescriptions: Prescription[];
     medicines: UserMedicine[];
+    generalDocuments: GeneralMedicalDocument[];
   }): UnifiedMedicalRecord[] {
     const records: UnifiedMedicalRecord[] = [];
 
@@ -129,6 +137,21 @@ export class MedicalRecordsService {
       });
     });
 
+    // Map General Medical Documents
+    data.generalDocuments.forEach(d => {
+      records.push({
+        id: d.id,
+        name: d.title || 'Other Medical Document',
+        type: 'general',
+        typeLabel: 'Other Medical Document',
+        date: d.documentDate || (d.createdAt ? new Date(d.createdAt).toLocaleDateString() : ''),
+        uploadedBy: d.doctorName || d.hospitalOrClinic || 'Self',
+        hasAiSummary: !!d.aiSummary,
+        summary: d.aiSummary || d.description || 'Document saved successfully.',
+        rawRecord: d,
+      });
+    });
+
     // Sort newest first
     return records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
@@ -144,6 +167,7 @@ export class MedicalRecordsService {
       imaging: 'documents/imaging',
       prescription: 'prescriptions',
       medicine: 'user-medicines',
+      general: 'documents/general',
     };
     return `${this.base}/${paths[record.type]}/${record.id}`;
   }

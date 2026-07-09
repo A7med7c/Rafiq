@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
+using Rafiq.Application.Features.GeneralDocuments.Commands.UploadGeneralDocument;
 using Rafiq.Application.Features.ImagingReports.Commands.UploadImagingReport;
 using Rafiq.Application.Features.ImagingReports.DTOs;
 using Rafiq.Application.Features.ImagingReports.Queries.GetImagingReportById;
@@ -159,6 +160,14 @@ public sealed class DocumentsController(
 
         return Ok(result);
     }
+    [HttpPost("general/upload")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadGeneralDocument(
+    [FromForm] UploadGeneralDocumentCommand command)
+    {
+        var result = await mediator.Send(command);
+        return Ok(result);
+    }
 
     private static DateOnly ParseDateOrToday(string? value) =>
         DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
@@ -202,6 +211,7 @@ public sealed class DocumentsController(
             Summary = report.Description,
             CreatedAt = report.CreatedAt
         };
+
 }
 
 public sealed record SaveLabReportRequest(

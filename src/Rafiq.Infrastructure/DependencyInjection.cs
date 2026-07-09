@@ -56,6 +56,8 @@ public static class DependencyInjection
         services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IResetTokenService, ResetTokenService>();
+        services.AddScoped<IGeneralDocumentRepository, GeneralDocumentRepository>();
+
         // ── Bedrock ────────────────────────────────────────────────────────
         services.Configure<BedrockSettings>(configuration.GetSection("Bedrock"));
         services.AddHttpClient<IBedrockService, BedrockService>();

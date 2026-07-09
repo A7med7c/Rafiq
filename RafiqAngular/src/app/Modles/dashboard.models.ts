@@ -83,6 +83,21 @@ export interface UserMedicine {
   updatedAt?: string;
 }
 
+// ===== General Medical Document =====
+export interface GeneralMedicalDocument {
+  id: string;
+  title: string;
+  description?: string;
+  aiSummary?: string;
+  imagePath?: string;
+  documentType?: string;
+  doctorName?: string | null;
+  hospitalOrClinic?: string | null;
+  documentDate?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // ===== Medicine Reminder =====
 export interface MedicineReminder {
   id: string;

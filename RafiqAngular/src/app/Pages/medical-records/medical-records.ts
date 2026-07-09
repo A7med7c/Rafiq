@@ -12,7 +12,20 @@ import { ScanMedicineBoxResponse, AddUserMedicinePayload } from '../../Modles/da
 import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
 
-export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine';
+export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
+type RecordTab = 'all' | UploadCardKey;
+type AiStatusFilter = 'all' | 'processed' | 'pending';
+type UploadedByFilter = 'all' | 'self' | 'manual' | 'medicine';
+type SortOption = 'newest' | 'oldest' | 'az' | 'za';
+
+interface RecordFilters {
+  type: RecordTab;
+  aiStatus: AiStatusFilter;
+  uploadedBy: UploadedByFilter;
+  fromDate: string;
+  toDate: string;
+  sortBy: SortOption;
+}
 
 interface UploadState {
   uploading: boolean;
@@ -36,10 +49,15 @@ export interface ReviewLabResult {
 }
 
 export interface ReviewForm {
-  type: 'lab' | 'imaging' | 'prescription';
+  type: 'lab' | 'imaging' | 'prescription' | 'general';
   mode: 'create' | 'edit';
   recordId?: string;
   imagePath: string;
+  title: string;
+  description: string;
+  documentType: string;
+  hospitalOrClinic: string;
+  documentDate: string;
   summary: string;
   ocrText: string;
   labName: string;
@@ -73,6 +91,12 @@ interface ScanForm {
   imagePath: string;
 }
 
+interface GeneralUploadForm {
+  description: string;
+  file: File | null;
+  fileName: string;
+}
+
 export interface Toast {
   id: number;
   message: string;
@@ -80,6 +104,16 @@ export interface Toast {
 }
 
 const PAGE_SIZE = 6;
+const FILTER_SORT_STORAGE_KEY = 'rafiq-medical-records-sort';
+
+const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
+  type: 'all',
+  aiStatus: 'all',
+  uploadedBy: 'all',
+  fromDate: '',
+  toDate: '',
+  sortBy,
+});
 
 @Component({
   selector: 'app-medical-records',
@@ -98,14 +132,17 @@ export class MedicalRecords implements OnInit, OnDestroy {
   @ViewChild('prescriptionInput') prescriptionInput!: ElementRef<HTMLInputElement>;
   @ViewChild('imagingInput') imagingInput!: ElementRef<HTMLInputElement>;
   @ViewChild('medicineInput') medicineInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('generalInput') generalInput!: ElementRef<HTMLInputElement>;
 
   readonly allRecords = signal<UnifiedMedicalRecord[]>([]);
   readonly loading = signal(true);
   readonly searchQuery = signal('');
-  readonly activeTab = signal<'all' | 'lab' | 'prescription' | 'imaging' | 'medicine'>('all');
+  readonly activeTab = signal<RecordTab>('all');
   readonly sidebarCollapsed = signal(false);
   readonly selectedRecord = signal<UnifiedMedicalRecord | null>(null);
   readonly dropdownOpen = signal(false);
+  readonly addRecordMenuOpen = signal(false);
+  readonly filterMenuOpen = signal(false);
   readonly actionMenuOpen = signal<string | null>(null);
   readonly deleteTarget = signal<UnifiedMedicalRecord | null>(null);
   readonly deleting = signal(false);
@@ -117,22 +154,48 @@ export class MedicalRecords implements OnInit, OnDestroy {
   readonly reviewImageFailed = signal(false);
   readonly scanImageFailed = signal(false);
 
-  readonly labCount = signal(0);
-  readonly prescriptionCount = signal(0);
-  readonly imagingCount = signal(0);
-  readonly medicineCount = signal(0);
+  readonly appliedFilters = signal<RecordFilters>(defaultFilters(this.getSavedSortOption()));
+  readonly draftFilters = signal<RecordFilters>(defaultFilters(this.getSavedSortOption()));
+  readonly recordTypeOptions: Array<{ value: RecordTab; label: string }> = [
+    { value: 'all', label: 'All' },
+    { value: 'lab', label: 'Lab Analysis' },
+    { value: 'prescription', label: 'Prescription' },
+    { value: 'imaging', label: 'X-Ray & Imaging' },
+    { value: 'medicine', label: 'Medicine Box' },
+    { value: 'general', label: 'Other Medical Document' },
+  ];
+  readonly aiStatusOptions: Array<{ value: AiStatusFilter; label: string }> = [
+    { value: 'all', label: 'All' },
+    { value: 'processed', label: 'Processed' },
+    { value: 'pending', label: 'Pending' },
+  ];
+  readonly uploadedByOptions: Array<{ value: UploadedByFilter; label: string }> = [
+    { value: 'all', label: 'All' },
+    { value: 'self', label: 'Self' },
+    { value: 'manual', label: 'Manual' },
+    { value: 'medicine', label: 'Medicine Box' },
+  ];
+  readonly sortOptions: Array<{ value: SortOption; label: string }> = [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' },
+    { value: 'az', label: 'A-Z' },
+    { value: 'za', label: 'Z-A' },
+  ];
 
   readonly uploadState = signal<Record<UploadCardKey, UploadState>>({
     lab: defaultUploadState(),
     prescription: defaultUploadState(),
     imaging: defaultUploadState(),
     medicine: defaultUploadState(),
+    general: defaultUploadState(),
   });
 
   readonly uploadLoading = signal(false);
   readonly uploadLoadingLabel = signal('');
   readonly reviewForm = signal<ReviewForm | null>(null);
   readonly reviewSaving = signal(false);
+  readonly generalUploadFormOpen = signal(false);
+  generalUploadForm: GeneralUploadForm = this.emptyGeneralUploadForm();
 
   readonly scanLoading = signal(false);
   readonly scanResult = signal<ScanMedicineBoxResponse | null>(null);
@@ -166,7 +229,7 @@ export class MedicalRecords implements OnInit, OnDestroy {
   }
 
   readonly filteredRecords = computed(() => {
-    let list = this.allRecords();
+    let list = this.applySmartFilters(this.allRecords(), this.appliedFilters());
     const q = this.searchQuery().trim().toLowerCase();
     const tab = this.activeTab();
     if (tab !== 'all') list = list.filter(r => r.type === tab);
@@ -178,7 +241,29 @@ export class MedicalRecords implements OnInit, OnDestroy {
         (r.summary && r.summary.toLowerCase().includes(q))
       );
     }
-    return list;
+    return this.sortRecords(list, this.appliedFilters().sortBy);
+  });
+
+  readonly countedRecords = computed(() =>
+    this.applySmartFilters(this.allRecords(), this.appliedFilters())
+  );
+
+  readonly labCount = computed(() => this.countedRecords().filter(r => r.type === 'lab').length);
+  readonly prescriptionCount = computed(() => this.countedRecords().filter(r => r.type === 'prescription').length);
+  readonly imagingCount = computed(() => this.countedRecords().filter(r => r.type === 'imaging').length);
+  readonly medicineCount = computed(() => this.countedRecords().filter(r => r.type === 'medicine').length);
+  readonly generalCount = computed(() => this.countedRecords().filter(r => r.type === 'general').length);
+
+  readonly activeFilterChips = computed(() => {
+    const filters = this.appliedFilters();
+    const chips: Array<{ key: keyof RecordFilters; label: string }> = [];
+    if (filters.type !== 'all') chips.push({ key: 'type', label: this.typeLabel(filters.type) });
+    if (filters.aiStatus !== 'all') chips.push({ key: 'aiStatus', label: filters.aiStatus === 'processed' ? 'Processed' : 'Pending' });
+    if (filters.uploadedBy !== 'all') chips.push({ key: 'uploadedBy', label: this.uploadedByLabel(filters.uploadedBy) });
+    if (filters.fromDate) chips.push({ key: 'fromDate', label: `From ${filters.fromDate}` });
+    if (filters.toDate) chips.push({ key: 'toDate', label: `To ${filters.toDate}` });
+    if (filters.sortBy !== 'newest') chips.push({ key: 'sortBy', label: this.sortLabel(filters.sortBy) });
+    return chips;
   });
 
   readonly pagedRecords = computed(() => {
@@ -219,7 +304,10 @@ export class MedicalRecords implements OnInit, OnDestroy {
     if (this.deleteTarget() && !this.deleting()) { this.closeDeleteModal(); return; }
     if (this.scanResult()) { this.cancelScanReview(); return; }
     if (this.reviewForm() && !this.reviewSaving()) { this.cancelReview(); return; }
+    if (this.generalUploadFormOpen() && !this.uploadLoading()) { this.cancelGeneralUpload(); return; }
     if (this.selectedRecord()) { this.closeDetails(); return; }
+    this.addRecordMenuOpen.set(false);
+    this.filterMenuOpen.set(false);
     this.actionMenuOpen.set(null);
     this.dropdownOpen.set(false);
   }
@@ -231,6 +319,12 @@ export class MedicalRecords implements OnInit, OnDestroy {
     }
     if (!(event.target as HTMLElement).closest('.record-actions')) {
       this.actionMenuOpen.set(null);
+    }
+    if (!(event.target as HTMLElement).closest('.add-record-menu-wrap')) {
+      this.addRecordMenuOpen.set(false);
+    }
+    if (!(event.target as HTMLElement).closest('.filter-menu-wrap')) {
+      this.filterMenuOpen.set(false);
     }
   }
 
@@ -250,14 +344,67 @@ export class MedicalRecords implements OnInit, OnDestroy {
   toggleDropdown(): void { this.dropdownOpen.update(v => !v); }
   logout(): void { this.dropdownOpen.set(false); this.authService.logout().subscribe(); }
 
+  toggleAddRecordMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.filterMenuOpen.set(false);
+    this.addRecordMenuOpen.update(v => !v);
+  }
+
+  selectUploadType(type: 'Lab Analysis' | 'Prescription' | 'X-Ray & Imaging' | 'Medicine Box' | 'General Medical Document'): void {
+    this.addRecordMenuOpen.set(false);
+    this.triggerUpload(type);
+  }
+
+  toggleFilterMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.addRecordMenuOpen.set(false);
+    this.draftFilters.set({ ...this.appliedFilters() });
+    this.filterMenuOpen.update(v => !v);
+  }
+
+  updateDraftFilter(key: keyof RecordFilters, value: string): void {
+    this.draftFilters.update(filters => ({ ...filters, [key]: value } as RecordFilters));
+  }
+
+  applyFilters(): void {
+    const next = { ...this.draftFilters() };
+    this.appliedFilters.set(next);
+    this.saveSortOption(next.sortBy);
+    this.filterMenuOpen.set(false);
+    this.currentPage.set(1);
+  }
+
+  resetFilters(): void {
+    const reset = defaultFilters(this.appliedFilters().sortBy);
+    this.draftFilters.set(reset);
+    this.appliedFilters.set(reset);
+    this.currentPage.set(1);
+  }
+
+  clearAllFilters(): void {
+    this.resetFilters();
+    this.filterMenuOpen.set(false);
+  }
+
+  removeFilterChip(key: keyof RecordFilters): void {
+    const current = this.appliedFilters();
+    const next = { ...current };
+    if (key === 'type') next.type = 'all';
+    if (key === 'aiStatus') next.aiStatus = 'all';
+    if (key === 'uploadedBy') next.uploadedBy = 'all';
+    if (key === 'fromDate') next.fromDate = '';
+    if (key === 'toDate') next.toDate = '';
+    if (key === 'sortBy') next.sortBy = 'newest';
+    this.appliedFilters.set(next);
+    this.draftFilters.set(next);
+    this.saveSortOption(next.sortBy);
+    this.currentPage.set(1);
+  }
+
   loadData(): void {
     this.loading.set(true);
     this.recordsService.getAllData().subscribe({
       next: res => {
-        this.labCount.set(res.labs.length);
-        this.prescriptionCount.set(res.prescriptions.length);
-        this.imagingCount.set(res.imaging.length);
-        this.medicineCount.set(res.medicines.length);
         this.allRecords.set(this.recordsService.toUnifiedRecords(res));
         this.currentPage.set(Math.min(this.currentPage(), this.totalPages()));
         this.loading.set(false);
@@ -267,6 +414,95 @@ export class MedicalRecords implements OnInit, OnDestroy {
         this.loading.set(false);
       },
     });
+  }
+
+  private applySmartFilters(records: UnifiedMedicalRecord[], filters: RecordFilters): UnifiedMedicalRecord[] {
+    return records.filter(record => {
+      if (filters.type !== 'all' && record.type !== filters.type) return false;
+      if (filters.aiStatus === 'processed' && !record.hasAiSummary) return false;
+      if (filters.aiStatus === 'pending' && record.hasAiSummary) return false;
+      if (!this.matchesUploadedBy(record, filters.uploadedBy)) return false;
+
+      const recordTime = this.getRecordTime(record);
+      if (filters.fromDate && recordTime < new Date(`${filters.fromDate}T00:00:00`).getTime()) return false;
+      if (filters.toDate && recordTime > new Date(`${filters.toDate}T23:59:59`).getTime()) return false;
+      return true;
+    });
+  }
+
+  private sortRecords(records: UnifiedMedicalRecord[], sortBy: SortOption): UnifiedMedicalRecord[] {
+    const sorted = [...records];
+    return sorted.sort((a, b) => {
+      if (sortBy === 'az') return a.name.localeCompare(b.name);
+      if (sortBy === 'za') return b.name.localeCompare(a.name);
+      const diff = this.getRecordTime(b) - this.getRecordTime(a);
+      return sortBy === 'newest' ? diff : -diff;
+    });
+  }
+
+  private matchesUploadedBy(record: UnifiedMedicalRecord, uploadedBy: UploadedByFilter): boolean {
+    if (uploadedBy === 'all') return true;
+    const source = `${record.uploadedBy ?? ''} ${record.rawRecord?.source ?? ''}`.toLowerCase();
+    if (uploadedBy === 'self') return source.includes('self');
+    if (uploadedBy === 'manual') return source.includes('manual');
+    return source.includes('medicine') || record.type === 'medicine';
+  }
+
+  private getRecordTime(record: UnifiedMedicalRecord): number {
+    const rawDate =
+      record.rawRecord?.createdAt ??
+      record.rawRecord?.reportDate ??
+      record.rawRecord?.prescriptionDate ??
+      record.date;
+    const time = new Date(rawDate).getTime();
+    return Number.isNaN(time) ? 0 : time;
+  }
+
+  private getSavedSortOption(): SortOption {
+    try {
+      const saved = localStorage.getItem(FILTER_SORT_STORAGE_KEY) as SortOption | null;
+      return saved && ['newest', 'oldest', 'az', 'za'].includes(saved) ? saved : 'newest';
+    } catch {
+      return 'newest';
+    }
+  }
+
+  private saveSortOption(sortBy: SortOption): void {
+    try {
+      localStorage.setItem(FILTER_SORT_STORAGE_KEY, sortBy);
+    } catch {}
+  }
+
+  typeLabel(type: RecordTab): string {
+    const labels: Record<RecordTab, string> = {
+      all: 'All',
+      lab: 'Lab Analysis',
+      prescription: 'Prescription',
+      imaging: 'X-Ray & Imaging',
+      medicine: 'Medicine Box',
+      general: 'Other Medical Document',
+    };
+    return labels[type];
+  }
+
+  uploadedByLabel(uploadedBy: UploadedByFilter): string {
+    const labels: Record<UploadedByFilter, string> = {
+      all: 'All',
+      self: 'Self',
+      manual: 'Manual',
+      medicine: 'Medicine Box',
+    };
+    return labels[uploadedBy];
+  }
+
+  sortLabel(sortBy: SortOption): string {
+    const labels: Record<SortOption, string> = {
+      newest: 'Newest First',
+      oldest: 'Oldest First',
+      az: 'A-Z',
+      za: 'Z-A',
+    };
+    return labels[sortBy];
   }
 
   goToPage(p: number | '...'): void {
@@ -282,9 +518,9 @@ export class MedicalRecords implements OnInit, OnDestroy {
     if (this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1);
   }
 
-  setTab(tab: 'all' | 'lab' | 'prescription' | 'imaging' | 'medicine'): void {
+  setTab(tab: RecordTab): void {
     if (tab === this.activeTab()) return;
-    const order: Array<'all' | 'lab' | 'prescription' | 'imaging' | 'medicine'> = ['all', 'lab', 'prescription', 'imaging', 'medicine'];
+    const order: RecordTab[] = ['all', 'lab', 'prescription', 'imaging', 'medicine', 'general'];
     const currentIndex = order.indexOf(this.activeTab());
     const nextIndex = order.indexOf(tab);
     this.tabDirection.set(nextIndex >= currentIndex ? 'left' : 'right');
@@ -301,6 +537,7 @@ export class MedicalRecords implements OnInit, OnDestroy {
       imaging: 'fa-x-ray',
       prescription: 'fa-prescription-bottle-medical',
       medicine: 'fa-pills',
+      general: 'fa-file-medical',
     };
     return m[type] ?? 'fa-file-medical';
   }
@@ -311,6 +548,7 @@ export class MedicalRecords implements OnInit, OnDestroy {
       imaging: 'rec-ico-teal',
       prescription: 'rec-ico-purple',
       medicine: 'rec-ico-orange',
+      general: 'rec-ico-gray',
     };
     return m[type] ?? 'rec-ico-gray';
   }
@@ -403,6 +641,11 @@ export class MedicalRecords implements OnInit, OnDestroy {
   closeLightbox(): void { this.lightboxUrl.set(null); }
 
   triggerUpload(type: string): void {
+    if (type === 'General Medical Document') {
+      this.openGeneralUploadForm();
+      return;
+    }
+
     const map: Record<string, ElementRef<HTMLInputElement> | undefined> = {
       'Lab Analysis': this.labInput,
       'Prescription': this.prescriptionInput,
@@ -432,6 +675,33 @@ export class MedicalRecords implements OnInit, OnDestroy {
     if (f) this.startMedicineScan(f);
   }
 
+  onGeneralFileSelected(e: Event): void {
+    const f = this.extractFile(e);
+    if (!f) return;
+    this.generalUploadForm.file = f;
+    this.generalUploadForm.fileName = f.name;
+  }
+
+  openGeneralUploadForm(): void {
+    this.generalUploadForm = this.emptyGeneralUploadForm();
+    this.generalUploadFormOpen.set(true);
+  }
+
+  cancelGeneralUpload(): void {
+    if (this.uploadLoading()) return;
+    this.generalUploadForm = this.emptyGeneralUploadForm();
+    this.generalUploadFormOpen.set(false);
+  }
+
+  submitGeneralUpload(): void {
+    const file = this.generalUploadForm.file;
+    if (!file) {
+      this.showToast('Please choose an image before uploading.', 'error');
+      return;
+    }
+    this.uploadAndReview('general', file, this.generalUploadForm.description);
+  }
+
   private extractFile(event: Event): File | null {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
@@ -439,16 +709,18 @@ export class MedicalRecords implements OnInit, OnDestroy {
     return file;
   }
 
-  private uploadAndReview(type: 'lab' | 'imaging' | 'prescription', file: File): void {
-    const urls: Record<'lab' | 'imaging' | 'prescription', string> = {
+  private uploadAndReview(type: 'lab' | 'imaging' | 'prescription' | 'general', file: File, description = ''): void {
+    const urls: Record<'lab' | 'imaging' | 'prescription' | 'general', string> = {
       lab: `${this.base}/documents/upload/lab`,
       imaging: `${this.base}/documents/upload/imaging`,
       prescription: `${this.base}/prescriptions/upload`,
+      general: `${this.base}/documents/general/upload`,
     };
-    const labels: Record<'lab' | 'imaging' | 'prescription', string> = {
+    const labels: Record<'lab' | 'imaging' | 'prescription' | 'general', string> = {
       lab: 'Analysing Lab Report...',
       imaging: 'Analysing Imaging Report...',
       prescription: 'Extracting Prescription...',
+      general: 'Analysing Medical Document...',
     };
 
     this.uploadLoading.set(true);
@@ -457,12 +729,20 @@ export class MedicalRecords implements OnInit, OnDestroy {
 
     const form = new FormData();
     form.append('image', file);
+    if (type === 'general') {
+      form.append('description', description.trim());
+    }
 
     this.http.post<{ data: any }>(urls[type], form).subscribe({
       next: res => {
         this.uploadLoading.set(false);
         this.setUploading(type, false);
         const data = res?.data ?? (res as any);
+        if (type === 'general') {
+          data.description = description.trim();
+          this.generalUploadFormOpen.set(false);
+          this.generalUploadForm = this.emptyGeneralUploadForm();
+        }
         this.openReviewModal(type, data);
       },
       error: err => {
@@ -474,7 +754,7 @@ export class MedicalRecords implements OnInit, OnDestroy {
   }
 
   private openReviewModal(
-    type: 'lab' | 'imaging' | 'prescription',
+    type: 'lab' | 'imaging' | 'prescription' | 'general',
     data: any,
     mode: 'create' | 'edit' = 'create',
     recordId?: string
@@ -484,6 +764,11 @@ export class MedicalRecords implements OnInit, OnDestroy {
       mode,
       recordId,
       imagePath: data.imageUrl ?? data.imagePath ?? '',
+      title: data.title ?? data.documentTitle ?? '',
+      description: data.description ?? '',
+      documentType: data.documentType ?? '',
+      hospitalOrClinic: data.hospitalOrClinic ?? '',
+      documentDate: data.documentDate ?? data.reportDate ?? '',
       summary: data.summary ?? data.aiSummary ?? '',
       ocrText: data.ocrText ?? '',
       labName: data.labName ?? '',
@@ -595,7 +880,7 @@ export class MedicalRecords implements OnInit, OnDestroy {
       request$ = rf.mode === 'edit' && rf.recordId
         ? this.http.put(`${this.base}/documents/imaging/${rf.recordId}`, payload)
         : this.http.post(`${this.base}/documents/imaging`, payload);
-    } else {
+    } else if (rf.type === 'prescription') {
       const payload = {
         doctorName: rf.doctorName,
         patientName: rf.patientName,
@@ -612,6 +897,16 @@ export class MedicalRecords implements OnInit, OnDestroy {
       request$ = rf.mode === 'edit' && rf.recordId
         ? this.http.put(`${this.base}/prescriptions/${rf.recordId}`, payload)
         : this.http.post(`${this.base}/prescriptions`, payload);
+    } else {
+      const payload = {
+        title: rf.title,
+        description: rf.description,
+        aiSummary: rf.summary,
+        imagePath: rf.imagePath,
+      };
+      request$ = rf.mode === 'edit' && rf.recordId
+        ? this.http.put(`${this.base}/documents/general/${rf.recordId}`, payload)
+        : this.http.post(`${this.base}/documents/general`, payload);
     }
 
     request$.subscribe({
@@ -714,6 +1009,14 @@ export class MedicalRecords implements OnInit, OnDestroy {
       duration: '',
       notes: '',
       imagePath: '',
+    };
+  }
+
+  private emptyGeneralUploadForm(): GeneralUploadForm {
+    return {
+      description: '',
+      file: null,
+      fileName: '',
     };
   }
 

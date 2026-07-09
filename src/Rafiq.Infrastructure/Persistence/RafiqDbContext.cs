@@ -55,6 +55,7 @@ public sealed class RafiqDbContext : IdentityDbContext<
     public DbSet<LabResult> LabResults => Set<LabResult>();
 
     public DbSet<ImagingReport> ImagingReports => Set<ImagingReport>();
+    public DbSet<GeneralDocument> GeneralDocuments => Set<GeneralDocument>();
 
     #endregion
 
