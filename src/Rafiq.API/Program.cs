@@ -60,6 +60,7 @@ public class Program
         app.UseCors("Angular");
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseStaticFiles();
         app.MapControllers();
         app.MapHealthChecks("/health");
 

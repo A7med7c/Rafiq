@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, forkJoin, catchError, of, switchMap } from 'rxjs';
+import { Observable, map, forkJoin, catchError, of } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse } from '../Modles/api-response';
 import {
@@ -11,23 +11,6 @@ import {
   UserMedicine,
   ReminderDisplayItem,
 } from '../Modles/dashboard.models';
-
-interface AddMedicinePayload {
-  medicineName: string;
-  dosage: string;
-  frequency: string;
-  duration: string;
-  notes?: string;
-  source: number;
-}
-
-const SEED_MEDICINES: AddMedicinePayload[] = [
-  { medicineName: 'Amoxicillin',   dosage: '500mg',     frequency: 'Every 8 hours', duration: '7 days',   notes: 'Take with food',    source: 1 },
-  { medicineName: 'Vitamin D3',    dosage: '1000 IU',   frequency: 'Once daily',    duration: 'Ongoing',  notes: 'With breakfast',    source: 1 },
-  { medicineName: 'Antihistamine', dosage: '10mg',      frequency: 'Once daily',    duration: 'As needed',notes: 'Take at night',     source: 1 },
-  { medicineName: 'Metformin',     dosage: '500mg',     frequency: 'Twice daily',   duration: 'Ongoing',  notes: 'With meals',        source: 1 },
-  { medicineName: 'Paracetamol',   dosage: '500mg',     frequency: 'As needed',     duration: 'As needed',notes: 'Max 4 per day',     source: 1 },
-];
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
@@ -69,20 +52,11 @@ export class DashboardService {
     );
   }
 
-  // ─── Medicines — seed if empty ────────────────────────────────────────────
+  // ─── Medicines ────────────────────────────────────────────────────────────
   getMedicinesWithReminders(): Observable<ReminderDisplayItem[]> {
     return this.fetchMedicines().pipe(
-      switchMap(medicines => {
-        if (medicines.length > 0) {
-          return of(this.toDisplayItems(medicines));
-        }
-        // Seed first 3 demo medicines, then re-fetch
-        return this.seedMedicines().pipe(
-          switchMap(() => this.fetchMedicines()),
-          map(seeded => this.toDisplayItems(seeded)),
-          catchError(() => of([] as ReminderDisplayItem[]))
-        );
-      })
+      map(medicines => this.toDisplayItems(medicines)),
+      catchError(() => of([] as ReminderDisplayItem[]))
     );
   }
 
@@ -91,13 +65,6 @@ export class DashboardService {
       map(r => r.data ?? []),
       catchError(() => of([] as UserMedicine[]))
     );
-  }
-
-  private seedMedicines(): Observable<void> {
-    const posts = SEED_MEDICINES.slice(0, 3).map(m =>
-      this.http.post(`${this.base}/user-medicines`, m).pipe(catchError(() => of(null)))
-    );
-    return forkJoin(posts).pipe(map(() => undefined), catchError(() => of(undefined)));
   }
 
   private toDisplayItems(medicines: UserMedicine[]): ReminderDisplayItem[] {
