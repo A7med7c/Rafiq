@@ -12,40 +12,60 @@ export class Features {
 
   text = {
     en: {
+      learnMore: 'Learn more →',
       items: [
         {
+          index: '01',
+          icon: 'assets/icons/LP1.jpg',
           title: 'Smart Vitals Sync',
-          description: 'Smart vitals monitor and healthcare AI to track your health in real-time.',
-          alt: 'Vitals sync',
+          description: 'Sync with smart devices and track your vitals in real-time.',
         },
         {
-          title: 'Medication Reminder',
-          description: 'Never miss a medicine with smart reminders and schedules.',
-          alt: 'Reminder',
-        },
-        {
+          index: '02',
+          icon: 'assets/icons/onboarding-hero.svg',
           title: 'Family Health Records',
-          description: "Store and share your family's medical records securely.",
-          alt: 'Health records',
+          description: "Keep your family's medical history organized and accessible.",
+        },
+        {
+          index: '03',
+          icon: 'assets/icons/LP2.jpg',
+          title: 'Medication Reminder',
+          description: 'Set reminders and never miss your medications again.',
+        },
+        {
+          index: '04',
+          icon: 'assets/icons/Lp4.jpg',
+          title: 'AI Health Assistant',
+          description: 'Chat with Rafiq AI to get medical information and answers.',
         },
       ],
     },
     ar: {
+      learnMore: 'اعرف المزيد ←',
       items: [
         {
+          index: '01',
+          icon: 'assets/icons/LP1.jpg',
           title: 'مزامنة المؤشرات الحيوية',
-          description: 'تابع صحتك لحظة بلحظة مع مراقبة ذكية وتحليل طبي مدعوم بالذكاء الاصطناعي.',
-          alt: 'مزامنة المؤشرات',
+          description: 'تزامن مع الأجهزة الذكية وتابع مؤشراتك الحيوية لحظة بلحظة.',
         },
         {
-          title: 'تذكير بالأدوية',
-          description: 'لا تفوّت جرعة دواء مع تنبيهات ذكية وجداول سهلة التنظيم.',
-          alt: 'تذكير بالأدوية',
-        },
-        {
+          index: '02',
+          icon: 'assets/icons/LP2.jpg',
           title: 'سجلات صحة العائلة',
-          description: 'احفظ وشارك السجلات الطبية لعائلتك بأمان وخصوصية.',
-          alt: 'السجلات الصحية',
+          description: 'احتفظ بتاريخ عائلتك الطبي منظمًا وسهل الوصول.',
+        },
+        {
+          index: '03',
+          icon: 'assets/icons/Lp4.jpg',
+          title: 'تذكير بالأدوية',
+          description: 'اضبط التذكيرات ولا تفوّت أدويتك مرة أخرى.',
+        },
+        {
+          index: '04',
+          icon: 'assets/icons/onboarding-hero.svg',
+          title: 'مساعد صحي ذكي',
+          description: 'تحدث مع رفيق للحصول على معلومات وإجابات طبية.',
         },
       ],
     },

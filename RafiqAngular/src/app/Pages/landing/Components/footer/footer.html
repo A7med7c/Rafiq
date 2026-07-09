@@ -1,49 +1,92 @@
-<footer id="contact" class="footer">
-    <div class="footer-top">
-        <h2>{{ t.headline }}</h2>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col footer-brand">
+        <span class="logo">
+          <img src="images/RafiqLogo.png" alt="Rafiq logo">
+          <span>{{ t.brand }}</span>
+        </span>
+        <p>{{ t.brandText }}</p>
+        <div class="social-links">
+          <a href="#" aria-label="Facebook">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M14 9h3V5h-3c-2.2 0-4 1.8-4 4v2H7v4h3v6h4v-6h3l1-4h-4v-2c0-.6.4-1 1-1Z" fill="currentColor"/>
+            </svg>
+          </a>
+          <a href="#" aria-label="Twitter">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M22 5.9c-.7.3-1.5.6-2.3.7a4 4 0 0 0 1.8-2.2 8 8 0 0 1-2.5 1 4 4 0 0 0-6.9 3.6A11.4 11.4 0 0 1 3.8 4.6a4 4 0 0 0 1.2 5.3c-.6 0-1.2-.2-1.7-.5v.1a4 4 0 0 0 3.2 3.9c-.6.2-1.2.2-1.8.1a4 4 0 0 0 3.7 2.8A8 8 0 0 1 2 18.4a11.4 11.4 0 0 0 6.2 1.8c7.4 0 11.5-6.2 11.5-11.5v-.5c.8-.6 1.5-1.3 2-2.1" fill="currentColor"/>
+            </svg>
+          </a>
+          <a href="#" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.8"/>
+              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
+              <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
+            </svg>
+          </a>
+          <a href="#" aria-label="LinkedIn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M7.5 10.5V17M7.5 7.5v.01M11.5 17v-4c0-1.4.9-2.5 2.5-2.5s2.5 1.1 2.5 2.5v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </a>
+        </div>
+      </div>
 
-        <p>{{ t.subhead }}</p>
+      <div class="footer-col">
+        <h5>{{ t.quickLinks }}</h5>
+        <ul>
+          @for (link of t.quickLinkItems; track link.section) {
+            <li>
+              <button type="button" (click)="scrollToSection(link.section)">{{ link.label }}</button>
+            </li>
+          }
+        </ul>
+      </div>
 
-        <button class="footer-btn">
-            {{ t.cta }}
-        </button>
+      <div class="footer-col">
+        <h5>{{ t.services }}</h5>
+        <ul>
+          @for (link of t.serviceLinks; track link) {
+            <li><a href="#">{{ link }}</a></li>
+          }
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>{{ t.support }}</h5>
+        <ul>
+          @for (link of t.supportLinks; track link) {
+            <li><a href="#">{{ link }}</a></li>
+          }
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>{{ t.download }}</h5>
+        <div class="store-badges">
+          <a class="store-badge" href="#">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M16.4 12.2c0-2.5 2-3.6 2.1-3.7-1.1-1.6-2.9-1.9-3.6-1.9-1.5-.2-3 .9-3.7.9-.8 0-2-.9-3.2-.9-1.6 0-3.2 1-4 2.5-1.7 3-.4 7.4 1.2 9.8.8 1.1 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.2-.8s1.9.8 3.2.8c1.3 0 2.2-1.1 3-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.5-1-2.5-3.1ZM14 4.9c.7-.8 1.1-1.9 1-3-1 0-2.1.6-2.8 1.4-.6.7-1.1 1.8-1 2.9 1.1.1 2.1-.5 2.8-1.3Z"/>
+            </svg>
+            <span><small>{{ t.appStoreSmall }}</small><strong>{{ t.appStore }}</strong></span>
+          </a>
+          <a class="store-badge" href="#">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M4 3.6c-.3.3-.5.7-.5 1.2v14.4c0 .5.2.9.5 1.2l9-8.4-9-8.4Z"/>
+              <path d="M17.5 12l-3-1.8L11.4 12l3.1 1.8 3-1.8Z" opacity=".6"/>
+              <path d="M4.8 3.1 15.3 9l-3 1.8-7.5-7.7Z" opacity=".8"/>
+              <path d="M4.8 20.9 12.3 13l3 1.8-10.5 6.1Z" opacity=".8"/>
+            </svg>
+            <span><small>{{ t.playStoreSmall }}</small><strong>{{ t.playStore }}</strong></span>
+          </a>
+        </div>
+      </div>
     </div>
 
-    <div class="footer-content container">
-        <div class="footer-brand">
-            <img src="images/RafiqLogo.png" alt="Logo">
-
-            <h3>{{ t.brand }}</h3>
-
-            <p>{{ t.brandText }}</p>
-        </div>
-
-        <div class="footer-links">
-            <h4>{{ t.quickLinks }}</h4>
-
-            <a href="#">{{ t.links[0] }}</a>
-            <a href="#">{{ t.links[1] }}</a>
-            <a href="#">{{ t.links[2] }}</a>
-            <a href="#">{{ t.links[3] }}</a>
-        </div>
-
-        <div class="footer-links">
-            <h4>{{ t.services }}</h4>
-
-            <a href="#">{{ t.serviceLinks[0] }}</a>
-            <a href="#">{{ t.serviceLinks[1] }}</a>
-            <a href="#">{{ t.serviceLinks[2] }}</a>
-        </div>
-
-        <div class="footer-links">
-            <h4>{{ t.contact }}</h4>
-
-            <a href="#">support@rafiq.ai</a>
-            <a href="#">+20 101 235 5286</a>
-        </div>
+    <div class="footer-bottom">
+      {{ t.copyright }}
     </div>
-
-    <div class="copyright">
-        {{ t.copyright }}
-    </div>
+  </div>
 </footer>

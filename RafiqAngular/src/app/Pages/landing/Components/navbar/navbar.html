@@ -1,20 +1,71 @@
-<nav class="navbar">
+<nav class="navbar" [class.navbar-scrolled]="isScrolled()" [class.menu-open]="isMenuOpen()">
   <div class="container">
     <button type="button" class="logo" (click)="navigateToSection('home')" [attr.aria-label]="t.home">
       <img src="images/RafiqLogo.png" alt="Rafiq logo">
       <span>{{ t.brand }}</span>
     </button>
 
-    <div class="right-side">
+    <button
+      type="button"
+      class="menu-toggle"
+      [attr.aria-expanded]="isMenuOpen()"
+      aria-controls="mobile-nav"
+      [attr.aria-label]="isMenuOpen() ? t.closeMenu : t.openMenu"
+      (click)="toggleMenu()">
+      <span class="menu-bar"></span>
+      <span class="menu-bar"></span>
+      <span class="menu-bar"></span>
+    </button>
+
+    <div class="right-side" id="mobile-nav">
       <ul class="nav-links">
         <li>
-          <button type="button" (click)="navigateToSection('home')">{{ t.home }}</button>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'home'"
+            (click)="navigateToSection('home')">
+            {{ t.home }}
+          </button>
         </li>
         <li>
-          <button type="button" (click)="navigateToSection('about')">{{ t.about }}</button>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'about'"
+            (click)="navigateToSection('about')">
+            {{ t.about }}
+          </button>
         </li>
         <li>
-          <button type="button" (click)="navigateToSection('contact')">{{ t.contact }}</button>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'features'"
+            (click)="navigateToSection('features')">
+            {{ t.features }}
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'how-it-works'"
+            (click)="navigateToSection('how-it-works')">
+            {{ t.howItWorks }}
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'testimonials'"
+            (click)="navigateToSection('testimonials')">
+            {{ t.testimonials }}
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'contact'"
+            (click)="navigateToSection('contact')">
+            {{ t.contact }}
+          </button>
         </li>
       </ul>
 
