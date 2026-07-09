@@ -40,7 +40,7 @@ public sealed class UploadImagingReportCommandHandler(
             base64Image,
             ImagingReportPrompt.Build(),
             cancellationToken)
-            ?? throw new Exception("Bedrock returned no data. Please try again.");
+            ?? throw new BadRequestException("No imaging report data could be extracted from the uploaded image.");
 
         var reportDate = DateOnly.TryParseExact(
             extracted.ReportDate,

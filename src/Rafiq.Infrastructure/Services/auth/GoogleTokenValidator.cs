@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Features.Auth.DTOs;
+using Rafiq.Domain.Exceptions;
 
 namespace Rafiq.Infrastructure.Services.auth
 {
@@ -9,18 +10,16 @@ namespace Rafiq.Infrastructure.Services.auth
     {
         public async Task<GoogleUserInfoDto> ValidateAsync(string IdToken, CancellationToken cancellationToken)
         {
-            var clientId = _configuration["Authentication:Google:ClientId"].Trim();
-
-            Console.WriteLine($"[{clientId}]");
-            Console.WriteLine(clientId.Length);
+            var clientId = _configuration["Authentication:Google:ClientId"]?.Trim();
+            if (string.IsNullOrWhiteSpace(clientId))
+            {
+                throw new ExternalServiceException("Google", "Client id is not configured.");
+            }
 
             var payload = await GoogleJsonWebSignature.ValidateAsync(IdToken,
                 new GoogleJsonWebSignature.ValidationSettings
                 {
-                    Audience = new[]
-                    {
-                        _configuration["Authentication:Google:ClientId"]?.Trim()
-                    }
+                    Audience = new[] { clientId }
                 });
 
 

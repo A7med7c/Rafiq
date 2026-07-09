@@ -14,3 +14,15 @@ body{
     width:90%;
     margin:0 auto;
 }   
+
+/* Shared Onboarding Layout */
+.onboarding-layout {
+  width: 100%;
+  max-width: 960px;
+  padding-left: 20px;
+  padding-right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+

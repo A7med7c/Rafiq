@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -36,6 +36,7 @@ export class RegisterFormComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   isSubmitting = false;
   isVerifying = false;
@@ -89,6 +90,8 @@ export class RegisterFormComponent {
       },
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error);
+        this.isSubmitting = false;
+        this.changeDetector.detectChanges();
       },
       complete: () => {
         this.isSubmitting = false;
@@ -116,6 +119,8 @@ export class RegisterFormComponent {
       },
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error);
+        this.isVerifying = false;
+        this.changeDetector.detectChanges();
       },
       complete: () => {
         this.isVerifying = false;
@@ -138,6 +143,8 @@ export class RegisterFormComponent {
       },
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error);
+        this.isResending = false;
+        this.changeDetector.detectChanges();
       },
       complete: () => {
         this.isResending = false;

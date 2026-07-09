@@ -1,0 +1,177 @@
+<div class="step-page">
+
+  <!-- Top navigation bar -->
+  <header class="step-header">
+    <button class="back-btn" (click)="goBack()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Back
+    </button>
+    <h1 class="header-title">Create Your Health Profile</h1>
+    <div class="header-spacer"></div>
+  </header>
+
+  <div class="onboarding-layout">
+
+    <!-- Progress stepper -->
+    <div class="stepper-wrapper">
+      <div class="stepper">
+        @for (step of steps; track $index) {
+          <div class="step-item" [class.active]="$index === 0" [class.done]="$index < 0">
+            <div class="step-circle">
+              <span class="step-number">{{ $index + 1 }}</span>
+            </div>
+            <span class="step-label">{{ step.label }}</span>
+          </div>
+          @if ($index < steps.length - 1) {
+            <div class="step-connector" [class.filled]="$index < 0"></div>
+          }
+        }
+      </div>
+    </div>
+
+  <!-- Form card -->
+  <div class="form-card">
+    <p class="step-indicator">Step 1 of 4</p>
+    <h2 class="form-title">Let's start with your basic information</h2>
+
+    <form [formGroup]="form" (ngSubmit)="continue()" novalidate>
+
+      <!-- Row: Date of Birth + Gender -->
+      <div class="fields-row">
+
+        <div class="field">
+          <label for="dob" class="field-label">Date of Birth</label>
+          <div class="input-shell" [class.invalid]="isInvalid('dateOfBirth')">
+            <input
+              id="dob"
+              type="date"
+              class="field-input"
+              formControlName="dateOfBirth"
+              [max]="today"
+            />
+            <span class="input-suffix-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </span>
+          </div>
+          @if (isInvalid('dateOfBirth')) {
+            <p class="field-error">{{ getDateOfBirthError() }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="gender" class="field-label">Gender</label>
+          <div class="input-shell select-shell" [class.invalid]="isInvalid('gender')">
+            <select id="gender" class="field-select" formControlName="gender">
+              <option value="" disabled>Select</option>
+              @for (opt of genderOptions; track opt.value) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+            <span class="select-arrow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </span>
+          </div>
+          @if (isInvalid('gender')) {
+            <p class="field-error">Gender is required</p>
+          }
+        </div>
+
+      </div>
+
+      <!-- Row: Height + Weight -->
+      <div class="fields-row">
+
+        <div class="field">
+          <label for="height" class="field-label">Height</label>
+          <div class="input-shell" [class.invalid]="isInvalid('height')">
+            <input
+              id="height"
+              type="number"
+              class="field-input"
+              formControlName="height"
+              placeholder="175"
+              min="50"
+              max="300"
+            />
+            <span class="input-unit">cm</span>
+          </div>
+          @if (isInvalid('height')) {
+            <p class="field-error">Enter a valid height (50–300 cm)</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="weight" class="field-label">Weight</label>
+          <div class="input-shell" [class.invalid]="isInvalid('weight')">
+            <input
+              id="weight"
+              type="number"
+              class="field-input"
+              formControlName="weight"
+              placeholder="72"
+              min="1"
+              max="500"
+            />
+            <span class="input-unit">kg</span>
+          </div>
+          @if (isInvalid('weight')) {
+            <p class="field-error">Enter a valid weight (1–500 kg)</p>
+          }
+        </div>
+
+      </div>
+
+      <!-- Blood Type (single column) -->
+      <div class="field">
+        <label for="bloodType" class="field-label">Blood Type</label>
+        <div class="input-shell select-shell" [class.invalid]="isInvalid('bloodType')">
+          <span class="blood-drop-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C12 2 5 10.5 5 15a7 7 0 0 0 14 0C19 10.5 12 2 12 2Z"/>
+            </svg>
+          </span>
+          <select id="bloodType" class="field-select has-prefix-icon" formControlName="bloodType">
+            <option value="" disabled>Select blood type</option>
+            @for (bt of bloodTypes; track bt.value) {
+              <option [value]="bt.value">{{ bt.label }}</option>
+            }
+          </select>
+          <span class="select-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </span>
+        </div>
+        @if (isInvalid('bloodType')) {
+          <p class="field-error">Blood type is required</p>
+        }
+      </div>
+
+      <!-- Continue button -->
+      <button type="submit" class="continue-btn">
+        Continue
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+
+    </form>
+  </div>
+
+  <!-- Bottom progress bar -->
+  <div class="progress-footer">
+    <div class="progress-track">
+      <div class="progress-fill" style="width: 25%"></div>
+    </div>
+    <span class="progress-label">Step 1 of 4</span>
+  </div>
+
+  </div> <!-- /onboarding-layout -->
+
+</div>

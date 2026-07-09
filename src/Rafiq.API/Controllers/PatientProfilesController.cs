@@ -6,6 +6,7 @@ using Rafiq.Application.Features.PatientProfiles.Commands.DeletePatientProfile;
 using Rafiq.Application.Features.PatientProfiles.Commands.UpdatePatientProfile;
 using Rafiq.Application.Features.PatientProfiles.Queries.GetMyPatientProfile;
 using Rafiq.Application.Features.PatientProfiles.Queries.GetPatientProfileById;
+using Rafiq.Domain.Exceptions;
 
 namespace Rafiq.API.Controllers;
 
@@ -40,7 +41,7 @@ public sealed class PatientProfilesController(IMediator _mediator) : ControllerB
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePatientProfileCommand command, CancellationToken cancellationToken)
     {
         if (id != command.PatientProfileId)
-            return BadRequest("Route id doesn't match body id.");
+            throw new BadRequestException("Route id doesn't match body id.");
 
         var result = await _mediator.Send(command, cancellationToken);
 

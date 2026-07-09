@@ -73,7 +73,13 @@
                 </div>
 
                 @if (isInvalid('password')) {
-                <p class="field-error">Password is required.</p>
+                <p class="field-error">
+                    @if (loginForm.controls.password.errors?.['required']) {
+                    Password is required.
+                    } @else {
+                    Password must be at least 8 characters.
+                    }
+                </p>
                 }
 
             </div>
@@ -84,7 +90,7 @@
             </a>
 
 
-            <button class="submit-button" type="submit" [attr.aria-busy]="isSubmitting" [disabled]="isSubmitting">
+            <button class="submit-button" type="submit" [attr.aria-busy]="isSubmitting" [disabled]="isSubmitting || loginForm.invalid">
                 <span class="button-content">
                     @if (isSubmitting) {
                     <span class="button-spinner" aria-hidden="true"></span>

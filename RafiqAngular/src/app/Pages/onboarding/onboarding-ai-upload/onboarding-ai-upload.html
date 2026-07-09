@@ -1,0 +1,214 @@
+<div class="ai-page">
+
+  <!-- Header -->
+  <header class="step-header">
+    <button class="back-btn" (click)="goBack()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Back
+    </button>
+    <h1 class="header-title">Let AI Fill Your Health Profile</h1>
+    <div class="header-spacer"></div>
+  </header>
+
+  <div class="onboarding-layout">
+
+    <!-- Page title -->
+    <div class="page-title-block">
+      <h2 class="page-title">Upload your medical documents</h2>
+      <p class="page-subtitle">Our AI will scan and extract important health information for you.</p>
+    </div>
+
+    <!-- Document type upload cards -->
+    <div class="doc-type-grid">
+
+      <!-- Lab Report -->
+      <div class="doc-card" [class.uploaded]="hasUpload('lab')">
+        <div class="doc-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11M3 9l6 6 6-6 6 6"/>
+            <path d="M3 3l18 18"/>
+            <path d="M3 14c0 3.3 2.7 6 6 6s6-2.7 6-6"/>
+          </svg>
+        </div>
+        <span class="doc-label">Lab Report</span>
+        <button class="doc-upload-btn" (click)="triggerUpload('lab')">
+          @if (hasUpload('lab')) { ✓ Uploaded } @else { Upload }
+        </button>
+        <input type="file" id="file-lab" accept=".pdf,.jpg,.jpeg,.png" style="display:none"
+               (change)="onFileSelected($event, 'lab')">
+      </div>
+
+      <!-- Prescription -->
+      <div class="doc-card" [class.uploaded]="hasUpload('prescription')">
+        <div class="doc-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/>
+            <path d="M9 8h2.5a2.5 2.5 0 0 1 0 5H9V8z"/>
+            <path d="M11.5 13L14 16"/>
+            <path d="M9 13h3"/>
+          </svg>
+        </div>
+        <span class="doc-label">Prescription</span>
+        <button class="doc-upload-btn" (click)="triggerUpload('prescription')">
+          @if (hasUpload('prescription')) { ✓ Uploaded } @else { Upload }
+        </button>
+        <input type="file" id="file-prescription" accept=".pdf,.jpg,.jpeg,.png" style="display:none"
+               (change)="onFileSelected($event, 'prescription')">
+      </div>
+
+      <!-- Radiology -->
+      <div class="doc-card" [class.uploaded]="hasUpload('radiology')">
+        <div class="doc-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="12" cy="12" r="4"/>
+            <line x1="12" y1="3" x2="12" y2="8"/>
+            <line x1="12" y1="16" x2="12" y2="21"/>
+            <line x1="3" y1="12" x2="8" y2="12"/>
+            <line x1="16" y1="12" x2="21" y2="12"/>
+          </svg>
+        </div>
+        <span class="doc-label">Radiology</span>
+        <button class="doc-upload-btn" (click)="triggerUpload('radiology')">
+          @if (hasUpload('radiology')) { ✓ Uploaded } @else { Upload }
+        </button>
+        <input type="file" id="file-radiology" accept=".pdf,.jpg,.jpeg,.png" style="display:none"
+               (change)="onFileSelected($event, 'radiology')">
+      </div>
+
+      <!-- Medical Report -->
+      <div class="doc-card" [class.uploaded]="hasUpload('medical')">
+        <div class="doc-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="12" x2="12" y2="16"/>
+            <line x1="10" y1="14" x2="14" y2="14"/>
+          </svg>
+        </div>
+        <span class="doc-label">Medical Report</span>
+        <button class="doc-upload-btn" (click)="triggerUpload('medical')">
+          @if (hasUpload('medical')) { ✓ Uploaded } @else { Upload }
+        </button>
+        <input type="file" id="file-medical" accept=".pdf,.jpg,.jpeg,.png" style="display:none"
+               (change)="onFileSelected($event, 'medical')">
+      </div>
+
+      <!-- Other -->
+      <div class="doc-card" [class.uploaded]="hasUpload('other')">
+        <div class="doc-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="8" y1="13" x2="16" y2="13"/>
+            <line x1="8" y1="17" x2="13" y2="17"/>
+          </svg>
+        </div>
+        <span class="doc-label">Other</span>
+        <button class="doc-upload-btn" (click)="triggerUpload('other')">
+          @if (hasUpload('other')) { ✓ Uploaded } @else { Upload }
+        </button>
+        <input type="file" id="file-other" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none"
+               (change)="onFileSelected($event, 'other')">
+      </div>
+
+    </div><!-- /doc-type-grid -->
+
+    <!-- AI extraction visualization -->
+    <div class="extraction-card">
+
+      <!-- Left: what AI extracts -->
+      <div class="extract-panel">
+        <p class="extract-title">What AI will extract?</p>
+        <ul class="extract-list">
+          @for (item of extractItems; track $index) {
+            <li class="extract-item">
+              <span class="extract-check">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </span>
+              {{ item }}
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Center: document mockup + AI badge -->
+      <div class="doc-vis-area">
+        <div class="doc-mockup">
+          <div class="mock-line w-full"></div>
+          <div class="mock-line w-3q"></div>
+          <div class="mock-line w-full"></div>
+          <div class="mock-line w-half"></div>
+          <div class="mock-line w-full"></div>
+          <div class="mock-line w-3q"></div>
+        </div>
+
+        <div class="arrow-connector">
+          <div class="arrow-line"></div>
+          <svg class="arrow-head" width="8" height="14" viewBox="0 0 8 14" fill="none">
+            <path d="M1 1l6 6-6 6" stroke="#4E89B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <div class="ai-badge">AI</div>
+      </div>
+
+      <!-- Right: extracted results -->
+      <div class="results-panel">
+        @for (r of resultItems; track $index) {
+          <div class="result-row" [style.animation-delay]="($index * 120) + 'ms'">
+            <span class="result-val">{{ r.value }}</span>
+            <span class="result-cat">{{ r.category }}</span>
+          </div>
+        }
+      </div>
+
+    </div><!-- /extraction-card -->
+
+    <!-- Privacy note -->
+    <div class="privacy-note">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span>Your data is secure and private. We only use it to improve your health profile.</span>
+    </div>
+
+    <!-- Complete Profile button -->
+    <button class="choose-files-btn" (click)="completeProfile()" [disabled]="isSubmitting">
+      @if (isSubmitting) {
+        <span class="btn-spinner"></span>
+        Saving...
+      } @else {
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Complete My Profile
+      }
+    </button>
+
+    @if (submitError) {
+      <div class="submit-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {{ submitError }}
+      </div>
+    }
+
+    @if (submitSuccess) {
+      <div class="submit-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        {{ submitSuccess }}
+      </div>
+    }
+
+  </div><!-- /onboarding-layout -->
+
+</div>

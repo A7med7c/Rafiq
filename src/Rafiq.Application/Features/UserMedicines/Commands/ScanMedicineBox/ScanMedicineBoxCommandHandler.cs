@@ -43,7 +43,7 @@ public sealed class ScanMedicineBoxCommandHandler(
             base64Image,
             MedicineBoxPrompt.Build(),
             cancellationToken)
-            ?? throw new Exception("Bedrock returned no data. Please try again.");
+            ?? throw new BadRequestException("No medicine data could be extracted from the uploaded image.");
 
         // 5. Return extracted data to client for review (does not save to UserMedicine yet)
         var dto = new ScanMedicineBoxResponseDto
