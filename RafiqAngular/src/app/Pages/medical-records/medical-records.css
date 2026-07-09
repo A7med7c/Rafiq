@@ -33,7 +33,7 @@
 
     padding:18px 22px;
 
-    border:1px solid #E5E7EB;
+    border:1px solid #0EAFD7;
 
     border-radius:16px;
 
@@ -53,6 +53,20 @@
 
     box-shadow:0 8px 20px rgba(0,0,0,.08);
 
+}
+
+.view-document-card--with-image {
+    align-items:center;
+}
+
+.view-document-thumb {
+    width:74px;
+    height:58px;
+    border-radius:10px;
+    object-fit:cover;
+    border:1px solid var(--border-lt);
+    background:#F9FAFB;
+    flex-shrink:0;
 }
 
 .view-document-icon{
@@ -175,6 +189,7 @@
   cursor: pointer;
   transition: all 0.15s ease;
   box-shadow: var(--shadow-sm);
+  white-space: nowrap;
 }
 
 .filter-btn:hover {
@@ -186,7 +201,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  background: var(--blue);
+  background: #0EAFD7;
   color: var(--white);
   border: none;
   border-radius: var(--r-xs);
@@ -200,7 +215,7 @@
 }
 
 .add-record-btn:hover {
-  background: #3665e0;
+  background: #0d98bb;
 }
 
 /* ── Upload Grid ───────────────────────────── */
@@ -289,12 +304,27 @@
 }
 
 /* ── Tabs Bar ──────────────────────────────── */
+.records-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--border);
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
 .tabs-bar {
   display: flex;
-  border-bottom: 2px solid var(--border);
   gap: 8px;
   overflow-x: auto;
   white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 auto;
+  scrollbar-width: none;
+}
+
+.tabs-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .tab-link {
@@ -340,7 +370,7 @@
 
   height: 2px;
 
-  background: var(--blue);
+  background: #0EAFD7;
 
   border-radius: 999px;
 
@@ -352,7 +382,7 @@
 
 .tab-link.active {
 
-  color: var(--blue);
+  color: #0EAFD7;
 
   font-weight: 700;
 
@@ -443,9 +473,9 @@
   font-weight: 700;
 }
 
-.type-lab         { background: var(--blue-lt);   color: var(--blue); }
+.type-lab         { background: var#010b0d;   color: #0EAFD7; }
 .type-imaging     { background: var(--teal-lt);   color: var(--teal); }
-.type-prescription { background: var(--purple-lt);  color: var(--purple); }
+.type-prescription {   color: #0EAFD7; }
 .type-medicine    { background: var(--orange-lt);  color: var(--orange); }
 
 .table-date {
@@ -468,9 +498,9 @@
 }
 
 .action-btn {
-  background: transparent;
+  background: white;
   border: 1px solid transparent;
-  color: var(--text-3);
+  color: #0EAFD7;
   font-size: 14px;
   width: 28px;
   height: 28px;
@@ -722,11 +752,12 @@
 
 .modal-btn {
   padding: 8px 16px;
+  background-color: #0EAFD7;
   border-radius: var(--r-xs);
   font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.15s ease;  
 }
 
 .modal-btn-secondary {
@@ -740,7 +771,7 @@
 }
 
 .modal-btn-primary {
-  background: var(--blue);
+  background: #0EAFD7;
   border: none;
   color: var(--white);
   display: flex;
@@ -749,7 +780,8 @@
 }
 
 .modal-btn-primary:hover {
-  background: #3665e0;
+  color: #0EAFD7;
+  background: white;
 }
 
 /* ── Responsive adjustments ────────────────── */
@@ -766,7 +798,23 @@
   .title-right {
     width: 100%;
   }
-  .search-wrap {
+  .records-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tabs-bar {
+    width: 100%;
+  }
+  .records-table-tools {
+    justify-content: flex-start;
+    width: 100%;
+    padding-bottom: 10px;
+  }
+  .search-wrap,
+  .records-toolbar .search-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
     width: 100%;
   }
 }
@@ -1204,11 +1252,11 @@
 
 /* Medical records scoped refinements */
 :host {
-  --sb-w: 236px;
+  --sb-w: 270px;
 }
 
 .dsh {
-  transition: grid-template-columns 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: grid-template-columns 250ms ease-in-out;
 }
 
 .dsh-sb,
@@ -1226,19 +1274,257 @@
 
 .dsh-sb {
   transition:
-    width 420ms cubic-bezier(0.22, 1, 0.36, 1),
-    padding 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    width 250ms ease-in-out,
+    padding 250ms ease-in-out;
 }
 
 .dsh.sb-collapsed {
   --sb-w: 74px;
 }
 
+.sb-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 28px;
+  min-width: 0;
+}
+
+.sb-top .sb-logo {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.sb-toggle {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  background: var(--white);
+  color: var(--text-3);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 150ms ease, color 150ms ease, transform 250ms ease-in-out;
+}
+
+.sb-toggle:hover {
+  background: var(--border-lt);
+  color: var(--text-2);
+}
+
+.dsh.sb-collapsed .sb-toggle {
+  transform: translateX(-1px);
+}
+
+.dsh.sb-collapsed .sb-toggle i {
+  transform: rotate(180deg);
+}
+
+.sb-toggle i,
+.sb-ico {
+  transition: transform 250ms ease-in-out;
+}
+
+.dsh.sb-collapsed .sb-ico {
+  transform: translateX(0);
+}
+
 .sb-logo-text,
 .sb-link span:last-child,
 .sb-help {
-  transition-duration: 260ms;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  transition:
+    opacity 250ms ease-in-out,
+    transform 250ms ease-in-out,
+    width 250ms ease-in-out,
+    visibility 250ms ease-in-out;
+}
+
+.sb-logo-icon {
+  width: 52px;
+  height: 52px;
+}
+
+.sb-logo-img {
+  width: 98px;
+  height: 70px;
+}
+
+.sb-logo-title {
+  font-size: 19px;
+}
+
+.sb-logo-sub {
+  font-size: 12px;
+}
+
+.dsh.sb-collapsed .sb-logo-icon {
+  width: 46px;
+  height: 46px;
+}
+
+.dsh.sb-collapsed .sb-logo-img {
+  width: 44px;
+  height: 44px;
+}
+
+.dsh.sb-collapsed .sb-logo-text,
+.dsh.sb-collapsed .sb-link span:last-child,
+.dsh.sb-collapsed .sb-help {
+  transform: translateX(-8px);
+}
+
+.dsh.sb-collapsed .sb-top {
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dsh.sb-collapsed .sb-toggle {
+  width: 34px;
+  height: 28px;
+}
+
+.records-table-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding-bottom: 8px;
+}
+
+.records-toolbar .search-wrap {
+  width: min(300px, 32vw);
+  min-width: 220px;
+}
+
+.record-actions {
+  position: relative;
+  display: inline-flex;
+}
+
+.record-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 132px;
+  padding: 6px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  box-shadow: 0 12px 32px rgba(0,0,0,.12);
+  z-index: 30;
+  animation: dropdown-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top right;
+}
+
+.record-menu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.record-menu-item i {
+  width: 14px;
+  text-align: center;
+}
+
+.record-menu-item:hover {
+  background: var(--blue-lt);
+  color: var(--blue);
+}
+
+.record-menu-item--danger {
+  color: var(--red);
+}
+
+.record-menu-item--danger:hover {
+  background: var(--red-lt);
+  color: var(--red);
+}
+
+.action-btn:disabled,
+.modal-btn:disabled,
+.close-modal-btn:disabled,
+.mini-add-btn:disabled,
+.row-delete-btn:disabled {
+  cursor: not-allowed;
+  opacity: .65;
+}
+
+.delete-overlay {
+  background: rgba(15, 23, 42, 0.68);
+}
+
+.delete-modal {
+  max-width: 440px;
+}
+
+.delete-modal-ico {
+  background: var(--red-lt);
+  color: var(--red);
+}
+
+.delete-modal-body {
+  gap: 8px;
+}
+
+.delete-modal-body p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.modal-btn-danger {
+  border: none;
+  background: var(--red);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.modal-btn-danger:hover:not(:disabled) {
+  background: #B91C1C;
+}
+
+.tab-animating.tab-slide-left {
+  animation: records-slide-left 250ms ease-in-out;
+}
+
+.tab-animating.tab-slide-right {
+  animation: records-slide-right 250ms ease-in-out;
+}
+
+@keyframes records-slide-left {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes records-slide-right {
+  from { opacity: 0; transform: translateX(-18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.records-table tbody tr {
+  transition: background 150ms ease, transform 180ms ease;
 }
 
 .pagination-bar {
@@ -1266,7 +1552,7 @@
 
 .page-btn:hover:not(:disabled),
 .page-btn.active {
-  background: var(--blue);
+  background: #0EAFD7;
   border-color: var(--blue);
   color: var(--white);
 }

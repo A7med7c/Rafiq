@@ -132,4 +132,19 @@ export class MedicalRecordsService {
     // Sort newest first
     return records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
+
+  deleteRecord(record: UnifiedMedicalRecord): Observable<unknown> {
+    const url = this.getRecordUrl(record);
+    return this.http.delete(url);
+  }
+
+  private getRecordUrl(record: UnifiedMedicalRecord): string {
+    const paths: Record<UnifiedMedicalRecord['type'], string> = {
+      lab: 'documents/labs',
+      imaging: 'documents/imaging',
+      prescription: 'prescriptions',
+      medicine: 'user-medicines',
+    };
+    return `${this.base}/${paths[record.type]}/${record.id}`;
+  }
 }
