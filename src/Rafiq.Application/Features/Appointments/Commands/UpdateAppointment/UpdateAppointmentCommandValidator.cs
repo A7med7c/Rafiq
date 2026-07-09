@@ -34,8 +34,5 @@ internal sealed class UpdateAppointmentCommandValidator : AbstractValidator<Upda
         RuleFor(x => x.ReminderOffsetMinutes)
             .GreaterThanOrEqualTo(0).WithMessage("ReminderOffsetMinutes cannot be negative.")
             .When(x => x.ReminderOffsetMinutes.HasValue);
-
-        RuleFor(x => x.Status)
-            .IsInEnum().WithMessage("Status must be a valid value.");
     }
 }

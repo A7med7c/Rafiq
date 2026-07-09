@@ -52,6 +52,14 @@ public sealed class AppointmentRepository(RafiqDbContext context) : IAppointment
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Appointment>> GetExpiredUpcomingAppointmentsAsync(
+        DateTime referenceTime,
+        CancellationToken cancellationToken = default)
+        => await context.Appointments
+            .Where(x => x.Status == AppointmentStatus.Upcoming &&
+                        x.AppointmentDateTime <= referenceTime)
+            .ToListAsync(cancellationToken);
+
     public Task<bool> ExistsDuplicateAsync(
         Guid userId,
         AppointmentType appointmentType,
