@@ -7,24 +7,22 @@ public interface IAppointmentRepository
 {
     Task AddAsync(Appointment appointment, CancellationToken cancellationToken = default);
 
-    Task<Appointment?> GetByIdAsync(Guid id, Guid userId, CancellationToken cancellationToken = default);
+    Task<Appointment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<Appointment>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Appointment>> GetAllByUserHealthProfileIdAsync(Guid userHealthProfileId, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<Appointment>> GetUpcomingByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Appointment>> GetUpcomingByUserHealthProfileIdAsync(Guid userHealthProfileId, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<Appointment>> GetTodayByUserIdAsync(Guid userId, DateTime today, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Appointment>> GetTodayByUserHealthProfileIdAsync(Guid userHealthProfileId, DateTime today, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Appointment>> GetExpiredUpcomingAppointmentsAsync(DateTime referenceTime, CancellationToken cancellationToken = default);
 
     Task<bool> ExistsDuplicateAsync(
-        Guid userId,
+        Guid userHealthProfileId,
         AppointmentType appointmentType,
         string title,
         string provider,
         DateTime appointmentDateTime,
         Guid? excludeId = null,
         CancellationToken cancellationToken = default);
-
-    Task<bool> DeleteAsync(Guid id, Guid userId, CancellationToken cancellationToken = default);
 }

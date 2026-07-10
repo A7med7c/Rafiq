@@ -1,8 +1,11 @@
 ﻿using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities.User;
 
 public sealed class GeneralDocument : BaseEntity
 {
-    public Guid UserId { get; private set; }
+    public Guid UserHealthProfileId { get; private set; }
+
+    public UserHealthProfile UserHealthProfile { get; private set; } = null!;
 
     public string Title { get; private set; } = null!;
 
@@ -15,13 +18,13 @@ public sealed class GeneralDocument : BaseEntity
     protected GeneralDocument() { }
 
     public GeneralDocument(
-        Guid userId,
+        Guid userHealthProfileId,
         string title,
         string description,
         string imagePath,
         string? aiSummary = null)
     {
-        UserId = userId;
+        UserHealthProfileId = userHealthProfileId;
         Title = title;
         Description = description;
         ImagePath = imagePath;

@@ -6,6 +6,7 @@ using Rafiq.Domain.Enums;
 namespace Rafiq.Application.Features.UserMedicines.Commands.AddUserMedicine;
 
 public sealed record AddUserMedicineCommand(
+    Guid ProfileId,
     string MedicineName,
     string Dosage,
     string Frequency,

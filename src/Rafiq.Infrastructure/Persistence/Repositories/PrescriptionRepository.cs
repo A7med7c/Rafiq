@@ -20,44 +20,38 @@ public sealed class PrescriptionRepository : IPrescriptionRepository
 
     public Task<Prescription?> GetByIdAsync(
         Guid id,
-        Guid userId,
         CancellationToken cancellationToken = default)
         => _context.Prescriptions
             .Include(p => p.Medicines)
-            .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId, cancellationToken);
+            .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, cancellationToken);
 
-    public async Task<IReadOnlyList<Prescription>> GetAllByUserIdAsync(
-        Guid userId,
+    public async Task<IReadOnlyList<Prescription>> GetAllByProfileIdAsync(
+        Guid userHealthProfileId,
         CancellationToken cancellationToken = default)
         => await _context.Prescriptions
             .Include(p => p.Medicines)
-            .Where(p => p.UserId == userId)
+            .Where(p => p.UserHealthProfileId == userHealthProfileId)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync(cancellationToken);
 
-    public async Task<bool> DeleteAsync(
-        Guid id,
-        Guid userId,
-        CancellationToken cancellationToken = default)
+    public void Update(Prescription prescription)
     {
-        var prescription = await _context.Prescriptions
-            .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId, cancellationToken);
+        _context.Prescriptions.Update(prescription);
+    }
 
-        if (prescription is null)
-            return false;
-
+    public void Delete(Prescription prescription)
+    {
         prescription.SoftDelete();
-        return true;
+        _context.Prescriptions.Update(prescription);
     }
 
     public async Task<List<PrescriptionMedicine>> GetMedicinesByIdsAsync(
-        IEnumerable<Guid> ids, 
-        Guid userId, 
+        IEnumerable<Guid> ids,
         CancellationToken cancellationToken = default)
     {
         return await _context.PrescriptionMedicines
             .Include(m => m.Prescription)
-            .Where(m => ids.Contains(m.Id) && m.Prescription.UserId == userId && !m.IsDeleted)
+            .Where(m => ids.Contains(m.Id) && !m.IsDeleted)
             .ToListAsync(cancellationToken);
     }
 }

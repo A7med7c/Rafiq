@@ -8,7 +8,7 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.Prescriptions.Queries.GetPrescriptionById;
 
 public sealed class GetPrescriptionByIdQueryHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IPrescriptionRepository prescriptionRepository)
     : IRequestHandler<GetPrescriptionByIdQuery, ApiResponse<PrescriptionResponseDto>>
 {
@@ -16,13 +16,11 @@ public sealed class GetPrescriptionByIdQueryHandler(
         GetPrescriptionByIdQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
-
-        // The repository filters by both Id AND UserId — ownership is enforced at the DB level
         var prescription = await prescriptionRepository
-            .GetByIdAsync(request.Id, userId, cancellationToken)
+            .GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(Domain.Entities.Documents.Prescription), request.Id);
+
+        await authorizationService.EnsureCanReadAsync(prescription.UserHealthProfileId, cancellationToken);
 
         var dto = new PrescriptionResponseDto
         {

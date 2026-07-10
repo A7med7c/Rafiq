@@ -1,4 +1,5 @@
 using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Enums;
 
 namespace Rafiq.Domain.Entities.Documents;
@@ -8,7 +9,7 @@ public class Appointment : BaseEntity
     protected Appointment() { }
 
     public Appointment(
-        Guid userId,
+        Guid userHealthProfileId,
         AppointmentType appointmentType,
         string? customType,
         string title,
@@ -17,7 +18,7 @@ public class Appointment : BaseEntity
         int? reminderOffsetMinutes,
         string? notes)
     {
-        UserId = userId;
+        UserHealthProfileId = userHealthProfileId;
         AppointmentType = appointmentType;
         CustomType = appointmentType == AppointmentType.Other ? customType : null;
         Title = title;
@@ -28,7 +29,9 @@ public class Appointment : BaseEntity
         Status = AppointmentStatus.Upcoming;
     }
 
-    public Guid UserId { get; private set; }
+    public Guid UserHealthProfileId { get; private set; }
+
+    public UserHealthProfile UserHealthProfile { get; private set; } = null!;
 
     public AppointmentType AppointmentType { get; private set; }
 

@@ -20,16 +20,15 @@ public sealed class ImagingReportRepository : IImagingReportRepository
 
     public Task<ImagingReport?> GetByIdAsync(
         Guid id,
-        Guid userId,
         CancellationToken cancellationToken = default)
         => _context.ImagingReports
-            .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId, cancellationToken);
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
-    public async Task<IReadOnlyList<ImagingReport>> GetAllByUserIdAsync(
-        Guid userId,
+    public async Task<IReadOnlyList<ImagingReport>> GetAllByProfileIdAsync(
+        Guid userHealthProfileId,
         CancellationToken cancellationToken = default)
         => await _context.ImagingReports
-            .Where(r => r.UserId == userId)
+            .Where(r => r.UserHealthProfileId == userHealthProfileId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
 }

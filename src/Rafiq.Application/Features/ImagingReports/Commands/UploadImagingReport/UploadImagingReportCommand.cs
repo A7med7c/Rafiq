@@ -5,5 +5,5 @@ using Rafiq.Application.Features.ImagingReports.DTOs;
 
 namespace Rafiq.Application.Features.ImagingReports.Commands.UploadImagingReport;
 
-public sealed record UploadImagingReportCommand(IFormFile Image)
+public sealed record UploadImagingReportCommand(Guid ProfileId, IFormFile Image)
     : IRequest<ApiResponse<ImagingReportResponseDto>>;

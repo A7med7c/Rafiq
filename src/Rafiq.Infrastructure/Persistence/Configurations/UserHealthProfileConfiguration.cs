@@ -14,6 +14,14 @@ public sealed class UserHealthProfileConfiguration
 
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.FirstName)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(x => x.LastName)
+            .HasMaxLength(100)
+            .IsRequired();
+
         builder.Property(x => x.Gender)
             .HasConversion<string>()
             .HasMaxLength(20)
@@ -21,8 +29,7 @@ public sealed class UserHealthProfileConfiguration
 
         builder.Property(x => x.BloodType)
             .HasConversion<string>()
-            .HasMaxLength(20)
-            .IsRequired();
+            .HasMaxLength(20);
 
         builder.Property(x => x.Height)
             .HasPrecision(5, 2);
@@ -35,7 +42,10 @@ public sealed class UserHealthProfileConfiguration
             .HasForeignKey<UserHealthProfile>(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // A registered user can have at most one Self Profile.
+        // Multiple Managed Profiles (UserId is null) are allowed.
         builder.HasIndex(x => x.UserId)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("[UserId] IS NOT NULL");
     }
 }

@@ -4,5 +4,5 @@ using Rafiq.Application.Features.ImagingReports.DTOs;
 
 namespace Rafiq.Application.Features.ImagingReports.Queries.GetMyImagingReports;
 
-public sealed record GetMyImagingReportsQuery
+public sealed record GetMyImagingReportsQuery(Guid ProfileId)
     : IRequest<ApiResponse<List<ImagingReportResponseDto>>>;

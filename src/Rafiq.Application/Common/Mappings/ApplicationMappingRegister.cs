@@ -10,7 +10,7 @@ public sealed class ApplicationMappingRegister : IRegister
     {
         config.NewConfig<UserHealthProfile, PatientProfileDto>()
      .Map(dest => dest.Gender, src => src.Gender.ToString())
-     .Map(dest => dest.BloodType, src => src.BloodType.ToString());
+     .Map(dest => dest.BloodType, src => src.BloodType == null ? null : src.BloodType.ToString());
 
         config.NewConfig<Allergy, AllergyDto>()
             .Map(dest => dest.Severity, src => src.Severity.ToString());

@@ -10,7 +10,7 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.UserMedicines.Commands.AddFromPrescription;
 
 public sealed class AddFromPrescriptionCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IPrescriptionRepository prescriptionRepository,
     IUserMedicineRepository userMedicineRepository,
     IUnitOfWork unitOfWork)
@@ -20,32 +20,44 @@ public sealed class AddFromPrescriptionCommandHandler(
         AddFromPrescriptionCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
-
-        // 1. Fetch the requested PrescriptionMedicines that belong to the current user
+        // 1. Load all requested PrescriptionMedicines with their parent Prescriptions
         var prescriptionMedicines = await prescriptionRepository.GetMedicinesByIdsAsync(
-            request.PrescriptionMedicineIds, 
-            userId, 
+            request.PrescriptionMedicineIds,
             cancellationToken);
 
-        if (prescriptionMedicines.Count == 0)
+        // 2. Verify every requested medicine was found
+        if (prescriptionMedicines.Count != request.PrescriptionMedicineIds.Count)
         {
-            return ApiResponse<AddFromPrescriptionResponseDto>.SuccessResponse(
-                new AddFromPrescriptionResponseDto { AddedCount = 0, SkippedCount = 0 },
-                "No valid medicines found to add.");
+            var foundIds = prescriptionMedicines.Select(m => m.Id).ToHashSet();
+            var missingId = request.PrescriptionMedicineIds.First(id => !foundIds.Contains(id));
+            throw new NotFoundException(nameof(PrescriptionMedicine), missingId);
         }
 
-        // 2. Fetch all existing UserMedicines for the user to check for duplicates
-        var existingUserMedicines = await userMedicineRepository.GetAllByUserIdAsync(userId, cancellationToken);
+        // 3. Collect distinct source UserHealthProfileIds from actual parent Prescriptions
+        var distinctSourceProfileIds = prescriptionMedicines
+            .Select(m => m.Prescription.UserHealthProfileId)
+            .Distinct()
+            .ToList();
+
+        // 4. EnsureCanReadAsync once per distinct source profile
+        foreach (var sourceProfileId in distinctSourceProfileIds)
+        {
+            await authorizationService.EnsureCanReadAsync(sourceProfileId, cancellationToken);
+        }
+
+        // 5. EnsureCanWriteAsync once for the destination profile
+        await authorizationService.EnsureCanWriteAsync(request.ProfileId, cancellationToken);
+
+        // 6. Fetch existing UserMedicines for the destination profile to avoid duplicates
+        var existingUserMedicines = await userMedicineRepository.GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
         var existingNames = new HashSet<string>(
-            existingUserMedicines.Select(m => m.MedicineName.Trim()), 
+            existingUserMedicines.Select(m => m.MedicineName.Trim()),
             StringComparer.OrdinalIgnoreCase);
 
         int addedCount = 0;
         int skippedCount = 0;
 
-        // 3. Process each requested medicine
+        // 7. Process each medicine
         foreach (var pm in prescriptionMedicines)
         {
             var medName = pm.MedicineName.Trim();
@@ -57,7 +69,7 @@ public sealed class AddFromPrescriptionCommandHandler(
             }
 
             var newUserMedicine = new UserMedicine(
-                userId: userId,
+                userHealthProfileId: request.ProfileId,
                 medicineName: pm.MedicineName,
                 dosage: pm.Dosage,
                 frequency: pm.Frequency,
@@ -68,7 +80,7 @@ public sealed class AddFromPrescriptionCommandHandler(
             );
 
             await userMedicineRepository.AddAsync(newUserMedicine, cancellationToken);
-            existingNames.Add(medName); // Prevent duplicate in the same batch
+            existingNames.Add(medName);
             addedCount++;
         }
 

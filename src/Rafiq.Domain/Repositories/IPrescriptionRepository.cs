@@ -6,11 +6,13 @@ public interface IPrescriptionRepository
 {
     Task AddAsync(Prescription prescription, CancellationToken cancellationToken = default);
 
-    Task<Prescription?> GetByIdAsync(Guid id, Guid userId, CancellationToken cancellationToken = default);
+    Task<Prescription?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<Prescription>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Prescription>> GetAllByProfileIdAsync(Guid userHealthProfileId, CancellationToken cancellationToken = default);
 
-    Task<List<PrescriptionMedicine>> GetMedicinesByIdsAsync(IEnumerable<Guid> ids, Guid userId, CancellationToken cancellationToken = default);
+    Task<List<PrescriptionMedicine>> GetMedicinesByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
 
-    Task<bool> DeleteAsync(Guid id, Guid userId, CancellationToken cancellationToken = default);
+    void Update(Prescription prescription);
+    
+    void Delete(Prescription prescription);
 }

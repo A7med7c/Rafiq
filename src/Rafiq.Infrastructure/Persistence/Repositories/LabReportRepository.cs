@@ -20,18 +20,17 @@ public sealed class LabReportRepository : ILabReportRepository
 
     public Task<LabReport?> GetByIdAsync(
         Guid id,
-        Guid userId,
         CancellationToken cancellationToken = default)
         => _context.LabReports
             .Include(r => r.Results)
-            .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId, cancellationToken);
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
-    public async Task<IReadOnlyList<LabReport>> GetAllByUserIdAsync(
-        Guid userId,
+    public async Task<IReadOnlyList<LabReport>> GetAllByProfileIdAsync(
+        Guid userHealthProfileId,
         CancellationToken cancellationToken = default)
         => await _context.LabReports
             .Include(r => r.Results)
-            .Where(r => r.UserId == userId)
+            .Where(r => r.UserHealthProfileId == userHealthProfileId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
 }

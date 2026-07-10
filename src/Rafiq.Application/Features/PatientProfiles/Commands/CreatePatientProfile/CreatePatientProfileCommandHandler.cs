@@ -12,7 +12,9 @@ namespace Rafiq.Application.Features.PatientProfiles.Commands.CreatePatientProfi
 
 public sealed class CreatePatientProfileCommandHandler(
     ICurrentUserService currentUserService,
+    IIdentityService identityService,
     IPatientProfileRepository patientProfileRepository,
+    IHealthProfileAccessRepository healthProfileAccessRepository,
     IUnitOfWork unitOfWork,
     IMapper mapper)
     : IRequestHandler<CreatePatientProfileCommand, ApiResponse<PatientProfileDto>>
@@ -30,15 +32,17 @@ public sealed class CreatePatientProfileCommandHandler(
         if (profileExists)
             throw new ConflictException("A patient profile already exists for this user.");
 
-        var profile = new UserHealthProfile
-        {
-            UserId = currentUserId,
-            Gender = request.Gender,
-            DateOfBirth = request.DateOfBirth,
-            Height = request.Height,
-            Weight = request.Weight,
-            BloodType = request.BloodType,
-        };
+        var account = await identityService.GetAccountAsync(currentUserId, cancellationToken);
+
+        var profile = UserHealthProfile.CreateSelf(
+            currentUserId,
+            account.FirstName,
+            account.LastName,
+            request.Gender,
+            request.DateOfBirth,
+            request.Height,
+            request.Weight,
+            request.BloodType);
 
         foreach (var allergy in request.Allergies)
         {
@@ -60,6 +64,10 @@ public sealed class CreatePatientProfileCommandHandler(
         }
 
         await patientProfileRepository.AddAsync(profile, cancellationToken);
+
+        var selfOwnerAccess = HealthProfileAccess.CreateSelfOwner(profile.Id, currentUserId);
+
+        await healthProfileAccessRepository.AddAsync(selfOwnerAccess, cancellationToken);
 
         request.SetEntityId(profile.Id);
 

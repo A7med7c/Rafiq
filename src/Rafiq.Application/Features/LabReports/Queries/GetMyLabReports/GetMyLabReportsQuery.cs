@@ -7,5 +7,5 @@ namespace Rafiq.Application.Features.LabReports.Queries.GetMyLabReports;
 /// <summary>
 /// Returns all Lab Reports that belong to the currently authenticated user.
 /// </summary>
-public sealed record GetMyLabReportsQuery
+public sealed record GetMyLabReportsQuery(Guid ProfileId)
     : IRequest<ApiResponse<List<LabReportResponseDto>>>;

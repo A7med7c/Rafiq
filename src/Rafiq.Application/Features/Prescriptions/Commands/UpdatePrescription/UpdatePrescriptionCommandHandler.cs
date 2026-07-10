@@ -9,7 +9,7 @@ using System.Globalization;
 namespace Rafiq.Application.Features.Prescriptions.Commands.UpdatePrescription;
 
 public sealed class UpdatePrescriptionCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IPrescriptionRepository prescriptionRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<UpdatePrescriptionCommand, ApiResponse<PrescriptionResponseDto>>
@@ -18,13 +18,11 @@ public sealed class UpdatePrescriptionCommandHandler(
         UpdatePrescriptionCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
-
-        // The repository filters by both Id AND UserId — ownership is enforced at the DB level
         var prescription = await prescriptionRepository
-            .GetByIdAsync(request.Id, userId, cancellationToken)
+            .GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(Domain.Entities.Documents.Prescription), request.Id);
+
+        await authorizationService.EnsureCanWriteAsync(prescription.UserHealthProfileId, cancellationToken);
 
         // Update editable fields
         prescription.DoctorName = request.DoctorName;
@@ -40,6 +38,7 @@ public sealed class UpdatePrescriptionCommandHandler(
             prescription.PrescriptionDate = parsed;
         }
 
+        prescriptionRepository.Update(prescription);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = new PrescriptionResponseDto

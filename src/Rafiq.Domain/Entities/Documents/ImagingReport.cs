@@ -1,4 +1,5 @@
 using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities.User;
 
 namespace Rafiq.Domain.Entities.Documents;
 
@@ -8,7 +9,7 @@ public class ImagingReport : BaseEntity
     protected ImagingReport() { }
 
     public ImagingReport(
-        Guid userId,
+        Guid userHealthProfileId,
         string imagingType,
         string bodyPart,
         string findings,
@@ -19,7 +20,7 @@ public class ImagingReport : BaseEntity
         string? ocrText,
         string? description)
     {
-        UserId = userId;
+        UserHealthProfileId = userHealthProfileId;
         ImagingType = imagingType;
         BodyPart = bodyPart;
         Findings = findings;
@@ -31,7 +32,9 @@ public class ImagingReport : BaseEntity
         Description = description;
     }
 
-    public Guid UserId { get; private set; }
+    public Guid UserHealthProfileId { get; private set; }
+
+    public UserHealthProfile UserHealthProfile { get; private set; } = null!;
 
     public string ImagingType { get; set; } = null!;
 

@@ -9,7 +9,7 @@ using System.Globalization;
 namespace Rafiq.Application.Features.ImagingReports.Commands.UploadImagingReport;
 
 public sealed class UploadImagingReportCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IBedrockService bedrockService,
     IFileStorageService fileStorageService)
     : IRequestHandler<UploadImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
@@ -18,8 +18,7 @@ public sealed class UploadImagingReportCommandHandler(
         UploadImagingReportCommand request,
         CancellationToken cancellationToken)
     {
-        _ = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        await authorizationService.EnsureCanWriteAsync(request.ProfileId, cancellationToken);
 
         var fileExtension = Path.GetExtension(request.Image.FileName);
         var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";

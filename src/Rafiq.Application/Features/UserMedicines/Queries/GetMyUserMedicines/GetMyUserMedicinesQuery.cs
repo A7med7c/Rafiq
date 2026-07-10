@@ -7,5 +7,5 @@ namespace Rafiq.Application.Features.UserMedicines.Queries.GetMyUserMedicines;
 /// <summary>
 /// Returns all UserMedicines that belong to the currently authenticated user.
 /// </summary>
-public sealed record GetMyUserMedicinesQuery
+public sealed record GetMyUserMedicinesQuery(Guid ProfileId)
     : IRequest<ApiResponse<List<UserMedicineResponseDto>>>;

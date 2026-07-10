@@ -2,13 +2,12 @@ using MediatR;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.LabReports.DTOs;
-using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Application.Features.LabReports.Queries.GetMyLabReports;
 
 public sealed class GetMyLabReportsQueryHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     ILabReportRepository labReportRepository)
     : IRequestHandler<GetMyLabReportsQuery, ApiResponse<List<LabReportResponseDto>>>
 {
@@ -16,11 +15,10 @@ public sealed class GetMyLabReportsQueryHandler(
         GetMyLabReportsQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        await authorizationService.EnsureCanReadAsync(request.ProfileId, cancellationToken);
 
         var reports = await labReportRepository
-            .GetAllByUserIdAsync(userId, cancellationToken);
+            .GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
 
         var dtos = reports.Select(report => new LabReportResponseDto
         {

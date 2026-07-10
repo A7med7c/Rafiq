@@ -42,6 +42,8 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<RafiqDbContext>());
         services.AddScoped<IPatientProfileRepository, UserHealthProfileRepository>();
+        services.AddScoped<IHealthProfileAccessRepository, HealthProfileAccessRepository>();
+        services.AddScoped<IHealthProfileAuthorizationService, HealthProfileAuthorizationService>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IOtpRepository, OtpRepository>();
         services.AddScoped<INotificationsService, NotificationsService>();
