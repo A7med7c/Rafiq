@@ -7,20 +7,19 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.Appointments.Commands.DeleteAppointment;
 
 public sealed class DeleteAppointmentCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IAppointmentRepository appointmentRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<DeleteAppointmentCommand, ApiResponse<bool>>
 {
     public async Task<ApiResponse<bool>> Handle(DeleteAppointmentCommand request, CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        var appointment = await appointmentRepository.GetByIdAsync(request.Id, cancellationToken)
+            ?? throw new NotFoundException(nameof(Domain.Entities.Documents.Appointment), request.Id);
 
-        var deleted = await appointmentRepository.DeleteAsync(request.Id, userId, cancellationToken);
+        await authorizationService.EnsureCanWriteAsync(appointment.UserHealthProfileId, cancellationToken);
 
-        if (!deleted)
-            throw new NotFoundException(nameof(Domain.Entities.Documents.Appointment), request.Id);
+        appointment.SoftDelete();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

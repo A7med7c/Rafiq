@@ -8,7 +8,7 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.MedicineReminders.Commands.DeleteMedicineReminder;
 
 public sealed class DeleteMedicineReminderCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
     IMedicineReminderRepository medicineReminderRepository,
     IUnitOfWork unitOfWork)
@@ -18,16 +18,13 @@ public sealed class DeleteMedicineReminderCommandHandler(
         DeleteMedicineReminderCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
-
         var reminder = await medicineReminderRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(MedicineReminder), request.Id);
 
-        var userMedicine = await userMedicineRepository.GetByIdAsync(reminder.UserMedicineId, userId, cancellationToken)
+        var userMedicine = await userMedicineRepository.GetByIdAsync(reminder.UserMedicineId, cancellationToken)
             ?? throw new NotFoundException(nameof(UserMedicine), reminder.UserMedicineId);
 
-        // Authorization is handled by repository
+        await authorizationService.EnsureCanWriteAsync(userMedicine.UserHealthProfileId, cancellationToken);
 
         medicineReminderRepository.Delete(reminder);
         await unitOfWork.SaveChangesAsync(cancellationToken);

@@ -8,7 +8,7 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.UserMedicines.Queries.GetMyUserMedicines;
 
 public sealed class GetMyUserMedicinesQueryHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository)
     : IRequestHandler<GetMyUserMedicinesQuery, ApiResponse<List<UserMedicineResponseDto>>>
 {
@@ -16,11 +16,10 @@ public sealed class GetMyUserMedicinesQueryHandler(
         GetMyUserMedicinesQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        await authorizationService.EnsureCanReadAsync(request.ProfileId, cancellationToken);
 
         var userMedicines = await userMedicineRepository
-            .GetAllByUserIdAsync(userId, cancellationToken);
+            .GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
 
         var dtos = userMedicines.Select(userMedicine => new UserMedicineResponseDto
         {

@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Rafiq.Domain.Entities.Documents;
-using Rafiq.Infrastructure.Persistence.Identity;
 
 namespace Rafiq.Infrastructure.Persistence.Configurations;
 
@@ -38,13 +37,13 @@ public sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appointm
         builder.Property(x => x.Notes)
             .HasColumnType("nvarchar(max)");
 
-        builder.HasOne<ApplicationUser>()
+        builder.HasOne(x => x.UserHealthProfile)
             .WithMany()
-            .HasForeignKey(x => x.UserId)
+            .HasForeignKey(x => x.UserHealthProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(x => x.UserId);
-        builder.HasIndex(x => new { x.UserId, x.AppointmentDateTime });
-        builder.HasIndex(x => new { x.UserId, x.Status, x.AppointmentDateTime });
+        builder.HasIndex(x => x.UserHealthProfileId);
+        builder.HasIndex(x => new { x.UserHealthProfileId, x.AppointmentDateTime });
+        builder.HasIndex(x => new { x.UserHealthProfileId, x.Status, x.AppointmentDateTime });
     }
 }

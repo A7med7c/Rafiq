@@ -30,6 +30,8 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<UserHealthProfile> UserHealthProfiles => Set<UserHealthProfile>();
 
+    public DbSet<HealthProfileAccess> HealthProfileAccesses => Set<HealthProfileAccess>();
+
     public DbSet<Allergy> Allergies => Set<Allergy>();
     public DbSet<OtpVerification> PhoneVerifications => Set<OtpVerification>();
 

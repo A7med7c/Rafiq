@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Rafiq.Domain.Entities.Documents;
-using Rafiq.Infrastructure.Persistence.Identity;
 
 namespace Rafiq.Infrastructure.Persistence.Configurations;
 
@@ -34,10 +33,10 @@ public sealed class LabReportConfiguration : IEntityTypeConfiguration<LabReport>
         builder.Property(x => x.Description)
             .HasMaxLength(2000);
 
-        // Relationship with Identity User
-        builder.HasOne<ApplicationUser>()
-            .WithMany(u => u.LabReports)
-            .HasForeignKey(x => x.UserId)
+        // Relationship with UserHealthProfile
+        builder.HasOne(x => x.UserHealthProfile)
+            .WithMany()
+            .HasForeignKey(x => x.UserHealthProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Relationship with LabResults
@@ -46,7 +45,7 @@ public sealed class LabReportConfiguration : IEntityTypeConfiguration<LabReport>
             .HasForeignKey(x => x.LabReportId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(x => x.UserId);
+        builder.HasIndex(x => x.UserHealthProfileId);
         builder.HasIndex(x => x.CreatedAt);
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Rafiq.Infrastructure.Persistence.Identity;
 
 public sealed class GeneralDocumentConfiguration
     : IEntityTypeConfiguration<GeneralDocument>
@@ -24,11 +23,11 @@ public sealed class GeneralDocumentConfiguration
         builder.Property(x => x.ImagePath)
             .IsRequired();
 
-        builder.HasOne<ApplicationUser>()
-            .WithMany(x => x.GeneralDocuments)
-            .HasForeignKey(x => x.UserId)
+        builder.HasOne(x => x.UserHealthProfile)
+            .WithMany()
+            .HasForeignKey(x => x.UserHealthProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(x => x.UserId);
+        builder.HasIndex(x => x.UserHealthProfileId);
     }
 }

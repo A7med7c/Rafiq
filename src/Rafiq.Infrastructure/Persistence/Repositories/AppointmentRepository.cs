@@ -12,31 +12,30 @@ public sealed class AppointmentRepository(RafiqDbContext context) : IAppointment
 
     public Task<Appointment?> GetByIdAsync(
         Guid id,
-        Guid userId,
         CancellationToken cancellationToken = default)
         => context.Appointments
-            .FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-    public async Task<IReadOnlyList<Appointment>> GetAllByUserIdAsync(
-        Guid userId,
+    public async Task<IReadOnlyList<Appointment>> GetAllByUserHealthProfileIdAsync(
+        Guid userHealthProfileId,
         CancellationToken cancellationToken = default)
         => await context.Appointments
-            .Where(x => x.UserId == userId)
+            .Where(x => x.UserHealthProfileId == userHealthProfileId)
             .OrderBy(x => x.AppointmentDateTime)
             .ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<Appointment>> GetUpcomingByUserIdAsync(
-        Guid userId,
+    public async Task<IReadOnlyList<Appointment>> GetUpcomingByUserHealthProfileIdAsync(
+        Guid userHealthProfileId,
         CancellationToken cancellationToken = default)
         => await context.Appointments
-            .Where(x => x.UserId == userId &&
+            .Where(x => x.UserHealthProfileId == userHealthProfileId &&
                         x.Status == AppointmentStatus.Upcoming &&
                         x.AppointmentDateTime >= DateTime.UtcNow)
             .OrderBy(x => x.AppointmentDateTime)
             .ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<Appointment>> GetTodayByUserIdAsync(
-        Guid userId,
+    public async Task<IReadOnlyList<Appointment>> GetTodayByUserHealthProfileIdAsync(
+        Guid userHealthProfileId,
         DateTime today,
         CancellationToken cancellationToken = default)
     {
@@ -44,7 +43,7 @@ public sealed class AppointmentRepository(RafiqDbContext context) : IAppointment
         var startOfNextDay = startOfDay.AddDays(1);
 
         return await context.Appointments
-            .Where(x => x.UserId == userId &&
+            .Where(x => x.UserHealthProfileId == userHealthProfileId &&
                         x.Status == AppointmentStatus.Upcoming &&
                         x.AppointmentDateTime >= startOfDay &&
                         x.AppointmentDateTime < startOfNextDay)
@@ -61,7 +60,7 @@ public sealed class AppointmentRepository(RafiqDbContext context) : IAppointment
             .ToListAsync(cancellationToken);
 
     public Task<bool> ExistsDuplicateAsync(
-        Guid userId,
+        Guid userHealthProfileId,
         AppointmentType appointmentType,
         string title,
         string provider,
@@ -73,7 +72,7 @@ public sealed class AppointmentRepository(RafiqDbContext context) : IAppointment
         var normalizedProvider = provider.Trim().ToUpper();
 
         var query = context.Appointments
-            .Where(x => x.UserId == userId &&
+            .Where(x => x.UserHealthProfileId == userHealthProfileId &&
                         x.AppointmentType == appointmentType &&
                         x.AppointmentDateTime == appointmentDateTime &&
                         x.Title.Trim().ToUpper() == normalizedTitle &&
@@ -85,17 +84,5 @@ public sealed class AppointmentRepository(RafiqDbContext context) : IAppointment
         }
 
         return query.AnyAsync(cancellationToken);
-    }
-
-    public async Task<bool> DeleteAsync(Guid id, Guid userId, CancellationToken cancellationToken = default)
-    {
-        var appointment = await context.Appointments
-            .FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellationToken);
-
-        if (appointment is null)
-            return false;
-
-        appointment.SoftDelete();
-        return true;
     }
 }

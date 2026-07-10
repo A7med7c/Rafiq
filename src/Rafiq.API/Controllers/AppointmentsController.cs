@@ -21,31 +21,42 @@ public sealed class AppointmentsController(IMediator mediator) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Create(
-        [FromBody] CreateAppointmentCommand command,
+        [FromQuery] Guid profileId,
+        [FromBody] CreateAppointmentRequest body,
         CancellationToken cancellationToken)
     {
+        var command = new CreateAppointmentCommand(
+            profileId,
+            body.AppointmentType,
+            body.CustomType,
+            body.Title,
+            body.Provider,
+            body.AppointmentDateTime,
+            body.ReminderOffsetMinutes,
+            body.Notes);
+
         var result = await mediator.Send(command, cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll([FromQuery] Guid profileId, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetAppointmentsQuery(), cancellationToken);
+        var result = await mediator.Send(new GetAppointmentsQuery(profileId), cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("upcoming")]
-    public async Task<IActionResult> GetUpcoming(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetUpcoming([FromQuery] Guid profileId, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetUpcomingAppointmentsQuery(), cancellationToken);
+        var result = await mediator.Send(new GetUpcomingAppointmentsQuery(profileId), cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("today")]
-    public async Task<IActionResult> GetToday(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetToday([FromQuery] Guid profileId, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetTodayAppointmentsQuery(), cancellationToken);
+        var result = await mediator.Send(new GetTodayAppointmentsQuery(profileId), cancellationToken);
         return Ok(result);
     }
 
@@ -98,6 +109,15 @@ public sealed class AppointmentsController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 }
+
+public sealed record CreateAppointmentRequest(
+    AppointmentType AppointmentType,
+    string? CustomType,
+    string Title,
+    string Provider,
+    DateTime AppointmentDateTime,
+    int? ReminderOffsetMinutes,
+    string? Notes);
 
 public sealed record UpdateAppointmentRequest(
     AppointmentType AppointmentType,

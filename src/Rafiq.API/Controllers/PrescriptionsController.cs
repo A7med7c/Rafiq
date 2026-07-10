@@ -1,37 +1,29 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Rafiq.Application.Common.Interfaces;
-using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.Prescriptions.Commands.DeletePrescription;
 using Rafiq.Application.Features.Prescriptions.Commands.UpdatePrescription;
 using Rafiq.Application.Features.Prescriptions.Commands.UploadPrescription;
 using Rafiq.Application.Features.Prescriptions.DTOs;
 using Rafiq.Application.Features.Prescriptions.Queries.GetMyPrescriptions;
 using Rafiq.Application.Features.Prescriptions.Queries.GetPrescriptionById;
-using Rafiq.Domain.Entities.Documents;
-using Rafiq.Domain.Exceptions;
-using Rafiq.Domain.Repositories;
-using System.Globalization;
+using Rafiq.Application.Features.Prescriptions.Commands.SavePrescription;
 
 namespace Rafiq.API.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/prescriptions")]
-public sealed class PrescriptionsController(
-    IMediator mediator,
-    ICurrentUserService currentUserService,
-    IPrescriptionRepository prescriptionRepository,
-    IUnitOfWork unitOfWork) : ControllerBase
+public sealed class PrescriptionsController(IMediator mediator) : ControllerBase
 {
     [HttpPost("upload")]
     public async Task<IActionResult> UploadPrescription(
+        [FromQuery] Guid profileId,
         IFormFile image,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new UploadPrescriptionCommand(image),
+            new UploadPrescriptionCommand(profileId, image),
             cancellationToken);
 
         return Ok(result);
@@ -39,43 +31,35 @@ public sealed class PrescriptionsController(
 
     [HttpPost]
     public async Task<IActionResult> SavePrescription(
+        [FromQuery] Guid profileId,
         [FromBody] SavePrescriptionRequest body,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        var medicines = body.Medicines?
+            .Select(m => new SavePrescriptionMedicineCommandItem(
+                m.MedicineName, m.Dosage, m.Frequency, m.Duration, m.Instructions, m.Notes))
+            .ToList();
 
-        var prescription = new Prescription(
-            userId,
-            body.DoctorName ?? string.Empty,
-            body.PatientName ?? string.Empty,
-            ParseDateOrToday(body.PrescriptionDate),
-            body.ImagePath ?? string.Empty);
+        var result = await mediator.Send(
+            new SavePrescriptionCommand(
+                profileId,
+                body.DoctorName,
+                body.PatientName,
+                body.PrescriptionDate,
+                body.ImagePath,
+                medicines),
+            cancellationToken);
 
-        foreach (var medicine in body.Medicines ?? [])
-        {
-            prescription.Medicines.Add(new PrescriptionMedicine
-            {
-                MedicineName = medicine.MedicineName ?? string.Empty,
-                Dosage = medicine.Dosage ?? string.Empty,
-                Frequency = medicine.Frequency ?? string.Empty,
-                Duration = medicine.Duration ?? string.Empty,
-                Notes = medicine.Instructions ?? medicine.Notes
-            });
-        }
-
-        await prescriptionRepository.AddAsync(prescription, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return StatusCode(StatusCodes.Status201Created,
-            ApiResponse<PrescriptionResponseDto>.SuccessResponse(ToDto(prescription), "Prescription saved successfully."));
+        return StatusCode(StatusCodes.Status201Created, result);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetMyPrescriptions(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetMyPrescriptions(
+        [FromQuery] Guid profileId,
+        CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new GetMyPrescriptionsQuery(),
+            new GetMyPrescriptionsQuery(profileId),
             cancellationToken);
 
         return Ok(result);
@@ -122,30 +106,6 @@ public sealed class PrescriptionsController(
         return Ok(result);
     }
 
-    private static DateOnly ParseDateOrToday(string? value) =>
-        DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
-            ? parsed
-            : DateOnly.FromDateTime(DateTime.UtcNow);
-
-    private static PrescriptionResponseDto ToDto(Prescription prescription) =>
-        new()
-        {
-            Id = prescription.Id,
-            DoctorName = prescription.DoctorName,
-            PatientName = prescription.PatientName,
-            PrescriptionDate = prescription.PrescriptionDate.ToString("yyyy-MM-dd"),
-            ImagePath = prescription.ImagePath,
-            CreatedAt = prescription.CreatedAt,
-            Medicines = prescription.Medicines.Select(m => new PrescriptionMedicineResponseDto
-            {
-                Id = m.Id,
-                MedicineName = m.MedicineName,
-                Dosage = m.Dosage,
-                Frequency = m.Frequency,
-                Duration = m.Duration,
-                Notes = m.Notes
-            }).ToList()
-        };
 }
 
 public sealed record SavePrescriptionRequest(

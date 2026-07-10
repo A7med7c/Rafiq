@@ -3,14 +3,14 @@ using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.Appointments.DTOs;
 using Rafiq.Domain.Entities.Documents;
-using Rafiq.Domain.Enums;
 using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Application.Features.Appointments.Commands.CreateAppointment;
 
 public sealed class CreateAppointmentCommandHandler(
-    ICurrentUserService currentUserService,
+    IPatientProfileRepository patientProfileRepository,
+    IHealthProfileAuthorizationService authorizationService,
     IAppointmentRepository appointmentRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<CreateAppointmentCommand, ApiResponse<AppointmentResponseDto>>
@@ -19,11 +19,13 @@ public sealed class CreateAppointmentCommandHandler(
         CreateAppointmentCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        _ = await patientProfileRepository.GetByIdAsync(request.ProfileId, cancellationToken)
+            ?? throw new NotFoundException("UserHealthProfile", request.ProfileId);
+
+        await authorizationService.EnsureCanWriteAsync(request.ProfileId, cancellationToken);
 
         var duplicateExists = await appointmentRepository.ExistsDuplicateAsync(
-            userId,
+            request.ProfileId,
             request.AppointmentType,
             request.Title,
             request.Provider,
@@ -35,7 +37,7 @@ public sealed class CreateAppointmentCommandHandler(
             throw new ValidationException(new[] { "An appointment with the same type, title, provider, and date/time already exists." });
 
         var appointment = new Appointment(
-            userId,
+            request.ProfileId,
             request.AppointmentType,
             request.CustomType,
             request.Title,

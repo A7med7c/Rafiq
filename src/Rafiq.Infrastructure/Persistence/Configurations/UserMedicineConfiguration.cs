@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Rafiq.Domain.Entities.Documents;
-using Rafiq.Infrastructure.Persistence.Identity;
 
 namespace Rafiq.Infrastructure.Persistence.Configurations;
 
@@ -40,13 +39,13 @@ public sealed class UserMedicineConfiguration : IEntityTypeConfiguration<UserMed
             .HasMaxLength(50)
             .IsRequired();
 
-        // Relationship with Identity User
-        builder.HasOne<ApplicationUser>()
-            .WithMany(u => u.UserMedicines)
-            .HasForeignKey(x => x.UserId)
+        // Relationship with UserHealthProfile
+        builder.HasOne(x => x.UserHealthProfile)
+            .WithMany()
+            .HasForeignKey(x => x.UserHealthProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(x => x.UserId);
+        builder.HasIndex(x => x.UserHealthProfileId);
         builder.HasIndex(x => x.CreatedAt);
     }
 }

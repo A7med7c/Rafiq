@@ -6,6 +6,7 @@ using Rafiq.Domain.Enums;
 namespace Rafiq.Application.Features.Appointments.Commands.CreateAppointment;
 
 public sealed record CreateAppointmentCommand(
+    Guid ProfileId,
     AppointmentType AppointmentType,
     string? CustomType,
     string Title,

@@ -128,6 +128,16 @@ public sealed class IdentityService(
         return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed);
     }
 
+    public async Task<IdentityUserDto?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
+        if (user is null || !user.IsActive)
+            return null;
+
+        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
+        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed);
+    }
+
     public async Task ConfirmPhoneNumberAsync(
     Guid userId,
     CancellationToken cancellationToken = default)

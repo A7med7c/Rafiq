@@ -7,19 +7,17 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.Appointments.Commands.CompleteAppointment;
 
 public sealed class CompleteAppointmentCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IAppointmentRepository appointmentRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<CompleteAppointmentCommand, ApiResponse<bool>>
 {
     public async Task<ApiResponse<bool>> Handle(CompleteAppointmentCommand request, CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
-
-        var appointment = await appointmentRepository
-            .GetByIdAsync(request.Id, userId, cancellationToken)
+        var appointment = await appointmentRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(Domain.Entities.Documents.Appointment), request.Id);
+
+        await authorizationService.EnsureCanWriteAsync(appointment.UserHealthProfileId, cancellationToken);
 
         appointment.MarkAsCompleted();
 

@@ -8,6 +8,7 @@ using Rafiq.Application.Features.UserMedicines.Commands.ScanMedicineBox;
 using Rafiq.Application.Features.UserMedicines.Commands.UpdateUserMedicine;
 using Rafiq.Application.Features.UserMedicines.Queries.GetMyUserMedicines;
 using Rafiq.Application.Features.UserMedicines.Queries.GetUserMedicineById;
+using Rafiq.Domain.Enums;
 
 namespace Rafiq.API.Controllers;
 
@@ -34,10 +35,13 @@ public sealed class UserMedicinesController(IMediator mediator) : ControllerBase
 
     [HttpPost("from-prescription")]
     public async Task<IActionResult> AddFromPrescription(
-        [FromBody] AddFromPrescriptionCommand command,
+        [FromQuery] Guid profileId,
+        [FromBody] AddFromPrescriptionBody body,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await mediator.Send(
+            new AddFromPrescriptionCommand(profileId, body.PrescriptionMedicineIds),
+            cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
     }
 
@@ -47,21 +51,34 @@ public sealed class UserMedicinesController(IMediator mediator) : ControllerBase
     /// </summary>
     [HttpPost]
     public async Task<IActionResult> AddUserMedicine(
-        [FromBody] AddUserMedicineCommand command,
+        [FromQuery] Guid profileId,
+        [FromBody] AddUserMedicineBody body,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await mediator.Send(
+            new AddUserMedicineCommand(
+                profileId,
+                body.MedicineName,
+                body.Dosage,
+                body.Frequency,
+                body.Duration,
+                body.Notes,
+                body.ImagePath,
+                body.Source),
+            cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
     }
 
     /// <summary>
-    /// Get all medicines for the authenticated user.
+    /// Get all medicines for the given profile.
     /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetMyUserMedicines(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetMyUserMedicines(
+        [FromQuery] Guid profileId,
+        CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new GetMyUserMedicinesQuery(),
+            new GetMyUserMedicinesQuery(profileId),
             cancellationToken);
 
         return Ok(result);
@@ -127,3 +144,16 @@ public sealed record UpdateUserMedicineRequest(
     string Frequency,
     string Duration,
     string? Notes);
+
+/// <summary>Request body for adding a UserMedicine manually or from scan.</summary>
+public sealed record AddUserMedicineBody(
+    string MedicineName,
+    string Dosage,
+    string Frequency,
+    string Duration,
+    string? Notes,
+    string? ImagePath,
+    MedicineSource Source);
+
+/// <summary>Request body for adding medicines from a prescription.</summary>
+public sealed record AddFromPrescriptionBody(List<Guid> PrescriptionMedicineIds);

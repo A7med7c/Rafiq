@@ -6,7 +6,7 @@ public interface ILabReportRepository
 {
     Task AddAsync(LabReport labReport, CancellationToken cancellationToken = default);
 
-    Task<LabReport?> GetByIdAsync(Guid id, Guid userId, CancellationToken cancellationToken = default);
+    Task<LabReport?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<LabReport>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LabReport>> GetAllByProfileIdAsync(Guid userHealthProfileId, CancellationToken cancellationToken = default);
 }

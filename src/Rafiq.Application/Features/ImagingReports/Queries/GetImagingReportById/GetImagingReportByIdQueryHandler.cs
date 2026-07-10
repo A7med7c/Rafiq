@@ -8,7 +8,7 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.ImagingReports.Queries.GetImagingReportById;
 
 public sealed class GetImagingReportByIdQueryHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IImagingReportRepository imagingReportRepository)
     : IRequestHandler<GetImagingReportByIdQuery, ApiResponse<ImagingReportResponseDto>>
 {
@@ -16,12 +16,11 @@ public sealed class GetImagingReportByIdQueryHandler(
         GetImagingReportByIdQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
-
         var report = await imagingReportRepository
-            .GetByIdAsync(request.Id, userId, cancellationToken)
+            .GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(Domain.Entities.Documents.ImagingReport), request.Id);
+
+        await authorizationService.EnsureCanReadAsync(report.UserHealthProfileId, cancellationToken);
 
         var dto = new ImagingReportResponseDto
         {

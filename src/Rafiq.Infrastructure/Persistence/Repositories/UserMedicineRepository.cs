@@ -20,31 +20,26 @@ public sealed class UserMedicineRepository : IUserMedicineRepository
 
     public Task<UserMedicine?> GetByIdAsync(
         Guid id,
-        Guid userId,
         CancellationToken cancellationToken = default)
         => _context.UserMedicines
-            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId, cancellationToken);
+            .FirstOrDefaultAsync(m => m.Id == id && !m.IsDeleted, cancellationToken);
 
-    public async Task<IReadOnlyList<UserMedicine>> GetAllByUserIdAsync(
-        Guid userId,
+    public async Task<IReadOnlyList<UserMedicine>> GetAllByProfileIdAsync(
+        Guid userHealthProfileId,
         CancellationToken cancellationToken = default)
         => await _context.UserMedicines
-            .Where(m => m.UserId == userId)
+            .Where(m => m.UserHealthProfileId == userHealthProfileId)
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
 
-    public async Task<bool> DeleteAsync(
-        Guid id,
-        Guid userId,
-        CancellationToken cancellationToken = default)
+    public void Update(UserMedicine userMedicine)
     {
-        var userMedicine = await _context.UserMedicines
-            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId, cancellationToken);
+        _context.UserMedicines.Update(userMedicine);
+    }
 
-        if (userMedicine is null)
-            return false;
-
+    public void Delete(UserMedicine userMedicine)
+    {
         userMedicine.SoftDelete();
-        return true;
+        _context.UserMedicines.Update(userMedicine);
     }
 }

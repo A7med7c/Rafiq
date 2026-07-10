@@ -8,7 +8,8 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.Appointments.Queries.GetTodayAppointments;
 
 public sealed class GetTodayAppointmentsQueryHandler(
-    ICurrentUserService currentUserService,
+    IPatientProfileRepository patientProfileRepository,
+    IHealthProfileAuthorizationService authorizationService,
     IAppointmentRepository appointmentRepository)
     : IRequestHandler<GetTodayAppointmentsQuery, ApiResponse<List<AppointmentResponseDto>>>
 {
@@ -16,11 +17,13 @@ public sealed class GetTodayAppointmentsQueryHandler(
         GetTodayAppointmentsQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        _ = await patientProfileRepository.GetByIdAsync(request.ProfileId, cancellationToken)
+            ?? throw new NotFoundException("UserHealthProfile", request.ProfileId);
 
-        var appointments = await appointmentRepository.GetTodayByUserIdAsync(
-            userId,
+        await authorizationService.EnsureCanReadAsync(request.ProfileId, cancellationToken);
+
+        var appointments = await appointmentRepository.GetTodayByUserHealthProfileIdAsync(
+            request.ProfileId,
             DateTime.UtcNow,
             cancellationToken);
 

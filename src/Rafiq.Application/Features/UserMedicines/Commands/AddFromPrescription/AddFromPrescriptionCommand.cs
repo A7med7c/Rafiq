@@ -4,5 +4,5 @@ using Rafiq.Application.Features.UserMedicines.DTOs;
 
 namespace Rafiq.Application.Features.UserMedicines.Commands.AddFromPrescription;
 
-public sealed record AddFromPrescriptionCommand(List<Guid> PrescriptionMedicineIds)
+public sealed record AddFromPrescriptionCommand(Guid ProfileId, List<Guid> PrescriptionMedicineIds)
     : IRequest<ApiResponse<AddFromPrescriptionResponseDto>>;

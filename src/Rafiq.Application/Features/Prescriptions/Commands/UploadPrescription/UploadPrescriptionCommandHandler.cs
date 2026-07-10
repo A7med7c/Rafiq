@@ -9,7 +9,7 @@ using System.Globalization;
 namespace Rafiq.Application.Features.Prescriptions.Commands.UploadPrescription;
 
 public sealed class UploadPrescriptionCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IBedrockService bedrockService,
     IFileStorageService fileStorageService)
     : IRequestHandler<UploadPrescriptionCommand, ApiResponse<PrescriptionResponseDto>>
@@ -18,8 +18,7 @@ public sealed class UploadPrescriptionCommandHandler(
         UploadPrescriptionCommand request,
         CancellationToken cancellationToken)
     {
-        _ = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        await authorizationService.EnsureCanWriteAsync(request.ProfileId, cancellationToken);
 
         var fileExtension = Path.GetExtension(request.Image.FileName);
         var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";

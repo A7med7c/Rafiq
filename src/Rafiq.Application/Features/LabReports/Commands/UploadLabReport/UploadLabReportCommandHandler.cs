@@ -10,7 +10,7 @@ using System.Globalization;
 namespace Rafiq.Application.Features.LabReports.Commands.UploadLabReport;
 
 public sealed class UploadLabReportCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IBedrockService bedrockService,
     IFileStorageService fileStorageService)
     : IRequestHandler<UploadLabReportCommand, ApiResponse<LabReportResponseDto>>
@@ -19,8 +19,7 @@ public sealed class UploadLabReportCommandHandler(
         UploadLabReportCommand request,
         CancellationToken cancellationToken)
     {
-        _ = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        await authorizationService.EnsureCanWriteAsync(request.ProfileId, cancellationToken);
 
         var fileExtension = Path.GetExtension(request.Image.FileName);
         var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
