@@ -1,4 +1,5 @@
 using FluentValidation;
+using Rafiq.Domain.Enums;
 
 namespace Rafiq.Application.Features.PatientProfiles.Commands.CreateManagedProfile;
 
@@ -33,6 +34,10 @@ internal sealed class CreateManagedProfileCommandValidator
         RuleFor(x => x.Weight)
             .InclusiveBetween(1m, 500m)
             .When(x => x.Weight.HasValue);
+
+        RuleFor(x => x.Relationship)
+            .IsInEnum().WithMessage("Relationship is required for a managed profile.")
+            .NotEqual(RelationshipType.Self).WithMessage("Self cannot be used as the relationship for a managed profile.");
 
         RuleForEach(x => x.Allergies)
             .SetValidator(new CreateAllergyDtoValidator());

@@ -13,6 +13,7 @@ public sealed record CreateManagedProfileCommand(
     BloodType? BloodType,
     decimal? Height,
     decimal? Weight,
+    RelationshipType Relationship,
     List<CreateAllergyDto> Allergies,
     List<CreateChronicDiseaseDto> ChronicDiseases
 ) : IRequest<ApiResponse<PatientProfileDto>>

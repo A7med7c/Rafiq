@@ -54,7 +54,7 @@ public sealed class CreateManagedProfileCommandHandler(
 
         await patientProfileRepository.AddAsync(profile, cancellationToken);
 
-        var ownerAccess = HealthProfileAccess.CreateManagedProfileOwner(profile.Id, currentUserId);
+        var ownerAccess = HealthProfileAccess.CreateManagedProfileOwner(profile.Id, currentUserId, request.Relationship);
 
         await healthProfileAccessRepository.AddAsync(ownerAccess, cancellationToken);
 
