@@ -138,7 +138,8 @@ export class MedicalRecords implements OnInit, OnDestroy {
   readonly loading = signal(true);
   readonly searchQuery = signal('');
   readonly activeTab = signal<RecordTab>('all');
-  readonly sidebarCollapsed = signal(false);
+  readonly sidebarCollapsed  = signal(false);
+  readonly mobileSidebarOpen = signal(false);
   readonly selectedRecord = signal<UnifiedMedicalRecord | null>(null);
   readonly dropdownOpen = signal(false);
   readonly addRecordMenuOpen = signal(false);
@@ -334,11 +335,18 @@ export class MedicalRecords implements OnInit, OnDestroy {
   }
 
   private applyResponsiveSidebar(): void {
-    if (window.innerWidth <= 768) this.sidebarCollapsed.set(true);
+    this.sidebarCollapsed.set(window.innerWidth <= 1024);
+    if (window.innerWidth > 768) {
+      this.mobileSidebarOpen.set(false);
+    }
   }
 
   toggleSidebar(): void {
     this.sidebarCollapsed.update(v => !v);
+  }
+
+  toggleMobileSidebar(): void {
+    this.mobileSidebarOpen.update(v => !v);
   }
 
   toggleDropdown(): void { this.dropdownOpen.update(v => !v); }

@@ -1,7 +1,11 @@
 <div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
 
+  @if (mobileSidebarOpen()) {
+    <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
+  }
+
   <!-- ═══════════ SIDEBAR ═══════════ -->
-  <aside class="dsh-sb">
+  <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <!-- Logo -->
     <div class="sb-top">
       <div class="sb-logo">
@@ -16,6 +20,9 @@
       <button type="button" class="sb-toggle" [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
         (click)="toggleSidebar()">
         <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <button type="button" class="sb-mobile-close" aria-label="Close sidebar" (click)="toggleMobileSidebar()">
+        <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
 
@@ -65,11 +72,14 @@
 
     <!-- Help Card -->
     <div class="sb-help">
-      <p class="sb-help-title">Need Help Now?</p>
-      <p class="sb-help-sub">Get immediate AI assistance</p>
+      <img src="images/rafiq-robot.svg" alt="" class="sb-help-robot">
+      <div class="sb-help-copy">
+        <p class="sb-help-title">Ask Rafiq AI</p>
+        <p class="sb-help-sub">Get health insights and answers to your questions</p>
+      </div>
       <button type="button" class="sb-help-btn">
-        <i class="fa-solid fa-robot"></i>
-        Ask AI Assistant
+        <i class="fa-regular fa-comment-dots"></i>
+        Ask Now
       </button>
     </div>
   </aside>
@@ -79,6 +89,9 @@
 
     <!-- HEADER -->
     <header class="dsh-hdr">
+      <button type="button" class="sb-mobile-toggle" aria-label="Open sidebar" (click)="toggleMobileSidebar()">
+        <i class="fa-solid fa-bars"></i>
+      </button>
       <div class="hdr-search">
         <i class="fa-solid fa-magnifying-glass hdr-search-ico"></i>
         <input type="text" class="hdr-search-inp" placeholder="Search records, symptoms, medications..." readonly>

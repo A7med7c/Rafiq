@@ -22,8 +22,9 @@ export class Dashboard implements OnInit {
   readonly reminders        = signal<ReminderDisplayItem[]>([]);
   readonly recordsLoading   = signal(true);
   readonly remindersLoading = signal(true);
-  readonly sidebarCollapsed = signal(false);
-  readonly dropdownOpen     = signal(false);
+  readonly sidebarCollapsed  = signal(false);
+  readonly mobileSidebarOpen = signal(false);
+  readonly dropdownOpen      = signal(false);
   readonly today            = new Date();
 
   get displayName(): string {
@@ -63,11 +64,18 @@ export class Dashboard implements OnInit {
   }
 
   private applyResponsiveSidebar(): void {
-    if (window.innerWidth <= 768) this.sidebarCollapsed.set(true);
+    this.sidebarCollapsed.set(window.innerWidth <= 1024);
+    if (window.innerWidth > 768) {
+      this.mobileSidebarOpen.set(false);
+    }
   }
 
   toggleSidebar(): void {
     this.sidebarCollapsed.update(v => !v);
+  }
+
+  toggleMobileSidebar(): void {
+    this.mobileSidebarOpen.update(v => !v);
   }
 
   /** Close dropdown when clicking anywhere outside the hdr-user element */

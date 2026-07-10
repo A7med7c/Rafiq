@@ -15,7 +15,7 @@ export class Hero {
     en: {
       subtitle: 'AI Powered Healthcare',
       line1: 'Your AI',
-      line2: 'Health Healthcare',
+      line2: 'Healthcare',
       line3: 'Companion',
       highlight: '| 24/7.',
       description:
