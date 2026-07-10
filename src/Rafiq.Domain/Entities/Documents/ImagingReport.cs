@@ -1,4 +1,5 @@
 using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities.User;
 
 namespace Rafiq.Domain.Entities.Documents;
 
@@ -8,7 +9,7 @@ public class ImagingReport : BaseEntity
     protected ImagingReport() { }
 
     public ImagingReport(
-        Guid userId,
+        Guid userHealthProfileId,
         string imagingType,
         string bodyPart,
         string findings,
@@ -19,7 +20,7 @@ public class ImagingReport : BaseEntity
         string? ocrText,
         string? description)
     {
-        UserId = userId;
+        UserHealthProfileId = userHealthProfileId;
         ImagingType = imagingType;
         BodyPart = bodyPart;
         Findings = findings;
@@ -31,7 +32,9 @@ public class ImagingReport : BaseEntity
         Description = description;
     }
 
-    public Guid UserId { get; private set; }
+    public Guid UserHealthProfileId { get; private set; }
+
+    public UserHealthProfile UserHealthProfile { get; private set; } = null!;
 
     public string ImagingType { get; set; } = null!;
 
@@ -50,4 +53,28 @@ public class ImagingReport : BaseEntity
     public string? OCRText { get; private set; }
 
     public string? Description { get; set; } // Stores AI summary
+    
+    public void Update(
+        string imagingType,
+        string bodyPart,
+        string findings,
+        string impression,
+        string? doctorName,
+        DateOnly reportDate,
+        string? description,
+        string? imageUrl,
+        string? ocrText)
+    {
+        ImagingType = imagingType;
+        BodyPart = bodyPart;
+        Findings = findings;
+        Impression = impression;
+        DoctorName = doctorName;
+        ReportDate = reportDate;
+        Description = description;
+        if (!string.IsNullOrWhiteSpace(imageUrl))
+            ImageUrl = imageUrl;
+        OCRText = ocrText;
+        MarkUpdated();
+    }
 }

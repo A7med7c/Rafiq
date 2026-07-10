@@ -9,6 +9,8 @@ namespace Rafiq.Application.Features.UserMedicines.Queries.GetMyUserMedicines;
 
 public sealed class GetMyUserMedicinesQueryHandler(
     ICurrentUserService currentUserService,
+    IPatientProfileRepository patientProfileRepository,
+    IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository)
     : IRequestHandler<GetMyUserMedicinesQuery, ApiResponse<List<UserMedicineResponseDto>>>
 {
@@ -16,11 +18,21 @@ public sealed class GetMyUserMedicinesQueryHandler(
         GetMyUserMedicinesQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        var profileId = request.ProfileId;
+
+        if (profileId == Guid.Empty)
+        {
+            var currentUserId = currentUserService.UserId
+                ?? throw new UnauthorizedException("Authentication is required.");
+
+            profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
+                ?? throw new NotFoundException("PatientProfile", currentUserId);
+        }
+
+        await authorizationService.EnsureCanReadAsync(profileId, cancellationToken);
 
         var userMedicines = await userMedicineRepository
-            .GetAllByUserIdAsync(userId, cancellationToken);
+            .GetAllByProfileIdAsync(profileId, cancellationToken);
 
         var dtos = userMedicines.Select(userMedicine => new UserMedicineResponseDto
         {

@@ -8,7 +8,7 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.LabReports.Queries.GetLabReportById;
 
 public sealed class GetLabReportByIdQueryHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     ILabReportRepository labReportRepository)
     : IRequestHandler<GetLabReportByIdQuery, ApiResponse<LabReportResponseDto>>
 {
@@ -16,13 +16,11 @@ public sealed class GetLabReportByIdQueryHandler(
         GetLabReportByIdQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
-
-        // The repository filters by both Id AND UserId — ownership is enforced at the DB level
         var report = await labReportRepository
-            .GetByIdAsync(request.Id, userId, cancellationToken)
+            .GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(Domain.Entities.Documents.LabReport), request.Id);
+
+        await authorizationService.EnsureCanReadAsync(report.UserHealthProfileId, cancellationToken);
 
         var dto = new LabReportResponseDto
         {

@@ -58,12 +58,12 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("UserHealthProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserHealthProfileId");
 
                     b.ToTable("GeneralDocuments", (string)null);
                 });
@@ -243,16 +243,16 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("UserHealthProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserHealthProfileId");
 
-                    b.HasIndex("UserId", "AppointmentDateTime");
+                    b.HasIndex("UserHealthProfileId", "AppointmentDateTime");
 
-                    b.HasIndex("UserId", "Status", "AppointmentDateTime");
+                    b.HasIndex("UserHealthProfileId", "Status", "AppointmentDateTime");
 
                     b.ToTable("Appointments", (string)null);
                 });
@@ -312,14 +312,14 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("UserHealthProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserHealthProfileId");
 
                     b.ToTable("ImagingReports", (string)null);
                 });
@@ -367,14 +367,14 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("UserHealthProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserHealthProfileId");
 
                     b.ToTable("LabReports", (string)null);
                 });
@@ -515,14 +515,14 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("UserHealthProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserHealthProfileId");
 
                     b.ToTable("Prescriptions", (string)null);
                 });
@@ -628,14 +628,14 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("UserHealthProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserHealthProfileId");
 
                     b.ToTable("UserMedicines", (string)null);
                 });
@@ -717,6 +717,63 @@ namespace Rafiq.Infrastructure.Migrations
                     b.HasIndex("UserHealthProfileId");
 
                     b.ToTable("ChronicDiseases", (string)null);
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.User.HealthProfileAccess", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("GranteeUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InvitedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Origin")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Relationship")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StatusChangedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("UserHealthProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GranteeUserId");
+
+                    b.HasIndex("InvitedByUserId");
+
+                    b.HasIndex("UserHealthProfileId");
+
+                    b.HasIndex("UserHealthProfileId", "GranteeUserId")
+                        .IsUnique()
+                        .HasFilter("[Status] IN (1, 2)");
+
+                    b.ToTable("HealthProfileAccesses", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.User.Otp", b =>
@@ -890,7 +947,6 @@ namespace Rafiq.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("BloodType")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
@@ -903,32 +959,43 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2(7)");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Gender")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<decimal>("Height")
+                    b.Property<decimal?>("Height")
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<decimal>("Weight")
+                    b.Property<decimal?>("Weight")
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("UserHealthProfiles", (string)null);
                 });
@@ -1035,11 +1102,13 @@ namespace Rafiq.Infrastructure.Migrations
 
             modelBuilder.Entity("GeneralDocument", b =>
                 {
-                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
-                        .WithMany("GeneralDocuments")
-                        .HasForeignKey("UserId")
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -1095,29 +1164,35 @@ namespace Rafiq.Infrastructure.Migrations
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Appointment", b =>
                 {
-                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("UserHealthProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.ImagingReport", b =>
                 {
-                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
-                        .WithMany("ImagingReports")
-                        .HasForeignKey("UserId")
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
                 {
-                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
-                        .WithMany("LabReports")
-                        .HasForeignKey("UserId")
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabResult", b =>
@@ -1144,11 +1219,13 @@ namespace Rafiq.Infrastructure.Migrations
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Prescription", b =>
                 {
-                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
-                        .WithMany("Prescriptions")
-                        .HasForeignKey("UserId")
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.PrescriptionMedicine", b =>
@@ -1164,11 +1241,13 @@ namespace Rafiq.Infrastructure.Migrations
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.UserMedicine", b =>
                 {
-                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
-                        .WithMany("UserMedicines")
-                        .HasForeignKey("UserId")
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.User.Allergy", b =>
@@ -1186,6 +1265,28 @@ namespace Rafiq.Infrastructure.Migrations
                 {
                     b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
                         .WithMany("ChronicDiseases")
+                        .HasForeignKey("UserHealthProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.User.HealthProfileAccess", b =>
+                {
+                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("GranteeUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("InvitedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
                         .HasForeignKey("UserHealthProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1216,8 +1317,7 @@ namespace Rafiq.Infrastructure.Migrations
                     b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
                         .WithOne()
                         .HasForeignKey("Rafiq.Domain.Entities.User.UserHealthProfile", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", b =>
@@ -1249,19 +1349,6 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("Allergies");
 
                     b.Navigation("ChronicDiseases");
-                });
-
-            modelBuilder.Entity("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", b =>
-                {
-                    b.Navigation("GeneralDocuments");
-
-                    b.Navigation("ImagingReports");
-
-                    b.Navigation("LabReports");
-
-                    b.Navigation("Prescriptions");
-
-                    b.Navigation("UserMedicines");
                 });
 #pragma warning restore 612, 618
         }

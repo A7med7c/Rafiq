@@ -1,4 +1,5 @@
 using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Enums;
 
 namespace Rafiq.Domain.Entities.Documents;
@@ -9,7 +10,7 @@ public class UserMedicine : BaseEntity
     protected UserMedicine() { }
 
     public UserMedicine(
-        Guid userId,
+        Guid userHealthProfileId,
         string medicineName,
         string dosage,
         string frequency,
@@ -18,7 +19,7 @@ public class UserMedicine : BaseEntity
         string? imagePath,
         MedicineSource source)
     {
-        UserId = userId;
+        UserHealthProfileId = userHealthProfileId;
         MedicineName = medicineName;
         Dosage = dosage;
         Frequency = frequency;
@@ -28,7 +29,9 @@ public class UserMedicine : BaseEntity
         Source = source;
     }
 
-    public Guid UserId { get; private set; }
+    public Guid UserHealthProfileId { get; private set; }
+
+    public UserHealthProfile UserHealthProfile { get; private set; } = null!;
 
     public string MedicineName { get; set; } = null!;
 

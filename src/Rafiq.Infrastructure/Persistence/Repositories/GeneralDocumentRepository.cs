@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Rafiq.Infrastructure.Persistence;
 
 public sealed class GeneralDocumentRepository
@@ -20,20 +20,25 @@ public sealed class GeneralDocumentRepository
 
     public Task<GeneralDocument?> GetByIdAsync(
         Guid id,
-        Guid userId,
+        Guid userHealthProfileId,
         CancellationToken cancellationToken = default)
         => _context.GeneralDocuments
             .FirstOrDefaultAsync(
-                x => x.Id == id && x.UserId == userId,
+                x => x.Id == id && x.UserHealthProfileId == userHealthProfileId,
                 cancellationToken);
 
     public async Task<IReadOnlyList<GeneralDocument>> GetAllByUserIdAsync(
-        Guid userId,
+        Guid userHealthProfileId,
         CancellationToken cancellationToken = default)
         => await _context.GeneralDocuments
-            .Where(x => x.UserId == userId)
+            .Where(x => x.UserHealthProfileId == userHealthProfileId)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
+    
+    public void Update(GeneralDocument document)
+    {
+        _context.GeneralDocuments.Update(document);
+    }
 
     public void Remove(GeneralDocument document)
     {

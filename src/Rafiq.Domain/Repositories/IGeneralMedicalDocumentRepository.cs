@@ -1,4 +1,4 @@
-﻿public interface IGeneralDocumentRepository
+public interface IGeneralDocumentRepository
 {
     Task AddAsync(
         GeneralDocument document,
@@ -6,12 +6,14 @@
 
     Task<GeneralDocument?> GetByIdAsync(
         Guid id,
-        Guid userId,
+        Guid userHealthProfileId,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<GeneralDocument>> GetAllByUserIdAsync(
-        Guid userId,
+        Guid userHealthProfileId,
         CancellationToken cancellationToken = default);
+    
+    void Update(GeneralDocument document);
 
     void Remove(GeneralDocument document);
 }

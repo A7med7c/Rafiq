@@ -1,0 +1,523 @@
+import {
+  Component, inject, OnInit, OnDestroy, signal, computed, HostListener,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../Services/auth-service';
+import { AppointmentsService } from '../../Services/appointments.service';
+import { NotificationService } from '../../Services/notification.service';
+import {
+  AppointmentDto, AppointmentStatus, AppointmentType,
+  CreateAppointmentRequest, UpdateAppointmentRequest,
+  APPOINTMENT_TYPE_LABELS, APPOINTMENT_TYPE_ICONS,
+} from '../../Modles/appointment.models';
+
+type ApptTab = 'all' | 'upcoming' | 'completed' | 'cancelled';
+
+interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'error';
+}
+
+interface ApptForm {
+  appointmentType: AppointmentType | null;
+  customType: string;
+  title: string;
+  provider: string;
+  date: string;
+  time: string;
+  reminderOffsetMinutes: number | null;
+  notes: string;
+}
+
+const blankForm = (): ApptForm => ({
+  appointmentType: null,
+  customType: '',
+  title: '',
+  provider: '',
+  date: '',
+  time: '',
+  reminderOffsetMinutes: 30,
+  notes: '',
+});
+
+@Component({
+  selector: 'app-appointments',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
+  templateUrl: './appointments.html',
+  styleUrl: './appointments.css',
+})
+export class Appointments implements OnInit, OnDestroy {
+  private readonly authSvc   = inject(AuthService);
+  private readonly apptSvc   = inject(AppointmentsService);
+  private readonly notifSvc  = inject(NotificationService);
+  private readonly router     = inject(Router);
+  private readonly route      = inject(ActivatedRoute);
+
+  // ── Layout ──────────────────────────────────────────────────────────────
+  readonly sidebarCollapsed  = signal(false);
+  readonly mobileSidebarOpen = signal(false);
+  readonly dropdownOpen      = signal(false);
+
+  // ── Data ─────────────────────────────────────────────────────────────────
+  readonly appointments = signal<AppointmentDto[]>([]);
+  readonly loading      = signal(true);
+  readonly loadError    = signal<string | null>(null);
+
+  // ── Filters ──────────────────────────────────────────────────────────────
+  readonly activeTab   = signal<ApptTab>('all');
+  readonly searchQuery = signal('');
+  readonly dateFrom    = signal('');
+  readonly dateTo      = signal('');
+  readonly currentPage = signal(1);
+  readonly pageSize    = 10;
+
+  // ── Action menus ─────────────────────────────────────────────────────────
+  readonly openMenuId = signal<string | null>(null);
+
+  // ── Add / Edit modal ──────────────────────────────────────────────────────
+  readonly showAddModal = signal(false);
+  readonly editingId    = signal<string | null>(null);
+  readonly formStep     = signal<1 | 2>(1);
+  // form fields as individual signals for clean ngModel binding
+  readonly fType        = signal<AppointmentType | null>(null);
+  readonly fCustomType  = signal('');
+  readonly fTitle       = signal('');
+  readonly fProvider    = signal('');
+  readonly fDate        = signal('');
+  readonly fTime        = signal('');
+  readonly fReminder    = signal<number | null>(30);
+  readonly fNotes       = signal('');
+  readonly formErrors   = signal<Record<string, string>>({});
+  readonly submitting   = signal(false);
+
+  // ── View modal ────────────────────────────────────────────────────────────
+  readonly showViewModal = signal(false);
+  readonly viewingAppt   = signal<AppointmentDto | null>(null);
+
+  // ── Delete modal ──────────────────────────────────────────────────────────
+  readonly showDeleteModal = signal(false);
+  readonly deletingId      = signal<string | null>(null);
+  readonly deleting        = signal(false);
+
+  // ── Cancel modal ──────────────────────────────────────────────────────────
+  readonly showCancelModal = signal(false);
+  readonly cancellingId    = signal<string | null>(null);
+  readonly cancelling      = signal(false);
+
+  // ── Toasts ───────────────────────────────────────────────────────────────
+  private toastSeq = 0;
+  readonly toasts  = signal<Toast[]>([]);
+
+  // ── Notification timer ────────────────────────────────────────────────────
+  private notifTimer?: ReturnType<typeof setInterval>;
+  private firedIds   = new Set<string>();
+
+  // ── Expose enums / constants to template ─────────────────────────────────
+  readonly AppointmentType   = AppointmentType;
+  readonly AppointmentStatus = AppointmentStatus;
+  readonly TYPE_LABELS       = APPOINTMENT_TYPE_LABELS;
+  readonly TYPE_ICONS        = APPOINTMENT_TYPE_ICONS;
+  readonly ALL_TYPES         = [
+    AppointmentType.DoctorVisit,
+    AppointmentType.LabTest,
+    AppointmentType.Imaging,
+    AppointmentType.Vaccination,
+    AppointmentType.Dentist,
+    AppointmentType.Therapy,
+    AppointmentType.FollowUp,
+    AppointmentType.Other,
+  ] as const;
+
+  readonly REMINDER_OPTIONS = [
+    { value: 15,   label: '15 minutes before' },
+    { value: 30,   label: '30 minutes before' },
+    { value: 60,   label: '1 hour before' },
+    { value: 120,  label: '2 hours before' },
+    { value: 1440, label: '1 day before' },
+  ];
+
+  // ── Computed ──────────────────────────────────────────────────────────────
+  readonly upcomingCount   = computed(() =>
+    this.appointments().filter(a => a.status === AppointmentStatus.Upcoming).length
+  );
+  readonly completedCount  = computed(() =>
+    this.appointments().filter(a => a.status === AppointmentStatus.Completed).length
+  );
+  readonly cancelledCount  = computed(() =>
+    this.appointments().filter(
+      a => a.status === AppointmentStatus.Cancelled || a.status === AppointmentStatus.Missed
+    ).length
+  );
+  readonly totalCount      = computed(() => this.appointments().length);
+
+  readonly nextAppointment = computed(() => {
+    const now = Date.now();
+    return this.appointments()
+      .filter(a => a.status === AppointmentStatus.Upcoming && new Date(a.appointmentDateTime).getTime() > now)
+      .sort((a, b) => new Date(a.appointmentDateTime).getTime() - new Date(b.appointmentDateTime).getTime())[0]
+      ?? null;
+  });
+
+  readonly filtered = computed(() => {
+    let list = this.appointments();
+    const tab  = this.activeTab();
+    const q    = this.searchQuery().toLowerCase().trim();
+    const from = this.dateFrom();
+    const to   = this.dateTo();
+
+    if (tab === 'upcoming')  list = list.filter(a => a.status === AppointmentStatus.Upcoming);
+    if (tab === 'completed') list = list.filter(a => a.status === AppointmentStatus.Completed);
+    if (tab === 'cancelled') list = list.filter(
+      a => a.status === AppointmentStatus.Cancelled || a.status === AppointmentStatus.Missed
+    );
+
+    if (q) {
+      list = list.filter(a =>
+        a.title.toLowerCase().includes(q) ||
+        a.provider.toLowerCase().includes(q) ||
+        (a.customType ?? '').toLowerCase().includes(q)
+      );
+    }
+
+    if (from) list = list.filter(a => new Date(a.appointmentDateTime) >= new Date(from));
+    if (to)   list = list.filter(a => new Date(a.appointmentDateTime) <= new Date(`${to}T23:59:59`));
+
+    return list.sort(
+      (a, b) => new Date(a.appointmentDateTime).getTime() - new Date(b.appointmentDateTime).getTime()
+    );
+  });
+
+  readonly paginated = computed(() => {
+    const p = this.currentPage();
+    return this.filtered().slice((p - 1) * this.pageSize, p * this.pageSize);
+  });
+
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filtered().length / this.pageSize))
+  );
+
+  readonly pageNumbers = computed<(number | '...')[]>(() => {
+    const total   = this.totalPages();
+    const current = this.currentPage();
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages: (number | '...')[] = [1];
+    if (current > 3) pages.push('...');
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+    if (current < total - 2) pages.push('...');
+    pages.push(total);
+    return pages;
+  });
+
+  readonly unreadCount = this.notifSvc.unreadCount;
+
+  // ── Auth helpers ──────────────────────────────────────────────────────────
+  get displayName(): string {
+    const u = this.authSvc.currentUser;
+    return u?.firstName?.trim() || u?.email || 'there';
+  }
+  get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+  ngOnInit(): void {
+    this.applyResponsiveSidebar();
+    this.loadAppointments();
+    this.notifTimer = setInterval(() => this.checkDueNotifications(), 60_000);
+
+    // Auto-open add modal if navigated from dashboard with ?openAdd=1
+    this.route.queryParams.subscribe(params => {
+      if (params['openAdd']) {
+        this.openAdd();
+        this.router.navigate([], { replaceUrl: true, queryParams: {} });
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.notifTimer) clearInterval(this.notifTimer);
+  }
+
+  @HostListener('window:resize')
+  onResize(): void { this.applyResponsiveSidebar(); }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(e: MouseEvent): void {
+    const t = e.target as HTMLElement;
+    if (!t.closest('.hdr-user')) this.dropdownOpen.set(false);
+    if (!t.closest('.record-actions')) this.openMenuId.set(null);
+  }
+
+  private applyResponsiveSidebar(): void {
+    this.sidebarCollapsed.set(window.innerWidth <= 1024);
+    if (window.innerWidth > 768) this.mobileSidebarOpen.set(false);
+  }
+
+  toggleSidebar(): void       { this.sidebarCollapsed.update(v => !v); }
+  toggleMobileSidebar(): void { this.mobileSidebarOpen.update(v => !v); }
+  toggleDropdown(): void      { this.dropdownOpen.update(v => !v); }
+  logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
+
+  toggleMenu(id: string, e: MouseEvent): void {
+    e.stopPropagation();
+    this.openMenuId.update(cur => cur === id ? null : id);
+  }
+
+  // ── Data loading ──────────────────────────────────────────────────────────
+  loadAppointments(): void {
+    this.loading.set(true);
+    this.loadError.set(null);
+    this.apptSvc.getAll().subscribe({
+      next:  data => { this.appointments.set(data); this.loading.set(false); },
+      error: err  => {
+        this.loadError.set(
+          err?.error?.message ?? 'Could not load appointments. Please try again.'
+        );
+        this.loading.set(false);
+      },
+    });
+  }
+
+  // ── Filters / tabs ────────────────────────────────────────────────────────
+  setTab(tab: ApptTab): void   { this.activeTab.set(tab); this.currentPage.set(1); }
+  setPage(p: number | '...'): void { if (typeof p === 'number') this.currentPage.set(p); }
+  onFilterChange(): void { this.currentPage.set(1); }
+  clearFilters(): void   { this.searchQuery.set(''); this.dateFrom.set(''); this.dateTo.set(''); this.currentPage.set(1); }
+
+  // ── Add / Edit ────────────────────────────────────────────────────────────
+  openAdd(): void {
+    this.editingId.set(null);
+    this.resetForm();
+    this.formStep.set(1);
+    this.showAddModal.set(true);
+  }
+
+  openEdit(a: AppointmentDto): void {
+    this.editingId.set(a.id);
+    const dt = new Date(a.appointmentDateTime);
+    this.fType.set(a.appointmentType);
+    this.fCustomType.set(a.customType ?? '');
+    this.fTitle.set(a.title);
+    this.fProvider.set(a.provider);
+    this.fDate.set(dt.toISOString().slice(0, 10));
+    this.fTime.set(dt.toTimeString().slice(0, 5));
+    this.fReminder.set(a.reminderOffsetMinutes ?? null);
+    this.fNotes.set(a.notes ?? '');
+    this.formErrors.set({});
+    this.formStep.set(2);
+    this.showAddModal.set(true);
+  }
+
+  closeAddModal(): void { this.showAddModal.set(false); }
+
+  selectType(t: AppointmentType): void {
+    this.fType.set(t);
+    if (!this.editingId() && !this.fTitle()) {
+      this.fTitle.set(APPOINTMENT_TYPE_LABELS[t]);
+    }
+    this.formErrors.update(e => ({ ...e, appointmentType: '' }));
+  }
+
+  goStep2(): void {
+    if (!this.fType()) {
+      this.formErrors.update(e => ({ ...e, appointmentType: 'Please select an appointment type.' }));
+      return;
+    }
+    this.formErrors.set({});
+    this.formStep.set(2);
+  }
+
+  goStep1(): void { this.formStep.set(1); }
+
+  get minDate(): string {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + 5);
+    return d.toISOString().slice(0, 10);
+  }
+
+  get minTime(): string {
+    const fDate = this.fDate();
+    const today = new Date().toISOString().slice(0, 10);
+    if (fDate !== today) return '00:00';
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + 5);
+    return d.toTimeString().slice(0, 5);
+  }
+
+  private validate(): boolean {
+    const errs: Record<string, string> = {};
+    if (!this.fType()) errs['appointmentType'] = 'Please select an appointment type.';
+    if (this.fType() === AppointmentType.Other && !this.fCustomType().trim()) {
+      errs['customType'] = 'Please describe the appointment type.';
+    }
+    if (!this.fTitle().trim())    errs['title']    = 'Title is required.';
+    if (!this.fProvider().trim()) errs['provider'] = 'Provider name is required.';
+    if (!this.fDate())            errs['date']     = 'Date is required.';
+    if (!this.fTime())            errs['time']     = 'Time is required.';
+    if (this.fDate() && this.fTime()) {
+      const sel = new Date(`${this.fDate()}T${this.fTime()}`);
+      if (sel <= new Date()) errs['date'] = 'Appointment must be scheduled in the future.';
+    }
+    this.formErrors.set(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  submitForm(): void {
+    if (!this.validate()) return;
+    const dt = new Date(`${this.fDate()}T${this.fTime()}`);
+    const body: CreateAppointmentRequest = {
+      appointmentType:        this.fType()!,
+      customType:             this.fType() === AppointmentType.Other ? this.fCustomType().trim() : undefined,
+      title:                  this.fTitle().trim(),
+      provider:               this.fProvider().trim(),
+      appointmentDateTime:    dt.toISOString(),
+      reminderOffsetMinutes:  this.fReminder() ?? undefined,
+      notes:                  this.fNotes().trim() || undefined,
+    };
+
+    this.submitting.set(true);
+    const id  = this.editingId();
+    const op$ = id
+      ? this.apptSvc.update(id, body as UpdateAppointmentRequest)
+      : this.apptSvc.create(body);
+
+    op$.subscribe({
+      next: saved => {
+        if (id) {
+          this.appointments.update(list => list.map(a => a.id === id ? saved : a));
+          this.toast('Appointment updated successfully.', 'success');
+        } else {
+          this.appointments.update(list => [...list, saved]);
+          this.toast('Appointment added successfully.', 'success');
+        }
+        this.submitting.set(false);
+        this.closeAddModal();
+      },
+      error: err => {
+        this.toast(err?.error?.message ?? 'Failed to save appointment.', 'error');
+        this.submitting.set(false);
+      },
+    });
+  }
+
+  private resetForm(): void {
+    this.fType.set(null); this.fCustomType.set(''); this.fTitle.set('');
+    this.fProvider.set(''); this.fDate.set(''); this.fTime.set('');
+    this.fReminder.set(30); this.fNotes.set('');
+    this.formErrors.set({});
+  }
+
+  // ── View ──────────────────────────────────────────────────────────────────
+  openView(a: AppointmentDto): void { this.viewingAppt.set(a); this.showViewModal.set(true); }
+  closeView(): void { this.showViewModal.set(false); }
+
+  // ── Delete ────────────────────────────────────────────────────────────────
+  confirmDelete(id: string): void { this.deletingId.set(id); this.showDeleteModal.set(true); }
+  closeDelete(): void { this.showDeleteModal.set(false); this.deletingId.set(null); }
+  executeDelete(): void {
+    const id = this.deletingId();
+    if (!id) return;
+    this.deleting.set(true);
+    this.apptSvc.delete(id).subscribe({
+      next:  ()  => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast('Appointment deleted.', 'success'); this.deleting.set(false); this.closeDelete(); },
+      error: err => { this.toast(err?.error?.message ?? 'Delete failed.', 'error'); this.deleting.set(false); this.closeDelete(); },
+    });
+  }
+
+  // ── Cancel ────────────────────────────────────────────────────────────────
+  confirmCancel(id: string): void { this.cancellingId.set(id); this.showCancelModal.set(true); }
+  closeCancel(): void { this.showCancelModal.set(false); this.cancellingId.set(null); }
+  executeCancel(): void {
+    const id = this.cancellingId();
+    if (!id) return;
+    this.cancelling.set(true);
+    this.apptSvc.cancel(id).subscribe({
+      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Appointment cancelled.', 'success'); this.cancelling.set(false); this.closeCancel(); },
+      error: err   => { this.toast(err?.error?.message ?? 'Cancel failed.', 'error'); this.cancelling.set(false); this.closeCancel(); },
+    });
+  }
+
+  // ── Complete ──────────────────────────────────────────────────────────────
+  markComplete(id: string): void {
+    this.apptSvc.complete(id).subscribe({
+      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Marked as completed.', 'success'); },
+      error: err   => { this.toast(err?.error?.message ?? 'Failed.', 'error'); },
+    });
+  }
+
+  // ── Notification timer ────────────────────────────────────────────────────
+  private checkDueNotifications(): void {
+    const now = Date.now();
+    this.appointments()
+      .filter(a => a.status === AppointmentStatus.Upcoming && !this.firedIds.has(a.id))
+      .forEach(a => {
+        const t = new Date(a.appointmentDateTime).getTime();
+        if (t - now <= 60_000 && t >= now - 60_000) {
+          this.firedIds.add(a.id);
+          this.notifSvc.push({
+            title: 'Appointment Starting Now',
+            body:  `${a.title} with ${a.provider}`,
+            type:  'appointment',
+          });
+        }
+      });
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  toast(message: string, type: 'success' | 'error'): void {
+    const id = ++this.toastSeq;
+    this.toasts.update(t => [...t, { id, message, type }]);
+    setTimeout(() => this.toasts.update(t => t.filter(x => x.id !== id)), 4500);
+  }
+  dismissToast(id: number): void { this.toasts.update(t => t.filter(x => x.id !== id)); }
+
+  // ── Display helpers ───────────────────────────────────────────────────────
+  formatDate(dt: string): string {
+    return new Date(dt).toLocaleDateString('en-US', {
+      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
+    });
+  }
+
+  formatTime(dt: string): string {
+    return new Date(dt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+
+  relativeDate(dt: string): string {
+    const diff = Math.ceil((new Date(dt).getTime() - Date.now()) / 86_400_000);
+    if (diff < 0)  return `${Math.abs(diff)}d ago`;
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Tomorrow';
+    return `In ${diff} days`;
+  }
+
+  typeLabel(a: AppointmentDto): string {
+    if (a.appointmentType === AppointmentType.Other && a.customType) return a.customType;
+    return APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+  }
+
+  typeIcon(t: AppointmentType): string {
+    return APPOINTMENT_TYPE_ICONS[t] ?? 'fa-calendar';
+  }
+
+  statusLabel(s: AppointmentStatus): string {
+    return { [AppointmentStatus.Upcoming]: 'Upcoming', [AppointmentStatus.Completed]: 'Completed',
+             [AppointmentStatus.Cancelled]: 'Cancelled', [AppointmentStatus.Missed]: 'Missed' }[s] ?? '';
+  }
+
+  statusClass(s: AppointmentStatus): string {
+    return { [AppointmentStatus.Upcoming]: 'pill pill-blue-sm', [AppointmentStatus.Completed]: 'pill pill-green-sm',
+             [AppointmentStatus.Cancelled]: 'pill pill-red-sm', [AppointmentStatus.Missed]: 'pill pill-yellow-sm' }[s] ?? 'pill';
+  }
+
+  pageEnd(): number {
+    return Math.min(this.currentPage() * this.pageSize, this.filtered().length);
+  }
+
+  reminderLabel(mins: number | null | undefined): string {
+    if (!mins) return '—';
+    const map: Record<number, string> = { 15: '15 min', 30: '30 min', 60: '1 hr', 120: '2 hrs', 1440: '1 day' };
+    return (map[mins] ?? `${mins} min`) + ' before';
+  }
+}

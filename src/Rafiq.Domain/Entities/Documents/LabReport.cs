@@ -1,4 +1,5 @@
 using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities.User;
 
 namespace Rafiq.Domain.Entities.Documents;
 
@@ -8,7 +9,7 @@ public class LabReport : BaseEntity
     protected LabReport() { }
 
     public LabReport(
-        Guid userId,
+        Guid userHealthProfileId,
         string doctorName,
         string labName,
         DateOnly reportDate,
@@ -16,7 +17,7 @@ public class LabReport : BaseEntity
         string? ocrText,
         string? description)
     {
-        UserId = userId;
+        UserHealthProfileId = userHealthProfileId;
         DoctorName = doctorName;
         LabName = labName;
         ReportDate = reportDate;
@@ -25,7 +26,9 @@ public class LabReport : BaseEntity
         Description = description;
     }
 
-    public Guid UserId { get; private set; }
+    public Guid UserHealthProfileId { get; private set; }
+
+    public UserHealthProfile UserHealthProfile { get; private set; } = null!;
 
     public string DoctorName { get; set; } = null!;
 
@@ -41,4 +44,22 @@ public class LabReport : BaseEntity
 
     public ICollection<LabResult> Results { get; set; }
         = new List<LabResult>();
+    
+    public void Update(
+        string doctorName,
+        string labName,
+        DateOnly reportDate,
+        string? description,
+        string? imageUrl,
+        string? ocrText)
+    {
+        DoctorName = doctorName;
+        LabName = labName;
+        ReportDate = reportDate;
+        Description = description;
+        if (!string.IsNullOrWhiteSpace(imageUrl))
+            ImageUrl = imageUrl;
+        OCRText = ocrText;
+        MarkUpdated();
+    }
 }

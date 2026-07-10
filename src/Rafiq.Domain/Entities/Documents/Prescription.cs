@@ -1,4 +1,5 @@
 using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities.User;
 
 namespace Rafiq.Domain.Entities.Documents;
 
@@ -8,20 +9,22 @@ public class Prescription : BaseEntity
     protected Prescription() { }
 
     public Prescription(
-        Guid userId,
+        Guid userHealthProfileId,
         string doctorName,
         string patientName,
         DateOnly prescriptionDate,
         string imagePath)
     {
-        UserId = userId;
+        UserHealthProfileId = userHealthProfileId;
         DoctorName = doctorName;
         PatientName = patientName;
         PrescriptionDate = prescriptionDate;
         ImagePath = imagePath;
     }
 
-    public Guid UserId { get; private set; }
+    public Guid UserHealthProfileId { get; private set; }
+
+    public UserHealthProfile UserHealthProfile { get; private set; } = null!;
 
     public string DoctorName { get; set; } = null!;
 

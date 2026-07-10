@@ -8,7 +8,7 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.UserMedicines.Commands.UpdateUserMedicine;
 
 public sealed class UpdateUserMedicineCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<UpdateUserMedicineCommand, ApiResponse<UserMedicineResponseDto>>
@@ -17,12 +17,11 @@ public sealed class UpdateUserMedicineCommandHandler(
         UpdateUserMedicineCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
-
         var userMedicine = await userMedicineRepository
-            .GetByIdAsync(request.Id, userId, cancellationToken)
+            .GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(Domain.Entities.Documents.UserMedicine), request.Id);
+
+        await authorizationService.EnsureCanWriteAsync(userMedicine.UserHealthProfileId, cancellationToken);
 
         userMedicine.MedicineName = request.MedicineName;
         userMedicine.Dosage = request.Dosage;
@@ -30,6 +29,7 @@ public sealed class UpdateUserMedicineCommandHandler(
         userMedicine.Duration = request.Duration;
         userMedicine.Notes = request.Notes;
 
+        userMedicineRepository.Update(userMedicine);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = new UserMedicineResponseDto

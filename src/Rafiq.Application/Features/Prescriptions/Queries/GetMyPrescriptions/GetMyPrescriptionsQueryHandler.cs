@@ -9,6 +9,8 @@ namespace Rafiq.Application.Features.Prescriptions.Queries.GetMyPrescriptions;
 
 public sealed class GetMyPrescriptionsQueryHandler(
     ICurrentUserService currentUserService,
+    IPatientProfileRepository patientProfileRepository,
+    IHealthProfileAuthorizationService authorizationService,
     IPrescriptionRepository prescriptionRepository)
     : IRequestHandler<GetMyPrescriptionsQuery, ApiResponse<List<PrescriptionResponseDto>>>
 {
@@ -16,11 +18,21 @@ public sealed class GetMyPrescriptionsQueryHandler(
         GetMyPrescriptionsQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        var profileId = request.ProfileId;
+
+        if (profileId == Guid.Empty)
+        {
+            var currentUserId = currentUserService.UserId
+                ?? throw new UnauthorizedException("Authentication is required.");
+
+            profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
+                ?? throw new NotFoundException("PatientProfile", currentUserId);
+        }
+
+        await authorizationService.EnsureCanReadAsync(profileId, cancellationToken);
 
         var prescriptions = await prescriptionRepository
-            .GetAllByUserIdAsync(userId, cancellationToken);
+            .GetAllByProfileIdAsync(profileId, cancellationToken);
 
         var dtos = prescriptions.Select(prescription => new PrescriptionResponseDto
         {

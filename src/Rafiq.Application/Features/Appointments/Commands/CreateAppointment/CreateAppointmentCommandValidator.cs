@@ -7,6 +7,9 @@ internal sealed class CreateAppointmentCommandValidator : AbstractValidator<Crea
 {
     public CreateAppointmentCommandValidator()
     {
+        RuleFor(x => x.ProfileId)
+            .NotEmpty().WithMessage("ProfileId is required.");
+
         RuleFor(x => x.AppointmentDateTime)
             .NotEmpty().WithMessage("AppointmentDateTime is required.")
             .Must(x => x > DateTime.UtcNow).WithMessage("AppointmentDateTime cannot be in the past.");

@@ -7,7 +7,7 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.Prescriptions.Commands.DeletePrescription;
 
 public sealed class DeletePrescriptionCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IPrescriptionRepository prescriptionRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<DeletePrescriptionCommand, ApiResponse<bool>>
@@ -16,17 +16,13 @@ public sealed class DeletePrescriptionCommandHandler(
         DeletePrescriptionCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        var prescription = await prescriptionRepository
+            .GetByIdAsync(request.Id, cancellationToken)
+            ?? throw new NotFoundException(nameof(Domain.Entities.Documents.Prescription), request.Id);
 
-        var deleted = await prescriptionRepository.DeleteAsync(
-            request.Id,
-            userId,
-            cancellationToken);
+        await authorizationService.EnsureCanWriteAsync(prescription.UserHealthProfileId, cancellationToken);
 
-        if (!deleted)
-            throw new NotFoundException(nameof(Domain.Entities.Documents.Prescription), request.Id);
-
+        prescriptionRepository.Delete(prescription);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<bool>.SuccessResponse(true, "Prescription deleted successfully.");

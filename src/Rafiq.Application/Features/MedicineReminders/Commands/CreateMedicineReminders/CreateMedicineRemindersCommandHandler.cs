@@ -9,7 +9,7 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.MedicineReminders.Commands.CreateMedicineReminders;
 
 public sealed class CreateMedicineRemindersCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
     IMedicineReminderRepository medicineReminderRepository,
     IUnitOfWork unitOfWork)
@@ -19,13 +19,10 @@ public sealed class CreateMedicineRemindersCommandHandler(
         CreateMedicineRemindersCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
-
-        var userMedicine = await userMedicineRepository.GetByIdAsync(request.UserMedicineId, userId, cancellationToken)
+        var userMedicine = await userMedicineRepository.GetByIdAsync(request.UserMedicineId, cancellationToken)
             ?? throw new NotFoundException(nameof(UserMedicine), request.UserMedicineId);
 
-        // Authorization is handled by repository
+        await authorizationService.EnsureCanWriteAsync(userMedicine.UserHealthProfileId, cancellationToken);
 
         var duplicateTimes = new List<string>();
         var reminders = new List<MedicineReminder>();

@@ -8,6 +8,7 @@ using Rafiq.Domain.Repositories;
 
 public sealed class SaveGeneralDocumentCommandHandler(
     ICurrentUserService currentUserService,
+    IPatientProfileRepository patientProfileRepository,
     IGeneralDocumentRepository repository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<
@@ -19,8 +20,11 @@ public sealed class SaveGeneralDocumentCommandHandler(
         var userId = currentUserService.UserId
     ?? throw new UnauthorizedException("Authentication is required.");
 
+        var profile = await patientProfileRepository.GetByUserIdAsync(userId, cancellationToken)
+    ?? throw new NotFoundException("UserHealthProfile", userId);
+
         var document = new GeneralDocument(
-    userId,
+    profile.Id,
     request.Title,
     request.Description,
     request.ImagePath,
@@ -29,6 +33,8 @@ public sealed class SaveGeneralDocumentCommandHandler(
         await repository.AddAsync(
     document,
     cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
 
         return ApiResponse<GeneralDocumentResponseDto>.SuccessResponse(

@@ -9,7 +9,7 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.UserMedicines.Commands.AddUserMedicine;
 
 public sealed class AddUserMedicineCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<AddUserMedicineCommand, ApiResponse<UserMedicineResponseDto>>
@@ -18,11 +18,10 @@ public sealed class AddUserMedicineCommandHandler(
         AddUserMedicineCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
+        await authorizationService.EnsureCanWriteAsync(request.ProfileId, cancellationToken);
 
         var userMedicine = new UserMedicine(
-            userId: userId,
+            userHealthProfileId: request.ProfileId,
             medicineName: request.MedicineName,
             dosage: request.Dosage,
             frequency: request.Frequency,

@@ -8,7 +8,7 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Application.Features.Appointments.Commands.UpdateAppointment;
 
 public sealed class UpdateAppointmentCommandHandler(
-    ICurrentUserService currentUserService,
+    IHealthProfileAuthorizationService authorizationService,
     IAppointmentRepository appointmentRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<UpdateAppointmentCommand, ApiResponse<AppointmentResponseDto>>
@@ -17,15 +17,13 @@ public sealed class UpdateAppointmentCommandHandler(
         UpdateAppointmentCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Authentication is required.");
-
-        var appointment = await appointmentRepository
-            .GetByIdAsync(request.Id, userId, cancellationToken)
+        var appointment = await appointmentRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(Domain.Entities.Documents.Appointment), request.Id);
 
+        await authorizationService.EnsureCanWriteAsync(appointment.UserHealthProfileId, cancellationToken);
+
         var duplicateExists = await appointmentRepository.ExistsDuplicateAsync(
-            userId,
+            appointment.UserHealthProfileId,
             request.AppointmentType,
             request.Title,
             request.Provider,
