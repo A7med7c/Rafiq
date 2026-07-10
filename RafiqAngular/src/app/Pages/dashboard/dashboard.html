@@ -1,7 +1,7 @@
 <div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
 
   @if (mobileSidebarOpen()) {
-    <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
+  <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
   }
 
   <!-- ═══════════ SIDEBAR ═══════════ -->
@@ -17,8 +17,8 @@
           <span class="sb-logo-sub">Family Health Assistant</span>
         </div>
       </div>
-      <button type="button" class="sb-toggle" [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
-        (click)="toggleSidebar()">
+      <button type="button" class="sb-toggle"
+        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'" (click)="toggleSidebar()">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
       <button type="button" class="sb-mobile-close" aria-label="Close sidebar" (click)="toggleMobileSidebar()">
@@ -36,7 +36,7 @@
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
         <span>Medical Records</span>
       </a>
-      <a class="sb-link" href="#">
+      <a class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
         <span>Appointments</span>
       </a>
@@ -103,7 +103,9 @@
         </button>
         <button type="button" class="hdr-bell">
           <i class="fa-regular fa-bell"></i>
-          <span class="hdr-badge">3</span>
+          @if (unreadNotifCount() > 0) {
+          <span class="hdr-badge">{{ unreadNotifCount() }}</span>
+          }
         </button>
         <div class="hdr-user" (click)="toggleDropdown()">
           <img src="images/ahmed_avatar.png" alt="user" class="hdr-avatar">
@@ -112,31 +114,31 @@
 
           <!-- Dropdown Menu -->
           @if (dropdownOpen()) {
-            <div class="user-dropdown" (click)="$event.stopPropagation()">
-              <div class="user-dropdown-hdr">
-                <div class="user-dropdown-av">
-                  <img src="images/ahmed_avatar.png" alt="avatar">
-                </div>
-                <div class="user-dropdown-info">
-                  <span class="user-dropdown-name">{{ displayName }}</span>
-                  <span class="user-dropdown-email">{{ userEmail }}</span>
-                </div>
+          <div class="user-dropdown" (click)="$event.stopPropagation()">
+            <div class="user-dropdown-hdr">
+              <div class="user-dropdown-av">
+                <img src="images/ahmed_avatar.png" alt="avatar">
               </div>
-              <div class="user-dropdown-divider"></div>
-              <button type="button" class="user-dropdown-item">
-                <i class="fa-regular fa-user"></i>
-                My Profile
-              </button>
-              <button type="button" class="user-dropdown-item">
-                <i class="fa-solid fa-gear"></i>
-                Settings
-              </button>
-              <div class="user-dropdown-divider"></div>
-              <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                Logout
-              </button>
+              <div class="user-dropdown-info">
+                <span class="user-dropdown-name">{{ displayName }}</span>
+                <span class="user-dropdown-email">{{ userEmail }}</span>
+              </div>
             </div>
+            <div class="user-dropdown-divider"></div>
+            <button type="button" class="user-dropdown-item">
+              <i class="fa-regular fa-user"></i>
+              My Profile
+            </button>
+            <button type="button" class="user-dropdown-item">
+              <i class="fa-solid fa-gear"></i>
+              Settings
+            </button>
+            <div class="user-dropdown-divider"></div>
+            <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              Logout
+            </button>
+          </div>
           }
         </div>
       </div>
@@ -227,14 +229,14 @@
           <svg class="sys-spark" viewBox="0 0 220 44" preserveAspectRatio="none">
             <defs>
               <linearGradient id="spgrd" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#4A7CF7" stop-opacity="0.18"/>
-                <stop offset="100%" stop-color="#4A7CF7" stop-opacity="0"/>
+                <stop offset="0%" stop-color="#4A7CF7" stop-opacity="0.18" />
+                <stop offset="100%" stop-color="#4A7CF7" stop-opacity="0" />
               </linearGradient>
             </defs>
             <path d="M0 34 C20 28, 40 38, 60 22 C80 8, 100 36, 120 14 C140 2, 160 30, 180 16 C195 6, 210 20, 220 12"
-                  fill="url(#spgrd)"/>
+              fill="url(#spgrd)" />
             <path d="M0 34 C20 28, 40 38, 60 22 C80 8, 100 36, 120 14 C140 2, 160 30, 180 16 C195 6, 210 20, 220 12"
-                  fill="none" stroke="#4A7CF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              fill="none" stroke="#4A7CF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
           <div class="sys-bpm-row">
             <span class="sys-bpm-lbl">Average Family Heart Rate (7 days)</span>
@@ -246,8 +248,20 @@
         <div class="card appt-card">
           <div class="appt-hdr">
             <span class="appt-title">Upcoming Appointment</span>
-            <a href="#" class="link-sm">View all</a>
+            <a routerLink="/appointments" class="link-sm">View all</a>
           </div>
+
+          @if (apptLoading()) {
+          <div class="skl-list" style="padding:12px 0">
+            <div class="skl-row">
+              <div class="skl-sq"></div>
+              <div class="skl-lines" style="flex:1">
+                <div class="skl-line skl-70"></div>
+                <div class="skl-line skl-45"></div>
+              </div>
+            </div>
+          </div>
+          } @else if (nextAppointment()) {
           <div class="appt-body">
             <div class="appt-doc-wrap">
               <div class="appt-doc-ico">
@@ -255,20 +269,27 @@
               </div>
             </div>
             <div class="appt-info">
-              <p class="appt-name">Dr. Mohamed Ali</p>
-              <p class="appt-spec">Cardiology Checkup</p>
+              <p class="appt-name">{{ nextAppointment()!.provider }}</p>
+              <p class="appt-spec">{{ nextAppointment()!.title }}</p>
               <div class="appt-meta">
                 <span class="appt-meta-item">
-                  <i class="fa-regular fa-calendar"></i> Tomorrow, 10:30 AM
+                  <i class="fa-regular fa-calendar"></i> {{ formatApptDate(nextAppointment()!.appointmentDateTime) }}
                 </span>
-                <span class="pill pill-green-sm">In 1 day</span>
+                <span class="pill pill-green-sm">{{ formatApptRelative(nextAppointment()!.appointmentDateTime) }}</span>
               </div>
-              <button type="button" class="appt-detail-btn">View Details</button>
+              <button type="button" class="appt-detail-btn" routerLink="/appointments">View Details</button>
             </div>
           </div>
+          } @else {
+          <div style="padding:16px 0;text-align:center;color:var(--text-3);font-size:13px">
+            <i class="fa-regular fa-calendar" style="font-size:24px;display:block;margin-bottom:8px;color:var(--text-4)"></i>
+            No upcoming appointments
+          </div>
+          }
+
           <div class="appt-add-row">
             <span class="appt-add-lbl">Add New Appointment</span>
-            <button type="button" class="appt-add-btn">
+            <button type="button" class="appt-add-btn" (click)="goToAddAppointment()">
               <i class="fa-solid fa-plus"></i> Add
             </button>
           </div>
@@ -301,12 +322,16 @@
                 <span class="fam-v-lbl">BP</span>
                 <span class="fam-v-val">118/76 mmHg</span>
               </div>
-              <div class="fam-bar"><div class="fam-bar-fill bar-green" style="width:62%"></div></div>
+              <div class="fam-bar">
+                <div class="fam-bar-fill bar-green" style="width:62%"></div>
+              </div>
               <div class="fam-v-row">
                 <span class="fam-v-lbl">Glucose</span>
                 <span class="fam-v-val">92 mg/dL</span>
               </div>
-              <div class="fam-bar"><div class="fam-bar-fill bar-green" style="width:55%"></div></div>
+              <div class="fam-bar">
+                <div class="fam-bar-fill bar-green" style="width:55%"></div>
+              </div>
             </div>
             <button type="button" class="fam-checkin-btn">
               <i class="fa-solid fa-person-walking"></i> Check-in
@@ -330,12 +355,16 @@
                 <span class="fam-v-lbl">Heart Rate</span>
                 <span class="fam-v-val">68 bpm</span>
               </div>
-              <div class="fam-bar"><div class="fam-bar-fill bar-green" style="width:66%"></div></div>
+              <div class="fam-bar">
+                <div class="fam-bar-fill bar-green" style="width:66%"></div>
+              </div>
               <div class="fam-v-row">
                 <span class="fam-v-lbl">Sleep Quality</span>
                 <span class="fam-v-val">Excellent</span>
               </div>
-              <div class="fam-bar"><div class="fam-bar-fill bar-green" style="width:90%"></div></div>
+              <div class="fam-bar">
+                <div class="fam-bar-fill bar-green" style="width:90%"></div>
+              </div>
             </div>
             <button type="button" class="fam-checkin-btn">
               <i class="fa-solid fa-person-walking"></i> Check-in
@@ -359,12 +388,16 @@
                 <span class="fam-v-lbl">Temperature</span>
                 <span class="fam-v-val">98.6 °F</span>
               </div>
-              <div class="fam-bar"><div class="fam-bar-fill bar-blue" style="width:50%"></div></div>
+              <div class="fam-bar">
+                <div class="fam-bar-fill bar-blue" style="width:50%"></div>
+              </div>
               <div class="fam-v-row">
                 <span class="fam-v-lbl">Vaccination</span>
                 <span class="fam-v-val">Next: Oct 12</span>
               </div>
-              <div class="fam-bar"><div class="fam-bar-fill bar-blue" style="width:40%"></div></div>
+              <div class="fam-bar">
+                <div class="fam-bar-fill bar-blue" style="width:40%"></div>
+              </div>
             </div>
             <button type="button" class="fam-checkin-btn">
               <i class="fa-solid fa-person-walking"></i> Check-in
@@ -388,12 +421,16 @@
                 <span class="fam-v-lbl">BP Trend</span>
                 <span class="fam-v-val fam-v-red"><strong>High</strong> (138/92)</span>
               </div>
-              <div class="fam-bar"><div class="fam-bar-fill bar-red" style="width:88%"></div></div>
+              <div class="fam-bar">
+                <div class="fam-bar-fill bar-red" style="width:88%"></div>
+              </div>
               <div class="fam-v-row">
                 <span class="fam-v-lbl">Medication</span>
                 <span class="fam-v-val">8 AM Taken</span>
               </div>
-              <div class="fam-bar"><div class="fam-bar-fill bar-red" style="width:75%"></div></div>
+              <div class="fam-bar">
+                <div class="fam-bar-fill bar-red" style="width:75%"></div>
+              </div>
             </div>
             <button type="button" class="fam-checkin-btn fam-checkin-red">
               <i class="fa-solid fa-person-walking"></i> Check-in
@@ -414,44 +451,43 @@
           </div>
 
           @if (recordsLoading()) {
-            <div class="skl-list">
-              @for (s of [1,2,3]; track s) {
-                <div class="skl-row">
-                  <div class="skl-sq"></div>
-                  <div class="skl-lines">
-                    <div class="skl-line skl-70"></div>
-                    <div class="skl-line skl-45"></div>
-                  </div>
-                  <div class="skl-pill"></div>
-                </div>
-              }
+          <div class="skl-list">
+            @for (s of [1,2,3]; track s) {
+            <div class="skl-row">
+              <div class="skl-sq"></div>
+              <div class="skl-lines">
+                <div class="skl-line skl-70"></div>
+                <div class="skl-line skl-45"></div>
+              </div>
+              <div class="skl-pill"></div>
             </div>
+            }
+          </div>
           } @else if (records().length === 0) {
-            <div class="empty-state">
-              <i class="fa-solid fa-folder-open empty-icon"></i>
-              <p class="empty-title">No Medical Records Found</p>
-              <p class="empty-sub">Your uploaded lab reports and imaging results will appear here.</p>
-            </div>
+          <div class="empty-state">
+            <i class="fa-solid fa-folder-open empty-icon"></i>
+            <p class="empty-title">No Medical Records Found</p>
+            <p class="empty-sub">Your uploaded lab reports and imaging results will appear here.</p>
+          </div>
           } @else {
-            <ul class="rec-list">
-              @for (rec of records(); track rec.id; let i = $index) {
-                @if (i < 3) {
-                  <li class="rec-item">
-                    <div class="rec-ico" [class]="getRecordIconClass(rec.type)">
-                      <i [class]="'fa-solid ' + getRecordIcon(rec.type)"></i>
-                    </div>
-                    <div class="rec-info">
-                      <p class="rec-name">{{ rec.title }}</p>
-                      <p class="rec-meta">
-                        {{ rec.date }}
-                        @if (rec.source) { <span>· {{ rec.source }}</span> }
-                      </p>
-                    </div>
-                    <span class="pill pill-green-sm rec-status">{{ rec.status }}</span>
-                  </li>
-                }
+          <ul class="rec-list">
+            @for (rec of records(); track rec.id; let i = $index) {
+            @if (i < 3) { <li class="rec-item">
+              <div class="rec-ico" [class]="getRecordIconClass(rec.type)">
+                <i [class]="'fa-solid ' + getRecordIcon(rec.type)"></i>
+              </div>
+              <div class="rec-info">
+                <p class="rec-name">{{ rec.title }}</p>
+                <p class="rec-meta">
+                  {{ rec.date }}
+                  @if (rec.source) { <span>· {{ rec.source }}</span> }
+                </p>
+              </div>
+              <span class="pill pill-green-sm rec-status">{{ rec.status }}</span>
+              </li>
               }
-            </ul>
+              }
+          </ul>
           }
 
           <button type="button" class="bot-action-btn" routerLink="/medical-records">
@@ -467,38 +503,46 @@
           </div>
 
           @if (remindersLoading()) {
-            <div class="skl-list">
-              @for (s of [1,2,3]; track s) {
-                <div class="skl-row">
-                  <div class="skl-sq"></div>
-                  <div class="skl-lines">
-                    <div class="skl-line skl-70"></div>
-                    <div class="skl-line skl-45"></div>
-                  </div>
-                  <div class="skl-pill"></div>
-                </div>
-              }
+          <div class="skl-list">
+            @for (s of [1,2,3]; track s) {
+            <div class="skl-row">
+              <div class="skl-sq"></div>
+              <div class="skl-lines">
+                <div class="skl-line skl-70"></div>
+                <div class="skl-line skl-45"></div>
+              </div>
+              <div class="skl-pill"></div>
             </div>
-          } @else {
-            <ul class="med-list">
-              @for (rem of reminders(); track rem.id; let i = $index) {
-                @if (i < 3) {
-                  <li class="med-item">
-                    <div class="med-ico" [class]="getMedIconClass(i)">
-                      <i class="fa-solid fa-capsules"></i>
-                    </div>
-                    <div class="med-info">
-                      <p class="med-name">{{ rem.medicineName }} <span class="med-dose">{{ rem.dosage }}</span></p>
-                      <p class="med-freq">1 tablet · {{ rem.frequency }}</p>
-                    </div>
-                    <div class="med-next">
-                      <i class="fa-regular fa-bell med-bell"></i>
-                      <span class="med-next-time">{{ rem.reminderTime }}</span>
-                    </div>
-                  </li>
-                }
+            }
+          </div>
+          }
+          @else if (reminders().length === 0) {
+          <div class="empty-state">
+            <i class="fa-solid fa-bell empty-icon"></i>
+            <p class="empty-title">No Reminders Set</p>
+            <p class="empty-sub">Add your first reminder to get started.</p>
+          </div>
+          }
+
+          @else {
+          <ul class="med-list">
+            @for (rem of reminders(); track rem.id; let i = $index) {
+            @if (i < 3) { <li class="med-item">
+              <div class="med-ico" [class]="getMedIconClass(i)">
+                <i class="fa-solid fa-capsules"></i>
+              </div>
+              <div class="med-info">
+                <p class="med-name">{{ rem.medicineName }} <span class="med-dose">{{ rem.dosage }}</span></p>
+                <p class="med-freq">1 tablet · {{ rem.frequency }}</p>
+              </div>
+              <div class="med-next">
+                <i class="fa-regular fa-bell med-bell"></i>
+                <span class="med-next-time">{{ rem.reminderTime }}</span>
+              </div>
+              </li>
               }
-            </ul>
+              }
+          </ul>
           }
 
           <button type="button" class="bot-action-btn bot-action-orange">

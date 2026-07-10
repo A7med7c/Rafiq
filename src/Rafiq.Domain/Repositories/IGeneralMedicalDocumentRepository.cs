@@ -12,6 +12,8 @@ public interface IGeneralDocumentRepository
     Task<IReadOnlyList<GeneralDocument>> GetAllByUserIdAsync(
         Guid userHealthProfileId,
         CancellationToken cancellationToken = default);
+    
+    void Update(GeneralDocument document);
 
     void Remove(GeneralDocument document);
 }

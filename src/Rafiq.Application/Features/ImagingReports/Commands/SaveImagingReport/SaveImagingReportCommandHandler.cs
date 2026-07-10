@@ -3,12 +3,15 @@ using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.ImagingReports.DTOs;
 using Rafiq.Domain.Entities.Documents;
+using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 using System.Globalization;
 
 namespace Rafiq.Application.Features.ImagingReports.Commands.SaveImagingReport;
 
 public sealed class SaveImagingReportCommandHandler(
+    ICurrentUserService currentUserService,
+    IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IImagingReportRepository imagingReportRepository,
     IUnitOfWork unitOfWork)
@@ -18,14 +21,25 @@ public sealed class SaveImagingReportCommandHandler(
         SaveImagingReportCommand request,
         CancellationToken cancellationToken)
     {
-        await authorizationService.EnsureCanWriteAsync(request.ProfileId, cancellationToken);
+        var profileId = request.ProfileId;
+
+        if (profileId == Guid.Empty)
+        {
+            var currentUserId = currentUserService.UserId
+                ?? throw new UnauthorizedException("Authentication is required.");
+
+            profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
+                ?? throw new NotFoundException("PatientProfile", currentUserId);
+        }
+
+        await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
 
         var reportDate = DateOnly.TryParseExact(request.ReportDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
             ? parsed
             : DateOnly.FromDateTime(DateTime.UtcNow);
 
         var imagingReport = new ImagingReport(
-            request.ProfileId,
+            profileId,
             request.ImagingType ?? "Unknown",
             request.BodyPart ?? "Unknown",
             request.Findings ?? string.Empty,

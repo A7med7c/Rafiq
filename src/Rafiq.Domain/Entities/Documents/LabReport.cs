@@ -44,4 +44,22 @@ public class LabReport : BaseEntity
 
     public ICollection<LabResult> Results { get; set; }
         = new List<LabResult>();
+    
+    public void Update(
+        string doctorName,
+        string labName,
+        DateOnly reportDate,
+        string? description,
+        string? imageUrl,
+        string? ocrText)
+    {
+        DoctorName = doctorName;
+        LabName = labName;
+        ReportDate = reportDate;
+        Description = description;
+        if (!string.IsNullOrWhiteSpace(imageUrl))
+            ImageUrl = imageUrl;
+        OCRText = ocrText;
+        MarkUpdated();
+    }
 }

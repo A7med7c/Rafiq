@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../Services/auth-service';
 import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medical-records.service';
@@ -118,7 +118,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 @Component({
   selector: 'app-medical-records',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
   templateUrl: './medical-records.html',
   styleUrl: './medical-records.css',
 })

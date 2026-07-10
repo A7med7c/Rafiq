@@ -1,9 +1,13 @@
-import { Component, inject, OnInit, signal, HostListener, ElementRef } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
 import { DashboardService } from '../../Services/dashboard.service';
+import { AppointmentsService } from '../../Services/appointments.service';
+import { NotificationService } from '../../Services/notification.service';
 import { MedicalRecord, ReminderDisplayItem } from '../../Modles/dashboard.models';
+import { AppointmentDto, AppointmentStatus } from '../../Modles/appointment.models';
+import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -15,6 +19,8 @@ import { MedicalRecord, ReminderDisplayItem } from '../../Modles/dashboard.model
 export class Dashboard implements OnInit {
   private readonly authService      = inject(AuthService);
   private readonly dashboardService = inject(DashboardService);
+  private readonly apptService      = inject(AppointmentsService);
+  private readonly notifService     = inject(NotificationService);
   private readonly router           = inject(Router);
   private readonly elRef            = inject(ElementRef);
 
@@ -25,7 +31,21 @@ export class Dashboard implements OnInit {
   readonly sidebarCollapsed  = signal(false);
   readonly mobileSidebarOpen = signal(false);
   readonly dropdownOpen      = signal(false);
-  readonly today            = new Date();
+
+  readonly apptLoading     = signal(true);
+  readonly allAppointments = signal<AppointmentDto[]>([]);
+
+  readonly nextAppointment = computed(() => {
+    const now = Date.now();
+    return this.allAppointments()
+      .filter(a => a.status === AppointmentStatus.Upcoming && new Date(a.appointmentDateTime).getTime() > now)
+      .sort((a, b) => new Date(a.appointmentDateTime).getTime() - new Date(b.appointmentDateTime).getTime())[0]
+      ?? null;
+  });
+
+  readonly unreadNotifCount = this.notifService.unreadCount;
+
+  readonly today = new Date();
 
   get displayName(): string {
     const u = this.authService.currentUser;
@@ -56,6 +76,13 @@ export class Dashboard implements OnInit {
       next:  d => { this.reminders.set(d); this.remindersLoading.set(false); },
       error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
     });
+
+    this.apptService.getAll().pipe(
+      catchError(() => of([] as AppointmentDto[]))
+    ).subscribe(data => {
+      this.allAppointments.set(data);
+      this.apptLoading.set(false);
+    });
   }
 
   @HostListener('window:resize')
@@ -78,7 +105,6 @@ export class Dashboard implements OnInit {
     this.mobileSidebarOpen.update(v => !v);
   }
 
-  /** Close dropdown when clicking anywhere outside the hdr-user element */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
@@ -94,6 +120,27 @@ export class Dashboard implements OnInit {
   logout(): void {
     this.dropdownOpen.set(false);
     this.authService.logout().subscribe();
+  }
+
+  goToAddAppointment(): void {
+    this.router.navigate(['/appointments'], { queryParams: { openAdd: '1' } });
+  }
+
+  formatApptDate(dt: string): string {
+    const d    = new Date(dt);
+    const now  = new Date();
+    const diff = Math.ceil((d.getTime() - now.getTime()) / 86_400_000);
+    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    if (diff === 0) return `Today, ${time}`;
+    if (diff === 1) return `Tomorrow, ${time}`;
+    return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${time}`;
+  }
+
+  formatApptRelative(dt: string): string {
+    const diff = Math.ceil((new Date(dt).getTime() - Date.now()) / 86_400_000);
+    if (diff <= 0) return 'Today';
+    if (diff === 1) return 'In 1 day';
+    return `In ${diff} days`;
   }
 
   getRecordIcon(type: string): string {

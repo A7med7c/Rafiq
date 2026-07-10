@@ -7,45 +7,41 @@ using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 using System.Globalization;
 
-namespace Rafiq.Application.Features.LabReports.Commands.SaveLabReport;
+namespace Rafiq.Application.Features.LabReports.Commands.UpdateLabReport;
 
-public sealed class SaveLabReportCommandHandler(
-    ICurrentUserService currentUserService,
-    IPatientProfileRepository patientProfileRepository,
+public sealed class UpdateLabReportCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     ILabReportRepository labReportRepository,
     IUnitOfWork unitOfWork)
-    : IRequestHandler<SaveLabReportCommand, ApiResponse<LabReportResponseDto>>
+    : IRequestHandler<UpdateLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
     public async Task<ApiResponse<LabReportResponseDto>> Handle(
-        SaveLabReportCommand request,
+        UpdateLabReportCommand request,
         CancellationToken cancellationToken)
     {
-        var profileId = request.ProfileId;
+        var labReport = await labReportRepository.GetByIdAsync(request.Id, cancellationToken)
+            ?? throw new NotFoundException(nameof(LabReport), request.Id);
 
-        if (profileId == Guid.Empty)
-        {
-            var currentUserId = currentUserService.UserId
-                ?? throw new UnauthorizedException("Authentication is required.");
+        await authorizationService.EnsureCanWriteAsync(labReport.UserHealthProfileId, cancellationToken);
 
-            profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
-                ?? throw new NotFoundException("PatientProfile", currentUserId);
-        }
-
-        await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
-
-        var reportDate = DateOnly.TryParseExact(request.ReportDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
+        var reportDate = DateOnly.TryParseExact(
+            request.ReportDate,
+            "yyyy-MM-dd",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out var parsed)
             ? parsed
-            : DateOnly.FromDateTime(DateTime.UtcNow);
+            : labReport.ReportDate;
 
-        var labReport = new LabReport(
-            profileId,
+        labReport.Update(
             request.DoctorName ?? string.Empty,
             request.LabName ?? string.Empty,
             reportDate,
-            request.ImageUrl ?? string.Empty,
-            request.OcrText,
-            request.Summary);
+            request.Summary,
+            request.ImageUrl,
+            request.OcrText);
+
+        labReport.Results.Clear();
 
         foreach (var result in request.Results ?? [])
         {
@@ -59,7 +55,7 @@ public sealed class SaveLabReportCommandHandler(
             });
         }
 
-        await labReportRepository.AddAsync(labReport, cancellationToken);
+        labReportRepository.Update(labReport);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = new LabReportResponseDto
@@ -83,6 +79,6 @@ public sealed class SaveLabReportCommandHandler(
             }).ToList()
         };
 
-        return ApiResponse<LabReportResponseDto>.SuccessResponse(dto, "Lab report saved successfully.");
+        return ApiResponse<LabReportResponseDto>.SuccessResponse(dto, "Lab report updated successfully.");
     }
 }

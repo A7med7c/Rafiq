@@ -3,12 +3,15 @@ using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.Prescriptions.DTOs;
 using Rafiq.Domain.Entities.Documents;
+using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 using System.Globalization;
 
 namespace Rafiq.Application.Features.Prescriptions.Commands.SavePrescription;
 
 public sealed class SavePrescriptionCommandHandler(
+    ICurrentUserService currentUserService,
+    IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IPrescriptionRepository prescriptionRepository,
     IUnitOfWork unitOfWork)
@@ -18,7 +21,18 @@ public sealed class SavePrescriptionCommandHandler(
         SavePrescriptionCommand request,
         CancellationToken cancellationToken)
     {
-        await authorizationService.EnsureCanWriteAsync(request.ProfileId, cancellationToken);
+        var profileId = request.ProfileId;
+
+        if (profileId == Guid.Empty)
+        {
+            var currentUserId = currentUserService.UserId
+                ?? throw new UnauthorizedException("Authentication is required.");
+
+            profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
+                ?? throw new NotFoundException("PatientProfile", currentUserId);
+        }
+
+        await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
 
         var prescriptionDate = DateOnly.TryParseExact(
             request.PrescriptionDate, 
@@ -30,7 +44,7 @@ public sealed class SavePrescriptionCommandHandler(
             : DateOnly.FromDateTime(DateTime.UtcNow);
 
         var prescription = new Prescription(
-            request.ProfileId,
+            profileId,
             request.DoctorName ?? string.Empty,
             request.PatientName ?? string.Empty,
             prescriptionDate,

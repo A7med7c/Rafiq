@@ -34,6 +34,8 @@ public sealed class SaveGeneralDocumentCommandHandler(
     document,
     cancellationToken);
 
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
 
         return ApiResponse<GeneralDocumentResponseDto>.SuccessResponse(
 

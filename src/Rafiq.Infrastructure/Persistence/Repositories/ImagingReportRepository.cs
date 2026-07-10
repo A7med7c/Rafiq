@@ -31,4 +31,10 @@ public sealed class ImagingReportRepository : IImagingReportRepository
             .Where(r => r.UserHealthProfileId == userHealthProfileId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
+    
+    public void Update(ImagingReport imagingReport)
+        => _context.ImagingReports.Update(imagingReport);
+    
+    public void Remove(ImagingReport imagingReport)
+        => _context.ImagingReports.Remove(imagingReport);
 }

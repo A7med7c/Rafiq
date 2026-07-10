@@ -33,4 +33,10 @@ public sealed class LabReportRepository : ILabReportRepository
             .Where(r => r.UserHealthProfileId == userHealthProfileId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
+    
+    public void Update(LabReport labReport)
+        => _context.LabReports.Update(labReport);
+    
+    public void Remove(LabReport labReport)
+        => _context.LabReports.Remove(labReport);
 }
