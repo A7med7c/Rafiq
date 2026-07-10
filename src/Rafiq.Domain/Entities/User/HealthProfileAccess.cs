@@ -14,7 +14,8 @@ public class HealthProfileAccess : BaseEntity
         AccessRole role,
         AccessStatus status,
         Guid? invitedByUserId,
-        AccessOrigin origin)
+        AccessOrigin origin,
+        RelationshipType? relationship = null)
     {
         UserHealthProfileId = userHealthProfileId;
         GranteeUserId = granteeUserId;
@@ -22,6 +23,7 @@ public class HealthProfileAccess : BaseEntity
         Status = status;
         InvitedByUserId = invitedByUserId;
         Origin = origin;
+        Relationship = relationship;
         StatusChangedAt = DateTime.UtcNow;
     }
 
@@ -38,7 +40,8 @@ public class HealthProfileAccess : BaseEntity
             AccessRole.Owner,
             AccessStatus.Active,
             invitedByUserId: null,
-            AccessOrigin.Direct);
+            AccessOrigin.Direct,
+            RelationshipType.Self);
     }
 
     /// <summary>
@@ -46,7 +49,8 @@ public class HealthProfileAccess : BaseEntity
     /// </summary>
     public static HealthProfileAccess CreateManagedProfileOwner(
         Guid userHealthProfileId,
-        Guid granteeUserId)
+        Guid granteeUserId,
+        RelationshipType relationship)
     {
         return new HealthProfileAccess(
             userHealthProfileId,
@@ -54,7 +58,8 @@ public class HealthProfileAccess : BaseEntity
             AccessRole.Owner,
             AccessStatus.Active,
             invitedByUserId: null,
-            AccessOrigin.Direct);
+            AccessOrigin.Direct,
+            relationship);
     }
 
     /// <summary>
@@ -113,6 +118,12 @@ public class HealthProfileAccess : BaseEntity
     /// for GrantInvitation it's the Grantee, for AccessRequest it's the target profile's owner.
     /// </summary>
     public AccessOrigin Origin { get; private set; }
+
+    /// <summary>
+    /// Describes how the health profile is related to the grantee user (e.g., Self, Son, Mother).
+    /// Nullable because invitations, access requests, and ordinary shared-profile access do not necessarily represent a family relationship.
+    /// </summary>
+    public RelationshipType? Relationship { get; private set; }
 
     /// <summary>
     /// Historical record of who originally sent the invitation or made the request.

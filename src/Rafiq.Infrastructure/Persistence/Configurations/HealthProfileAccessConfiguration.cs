@@ -26,6 +26,9 @@ public sealed class HealthProfileAccessConfiguration
             .HasConversion<int>()
             .IsRequired();
 
+        builder.Property(x => x.Relationship)
+            .HasConversion<int>();
+
         builder.Property(x => x.StatusChangedAt)
             .IsRequired();
 

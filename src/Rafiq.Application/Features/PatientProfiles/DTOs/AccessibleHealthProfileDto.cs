@@ -11,6 +11,7 @@ public sealed record AccessibleHealthProfileDto(
     decimal? Height,
     decimal? Weight,
     string AccessRole,
+    string? Relationship,
     string AccessOrigin,
     string ProfileType,
     bool IsSelf

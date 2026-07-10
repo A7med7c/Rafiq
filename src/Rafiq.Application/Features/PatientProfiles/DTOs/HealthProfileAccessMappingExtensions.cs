@@ -67,6 +67,7 @@ internal static class HealthProfileAccessMappingExtensions
             profile.Height,
             profile.Weight,
             access.Role.ToString(),
+            access.Relationship?.ToString(),
             access.Origin.ToString(),
             profileType,
             isSelf);
