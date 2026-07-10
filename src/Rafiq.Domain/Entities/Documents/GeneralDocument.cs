@@ -34,10 +34,15 @@ public sealed class GeneralDocument : BaseEntity
     public void Update(
         string title,
         string description,
-        string? aiSummary)
+        string? aiSummary,
+        string? imagePath)
     {
         Title = title;
         Description = description;
         AiSummary = aiSummary;
+        if (!string.IsNullOrWhiteSpace(imagePath))
+            ImagePath = imagePath;
+
+        MarkUpdated();
     }
 }

@@ -53,4 +53,28 @@ public class ImagingReport : BaseEntity
     public string? OCRText { get; private set; }
 
     public string? Description { get; set; } // Stores AI summary
+    
+    public void Update(
+        string imagingType,
+        string bodyPart,
+        string findings,
+        string impression,
+        string? doctorName,
+        DateOnly reportDate,
+        string? description,
+        string? imageUrl,
+        string? ocrText)
+    {
+        ImagingType = imagingType;
+        BodyPart = bodyPart;
+        Findings = findings;
+        Impression = impression;
+        DoctorName = doctorName;
+        ReportDate = reportDate;
+        Description = description;
+        if (!string.IsNullOrWhiteSpace(imageUrl))
+            ImageUrl = imageUrl;
+        OCRText = ocrText;
+        MarkUpdated();
+    }
 }

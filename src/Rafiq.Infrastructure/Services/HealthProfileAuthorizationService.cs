@@ -7,7 +7,8 @@ namespace Rafiq.Infrastructure.Services;
 
 public sealed class HealthProfileAuthorizationService(
     ICurrentUserService currentUserService,
-    IHealthProfileAccessRepository healthProfileAccessRepository)
+    IHealthProfileAccessRepository healthProfileAccessRepository,
+    IPatientProfileRepository patientProfileRepository)
     : IHealthProfileAuthorizationService
 {
     public async Task<HealthProfileAccessContext> GetAccessAsync(
@@ -20,15 +21,47 @@ public sealed class HealthProfileAuthorizationService(
         var access = await healthProfileAccessRepository.GetActiveAccessAsync(
             userHealthProfileId,
             currentUserId,
-            cancellationToken)
-            ?? throw new UnauthorizedException("You do not have access to this health profile.");
+            cancellationToken);
+
+        if (access is not null)
+        {
+            return new HealthProfileAccessContext(
+                access.UserHealthProfileId,
+                currentUserId,
+                access.Id,
+                access.Role,
+                access.Status);
+        }
+
+        var implicitOwnerAccess = await GetImplicitOwnerAccessAsync(
+            userHealthProfileId,
+            currentUserId,
+            cancellationToken);
+
+        if (implicitOwnerAccess is not null)
+        {
+            return implicitOwnerAccess;
+        }
+
+        throw new UnauthorizedException("You do not have access to this health profile.");
+    }
+
+    private async Task<HealthProfileAccessContext?> GetImplicitOwnerAccessAsync(
+        Guid userHealthProfileId,
+        Guid currentUserId,
+        CancellationToken cancellationToken)
+    {
+        var profile = await patientProfileRepository.GetByIdAsync(userHealthProfileId, cancellationToken);
+
+        if (profile?.UserId != currentUserId)
+            return null;
 
         return new HealthProfileAccessContext(
-            access.UserHealthProfileId,
+            profile.Id,
             currentUserId,
-            access.Id,
-            access.Role,
-            access.Status);
+            Guid.Empty,
+            Domain.Enums.AccessRole.Owner,
+            Domain.Enums.AccessStatus.Active);
     }
 
     public Task<HealthProfileAccessContext> EnsureCanReadAsync(

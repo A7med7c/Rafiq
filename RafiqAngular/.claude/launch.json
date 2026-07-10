@@ -4,8 +4,8 @@
     {
       "name": "Angular Dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["start"],
-      "port": 4200
+      "runtimeArgs": ["start", "--", "--port=4201"],
+      "port": 4201
     }
   ]
 }
