@@ -1,8 +1,14 @@
 
+using Hangfire;
 using Rafiq.API.Extensions;
 using Rafiq.API.Middleware;
 using Rafiq.Application;
 using Rafiq.Infrastructure;
+<<<<<<< Updated upstream
+=======
+using Rafiq.Infrastructure.Services.auth;
+using Rafiq.Infrastructure.Services.MedicationReminders;
+>>>>>>> Stashed changes
 using System.Text.Json.Serialization;
 
 namespace Rafiq.API;
@@ -45,6 +51,14 @@ public class Program
         app.UseAuthorization();
         app.MapControllers();
         app.MapHealthChecks("/health");
+
+        app.UseHangfireDashboard("/hangfire");
+
+        RecurringJob.AddOrUpdate<DailyMedicationSchedulerJob>(
+            "daily-medication-scheduler",
+            job => job.ScheduleAsync(),
+            "5 0 * * *",   // 00:05 UTC every day
+            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
         app.Run();
     }

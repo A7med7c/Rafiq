@@ -49,6 +49,13 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<MedicineReminder> MedicineReminders => Set<MedicineReminder>();
 
+<<<<<<< Updated upstream
+=======
+    public DbSet<MedicationReminderLog> MedicationReminderLogs => Set<MedicationReminderLog>();
+
+    public DbSet<Appointment> Appointments => Set<Appointment>();
+
+>>>>>>> Stashed changes
     public DbSet<LabReport> LabReports => Set<LabReport>();
 
     public DbSet<LabResult> LabResults => Set<LabResult>();

@@ -328,6 +328,63 @@ namespace Rafiq.Infrastructure.Migrations
                     b.ToTable("Medicines");
                 });
 
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicationReminderLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MedicineReminderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("NextJobId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("ReminderNumber")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("ScheduledDate")
+                        .HasColumnType("date");
+
+                    b.Property<TimeSpan>("ScheduledTime")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("UserHealthProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserHealthProfileId", "ScheduledDate");
+
+                    b.HasIndex("MedicineReminderId", "ScheduledDate", "ReminderNumber");
+
+                    b.ToTable("MedicationReminderLogs", (string)null);
+                });
+
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicineReminder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -888,7 +945,52 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("LabReport");
                 });
 
+<<<<<<< Updated upstream
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Medicine", b =>
+=======
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicationReminderLog", b =>
+                {
+                    b.HasOne("Rafiq.Domain.Entities.Documents.MedicineReminder", "MedicineReminder")
+                        .WithMany()
+                        .HasForeignKey("MedicineReminderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MedicineReminder");
+
+                    b.Navigation("UserHealthProfile");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicineReminder", b =>
+                {
+                    b.HasOne("Rafiq.Domain.Entities.Documents.UserMedicine", "UserMedicine")
+                        .WithMany("Reminders")
+                        .HasForeignKey("UserMedicineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserMedicine");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Prescription", b =>
+                {
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.PrescriptionMedicine", b =>
+>>>>>>> Stashed changes
                 {
                     b.HasOne("Rafiq.Domain.Entities.Documents.Prescription", "Prescription")
                         .WithMany("Medicines")

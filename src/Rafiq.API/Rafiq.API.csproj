@@ -6,6 +6,11 @@
     <RootNamespace>Rafiq.API</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+<<<<<<< Updated upstream
+=======
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.9" />
+>>>>>>> Stashed changes
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.*">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
