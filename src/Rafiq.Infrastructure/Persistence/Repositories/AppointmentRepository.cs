@@ -85,4 +85,32 @@ public sealed class AppointmentRepository(RafiqDbContext context) : IAppointment
 
         return query.AnyAsync(cancellationToken);
     }
+
+    public async Task UpdateMissedAppointmentsAsync(CancellationToken cancellationToken)
+    {
+
+
+        var now = DateTime.Now;
+
+        Console.WriteLine($"UTC NOW = {now}");
+
+        var appointments = await context.Appointments
+            .Where(a => a.Status == AppointmentStatus.Upcoming)
+            .ToListAsync(cancellationToken);
+
+        foreach (var appointment in appointments)
+        {
+            Console.WriteLine(
+                $"{appointment.Title} | {appointment.AppointmentDateTime} | {(appointment.AppointmentDateTime <= now)}");
+            var appointmentUtc = DateTime.SpecifyKind(
+    appointment.AppointmentDateTime,
+    DateTimeKind.Utc);
+
+            if (appointment.AppointmentDateTime <= now)
+            {
+                appointment.MarkAsMissed();
+
+            }
+        }
+    }
 }

@@ -223,6 +223,54 @@
         </div>
 
         }
+        @else {
+        <div class="next-card next-card-empty">
+
+          <div class="next-card-content">
+
+            <div class="next-header">
+
+              <div class="next-icon">
+                <i class="fa-regular fa-calendar"></i>
+              </div>
+
+              <div>
+                <div class="next-small-title" style="font-size: 20px;">
+                  Next Appointment
+                </div>
+
+                <h2 class="next-title empty-title" style="margin:20px 0px;">
+                  No Upcoming Appointment
+                </h2>
+
+                <p class="empty-text">
+                  You don't have any upcoming appointments.
+                  Schedule one to receive reminders.
+                </p>
+
+                <button class="next-btn" (click)="openAdd()">
+
+                  <i class="fa-solid fa-plus"></i>
+
+                  Add Appointment
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="next-image">
+
+            <img src="images/calender.png" alt="Calendar">
+
+          </div>
+
+        </div>
+
+        }
 
         <!-- ================= STATS ================= -->
 
@@ -231,7 +279,7 @@
           <div class="stat-card stat-card-blue" (click)="setTab('upcoming')">
 
             <div class="stat-ico-wrap stat-ico-blue">
-              <i class="fa-regular fa-calendar-check"></i>
+              <i class="fa-solid fa-clipboard-check" style="color: rgb(116, 192, 252);"></i>
             </div>
 
             <div class="stat-body">
@@ -256,7 +304,7 @@
           <div class="stat-card stat-card-green" (click)="setTab('completed')">
 
             <div class="stat-ico-wrap stat-ico-green">
-              <i class="fa-solid fa-circle-check"></i>
+              <i class="fa-solid fa-circle-check" style="color: rgb(68, 239, 122);"></i>
             </div>
 
             <div class="stat-body">
@@ -281,11 +329,11 @@
           <div class="stat-card stat-card-red" (click)="setTab('cancelled')">
 
             <div class="stat-ico-wrap stat-ico-red">
-              <i class="fa-solid fa-circle-xmark"></i>
+              <i class="fa-solid fa-circle-xmark" style="color: rgb(226, 26, 32);"></i>
             </div>
 
             <div class="stat-body">
-              <span class="stat-lbl">Cancelled</span>
+              <span class="stat-lbl">Cancelled / Missed</span>
 
               <span class="stat-num">{{ cancelledCount() }}</span>
               <span class="stat-sub">appointments</span>
@@ -306,7 +354,7 @@
           <div class="stat-card stat-card-gray" (click)="setTab('all')">
 
             <div class="stat-ico-wrap stat-ico-gray">
-              <i class="fa-regular fa-calendar"></i>
+              <i class="fa-regular fa-calendar-days" style="color: rgb(116, 192, 252);"></i>
             </div>
 
             <div class="stat-body">
@@ -333,108 +381,82 @@
 
       <!-- ── Tab Bar ── -->
 
-     <div class="appts-toolbar">
+      <div class="appts-toolbar">
 
-  <!-- Tabs -->
-  <div class="appts-tab-bar">
+        <!-- Tabs -->
+        <div class="appts-tab-bar">
 
-    <button
-      type="button"
-      class="tab-btn"
-      [class.tab-btn--active]="activeTab() === 'all'"
-      (click)="setTab('all')">
-      All
-      <!-- <span class="tab-count">{{ totalCount() }}</span> -->
-    </button>
+          <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'all'" (click)="setTab('all')">
+            All
+            <!-- <span class="tab-count">{{ totalCount() }}</span> -->
+          </button>
 
-    <button
-      type="button"
-      class="tab-btn"
-      [class.tab-btn--active]="activeTab() === 'upcoming'"
-      (click)="setTab('upcoming')">
-      Upcoming
-      <!-- <span class="tab-count tab-count-blue">{{ upcomingCount() }}</span> -->
-    </button>
+          <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'upcoming'"
+            (click)="setTab('upcoming')">
+            Upcoming
+            <!-- <span class="tab-count tab-count-blue">{{ upcomingCount() }}</span> -->
+          </button>
 
-    <button
-      type="button"
-      class="tab-btn"
-      [class.tab-btn--active]="activeTab() === 'completed'"
-      (click)="setTab('completed')">
-      Completed
-      <!-- <span class="tab-count tab-count-green">{{ completedCount() }}</span> -->
-    </button>
+          <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'completed'"
+            (click)="setTab('completed')">
+            Completed
+            <!-- <span class="tab-count tab-count-green">{{ completedCount() }}</span> -->
+          </button>
 
-    <button
-      type="button"
-      class="tab-btn"
-      [class.tab-btn--active]="activeTab() === 'cancelled'"
-      (click)="setTab('cancelled')">
-      Cancelled
-      <!-- <span class="tab-count tab-count-red">{{ cancelledCount() }}</span> -->
-    </button>
+          <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'cancelled'"
+            (click)="setTab('cancelled')">
+            Cancelled &amp; Missed
+            <!-- <span class="tab-count tab-count-red">{{ cancelledCount() }}</span> -->
+          </button>         
 
-  </div>
+        </div>
 
-  <!-- Search + Filters -->
-  <div class="appts-controls-row">
+        <!-- Search + Filters -->
+        <div class="appts-controls-row">
 
-    <div class="appts-search-wrap">
+          <div class="appts-search-wrap">
 
-      <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
+            <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
 
-      <input
-        type="text"
-        class="appts-search-inp"
-        placeholder="Search appointments..."
-        [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event); onFilterChange()">
+            <input type="text" class="appts-search-inp" placeholder="Search appointments..." [ngModel]="searchQuery()"
+              (ngModelChange)="searchQuery.set($event); onFilterChange()">
 
-    </div>
+          </div>
 
-    <div class="appts-date-wrap">
+          <div class="appts-date-wrap">
 
-      <i class="fa-regular fa-calendar appts-date-ico"></i>
+            <i class="fa-regular fa-calendar appts-date-ico"></i>
 
-      <input
-        type="date"
-        class="appts-date-inp"
-        [ngModel]="dateFrom()"
-        (ngModelChange)="dateFrom.set($event); onFilterChange()">
+            <input type="date" class="appts-date-inp" [ngModel]="dateFrom()"
+              (ngModelChange)="dateFrom.set($event); onFilterChange()">
 
-      <span class="appts-date-sep">—</span>
+            <span class="appts-date-sep">—</span>
 
-      <input
-        type="date"
-        class="appts-date-inp"
-        [ngModel]="dateTo()"
-        (ngModelChange)="dateTo.set($event); onFilterChange()">
+            <input type="date" class="appts-date-inp" [ngModel]="dateTo()"
+              (ngModelChange)="dateTo.set($event); onFilterChange()">
 
-    </div>
+          </div>
 
-    @if (searchQuery() || dateFrom() || dateTo()) {
+          @if (searchQuery() || dateFrom() || dateTo()) {
 
-      <button
-        type="button"
-        class="filter-btn"
-        (click)="clearFilters()">
+          <button type="button" class="filter-btn" (click)="clearFilters()">
 
-        <i class="fa-solid fa-sliders"></i>
+            <i class="fa-solid fa-sliders"></i>
 
-        Clear
+            Clear
 
-      </button>
+          </button>
 
-    }
+          }
 
-  </div>
+        </div>
 
-</div>
+      </div>
 
 
 
       <!-- ── Table ── -->
-      <div class="card appts-table-card">
+      <div class="card appts-table-card" [class.tab-animating]="tabAnimating()" [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
 
         @if (loading()) {
         <div class="skl-list">
@@ -474,11 +496,11 @@
             Click "Add Appointment" to schedule your first one.
             }
           </p>
-          @if (!searchQuery() && !dateFrom() && !dateTo()) {
+          <!-- @if (!searchQuery() && !dateFrom() && !dateTo()) {
           <button type="button" class="add-appt-btn" style="margin-top:14px" (click)="openAdd()">
             <i class="fa-solid fa-plus"></i> Add Appointment
           </button>
-          }
+          } -->
         </div>
         }
 
@@ -496,7 +518,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (a of paginated(); track a.id) {
+              @for (a of paginated(); track a.id; let i = $index) {
               <tr>
                 <!-- Appointment -->
                 <td>
@@ -506,7 +528,7 @@
                     </div>
                     <div>
                       <p class="rec-name" style="margin:0 0 2px">{{ a.title }}</p>
-                      <span class="type-pill">{{ typeLabel(a) }}</span>
+                      <span class="type-pill">{{ a.appointmentType }}</span>
                     </div>
                   </div>
                 </td>
@@ -541,7 +563,7 @@
                       <i class="fa-solid fa-ellipsis-vertical"></i>
                     </button>
                     @if (openMenuId() === a.id) {
-                    <div class="record-menu">
+                    <div class="record-menu"  [class.record-menu-up]="isLastRow(i)">
                       @if (a.status === AppointmentStatus.Upcoming) {
                       <button type="button" class="rec-menu-item" (click)="markComplete(a.id); openMenuId.set(null)">
                         <i class="fa-solid fa-check"></i> Mark Complete
@@ -566,31 +588,45 @@
 
         <!-- Pagination -->
         @if (totalPages() > 1) {
-        <div class="pagination-row">
-          <span class="page-info">
-            Showing {{ (currentPage() - 1) * pageSize + 1 }}–{{ pageEnd() }} of {{ filtered().length }}
-          </span>
-          <div class="page-btns">
-            <button type="button" class="page-btn" [disabled]="currentPage() === 1"
-              (click)="setPage(currentPage() - 1)">
-              <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            @for (p of pageNumbers(); track p) {
-            @if (p === '...') {
-            <span class="page-ellipsis">…</span>
-            } @else {
-            <button type="button" class="page-btn" [class.page-btn--active]="p === currentPage()" (click)="setPage(p)">
-              {{ p }}
-            </button>
-            }
-            }
-            <button type="button" class="page-btn" [disabled]="currentPage() === totalPages()"
-              (click)="setPage(currentPage() + 1)">
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-          </div>
-        </div>
-        }
+<div class="pagination-bar">
+
+  <button
+    type="button"
+    class="page-btn"
+    [disabled]="currentPage() === 1"
+    (click)="prevPage()">
+
+    <i class="fa-solid fa-chevron-left"></i>
+
+  </button>
+
+  @for (page of pageNumbers(); track $index) {
+
+    <button
+      type="button"
+      class="page-btn"
+      [class.active]="page === currentPage()"
+      [disabled]="page === '...'"
+      (click)="goToPage(page)">
+
+      {{ page }}
+
+    </button>
+
+  }
+
+  <button
+    type="button"
+    class="page-btn"
+    [disabled]="currentPage() === totalPages()"
+    (click)="nextPage()">
+
+    <i class="fa-solid fa-chevron-right"></i>
+
+  </button>
+
+</div>
+}
         }
 
       </div><!-- /table card -->

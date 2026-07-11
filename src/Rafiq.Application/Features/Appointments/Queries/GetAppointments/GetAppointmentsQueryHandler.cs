@@ -10,13 +10,17 @@ namespace Rafiq.Application.Features.Appointments.Queries.GetAppointments;
 public sealed class GetAppointmentsQueryHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
-    IAppointmentRepository appointmentRepository)
+    IAppointmentRepository appointmentRepository,
+    IUnitOfWork unitOfWork)
     : IRequestHandler<GetAppointmentsQuery, ApiResponse<List<AppointmentResponseDto>>>
 {
     public async Task<ApiResponse<List<AppointmentResponseDto>>> Handle(
         GetAppointmentsQuery request,
         CancellationToken cancellationToken)
     {
+        await appointmentRepository.UpdateMissedAppointmentsAsync(cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
         _ = await patientProfileRepository.GetByIdAsync(request.ProfileId, cancellationToken)
             ?? throw new NotFoundException("UserHealthProfile", request.ProfileId);
 

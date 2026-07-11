@@ -73,7 +73,9 @@ export class Appointments implements OnInit, OnDestroy {
   readonly dateFrom    = signal('');
   readonly dateTo      = signal('');
   readonly currentPage = signal(1);
-  readonly pageSize    = 10;
+  readonly PAGE_SIZE    = 5;
+  readonly tabDirection = signal<'left' | 'right'>('left');
+  readonly tabAnimating = signal(false);
 
   // ── Action menus ─────────────────────────────────────────────────────────
   readonly openMenuId = signal<string | null>(null);
@@ -193,24 +195,67 @@ export class Appointments implements OnInit, OnDestroy {
 
   readonly paginated = computed(() => {
     const p = this.currentPage();
-    return this.filtered().slice((p - 1) * this.pageSize, p * this.pageSize);
+    return this.filtered().slice((p - 1) * this.PAGE_SIZE, p * this.PAGE_SIZE);
   });
 
   readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.filtered().length / this.pageSize))
+    Math.max(1, Math.ceil(this.filtered().length / this.PAGE_SIZE))
   );
 
-  readonly pageNumbers = computed<(number | '...')[]>(() => {
-    const total   = this.totalPages();
-    const current = this.currentPage();
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    const pages: (number | '...')[] = [1];
-    if (current > 3) pages.push('...');
-    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
-    if (current < total - 2) pages.push('...');
+readonly pageNumbers = computed(() => {
+  const total = this.totalPages();
+  const cur = this.currentPage();
+
+  const pages: (number | '...')[] = [];
+
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+
+    if (cur > 3)
+      pages.push('...');
+
+    for (
+      let i = Math.max(2, cur - 1);
+      i <= Math.min(total - 1, cur + 1);
+      i++
+    ) {
+      pages.push(i);
+    }
+
+    if (cur < total - 2)
+      pages.push('...');
+
     pages.push(total);
-    return pages;
-  });
+  }
+
+  return pages;
+});
+
+goToPage(page: number | '...') {
+  if (page === '...') return;
+  if (page === this.currentPage()) return;
+
+  this.animateTable(page > this.currentPage() ? 'left' : 'right');
+  this.currentPage.set(page);
+}
+
+prevPage() {
+  if (this.currentPage() > 1) {
+    this.animateTable('right');
+    this.currentPage.update(p => p - 1);
+  }
+}
+
+nextPage() {
+  if (this.currentPage() < this.totalPages()) {
+    this.animateTable('left');
+    this.currentPage.update(p => p + 1);
+  }
+}
 
   readonly unreadCount = this.notifSvc.unreadCount;
 
@@ -281,10 +326,35 @@ export class Appointments implements OnInit, OnDestroy {
   }
 
   // ── Filters / tabs ────────────────────────────────────────────────────────
-  setTab(tab: ApptTab): void   { this.activeTab.set(tab); this.currentPage.set(1); }
-  setPage(p: number | '...'): void { if (typeof p === 'number') this.currentPage.set(p); }
-  onFilterChange(): void { this.currentPage.set(1); }
-  clearFilters(): void   { this.searchQuery.set(''); this.dateFrom.set(''); this.dateTo.set(''); this.currentPage.set(1); }
+  setTab(tab: ApptTab): void {
+    if (tab === this.activeTab()) return;
+
+    const order: ApptTab[] = ['all', 'upcoming', 'completed', 'cancelled'];
+    const currentIndex = order.indexOf(this.activeTab());
+    const nextIndex = order.indexOf(tab);
+    this.animateTable(nextIndex >= currentIndex ? 'left' : 'right');
+    this.activeTab.set(tab);
+    this.currentPage.set(1);
+  }
+  setPage(p: number | '...'): void { if (typeof p === 'number') this.goToPage(p); }
+  onFilterChange(): void {
+    if (this.currentPage() !== 1) this.animateTable('right');
+    this.currentPage.set(1);
+  }
+  clearFilters(): void {
+    if (this.searchQuery() || this.dateFrom() || this.dateTo()) this.animateTable('right');
+    this.searchQuery.set('');
+    this.dateFrom.set('');
+    this.dateTo.set('');
+    this.currentPage.set(1);
+  }
+
+  private animateTable(direction: 'left' | 'right'): void {
+    this.tabDirection.set(direction);
+    this.tabAnimating.set(false);
+    setTimeout(() => this.tabAnimating.set(true));
+    setTimeout(() => this.tabAnimating.set(false), 260);
+  }
 
   // ── Add / Edit ────────────────────────────────────────────────────────────
   openAdd(): void {
@@ -372,7 +442,7 @@ export class Appointments implements OnInit, OnDestroy {
       customType:             this.fType() === AppointmentType.Other ? this.fCustomType().trim() : undefined,
       title:                  this.fTitle().trim(),
       provider:               this.fProvider().trim(),
-      appointmentDateTime:    dt.toISOString(),
+      appointmentDateTime: `${this.fDate()}T${this.fTime()}:00`,
       reminderOffsetMinutes:  this.fReminder() ?? undefined,
       notes:                  this.fNotes().trim() || undefined,
     };
@@ -512,7 +582,7 @@ export class Appointments implements OnInit, OnDestroy {
   }
 
   pageEnd(): number {
-    return Math.min(this.currentPage() * this.pageSize, this.filtered().length);
+    return Math.min(this.currentPage() * this.PAGE_SIZE, this.filtered().length);
   }
 
   reminderLabel(mins: number | null | undefined): string {
@@ -520,4 +590,9 @@ export class Appointments implements OnInit, OnDestroy {
     const map: Record<number, string> = { 15: '15 min', 30: '30 min', 60: '1 hr', 120: '2 hrs', 1440: '1 day' };
     return (map[mins] ?? `${mins} min`) + ' before';
   }
+
+  isLastRow(index: number): boolean {
+  return index === this.paginated().length - 1;
+}
+
 }

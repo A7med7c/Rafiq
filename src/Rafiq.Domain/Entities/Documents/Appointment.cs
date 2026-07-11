@@ -72,7 +72,7 @@ public class Appointment : BaseEntity
         if (Status != AppointmentStatus.Upcoming)
             throw new Rafiq.Domain.Exceptions.BadRequestException("Only upcoming appointments can be marked as completed.");
 
-        if (AppointmentDateTime > DateTime.UtcNow)
+        if (AppointmentDateTime > DateTime.Now)
             throw new Rafiq.Domain.Exceptions.BadRequestException("A future appointment cannot be marked as completed.");
 
         if (DateTime.UtcNow > AppointmentDateTime.AddHours(3))

@@ -16,7 +16,7 @@ public interface IAppointmentRepository
     Task<IReadOnlyList<Appointment>> GetTodayByUserHealthProfileIdAsync(Guid userHealthProfileId, DateTime today, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Appointment>> GetExpiredUpcomingAppointmentsAsync(DateTime referenceTime, CancellationToken cancellationToken = default);
-
+    Task UpdateMissedAppointmentsAsync(CancellationToken cancellationToken);
     Task<bool> ExistsDuplicateAsync(
         Guid userHealthProfileId,
         AppointmentType appointmentType,
