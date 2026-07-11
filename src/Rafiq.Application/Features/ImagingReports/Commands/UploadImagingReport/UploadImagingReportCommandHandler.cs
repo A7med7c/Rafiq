@@ -4,11 +4,14 @@ using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.ImagingReports.DTOs;
 using Rafiq.Domain.Exceptions;
+using Rafiq.Domain.Repositories;
 using System.Globalization;
 
 namespace Rafiq.Application.Features.ImagingReports.Commands.UploadImagingReport;
 
 public sealed class UploadImagingReportCommandHandler(
+    ICurrentUserService currentUserService,
+    IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IBedrockService bedrockService,
     IFileStorageService fileStorageService)
@@ -18,7 +21,18 @@ public sealed class UploadImagingReportCommandHandler(
         UploadImagingReportCommand request,
         CancellationToken cancellationToken)
     {
-        await authorizationService.EnsureCanWriteAsync(request.ProfileId, cancellationToken);
+        var profileId = request.ProfileId;
+
+        if (profileId == Guid.Empty)
+        {
+            var currentUserId = currentUserService.UserId
+                ?? throw new UnauthorizedException("Authentication is required.");
+
+            profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
+                ?? throw new NotFoundException("PatientProfile", currentUserId);
+        }
+
+        await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
 
         var fileExtension = Path.GetExtension(request.Image.FileName);
         var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";

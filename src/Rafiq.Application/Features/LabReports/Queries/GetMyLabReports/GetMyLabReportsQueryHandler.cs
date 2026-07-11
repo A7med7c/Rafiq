@@ -2,11 +2,14 @@ using MediatR;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.LabReports.DTOs;
+using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Application.Features.LabReports.Queries.GetMyLabReports;
 
 public sealed class GetMyLabReportsQueryHandler(
+    ICurrentUserService currentUserService,
+    IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     ILabReportRepository labReportRepository)
     : IRequestHandler<GetMyLabReportsQuery, ApiResponse<List<LabReportResponseDto>>>
@@ -15,10 +18,21 @@ public sealed class GetMyLabReportsQueryHandler(
         GetMyLabReportsQuery request,
         CancellationToken cancellationToken)
     {
-        await authorizationService.EnsureCanReadAsync(request.ProfileId, cancellationToken);
+        var profileId = request.ProfileId;
+
+        if (profileId == Guid.Empty)
+        {
+            var currentUserId = currentUserService.UserId
+                ?? throw new UnauthorizedException("Authentication is required.");
+
+            profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
+                ?? throw new NotFoundException("PatientProfile", currentUserId);
+        }
+
+        await authorizationService.EnsureCanReadAsync(profileId, cancellationToken);
 
         var reports = await labReportRepository
-            .GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
+            .GetAllByProfileIdAsync(profileId, cancellationToken);
 
         var dtos = reports.Select(report => new LabReportResponseDto
         {

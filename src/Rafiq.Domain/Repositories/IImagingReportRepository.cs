@@ -9,4 +9,8 @@ public interface IImagingReportRepository
     Task<ImagingReport?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ImagingReport>> GetAllByProfileIdAsync(Guid userHealthProfileId, CancellationToken cancellationToken = default);
+    
+    void Update(ImagingReport imagingReport);
+    
+    void Remove(ImagingReport imagingReport);
 }

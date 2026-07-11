@@ -2,11 +2,14 @@ using MediatR;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.ImagingReports.DTOs;
+using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Application.Features.ImagingReports.Queries.GetMyImagingReports;
 
 public sealed class GetMyImagingReportsQueryHandler(
+    ICurrentUserService currentUserService,
+    IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IImagingReportRepository imagingReportRepository)
     : IRequestHandler<GetMyImagingReportsQuery, ApiResponse<List<ImagingReportResponseDto>>>
@@ -15,10 +18,21 @@ public sealed class GetMyImagingReportsQueryHandler(
         GetMyImagingReportsQuery request,
         CancellationToken cancellationToken)
     {
-        await authorizationService.EnsureCanReadAsync(request.ProfileId, cancellationToken);
+        var profileId = request.ProfileId;
+
+        if (profileId == Guid.Empty)
+        {
+            var currentUserId = currentUserService.UserId
+                ?? throw new UnauthorizedException("Authentication is required.");
+
+            profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
+                ?? throw new NotFoundException("PatientProfile", currentUserId);
+        }
+
+        await authorizationService.EnsureCanReadAsync(profileId, cancellationToken);
 
         var reports = await imagingReportRepository
-            .GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
+            .GetAllByProfileIdAsync(profileId, cancellationToken);
 
         var dtos = reports.Select(report => new ImagingReportResponseDto
         {

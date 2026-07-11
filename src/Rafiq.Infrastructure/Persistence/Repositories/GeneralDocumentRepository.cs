@@ -34,6 +34,11 @@ public sealed class GeneralDocumentRepository
             .Where(x => x.UserHealthProfileId == userHealthProfileId)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
+    
+    public void Update(GeneralDocument document)
+    {
+        _context.GeneralDocuments.Update(document);
+    }
 
     public void Remove(GeneralDocument document)
     {
