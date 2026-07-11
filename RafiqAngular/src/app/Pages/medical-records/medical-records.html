@@ -1,7 +1,7 @@
 <div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
 
   @if (mobileSidebarOpen()) {
-    <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
+  <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
   }
 
   <!-- ═══════════ SIDEBAR ═══════════ -->
@@ -17,8 +17,8 @@
           <span class="sb-logo-sub">Family Health Assistant</span>
         </div>
       </div>
-      <button type="button" class="sb-toggle" [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
-        (click)="toggleSidebar()">
+      <button type="button" class="sb-toggle"
+        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'" (click)="toggleSidebar()">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
       <button type="button" class="sb-mobile-close" aria-label="Close sidebar" (click)="toggleMobileSidebar()">
@@ -40,14 +40,17 @@
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
         <span>Appointments</span>
       </a>
-      <a class="sb-link" href="#">
+
+      <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
         <span>AI Assistant</span>
       </a>
+
       <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>Medications &amp; Reminders</span>
       </a>
+
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
         <span>Analytics</span>
@@ -302,7 +305,7 @@
             }
           </button>
         </div>
-       
+
       </section>
 
       <!-- TABS BAR -->
@@ -394,8 +397,10 @@
               </div>
 
               <div class="filter-actions">
-                <button type="button" class="filter-action-btn filter-action-btn--ghost" (click)="resetFilters()">Reset Filters</button>
-                <button type="button" class="filter-action-btn filter-action-btn--primary" (click)="applyFilters()">Apply Filters</button>
+                <button type="button" class="filter-action-btn filter-action-btn--ghost" (click)="resetFilters()">Reset
+                  Filters</button>
+                <button type="button" class="filter-action-btn filter-action-btn--primary"
+                  (click)="applyFilters()">Apply Filters</button>
               </div>
             </div>
             }
@@ -416,7 +421,8 @@
       }
 
       <!-- RECORDS TABLE AREA -->
-      <section class="table-card" [class.tab-animating]="tabAnimating()" [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
+      <section class="table-card" [class.tab-animating]="tabAnimating()"
+        [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
         @if (loading()) {
         <div class="table-loader">
           <div class="skl-list">
@@ -480,14 +486,17 @@
                 </td>
                 <td class="text-right">
                   <div class="actions-cell">
-                    <button type="button" class="action-btn" title="View Details" [disabled]="loading() || deleting() || reviewSaving()" (click)="viewDetails(rec)">
+                    <button type="button" class="action-btn" title="View Details"
+                      [disabled]="loading() || deleting() || reviewSaving()" (click)="viewDetails(rec)">
                       <i class="fa-regular fa-eye"></i>
                     </button>
-                    <button type="button" class="action-btn" title="Download File" [disabled]="loading() || deleting() || reviewSaving()" (click)="downloadRecord(rec)">
+                    <button type="button" class="action-btn" title="Download File"
+                      [disabled]="loading() || deleting() || reviewSaving()" (click)="downloadRecord(rec)">
                       <i class="fa-solid fa-download"></i>
                     </button>
                     <div class="record-actions">
-                      <button type="button" class="action-btn" title="Menu" [disabled]="loading() || deleting() || reviewSaving()"
+                      <button type="button" class="action-btn" title="Menu"
+                        [disabled]="loading() || deleting() || reviewSaving()"
                         (click)="toggleActionMenu(rec.id, $event)">
                         <i class="fa-solid fa-ellipsis-vertical"></i>
                       </button>
@@ -497,7 +506,8 @@
                           <i class="fa-solid fa-pen-to-square"></i>
                           Edit
                         </button>
-                        <button type="button" class="record-menu-item record-menu-item--danger" (click)="openDeleteModal(rec)">
+                        <button type="button" class="record-menu-item record-menu-item--danger"
+                          (click)="openDeleteModal(rec)">
                           <i class="fa-solid fa-trash-can"></i>
                           Delete
                         </button>
@@ -517,12 +527,13 @@
             <i class="fa-solid fa-chevron-left"></i>
           </button>
           @for (page of pageNumbers(); track $index) {
-          <button type="button" class="page-btn" [class.active]="page === currentPage()" [disabled]="page === '...' || loading()"
-            (click)="goToPage(page)">
+          <button type="button" class="page-btn" [class.active]="page === currentPage()"
+            [disabled]="page === '...' || loading()" (click)="goToPage(page)">
             {{ page }}
           </button>
           }
-          <button type="button" class="page-btn" [disabled]="currentPage() === totalPages() || loading()" (click)="nextPage()">
+          <button type="button" class="page-btn" [disabled]="currentPage() === totalPages() || loading()"
+            (click)="nextPage()">
             <i class="fa-solid fa-chevron-right"></i>
           </button>
         </div>
@@ -554,7 +565,8 @@
       <div class="modal-body">
         @if (getRecordImageUrl(rec); as imageUrl) {
 
-        <button type="button" class="view-document-card view-document-card--with-image" (click)="openLightbox(imageUrl)">
+        <button type="button" class="view-document-card view-document-card--with-image"
+          (click)="openLightbox(imageUrl)">
 
           @if (!detailImageFailed()) {
           <img [src]="imageUrl" alt="Original uploaded record" class="view-document-thumb"
@@ -732,9 +744,10 @@
         <p>This action cannot be undone.</p>
       </div>
       <footer class="modal-ftr">
-        <button type="button" class="modal-btn modal-btn-secondary" [disabled]="deleting()" (click)="closeDeleteModal()">Cancel</button>
-        <button type="button" class="modal-btn modal-btn-danger" [disabled]="deleting()" [class.modal-btn--saving]="deleting()"
-          (click)="deleteRecord()">
+        <button type="button" class="modal-btn modal-btn-secondary" [disabled]="deleting()"
+          (click)="closeDeleteModal()">Cancel</button>
+        <button type="button" class="modal-btn modal-btn-danger" [disabled]="deleting()"
+          [class.modal-btn--saving]="deleting()" (click)="deleteRecord()">
           @if (deleting()) {
           <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
             <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
@@ -774,8 +787,8 @@
         <div class="scan-form-grid">
           <div class="scan-field scan-field--full">
             <label class="scan-label">Document Image <span class="scan-required">*</span></label>
-            <input type="file" class="scan-input" accept=".jpg,.jpeg,.png,.webp"
-              [disabled]="uploadLoading()" (change)="onGeneralFileSelected($event)">
+            <input type="file" class="scan-input" accept=".jpg,.jpeg,.png,.webp" [disabled]="uploadLoading()"
+              (change)="onGeneralFileSelected($event)">
             @if (generalUploadForm.fileName) {
             <p class="scan-file-name"><i class="fa-regular fa-file-image"></i> {{ generalUploadForm.fileName }}</p>
             }
@@ -790,9 +803,11 @@
       </div>
 
       <footer class="modal-ftr">
-        <button type="button" class="modal-btn modal-btn-secondary" [disabled]="uploadLoading()" (click)="cancelGeneralUpload()">Cancel</button>
-        <button type="button" class="modal-btn modal-btn-primary" [disabled]="uploadLoading() || !generalUploadForm.file"
-          [class.modal-btn--saving]="uploadLoading()" (click)="submitGeneralUpload()">
+        <button type="button" class="modal-btn modal-btn-secondary" [disabled]="uploadLoading()"
+          (click)="cancelGeneralUpload()">Cancel</button>
+        <button type="button" class="modal-btn modal-btn-primary"
+          [disabled]="uploadLoading() || !generalUploadForm.file" [class.modal-btn--saving]="uploadLoading()"
+          (click)="submitGeneralUpload()">
           @if (uploadLoading()) {
           <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
             <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
@@ -1002,7 +1017,8 @@
                   <td><input class="table-edit-input" [(ngModel)]="res.normalRange"></td>
                   <td><input class="table-edit-input" [(ngModel)]="res.status"></td>
                   <td>
-                    <button type="button" class="row-delete-btn" [disabled]="reviewSaving()" (click)="removeLabResult(res.id)">
+                    <button type="button" class="row-delete-btn" [disabled]="reviewSaving()"
+                      (click)="removeLabResult(res.id)">
                       <i class="fa-solid fa-trash-can"></i>
                     </button>
                   </td>
@@ -1043,7 +1059,8 @@
                   <td><input class="table-edit-input" [(ngModel)]="med.duration"></td>
                   <td><input class="table-edit-input" [(ngModel)]="med.instructions"></td>
                   <td>
-                    <button type="button" class="row-delete-btn" [disabled]="reviewSaving()" (click)="removePrescriptionMed($index)">
+                    <button type="button" class="row-delete-btn" [disabled]="reviewSaving()"
+                      (click)="removePrescriptionMed($index)">
                       <i class="fa-solid fa-trash-can"></i>
                     </button>
                   </td>
@@ -1057,7 +1074,8 @@
       </div>
 
       <footer class="modal-ftr">
-        <button type="button" class="modal-btn modal-btn-secondary" [disabled]="reviewSaving()" (click)="cancelReview()">Cancel</button>
+        <button type="button" class="modal-btn modal-btn-secondary" [disabled]="reviewSaving()"
+          (click)="cancelReview()">Cancel</button>
         <button type="button" class="modal-btn modal-btn-primary" [disabled]="reviewSaving()"
           [class.modal-btn--saving]="reviewSaving()" (click)="confirmAndSave()">
           @if (reviewSaving()) {
@@ -1114,7 +1132,8 @@
             <i class="fa-solid fa-pills"></i>
           </div>
           <div>
-            <h3 class="modal-title">{{ scanMode() === 'edit' ? 'Edit Medicine Record' : 'Review Scanned Medicine' }}</h3>
+            <h3 class="modal-title">{{ scanMode() === 'edit' ? 'Edit Medicine Record' : 'Review Scanned Medicine' }}
+            </h3>
             <p class="modal-sub">Edit any field before saving to your record.</p>
           </div>
         </div>
@@ -1194,7 +1213,8 @@
       </div>
 
       <footer class="modal-ftr">
-        <button type="button" class="modal-btn modal-btn-secondary" [disabled]="scanSaving()" (click)="cancelScanReview()">Cancel</button>
+        <button type="button" class="modal-btn modal-btn-secondary" [disabled]="scanSaving()"
+          (click)="cancelScanReview()">Cancel</button>
         <button type="button" class="modal-btn modal-btn-primary"
           [disabled]="scanSaving() || scanForm.medicineName.trim() === ''" [class.modal-btn--saving]="scanSaving()"
           (click)="saveScanResult()">

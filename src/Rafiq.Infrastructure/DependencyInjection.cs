@@ -11,14 +11,13 @@ using Rafiq.Infrastructure.Persistence;
 using Rafiq.Infrastructure.Persistence.Identity;
 using Rafiq.Infrastructure.Persistence.Repositories;
 using Rafiq.Infrastructure.Services;
-<<<<<<< Updated upstream
-=======
 using Rafiq.Infrastructure.Services.auth;
 using Rafiq.Infrastructure.Services.Auth;
 using Rafiq.Infrastructure.Services.Notifications;
 using Rafiq.Infrastructure.Services.BackgroundJobs;
 using Rafiq.Infrastructure.Services.MedicationReminders;
->>>>>>> Stashed changes
+using Rafiq.Infrastructure.Services.AiChat;
+
 
 namespace Rafiq.Infrastructure;
 
@@ -48,7 +47,10 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<RafiqDbContext>());
         services.AddScoped<IPatientProfileRepository, UserHealthProfileRepository>();
+        services.AddScoped<IHealthProfileAccessRepository, HealthProfileAccessRepository>();
+        services.AddScoped<IHealthProfileAuthorizationService, HealthProfileAuthorizationService>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IOtpRepository, OtpRepository>();
         services.AddScoped<INotificationsService, NotificationsService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<ITokenService, TokenService>();
@@ -57,13 +59,34 @@ public static class DependencyInjection
         services.AddScoped<ITokenHasher, Sha256TokenHasher>();
         services.AddScoped<IOtpHasher, BCryptOtpHasher>();
         services.AddScoped<IOtpGenerator, OtpGenerator>();
+        services.AddScoped<IOtpVerificationRepository, OtpVerificationRepository>();
+        services.AddScoped<ITokenIssuingService, TokenIssuingService>();
+        services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
+        services.AddScoped<IOtpService, OtpService>();
+        services.AddScoped<IResetTokenService, ResetTokenService>();
+        services.AddScoped<IGeneralDocumentRepository, GeneralDocumentRepository>();
 
+        // ── Bedrock ────────────────────────────────────────────────────────
+        services.Configure<BedrockSettings>(configuration.GetSection("Bedrock"));
+        services.AddHttpClient<IBedrockService, BedrockService>();
 
-        services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
+        // ── AiChat ────────────────────────────────────────────────────────
+        services.Configure<AiChatSettings>(configuration.GetSection("AiChat"));
+        services.AddHttpClient<IAiChatService, AiChatService>();
+
+        // ── Documents ─────────────────────────────────────────────────────
+        services.AddScoped<ILabReportRepository, LabReportRepository>();
+        services.AddScoped<IImagingReportRepository, ImagingReportRepository>();
+
+        services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
+        services.AddScoped<IUserMedicineRepository, UserMedicineRepository>();
+        services.AddScoped<IMedicineReminderRepository, MedicineReminderRepository>();
+        services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        services.AddScoped<IAiConversationRepository, AiConversationRepository>();
+        services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
-<<<<<<< Updated upstream
-=======
+
 
         services.AddHostedService<MissedAppointmentsBackgroundService>();
 
@@ -90,8 +113,7 @@ public static class DependencyInjection
             }));
 
         services.AddHangfireServer();
-
->>>>>>> Stashed changes
+        services.AddHostedService<MissedAppointmentsBackgroundService>();
         return services;
     }
 }

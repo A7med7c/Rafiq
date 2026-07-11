@@ -1,9 +1,9 @@
 namespace Rafiq.Domain.Enums
 {
-    public enum DiseaseStatus
-    {
-        Active,
-        Controlled,
-        Resolved
-    }
+public enum DiseaseStatus
+{
+    Active,
+    Controlled,
+    Resolved
+}
 }

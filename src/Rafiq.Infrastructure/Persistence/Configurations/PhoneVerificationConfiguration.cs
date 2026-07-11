@@ -6,9 +6,9 @@ using Rafiq.Infrastructure.Persistence.Identity;
 namespace Rafiq.Infrastructure.Persistence.Configurations
 {
     public class PhoneVerificationConfiguration
-     : IEntityTypeConfiguration<PhoneVerification>
+     : IEntityTypeConfiguration<OtpVerification>
     {
-        public void Configure(EntityTypeBuilder<PhoneVerification> builder)
+        public void Configure(EntityTypeBuilder<OtpVerification> builder)
         {
             builder.HasKey(x => x.Id);
 

@@ -9,4 +9,9 @@ public class ValidationException : Exception
     {
         Errors = errors.ToList().AsReadOnly();
     }
+
+    public ValidationException(string error)
+        : this(new[] { error })
+    {
+    }
 }

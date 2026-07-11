@@ -1,0 +1,45 @@
+using MediatR;
+using Rafiq.Application.Common.Interfaces;
+using Rafiq.Application.Common.Models;
+using Rafiq.Application.Features.MedicineReminders.DTOs;
+using Rafiq.Domain.Entities.Documents;
+using Rafiq.Domain.Exceptions;
+using Rafiq.Domain.Repositories;
+
+namespace Rafiq.Application.Features.MedicineReminders.Queries.GetMedicineReminderById;
+
+public sealed class GetMedicineReminderByIdQueryHandler(
+    IHealthProfileAuthorizationService authorizationService,
+    IUserMedicineRepository userMedicineRepository,
+    IMedicineReminderRepository medicineReminderRepository)
+    : IRequestHandler<GetMedicineReminderByIdQuery, ApiResponse<MedicineReminderResponseDto>>
+{
+    public async Task<ApiResponse<MedicineReminderResponseDto>> Handle(
+        GetMedicineReminderByIdQuery request,
+        CancellationToken cancellationToken)
+    {
+        var reminder = await medicineReminderRepository.GetByIdAsync(request.Id, cancellationToken)
+            ?? throw new NotFoundException(nameof(MedicineReminder), request.Id);
+
+        var userMedicine = await userMedicineRepository.GetByIdAsync(reminder.UserMedicineId, cancellationToken)
+            ?? throw new NotFoundException(nameof(UserMedicine), reminder.UserMedicineId);
+
+        await authorizationService.EnsureCanReadAsync(userMedicine.UserHealthProfileId, cancellationToken);
+
+        var dto = new MedicineReminderResponseDto
+        {
+            Id = reminder.Id,
+            UserMedicineId = reminder.UserMedicineId,
+            ReminderTime = reminder.ReminderTime,
+            StartDate = reminder.StartDate,
+            EndDate = reminder.EndDate,
+            RepeatType = reminder.RepeatType.ToString(),
+            IsEnabled = reminder.IsEnabled,
+            LastTriggeredAt = reminder.LastTriggeredAt,
+            CreatedAt = reminder.CreatedAt,
+            UpdatedAt = reminder.UpdatedAt
+        };
+
+        return ApiResponse<MedicineReminderResponseDto>.SuccessResponse(dto);
+    }
+}

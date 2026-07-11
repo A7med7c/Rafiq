@@ -1,16 +1,72 @@
-<nav class="navbar">
+<nav class="navbar" [class.navbar-scrolled]="isScrolled()" [class.menu-open]="isMenuOpen()">
   <div class="container">
-    <div class="logo">
-      <img src="images/RafiqLogo.png" alt="logo">
+    <button type="button" class="logo" (click)="navigateToSection('home')" [attr.aria-label]="t.home">
+      <img src="images/RafiqLogo.png" alt="Rafiq logo">
       <span>{{ t.brand }}</span>
-    </div>
+    </button>
 
-    <div class="right-side">
+    <button
+      type="button"
+      class="menu-toggle"
+      [attr.aria-expanded]="isMenuOpen()"
+      aria-controls="mobile-nav"
+      [attr.aria-label]="isMenuOpen() ? t.closeMenu : t.openMenu"
+      (click)="toggleMenu()">
+      <span class="menu-bar"></span>
+      <span class="menu-bar"></span>
+      <span class="menu-bar"></span>
+    </button>
+
+    <div class="right-side" id="mobile-nav">
       <ul class="nav-links">
-        <li>{{ t.home }}</li>
-        <li>{{ t.about }}</li>
-        <li>{{ t.contact }}</li>
-        <li routerLink="/login">{{ t.login }}</li>
+        <li>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'home'"
+            (click)="navigateToSection('home')">
+            {{ t.home }}
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'about'"
+            (click)="navigateToSection('about')">
+            {{ t.about }}
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'features'"
+            (click)="navigateToSection('features')">
+            {{ t.features }}
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'how-it-works'"
+            (click)="navigateToSection('how-it-works')">
+            {{ t.howItWorks }}
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'testimonials'"
+            (click)="navigateToSection('testimonials')">
+            {{ t.testimonials }}
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            [class.active]="activeSection() === 'contact'"
+            (click)="navigateToSection('contact')">
+            {{ t.contact }}
+          </button>
+        </li>
       </ul>
 
       <div class="language-toggle" aria-label="Language switcher">
@@ -28,7 +84,23 @@
         </button>
       </div>
 
-      <button class="btn">{{ t.cta }}</button>
+      @if (isAuthenticated) {
+        <div class="auth-actions authenticated">
+          <span class="account-name">{{ displayName }}</span>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="signOut()"
+            [disabled]="isSigningOut()">
+            {{ isSigningOut() ? t.signingOut : t.signOut }}
+          </button>
+        </div>
+      } @else {
+        <div class="auth-actions">
+          <a class="nav-login" routerLink="/login">{{ t.login }}</a>
+          <a class="btn" routerLink="/register">{{ t.cta }}</a>
+        </div>
+      }
     </div>
   </div>
 </nav>

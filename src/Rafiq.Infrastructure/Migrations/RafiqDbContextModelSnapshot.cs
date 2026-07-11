@@ -22,11 +22,15 @@ namespace Rafiq.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("DocumentType", b =>
+            modelBuilder.Entity("GeneralDocument", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AiSummary")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2(7)");
@@ -35,52 +39,16 @@ namespace Rafiq.Infrastructure.Migrations
                         .HasColumnType("datetime2(7)");
 
                     b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DocumentTypes");
-                });
-
-            modelBuilder.Entity("MedicalDocument", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<Guid>("DocumentTypeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("OCRText")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -90,20 +58,14 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("UserHealthProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt");
+                    b.HasIndex("UserHealthProfileId");
 
-                    b.HasIndex("DocumentTypeId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("MedicalDocuments", (string)null);
-
-                    b.UseTptMappingStrategy();
+                    b.ToTable("GeneralDocuments", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -237,6 +199,266 @@ namespace Rafiq.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Rafiq.Domain.Entities.Chat.AiConversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastMessageAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("UserHealthProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserHealthProfileId");
+
+                    b.HasIndex("UserId", "LastMessageAt");
+
+                    b.ToTable("AiConversations", (string)null);
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Chat.AiMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AiConversationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SequenceNumber")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AiConversationId", "SequenceNumber")
+                        .IsUnique();
+
+                    b.ToTable("AiMessages", (string)null);
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Appointment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AppointmentDateTime")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<int>("AppointmentType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<string>("CustomType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ReminderOffsetMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("UserHealthProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserHealthProfileId");
+
+                    b.HasIndex("UserHealthProfileId", "AppointmentDateTime");
+
+                    b.HasIndex("UserHealthProfileId", "Status", "AppointmentDateTime");
+
+                    b.ToTable("Appointments", (string)null);
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.ImagingReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BodyPart")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("DoctorName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Findings")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ImagingType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Impression")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OCRText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateOnly>("ReportDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("UserHealthProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("UserHealthProfileId");
+
+                    b.ToTable("ImagingReports", (string)null);
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("DoctorName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LabName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("OCRText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateOnly>("ReportDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("UserHealthProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("UserHealthProfileId");
+
+                    b.ToTable("LabReports", (string)null);
+                });
+
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabResult", b =>
                 {
                     b.Property<Guid>("Id")
@@ -257,75 +479,36 @@ namespace Rafiq.Infrastructure.Migrations
 
                     b.Property<string>("NormalRange")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Status")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("TestName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<string>("Unit")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
                     b.Property<string>("Value")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("LabReportId");
 
-                    b.ToTable("LabResults");
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Medicine", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<string>("Dose")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DrugName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Duration")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Frequency")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Instructions")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("PrescriptionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PrescriptionId");
-
-                    b.ToTable("Medicines");
+                    b.ToTable("LabResults", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicationReminderLog", b =>
@@ -400,21 +583,22 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("MedicineId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
 
-                    b.Property<TimeOnly>("ReminderTime")
+                    b.Property<DateTime?>("LastTriggeredAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<TimeSpan>("ReminderTime")
                         .HasColumnType("time");
 
                     b.Property<string>("RepeatType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
@@ -422,11 +606,175 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
+                    b.Property<Guid>("UserMedicineId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("MedicineId");
+                    b.HasIndex("UserMedicineId");
 
-                    b.ToTable("MedicineReminders");
+                    b.ToTable("MedicineReminders", (string)null);
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Prescription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<string>("DoctorName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PatientName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateOnly>("PrescriptionDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("UserHealthProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("UserHealthProfileId");
+
+                    b.ToTable("Prescriptions", (string)null);
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.PrescriptionMedicine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<string>("Dosage")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Duration")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Frequency")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MedicineName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("PrescriptionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PrescriptionId");
+
+                    b.ToTable("PrescriptionMedicines", (string)null);
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.UserMedicine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<string>("Dosage")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Duration")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Frequency")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ImagePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MedicineName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("UserHealthProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("UserHealthProfileId");
+
+                    b.ToTable("UserMedicines", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.User.Allergy", b =>
@@ -508,7 +856,106 @@ namespace Rafiq.Infrastructure.Migrations
                     b.ToTable("ChronicDiseases", (string)null);
                 });
 
-            modelBuilder.Entity("Rafiq.Domain.Entities.User.PhoneVerification", b =>
+            modelBuilder.Entity("Rafiq.Domain.Entities.User.HealthProfileAccess", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("GranteeUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InvitedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Origin")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Relationship")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StatusChangedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("UserHealthProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GranteeUserId");
+
+                    b.HasIndex("InvitedByUserId");
+
+                    b.HasIndex("UserHealthProfileId");
+
+                    b.HasIndex("UserHealthProfileId", "GranteeUserId")
+                        .IsUnique()
+                        .HasFilter("[Status] IN (1, 2)");
+
+                    b.ToTable("HealthProfileAccesses", (string)null);
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.User.Otp", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Purpose")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Otps");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.User.OtpVerification", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -538,6 +985,9 @@ namespace Rafiq.Infrastructure.Migrations
 
                     b.Property<DateTime>("LastSentAt")
                         .HasColumnType("datetime2(7)");
+
+                    b.Property<int>("Purpose")
+                        .HasColumnType("int");
 
                     b.Property<int>("ResendCount")
                         .HasColumnType("int");
@@ -634,7 +1084,6 @@ namespace Rafiq.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("BloodType")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
@@ -647,32 +1096,43 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2(7)");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Gender")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<decimal>("Height")
+                    b.Property<decimal?>("Height")
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2(7)");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<decimal>("Weight")
+                    b.Property<decimal?>("Weight")
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("UserHealthProfiles", (string)null);
                 });
@@ -777,110 +1237,15 @@ namespace Rafiq.Infrastructure.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.ImagingReport", b =>
+            modelBuilder.Entity("GeneralDocument", b =>
                 {
-                    b.HasBaseType("MedicalDocument");
-
-                    b.Property<string>("BodyPart")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Findings")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImagingType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Impression")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateOnly>("ReportDate")
-                        .HasColumnType("date");
-
-                    b.ToTable("ImagingReports", (string)null);
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
-                {
-                    b.HasBaseType("MedicalDocument");
-
-                    b.Property<string>("LabName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateOnly>("ReportDate")
-                        .HasColumnType("date");
-
-                    b.ToTable("LabReports", (string)null);
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicalReport", b =>
-                {
-                    b.HasBaseType("MedicalDocument");
-
-                    b.Property<string>("Diagnosis")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DoctorName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("Recommendations")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateOnly>("ReportDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("ReportTitle")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.ToTable("MedicalReports", (string)null);
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Prescription", b =>
-                {
-                    b.HasBaseType("MedicalDocument");
-
-                    b.Property<string>("DoctorName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateOnly>("VisitDate")
-                        .HasColumnType("date");
-
-                    b.ToTable("Prescriptions", (string)null);
-                });
-
-            modelBuilder.Entity("MedicalDocument", b =>
-                {
-                    b.HasOne("DocumentType", "DocumentType")
-                        .WithMany("Documents")
-                        .HasForeignKey("DocumentTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
-                        .WithMany("MedicalDocuments")
-                        .HasForeignKey("UserId")
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("DocumentType");
+                    b.Navigation("UserHealthProfile");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -934,6 +1299,61 @@ namespace Rafiq.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Rafiq.Domain.Entities.Chat.AiConversation", b =>
+                {
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Chat.AiMessage", b =>
+                {
+                    b.HasOne("Rafiq.Domain.Entities.Chat.AiConversation", "AiConversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("AiConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AiConversation");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Appointment", b =>
+                {
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.ImagingReport", b =>
+                {
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
+                {
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
+                });
+
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabResult", b =>
                 {
                     b.HasOne("Rafiq.Domain.Entities.Documents.LabReport", "LabReport")
@@ -945,9 +1365,6 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("LabReport");
                 });
 
-<<<<<<< Updated upstream
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Medicine", b =>
-=======
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicationReminderLog", b =>
                 {
                     b.HasOne("Rafiq.Domain.Entities.Documents.MedicineReminder", "MedicineReminder")
@@ -990,7 +1407,6 @@ namespace Rafiq.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.PrescriptionMedicine", b =>
->>>>>>> Stashed changes
                 {
                     b.HasOne("Rafiq.Domain.Entities.Documents.Prescription", "Prescription")
                         .WithMany("Medicines")
@@ -1001,15 +1417,15 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("Prescription");
                 });
 
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicineReminder", b =>
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.UserMedicine", b =>
                 {
-                    b.HasOne("Rafiq.Domain.Entities.Documents.Medicine", "Medicine")
-                        .WithMany("Reminders")
-                        .HasForeignKey("MedicineId")
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Medicine");
+                    b.Navigation("UserHealthProfile");
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.User.Allergy", b =>
@@ -1034,7 +1450,29 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("UserHealthProfile");
                 });
 
-            modelBuilder.Entity("Rafiq.Domain.Entities.User.PhoneVerification", b =>
+            modelBuilder.Entity("Rafiq.Domain.Entities.User.HealthProfileAccess", b =>
+                {
+                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("GranteeUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("InvitedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Rafiq.Domain.Entities.User.UserHealthProfile", "UserHealthProfile")
+                        .WithMany()
+                        .HasForeignKey("UserHealthProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserHealthProfile");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.User.OtpVerification", b =>
                 {
                     b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
                         .WithMany()
@@ -1057,8 +1495,7 @@ namespace Rafiq.Infrastructure.Migrations
                     b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
                         .WithOne()
                         .HasForeignKey("Rafiq.Domain.Entities.User.UserHealthProfile", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", b =>
@@ -1070,62 +1507,9 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("HealthProfile");
                 });
 
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.ImagingReport", b =>
+            modelBuilder.Entity("Rafiq.Domain.Entities.Chat.AiConversation", b =>
                 {
-                    b.HasOne("MedicalDocument", null)
-                        .WithOne()
-                        .HasForeignKey("Rafiq.Domain.Entities.Documents.ImagingReport", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
-                {
-                    b.HasOne("MedicalDocument", null)
-                        .WithOne()
-                        .HasForeignKey("Rafiq.Domain.Entities.Documents.LabReport", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.MedicalReport", b =>
-                {
-                    b.HasOne("MedicalDocument", null)
-                        .WithOne()
-                        .HasForeignKey("Rafiq.Domain.Entities.Documents.MedicalReport", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Prescription", b =>
-                {
-                    b.HasOne("MedicalDocument", null)
-                        .WithOne()
-                        .HasForeignKey("Rafiq.Domain.Entities.Documents.Prescription", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("DocumentType", b =>
-                {
-                    b.Navigation("Documents");
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Medicine", b =>
-                {
-                    b.Navigation("Reminders");
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.User.UserHealthProfile", b =>
-                {
-                    b.Navigation("Allergies");
-
-                    b.Navigation("ChronicDiseases");
-                });
-
-            modelBuilder.Entity("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", b =>
-                {
-                    b.Navigation("MedicalDocuments");
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.LabReport", b =>
@@ -1136,6 +1520,18 @@ namespace Rafiq.Infrastructure.Migrations
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Prescription", b =>
                 {
                     b.Navigation("Medicines");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Documents.UserMedicine", b =>
+                {
+                    b.Navigation("Reminders");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.User.UserHealthProfile", b =>
+                {
+                    b.Navigation("Allergies");
+
+                    b.Navigation("ChronicDiseases");
                 });
 #pragma warning restore 612, 618
         }

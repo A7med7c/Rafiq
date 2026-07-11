@@ -1,0 +1,280 @@
+/* ===== Page wrapper — matches .login-page background ===== */
+.onboarding-welcome-page {
+  width: 100%;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(20px, 4vh, 34px) 7vw;
+  background:
+    radial-gradient(circle at 18% 72%, rgba(75, 219, 255, .24), transparent 24%),
+    radial-gradient(circle at 80% 12%, rgba(255, 255, 255, .95), transparent 18%),
+    linear-gradient(135deg, #eef8ff 0%, #dff5ff 44%, #f7fcff 100%);
+  color: #08264a;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
+/* ===== Card — matches .login-card ===== */
+.onboarding-card {
+  width: 100%;
+  max-width: 100%;
+  background: #fff;
+  padding: clamp(28px, 5vh, 42px) 34px;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(8, 38, 74, .08);
+  border: 1px solid rgba(78, 137, 184, .08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: cardSlideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+@keyframes cardSlideUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Brand header — matches .brand in auth-hero ===== */
+.brand-header {
+  width: 100%;
+  margin-bottom: 4px;
+  animation: fadeIn 0.5s 0.1s ease forwards;
+  opacity: 0;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.brand-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+  color: #08264a;
+}
+
+.brand-tagline {
+  font-size: 13px;
+  color: #5d7692;
+}
+
+/* ===== Hero illustration ===== */
+.hero-illustration {
+  width: 200px;
+  height: 168px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0 12px;
+  animation: fadeIn 0.5s 0.2s ease forwards;
+  opacity: 0;
+}
+
+.hero-illustration img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 28px rgba(21, 146, 211, .18));
+}
+
+/* ===== Welcome text — matches .card-header ===== */
+.welcome-content {
+  text-align: center;
+  margin-bottom: 22px;
+  width: 100%;
+  animation: fadeIn 0.5s 0.3s ease forwards;
+  opacity: 0;
+}
+
+.welcome-title {
+  margin: 0 0 6px;
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(26px, 4vh, 34px);
+  font-weight: 700;
+  color: #111;
+  line-height: 1.2;
+}
+
+.welcome-subtitle {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #4E89B8;
+}
+
+.welcome-description {
+  margin: 0;
+  font-size: 14.5px;
+  color: #8b8b8b;
+  line-height: 1.55;
+}
+
+/* ===== Feature cards ===== */
+.feature-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 22px;
+  animation: fadeIn 0.5s 0.4s ease forwards;
+  opacity: 0;
+}
+
+.feature-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px;
+  background: #f7fcff;
+  border-radius: 14px;
+  border: 1px solid rgba(78, 137, 184, .12);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(8, 38, 74, .07);
+}
+
+.feature-icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 10px;
+  background: #49d7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(78, 137, 184, .24);
+  flex-shrink: 0;
+}
+
+.feature-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.feature-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #08264a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feature-desc {
+  font-size: 11px;
+  color: #8b8b8b;
+  line-height: 1.3;
+}
+
+/* ===== CTA Button — matches .submit-button ===== */
+.cta-button {
+  width: 100%;
+  min-height: 54px;
+  border: none;
+  border-radius: 16px;
+  background: #49d7ff;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 12px 22px rgba(78, 137, 184, .24);
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+  animation: fadeIn 0.5s 0.5s ease forwards;
+  opacity: 0;
+}
+
+.cta-button:hover {
+  background: linear-gradient(135deg, #467fae 0%, #356f9a 100%);
+  box-shadow: 0 16px 28px rgba(78, 137, 184, .30);
+  transform: translateY(-1px);
+}
+
+.cta-button:active {
+  transform: translateY(0);
+  box-shadow: 0 9px 18px rgba(78, 137, 184, .22);
+}
+
+.cta-button i {
+  transition: transform 0.2s ease;
+}
+
+.cta-button:hover i {
+  transform: translateX(4px);
+}
+
+/* ===== Footer note ===== */
+.footer-note {
+  margin-top: 16px;
+  font-size: 13px;
+  color: #93a3b5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: fadeIn 0.5s 0.6s ease forwards;
+  opacity: 0;
+}
+
+.footer-note i {
+  color: #49d7ff;
+  font-size: 13px;
+}
+
+/* ===== Shared fade-in ===== */
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 576px) {
+  .onboarding-card {
+    padding: 28px 18px;
+  }
+
+  .welcome-title {
+    font-size: 26px;
+  }
+
+  .hero-illustration {
+    width: 170px;
+    height: 145px;
+  }
+
+  .cta-button {
+    min-height: 52px;
+    font-size: 16px;
+  }
+
+  .feature-title {
+    white-space: normal;
+  }
+}

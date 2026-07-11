@@ -2,21 +2,50 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Rafiq.Domain.Entities.Documents;
 
-namespace Rafiq.Infrastructure.Persistence.Configurations
+namespace Rafiq.Infrastructure.Persistence.Configurations;
+
+public sealed class LabReportConfiguration : IEntityTypeConfiguration<LabReport>
 {
-    public sealed class LabReportConfiguration
-     : IEntityTypeConfiguration<LabReport>
+    public void Configure(EntityTypeBuilder<LabReport> builder)
     {
-        public void Configure(EntityTypeBuilder<LabReport> builder)
-        {
-            builder.ToTable("LabReports");
+        builder.ToTable("LabReports");
 
-            builder.Property(x => x.LabName)
-                .HasMaxLength(200);
+        builder.HasKey(x => x.Id);
 
-            builder.HasMany(x => x.Results)
-                .WithOne(x => x.LabReport)
-                .HasForeignKey(x => x.LabReportId);
-        }
+        builder.Property(x => x.DoctorName)
+            .HasMaxLength(200)
+            .IsRequired();
+
+        builder.Property(x => x.LabName)
+            .HasMaxLength(200)
+            .IsRequired();
+
+        builder.Property(x => x.ReportDate)
+            .IsRequired();
+
+        builder.Property(x => x.ImageUrl)
+            .HasMaxLength(500)
+            .IsRequired();
+
+        builder.Property(x => x.OCRText)
+            .HasColumnType("nvarchar(max)");
+
+        builder.Property(x => x.Description)
+            .HasMaxLength(2000);
+
+        // Relationship with UserHealthProfile
+        builder.HasOne(x => x.UserHealthProfile)
+            .WithMany()
+            .HasForeignKey(x => x.UserHealthProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Relationship with LabResults
+        builder.HasMany(x => x.Results)
+            .WithOne(x => x.LabReport)
+            .HasForeignKey(x => x.LabReportId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(x => x.UserHealthProfileId);
+        builder.HasIndex(x => x.CreatedAt);
     }
 }

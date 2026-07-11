@@ -7,13 +7,12 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
-<<<<<<< Updated upstream
-=======
     <PackageReference Include="Hangfire.AspNetCore" Version="1.*" />
     <PackageReference Include="Hangfire.Core" Version="1.*" />
     <PackageReference Include="Hangfire.SqlServer" Version="1.*" />
     <PackageReference Include="Google.Apis.Auth" Version="1.75.0" />
->>>>>>> Stashed changes
+
+    <PackageReference Include="Google.Apis.Auth" Version="1.75.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.*" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.*">
       <PrivateAssets>all</PrivateAssets>

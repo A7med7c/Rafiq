@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities.Chat;
 using Rafiq.Domain.Entities.Documents;
 using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Repositories;
@@ -30,45 +31,49 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<UserHealthProfile> UserHealthProfiles => Set<UserHealthProfile>();
 
+    public DbSet<HealthProfileAccess> HealthProfileAccesses => Set<HealthProfileAccess>();
+
     public DbSet<Allergy> Allergies => Set<Allergy>();
-    public DbSet<PhoneVerification> PhoneVerifications => Set<PhoneVerification>();
+    public DbSet<OtpVerification> PhoneVerifications => Set<OtpVerification>();
 
     public DbSet<ChronicDisease> ChronicDiseases => Set<ChronicDisease>();
+    public DbSet<Otp> Otps => Set<Otp>();
 
     #endregion
 
     #region Medical Documents
 
-    public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
-
-    public DbSet<MedicalDocument> MedicalDocuments => Set<MedicalDocument>();
-
     public DbSet<Prescription> Prescriptions => Set<Prescription>();
 
-    public DbSet<Medicine> Medicines => Set<Medicine>();
+    public DbSet<PrescriptionMedicine> PrescriptionMedicines => Set<PrescriptionMedicine>();
+
+    public DbSet<UserMedicine> UserMedicines => Set<UserMedicine>();
 
     public DbSet<MedicineReminder> MedicineReminders => Set<MedicineReminder>();
 
-<<<<<<< Updated upstream
-=======
     public DbSet<MedicationReminderLog> MedicationReminderLogs => Set<MedicationReminderLog>();
 
     public DbSet<Appointment> Appointments => Set<Appointment>();
-
->>>>>>> Stashed changes
     public DbSet<LabReport> LabReports => Set<LabReport>();
 
     public DbSet<LabResult> LabResults => Set<LabResult>();
 
     public DbSet<ImagingReport> ImagingReports => Set<ImagingReport>();
-
-    public DbSet<MedicalReport> MedicalReports => Set<MedicalReport>();
+    public DbSet<GeneralDocument> GeneralDocuments => Set<GeneralDocument>();
 
     #endregion
 
     #region Identity
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    #endregion
+
+    #region AI Chat
+
+    public DbSet<AiConversation> AiConversations => Set<AiConversation>();
+
+    public DbSet<AiMessage> AiMessages => Set<AiMessage>();
 
     #endregion
 
@@ -79,8 +84,6 @@ public sealed class RafiqDbContext : IdentityDbContext<
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(RafiqDbContext).Assembly);
 
         // Use Table-Per-Type for MedicalDocument inheritance
-        modelBuilder.Entity<MedicalDocument>()
-            .UseTptMappingStrategy();
 
         ApplySoftDeleteFilters(modelBuilder);
 

@@ -26,16 +26,16 @@ public class MedicineReminderRepository(RafiqDbContext context) : IMedicineRemin
     }
 
     public async Task<bool> ExistsAsync(
-        Guid userMedicineId, 
-        TimeSpan time, 
-        DateOnly startDate, 
-        DateOnly endDate, 
-        string repeatType, 
-        Guid? excludeId = null, 
+        Guid userMedicineId,
+        TimeSpan time,
+        DateOnly startDate,
+        DateOnly endDate,
+        string repeatType,
+        Guid? excludeId = null,
         CancellationToken cancellationToken = default)
     {
         var query = context.MedicineReminders.AsQueryable()
-            .Where(x => x.UserMedicineId == userMedicineId && 
+            .Where(x => x.UserMedicineId == userMedicineId &&
                         x.ReminderTime == time &&
                         x.StartDate == startDate &&
                         x.EndDate == endDate &&

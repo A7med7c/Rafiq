@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Rafiq.Domain.Entities.User;
-using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Infrastructure.Persistence.Repositories;
 
@@ -50,7 +49,6 @@ public sealed class RefreshTokenRepository : IRefreshTokenRepository
 
     public async Task RevokeAllByUserIdAsync(
         Guid userId,
-        string? revokedByIp = null,
         CancellationToken cancellationToken = default)
     {
         var tokens = await GetActiveByUserIdAsync(
@@ -59,7 +57,7 @@ public sealed class RefreshTokenRepository : IRefreshTokenRepository
 
         foreach (var token in tokens)
         {
-            token.Revoke(revokedByIp);
+            token.Revoke();
         }
     }
 }

@@ -1,337 +1,368 @@
-# Rafiq AI — MVP Implementation Phases (spec-kit / SDD)
-
-## How to Use This Document with spec-kit
-
-Each phase below maps to one spec-kit cycle:
-1. Run `/speckit.spec` → generate the spec for that phase
-2. Run `/speckit.plan` → generate the technical plan
-3. Run `/speckit.tasks` → break into small, testable tasks
-4. Run `/speckit.implement` → agent implements task by task
-
-Complete one phase fully before starting the next. The output of each phase (working, tested code) becomes the foundation the next phase builds on.
-
----
-
-## Stack (from project docs — bake into constitution.md)
-
-| Layer | Technology |
-|---|---|
-| Frontend Web | Angular |
-| Mobile | Flutter |
-| Backend | ASP.NET Core REST APIs |
-| Database | SQL Server |
-| File Storage | Azure Blob Storage / AWS S3 |
-| AI | OCR + LLM + RAG |
-| Maps | Google Maps API |
-| Notifications | Firebase Cloud Messaging (FCM) + SMS/Email |
-
----
-
-## constitution.md Principles (set before Phase 1)
-
-Before running any spec, initialize your constitution with these non-negotiables:
-
-- **API-first**: every feature is exposed as a REST endpoint; frontend/mobile are pure consumers.
-- **Security baseline**: JWT authentication on every protected endpoint; no patient data endpoint is ever unauthenticated.
-- **Soft delete only**: never hard-delete medical records; always set `IsDeleted = true` + `DeletedAt`.
-- **UTC timestamps**: all `CreatedAt`, `UpdatedAt`, `DeletedAt` stored in UTC.
-- **Nullable by design**: `PatientProfile.UserId` is nullable (dependents); `LabResult.DocumentId` is nullable (manual entry).
-- **Audit every write**: every POST/PUT/PATCH/DELETE on patient data must write an `AuditLog` row.
-- **Error contracts**: all API errors return a standard `{ statusCode, message, errors[] }` shape.
-- **Test coverage gate**: no phase is done until unit tests pass for all service-layer logic.
-
----
-
-## Phase Overview
-
-| Phase | Name | What it Delivers | Depends On |
-|---|---|---|---|
-| 1 | Foundation & Auth | Database schema, User auth, PatientProfile CRUD | — |
-| 2 | Medical Documents & OCR | Document upload, blob storage, OCR extraction pipeline | Phase 1 |
-| 3 | Medications & Reminders | Medication list, schedules, adherence tracking, notifications | Phase 2 |
-| 4 | Lab Results & Appointments | Lab result entry (manual + document), appointments, reminders | Phase 2 |
-| 5 | Family & Caregiver Access | CaregiverLink with approval workflow, cross-patient views | Phase 1 |
-| 6 | AI Medical Assistant (RAG) | Chat interface, LLM integration, per-claim RAG citations | Phase 2 |
-| 7 | Healthcare Provider Discovery | Provider database, map search, link to documents/appointments | Phase 1 |
-| 8 | Consent, Audit & Compliance | Consent management, AuditLog, soft delete, notification log | All prior phases |
-
----
-
-## Phase 1 — Foundation & Auth
-
-**Goal:** A running, deployable backend with the full database schema, user registration/login, and patient profile management. Everything else builds on top of this.
-
-### Spec Inputs (paste into `/speckit.spec`):
-
-> Build the foundation layer for Rafiq AI, a personal healthcare companion platform.
-> This phase covers:
-> 1. SQL Server database schema for all MVP entities: User, PatientProfile, CaregiverLink, Document, ExtractedEntity, Medication, MedicationSchedule, Appointment, LabResult, HealthcareProvider, ChatSession, ChatMessage, KnowledgeSource, ChatMessageCitation, Notification, Consent, AuditLog. All entities holding personal/medical data must include CreatedAt, UpdatedAt, IsDeleted, DeletedAt fields.
-> 2. User registration (email + phone, hashed password, role: Patient/Caregiver/Admin).
-> 3. User login returning a JWT access token and refresh token.
-> 4. PatientProfile CRUD (create, get, update, soft delete) — UserId is nullable to support dependents with no login.
-> 5. Middleware: JWT validation on protected routes, global error handler returning standard error shape.
->
-> Stack: ASP.NET Core Web API, SQL Server (Entity Framework Core), JWT.
-> Non-goals for this phase: file upload, OCR, notifications, AI, maps.
-
-### Key Entities Introduced:
-- `User`, `PatientProfile`
-
-### Acceptance Criteria:
-- [ ] All 17 tables created with correct FK relationships and audit fields
-- [ ] `POST /auth/register` and `POST /auth/login` return valid JWTs
-- [ ] `GET/POST/PUT/DELETE /patients/{id}` endpoints work, with soft delete
-- [ ] Unauthorized requests to protected routes return 401
-- [ ] Unit tests cover AuthService, PatientService, token generation/validation
-
----
-
-## Phase 2 — Medical Documents & OCR
-
-**Goal:** Users can upload medical documents; the system stores metadata in SQL and the file in blob storage, then runs OCR/AI extraction to detect medications, diagnoses, and lab values from the document.
-
-### Spec Inputs (paste into `/speckit.spec`):
-
-> Build the document management and OCR extraction pipeline for Rafiq AI.
-> This phase covers:
-> 1. Document upload endpoint: accepts PDF/JPG/PNG, stores file in Azure Blob Storage / S3, persists Document metadata in SQL (DocumentType, FileUrl, OcrStatus, PatientId, ProviderId nullable, audit fields).
-> 2. OCR/AI extraction pipeline: triggered after upload, extracts structured entities (Medication, Diagnosis, LabValue) from the document and stores them in ExtractedEntity (RawValue, ConfirmedValue, ConfidenceScore, IsUserConfirmed).
-> 3. User confirmation endpoint: allows the patient/caregiver to review and confirm/correct AI-extracted data (sets IsUserConfirmed = true, updates ConfirmedValue).
-> 4. Document list and detail endpoints: list all documents for a patient, get document with its extracted entities.
-> 5. OcrStatus lifecycle: Pending → Processing → Completed / Failed.
->
-> Stack: ASP.NET Core, Azure Blob Storage SDK (or AWS S3), OCR service integration (Azure AI Document Intelligence or equivalent).
-> Non-goals: medication scheduling, lab trend analysis, chat assistant.
-
-### Key Entities Introduced:
-- `Document`, `ExtractedEntity`
-
-### Acceptance Criteria:
-- [ ] `POST /documents/upload` stores file in blob and inserts Document row with `OcrStatus = Pending`
-- [ ] OCR pipeline runs asynchronously, populates ExtractedEntity rows, sets `OcrStatus = Completed`
-- [ ] `PUT /documents/{id}/entities/{entityId}/confirm` updates ConfirmedValue and IsUserConfirmed
-- [ ] `GET /patients/{id}/documents` returns documents with their extraction status
-- [ ] Unit tests cover upload service, extraction parser, confirmation logic
-- [ ] OCR failures set `OcrStatus = Failed` without crashing the pipeline
-
----
-
-## Phase 3 — Medications & Reminders
-
-**Goal:** Patients have a medication list derived from confirmed extractions or manual entry, with auto-generated schedules and notifications for adherence tracking.
-
-### Spec Inputs (paste into `/speckit.spec`):
-
-> Build the medication management and reminder system for Rafiq AI.
-> This phase covers:
-> 1. Medication CRUD: create a medication record for a patient (Name, Dosage, Frequency, Route, StartDate, EndDate, SourceDocumentId nullable). Support both manual creation and auto-creation from a confirmed ExtractedEntity.
-> 2. MedicationSchedule generation: when a Medication is created, auto-generate MedicationSchedule rows based on Frequency (e.g., "twice daily" → two schedule entries per day) with Status = Pending.
-> 3. Adherence tracking: endpoint to mark a scheduled dose as Taken, Missed, or Skipped.
-> 4. Notification dispatch: when a MedicationSchedule entry is upcoming (within reminder window), send a push notification via Firebase Cloud Messaging (FCM) to the patient and/or linked caregivers. Log the notification in the Notification table.
-> 5. Medication list endpoint: list active medications for a patient with today's schedule summary.
->
-> Stack: ASP.NET Core, SQL Server, FCM (Firebase Admin SDK), background scheduler (e.g., Hangfire or hosted service).
-> Non-goals: lab results, appointments, AI chat.
-
-### Key Entities Introduced:
-- `Medication`, `MedicationSchedule`, `Notification`
-
-### Acceptance Criteria:
-- [ ] `POST /patients/{id}/medications` creates medication + auto-generates schedule rows
-- [ ] `PUT /schedules/{id}/status` updates dose status (Taken/Missed/Skipped)
-- [ ] FCM push fires before each scheduled dose; Notification row logged with SentAt + Status
-- [ ] `GET /patients/{id}/medications` returns active medications with schedule summary
-- [ ] Unit tests cover schedule generation logic, adherence update, notification trigger
-
----
-
-## Phase 4 — Lab Results & Appointments
-
-**Goal:** Patients can record lab results (from documents or manually) and track appointments with reminders.
-
-### Spec Inputs (paste into `/speckit.spec`):
-
-> Build lab result tracking and appointment management for Rafiq AI.
-> This phase covers:
-> 1. Lab Result entry: create a LabResult record (TestName, Value, Unit, ReferenceRange, TestDate). Support two entry paths: (a) linked to an uploaded Document (DocumentId FK set), (b) manual entry by patient/caregiver (DocumentId = null, EnteredBy = UserId). EntrySource field distinguishes the two.
-> 2. Lab Result trend: endpoint returning all values for a given TestName over time for a patient, sorted by TestDate — suitable for charting a trend line.
-> 3. Appointment CRUD: create/edit/cancel appointments (Type: Visit/Test/Scan/FollowUp, DateTime, ProviderId nullable, Location, ReminderLeadTime, Status: Scheduled/Completed/Cancelled).
-> 4. Appointment reminder: dispatch FCM/email reminder at (DateTime − ReminderLeadTime); log to Notification table.
-> 5. List endpoints: upcoming appointments and recent lab results per patient.
->
-> Stack: ASP.NET Core, SQL Server, FCM, background scheduler.
-> Non-goals: AI chat, provider map search, caregiver access (handled in Phase 5).
-
-### Key Entities Introduced:
-- `LabResult`, `Appointment`
-
-### Acceptance Criteria:
-- [ ] `POST /patients/{id}/lab-results` supports both document-linked and manual entry
-- [ ] `GET /patients/{id}/lab-results/trend?test=HbA1c` returns time-ordered values
-- [ ] `POST /patients/{id}/appointments` creates appointment and schedules reminder job
-- [ ] Reminder notification fires at correct lead time; Notification row logged
-- [ ] Unit tests cover dual-entry lab logic, trend query, reminder scheduling
-
----
-
-## Phase 5 — Family & Caregiver Access
-
-**Goal:** A user can invite another user as a caregiver for a patient, with an approval workflow controlling access. Caregivers see patient data within their granted permission level.
-
-### Spec Inputs (paste into `/speckit.spec`):
-
-> Build the family and caregiver access system for Rafiq AI.
-> This phase covers:
-> 1. CaregiverLink invitation: a user sends an invite to another user (by email/phone) to become a caregiver for a PatientProfile. CaregiverLink is created with Status = Pending, RequestedAt = now.
-> 2. Approval workflow: the invitee can Accept or Reject. On Accept: Status = Accepted, AcceptedAt = now, AcceptedBy = invitee UserId. On Reject: Status = Rejected. Either party can later Revoke (Status = Revoked).
-> 3. Access enforcement: all patient data endpoints (documents, medications, lab results, appointments) must check that the requesting user is either (a) the patient themselves, or (b) a caregiver with Status = Accepted and PermissionLevel covering the requested action (view/edit/reminder-only).
-> 4. Caregiver dashboard: endpoint returning a list of all PatientProfiles a caregiver has accepted access to, with a summary (name, next appointment, pending medication doses).
-> 5. Dependent patient creation: allow a caregiver to create a PatientProfile with UserId = null (a dependent with no login), automatically creating an Accepted CaregiverLink for themselves.
-> 6. Notifications: notify caregiver when their linked patient misses a medication or appointment.
->
-> Stack: ASP.NET Core, SQL Server, FCM/email.
-> Non-goals: AI chat, provider discovery.
-
-### Key Entities Introduced:
-- `CaregiverLink` (approval workflow in full)
-
-### Acceptance Criteria:
-- [ ] `POST /caregiver-links/invite` creates Pending link and notifies invitee
-- [ ] `PUT /caregiver-links/{id}/accept` and `/reject` transitions work correctly
-- [ ] Patient endpoints return 403 for callers without an Accepted CaregiverLink
-- [ ] `GET /caregiver/dashboard` returns all linked patients with summary data
-- [ ] Dependent patient creation works with `UserId = null`
-- [ ] Unit tests cover approval state machine, access-enforcement middleware
-
----
-
-## Phase 6 — AI Medical Assistant (RAG)
-
-**Goal:** Patients can chat with an AI assistant that explains their reports, answers healthcare questions, and cites per-claim the specific medical source (WHO guideline, drug database, literature) it used.
-
-### Spec Inputs (paste into `/speckit.spec`):
-
-> Build the AI medical assistant with RAG for Rafiq AI.
-> This phase covers:
-> 1. Chat session management: create a ChatSession for a patient; persist ChatMessages (Sender: User/AI, Content, Timestamp).
-> 2. LLM integration: on user message, call the LLM (GPT-4 / Claude / equivalent) with the patient's message plus relevant context retrieved from the medical knowledge base.
-> 3. RAG retrieval: query the KnowledgeSource knowledge base (WHO Guidelines, Drug Databases, Clinical Literature, National Health Recommendations) using vector similarity to retrieve the most relevant chunks for the patient's question.
-> 4. Per-claim citation: the LLM response is structured so each individual claim references its specific KnowledgeSource (SourceId) and a Locator (page/paragraph/chunk). Store these as ChatMessageCitation rows (ClaimText, SourceId, Locator, ConfidenceScore) linked to the ChatMessage.
-> 5. Patient context injection: before calling the LLM, inject a summary of the patient's active medications and recent diagnoses from their profile to personalize the response.
-> 6. Medical specialty suggestion: if the patient describes symptoms, the assistant should suggest an appropriate medical specialty and the confidence score should be stored in the relevant ChatMessageCitation.
-> 7. Safety guardrail: the assistant must include a disclaimer on every response that it is not a substitute for professional medical advice.
->
-> Stack: ASP.NET Core, LLM API (OpenAI / Anthropic), vector search (Azure AI Search / pgvector / Qdrant), KnowledgeSource seed data.
-> Non-goals: voice, real-time streaming (can be added post-MVP), provider map.
-
-### Key Entities Introduced:
-- `ChatSession`, `ChatMessage`, `KnowledgeSource`, `ChatMessageCitation`
-
-### Acceptance Criteria:
-- [ ] `POST /patients/{id}/chat/sessions` creates a ChatSession
-- [ ] `POST /chat/sessions/{id}/messages` stores user message, retrieves RAG context, calls LLM, stores AI response
-- [ ] AI response is split into claims; each claim has a ChatMessageCitation row with SourceId + Locator
-- [ ] `GET /chat/sessions/{id}/messages` returns full conversation with citations
-- [ ] Patient's medications and diagnoses are injected into every LLM call
-- [ ] Disclaimer text is present in every AI message
-- [ ] Unit tests cover RAG retrieval, citation parsing, patient context injection
-
----
-
-## Phase 7 — Healthcare Provider Discovery
-
-**Goal:** Patients can search for nearby hospitals, clinics, labs, and pharmacies, filter by type/specialty, and link providers to their documents and appointments.
-
-### Spec Inputs (paste into `/speckit.spec`):
-
-> Build healthcare provider discovery for Rafiq AI.
-> This phase covers:
-> 1. HealthcareProvider data model: seed a provider database with Name, Type (Hospital/Clinic/Lab/Pharmacy), Address, Latitude, Longitude, Phone, Services (comma-separated or JSON array).
-> 2. Proximity search: endpoint accepting (latitude, longitude, radius, type filter) returning providers sorted by distance. Use Google Maps API or Haversine formula for distance calculation.
-> 3. Provider detail: endpoint returning full provider details including address, phone, services offered.
-> 4. Link provider to document: allow updating Document.ProviderId to associate a document with the provider it came from.
-> 5. Link provider to appointment: allow setting Appointment.ProviderId when creating/editing an appointment; provider detail should show automatically on the appointment.
-> 6. Provider search from appointment/document creation: when a patient creates an appointment or uploads a document, surface a provider search inline so they can tag the source provider.
->
-> Stack: ASP.NET Core, SQL Server, Google Maps API (or Haversine for distance), provider seed data.
-> Non-goals: provider ratings/reviews, real-time availability, booking integration.
-
-### Key Entities Introduced:
-- `HealthcareProvider`
-
-### Acceptance Criteria:
-- [ ] `GET /providers/search?lat=&lng=&radius=&type=` returns sorted, filtered provider list
-- [ ] `GET /providers/{id}` returns full provider detail
-- [ ] `PUT /documents/{id}/provider` links a provider to a document
-- [ ] `POST/PUT /appointments` accepts ProviderId and returns provider name in appointment detail
-- [ ] Distance calculation is accurate within acceptable margin
-- [ ] Unit tests cover proximity sort, type filter, provider link
-
----
-
-## Phase 8 — Consent, Audit & Compliance
-
-**Goal:** Formal consent tracking for what patients have authorized, a complete audit log of all data access and modification, and a notification log audit view. This phase hardens the platform for production readiness.
-
-### Spec Inputs (paste into `/speckit.spec`):
-
-> Build the consent, audit, and compliance layer for Rafiq AI.
-> This phase covers:
-> 1. Consent management: create Consent records per patient for each ConsentType (DataSharing, AIProcessing, CaregiverAccess, Marketing). Endpoints to grant and revoke consent. If a patient has not granted AIProcessing consent, the AI chat endpoint must return 403 with a prompt to provide consent.
-> 2. Consent enforcement middleware: check Consent.Status = Granted before executing any feature that requires it (e.g., AI chat requires AIProcessing consent; caregiver invite requires CaregiverAccess consent).
-> 3. AuditLog completeness: verify and close any gaps — every POST/PUT/PATCH/DELETE on patient data entities (Document, Medication, LabResult, Appointment, CaregiverLink, Consent) must write an AuditLog row (ActorUserId, PatientId, Action, EntityType, EntityId, Timestamp, IpAddress).
-> 4. Read access audit: log GET requests to patient records in AuditLog when the actor is a caregiver (not the patient themselves), for access tracking.
-> 5. Notification log: expose a `GET /patients/{id}/notifications` endpoint returning the full Notification history (type, channel, status, timestamp) for patient and caregiver visibility.
-> 6. Soft delete verification: run a check across all entities to confirm no hard-delete endpoints exist; all deletes must set IsDeleted = true, DeletedAt = now, and write an AuditLog row.
-> 7. Data export: endpoint allowing a patient to export their full medical profile (documents metadata, medications, lab results, appointments, consents) as a structured JSON payload — supports right-to-portability.
->
-> Stack: ASP.NET Core, SQL Server, middleware pipeline.
-> Non-goals: formal HIPAA/GDPR certification (baseline compliance only at MVP level).
-
-### Key Entities Introduced / Hardened:
-- `Consent`, `AuditLog`, `Notification` (log view)
-
-### Acceptance Criteria:
-- [ ] `POST /patients/{id}/consents` and `PUT /consents/{id}/revoke` work correctly
-- [ ] AI chat returns 403 if AIProcessing consent is not granted
-- [ ] Every write operation on a patient entity creates an AuditLog row
-- [ ] Caregiver read access is logged in AuditLog
-- [ ] `GET /patients/{id}/notifications` returns full notification history
-- [ ] No endpoint in the codebase calls SQL DELETE on a patient data table (verified by test)
-- [ ] `GET /patients/{id}/export` returns complete profile JSON
-
----
-
-## Summary: Phase-to-Entity Mapping
-
-| Entity | Introduced in Phase |
-|---|---|
-| User | 1 |
-| PatientProfile | 1 |
-| CaregiverLink (full approval) | 5 |
-| Document | 2 |
-| ExtractedEntity | 2 |
-| Medication | 3 |
-| MedicationSchedule | 3 |
-| Notification | 3 (extended in 4, 8) |
-| LabResult | 4 |
-| Appointment | 4 |
-| ChatSession | 6 |
-| ChatMessage | 6 |
-| KnowledgeSource | 6 |
-| ChatMessageCitation | 6 |
-| HealthcareProvider | 7 |
-| Consent | 8 |
-| AuditLog | 1 (hardened in 8) |
-
----
-
-## Post-MVP Backlog (out of scope for now)
-
-- Real-time chat streaming (WebSockets / SignalR)
-- Voice input for AI assistant
-- DICOM radiology file support
-- Provider ratings and booking integration
-- Multi-language support
-- Formal HIPAA / local regulatory compliance audit
-- Mobile (Flutter) frontend — all above phases are backend-first; mobile consumes the APIs
+Repository Map
+
+Root: C:\Users\Ahmed Ragab\source\repos\Rafiq
+Backend solution: src/src.sln:5
+Backend projects:
+src/Rafiq.API/Rafiq.API.csproj:1
+src/Rafiq.Application/Rafiq.Application.csproj:1
+src/Rafiq.Domain/Rafiq.Domain.csproj:1
+src/Rafiq.Infrastructure/Rafiq.Infrastructure.csproj:1
+Backend tests:
+tests/Rafiq.API.Tests/Rafiq.API.Tests.csproj:1
+tests/Rafiq.Application.Tests/Rafiq.Application.Tests.csproj:1
+tests/Rafiq.Domain.Tests/Rafiq.Domain.Tests.csproj:1
+Angular workspace: RafiqAngular/angular.json:8
+Angular package manifest: RafiqAngular/package.json:1
+Backend config:
+src/Rafiq.API/appsettings.json:1
+src/Rafiq.API/appsettings.Development.json:1
+src/Rafiq.API/Properties/launchSettings.json
+Angular config:
+RafiqAngular/angular.json:1
+RafiqAngular/tsconfig.json
+RafiqAngular/tsconfig.app.json
+RafiqAngular/tsconfig.spec.json
+RafiqAngular/src/app/Environments/Environment.ts:1
+Documentation:
+RafiqAngular/README.md:1
+PLan.md
+Infrastructure/tooling:
+.kilo/agent-manager.json
+.kilo/package.json
+RafiqAngular/.vscode/tasks.json
+RafiqAngular/.vscode/launch.json
+RafiqAngular/.vscode/extensions.json
+RafiqAngular/.vscode/mcp.json
+Architecture Overview
+
+The backend follows a Clean Architecture-style split: API -> Application -> Domain, with Infrastructure implementing persistence/external services and referenced by API.
+Rafiq.API is the HTTP host and composition root. It registers controllers, Swagger, Application, Infrastructure, JWT auth, authorization, health checks, CORS, static files, and exception middleware in src/Rafiq.API/Program.cs:18.
+Rafiq.Application owns CQRS handlers, DTOs, validators, mappings, response wrappers, interfaces, and feature orchestration. MediatR, FluentValidation, and Mapster are registered in src/Rafiq.Application/DependencyInjection.cs:16.
+Rafiq.Domain owns entities, enums, repository contracts, and domain exceptions. It has no package references in src/Rafiq.Domain/Rafiq.Domain.csproj:1.
+Rafiq.Infrastructure owns EF Core, Identity, repositories, JWT/token services, Google validation, Twilio notification service, Bedrock AI integration, local file storage, and background jobs. Its registrations are in src/Rafiq.Infrastructure/DependencyInjection.cs:21.
+The Angular app is a standalone Angular application, not NgModule-based. It bootstraps with bootstrapApplication(App, appConfig) and uses router, HTTP interceptors, functional guards, signals, services, and plain CSS.
+Technology Stack
+
+Backend:
+.NET net10.0 across API/Application/Domain/Infrastructure at src/Rafiq.API/Rafiq.API.csproj:3
+ASP.NET Core Web API
+EF Core SQL Server 10._
+ASP.NET Core Identity with GUID users/roles
+JWT Bearer auth
+MediatR 12._
+FluentValidation 11._
+Mapster 7._
+Swagger/Swashbuckle 10.2.3
+Serilog packages referenced, but no active UseSerilog bootstrap found
+Twilio
+Google.Apis.Auth
+BCrypt.Net
+Frontend:
+Angular ^21.2.0 at RafiqAngular/package.json:14
+Angular CLI/build ^21.2.1
+TypeScript ~5.9.2
+RxJS ~7.8.0
+Vitest via Angular test builder
+jspdf and jspdf-autotable for client PDF generation
+Plain component CSS and global CSS, no Tailwind/Bootstrap package detected
+Backend Projects
+
+Rafiq.API: ASP.NET Core Web API host. Entry point is src/Rafiq.API/Program.cs:12. Controllers live under src/Rafiq.API/Controllers. Middleware lives under src/Rafiq.API/Middleware.
+Rafiq.Application: application layer. Feature folders include Auth, PatientProfiles, LabReports, ImagingReports, Prescriptions, UserMedicines, MedicineReminders, Appointments, and GeneralDocuments.
+Rafiq.Domain: domain model. Contains Common/BaseEntity, Entities, Enums, Exceptions, and Repositories.
+Rafiq.Infrastructure: persistence and integrations. Contains Persistence/RafiqDbContext.cs, Persistence/Configurations, Persistence/Repositories, Persistence/Identity, Services/auth, Services/Notifications, Services/BackgroundJobs, migrations, Bedrock, and file storage.
+Backend Request Pipeline
+
+Controllers are registered with JSON enum string serialization in src/Rafiq.API/Program.cs:18.
+Swagger is configured in src/Rafiq.API/Extensions/ServiceCollectionExtensions.cs:11.
+CORS allows only http://localhost:4200 in src/Rafiq.API/Program.cs:34.
+Global exception middleware runs early in src/Rafiq.API/Program.cs:47.
+Dev-only Swagger UI is exposed at /swagger in src/Rafiq.API/Program.cs:49.
+HTTPS redirection, CORS, authentication, authorization, static files, controllers, and health checks are mapped in src/Rafiq.API/Program.cs:59.
+Health endpoint: /health in src/Rafiq.API/Program.cs:65.
+Backend API Surface
+
+Auth: api/auth in src/Rafiq.API/Controllers/AuthController.cs:20
+Register, login, logout, Google login, me, update me, change password, forgot password, verify reset OTP, reset password, verify phone, resend phone code, refresh token, revoke token.
+Patient profiles: api/patient-profiles in src/Rafiq.API/Controllers/PatientProfilesController.cs:15
+Create, get me, get by id, update, delete.
+Documents: api/documents in src/Rafiq.API/Controllers/DocumentsController.cs:24
+Lab upload/save/list/get, imaging upload/save/list/get, general document upload.
+Prescriptions: api/prescriptions in src/Rafiq.API/Controllers/PrescriptionsController.cs:21
+Upload, save, list, get, update, delete.
+User medicines: api/user-medicines in src/Rafiq.API/Controllers/UserMedicinesController.cs:16
+Scan medicine box, add from prescription, add, list, get, update, delete.
+Medicine reminders: mixed under api/user-medicines/{medicineId}/reminders and api/medicine-reminders in src/Rafiq.API/Controllers/MedicineRemindersController.cs:16.
+Appointments: api/appointments in src/Rafiq.API/Controllers/AppointmentsController.cs:19
+Create, list, upcoming, today, get, update, delete, complete, cancel.
+Clean Architecture / CQRS
+
+MediatR is registered for all Application handlers in src/Rafiq.Application/DependencyInjection.cs:16.
+Validation is wired as a MediatR pipeline behavior in src/Rafiq.Application/DependencyInjection.cs:19.
+Commands/queries return ApiResponse<T> wrappers, for example Application files matched throughout src/Rafiq.Application/Features.
+Feature folders use command/query/DTO/validator structure.
+Most controllers delegate to MediatR, but some API controllers directly construct domain entities and call repositories, especially DocumentsController and PrescriptionsController, which weakens the clean layering.
+Authentication Flow
+
+Backend uses IdentityCore with roles, SignInManager, EF stores, and default token providers in src/Rafiq.Infrastructure/DependencyInjection.cs:26.
+JWT auth is configured in src/Rafiq.API/Extensions/ServiceCollectionExtensions.cs:40.
+JWT secret is read from JWT_SECRET_KEY first, then Jwt:SecretKey in src/Rafiq.API/Extensions/ServiceCollectionExtensions.cs:42.
+JWT validates issuer, audience, lifetime, signing key, and uses zero clock skew in src/Rafiq.API/Extensions/ServiceCollectionExtensions.cs:65.
+Custom JSON 401/403 responses are returned from JWT events in src/Rafiq.API/Extensions/ServiceCollectionExtensions.cs:77.
+Frontend login posts to ${environment.apiUrl}/auth/login in RafiqAngular/src/app/Services/auth-service.ts:57.
+Successful login stores access/refresh tokens, then loads /auth/me in RafiqAngular/src/app/Services/auth-service.ts:149.
+Tokens and current user are stored in localStorage under accessToken, refreshToken, and currentUser in RafiqAngular/src/app/Services/token-storage-service.ts:10.
+Refresh token flow posts to /auth/refresh-token in RafiqAngular/src/app/Services/auth-service.ts:103.
+The auth interceptor retries protected 401 responses after refresh in RafiqAngular/src/app/Interceptors/auth.interceptor.ts:54.
+Google login uses frontend Google Identity Services and posts ID token to /auth/google in RafiqAngular/src/app/Services/auth-service.ts:94.
+Authorization
+
+Backend registers authorization in src/Rafiq.API/Program.cs:28.
+Most resource controllers are protected with [Authorize], such as PatientProfilesController, DocumentsController, PrescriptionsController, UserMedicinesController, and AppointmentsController.
+No role-based policies or custom authorization policies were found.
+Auth endpoints are mostly public by absence of controller-level [Authorize]; selected endpoints use [Authorize] explicitly.
+Frontend Summary
+
+Angular app name: RafiqAngular in RafiqAngular/angular.json:9.
+Browser entry: RafiqAngular/src/main.ts.
+App providers are centralized in RafiqAngular/src/app/app.config.ts:13.
+Root routes live in RafiqAngular/src/app/app.routes.ts:16.
+Routes:
+/ landing
+/login, /register
+/dashboard
+/medical-records
+/onboarding/welcome
+/onboarding/step1 through /onboarding/step4
+/onboarding/ai-upload
+Guards:
+authGuard protects app routes.
+guestGuard prevents logged-in users from visiting login/register.
+HTTP:
+Base URL is hardcoded to https://localhost:7082/api in RafiqAngular/src/app/Environments/Environment.ts:3.
+Auth interceptor attaches bearer tokens only to URLs starting with that API URL in RafiqAngular/src/app/Interceptors/auth.interceptor.ts:15.
+State management:
+No NgRx/store library.
+Auth uses BehaviorSubject.
+UI-heavy pages use Angular signals and computed state.
+Styling:
+Plain global CSS and component CSS.
+Global stylesheet is RafiqAngular/src/styles.css.
+Fonts and Font Awesome load from CDN in RafiqAngular/src/index.html.
+Angular Features
+
+Landing page with navbar, hero, features, about, how-it-works, stats, testimonials, contact, and footer.
+Login/register pages with reusable auth hero and form components.
+Dashboard aggregates recent labs/imaging and medicine reminder-like cards.
+Medical records page handles labs, imaging, prescriptions, medicines, general documents, upload/review modals, AI review confirmation, medicine-box scanning, deletion, filtering, pagination, and PDF generation.
+Onboarding wizard collects demographic/health data in sessionStorage and submits patient profile through HealthProfileService.
+PDF generation is client-side via PdfService.
+Frontend-Backend Communication
+
+Angular project communicates with the local ASP.NET Core API at https://localhost:7082/api.
+Auth endpoints:
+POST /auth/login
+POST /auth/register
+POST /auth/google
+GET /auth/me
+POST /auth/refresh-token
+POST /auth/logout
+POST /auth/verify-phone
+POST /auth/resend-phone-code
+Patient profile endpoints:
+POST /patient-profiles
+GET /patient-profiles/me
+Medical records endpoints:
+GET /documents/labs
+GET /documents/imaging
+GET /prescriptions
+GET /user-medicines
+GET /documents/general
+Upload endpoints:
+POST /documents/upload/lab
+POST /documents/upload/imaging
+POST /prescriptions/upload
+POST /documents/general/upload
+POST /user-medicines/scan-box
+The upload flow uses FormData with image, then opens client-side review/confirmation before saving normalized records.
+No SignalR client or server registration was found.
+No Hangfire usage was found.
+Database Summary
+
+Main DbContext: src/Rafiq.Infrastructure/Persistence/RafiqDbContext.cs:13.
+It inherits IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid, ...> and implements IUnitOfWork.
+DbSets include health profiles, allergies, chronic diseases, OTPs, phone verifications, prescriptions, prescription medicines, user medicines, medicine reminders, appointments, lab reports/results, imaging reports, general documents, and refresh tokens in src/Rafiq.Infrastructure/Persistence/RafiqDbContext.cs:31.
+Configurations are scanned from the Infrastructure assembly in src/Rafiq.Infrastructure/Persistence/RafiqDbContext.cs:72.
+Soft-delete is applied to BaseEntity deletes in src/Rafiq.Infrastructure/Persistence/RafiqDbContext.cs:81.
+Global query filters exclude soft-deleted base entities in src/Rafiq.Infrastructure/Persistence/RafiqDbContext.cs:103.
+All DateTime columns are normalized to datetime2(7) in src/Rafiq.Infrastructure/Persistence/RafiqDbContext.cs:127.
+Migrations are under src/Rafiq.Infrastructure/Migrations.
+No seed data was found.
+Database Entities
+
+Identity:
+ApplicationUser extends Identity user with profile and medical document navigations.
+Identity roles/users/claims/logins/tokens are standard ASP.NET Identity tables.
+Health profile:
+UserHealthProfiles
+Allergies
+ChronicDiseases
+Auth/session:
+RefreshTokens
+PhoneVerifications
+Otps
+Medical records:
+Prescriptions
+PrescriptionMedicines
+UserMedicines
+MedicineReminders
+LabReports
+LabResults
+ImagingReports
+GeneralDocuments
+Appointments
+Database Relationships
+
+User -> HealthProfile: one-to-one, unique user profile.
+HealthProfile -> Allergies: one-to-many cascade.
+HealthProfile -> ChronicDiseases: one-to-many cascade.
+User -> Prescriptions: one-to-many cascade.
+Prescription -> PrescriptionMedicines: one-to-many cascade.
+User -> UserMedicines: one-to-many cascade.
+UserMedicine -> MedicineReminders: one-to-many cascade.
+User -> Appointments: one-to-many cascade.
+User -> LabReports: one-to-many cascade.
+LabReport -> LabResults: one-to-many cascade.
+User -> ImagingReports: one-to-many cascade.
+User -> GeneralDocuments: one-to-many cascade.
+User -> RefreshTokens: one-to-many cascade.
+Otp.UserId appears to have no configured FK.
+Dependency Graph
+
+RafiqAngular
+-> Rafiq.API
+-> Rafiq.Application
+-> Rafiq.Domain
+-> Rafiq.Infrastructure
+-> Rafiq.Application
+-> Rafiq.Domain
+-> SQL Server database
+-> Local file storage
+-> Bedrock-compatible AI gateway
+-> Twilio
+-> Google token validation
+Request Lifecycle
+
+User interacts with Angular component or page.
+Angular service builds request from environment.apiUrl.
+authInterceptor attaches JWT for protected API URLs.
+ASP.NET Core receives request through global exception middleware, CORS, authentication, and authorization.
+Controller action receives DTO/command/form file.
+Preferred path: controller sends command/query through MediatR.
+ValidationBehavior runs FluentValidation validators.
+Handler uses current user service, domain repositories, external services, and IUnitOfWork.
+Repository queries/mutates EF Core DbContext.
+DbContext applies soft-delete/audit behavior and saves to SQL Server.
+Handler returns ApiResponse<T>.
+Controller returns status code and response body.
+Angular service maps response into page/component state.
+Important Services
+
+Backend:
+IdentityService: registration, login, account, password, role/user orchestration.
+TokenService: JWT creation.
+TokenIssuingService: access/refresh token issuance.
+RefreshTokenRepository: refresh-token persistence.
+CurrentUserService: resolves current user from claims.
+OtpService, OtpGenerator, BCryptOtpHasher: OTP flow.
+GoogleTokenValidator: external Google token validation.
+BedrockService: AI multimodal image analysis.
+LocalFileStorageService: saves uploads under wwwroot/uploads.
+MissedAppointmentsBackgroundService: marks expired appointments missed every 15 minutes.
+Frontend:
+AuthService: login/register/session/current user/refresh/logout.
+TokenStorageService: localStorage tokens/user/onboarding flags.
+HealthProfileService: patient profile create/read.
+DashboardService: dashboard aggregation.
+MedicalRecordsService: unified record fetching/mapping/deletion.
+PdfService: record PDF export.
+GoogleService: Google login button integration.
+Implemented Features
+
+Authentication: email/phone login, registration, JWT, refresh tokens, logout, revoke token, Google login.
+Authorization: protected API controllers and Angular auth/guest guards.
+User account: /auth/me, update account, change password.
+Phone verification: verify/resend phone code.
+Password reset: forgot password, verify reset OTP, reset password.
+Patient profile/onboarding: demographics, blood type, height/weight, allergies, chronic diseases.
+Medical records: labs, imaging, prescriptions, medicines, general documents.
+File uploads: image-based uploads saved locally and reviewed client-side before final save.
+AI/OCR-like extraction: Bedrock service analyzes lab reports, imaging reports, prescriptions, medicine boxes, and general documents.
+Dashboard: recent medical records and inferred medicine reminder cards.
+Medicine management: manual/add from prescription/scan box/update/delete.
+Medicine reminders: CRUD and toggle endpoints exist.
+Appointments: create/list/today/upcoming/update/delete/complete/cancel plus background missed status processing.
+Notifications/SMS: Twilio service exists for OTP-like notification flows.
+PDF exports: Angular generates PDFs for records.
+SignalR: not implemented.
+Payments: not found.
+Emails: not found.
+Coding Style Learned
+
+C#:
+File-scoped namespaces.
+Nullable enabled.
+Primary constructors are used for controllers/services/handlers.
+sealed records/classes are common.
+Commands/queries are MediatR IRequest<ApiResponse<T>>.
+Validators use FluentValidation, often internal sealed validators.
+Domain exceptions are thrown and mapped globally by middleware.
+Repositories are interfaces in Domain and implementations in Infrastructure.
+CancellationToken is used on most async APIs.
+DTOs generally live under feature-specific DTOs folders.
+API responses use ApiResponse<T>.SuccessResponse and FailureResponse.
+Angular:
+Standalone components and functional guards/interceptors.
+inject() preferred over constructor injection.
+Services are providedIn: 'root'.
+State uses RxJS for auth and signals for UI-heavy pages.
+Folders use PascalCase names: Pages, Services, Guards, Interceptors.
+Models folder is misspelled as Modles and existing code follows that spelling.
+Environment import path uses custom casing: ../Environments/Environment.
+Potential Issues
+
+src/Rafiq.API/appsettings.json:20 contains Twilio credentials and src/Rafiq.API/appsettings.json:12 contains a JWT secret; these should not be committed as plaintext secrets.
+src/Rafiq.API/appsettings.json:3 contains a machine-specific SQL Server connection string.
+RafiqAngular/src/app/Environments/Environment.ts:3 hardcodes the API URL and does not use Angular file replacements.
+RafiqAngular/src/app/Environments/Environment.ts:5 hardcodes Google client ID.
+CORS allows http://localhost:4200, while frontend API URL targets HTTPS localhost API; production environment strategy is absent.
+Serilog packages are referenced, but no active Serilog host configuration was found.
+No API versioning is implemented.
+No SignalR or Hangfire despite possible realtime/background needs.
+Some controllers bypass Application layer by constructing entities and calling repositories directly.
+Duplicate IGoogleTokenValidator registration exists in API and Infrastructure.
+GeneralDocument appears to lack a namespace, unlike other domain entities.
+ApplicationUser/health profile relationship may create an unintended extra nullable FK/index because navigation configuration is incomplete.
+Otp.UserId appears to lack a database FK.
+AuthController.Logout is not protected by [Authorize], though it operates by refresh token body.
+localStorage token storage exposes tokens to XSS risk.
+Medical records Angular page is very large and mixes UI state, upload orchestration, API calls, and transformations.
+DashboardService infers reminder times from medicine frequency instead of using the reminders API.
+Some naming/casing inconsistencies exist: Services/auth, Modles, trailing spaces in filenames, and class/file mismatch for patient profile repository.
+No wildcard Angular route exists.
+Onboarding AI upload captures files but does not upload them before profile completion.
+Suggested Improvements
+
+Move secrets and connection strings to user secrets, environment variables, or a secret manager.
+Add proper Angular environment configurations and file replacements for development/production.
+Keep API controllers thin by moving save/update orchestration fully into Application commands.
+Add role/policy-based authorization where business rules require it.
+Fix EF relationship anomalies for health profile and OTP user FK.
+Add API versioning if external/mobile clients are expected.
+Add structured Serilog host setup or remove unused Serilog packages.
+Split large Angular smart components into smaller services/components, especially medical records upload/review flows.
+Replace dashboard inferred reminder times with real reminder endpoint data.
+Consider safer token storage strategy if threat model includes XSS-sensitive data.
+Add production CORS configuration.
+Add missing wildcard route and not-found UI.
+Expand tests beyond auth/profile into documents, medicines, reminders, appointments, uploads, and exception behavior.

@@ -3,6 +3,7 @@ using Hangfire;
 using Rafiq.API.Extensions;
 using Rafiq.API.Middleware;
 using Rafiq.Application;
+using Rafiq.Application.Common.Interfaces;
 using Rafiq.Infrastructure;
 <<<<<<< Updated upstream
 =======
@@ -31,6 +32,20 @@ public class Program
         builder.Services.AddJwtAuthentication(builder.Configuration);
         builder.Services.AddAuthorization();
         builder.Services.AddHealthChecks();
+        builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
+
+
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("Angular", policy =>
+            {
+                policy
+                    .WithOrigins("http://localhost:4200")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
 
         var app = builder.Build();
 
@@ -47,8 +62,10 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+        app.UseCors("Angular");
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseStaticFiles();
         app.MapControllers();
         app.MapHealthChecks("/health");
 
