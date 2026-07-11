@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, shareReplay, switchMap } from 'rxjs';
+import { Observable, map, switchMap } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse } from '../Modles/api-response';
 import {
@@ -16,14 +16,14 @@ export class AppointmentsService {
   private readonly healthProfileSvc   = inject(HealthProfileService);
   private readonly base               = `${environment.apiUrl}/appointments`;
 
-  private readonly profileId$: Observable<string> =
-    this.healthProfileSvc.getMyProfile().pipe(
+  private getCurrentProfileId(): Observable<string> {
+    return this.healthProfileSvc.getMyProfile().pipe(
       map(r => r.data.id),
-      shareReplay(1),
     );
+  }
 
   getAll(): Observable<AppointmentDto[]> {
-    return this.profileId$.pipe(
+    return this.getCurrentProfileId().pipe(
       switchMap(pid =>
         this.http.get<ApiResponse<AppointmentDto[]>>(`${this.base}?profileId=${pid}`)
       ),
@@ -32,7 +32,7 @@ export class AppointmentsService {
   }
 
   getUpcoming(): Observable<AppointmentDto[]> {
-    return this.profileId$.pipe(
+    return this.getCurrentProfileId().pipe(
       switchMap(pid =>
         this.http.get<ApiResponse<AppointmentDto[]>>(
           `${this.base}/upcoming?profileId=${pid}`
@@ -43,7 +43,7 @@ export class AppointmentsService {
   }
 
   create(body: CreateAppointmentRequest): Observable<AppointmentDto> {
-    return this.profileId$.pipe(
+    return this.getCurrentProfileId().pipe(
       switchMap(pid =>
         this.http.post<ApiResponse<AppointmentDto>>(`${this.base}?profileId=${pid}`, body)
       ),
