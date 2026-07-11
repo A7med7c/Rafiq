@@ -13,6 +13,7 @@ using Rafiq.Infrastructure.Services.auth;
 using Rafiq.Infrastructure.Services.Auth;
 using Rafiq.Infrastructure.Services.Notifications;
 using Rafiq.Infrastructure.Services.BackgroundJobs;
+using Rafiq.Infrastructure.Services.AiChat;
 
 namespace Rafiq.Infrastructure;
 
@@ -65,6 +66,10 @@ public static class DependencyInjection
         services.Configure<BedrockSettings>(configuration.GetSection("Bedrock"));
         services.AddHttpClient<IBedrockService, BedrockService>();
 
+        // ── AiChat ────────────────────────────────────────────────────────
+        services.Configure<AiChatSettings>(configuration.GetSection("AiChat"));
+        services.AddHttpClient<IAiChatService, AiChatService>();
+
         // ── Documents ─────────────────────────────────────────────────────
         services.AddScoped<ILabReportRepository, LabReportRepository>();
         services.AddScoped<IImagingReportRepository, ImagingReportRepository>();
@@ -73,6 +78,7 @@ public static class DependencyInjection
         services.AddScoped<IUserMedicineRepository, UserMedicineRepository>();
         services.AddScoped<IMedicineReminderRepository, MedicineReminderRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        services.AddScoped<IAiConversationRepository, AiConversationRepository>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));

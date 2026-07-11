@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities.Chat;
 using Rafiq.Domain.Entities.Documents;
 using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Repositories;
@@ -64,6 +65,14 @@ public sealed class RafiqDbContext : IdentityDbContext<
     #region Identity
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    #endregion
+
+    #region AI Chat
+
+    public DbSet<AiConversation> AiConversations => Set<AiConversation>();
+
+    public DbSet<AiMessage> AiMessages => Set<AiMessage>();
 
     #endregion
 
