@@ -109,7 +109,7 @@
 
   border-radius: 14px;
 
-  background: #EAF4FF;
+  background: #F5FAFF;
 
   color: #2F80ED;
 
@@ -377,7 +377,7 @@
   border: none;
   margin-top: auto;
 
-  color: #2F80ED;
+  color: var(--blue);
 
   font-size: 14px;
 
@@ -797,23 +797,29 @@
 
 /* ── Appointments table card ─────────────────── */
 .appts-table-card {
+  --table-head-h: 44px;
+  --table-row-h: 66px;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .records-table-wrap {
   overflow-x: auto;
+  overflow-y: hidden;
   padding:0 12px 12px;
+  min-height: calc(var(--table-head-h) + (var(--table-row-h) * 5) + 12px);
 }
 
 .appts-table {
   width: 100%;
+  min-height: calc(var(--table-head-h) + (var(--table-row-h) * 5));
   border-collapse: collapse;
   font-size: 13px;
 }
 
 .appts-table thead th {
    background:#F8FAFC;
+  height: var(--table-head-h);
   padding: 12px 16px;
   text-align: left;
   font-size: 11px;
@@ -850,8 +856,27 @@
 }
 
 .appts-table tbody td {
+  height: var(--table-row-h);
   padding: 14px 16px;
   vertical-align: middle;
+}
+
+.tab-animating.tab-slide-left {
+  animation: records-slide-left 250ms ease-in-out;
+}
+
+.tab-animating.tab-slide-right {
+  animation: records-slide-right 250ms ease-in-out;
+}
+
+@keyframes records-slide-left {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes records-slide-right {
+  from { opacity: 0; transform: translateX(-18px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 /* Appointment type icon */
@@ -971,6 +996,47 @@
   overflow: hidden;
 }
 
+.record-menu-up{
+    top:auto;
+    bottom:calc(100% + 6px);
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-lt);
+  margin-bottom: 10px;
+}
+
+
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  background: var(--white);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.page-btn:hover:not(:disabled),
+.page-btn.active {
+  background: #0EAFD7;
+  border-color: var(--blue);
+  color: var(--white);
+}
+
+.page-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .rec-menu-item {
   display: flex;
   align-items: center;
@@ -1009,26 +1075,6 @@
 }
 
 /* ── Pagination ───────────────────────────────── */
-.pagination-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 20px;
-  border-top: 1px solid var(--border-lt);
-  flex-wrap: wrap;
-}
-
-.page-info {
-  font-size: 12px;
-  color: var(--text-3);
-}
-
-.page-btns {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
 
 .page-btn {
   min-width: 32px;
@@ -1400,9 +1446,9 @@
     padding-bottom:10px;
 }
 
-.appts-list-card{
+/* .appts-list-card{
 
-    /* background:#fff; */
+    background:#fff;
 
     border:1px solid #E8EEF6;
 
@@ -1412,7 +1458,7 @@
 
     box-shadow:0 6px 18px rgba(16,24,40,.04);
 
-}
+} */
 
 .filter-btn{
 
@@ -1743,147 +1789,53 @@
   color: var(--text-2);
 }
 
-/* ═══════════ RESPONSIVE ════════════════════════ */
-@media (max-width:1400px){
-
-    .appointment-overview{
-
-        grid-template-columns:1fr;
-    }
-
-    .stat-grid{
-
-        display:grid;
-
-        grid-template-columns:repeat(2,1fr);
-
-        gap:16px;
-    }
-
-    .stat-card{
-
-        max-width:none;
-
-        min-width:0;
-
-        height:190px;
-    }
-}
-
-@media (max-width:768px){
-
-    .stat-grid{
-
-        grid-template-columns:1fr;
-    }
-
-    .next-card{
-
-        flex-direction:column;
-
-        text-align:left;
-    }
-
-    .next-image{
-
-        display:none;
-    }
-}
-
-
-@media (max-width: 900px) {
-  .stat-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .view-detail-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .stat-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .appts-date-wrap {
-    display: none;
-  }
-
-  .hero-appt-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .hero-appt-actions {
-    flex-direction: row;
-  }
-
-  .field-row-2 {
-    grid-template-columns: 1fr;
-  }
-
-  .type-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
+/* ==========================================
+   Large Desktop
+========================================== */
 
 @media (max-width:1600px){
 
     .appointment-overview{
-        grid-template-columns:500px 1fr;
+        grid-template-columns:460px 1fr;
+    }
+
+    .next-image img{
+        width:180px;
     }
 
 }
 
-/* ===========================
+
+/* ==========================================
    Desktop
-=========================== */
+========================================== */
 
 @media (max-width:1400px){
 
     .appointment-overview{
-        grid-template-columns:440px 1fr;
+        grid-template-columns:420px 1fr;
+        gap:18px;
+    }
+
+    .next-card{
+        padding:22px;
     }
 
     .next-image img{
-        width:170px;
+        width:165px;
     }
 
 }
 
-/* ===========================
+
+/* ==========================================
    Laptop
-=========================== */
+========================================== */
 
 @media (max-width:1200px){
 
     .appointment-overview{
-        grid-template-columns:380px 1fr;
-    }
-
-    .next-card{
-        padding:20px;
-    }
-
-    .next-title{
-        font-size:28px;
-    }
-
-    .next-image img{
-        width:145px;
-    }
-
-}
-
-/* ===========================
-   Small Laptop
-=========================== */
-
-@media (max-width:992px){
-
-    .appointment-overview{
-        grid-template-columns:320px 1fr;
+        grid-template-columns:360px 1fr;
     }
 
     .next-card{
@@ -1897,66 +1849,64 @@
     .next-provider,
     .next-meta,
     .next-reminder{
-
         font-size:14px;
     }
 
     .next-image img{
+        width:135px;
+    }
 
-        width:120px;
+    .appts-toolbar{
+        flex-direction:column;
+        align-items:stretch;
+        gap:16px;
+    }
+
+    .appts-controls-row{
+        justify-content:flex-end;
+        flex-wrap:wrap;
     }
 
 }
 
-@media (max-width:768px){
+
+/* ==========================================
+   Tablet
+========================================== */
+
+@media (max-width:992px){
 
     .appointment-overview{
-
         grid-template-columns:1fr;
     }
 
     .next-card{
-
-        max-width:none;
+        width:100%;
     }
 
     .stat-grid{
 
         display:grid;
 
-        grid-template-columns:repeat(2,1fr);
+        grid-template-columns:repeat(2,minmax(220px,1fr));
 
-        gap:16px;
+        gap:18px;
+
     }
 
-}
+    .stat-card{
 
-@media (max-width:576px){
+        height:220px;
 
-    .stat-grid{
-
-        grid-template-columns:1fr;
     }
 
-    .next-card{
-
-        flex-direction:column;
-    }
-
-    .next-image{
-
-        display:none;
-    }
-
-}
-
-@media(max-width:992px){
-
-    .appts-controls-right{
+    .appts-controls-row{
 
         width:100%;
 
         justify-content:space-between;
+
+        flex-wrap:wrap;
 
     }
 
@@ -1968,21 +1918,82 @@
 
     }
 
-}
+    .view-detail-grid{
 
-@media(max-width:1200px){
-
-    .appts-toolbar{
-
-        flex-direction:column;
-
-        align-items:stretch;
+        grid-template-columns:1fr;
 
     }
 
-    .appts-controls-row{
+}
 
-        justify-content:flex-end;
+
+/* ==========================================
+   Mobile
+========================================== */
+
+@media (max-width:768px){
+    .appts-table-card{
+        --table-head-h:42px;
+        --table-row-h:60px;
+    }
+
+    .next-card{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:20px;
+
+    }
+
+    .next-card-content{
+
+        max-width:100%;
+    }
+
+    .next-image{
+
+        display:none;
+
+    }
+
+    .stat-grid{
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+}
+
+
+/* ==========================================
+   Small Mobile
+========================================== */
+
+@media (max-width:576px){
+
+    .stat-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .appts-date-wrap{
+
+        display:none;
+
+    }
+
+    .field-row-2{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .type-grid{
+
+        grid-template-columns:repeat(2,1fr);
 
     }
 

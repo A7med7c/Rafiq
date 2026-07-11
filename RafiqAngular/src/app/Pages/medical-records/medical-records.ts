@@ -103,7 +103,7 @@ export interface Toast {
   type: 'success' | 'error';
 }
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 5;
 const FILTER_SORT_STORAGE_KEY = 'rafiq-medical-records-sort';
 
 const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
@@ -515,15 +515,25 @@ export class MedicalRecords implements OnInit, OnDestroy {
 
   goToPage(p: number | '...'): void {
     if (p === '...') return;
-    this.currentPage.set(Math.max(1, Math.min(p, this.totalPages())));
+    const nextPage = Math.max(1, Math.min(p, this.totalPages()));
+    if (nextPage === this.currentPage()) return;
+
+    this.animateTable(nextPage > this.currentPage() ? 'left' : 'right');
+    this.currentPage.set(nextPage);
   }
 
   prevPage(): void {
-    if (this.currentPage() > 1) this.currentPage.update(p => p - 1);
+    if (this.currentPage() > 1) {
+      this.animateTable('right');
+      this.currentPage.update(p => p - 1);
+    }
   }
 
   nextPage(): void {
-    if (this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1);
+    if (this.currentPage() < this.totalPages()) {
+      this.animateTable('left');
+      this.currentPage.update(p => p + 1);
+    }
   }
 
   setTab(tab: RecordTab): void {
@@ -531,9 +541,13 @@ export class MedicalRecords implements OnInit, OnDestroy {
     const order: RecordTab[] = ['all', 'lab', 'prescription', 'imaging', 'medicine', 'general'];
     const currentIndex = order.indexOf(this.activeTab());
     const nextIndex = order.indexOf(tab);
-    this.tabDirection.set(nextIndex >= currentIndex ? 'left' : 'right');
+    this.animateTable(nextIndex >= currentIndex ? 'left' : 'right');
     this.activeTab.set(tab);
     this.currentPage.set(1);
+  }
+
+  private animateTable(direction: 'left' | 'right'): void {
+    this.tabDirection.set(direction);
     this.tabAnimating.set(false);
     setTimeout(() => this.tabAnimating.set(true));
     setTimeout(() => this.tabAnimating.set(false), 260);
