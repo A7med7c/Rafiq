@@ -1,0 +1,394 @@
+<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
+
+  @if (mobileSidebarOpen()) {
+  <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
+  }
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
+    <div class="sb-top">
+      <div class="sb-logo">
+        <div class="sb-logo-icon">
+          <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
+        </div>
+        <div class="sb-logo-text">
+          <span class="sb-logo-title">Rafiq AI</span>
+          <span class="sb-logo-sub">Family Health Assistant</span>
+        </div>
+      </div>
+      <button type="button" class="sb-toggle"
+        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'" (click)="toggleSidebar()">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <button type="button" class="sb-mobile-close" aria-label="Close sidebar" (click)="toggleMobileSidebar()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <nav class="sb-nav">
+      <a class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact: true}">
+        <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
+        <span>Dashboard</span>
+      </a>
+      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
+        <span>Medical Records</span>
+      </a>
+      <a class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
+        <span>Appointments</span>
+      </a>
+      <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
+        <span>AI Assistant</span>
+      </a>
+      <a class="sb-link" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
+        <span>Medications &amp; Reminders</span>
+      </a>
+      <a class="sb-link" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
+        <span>Analytics</span>
+      </a>
+      <a class="sb-link sb-sos" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
+        <span>SOS &amp; Emergency</span>
+      </a>
+      <a class="sb-link" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
+        <span>Family Profiles</span>
+      </a>
+      <a class="sb-link" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+    <div class="sb-help">
+      <img src="images/rafiq-robot.svg" alt="" class="sb-help-robot">
+      <div class="sb-help-copy">
+        <p class="sb-help-title">Ask Rafiq AI</p>
+        <p class="sb-help-sub">Get health insights and answers to your questions</p>
+      </div>
+      <button type="button" class="sb-help-btn" (click)="startNewConversation()">
+        <i class="fa-regular fa-comment-dots"></i>
+        Ask Now
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <div class="dsh-main">
+
+    <!-- HEADER -->
+    <header class="dsh-hdr">
+      <button type="button" class="sb-mobile-toggle" aria-label="Open sidebar" (click)="toggleMobileSidebar()">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="hdr-search">
+        <i class="fa-solid fa-magnifying-glass hdr-search-ico"></i>
+        <input type="text" class="hdr-search-inp" placeholder="Search records, symptoms, medications..." readonly>
+      </div>
+      <div class="hdr-right">
+        <button type="button" class="hdr-ask-btn" (click)="startNewConversation()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          Ask AI
+        </button>
+        <button type="button" class="hdr-bell">
+          <i class="fa-regular fa-bell"></i>
+          @if (unreadNotifCount() > 0) {
+          <span class="hdr-badge">{{ unreadNotifCount() }}</span>
+          }
+        </button>
+        <div class="hdr-user" (click)="toggleDropdown()">
+          <img src="images/ahmed_avatar.png" alt="user" class="hdr-avatar">
+          <span class="hdr-username">{{ displayName }}</span>
+          <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
+
+          @if (dropdownOpen()) {
+          <div class="user-dropdown" (click)="$event.stopPropagation()">
+            <div class="user-dropdown-hdr">
+              <div class="user-dropdown-av">
+                <img src="images/ahmed_avatar.png" alt="avatar">
+              </div>
+              <div class="user-dropdown-info">
+                <span class="user-dropdown-name">{{ displayName }}</span>
+                <span class="user-dropdown-email">{{ userEmail }}</span>
+              </div>
+            </div>
+            <div class="user-dropdown-divider"></div>
+            <button type="button" class="user-dropdown-item">
+              <i class="fa-regular fa-user"></i>
+              My Profile
+            </button>
+            <button type="button" class="user-dropdown-item">
+              <i class="fa-solid fa-gear"></i>
+              Settings
+            </button>
+            <div class="user-dropdown-divider"></div>
+            <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              Logout
+            </button>
+          </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <!-- ═══════════ CHAT BODY (RTL) ═══════════ -->
+    <div class="chat-wrap" dir="rtl">
+
+      @if (profileError()) {
+      <div class="chat-empty-page">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>لم يتم العثور على ملف صحي. من فضلك أكمل إعداد ملفك الصحي أولاً.</p>
+      </div>
+      } @else {
+
+      <!-- LEFT: conversation list -->
+      <aside class="chat-list-panel">
+        <button type="button" class="chat-new-btn" (click)="startNewConversation()">
+          <i class="fa-solid fa-plus"></i>
+          محادثة جديدة
+        </button>
+
+        <div class="chat-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input
+            type="text"
+            placeholder="ابحث في المحادثات..."
+            [value]="searchTerm()"
+            (input)="searchTerm.set($any($event.target).value)"
+          >
+          <button type="button" class="chat-search-filter" aria-label="فلترة">
+            <i class="fa-solid fa-sliders"></i>
+          </button>
+        </div>
+
+        <p class="chat-list-label">المحادثات الحديثة</p>
+
+        @if (conversationsLoading()) {
+        <div class="chat-list-skel">
+          @for (s of [1,2,3,4]; track s) {
+          <div class="chat-skel-row">
+            <div class="chat-skel-ico"></div>
+            <div class="chat-skel-lines">
+              <div class="chat-skel-line chat-skel-70"></div>
+              <div class="chat-skel-line chat-skel-45"></div>
+            </div>
+          </div>
+          }
+        </div>
+        } @else if (filteredConversations().length === 0) {
+        <div class="chat-list-empty">
+          <i class="fa-regular fa-comments"></i>
+          <p>لا توجد محادثات بعد</p>
+        </div>
+        } @else {
+        <ul class="chat-conv-list">
+          @for (conv of visibleConversations(); track conv.id) {
+          <li
+            class="chat-conv-item"
+            [class.chat-conv-item--active]="conv.id === selectedConversationId()"
+            (click)="selectConversation(conv)"
+          >
+            <span class="chat-conv-ico"><i class="fa-regular fa-comment-dots"></i></span>
+            <div class="chat-conv-info">
+              <div class="chat-conv-top">
+                <span class="chat-conv-title">{{ conv.title }}</span>
+                <span class="chat-conv-time">{{ formatSidebarTime(conv) }}</span>
+              </div>
+            </div>
+          </li>
+          }
+        </ul>
+
+        @if (filteredConversations().length > 6) {
+        <button type="button" class="chat-show-more" (click)="toggleShowAllConversations()">
+          {{ showAllConversations() ? 'عرض أقل' : 'عرض المزيد' }}
+          <i class="fa-solid" [class.fa-chevron-down]="!showAllConversations()" [class.fa-chevron-up]="showAllConversations()"></i>
+        </button>
+        }
+        }
+      </aside>
+
+      <!-- RIGHT: active chat -->
+      <section class="chat-main-panel">
+
+        @if (!selectedConversationId()) {
+        <div class="chat-empty-state">
+          <div class="chat-empty-avatar"><i class="fa-solid fa-robot"></i></div>
+          <h2>اسأل رفيق أي أي</h2>
+          <p>اسأل عن التحاليل، الأدوية، الحساسية، أو المواعيد المسجلة عندك في رفيق.</p>
+        </div>
+        } @else {
+
+        <div class="chat-main-hdr">
+          <div class="chat-main-hdr-left">
+            <span class="chat-avatar-sm"><i class="fa-solid fa-robot"></i></span>
+            <div class="chat-main-hdr-title">
+              @if (!renaming()) {
+              <div class="chat-title-row">
+                <h2>{{ selectedConversation()?.title }}</h2>
+                <button type="button" class="chat-icon-btn" aria-label="إعادة تسمية" (click)="startRename()">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+              </div>
+              } @else {
+              <div class="chat-rename-row">
+                <input
+                  type="text"
+                  class="chat-rename-input"
+                  [value]="renameDraft()"
+                  (input)="renameDraft.set($any($event.target).value)"
+                  (keydown.enter)="confirmRename()"
+                  (keydown.escape)="cancelRename()"
+                  maxlength="255"
+                  autofocus
+                >
+                <button type="button" class="chat-icon-btn" aria-label="حفظ" (click)="confirmRename()">
+                  <i class="fa-solid fa-check"></i>
+                </button>
+                <button type="button" class="chat-icon-btn" aria-label="إلغاء" (click)="cancelRename()">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              }
+              <span class="chat-main-hdr-sub">آخر تحديث: {{ formatHeaderLastUpdated() }}</span>
+            </div>
+          </div>
+          <div class="chat-main-hdr-actions">
+            <button type="button" class="chat-icon-btn" aria-label="أرشفة المحادثة" (click)="archiveConversation()">
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+            <button type="button" class="chat-icon-btn" aria-label="مشاركة">
+              <i class="fa-solid fa-share-nodes"></i>
+            </button>
+            <button type="button" class="chat-icon-btn" aria-label="المزيد">
+              <i class="fa-solid fa-ellipsis"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="chat-messages">
+          @if (messagesLoading()) {
+          <div class="chat-loading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+          </div>
+          } @else {
+          @for (msg of messages(); track msg.id) {
+          @if (isUserMessage(msg)) {
+          <div class="chat-msg chat-msg--user">
+            <div class="chat-bubble chat-bubble--user">
+              @if (msg.imagePreviewUrl) {
+              <img [src]="msg.imagePreviewUrl" alt="" class="chat-bubble-img">
+              }
+              @if (msg.content) {
+              <p>{{ msg.content }}</p>
+              }
+            </div>
+            <span class="chat-msg-time">
+              {{ formatMessageTime(msg) }}
+              <i class="fa-solid fa-check-double chat-read-tick"></i>
+            </span>
+          </div>
+          } @else {
+          <div class="chat-msg chat-msg--ai">
+            <span class="chat-avatar-sm chat-avatar-sm--msg"><i class="fa-solid fa-robot"></i></span>
+            <div class="chat-bubble-col">
+              <div class="chat-bubble chat-bubble--ai">
+                <markdown [data]="msg.content"></markdown>
+              </div>
+              <span class="chat-msg-time chat-msg-time--ai">{{ formatMessageTime(msg) }}</span>
+            </div>
+          </div>
+          }
+          }
+
+          @if (sending()) {
+          <div class="chat-msg chat-msg--ai">
+            <span class="chat-avatar-sm chat-avatar-sm--msg"><i class="fa-solid fa-robot"></i></span>
+            <div class="chat-bubble-col">
+              <div class="chat-bubble chat-bubble--ai chat-typing">
+                <span class="chat-typing-dot"></span>
+                <span class="chat-typing-dot"></span>
+                <span class="chat-typing-dot"></span>
+              </div>
+              <span class="chat-typing-label">رفيق بيكتب...</span>
+            </div>
+          </div>
+          }
+          }
+          <div #messagesEnd></div>
+        </div>
+        }
+
+        @if (sendError()) {
+        <div class="chat-error-bar">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          {{ sendError() }}
+        </div>
+        }
+
+        @if (attachError()) {
+        <div class="chat-error-bar">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          {{ attachError() }}
+        </div>
+        }
+
+        @if (attachedImagePreviewUrl()) {
+        <div class="chat-attach-preview">
+          <img [src]="attachedImagePreviewUrl()" alt="" class="chat-attach-preview-img">
+          <button type="button" class="chat-attach-remove" aria-label="إزالة الصورة" (click)="removeAttachedImage()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        }
+
+        <div class="chat-composer">
+          <input
+            #fileInput
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            class="chat-file-input"
+            (change)="onFileSelected($event)"
+          >
+          <button
+            type="button"
+            class="chat-icon-btn chat-attach-btn"
+            aria-label="إرفاق صورة"
+            [disabled]="sending()"
+            (click)="triggerFileSelect()"
+          >
+            <i class="fa-solid fa-paperclip"></i>
+          </button>
+          <textarea
+            #messageInput
+            class="chat-composer-input"
+            rows="1"
+            placeholder="اكتب رسالتك هنا..."
+            [value]="messageText()"
+            (input)="onMessageInput($any($event.target).value)"
+            (keydown)="onComposerKeydown($event)"
+          ></textarea>
+          <button
+            type="button"
+            class="chat-send-btn"
+            [disabled]="(!messageText().trim() && !attachedImageBase64()) || sending()"
+            (click)="sendMessage()"
+          >
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+        <p class="chat-composer-hint">
+          <i class="fa-regular fa-image"></i>
+          يمكنك أيضاً رفع صورة تحليل أو تقرير (JPG, PNG, WebP)
+        </p>
+      </section>
+      }
+    </div>
+    <!-- /chat-wrap -->
+  </div><!-- /dsh-main -->
+</div><!-- /dsh -->

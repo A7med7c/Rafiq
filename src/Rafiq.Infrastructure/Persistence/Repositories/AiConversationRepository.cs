@@ -28,4 +28,18 @@ public sealed class AiConversationRepository(RafiqDbContext context) : IAiConver
     {
         await context.AiMessages.AddAsync(message, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<AiConversation>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await context.AiConversations
+            .AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .OrderByDescending(x => x.LastMessageAt ?? x.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public void Remove(AiConversation conversation)
+    {
+        context.AiConversations.Remove(conversation);
+    }
 }

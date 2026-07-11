@@ -5,6 +5,7 @@ import { Landing } from './Pages/landing/landing';
 import { Dashboard } from './Pages/dashboard/dashboard';
 import { MedicalRecords } from './Pages/medical-records/medical-records';
 import { Appointments } from './Pages/appointments/appointments';
+import { AiAssistant } from './Pages/ai-assistant/ai-assistant';
 import { OnboardingWelcome } from './Pages/onboarding/onboarding-welcome/onboarding-welcome';
 import { OnboardingStep1 } from './Pages/onboarding/onboarding-step1/onboarding-step1';
 import { OnboardingStep2 } from './Pages/onboarding/onboarding-step2/onboarding-step2';
@@ -19,6 +20,7 @@ export const routes: Routes = [
   { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
   { path: 'medical-records', component: MedicalRecords, canActivate: [authGuard] },
   { path: 'appointments', component: Appointments, canActivate: [authGuard] },
+  { path: 'ai-assistant', component: AiAssistant, canActivate: [authGuard] },
   { path: 'login', component: Login, canActivate: [guestGuard] },
   { path: 'register', component: Register, canActivate: [guestGuard] },
   { path: 'onboarding/welcome', component: OnboardingWelcome, canActivate: [authGuard] },
