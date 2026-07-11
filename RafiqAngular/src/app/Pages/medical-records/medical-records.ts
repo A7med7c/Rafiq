@@ -11,6 +11,8 @@ import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medi
 import { ScanMedicineBoxResponse, AddUserMedicinePayload } from '../../Modles/dashboard.models';
 import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
+import { HealthProfileService } from '../../Services/health-profile.service';
+import { switchMap } from 'rxjs';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -125,6 +127,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 export class MedicalRecords implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly recordsService = inject(MedicalRecordsService);
+  private readonly healthProfileSvc = inject(HealthProfileService);
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiUrl;
 
@@ -1002,7 +1005,11 @@ export class MedicalRecords implements OnInit, OnDestroy {
     const mode = this.scanMode();
     const request$ = mode === 'edit' && this.scanRecordId()
       ? this.http.put(`${this.base}/user-medicines/${this.scanRecordId()}`, payload)
-      : this.http.post(`${this.base}/user-medicines`, payload);
+      : this.healthProfileSvc.getMyProfile().pipe(
+          switchMap(res =>
+            this.http.post(`${this.base}/user-medicines?profileId=${res.data.id}`, payload)
+          )
+        );
 
     request$.subscribe({
       next: () => {

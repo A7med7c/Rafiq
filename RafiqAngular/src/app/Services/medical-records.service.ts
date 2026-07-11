@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, forkJoin, catchError, of } from 'rxjs';
+import { Observable, map, forkJoin, catchError, of, switchMap } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse } from '../Modles/api-response';
 import {
@@ -11,6 +11,7 @@ import {
   MedicalRecord,
   GeneralMedicalDocument,
 } from '../Modles/dashboard.models';
+import { HealthProfileService } from './health-profile.service';
 
 export interface UnifiedMedicalRecord {
   id: string;
@@ -27,7 +28,14 @@ export interface UnifiedMedicalRecord {
 @Injectable({ providedIn: 'root' })
 export class MedicalRecordsService {
   private readonly http = inject(HttpClient);
+  private readonly healthProfileSvc = inject(HealthProfileService);
   private readonly base = environment.apiUrl;
+
+  private getCurrentProfileId(): Observable<string> {
+    return this.healthProfileSvc.getMyProfile().pipe(
+      map(r => r.data.id),
+    );
+  }
 
   // Fetch all categories
   getAllData(): Observable<{
@@ -49,7 +57,10 @@ export class MedicalRecordsService {
       map(r => r.data ?? []),
       catchError(() => of([] as Prescription[]))
     );
-    const medicines$ = this.http.get<ApiResponse<UserMedicine[]>>(`${this.base}/user-medicines`).pipe(
+    const medicines$ = this.getCurrentProfileId().pipe(
+      switchMap(profileId =>
+        this.http.get<ApiResponse<UserMedicine[]>>(`${this.base}/user-medicines?profileId=${profileId}`)
+      ),
       map(r => r.data ?? []),
       catchError(() => of([] as UserMedicine[]))
     );
