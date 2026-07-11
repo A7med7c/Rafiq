@@ -1,0 +1,71 @@
+using Microsoft.EntityFrameworkCore;
+using Rafiq.Domain.Entities.Documents;
+using Rafiq.Domain.Enums;
+using Rafiq.Domain.Repositories;
+
+namespace Rafiq.Infrastructure.Persistence.Repositories;
+
+public sealed class MedicationReminderLogRepository(RafiqDbContext context) : IMedicationReminderLogRepository
+{
+    public async Task AddAsync(MedicationReminderLog log, CancellationToken cancellationToken = default)
+    {
+        await context.MedicationReminderLogs.AddAsync(log, cancellationToken);
+    }
+
+    public async Task<MedicationReminderLog?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public async Task<MedicationReminderLog?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .Include(x => x.MedicineReminder)
+                .ThenInclude(r => r.UserMedicine)
+            .Include(x => x.UserHealthProfile)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public async Task<bool> ExistsForDateAsync(Guid medicineReminderId, DateOnly date, CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .AnyAsync(x => x.MedicineReminderId == medicineReminderId
+                        && x.ScheduledDate == date
+                        && x.ReminderNumber == 1,
+                cancellationToken);
+    }
+
+    public async Task<List<MedicationReminderLog>> GetTodayByProfileIdAsync(
+        Guid userHealthProfileId,
+        DateOnly today,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .Include(x => x.MedicineReminder)
+                .ThenInclude(r => r.UserMedicine)
+            .Where(x => x.UserHealthProfileId == userHealthProfileId && x.ScheduledDate == today && !x.IsDeleted)
+            .OrderBy(x => x.ScheduledTime)
+            .ThenBy(x => x.ReminderNumber)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<MedicationReminderLog>> GetPendingSubsequentLogsAsync(
+        Guid medicineReminderId,
+        DateOnly date,
+        int afterReminderNumber,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .Where(x => x.MedicineReminderId == medicineReminderId
+                     && x.ScheduledDate == date
+                     && x.ReminderNumber > afterReminderNumber
+                     && x.Status == MedicationReminderStatus.Pending)
+            .ToListAsync(cancellationToken);
+    }
+
+    public void Update(MedicationReminderLog log)
+    {
+        context.MedicationReminderLogs.Update(log);
+    }
+}

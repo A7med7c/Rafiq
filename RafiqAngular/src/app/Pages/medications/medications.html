@@ -1,0 +1,431 @@
+<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
+
+  @if (mobileSidebarOpen()) {
+  <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
+  }
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
+    <div class="sb-top">
+      <div class="sb-logo">
+        <div class="sb-logo-icon">
+          <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
+        </div>
+        <div class="sb-logo-text">
+          <span class="sb-logo-title">Rafiq AI</span>
+          <span class="sb-logo-sub">Family Health Assistant</span>
+        </div>
+      </div>
+      <button type="button" class="sb-toggle"
+        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+        (click)="toggleSidebar()">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <button type="button" class="sb-mobile-close" aria-label="Close sidebar" (click)="toggleMobileSidebar()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <nav class="sb-nav">
+      <a class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact:true}">
+        <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
+        <span>Dashboard</span>
+      </a>
+      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
+        <span>Medical Records</span>
+      </a>
+      <a class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
+        <span>Appointments</span>
+      </a>
+      <a class="sb-link" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
+        <span>AI Assistant</span>
+      </a>
+      <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
+        <span>Medications &amp; Reminders</span>
+      </a>
+      <a class="sb-link" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
+        <span>Analytics</span>
+      </a>
+      <a class="sb-link sb-sos" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
+        <span>SOS &amp; Emergency</span>
+      </a>
+      <a class="sb-link" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
+        <span>Family Profiles</span>
+      </a>
+      <a class="sb-link" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+    <div class="sb-help">
+      <img src="images/rafiq-robot.svg" alt="" class="sb-help-robot">
+      <div class="sb-help-copy">
+        <p class="sb-help-title">Ask Rafiq AI</p>
+        <p class="sb-help-sub">Get health insights and answers to your questions</p>
+      </div>
+      <button type="button" class="sb-help-btn">
+        <i class="fa-regular fa-comment-dots"></i>
+        Ask Now
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <div class="dsh-main">
+
+    <!-- HEADER -->
+    <header class="dsh-hdr">
+      <button type="button" class="sb-mobile-toggle" aria-label="Open sidebar" (click)="toggleMobileSidebar()">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="hdr-search">
+        <i class="fa-solid fa-magnifying-glass hdr-search-ico"></i>
+        <input type="text" class="hdr-search-inp" placeholder="Search records, symptoms, medications..." readonly>
+      </div>
+      <div class="hdr-right">
+        <button type="button" class="hdr-ask-btn">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          Ask AI
+        </button>
+        <button type="button" class="hdr-bell">
+          <i class="fa-regular fa-bell"></i>
+          @if (unreadCount() > 0) {
+          <span class="hdr-badge">{{ unreadCount() }}</span>
+          }
+        </button>
+        <div class="hdr-user" (click)="toggleDropdown()">
+          <img src="images/ahmed_avatar.png" alt="user" class="hdr-avatar">
+          <span class="hdr-username">{{ displayName }}</span>
+          <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
+          @if (dropdownOpen()) {
+          <div class="user-dropdown" (click)="$event.stopPropagation()">
+            <div class="user-dropdown-hdr">
+              <div class="user-dropdown-av">
+                <img src="images/ahmed_avatar.png" alt="avatar">
+              </div>
+              <div class="user-dropdown-info">
+                <span class="user-dropdown-name">{{ displayName }}</span>
+                <span class="user-dropdown-email">{{ userEmail }}</span>
+              </div>
+            </div>
+            <div class="user-dropdown-divider"></div>
+            <button type="button" class="user-dropdown-item">
+              <i class="fa-regular fa-user"></i> My Profile
+            </button>
+            <button type="button" class="user-dropdown-item">
+              <i class="fa-solid fa-gear"></i> Settings
+            </button>
+            <div class="user-dropdown-divider"></div>
+            <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+            </button>
+          </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <!-- BODY -->
+    <div class="dsh-body">
+
+      <!-- ── Title Bar ── -->
+      <div class="med-title-bar">
+        <div>
+          <h1 class="med-title">Medications &amp; Reminders</h1>
+          <p class="med-subtitle">{{ todayLabel() }}</p>
+        </div>
+      </div>
+
+      <!-- ── Overview Stats ── -->
+      <div class="med-stat-grid">
+        <div class="med-stat-card med-stat-green">
+          <div class="med-stat-ico">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div class="med-stat-body">
+            <span class="med-stat-num">{{ confirmedCount() }}</span>
+            <span class="med-stat-lbl">Confirmed</span>
+          </div>
+        </div>
+        <div class="med-stat-card med-stat-blue">
+          <div class="med-stat-ico">
+            <i class="fa-regular fa-clock"></i>
+          </div>
+          <div class="med-stat-body">
+            <span class="med-stat-num">{{ pendingCount() }}</span>
+            <span class="med-stat-lbl">Pending</span>
+          </div>
+        </div>
+        <div class="med-stat-card med-stat-red">
+          <div class="med-stat-ico">
+            <i class="fa-solid fa-ban"></i>
+          </div>
+          <div class="med-stat-body">
+            <span class="med-stat-num">{{ cancelledCount() }}</span>
+            <span class="med-stat-lbl">Cancelled</span>
+          </div>
+        </div>
+        <div class="med-stat-card med-stat-orange">
+          <div class="med-stat-ico">
+            <i class="fa-solid fa-pills"></i>
+          </div>
+          <div class="med-stat-body">
+            <span class="med-stat-num">{{ medicines().length || uniqueScheduledCount() }}</span>
+            <span class="med-stat-lbl">Medications</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab Bar ── -->
+      <div class="med-tabs">
+        <button type="button" class="med-tab" [class.med-tab--active]="activeTab() === 'schedule'"
+          (click)="setTab('schedule')">
+          <i class="fa-regular fa-calendar-check"></i>
+          Today's Schedule
+          @if (todayLogs().length > 0) {
+          <span class="med-tab-badge">{{ todayLogs().length }}</span>
+          }
+        </button>
+        <button type="button" class="med-tab" [class.med-tab--active]="activeTab() === 'medications'"
+          (click)="setTab('medications')">
+          <i class="fa-solid fa-pills"></i>
+          My Medications
+          @if (medicines().length > 0) {
+          <span class="med-tab-badge">{{ medicines().length }}</span>
+          }
+        </button>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           TAB: TODAY'S SCHEDULE
+      ════════════════════════════════════════ -->
+      @if (activeTab() === 'schedule') {
+      <div class="card med-card">
+
+        @if (scheduleLoading()) {
+        <div class="skl-list">
+          @for (s of [1,2,3]; track s) {
+          <div class="skl-row" style="padding:16px 0;border-bottom:1px solid var(--border-lt)">
+            <div class="skl-sq" style="width:48px;height:48px;border-radius:var(--r-sm)"></div>
+            <div class="skl-lines" style="flex:1">
+              <div class="skl-line skl-70"></div>
+              <div class="skl-line skl-45"></div>
+            </div>
+            <div class="skl-pill" style="width:80px;height:24px"></div>
+          </div>
+          }
+        </div>
+
+        } @else if (scheduleError()) {
+        <div class="empty-state">
+          <i class="fa-solid fa-triangle-exclamation empty-icon" style="color:var(--red)"></i>
+          <p class="empty-title">Could not load schedule</p>
+          <p class="empty-sub">{{ scheduleError() }}</p>
+          <button type="button" class="med-retry-btn" (click)="loadSchedule()">Try Again</button>
+        </div>
+
+        } @else if (todayLogs().length === 0) {
+        <div class="empty-state">
+          <i class="fa-solid fa-bell-slash empty-icon"></i>
+          <p class="empty-title">No Reminders Today</p>
+          <p class="empty-sub">Your medication reminders for today will appear here once scheduled.</p>
+        </div>
+
+        } @else {
+        <ul class="sched-full-list">
+          @for (log of sortedLogs(); track log.id) {
+          <li class="sched-full-item" [class.sched-item--done]="log.status === 'Confirmed'"
+            [class.sched-item--cancelled]="log.status === 'Cancelled'">
+
+            <!-- Time column -->
+            <div class="sched-time-col">
+              <span class="sched-full-time">{{ formatTime(log.scheduledTime) }}</span>
+              <span class="sched-attempt">{{ reminderAttemptLabel(log.reminderNumber) }}</span>
+            </div>
+
+            <!-- Icon -->
+            <div class="sched-med-ico" [class]="'sched-med-ico--' + log.status.toLowerCase()">
+              <i class="fa-solid" [class]="'fa-' + statusIcon(log.status)"></i>
+            </div>
+
+            <!-- Info -->
+            <div class="sched-med-info">
+              <p class="sched-med-name">{{ log.medicineName }}</p>
+              <p class="sched-med-dose">{{ log.dosage }}</p>
+              @if (log.confirmedAt) {
+              <p class="sched-confirmed-at">
+                <i class="fa-solid fa-circle-check" style="color:var(--green);font-size:11px"></i>
+                Confirmed at {{ formatDate(log.confirmedAt) }}
+              </p>
+              }
+            </div>
+
+            <!-- Status + Action -->
+            <div class="sched-med-right">
+              <span [class]="statusClass(log.status)">{{ statusLabel(log.status) }}</span>
+              @if (canConfirm(log.status)) {
+              <button type="button" class="med-confirm-btn" (click)="openConfirm(log)"
+                aria-label="Confirm I took this medication">
+                <i class="fa-solid fa-check"></i>
+                I Took It
+              </button>
+              }
+            </div>
+
+          </li>
+          }
+        </ul>
+        }
+      </div>
+      }
+
+      <!-- ════════════════════════════════════════
+           TAB: MY MEDICATIONS
+      ════════════════════════════════════════ -->
+      @if (activeTab() === 'medications') {
+      <div class="card med-card">
+
+        @if (medsLoading()) {
+        <div class="skl-list">
+          @for (s of [1,2,3,4]; track s) {
+          <div class="skl-row" style="padding:16px 0;border-bottom:1px solid var(--border-lt)">
+            <div class="skl-sq" style="width:44px;height:44px;border-radius:var(--r-sm)"></div>
+            <div class="skl-lines" style="flex:1">
+              <div class="skl-line skl-70"></div>
+              <div class="skl-line skl-45"></div>
+            </div>
+            <div class="skl-pill" style="width:70px;height:22px"></div>
+          </div>
+          }
+        </div>
+
+        } @else if (medsError()) {
+        <div class="empty-state">
+          <i class="fa-solid fa-triangle-exclamation empty-icon" style="color:var(--red)"></i>
+          <p class="empty-title">Could not load medications</p>
+          <p class="empty-sub">{{ medsError() }}</p>
+          <button type="button" class="med-retry-btn" (click)="loadMedicines()">Try Again</button>
+        </div>
+
+        } @else if (medicines().length === 0) {
+        <div class="empty-state">
+          <i class="fa-solid fa-pills empty-icon"></i>
+          <p class="empty-title">No Medications Found</p>
+          <p class="empty-sub">Your medications will appear here once added.</p>
+        </div>
+
+        } @else {
+        <ul class="med-full-list">
+          @for (med of medicines(); track med.id; let i = $index) {
+          <li class="med-full-item">
+            <div class="med-full-ico" [class]="medIconClass(i)">
+              <i class="fa-solid fa-capsules"></i>
+            </div>
+            <div class="med-full-info">
+              <div class="med-full-top">
+                <p class="med-full-name">{{ med.medicineName }}</p>
+                <span [class]="sourceClass(med.source)">{{ sourceLabel(med.source) }}</span>
+              </div>
+              <p class="med-full-dose">{{ med.dosage }}</p>
+              <div class="med-full-meta">
+                <span class="med-meta-item">
+                  <i class="fa-regular fa-clock"></i> {{ med.frequency }}
+                </span>
+                <span class="med-meta-item">
+                  <i class="fa-solid fa-calendar-days"></i> {{ med.duration }}
+                </span>
+                @if (med.notes) {
+                <span class="med-meta-item med-meta-notes">
+                  <i class="fa-regular fa-note-sticky"></i> {{ med.notes }}
+                </span>
+                }
+              </div>
+            </div>
+          </li>
+          }
+        </ul>
+        }
+
+      </div>
+      }
+
+    </div><!-- /dsh-body -->
+  </div><!-- /dsh-main -->
+</div><!-- /dsh -->
+
+<!-- ═══════════ CONFIRM MEDICATION MODAL ═══════════ -->
+@if (showConfirmModal()) {
+<div class="modal-overlay" (click)="closeConfirm()">
+  <div class="modal-card confirm-modal" (click)="$event.stopPropagation()" role="dialog"
+    aria-modal="true" aria-labelledby="confirm-modal-title">
+
+    <div class="modal-hdr">
+      <div class="confirm-modal-ico">
+        <i class="fa-solid fa-pills"></i>
+      </div>
+      <div>
+        <h2 class="modal-title" id="confirm-modal-title">Confirm Medication</h2>
+        <p class="modal-subtitle">Please confirm you've taken this medication</p>
+      </div>
+    </div>
+
+    @if (confirmingLog()) {
+    <div class="confirm-med-detail">
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-lbl">Medication</span>
+        <span class="confirm-detail-val">{{ confirmingLog()!.medicineName }}</span>
+      </div>
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-lbl">Dosage</span>
+        <span class="confirm-detail-val">{{ confirmingLog()!.dosage }}</span>
+      </div>
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-lbl">Scheduled</span>
+        <span class="confirm-detail-val">{{ formatTime(confirmingLog()!.scheduledTime) }}</span>
+      </div>
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-lbl">Reminder</span>
+        <span class="confirm-detail-val">{{ reminderAttemptLabel(confirmingLog()!.reminderNumber) }}</span>
+      </div>
+    </div>
+    }
+
+    <div class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeConfirm()"
+        [disabled]="confirming()">
+        Cancel
+      </button>
+      <button type="button" class="modal-btn modal-btn-primary med-confirm-primary"
+        (click)="submitConfirm()" [disabled]="confirming()" aria-label="Confirm I took this medication">
+        @if (confirming()) {
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Confirming…
+        } @else {
+        <i class="fa-solid fa-check"></i> I Took My Medication
+        }
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ═══════════ TOASTS ═══════════ -->
+<div class="toast-container" aria-live="polite">
+  @for (t of toasts(); track t.id) {
+  <div class="toast" [class.toast-success]="t.type === 'success'" [class.toast-error]="t.type === 'error'">
+    <i class="fa-solid" [class.fa-circle-check]="t.type === 'success'"
+       [class.fa-circle-xmark]="t.type === 'error'"></i>
+    <span>{{ t.message }}</span>
+    <button type="button" class="toast-close" (click)="dismissToast(t.id)" aria-label="Dismiss">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  }
+</div>
