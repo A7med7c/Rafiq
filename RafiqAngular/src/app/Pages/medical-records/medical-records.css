@@ -493,7 +493,6 @@
 
 .records-table {
   width: 100%;
-  min-height: calc(var(--table-head-h) + (var(--table-row-h) * 5));
   border-collapse: collapse;
   text-align: left;
 }

@@ -5,6 +5,10 @@ obj/
 *.user
 *.suo
 
+# Local app configuration
+appsettings.json
+**/appsettings.json
+
 # Spec Kit artifacts and local agent skills
 specs/
 .specify/
@@ -17,3 +21,4 @@ src/Rafiq.API/wwwroot/uploads/
 RafiqAngular/node_modules/
 ProjectDescription.md
 PLan.md
+src/Rafiq.API/appsettings.json

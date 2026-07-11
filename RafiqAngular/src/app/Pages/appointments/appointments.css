@@ -812,7 +812,7 @@
 
 .appts-table {
   width: 100%;
-  min-height: calc(var(--table-head-h) + (var(--table-row-h) * 5));
+  height: auto;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -843,8 +843,13 @@
 }
 
 .appts-table tbody tr {
+  height: var(--table-row-h);
   border-bottom: 1px solid var(--border-lt);
   transition: background 0.12s;
+}
+
+.appts-table tbody {
+  vertical-align: top;
 }
 
 .appts-table tbody tr:last-child {
