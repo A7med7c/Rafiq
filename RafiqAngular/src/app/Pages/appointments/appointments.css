@@ -1597,6 +1597,26 @@
   font-weight: 700;
 }
 
+.custom-reminder-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  max-width: 260px;
+}
+
+.custom-reminder-input {
+  width: 110px;
+  flex: 0 0 110px;
+}
+
+.custom-reminder-unit {
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* ── View detail layout ── */
 .view-detail-header {
   display: flex;

@@ -92,6 +92,8 @@ export class Appointments implements OnInit, OnDestroy {
   readonly fDate        = signal('');
   readonly fTime        = signal('');
   readonly fReminder    = signal<number | null>(30);
+  readonly fCustomReminder = signal<number | null>(null);
+  readonly customReminderSelected = signal(false);
   readonly fNotes       = signal('');
   readonly formErrors   = signal<Record<string, string>>({});
   readonly submitting   = signal(false);
@@ -141,6 +143,11 @@ export class Appointments implements OnInit, OnDestroy {
     { value: 120,  label: '2 hours before' },
     { value: 1440, label: '1 day before' },
   ];
+
+  readonly canContinueType = computed(() =>
+    !!this.fType() &&
+    (this.fType() !== AppointmentType.Other || !!this.fCustomType().trim())
+  );
 
   // ── Computed ──────────────────────────────────────────────────────────────
   readonly upcomingCount   = computed(() =>
@@ -373,7 +380,7 @@ nextPage() {
     this.fProvider.set(a.provider);
     this.fDate.set(dt.toISOString().slice(0, 10));
     this.fTime.set(dt.toTimeString().slice(0, 5));
-    this.fReminder.set(a.reminderOffsetMinutes ?? null);
+    this.applyReminderValue(a.reminderOffsetMinutes ?? null);
     this.fNotes.set(a.notes ?? '');
     this.formErrors.set({});
     this.formStep.set(2);
@@ -390,9 +397,18 @@ nextPage() {
     this.formErrors.update(e => ({ ...e, appointmentType: '' }));
   }
 
+  onCustomTypeChange(value: string): void {
+    this.fCustomType.set(value);
+    this.formErrors.update(e => ({ ...e, customType: '' }));
+  }
+
   goStep2(): void {
     if (!this.fType()) {
       this.formErrors.update(e => ({ ...e, appointmentType: 'Please select an appointment type.' }));
+      return;
+    }
+    if (this.fType() === AppointmentType.Other && !this.fCustomType().trim()) {
+      this.formErrors.update(e => ({ ...e, customType: 'Please describe the appointment type.' }));
       return;
     }
     this.formErrors.set({});
@@ -416,6 +432,66 @@ nextPage() {
     return d.toTimeString().slice(0, 5);
   }
 
+  setPresetReminder(value: number | null): void {
+    this.customReminderSelected.set(false);
+    this.fReminder.set(value);
+    this.fCustomReminder.set(null);
+    this.formErrors.update(e => ({ ...e, reminder: '' }));
+  }
+
+  selectCustomReminder(): void {
+    this.customReminderSelected.set(true);
+    const current = this.fCustomReminder() ?? this.fReminder() ?? 30;
+    this.fCustomReminder.set(current);
+    this.fReminder.set(current);
+    this.formErrors.update(e => ({ ...e, reminder: '' }));
+  }
+
+  setCustomReminder(value: number | string | null): void {
+    const parsed = value === null || value === '' ? null : Number(value);
+    this.customReminderSelected.set(true);
+    this.fCustomReminder.set(Number.isFinite(parsed) ? parsed : null);
+    this.fReminder.set(Number.isFinite(parsed) ? parsed : null);
+    this.formErrors.update(e => ({ ...e, reminder: '' }));
+  }
+
+  private applyReminderValue(value: number | null): void {
+    const presetValues = this.REMINDER_OPTIONS.map(opt => opt.value);
+    const isPreset = value === null || presetValues.includes(value);
+    this.customReminderSelected.set(!isPreset);
+    this.fReminder.set(value);
+    this.fCustomReminder.set(isPreset ? null : value);
+  }
+
+  private getReminderOffset(): number | null {
+    return this.customReminderSelected()
+      ? this.fCustomReminder()
+      : this.fReminder();
+  }
+
+  private hasUpcomingAppointmentAtSelectedTime(): boolean {
+    const selectedKey = this.appointmentMinuteKey(`${this.fDate()}T${this.fTime()}:00`);
+    const editingId = this.editingId();
+
+    return this.appointments().some(appointment =>
+      appointment.id !== editingId &&
+      appointment.status === AppointmentStatus.Upcoming &&
+      this.appointmentMinuteKey(appointment.appointmentDateTime) === selectedKey
+    );
+  }
+
+  private appointmentMinuteKey(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value.slice(0, 16);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
   private validate(): boolean {
     const errs: Record<string, string> = {};
     if (!this.fType()) errs['appointmentType'] = 'Please select an appointment type.';
@@ -429,6 +505,17 @@ nextPage() {
     if (this.fDate() && this.fTime()) {
       const sel = new Date(`${this.fDate()}T${this.fTime()}`);
       if (sel <= new Date()) errs['date'] = 'Appointment must be scheduled in the future.';
+      if (this.hasUpcomingAppointmentAtSelectedTime()) {
+        errs['time'] = 'You already have an upcoming appointment at this time.';
+      }
+    }
+    if (this.customReminderSelected()) {
+      const customReminder = this.fCustomReminder();
+      if (customReminder === null || customReminder < 1) {
+        errs['reminder'] = 'Custom reminder must be at least 1 minute.';
+      } else if (customReminder > 10080) {
+        errs['reminder'] = 'Custom reminder cannot be more than 7 days.';
+      }
     }
     this.formErrors.set(errs);
     return Object.keys(errs).length === 0;
@@ -443,7 +530,7 @@ nextPage() {
       title:                  this.fTitle().trim(),
       provider:               this.fProvider().trim(),
       appointmentDateTime: `${this.fDate()}T${this.fTime()}:00`,
-      reminderOffsetMinutes:  this.fReminder() ?? undefined,
+      reminderOffsetMinutes:  this.getReminderOffset() ?? undefined,
       notes:                  this.fNotes().trim() || undefined,
     };
 
@@ -475,7 +562,7 @@ nextPage() {
   private resetForm(): void {
     this.fType.set(null); this.fCustomType.set(''); this.fTitle.set('');
     this.fProvider.set(''); this.fDate.set(''); this.fTime.set('');
-    this.fReminder.set(30); this.fNotes.set('');
+    this.applyReminderValue(30); this.fNotes.set('');
     this.formErrors.set({});
   }
 

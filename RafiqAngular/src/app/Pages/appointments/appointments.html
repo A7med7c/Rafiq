@@ -691,7 +691,8 @@
       <div class="field-group" style="margin-top:16px">
         <label class="field-lbl">Custom Appointment Type *</label>
         <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['customType']"
-          placeholder="e.g. Nutrition Consultation" [ngModel]="fCustomType()" (ngModelChange)="fCustomType.set($event)">
+          placeholder="e.g. Nutrition Consultation" [ngModel]="fCustomType()"
+          (ngModelChange)="onCustomTypeChange($event)">
         @if (formErrors()['customType']) {
         <p class="field-err">{{ formErrors()['customType'] }}</p>
         }
@@ -700,7 +701,7 @@
     </div>
     <div class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">Cancel</button>
-      <button type="button" class="modal-btn modal-btn-primary" (click)="goStep2()">
+      <button type="button" class="modal-btn modal-btn-primary" [disabled]="!canContinueType()" (click)="goStep2()">
         Next <i class="fa-solid fa-arrow-right"></i>
       </button>
     </div>
@@ -709,6 +710,18 @@
     <!-- ── STEP 2: Details ── -->
     @if (formStep() === 2) {
     <div class="modal-body">
+
+      @if (fType() === AppointmentType.Other) {
+      <div class="field-group">
+        <label class="field-lbl">Custom Appointment Type *</label>
+        <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['customType']"
+          placeholder="e.g. Nutrition Consultation" [ngModel]="fCustomType()"
+          (ngModelChange)="onCustomTypeChange($event)">
+        @if (formErrors()['customType']) {
+        <p class="field-err">{{ formErrors()['customType'] }}</p>
+        }
+      </div>
+      }
 
       <div class="field-group">
         <label class="field-lbl">Appointment Title *</label>
@@ -750,17 +763,34 @@
       <div class="field-group">
         <label class="field-lbl">Reminder</label>
         <div class="reminder-opts">
-          <button type="button" class="reminder-chip" [class.reminder-chip--active]="fReminder() === null"
-            (click)="fReminder.set(null)">
+          <button type="button" class="reminder-chip"
+            [class.reminder-chip--active]="!customReminderSelected() && fReminder() === null"
+            (click)="setPresetReminder(null)">
             None
           </button>
           @for (opt of REMINDER_OPTIONS; track opt.value) {
-          <button type="button" class="reminder-chip" [class.reminder-chip--active]="fReminder() === opt.value"
-            (click)="fReminder.set(opt.value)">
+          <button type="button" class="reminder-chip"
+            [class.reminder-chip--active]="!customReminderSelected() && fReminder() === opt.value"
+            (click)="setPresetReminder(opt.value)">
             {{ opt.label }}
           </button>
           }
+          <button type="button" class="reminder-chip" [class.reminder-chip--active]="customReminderSelected()"
+            (click)="selectCustomReminder()">
+            Custom
+          </button>
         </div>
+        @if (customReminderSelected()) {
+        <div class="custom-reminder-row">
+          <input type="number" class="field-inp custom-reminder-input"
+            [class.field-inp--err]="formErrors()['reminder']" min="1" max="10080" step="1"
+            [ngModel]="fCustomReminder()" (ngModelChange)="setCustomReminder($event)">
+          <span class="custom-reminder-unit">minutes before</span>
+        </div>
+        }
+        @if (formErrors()['reminder']) {
+        <p class="field-err">{{ formErrors()['reminder'] }}</p>
+        }
       </div>
 
       <div class="field-group">
@@ -778,7 +808,9 @@
       } @else {
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">Cancel</button>
       }
-      <button type="button" class="modal-btn modal-btn-primary" [disabled]="submitting()" (click)="submitForm()">
+      <button type="button" class="modal-btn modal-btn-primary"
+        [disabled]="submitting() || (fType() === AppointmentType.Other && !fCustomType().trim())"
+        (click)="submitForm()">
         @if (submitting()) {
         <span class="btn-spinner"></span> Saving...
         } @else if (editingId()) {
