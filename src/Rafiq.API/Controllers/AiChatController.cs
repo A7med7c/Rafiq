@@ -1,9 +1,12 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Rafiq.Application.Features.AiChat.Commands.ArchiveConversation;
 using Rafiq.Application.Features.AiChat.Commands.CreateConversation;
+using Rafiq.Application.Features.AiChat.Commands.RenameConversation;
 using Rafiq.Application.Features.AiChat.Commands.SendMessage;
 using Rafiq.Application.Features.AiChat.Queries.GetConversationHistory;
+using Rafiq.Application.Features.AiChat.Queries.GetConversations;
 
 namespace Rafiq.API.Controllers;
 
@@ -34,12 +37,47 @@ public class AiChatController : ControllerBase
     }
 
     /// <summary>
+    /// Lists the current user's conversations, ordered by most recent activity,
+    /// for rendering the conversation-history sidebar. Does not include message content.
+    /// </summary>
+    [HttpGet("conversations")]
+    public async Task<IActionResult> GetConversations(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetConversationsQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Retrieves the full message history for a conversation.
     /// </summary>
     [HttpGet("conversations/{conversationId:guid}")]
     public async Task<IActionResult> GetHistory(Guid conversationId, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetConversationHistoryQuery(conversationId), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Renames a conversation.
+    /// </summary>
+    [HttpPatch("conversations/{conversationId:guid}")]
+    public async Task<IActionResult> RenameConversation(
+        Guid conversationId,
+        [FromBody] RenameConversationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new RenameConversationCommand(conversationId, request.Title), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Archives (soft-deletes) a conversation. It stops appearing in the conversation
+    /// list/history and can no longer receive new messages.
+    /// </summary>
+    [HttpDelete("conversations/{conversationId:guid}")]
+    public async Task<IActionResult> ArchiveConversation(Guid conversationId, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new ArchiveConversationCommand(conversationId), cancellationToken);
         return Ok(result);
     }
 
@@ -63,6 +101,11 @@ public class AiChatController : ControllerBase
 public sealed class CreateConversationRequest
 {
     public Guid UserHealthProfileId { get; set; }
+    public string Title { get; set; } = string.Empty;
+}
+
+public sealed class RenameConversationRequest
+{
     public string Title { get; set; } = string.Empty;
 }
 

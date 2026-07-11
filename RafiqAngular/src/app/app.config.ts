@@ -1,6 +1,7 @@
 import { ApplicationConfig, APP_INITIALIZER, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { provideMarkdown } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './Interceptors/auth.interceptor';
@@ -15,6 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
+    provideMarkdown(),
     {
       provide: APP_INITIALIZER,
       useFactory: initializeAuth,
