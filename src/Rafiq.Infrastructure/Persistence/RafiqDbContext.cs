@@ -38,6 +38,7 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<ChronicDisease> ChronicDiseases => Set<ChronicDisease>();
     public DbSet<Otp> Otps => Set<Otp>();
+    public DbSet<EmergencyContact> EmergencyContacts => Set<EmergencyContact>();
 
     #endregion
 

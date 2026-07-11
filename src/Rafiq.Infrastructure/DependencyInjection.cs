@@ -78,6 +78,7 @@ public static class DependencyInjection
         services.AddScoped<IUserMedicineRepository, UserMedicineRepository>();
         services.AddScoped<IMedicineReminderRepository, MedicineReminderRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        services.AddScoped<IEmergencyContactRepository, EmergencyContactRepository>();
         services.AddScoped<IAiConversationRepository, AiConversationRepository>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
