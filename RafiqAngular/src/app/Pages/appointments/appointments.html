@@ -38,19 +38,11 @@
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
         <span>Appointments</span>
       </a>
-<<<<<<< HEAD
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
-        <span>AI Assistant</span>
-      </a>
-      <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
-=======
       <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
         <span>AI Assistant</span>
       </a>
       <a class="sb-link" href="#">
->>>>>>> origin/main
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>Medications &amp; Reminders</span>
       </a>
@@ -102,7 +94,8 @@
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           Ask AI
         </button>
-        <button type="button" class="hdr-bell">
+        <button type="button" class="hdr-bell" (click)="notifSvc.toggleNotificationCenter()"
+          [class.hdr-bell--active]="notifSvc.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
           @if (unreadCount() > 0) {
           <span class="hdr-badge">{{ unreadCount() }}</span>
@@ -231,8 +224,6 @@
         </div>
 
         }
-<<<<<<< HEAD
-=======
         @else {
         <div class="next-card next-card-empty">
 
@@ -281,7 +272,6 @@
         </div>
 
         }
->>>>>>> origin/main
 
         <!-- ================= STATS ================= -->
 
@@ -290,11 +280,7 @@
           <div class="stat-card stat-card-blue" (click)="setTab('upcoming')">
 
             <div class="stat-ico-wrap stat-ico-blue">
-<<<<<<< HEAD
-              <i class="fa-regular fa-calendar-check"></i>
-=======
               <i class="fa-solid fa-clipboard-check" style="color: rgb(116, 192, 252);"></i>
->>>>>>> origin/main
             </div>
 
             <div class="stat-body">
@@ -319,11 +305,7 @@
           <div class="stat-card stat-card-green" (click)="setTab('completed')">
 
             <div class="stat-ico-wrap stat-ico-green">
-<<<<<<< HEAD
-              <i class="fa-solid fa-circle-check"></i>
-=======
               <i class="fa-solid fa-circle-check" style="color: rgb(68, 239, 122);"></i>
->>>>>>> origin/main
             </div>
 
             <div class="stat-body">
@@ -348,19 +330,11 @@
           <div class="stat-card stat-card-red" (click)="setTab('cancelled')">
 
             <div class="stat-ico-wrap stat-ico-red">
-<<<<<<< HEAD
-              <i class="fa-solid fa-circle-xmark"></i>
-            </div>
-
-            <div class="stat-body">
-              <span class="stat-lbl">Cancelled</span>
-=======
               <i class="fa-solid fa-circle-xmark" style="color: rgb(226, 26, 32);"></i>
             </div>
 
             <div class="stat-body">
               <span class="stat-lbl">Cancelled / Missed</span>
->>>>>>> origin/main
 
               <span class="stat-num">{{ cancelledCount() }}</span>
               <span class="stat-sub">appointments</span>
@@ -381,11 +355,7 @@
           <div class="stat-card stat-card-gray" (click)="setTab('all')">
 
             <div class="stat-ico-wrap stat-ico-gray">
-<<<<<<< HEAD
-              <i class="fa-regular fa-calendar"></i>
-=======
               <i class="fa-regular fa-calendar-days" style="color: rgb(116, 192, 252);"></i>
->>>>>>> origin/main
             </div>
 
             <div class="stat-body">
@@ -412,105 +382,6 @@
 
       <!-- ── Tab Bar ── -->
 
-<<<<<<< HEAD
-     <div class="appts-toolbar">
-
-  <!-- Tabs -->
-  <div class="appts-tab-bar">
-
-    <button
-      type="button"
-      class="tab-btn"
-      [class.tab-btn--active]="activeTab() === 'all'"
-      (click)="setTab('all')">
-      All
-      <!-- <span class="tab-count">{{ totalCount() }}</span> -->
-    </button>
-
-    <button
-      type="button"
-      class="tab-btn"
-      [class.tab-btn--active]="activeTab() === 'upcoming'"
-      (click)="setTab('upcoming')">
-      Upcoming
-      <!-- <span class="tab-count tab-count-blue">{{ upcomingCount() }}</span> -->
-    </button>
-
-    <button
-      type="button"
-      class="tab-btn"
-      [class.tab-btn--active]="activeTab() === 'completed'"
-      (click)="setTab('completed')">
-      Completed
-      <!-- <span class="tab-count tab-count-green">{{ completedCount() }}</span> -->
-    </button>
-
-    <button
-      type="button"
-      class="tab-btn"
-      [class.tab-btn--active]="activeTab() === 'cancelled'"
-      (click)="setTab('cancelled')">
-      Cancelled
-      <!-- <span class="tab-count tab-count-red">{{ cancelledCount() }}</span> -->
-    </button>
-
-  </div>
-
-  <!-- Search + Filters -->
-  <div class="appts-controls-row">
-
-    <div class="appts-search-wrap">
-
-      <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
-
-      <input
-        type="text"
-        class="appts-search-inp"
-        placeholder="Search appointments..."
-        [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event); onFilterChange()">
-
-    </div>
-
-    <div class="appts-date-wrap">
-
-      <i class="fa-regular fa-calendar appts-date-ico"></i>
-
-      <input
-        type="date"
-        class="appts-date-inp"
-        [ngModel]="dateFrom()"
-        (ngModelChange)="dateFrom.set($event); onFilterChange()">
-
-      <span class="appts-date-sep">—</span>
-
-      <input
-        type="date"
-        class="appts-date-inp"
-        [ngModel]="dateTo()"
-        (ngModelChange)="dateTo.set($event); onFilterChange()">
-
-    </div>
-
-    @if (searchQuery() || dateFrom() || dateTo()) {
-
-      <button
-        type="button"
-        class="filter-btn"
-        (click)="clearFilters()">
-
-        <i class="fa-solid fa-sliders"></i>
-
-        Clear
-
-      </button>
-
-    }
-
-  </div>
-
-</div>
-=======
       <div class="appts-toolbar">
 
         <!-- Tabs -->
@@ -582,16 +453,11 @@
         </div>
 
       </div>
->>>>>>> origin/main
 
 
 
       <!-- ── Table ── -->
-<<<<<<< HEAD
-      <div class="card appts-table-card">
-=======
       <div class="card appts-table-card" [class.tab-animating]="tabAnimating()" [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
->>>>>>> origin/main
 
         @if (loading()) {
         <div class="skl-list">
@@ -631,19 +497,11 @@
             Click "Add Appointment" to schedule your first one.
             }
           </p>
-<<<<<<< HEAD
-          @if (!searchQuery() && !dateFrom() && !dateTo()) {
-          <button type="button" class="add-appt-btn" style="margin-top:14px" (click)="openAdd()">
-            <i class="fa-solid fa-plus"></i> Add Appointment
-          </button>
-          }
-=======
           <!-- @if (!searchQuery() && !dateFrom() && !dateTo()) {
           <button type="button" class="add-appt-btn" style="margin-top:14px" (click)="openAdd()">
             <i class="fa-solid fa-plus"></i> Add Appointment
           </button>
           } -->
->>>>>>> origin/main
         </div>
         }
 
@@ -661,11 +519,7 @@
               </tr>
             </thead>
             <tbody>
-<<<<<<< HEAD
-              @for (a of paginated(); track a.id) {
-=======
               @for (a of paginated(); track a.id; let i = $index) {
->>>>>>> origin/main
               <tr>
                 <!-- Appointment -->
                 <td>
@@ -675,11 +529,7 @@
                     </div>
                     <div>
                       <p class="rec-name" style="margin:0 0 2px">{{ a.title }}</p>
-<<<<<<< HEAD
-                      <span class="type-pill">{{ typeLabel(a) }}</span>
-=======
                       <span class="type-pill">{{ a.appointmentType }}</span>
->>>>>>> origin/main
                     </div>
                   </div>
                 </td>
@@ -714,11 +564,7 @@
                       <i class="fa-solid fa-ellipsis-vertical"></i>
                     </button>
                     @if (openMenuId() === a.id) {
-<<<<<<< HEAD
-                    <div class="record-menu">
-=======
                     <div class="record-menu"  [class.record-menu-up]="isLastRow(i)">
->>>>>>> origin/main
                       @if (a.status === AppointmentStatus.Upcoming) {
                       <button type="button" class="rec-menu-item" (click)="markComplete(a.id); openMenuId.set(null)">
                         <i class="fa-solid fa-check"></i> Mark Complete
@@ -743,33 +589,6 @@
 
         <!-- Pagination -->
         @if (totalPages() > 1) {
-<<<<<<< HEAD
-        <div class="pagination-row">
-          <span class="page-info">
-            Showing {{ (currentPage() - 1) * pageSize + 1 }}–{{ pageEnd() }} of {{ filtered().length }}
-          </span>
-          <div class="page-btns">
-            <button type="button" class="page-btn" [disabled]="currentPage() === 1"
-              (click)="setPage(currentPage() - 1)">
-              <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            @for (p of pageNumbers(); track p) {
-            @if (p === '...') {
-            <span class="page-ellipsis">…</span>
-            } @else {
-            <button type="button" class="page-btn" [class.page-btn--active]="p === currentPage()" (click)="setPage(p)">
-              {{ p }}
-            </button>
-            }
-            }
-            <button type="button" class="page-btn" [disabled]="currentPage() === totalPages()"
-              (click)="setPage(currentPage() + 1)">
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-          </div>
-        </div>
-        }
-=======
 <div class="pagination-bar">
 
   <button
@@ -809,7 +628,6 @@
 
 </div>
 }
->>>>>>> origin/main
         }
 
       </div><!-- /table card -->
@@ -874,12 +692,8 @@
       <div class="field-group" style="margin-top:16px">
         <label class="field-lbl">Custom Appointment Type *</label>
         <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['customType']"
-<<<<<<< HEAD
-          placeholder="e.g. Nutrition Consultation" [ngModel]="fCustomType()" (ngModelChange)="fCustomType.set($event)">
-=======
           placeholder="e.g. Nutrition Consultation" [ngModel]="fCustomType()"
           (ngModelChange)="onCustomTypeChange($event)">
->>>>>>> origin/main
         @if (formErrors()['customType']) {
         <p class="field-err">{{ formErrors()['customType'] }}</p>
         }
@@ -888,11 +702,7 @@
     </div>
     <div class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">Cancel</button>
-<<<<<<< HEAD
-      <button type="button" class="modal-btn modal-btn-primary" (click)="goStep2()">
-=======
       <button type="button" class="modal-btn modal-btn-primary" [disabled]="!canContinueType()" (click)="goStep2()">
->>>>>>> origin/main
         Next <i class="fa-solid fa-arrow-right"></i>
       </button>
     </div>
@@ -902,8 +712,6 @@
     @if (formStep() === 2) {
     <div class="modal-body">
 
-<<<<<<< HEAD
-=======
       @if (fType() === AppointmentType.Other) {
       <div class="field-group">
         <label class="field-lbl">Custom Appointment Type *</label>
@@ -916,7 +724,6 @@
       </div>
       }
 
->>>>>>> origin/main
       <div class="field-group">
         <label class="field-lbl">Appointment Title *</label>
         <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['title']"
@@ -957,19 +764,6 @@
       <div class="field-group">
         <label class="field-lbl">Reminder</label>
         <div class="reminder-opts">
-<<<<<<< HEAD
-          <button type="button" class="reminder-chip" [class.reminder-chip--active]="fReminder() === null"
-            (click)="fReminder.set(null)">
-            None
-          </button>
-          @for (opt of REMINDER_OPTIONS; track opt.value) {
-          <button type="button" class="reminder-chip" [class.reminder-chip--active]="fReminder() === opt.value"
-            (click)="fReminder.set(opt.value)">
-            {{ opt.label }}
-          </button>
-          }
-        </div>
-=======
           <button type="button" class="reminder-chip"
             [class.reminder-chip--active]="!customReminderSelected() && fReminder() === null"
             (click)="setPresetReminder(null)">
@@ -998,7 +792,6 @@
         @if (formErrors()['reminder']) {
         <p class="field-err">{{ formErrors()['reminder'] }}</p>
         }
->>>>>>> origin/main
       </div>
 
       <div class="field-group">
@@ -1016,13 +809,9 @@
       } @else {
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">Cancel</button>
       }
-<<<<<<< HEAD
-      <button type="button" class="modal-btn modal-btn-primary" [disabled]="submitting()" (click)="submitForm()">
-=======
       <button type="button" class="modal-btn modal-btn-primary"
         [disabled]="submitting() || (fType() === AppointmentType.Other && !fCustomType().trim())"
         (click)="submitForm()">
->>>>>>> origin/main
         @if (submitting()) {
         <span class="btn-spinner"></span> Saving...
         } @else if (editingId()) {
@@ -1171,8 +960,4 @@
     </button>
   </div>
   }
-<<<<<<< HEAD
 </div>
-=======
-</div>
->>>>>>> origin/main

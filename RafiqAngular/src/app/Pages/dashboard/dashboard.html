@@ -104,7 +104,8 @@
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           Ask AI
         </button>
-        <button type="button" class="hdr-bell">
+        <button type="button" class="hdr-bell" (click)="notifService.toggleNotificationCenter()"
+          [class.hdr-bell--active]="notifService.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
           @if (unreadNotifCount() > 0) {
           <span class="hdr-badge">{{ unreadNotifCount() }}</span>
@@ -503,10 +504,7 @@
         <div class="card">
           <div class="bot-card-hdr">
             <span class="bot-card-title">Medications &amp; Reminders</span>
-            <<<<<<< HEAD <a routerLink="/medications" class="link-sm">View all</a>
-              =======
-              <a href="#" class="link-sm">View all</a>
-              >>>>>>> origin/main
+            <a routerLink="/medications" class="link-sm">View all</a>
           </div>
 
           @if (remindersLoading()) {

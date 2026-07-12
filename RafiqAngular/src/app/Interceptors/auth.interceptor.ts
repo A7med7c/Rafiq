@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { inject, isDevMode } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../Services/auth-service';
@@ -48,6 +48,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           Authorization: `Bearer ${token}`
         }
       });
+
+      if (isDevMode()) {
+        console.debug(`[Auth] Authorization attached → ${req.method} ${req.url}`);
+      }
+    } else if (isDevMode()) {
+      console.warn(`[Auth] No access token in storage → ${req.method} ${req.url}`);
     }
   }
 
@@ -59,6 +65,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         !req.url.includes('/auth/refresh-token') &&
         tokenStorage.getRefreshToken()
       ) {
+        if (isDevMode()) {
+          console.debug(`[Auth] 401 on ${req.url} — refreshing (shared single-flight).`);
+        }
+
+        // AuthService de-duplicates this: a burst of 401s produces exactly ONE
+        // refresh call. Two calls would trip server-side reuse detection and kill
+        // the whole token family.
         return authService.refreshToken().pipe(
           switchMap(() => {
             const newToken = tokenStorage.getAccessToken();

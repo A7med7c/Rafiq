@@ -4,14 +4,16 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../Services/auth-service';
 import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medical-records.service';
-import { ScanMedicineBoxResponse, AddUserMedicinePayload } from '../../Modles/dashboard.models';
+import { ScanMedicineBoxResponse, AddUserMedicinePayload, CreateReminderPayload } from '../../Modles/dashboard.models';
+import { MedicationRemindersService } from '../../Services/medication-reminders.service';
 import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
+import { NotificationService } from '../../Services/notification.service';
 import { switchMap } from 'rxjs';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
@@ -93,6 +95,17 @@ interface ScanForm {
   imagePath: string;
 }
 
+type RepeatOption = 'Once' | 'Daily' | 'Weekly' | 'Monthly';
+
+interface ReminderForm {
+  reminderTimes: string[];
+  repeatType: RepeatOption;
+  startDate: string;
+  endDate: string;
+  notificationsEnabled: boolean;
+  notes: string;
+}
+
 interface GeneralUploadForm {
   description: string;
   file: File | null;
@@ -125,11 +138,14 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
   styleUrl: './medical-records.css',
 })
 export class MedicalRecords implements OnInit, OnDestroy {
-  private readonly authService = inject(AuthService);
-  private readonly recordsService = inject(MedicalRecordsService);
+  private readonly authService      = inject(AuthService);
+  private readonly recordsService   = inject(MedicalRecordsService);
   private readonly healthProfileSvc = inject(HealthProfileService);
-  private readonly http = inject(HttpClient);
-  private readonly base = environment.apiUrl;
+  protected readonly notificationSvc  = inject(NotificationService);
+  private readonly reminderSvc      = inject(MedicationRemindersService);
+  private readonly router           = inject(Router);
+  private readonly http             = inject(HttpClient);
+  private readonly base             = environment.apiUrl;
 
   @ViewChild('labInput') labInput!: ElementRef<HTMLInputElement>;
   @ViewChild('prescriptionInput') prescriptionInput!: ElementRef<HTMLInputElement>;
@@ -152,6 +168,7 @@ export class MedicalRecords implements OnInit, OnDestroy {
   readonly deleting = signal(false);
   readonly tabDirection = signal<'left' | 'right'>('left');
   readonly tabAnimating = signal(false);
+  readonly unreadCount = this.notificationSvc.unreadCount;
 
   readonly lightboxUrl = signal<string | null>(null);
   readonly detailImageFailed = signal(false);
@@ -201,12 +218,49 @@ export class MedicalRecords implements OnInit, OnDestroy {
   readonly generalUploadFormOpen = signal(false);
   generalUploadForm: GeneralUploadForm = this.emptyGeneralUploadForm();
 
-  readonly scanLoading = signal(false);
-  readonly scanResult = signal<ScanMedicineBoxResponse | null>(null);
-  readonly scanSaving = signal(false);
-  readonly scanMode = signal<'create' | 'edit'>('create');
-  readonly scanRecordId = signal<string | null>(null);
+  readonly scanLoading           = signal(false);
+  readonly scanResult            = signal<ScanMedicineBoxResponse | null>(null);
+  readonly scanSaving            = signal(false);
+  readonly scanMode              = signal<'create' | 'edit'>('create');
+  readonly scanRecordId          = signal<string | null>(null);
+  readonly scanSavedMedicineName = signal<string | null>(null);
+  readonly scanSavedMedicineId   = signal<string | null>(null);
   scanForm: ScanForm = this.emptyScanForm();
+
+  readonly showReminderModal  = signal(false);
+  readonly reminderMedicineId   = signal<string | null>(null);
+  readonly reminderMedicineName = signal<string | null>(null);
+  readonly reminderSaving       = signal(false);
+  reminderForm: ReminderForm = this.emptyReminderForm();
+
+  readonly repeatOptions: Array<{ value: RepeatOption; label: string }> = [
+    { value: 'Once',    label: 'Once'    },
+    { value: 'Daily',   label: 'Daily'   },
+    { value: 'Weekly',  label: 'Weekly'  },
+    { value: 'Monthly', label: 'Monthly' },
+  ];
+
+  get reminderFormErrors(): string[] {
+    const errors: string[] = [];
+    const filledTimes = this.reminderForm.reminderTimes.filter(t => t.trim());
+    if (filledTimes.length === 0) {
+      errors.push('At least one reminder time is required.');
+    } else if (new Set(filledTimes).size < filledTimes.length) {
+      errors.push('Reminder times cannot be duplicated.');
+    }
+    if (!this.reminderForm.startDate) errors.push('Start date is required.');
+    if (this.reminderForm.repeatType !== 'Once') {
+      if (!this.reminderForm.endDate) errors.push('End date is required.');
+      else if (this.reminderForm.startDate && this.reminderForm.endDate < this.reminderForm.startDate) {
+        errors.push('End date cannot be before start date.');
+      }
+    }
+    return errors;
+  }
+
+  get reminderFormValid(): boolean {
+    return this.reminderFormErrors.length === 0;
+  }
 
   readonly currentPage = signal(1);
   readonly pageSize = PAGE_SIZE;
@@ -306,6 +360,8 @@ export class MedicalRecords implements OnInit, OnDestroy {
   onEsc(): void {
     if (this.lightboxUrl()) { this.lightboxUrl.set(null); return; }
     if (this.deleteTarget() && !this.deleting()) { this.closeDeleteModal(); return; }
+    if (this.showReminderModal()) { this.closeReminderModal(); return; }
+    if (this.scanSavedMedicineName()) { this.dismissScanSuccess(); return; }
     if (this.scanResult()) { this.cancelScanReview(); return; }
     if (this.reviewForm() && !this.reviewSaving()) { this.cancelReview(); return; }
     if (this.generalUploadFormOpen() && !this.uploadLoading()) { this.cancelGeneralUpload(); return; }
@@ -982,11 +1038,67 @@ export class MedicalRecords implements OnInit, OnDestroy {
     });
   }
 
-  cancelScanReview(): void {
+  private resetScanState(): void {
     this.scanResult.set(null);
     this.scanMode.set('create');
     this.scanRecordId.set(null);
     this.scanForm = this.emptyScanForm();
+    this.scanSavedMedicineName.set(null);
+    this.scanSavedMedicineId.set(null);
+  }
+
+  cancelScanReview(): void {
+    this.resetScanState();
+  }
+
+  dismissScanSuccess(): void {
+    this.resetScanState();
+    this.router.navigate(['/medications'], { queryParams: { tab: 'medications' } });
+  }
+
+  openReminderFromScan(): void {
+    const id   = this.scanSavedMedicineId();
+    const name = this.scanSavedMedicineName();
+    this.resetScanState();
+    if (!id) return;
+    this.reminderMedicineId.set(id);
+    this.reminderMedicineName.set(name);
+    this.reminderForm = this.emptyReminderForm();
+    this.showReminderModal.set(true);
+  }
+
+  closeReminderModal(): void {
+    this.showReminderModal.set(false);
+    this.reminderMedicineId.set(null);
+    this.reminderMedicineName.set(null);
+    this.reminderForm = this.emptyReminderForm();
+  }
+
+  saveReminder(): void {
+    if (!this.reminderFormValid) return;
+    const medicineId = this.reminderMedicineId();
+    if (!medicineId) return;
+    this.reminderSaving.set(true);
+    const startDate = this.reminderForm.startDate;
+    const payload: CreateReminderPayload = {
+      userMedicineId: medicineId,
+      times:          this.reminderForm.reminderTimes.filter(t => t.trim()),
+      startDate,
+      endDate:    this.reminderForm.repeatType === 'Once' ? startDate : this.reminderForm.endDate,
+      repeatType: this.reminderForm.repeatType,
+    };
+    this.reminderSvc.createReminder(medicineId, payload).subscribe({
+      next: () => {
+        this.reminderSaving.set(false);
+        this.closeReminderModal();
+        this.showToast('Reminder set successfully.', 'success');
+        this.router.navigate(['/medications'], { queryParams: { tab: 'medications' } });
+      },
+      error: err => {
+        this.reminderSaving.set(false);
+        this.showToast(err?.error?.message || 'Failed to set reminder. Please try again.', 'error');
+      },
+    });
   }
 
   saveScanResult(): void {
@@ -1012,14 +1124,19 @@ export class MedicalRecords implements OnInit, OnDestroy {
         );
 
     request$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.scanSaving.set(false);
-        this.scanResult.set(null);
-        this.scanMode.set('create');
-        this.scanRecordId.set(null);
-        this.scanForm = this.emptyScanForm();
-        this.showToast(mode === 'edit' ? 'Medicine record updated successfully.' : 'Medicine saved to your records.', 'success');
-        this.loadData();
+        if (mode === 'edit') {
+          this.resetScanState();
+          this.showToast('Medicine record updated successfully.', 'success');
+          this.loadData();
+        } else {
+          const savedId   = res?.data?.id ?? null;
+          const savedName = this.scanForm.medicineName.trim();
+          this.scanSavedMedicineId.set(savedId);
+          this.scanSavedMedicineName.set(savedName);
+          this.loadData();
+        }
       },
       error: err => {
         this.scanSaving.set(false);
@@ -1039,6 +1156,38 @@ export class MedicalRecords implements OnInit, OnDestroy {
       notes: '',
       imagePath: '',
     };
+  }
+
+  private emptyReminderForm(): ReminderForm {
+    return {
+      reminderTimes: [''],
+      repeatType: 'Daily',
+      startDate: '',
+      endDate: '',
+      notificationsEnabled: true,
+      notes: '',
+    };
+  }
+
+  addReminderTime(): void {
+    this.reminderForm.reminderTimes = [...this.reminderForm.reminderTimes, ''];
+  }
+
+  removeReminderTime(index: number): void {
+    this.reminderForm.reminderTimes = this.reminderForm.reminderTimes.filter((_, i) => i !== index);
+  }
+
+  setRepeatType(type: RepeatOption): void {
+    this.reminderForm.repeatType = type;
+    if (type === 'Once' && this.reminderForm.startDate) {
+      this.reminderForm.endDate = this.reminderForm.startDate;
+    }
+  }
+
+  onReminderStartDateChange(): void {
+    if (this.reminderForm.repeatType === 'Once') {
+      this.reminderForm.endDate = this.reminderForm.startDate;
+    }
   }
 
   private emptyGeneralUploadForm(): GeneralUploadForm {

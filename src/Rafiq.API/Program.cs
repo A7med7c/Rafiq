@@ -5,12 +5,10 @@ using Rafiq.API.Middleware;
 using Rafiq.Application;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Infrastructure;
-<<<<<<< Updated upstream
-=======
 using Rafiq.Infrastructure.Services.auth;
 using Rafiq.Infrastructure.Services.MedicationReminders;
->>>>>>> Stashed changes
 using System.Text.Json.Serialization;
+using Rafiq.Infrastructure.Services.Notifications;
 
 namespace Rafiq.API;
 
@@ -29,7 +27,7 @@ public class Program
         builder.Services.AddSwaggerDocumentation();
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
-        builder.Services.AddJwtAuthentication(builder.Configuration);
+        builder.Services.AddJwtAuthentication(builder.Configuration, builder.Environment);
         builder.Services.AddAuthorization();
         builder.Services.AddHealthChecks();
         builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
@@ -43,7 +41,8 @@ public class Program
                 policy
                     .WithOrigins("http://localhost:4200")
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
             });
         });
 
@@ -67,15 +66,22 @@ public class Program
         app.UseAuthorization();
         app.UseStaticFiles();
         app.MapControllers();
+        app.MapHub<NotificationHub>("/hubs/notifications");
         app.MapHealthChecks("/health");
 
         app.UseHangfireDashboard("/hangfire");
 
+        // Sweep runs at 00:05 in the reminder timezone, so "today" means the same thing
+        // here as it does inside the scheduling service.
+        var reminderTimeZone = app.Services
+            .GetRequiredService<IDateTimeProvider>()
+            .ReminderTimeZone;
+
         RecurringJob.AddOrUpdate<DailyMedicationSchedulerJob>(
             "daily-medication-scheduler",
             job => job.ScheduleAsync(),
-            "5 0 * * *",   // 00:05 UTC every day
-            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            "5 0 * * *",
+            new RecurringJobOptions { TimeZone = reminderTimeZone });
 
         app.Run();
     }

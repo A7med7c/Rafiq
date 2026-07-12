@@ -48,6 +48,16 @@ public class MedicationReminderLog : BaseEntity
         MarkUpdated();
     }
 
+    /// <summary>
+    /// Records a dose whose time had already passed when it was materialised, so no
+    /// reminder was ever sent. Not a completed state — it can still be confirmed late.
+    /// </summary>
+    public void MarkAsOverdue()
+    {
+        Status = MedicationReminderStatus.Overdue;
+        MarkUpdated();
+    }
+
     public void MarkAsConfirmed()
     {
         Status = MedicationReminderStatus.Confirmed;

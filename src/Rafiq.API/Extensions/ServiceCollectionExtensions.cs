@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Rafiq.Application.Common.Models;
+using System.Security.Claims;
 using System.Text;
 
 namespace Rafiq.API.Extensions;
@@ -37,8 +39,12 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddJwtAuthentication(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment? hostEnvironment = null)
     {
+        var isDevelopment = hostEnvironment?.IsDevelopment() ?? false;
         var secret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? configuration["Jwt:SecretKey"];
         if (string.IsNullOrWhiteSpace(secret))
         {
@@ -76,8 +82,71 @@ public static class ServiceCollectionExtensions
 
                 options.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = context =>
+                    {
+                        // WebSockets cannot carry an Authorization header, so SignalR sends the
+                        // token as ?access_token=. Only honour it on the hub path.
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
+                    {
+                        if (isDevelopment)
+                        {
+                            var logger = context.HttpContext.RequestServices
+                                .GetRequiredService<ILoggerFactory>()
+                                .CreateLogger("Rafiq.Auth");
+
+                            var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                                         ?? context.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+                            logger.LogInformation(
+                                "JWT validated for userId={UserId} on {Method} {Path}",
+                                userId, context.Request.Method, context.Request.Path);
+                        }
+
+                        return Task.CompletedTask;
+                    },
+                    OnAuthenticationFailed = context =>
+                    {
+                        if (isDevelopment)
+                        {
+                            var logger = context.HttpContext.RequestServices
+                                .GetRequiredService<ILoggerFactory>()
+                                .CreateLogger("Rafiq.Auth");
+
+                            logger.LogWarning(
+                                "JWT authentication FAILED on {Method} {Path}: {Reason}",
+                                context.Request.Method,
+                                context.Request.Path,
+                                context.Exception.Message);
+                        }
+
+                        return Task.CompletedTask;
+                    },
                     OnChallenge = async context =>
                     {
+                        if (isDevelopment)
+                        {
+                            var logger = context.HttpContext.RequestServices
+                                .GetRequiredService<ILoggerFactory>()
+                                .CreateLogger("Rafiq.Auth");
+
+                            logger.LogWarning(
+                                "401 challenge on {Method} {Path}. HasAuthorizationHeader={HasHeader}, HasAccessTokenQuery={HasQuery}, Error={Error} {Description}",
+                                context.Request.Method,
+                                context.Request.Path,
+                                context.Request.Headers.ContainsKey("Authorization"),
+                                context.Request.Query.ContainsKey("access_token"),
+                                context.Error,
+                                context.ErrorDescription);
+                        }
+
                         context.HandleResponse();
                         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                         context.Response.ContentType = "application/json";

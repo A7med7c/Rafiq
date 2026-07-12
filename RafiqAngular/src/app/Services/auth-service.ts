@@ -1,7 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, isDevMode } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, finalize, map, of, tap, throwError } from 'rxjs';
+import {
+  BehaviorSubject, Observable, Subject, catchError, finalize, firstValueFrom,
+  map, of, shareReplay, tap, throwError
+} from 'rxjs';
 import { Account } from '../Modles/account';
 import { ApiResponse, ApiResponseBase } from '../Modles/api-response';
 import { AuthResponse } from '../Modles/auth-response';
@@ -26,6 +29,19 @@ export class AuthService {
 
   readonly currentUser$ = this.currentUserSubject.asObservable();
   private sessionInitialized = false;
+
+  /**
+   * The single in-flight refresh, shared by every caller.
+   *
+   * The server rotates refresh tokens and treats a second use of the same token as
+   * theft: it revokes the whole family, including the token the winning refresh just
+   * issued. So concurrent refreshes must never happen — all callers wait on this one.
+   */
+  private refreshInFlight$: Observable<AuthResponse> | null = null;
+
+  /** Emits after the access token has been replaced, so dependants (SignalR) can reconnect. */
+  private readonly tokensRefreshedSubject = new Subject<void>();
+  readonly tokensRefreshed$ = this.tokensRefreshedSubject.asObservable();
 
   get isLoggedIn(): boolean {
     return this.tokenStorage.isLoggedIn();
@@ -100,19 +116,91 @@ export class AuthService {
     );
   }
 
+  /**
+   * Refreshes the access token. Concurrent callers share one HTTP request — firing two
+   * would trip the server's refresh-token reuse detection and kill the whole session.
+   */
   refreshToken(): Observable<AuthResponse> {
+    if (this.refreshInFlight$) {
+      this.log('Refresh already in flight — joining it.');
+      return this.refreshInFlight$;
+    }
+
     const refreshToken = this.tokenStorage.getRefreshToken();
 
     if (!refreshToken) {
       return throwError(() => new Error('No refresh token available.'));
     }
 
-    return this.http.post<AuthResponse>(
+    this.log('Refreshing access token.');
+
+    this.refreshInFlight$ = this.http.post<AuthResponse>(
       `${environment.apiUrl}/auth/refresh-token`,
       { refreshToken }
     ).pipe(
-      tap((response) => this.handleAuthSuccess(response, false))
+      tap((response) => {
+        this.handleAuthSuccess(response, false);
+        this.log('Access token refreshed.');
+        this.tokensRefreshedSubject.next();
+      }),
+      // Release the slot once this attempt settles, win or lose, so a later 401 can retry.
+      finalize(() => { this.refreshInFlight$ = null; }),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
+
+    return this.refreshInFlight$;
+  }
+
+  /** True when the stored access token is absent or its `exp` has passed. */
+  isAccessTokenExpired(skewSeconds = 30): boolean {
+    const token = this.tokenStorage.getAccessToken();
+    if (!token) return true;
+
+    const exp = this.readExpiry(token);
+    if (exp === null) return false; // Unreadable: let the server be the judge.
+
+    return Date.now() >= (exp * 1000) - skewSeconds * 1000;
+  }
+
+  /**
+   * Returns an access token that is valid right now, refreshing first if the stored one
+   * has expired. SignalR uses this so it never negotiates with a dead token.
+   */
+  async getValidAccessToken(): Promise<string> {
+    if (!this.tokenStorage.getRefreshToken() && !this.tokenStorage.getAccessToken()) {
+      return '';
+    }
+
+    if (this.isAccessTokenExpired()) {
+      try {
+        await firstValueFrom(this.refreshToken());
+      } catch {
+        return '';
+      }
+    }
+
+    return this.tokenStorage.getAccessToken() ?? '';
+  }
+
+  /** Reads the `exp` claim without pulling in a JWT library. */
+  private readExpiry(token: string): number | null {
+    try {
+      const payload = token.split('.')[1];
+      if (!payload) return null;
+
+      const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      const exp = JSON.parse(json)?.exp;
+
+      return typeof exp === 'number' ? exp : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private log(message: string): void {
+    if (isDevMode()) {
+      console.debug(`[Auth] ${message}`);
+    }
   }
 
   getMe(): Observable<Account> {

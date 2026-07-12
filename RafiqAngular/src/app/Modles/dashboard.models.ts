@@ -142,3 +142,21 @@ export interface AddUserMedicinePayload {
   imagePath?: string;
   source: number; // 1=Manual, 2=Prescription, 3=MedicineBox
 }
+
+// ===== Create Reminder Payload =====
+export interface CreateReminderPayload {
+  userMedicineId: string;
+  times: string[];        // ["HH:mm", ...]
+  startDate: string;      // "YYYY-MM-DD"
+  endDate: string;        // "YYYY-MM-DD"
+  repeatType: string;     // "Once" | "Daily" | "Weekly" | "Monthly"
+}
+
+// ===== Update Reminder Payload =====
+export interface UpdateReminderPayload {
+  id: string;
+  reminderTime: string;   // "HH:mm"
+  startDate: string;      // "YYYY-MM-DD"
+  endDate: string;        // "YYYY-MM-DD"
+  repeatType: string;     // "Once" | "Daily" | "Weekly" | "Monthly"
+}

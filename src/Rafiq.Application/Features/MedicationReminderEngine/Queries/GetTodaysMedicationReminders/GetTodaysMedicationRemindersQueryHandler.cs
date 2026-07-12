@@ -8,7 +8,8 @@ namespace Rafiq.Application.Features.MedicationReminderEngine.Queries.GetTodaysM
 
 public sealed class GetTodaysMedicationRemindersQueryHandler(
     IMedicationReminderLogRepository logRepository,
-    IHealthProfileAuthorizationService authorizationService)
+    IHealthProfileAuthorizationService authorizationService,
+    IDateTimeProvider dateTimeProvider)
     : IRequestHandler<GetTodaysMedicationRemindersQuery, ApiResponse<List<MedicationReminderLogDto>>>
 {
     public async Task<ApiResponse<List<MedicationReminderLogDto>>> Handle(
@@ -17,7 +18,8 @@ public sealed class GetTodaysMedicationRemindersQueryHandler(
     {
         await authorizationService.EnsureCanReadAsync(request.ProfileId, cancellationToken);
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        // Must match the scheduler's notion of "today", otherwise the two disagree under a non-UTC zone.
+        var today = dateTimeProvider.Today;
         var logs = await logRepository.GetTodayByProfileIdAsync(request.ProfileId, today, cancellationToken);
 
         var dtos = logs.Select(l => l.ToDto()).ToList();

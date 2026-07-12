@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed, HostListener, ElementRef } from '@angular/core';
+import { Component, effect, inject, OnInit, signal, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
@@ -20,9 +20,17 @@ export class Dashboard implements OnInit {
   private readonly authService      = inject(AuthService);
   private readonly dashboardService = inject(DashboardService);
   private readonly apptService      = inject(AppointmentsService);
-  private readonly notifService     = inject(NotificationService);
+  protected readonly notifService     = inject(NotificationService);
   private readonly router           = inject(Router);
   private readonly elRef            = inject(ElementRef);
+
+  private readonly dashboardRefreshEffect = effect(() => {
+    if (this.notifService.reminderDataRefreshTick() === 0) {
+      return;
+    }
+
+    this.loadReminderData();
+  });
 
   readonly records          = signal<MedicalRecord[]>([]);
   readonly reminders        = signal<ReminderDisplayItem[]>([]);
@@ -66,23 +74,7 @@ export class Dashboard implements OnInit {
 
   ngOnInit(): void {
     this.applyResponsiveSidebar();
-
-    this.dashboardService.getMedicalRecords().subscribe({
-      next:  d => { this.records.set(d); this.recordsLoading.set(false); },
-      error: () => { this.records.set([]); this.recordsLoading.set(false); },
-    });
-
-    this.dashboardService.getMedicinesWithReminders().subscribe({
-      next:  d => { this.reminders.set(d); this.remindersLoading.set(false); },
-      error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
-    });
-
-    this.apptService.getAll().pipe(
-      catchError(() => of([] as AppointmentDto[]))
-    ).subscribe(data => {
-      this.allAppointments.set(data);
-      this.apptLoading.set(false);
-    });
+    this.loadDashboardData();
   }
 
   @HostListener('window:resize')
@@ -95,6 +87,38 @@ export class Dashboard implements OnInit {
     if (window.innerWidth > 768) {
       this.mobileSidebarOpen.set(false);
     }
+  }
+
+  private loadDashboardData(): void {
+    this.recordsLoading.set(true);
+    this.remindersLoading.set(true);
+    this.apptLoading.set(true);
+
+    this.dashboardService.getMedicalRecords().subscribe({
+      next: d => { this.records.set(d); this.recordsLoading.set(false); },
+      error: () => { this.records.set([]); this.recordsLoading.set(false); },
+    });
+
+    this.dashboardService.getMedicinesWithReminders().subscribe({
+      next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
+      error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
+    });
+
+    this.apptService.getAll().pipe(
+      catchError(() => of([] as AppointmentDto[]))
+    ).subscribe(data => {
+      this.allAppointments.set(data);
+      this.apptLoading.set(false);
+    });
+  }
+
+  private loadReminderData(): void {
+    this.remindersLoading.set(true);
+
+    this.dashboardService.getMedicinesWithReminders().subscribe({
+      next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
+      error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
+    });
   }
 
   toggleSidebar(): void {

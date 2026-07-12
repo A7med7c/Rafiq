@@ -104,9 +104,12 @@
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           Ask AI
         </button>
-        <button type="button" class="hdr-bell">
+        <button type="button" class="hdr-bell" (click)="notificationSvc.toggleNotificationCenter()"
+          [class.hdr-bell--active]="notificationSvc.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
-          <span class="hdr-badge">3</span>
+          @if (unreadCount() > 0) {
+          <span class="hdr-badge">{{ unreadCount() }}</span>
+          }
         </button>
         <div class="hdr-user" (click)="toggleDropdown()">
           <img src="images/ahmed_avatar.png" alt="user" class="hdr-avatar">
@@ -1124,8 +1127,50 @@
 
   <!-- ═══ MEDICINE SCAN REVIEW MODAL ═══ -->
   @if (scanResult()) {
-  <div class="modal-overlay" (click)="cancelScanReview()">
+  <div class="modal-overlay" (click)="scanSavedMedicineName() ? dismissScanSuccess() : cancelScanReview()">
     <div class="modal-card scan-review-modal" (click)="$event.stopPropagation()">
+
+      @if (scanSavedMedicineName()) {
+      <!-- ─── Success state ─── -->
+      <header class="modal-hdr">
+        <div class="modal-hdr-left">
+          <div class="modal-ico scan-saved-ico">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div>
+            <h3 class="modal-title">Medicine Saved</h3>
+            <p class="modal-sub">Would you like to receive reminders for this medicine?</p>
+          </div>
+        </div>
+        <button type="button" class="close-modal-btn" (click)="dismissScanSuccess()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </header>
+
+      <div class="modal-body scan-success-body">
+        <div class="scan-success-content">
+          <div class="scan-success-icon-lg">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <p class="scan-success-label">Medicine saved successfully</p>
+          <h3 class="scan-success-name">{{ scanSavedMedicineName() }}</h3>
+          <p class="scan-success-hint">Never miss a dose — set a reminder to take it on time.</p>
+        </div>
+      </div>
+
+      <footer class="modal-ftr">
+        <button type="button" class="modal-btn modal-btn-secondary" (click)="dismissScanSuccess()">
+          Maybe Later
+        </button>
+        <button type="button" class="modal-btn modal-btn-primary" [disabled]="!scanSavedMedicineId()"
+          (click)="openReminderFromScan()">
+          <i class="fa-solid fa-bell"></i>
+          Set Reminder Now
+        </button>
+      </footer>
+
+      } @else {
+      <!-- ─── Review / edit form ─── -->
       <header class="modal-hdr">
         <div class="modal-hdr-left">
           <div class="modal-ico rec-ico-orange">
@@ -1236,6 +1281,182 @@
           }
         </button>
       </footer>
+      }
+
+    </div>
+  </div>
+  }
+
+  <!-- ═══ REMINDER CREATION MODAL ═══ -->
+  @if (showReminderModal()) {
+  <div class="modal-overlay" (click)="closeReminderModal()">
+    <div class="modal-card reminder-modal" (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <header class="modal-hdr">
+        <div class="modal-hdr-left">
+          <div class="modal-ico rec-ico-blue">
+            <i class="fa-solid fa-bell"></i>
+          </div>
+          <div>
+            <h3 class="modal-title">Set Reminder</h3>
+            <p class="modal-sub">{{ reminderMedicineName() }}</p>
+          </div>
+        </div>
+        <button type="button" class="close-modal-btn" [disabled]="reminderSaving()" (click)="closeReminderModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </header>
+
+      <!-- Body -->
+      <div class="modal-body reminder-body">
+
+        <!-- ── Reminder Times ── -->
+        <div class="rm-section">
+          <div class="rm-section-hdr">
+            <span class="rm-section-title">
+              <i class="fa-regular fa-clock"></i>
+              Reminder Times
+              <span class="scan-required">*</span>
+            </span>
+            <button type="button" class="rm-add-btn" (click)="addReminderTime()" [disabled]="reminderSaving()">
+              <i class="fa-solid fa-plus"></i> Add Time
+            </button>
+          </div>
+
+          <div class="rm-times-list">
+            @for (time of reminderForm.reminderTimes; track $index) {
+            <div class="rm-time-row" [class.rm-time-row--invalid]="time && reminderForm.reminderTimes.indexOf(time) !== $index">
+              <div class="rm-time-badge">
+                <i class="fa-regular fa-clock"></i>
+              </div>
+              <input type="time" class="scan-input rm-time-input"
+                [(ngModel)]="reminderForm.reminderTimes[$index]"
+                [name]="'rtime_' + $index"
+                [disabled]="reminderSaving()">
+              @if (reminderForm.reminderTimes.length > 1) {
+              <button type="button" class="rm-remove-btn" (click)="removeReminderTime($index)"
+                [disabled]="reminderSaving()" title="Remove">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              }
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- ── Repeat Pattern ── -->
+        <div class="rm-section">
+          <div class="rm-section-title rm-section-title--standalone">
+            <i class="fa-solid fa-repeat"></i>
+            Repeat Pattern
+          </div>
+          <div class="rm-repeat-group">
+            @for (opt of repeatOptions; track opt.value) {
+            <button type="button" class="rm-repeat-btn"
+              [class.rm-repeat-btn--active]="reminderForm.repeatType === opt.value"
+              (click)="setRepeatType(opt.value)" [disabled]="reminderSaving()">
+              {{ opt.label }}
+            </button>
+            }
+          </div>
+        </div>
+
+        <!-- ── Dates ── -->
+        <div class="rm-dates-grid">
+          <div class="scan-field">
+            <label class="scan-label">
+              Start Date <span class="scan-required">*</span>
+            </label>
+            <input type="date" class="scan-input"
+              [(ngModel)]="reminderForm.startDate"
+              (ngModelChange)="onReminderStartDateChange()"
+              name="reminderStartDate"
+              [disabled]="reminderSaving()">
+          </div>
+          <div class="scan-field">
+            <label class="scan-label">
+              End Date
+              @if (reminderForm.repeatType !== 'Once') {
+              <span class="scan-required">*</span>
+              }
+            </label>
+            <input type="date" class="scan-input"
+              [(ngModel)]="reminderForm.endDate"
+              name="reminderEndDate"
+              [disabled]="reminderSaving() || reminderForm.repeatType === 'Once'"
+              [class.rm-date-locked]="reminderForm.repeatType === 'Once'">
+          </div>
+        </div>
+
+        <!-- ── Notifications toggle ── -->
+        <div class="rm-toggle-row">
+          <div class="rm-toggle-info">
+            <div class="rm-toggle-icon-wrap">
+              <i class="fa-solid fa-bell"></i>
+            </div>
+            <div class="rm-toggle-text">
+              <span class="rm-toggle-label">Push Notifications</span>
+              <span class="rm-toggle-sub">Receive alerts when it's time</span>
+            </div>
+          </div>
+          <button type="button" class="rm-toggle" role="switch"
+            [class.rm-toggle--on]="reminderForm.notificationsEnabled"
+            [attr.aria-checked]="reminderForm.notificationsEnabled"
+            [disabled]="reminderSaving()"
+            (click)="reminderForm.notificationsEnabled = !reminderForm.notificationsEnabled">
+            <span class="rm-toggle-thumb"></span>
+          </button>
+        </div>
+
+        <!-- ── Notes ── -->
+        <div class="scan-field">
+          <label class="scan-label">Notes <span class="scan-optional">(optional)</span></label>
+          <textarea class="scan-input scan-textarea rm-notes-area"
+            [(ngModel)]="reminderForm.notes"
+            name="reminderNotes"
+            placeholder="e.g. Take with food, avoid grapefruit..."
+            rows="2"
+            [disabled]="reminderSaving()"></textarea>
+        </div>
+
+        <!-- ── Validation errors ── -->
+        @if (reminderFormErrors.length > 0) {
+        <div class="rm-errors">
+          @for (err of reminderFormErrors; track err) {
+          <p class="rm-error-item">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            {{ err }}
+          </p>
+          }
+        </div>
+        }
+
+      </div>
+
+      <!-- Footer -->
+      <footer class="modal-ftr">
+        <button type="button" class="modal-btn modal-btn-secondary" [disabled]="reminderSaving()"
+          (click)="closeReminderModal()">Cancel</button>
+        <button type="button" class="modal-btn modal-btn-primary"
+          [disabled]="reminderSaving() || !reminderFormValid"
+          [class.modal-btn--saving]="reminderSaving()"
+          (click)="saveReminder()">
+          @if (reminderSaving()) {
+          <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+              [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+              stroke-linecap="round" transform="rotate(-90 18 18)" />
+          </svg>
+          Saving...
+          } @else {
+          <i class="fa-solid fa-bell"></i>
+          Save Reminder
+          }
+        </button>
+      </footer>
+
     </div>
   </div>
   }

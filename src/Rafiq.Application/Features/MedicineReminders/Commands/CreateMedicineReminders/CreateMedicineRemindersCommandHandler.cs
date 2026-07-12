@@ -12,6 +12,7 @@ public sealed class CreateMedicineRemindersCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
     IMedicineReminderRepository medicineReminderRepository,
+    IMedicationSchedulingService medicationSchedulingService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<CreateMedicineRemindersCommand, ApiResponse<List<MedicineReminderResponseDto>>>
 {
@@ -68,6 +69,12 @@ public sealed class CreateMedicineRemindersCommandHandler(
 
         await medicineReminderRepository.AddRangeAsync(reminders, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Activate immediately: a reminder created after today's daily sweep still fires today.
+        foreach (var reminder in reminders)
+        {
+            await medicationSchedulingService.ScheduleTodayIfApplicableAsync(reminder, cancellationToken);
+        }
 
         var dtos = reminders.Select(r => new MedicineReminderResponseDto
         {

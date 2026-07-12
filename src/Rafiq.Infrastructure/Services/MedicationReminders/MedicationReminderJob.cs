@@ -1,17 +1,16 @@
 using Hangfire;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using Rafiq.Application.Common.Interfaces;
 using Rafiq.Domain.Entities.Documents;
 using Rafiq.Domain.Repositories;
-using Rafiq.Infrastructure.Persistence.Identity;
 
 namespace Rafiq.Infrastructure.Services.MedicationReminders;
 
 public sealed class MedicationReminderJob(
     IMedicationReminderLogRepository logRepository,
-    UserManager<ApplicationUser> userManager,
     IUnitOfWork unitOfWork,
     IBackgroundJobClient backgroundJobClient,
+    INotificationService notificationService,
     ILogger<MedicationReminderJob> logger)
 {
     private const int MaxReminderNumber = 3;
@@ -20,6 +19,8 @@ public sealed class MedicationReminderJob(
     [AutomaticRetry(Attempts = 0)]
     public async Task ExecuteAsync(Guid logId)
     {
+        logger.LogInformation("MedicationReminderJob STARTED for log {LogId}.", logId);
+
         var log = await logRepository.GetByIdWithDetailsAsync(logId, CancellationToken.None);
 
         if (log is null)
@@ -27,6 +28,10 @@ public sealed class MedicationReminderJob(
             logger.LogWarning("MedicationReminderLog {LogId} not found. Skipping.", logId);
             return;
         }
+
+        logger.LogInformation(
+            "ReminderLog loaded: status={Status}, reminderNumber={Number}, profileId={ProfileId}, userId={UserId}",
+            log.Status, log.ReminderNumber, log.UserHealthProfileId, log.UserHealthProfile?.UserId);
 
         if (log.IsCompleted)
         {
@@ -36,7 +41,9 @@ public sealed class MedicationReminderJob(
             return;
         }
 
+        logger.LogInformation("Before SendNotificationAsync for log {LogId}.", logId);
         await SendNotificationAsync(log);
+        logger.LogInformation("After SendNotificationAsync for log {LogId}.", logId);
 
         log.MarkAsSent();
 
@@ -79,16 +86,6 @@ public sealed class MedicationReminderJob(
             return;
         }
 
-        var user = await userManager.FindByIdAsync(profile.UserId.ToString()!);
-
-        if (user is null || string.IsNullOrWhiteSpace(user.PhoneNumber))
-        {
-            logger.LogWarning(
-                "User {UserId} has no phone number. Skipping notification.",
-                profile.UserId);
-            return;
-        }
-
         var medicineName = log.MedicineReminder?.UserMedicine?.MedicineName ?? "your medication";
         var dosage = log.MedicineReminder?.UserMedicine?.Dosage ?? string.Empty;
 
@@ -96,10 +93,32 @@ public sealed class MedicationReminderJob(
             ? $"Time to take {medicineName} ({dosage}). Confirm once taken."
             : $"Reminder #{log.ReminderNumber}: Please take {medicineName} ({dosage}) now.";
 
-        // The notification delivery (SMS/push) is handled by the notification infrastructure.
-        // This is the integration point: SendMedicationReminder(userId, logId, message).
+        var payload = new MedicationReminderNotificationPayload
+        {
+            ReminderId = log.Id.ToString(),
+            MedicineId = log.MedicineReminder?.UserMedicineId.ToString() ?? string.Empty,
+            MedicineName = medicineName,
+            GenericName = string.Empty,
+            Strength = string.Empty,
+            Dosage = dosage,
+            ReminderTime = log.ScheduledTime.ToString(),
+            Status = log.Status.ToString(),
+            NotificationText = message
+        };
+
+        var targetUserId = profile.UserId.ToString()!;
+
         logger.LogInformation(
-            "SendMedicationReminder → userId={UserId}, logId={LogId}, phone={Phone}, message={Message}",
-            profile.UserId, log.Id, user.PhoneNumber, message);
+            "Before notificationService.SendMedicationReminderAsync: targetUserId='{UserId}', logId={LogId}",
+            targetUserId, log.Id);
+
+        await notificationService.SendMedicationReminderAsync(
+            targetUserId,
+            payload,
+            CancellationToken.None);
+
+        logger.LogInformation(
+            "After notificationService.SendMedicationReminderAsync: userId={UserId}, logId={LogId}",
+            targetUserId, log.Id);
     }
 }

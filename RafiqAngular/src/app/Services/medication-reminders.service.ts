@@ -4,7 +4,7 @@ import { Observable, map, shareReplay, switchMap } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse, ApiResponseBase } from '../Modles/api-response';
 import { MedicationReminderLogDto } from '../Modles/medication-reminder.models';
-import { UserMedicine } from '../Modles/dashboard.models';
+import { CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UserMedicine } from '../Modles/dashboard.models';
 import { HealthProfileService } from './health-profile.service';
 
 @Injectable({ providedIn: 'root' })
@@ -13,6 +13,7 @@ export class MedicationRemindersService {
   private readonly healthProfileSvc = inject(HealthProfileService);
   private readonly base             = `${environment.apiUrl}/medication-reminders`;
   private readonly medBase          = `${environment.apiUrl}/user-medicines`;
+  private readonly remBase          = `${environment.apiUrl}/medicine-reminders`;
 
   private readonly profileId$: Observable<string> =
     this.healthProfileSvc.getMyProfile().pipe(
@@ -48,5 +49,27 @@ export class MedicationRemindersService {
       ),
       map(r => r.data ?? []),
     );
+  }
+
+  createReminder(medicineId: string, payload: CreateReminderPayload): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(`${this.medBase}/${medicineId}/reminders`, payload);
+  }
+
+  getRemindersForMedicine(medicineId: string): Observable<MedicineReminder[]> {
+    return this.http
+      .get<ApiResponse<MedicineReminder[]>>(`${this.medBase}/${medicineId}/reminders`)
+      .pipe(map(r => r.data ?? []));
+  }
+
+  toggleReminderStatus(reminderId: string): Observable<ApiResponseBase> {
+    return this.http.patch<ApiResponseBase>(`${this.remBase}/${reminderId}/toggle-status`, {});
+  }
+
+  deleteReminder(reminderId: string): Observable<ApiResponseBase> {
+    return this.http.delete<ApiResponseBase>(`${this.remBase}/${reminderId}`);
+  }
+
+  updateReminder(id: string, payload: UpdateReminderPayload): Observable<ApiResponseBase> {
+    return this.http.put<ApiResponseBase>(`${this.remBase}/${id}`, payload);
   }
 }
