@@ -1,9 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HealthProfileService } from '../../../Services/health-profile.service';
 import { Gender, BloodType, AllergySeverity, DiseaseStatus } from '../../../Modles/health-profile-enums';
 import { CreatePatientProfileRequest } from '../../../Modles/health-profile-request';
+import { EmergencyContactService, EmergencyContactResponse } from '../../../Services/emergency-contact.service';
 
 interface Step1Data {
   dateOfBirth: string;
@@ -45,9 +46,12 @@ export class OnboardingStep4 implements OnInit {
 
   private readonly router = inject(Router);
   private readonly healthProfile = inject(HealthProfileService);
+  private readonly emergencyService = inject(EmergencyContactService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly steps = [
     { label: 'Basic Info' },
+    { label: 'Emergency Contacts' },
     { label: 'Allergies' },
     { label: 'Chronic Diseases' },
     { label: 'Review' },
@@ -56,6 +60,7 @@ export class OnboardingStep4 implements OnInit {
   step1: Step1Data | null = null;
   step2: Step2Data | null = null;
   step3: Step3Data | null = null;
+  emergencyContacts: EmergencyContactResponse[] = [];
 
   /** UI state */
   isSubmitting = false;
@@ -102,9 +107,26 @@ export class OnboardingStep4 implements OnInit {
       if (s1) this.step1 = JSON.parse(s1);
       if (s2) this.step2 = JSON.parse(s2);
       if (s3) this.step3 = JSON.parse(s3);
+      this.loadEmergencyContacts();
     } catch {
       this.router.navigate(['/onboarding/step1']);
     }
+  }
+
+  loadEmergencyContacts(): void {
+    this.emergencyService.getEmergencyContacts().subscribe({
+      next: (res) => {
+        console.log('Review step loadEmergencyContacts res:', res);
+        if (res?.success && res.data) {
+          this.emergencyContacts = res.data;
+          console.log('Review step emergencyContacts set:', this.emergencyContacts);
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load emergency contacts in review step', err);
+      }
+    });
   }
 
   // ── Display helpers ─────────────────────────────────────────────────────
@@ -184,8 +206,12 @@ export class OnboardingStep4 implements OnInit {
     this.router.navigate(['/onboarding/ai-upload']);
   }
 
-  editStep(step: number): void {
-    this.router.navigate([`/onboarding/step${step}`]);
+  editStep(step: number | string): void {
+    if (step === 'emergency') {
+      this.router.navigate(['/onboarding/emergency']);
+    } else {
+      this.router.navigate([`/onboarding/step${step}`]);
+    }
   }
 
   // ── Submit ──────────────────────────────────────────────────────────────

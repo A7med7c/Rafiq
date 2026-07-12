@@ -4,7 +4,7 @@ obj/
 .vs/
 *.user
 *.suo
-
+.claude/
 # Local app configuration
 appsettings.json
 **/appsettings.json
