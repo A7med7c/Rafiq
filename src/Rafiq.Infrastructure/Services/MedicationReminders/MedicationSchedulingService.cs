@@ -28,7 +28,7 @@ public sealed class MedicationSchedulingService(
     private readonly TimeSpan _lateGrace = TimeSpan.FromMinutes(options.Value.LateGraceMinutes);
 
     // The three fixed stages every reminder occurrence must produce, relative to ReminderTime.
-    private const int StageOffsetMinutes = 10;
+    private const int StageOffsetMinutes = 1;
 
     public async Task<bool> ScheduleTodayIfApplicableAsync(
         MedicineReminder reminder,

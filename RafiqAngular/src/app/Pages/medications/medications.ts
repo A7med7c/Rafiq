@@ -9,7 +9,7 @@ import { AuthService } from '../../Services/auth-service';
 import { NotificationService } from '../../Services/notification.service';
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
 import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
-import { CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UserMedicine } from '../../Modles/dashboard.models';
+import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UserMedicine } from '../../Modles/dashboard.models';
 
 type MedTab = 'schedule' | 'medications';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -28,6 +28,14 @@ interface Toast {
   id: number;
   message: string;
   type: 'success' | 'error';
+}
+
+interface AddMedForm {
+  medicineName: string;
+  dosage:       string;
+  frequency:    string;
+  duration:     string;
+  notes:        string;
 }
 
 /** Display-only state for a single reminder attempt chip — derived purely on the frontend. */
@@ -166,8 +174,16 @@ export class Medications implements OnInit, OnDestroy {
   readonly highlightReminderId = signal<string | null>(null);
   readonly pendingReminderMedicineId = signal<string | null>(null);
 
+  // ── Add Medicine modal ────────────────────────────────────────────────────
+  readonly showAddMedModal = signal(false);
+  readonly addMedSaving    = signal(false);
+  readonly addMedTouched   = signal(false);
+
   // ── Reminder form ─────────────────────────────────────────────────────────
   reminderForm: ReminderForm = this.emptyReminderForm();
+
+  // ── Add Medicine form ─────────────────────────────────────────────────────
+  addMedForm: AddMedForm = this.emptyAddMedForm();
   readonly repeatOptions: { label: string; value: RepeatOption }[] = [
     { label: 'Once',    value: 'Once'    },
     { label: 'Daily',   value: 'Daily'   },
@@ -186,9 +202,16 @@ export class Medications implements OnInit, OnDestroy {
 
   // ── Doses (escalation logs folded into the dose they belong to) ───────────
   readonly doses = computed<Dose[]>(() => {
-    const groups = new Map<string, MedicationReminderLogDto[]>();
+    const today   = Medications.localToday();
+    const nowMins = this.nowMinutes();   // read the clock so doses recomputes every tick
+    const groups  = new Map<string, MedicationReminderLogDto[]>();
 
     for (const log of this.todayLogs()) {
+      // Safety-filter: only include logs whose scheduledDate is today in local time.
+      // The backend's /today endpoint should already scope to today, but backend date
+      // arithmetic is UTC-based and can return yesterday's Stage-1 logs for early doses.
+      if (log.scheduledDate !== today) continue;
+
       // Group by (reminderId, date) — NOT by scheduledTime.
       //
       // The scheduler creates three log rows per dose occurrence, each with a different
@@ -231,7 +254,10 @@ export class Medications implements OnInit, OnDestroy {
         let state: AttemptState;
         if (l.status === 'Confirmed')        state = 'Completed';
         else if (l.status === 'Cancelled')   state = 'Cancelled';
-        else if (open && l.id === open.id)   state = 'Next';
+        else if (open && l.id === open.id)
+          // If the attempt's own minute has arrived or passed, the reminder is no longer
+          // "next" — treat it as missed so the timeline stays consistent with the card header.
+          state = Medications.toMinutes(l.scheduledTime) <= nowMins ? 'Missed' : 'Next';
         else if (l.status === 'Pending')     state = 'Upcoming';
         else                                 state = 'Missed';
         // scheduledTime comes from the actual log so the timeline shows the real fire time.
@@ -254,6 +280,31 @@ export class Medications implements OnInit, OnDestroy {
     }
 
     return doses.sort((a, b) => a.minutes - b.minutes);
+  });
+
+  /**
+   * Reactive display order for Today's Schedule.
+   *
+   * Priority tiers (re-evaluated whenever nowMinutes or doses change):
+   *   0 — overdue + still actionable  → ascending by time (most overdue first)
+   *   1 — upcoming + actionable        → ascending by time (nearest first)
+   *   2 — confirmed                    → descending by time (most recent first)
+   *   3 — cancelled                    → descending by time
+   */
+  readonly sortedDoses = computed<Dose[]>(() => {
+    const now = this.nowMinutes();
+    const priority = (d: Dose): number => {
+      if (d.actionable && d.minutes < now) return 0;
+      if (d.actionable)                    return 1;
+      if (d.status === 'Confirmed')        return 2;
+      return 3;
+    };
+    return [...this.doses()].sort((a, b) => {
+      const pa = priority(a), pb = priority(b);
+      if (pa !== pb) return pa - pb;
+      // actionable tiers: nearest (ascending); done tiers: most-recent-first (descending)
+      return pa <= 1 ? a.minutes - b.minutes : b.minutes - a.minutes;
+    });
   });
 
   readonly takenCount   = computed(() => this.doses().filter(d => d.status === 'Confirmed').length);
@@ -341,18 +392,88 @@ export class Medications implements OnInit, OnDestroy {
   }
   get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
 
+  // ── Reminder form validation ──────────────────────────────────────────────
+
+  /** Per-time-index inline errors: past-time or duplicate. */
+  get timeErrors(): Record<number, string> {
+    const result: Record<number, string> = {};
+    const today   = Medications.localToday();
+    const isToday = this.reminderForm.startDate === today;
+    const nowMins = this.nowMinutes();
+
+    // Build a map of value → [indices] to detect duplicates
+    const seen = new Map<string, number[]>();
+    this.reminderForm.reminderTimes.forEach((t, i) => {
+      if (!t.trim()) return;
+      const arr = seen.get(t) ?? [];
+      arr.push(i);
+      seen.set(t, arr);
+    });
+
+    this.reminderForm.reminderTimes.forEach((t, i) => {
+      if (!t.trim()) return;
+      if ((seen.get(t)?.length ?? 0) > 1) {
+        result[i] = 'This reminder time already exists.';
+        return;
+      }
+      if (isToday) {
+        const [h, m] = t.split(':').map(Number);
+        if (h * 60 + m < nowMins) {
+          result[i] = 'The selected time has already passed.';
+        }
+      }
+    });
+
+    return result;
+  }
+
+  /** Global form errors — shown in the bottom summary panel. */
   get reminderFormErrors(): string[] {
-    const f = this.reminderForm;
     const errs: string[] = [];
-    const filled = f.reminderTimes.filter(t => t.trim());
-    if (filled.length === 0) errs.push('Add at least one reminder time.');
-    if (new Set(filled).size < filled.length) errs.push('Remove duplicate times.');
-    if (f.repeatType !== 'Once' && f.endDate && f.startDate && f.endDate < f.startDate)
-      errs.push('End date must be on or after start date.');
+    if (this.reminderForm.reminderTimes.filter(t => t.trim()).length === 0)
+      errs.push('Add at least one reminder time.');
     return errs;
   }
 
-  get reminderFormValid(): boolean { return this.reminderFormErrors.length === 0; }
+  /** True only when global errors, per-time errors, and date errors are all clear. */
+  get reminderFormValid(): boolean {
+    const f     = this.reminderForm;
+    const today = Medications.localToday();
+    if (this.reminderFormErrors.length > 0) return false;
+    if (Object.keys(this.timeErrors).length > 0) return false;
+    if (f.startDate && f.startDate < today) return false;
+    if (f.repeatType !== 'Once') {
+      if (f.endDate && f.endDate < today) return false;
+      if (f.endDate && f.startDate && f.endDate < f.startDate) return false;
+    }
+    return true;
+  }
+
+  /** Today's date string "YYYY-MM-DD" used for [min] bindings in the template. */
+  get todayDate(): string { return Medications.localToday(); }
+
+  /** Minimum allowed end date: whichever is later — today or the chosen start date. */
+  get minEndDate(): string {
+    const today = Medications.localToday();
+    const start = this.reminderForm.startDate;
+    return start > today ? start : today;
+  }
+
+  /** Current time as "HH:MM" derived from the live nowMinutes signal. */
+  get currentTimeHHMM(): string {
+    const m = this.nowMinutes();
+    return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  }
+
+  get addMedErrors(): string[] {
+    const f = this.addMedForm;
+    const errs: string[] = [];
+    if (!f.medicineName.trim()) errs.push('Medicine name is required.');
+    if (!f.dosage.trim())       errs.push('Dosage is required.');
+    if (!f.frequency.trim())    errs.push('Frequency is required.');
+    if (!f.duration.trim())     errs.push('Duration is required.');
+    return errs;
+  }
 
   ngOnInit(): void {
     this.applyResponsiveSidebar();
@@ -391,6 +512,7 @@ export class Medications implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEsc(): void {
+    if (this.showAddMedModal())         { this.closeAddMed(); return; }
     if (this.showAddReminderModal())    { this.closeAddReminder(); return; }
     if (this.showDeleteReminderModal()) { this.closeDeleteReminder(); return; }
     if (this.viewingMed())              { this.closeMedView(); return; }
@@ -990,15 +1112,22 @@ export class Medications implements OnInit, OnDestroy {
   }
 
   onReminderStartDateChange(): void {
-    if (this.reminderForm.repeatType === 'Once') {
-      this.reminderForm = { ...this.reminderForm, endDate: this.reminderForm.startDate };
+    const f = this.reminderForm;
+    if (f.repeatType === 'Once') {
+      this.reminderForm = { ...f, endDate: f.startDate };
+    } else if (f.endDate && f.startDate && f.endDate < f.startDate) {
+      // Auto-advance end date to match new start so the form stays valid
+      this.reminderForm = { ...f, endDate: f.startDate };
     }
   }
 
   updateReminderTime(index: number, value: string): void {
     const times = [...this.reminderForm.reminderTimes];
     times[index] = value;
-    this.reminderForm = { ...this.reminderForm, reminderTimes: times };
+    // Sort filled times chronologically after each change; empty slots stay at the end
+    const filled = times.filter(t => t.trim()).sort();
+    const empty  = times.filter(t => !t.trim());
+    this.reminderForm = { ...this.reminderForm, reminderTimes: [...filled, ...empty] };
   }
 
   // ── My Medications — table actions ───────────────────────────────────────
@@ -1052,5 +1181,52 @@ export class Medications implements OnInit, OnDestroy {
       notificationsEnabled: true,
       notes:                '',
     };
+  }
+
+  // ── Add Medicine modal ────────────────────────────────────────────────────
+  openAddMed(): void {
+    this.addMedForm  = this.emptyAddMedForm();
+    this.addMedTouched.set(false);
+    this.showAddMedModal.set(true);
+  }
+
+  closeAddMed(): void {
+    if (this.addMedSaving()) return;
+    this.showAddMedModal.set(false);
+  }
+
+  saveAddMed(): void {
+    this.addMedTouched.set(true);
+    if (this.addMedErrors.length > 0) return;
+
+    const payload: AddUserMedicinePayload = {
+      medicineName: this.addMedForm.medicineName.trim(),
+      dosage:       this.addMedForm.dosage.trim(),
+      frequency:    this.addMedForm.frequency.trim(),
+      duration:     this.addMedForm.duration.trim(),
+      notes:        this.addMedForm.notes.trim() || undefined,
+      source:       1,
+    };
+
+    this.addMedSaving.set(true);
+    this.medSvc.createMedicine(payload).subscribe({
+      next: res => {
+        this.addMedSaving.set(false);
+        this.showAddMedModal.set(false);
+        this.toast(`${payload.medicineName} added successfully.`, 'success');
+        this.loadMedicines();
+        if (res.data?.id) {
+          this.setTab('medications');
+        }
+      },
+      error: err => {
+        this.toast(err?.error?.message ?? 'Could not add medication.', 'error');
+        this.addMedSaving.set(false);
+      },
+    });
+  }
+
+  private emptyAddMedForm(): AddMedForm {
+    return { medicineName: '', dosage: '', frequency: '', duration: '', notes: '' };
   }
 }

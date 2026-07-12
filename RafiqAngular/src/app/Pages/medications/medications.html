@@ -143,6 +143,9 @@
           <h1 class="med-title">Medications &amp; Reminders</h1>
           <p class="med-subtitle">{{ todayLabel() }}</p>
         </div>
+        <button type="button" class="add-med-btn" (click)="openAddMed()">
+          <i class="fa-solid fa-plus"></i> Add Medication
+        </button>
       </div>
 
       <!-- ── Day Rail: the next dose, and the shape of the day ── -->
@@ -213,7 +216,7 @@
             <span class="rail-now-dot"></span>
           </div>
 
-          @for (dose of doses(); track dose.key) {
+          @for (dose of sortedDoses(); track dose.key) {
           <button type="button"
             class="rail-pip"
             [class]="'rail-pip--' + doseState(dose)"
@@ -327,7 +330,7 @@
             </div>
           </div>
 
-          } @else if (todayLogs().length === 0) {
+          } @else if (todayLogs().length === 0 || doses().length === 0) {
           <div class="card med-card">
             <div class="empty-state">
               @if (medicines().length > 0 && !hasAnyReminders()) {
@@ -338,8 +341,8 @@
                 <i class="fa-solid fa-plus"></i> Create Reminder
               </button>
               } @else {
-              <i class="fa-solid fa-bell-slash empty-icon"></i>
-              <p class="empty-title">No Reminders Today</p>
+              <i class="fa-solid fa-calendar-check empty-icon" style="color:var(--blue)"></i>
+              <p class="empty-title">No medications scheduled for today</p>
               <p class="empty-sub">Your medication reminders for today will appear here once scheduled.</p>
               }
             </div>
@@ -347,7 +350,7 @@
 
           } @else {
           <ul class="dose-list">
-            @for (dose of doses(); track dose.key) {
+            @for (dose of sortedDoses(); track dose.key) {
             <li class="dose-card"
               [class.dose-card--done]="dose.status === 'Confirmed'"
               [class.dose-card--cancelled]="dose.status === 'Cancelled'"
@@ -900,30 +903,58 @@
 
     <div class="reminder-body">
 
-      <!-- Times -->
+      <!-- ── Reminder Times ── -->
       <div class="rm-section">
         <div class="rm-section-hdr">
-          <span class="rm-section-title"><i class="fa-regular fa-clock"></i> Reminder Times</span>
-          <button type="button" class="rm-add-btn" (click)="addReminderTime()">
+          <span class="rm-section-title">
+            <i class="fa-regular fa-clock"></i> Reminder Times
+            @if (reminderForm.reminderTimes.filter(t => !!t.trim()).length > 0) {
+            <span class="rm-count-badge">{{ reminderForm.reminderTimes.filter(t => !!t.trim()).length }}</span>
+            }
+          </span>
+          <button type="button" class="rm-add-btn" (click)="addReminderTime()"
+            [disabled]="reminderForm.reminderTimes.length >= 6"
+            aria-label="Add another reminder time">
             <i class="fa-solid fa-plus"></i> Add Time
           </button>
         </div>
+
         @for (t of reminderForm.reminderTimes; track $index) {
-        <div class="rm-time-row">
-          <span class="rm-time-badge"><i class="fa-solid fa-clock"></i></span>
-          <input type="time" class="rm-time-input"
-            [value]="t"
-            (change)="updateReminderTime($index, $any($event.target).value)" />
-          @if (reminderForm.reminderTimes.length > 1) {
-          <button type="button" class="rm-remove-btn" (click)="removeReminderTime($index)" aria-label="Remove time">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
+        <div class="rm-time-field" [class.rm-time-field--error]="!!timeErrors[$index]">
+          <div class="rm-time-row">
+            <span class="rm-time-badge" [class.rm-time-badge--error]="!!timeErrors[$index]">
+              <i class="fa-solid"
+                [class.fa-clock]="!timeErrors[$index]"
+                [class.fa-triangle-exclamation]="!!timeErrors[$index]"></i>
+            </span>
+            <input type="time"
+              class="rm-time-input"
+              [class.rm-field--error]="!!timeErrors[$index]"
+              [class.rm-field--valid]="!!t && !timeErrors[$index]"
+              [value]="t"
+              [min]="reminderForm.startDate === todayDate ? currentTimeHHMM : ''"
+              [attr.aria-label]="'Reminder time ' + ($index + 1)"
+              [attr.aria-invalid]="!!timeErrors[$index]"
+              [attr.aria-describedby]="timeErrors[$index] ? 'time-err-' + $index : null"
+              (change)="updateReminderTime($index, $any($event.target).value)" />
+            @if (reminderForm.reminderTimes.length > 1) {
+            <button type="button" class="rm-remove-btn"
+              (click)="removeReminderTime($index)"
+              [attr.aria-label]="'Remove reminder time ' + ($index + 1)">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            }
+          </div>
+          @if (timeErrors[$index]) {
+          <p class="rm-field-error" [id]="'time-err-' + $index" role="alert">
+            <i class="fa-solid fa-circle-exclamation"></i> {{ timeErrors[$index] }}
+          </p>
           }
         </div>
         }
       </div>
 
-      <!-- Repeat -->
+      <!-- ── Repeat ── -->
       <div class="rm-section">
         <p class="rm-section-title"><i class="fa-solid fa-repeat"></i> Repeat</p>
         <div class="rm-repeat-group">
@@ -936,45 +967,76 @@
         </div>
       </div>
 
-      <!-- Dates -->
+      <!-- ── Dates ── -->
       <div class="rm-section rm-dates-grid">
-        <div>
-          <label class="rm-section-title"><i class="fa-regular fa-calendar"></i> Start Date</label>
-          <input type="date" class="rm-time-input"
+        <div class="rm-date-field">
+          <label class="rm-section-title" for="rm-start-date">
+            <i class="fa-regular fa-calendar"></i> Start Date
+          </label>
+          <input id="rm-start-date" type="date"
+            class="rm-time-input"
+            [class.rm-field--error]="reminderForm.startDate < todayDate"
+            [class.rm-field--valid]="reminderForm.startDate >= todayDate"
             [(ngModel)]="reminderForm.startDate"
+            [min]="todayDate"
+            aria-label="Reminder start date"
             (ngModelChange)="onReminderStartDateChange()" />
+          @if (reminderForm.startDate && reminderForm.startDate < todayDate) {
+          <p class="rm-field-error" role="alert">
+            <i class="fa-solid fa-circle-exclamation"></i> Start date cannot be in the past.
+          </p>
+          }
         </div>
-        <div>
-          <label class="rm-section-title"><i class="fa-regular fa-calendar-check"></i> End Date</label>
-          <input type="date" class="rm-time-input"
+        <div class="rm-date-field">
+          <label class="rm-section-title" for="rm-end-date">
+            <i class="fa-regular fa-calendar-check"></i> End Date
+          </label>
+          <input id="rm-end-date" type="date"
+            class="rm-time-input"
+            [class.rm-field--error]="reminderForm.repeatType !== 'Once' && !!reminderForm.endDate && reminderForm.endDate < reminderForm.startDate"
+            [class.rm-field--valid]="reminderForm.repeatType !== 'Once' && !!reminderForm.endDate && reminderForm.endDate >= reminderForm.startDate"
+            [class.rm-date-locked]="reminderForm.repeatType === 'Once'"
             [(ngModel)]="reminderForm.endDate"
+            [min]="minEndDate"
             [disabled]="reminderForm.repeatType === 'Once'"
-            [class.rm-date-locked]="reminderForm.repeatType === 'Once'" />
+            aria-label="Reminder end date" />
+          @if (reminderForm.repeatType !== 'Once' && reminderForm.endDate && reminderForm.endDate < reminderForm.startDate) {
+          <p class="rm-field-error" role="alert">
+            <i class="fa-solid fa-circle-exclamation"></i> End date must be after start date.
+          </p>
+          }
         </div>
       </div>
 
-      <!-- Toggle -->
+      <!-- ── Push Notifications toggle ── -->
       <div class="rm-section rm-toggle-row">
         <span class="rm-section-title"><i class="fa-solid fa-bell"></i> Push Notifications</span>
         <button type="button"
           class="rm-toggle"
           [class.rm-toggle--on]="reminderForm.notificationsEnabled"
           (click)="reminderForm.notificationsEnabled = !reminderForm.notificationsEnabled"
-          [attr.aria-checked]="reminderForm.notificationsEnabled" role="switch">
+          [attr.aria-checked]="reminderForm.notificationsEnabled"
+          role="switch"
+          aria-label="Enable push notifications">
           <span class="rm-toggle-thumb"></span>
         </button>
       </div>
 
-      <!-- Notes -->
+      <!-- ── Notes ── -->
       <div class="rm-section">
-        <label class="rm-section-title"><i class="fa-regular fa-note-sticky"></i> Notes (optional)</label>
-        <textarea class="rm-notes-area" [(ngModel)]="reminderForm.notes"
-          placeholder="e.g. Take with food" rows="2"></textarea>
+        <label class="rm-section-title" for="rm-notes">
+          <i class="fa-regular fa-note-sticky"></i> Notes (optional)
+        </label>
+        <textarea id="rm-notes" class="rm-notes-area"
+          [(ngModel)]="reminderForm.notes"
+          placeholder="e.g. Take with food, avoid on empty stomach"
+          rows="2"
+          aria-label="Additional notes"></textarea>
       </div>
 
-      <!-- Errors -->
+      <!-- ── Global summary errors ── -->
       @if (reminderFormErrors.length > 0) {
-      <ul class="rm-errors">
+      <ul class="rm-errors" role="alert" aria-label="Form errors">
         @for (e of reminderFormErrors; track e) {
         <li class="rm-error-item"><i class="fa-solid fa-circle-exclamation"></i> {{ e }}</li>
         }
@@ -1112,6 +1174,106 @@
         <i class="fa-solid fa-plus"></i> Add Reminder
       </button>
       }
+    </div>
+
+  </div>
+</div>
+}
+
+<!-- ═══════════ ADD MEDICATION MODAL ═══════════ -->
+@if (showAddMedModal()) {
+<div class="modal-overlay" (click)="closeAddMed()">
+  <div class="modal-card reminder-modal" (click)="$event.stopPropagation()" role="dialog"
+    aria-modal="true" aria-labelledby="add-med-title">
+
+    <div class="modal-hdr">
+      <div class="confirm-modal-ico" style="background:var(--blue-lt);color:var(--blue)">
+        <i class="fa-solid fa-pills"></i>
+      </div>
+      <div>
+        <h2 class="modal-title" id="add-med-title">Add Medication</h2>
+        <p class="modal-subtitle">Enter the details for the new medication</p>
+      </div>
+      <button type="button" class="rm-close-btn" (click)="closeAddMed()" aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="reminder-body">
+
+      <div class="rm-section rm-dates-grid">
+        <div>
+          <label class="rm-section-title" for="add-med-name">
+            <i class="fa-solid fa-pills"></i> Medicine Name <span style="color:var(--red)">*</span>
+          </label>
+          <input id="add-med-name" type="text" class="rm-time-input"
+            [(ngModel)]="addMedForm.medicineName"
+            placeholder="e.g. Paracetamol"
+            [class.rm-input-error]="addMedTouched() && !addMedForm.medicineName.trim()" />
+        </div>
+        <div>
+          <label class="rm-section-title" for="add-med-dosage">
+            <i class="fa-solid fa-flask"></i> Dosage <span style="color:var(--red)">*</span>
+          </label>
+          <input id="add-med-dosage" type="text" class="rm-time-input"
+            [(ngModel)]="addMedForm.dosage"
+            placeholder="e.g. 500mg"
+            [class.rm-input-error]="addMedTouched() && !addMedForm.dosage.trim()" />
+        </div>
+      </div>
+
+      <div class="rm-section rm-dates-grid">
+        <div>
+          <label class="rm-section-title" for="add-med-frequency">
+            <i class="fa-regular fa-clock"></i> Frequency <span style="color:var(--red)">*</span>
+          </label>
+          <input id="add-med-frequency" type="text" class="rm-time-input"
+            [(ngModel)]="addMedForm.frequency"
+            placeholder="e.g. Twice daily"
+            [class.rm-input-error]="addMedTouched() && !addMedForm.frequency.trim()" />
+        </div>
+        <div>
+          <label class="rm-section-title" for="add-med-duration">
+            <i class="fa-solid fa-calendar-days"></i> Duration <span style="color:var(--red)">*</span>
+          </label>
+          <input id="add-med-duration" type="text" class="rm-time-input"
+            [(ngModel)]="addMedForm.duration"
+            placeholder="e.g. 7 days"
+            [class.rm-input-error]="addMedTouched() && !addMedForm.duration.trim()" />
+        </div>
+      </div>
+
+      <div class="rm-section">
+        <label class="rm-section-title" for="add-med-notes">
+          <i class="fa-regular fa-note-sticky"></i> Notes (optional)
+        </label>
+        <textarea id="add-med-notes" class="rm-notes-area"
+          [(ngModel)]="addMedForm.notes"
+          placeholder="e.g. Take with food, avoid on empty stomach"
+          rows="2"></textarea>
+      </div>
+
+      @if (addMedTouched() && addMedErrors.length > 0) {
+      <ul class="rm-errors">
+        @for (e of addMedErrors; track e) {
+        <li class="rm-error-item"><i class="fa-solid fa-circle-exclamation"></i> {{ e }}</li>
+        }
+      </ul>
+      }
+
+    </div><!-- /reminder-body -->
+
+    <div class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddMed()"
+        [disabled]="addMedSaving()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary" (click)="saveAddMed()"
+        [disabled]="addMedSaving()">
+        @if (addMedSaving()) {
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Saving…
+        } @else {
+        <i class="fa-solid fa-plus"></i> Add Medication
+        }
+      </button>
     </div>
 
   </div>

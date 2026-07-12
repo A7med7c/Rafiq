@@ -429,6 +429,12 @@ export class NotificationService {
     this.showBrowserReminderNotification(reminder);
     this.notificationSoundService.play();
 
+    // The Hangfire job that fired this SignalR event has also just transitioned the backend
+    // log from Pending → Sent.  Increment the refresh tick so the Medications page re-fetches
+    // todayLogs and picks up the updated statuses, attempt states, and sort order — without
+    // requiring a page reload.
+    this.notifyReminderChanged();
+
     if (isDevMode()) {
       console.debug('[NotificationService] MedicationReminderDue received', reminder);
     }
