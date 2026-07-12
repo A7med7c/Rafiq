@@ -1,7 +1,7 @@
 <div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
 
   @if (mobileSidebarOpen()) {
-    <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
+  <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
   }
 
   <!-- ═══════════ SIDEBAR ═══════════ -->
@@ -16,8 +16,8 @@
           <span class="sb-logo-sub">Family Health Assistant</span>
         </div>
       </div>
-      <button type="button" class="sb-toggle" [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
-        (click)="toggleSidebar()">
+      <button type="button" class="sb-toggle"
+        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'" (click)="toggleSidebar()">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
       <button type="button" class="sb-mobile-close" aria-label="Close sidebar" (click)="toggleMobileSidebar()">
@@ -38,14 +38,17 @@
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
         <span>Appointments</span>
       </a>
+
       <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
         <span>AI Assistant</span>
       </a>
-      <a class="sb-link" href="#">
+
+      <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>Medications &amp; Reminders</span>
       </a>
+
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
         <span>Analytics</span>
@@ -94,9 +97,12 @@
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           Ask AI
         </button>
-        <button type="button" class="hdr-bell">
+        <button type="button" class="hdr-bell" (click)="notificationSvc.toggleNotificationCenter()"
+          [class.hdr-bell--active]="notificationSvc.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
-          <span class="hdr-badge">3</span>
+          @if (unreadCount() > 0) {
+          <span class="hdr-badge">{{ unreadCount() }}</span>
+          }
         </button>
         <div class="hdr-user" (click)="toggleDropdown()">
           <img src="images/ahmed_avatar.png" alt="user" class="hdr-avatar">

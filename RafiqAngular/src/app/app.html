@@ -1,1 +1,221 @@
 <router-outlet></router-outlet>
+
+<div class="toast-container" aria-live="polite" aria-atomic="true">
+  @for (toast of notificationService.toasts(); track toast.id) {
+  @if (toast.action === 'open-reminder' && toast.sourceId) {
+  <div class="toast toast--clickable" role="button" tabindex="0" [class.toast--success]="toast.type === 'success'"
+    [class.toast--error]="toast.type === 'error'" (click)="notificationService.openReminderFromToast(toast.sourceId)"
+    (keydown.enter)="notificationService.openReminderFromToast(toast.sourceId)"
+    (keydown.space)="$event.preventDefault(); notificationService.openReminderFromToast(toast.sourceId)">
+    <span class="toast__icon">
+      <i class="fa-solid fa-bell"></i>
+    </span>
+    <span class="toast__body">
+      <span class="toast__title">{{ toast.title }}</span>
+      <span class="toast__message">{{ toast.body }}</span>
+    </span>
+    <button type="button" class="toast-close" (click)="$event.stopPropagation(); notificationService.dismissToast(toast.id)"
+      aria-label="Dismiss toast">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  } @else {
+  <div class="toast" [class.toast--success]="toast.type === 'success'" [class.toast--error]="toast.type === 'error'">
+    <span class="toast__icon">
+      <i class="toast-icon fa-solid" [class.fa-circle-check]="toast.type === 'success'"
+        [class.fa-circle-xmark]="toast.type === 'error'" [class.fa-circle-info]="toast.type === 'info'"></i>
+    </span>
+    <span class="toast__body">
+      <span class="toast__title">{{ toast.title }}</span>
+      <span class="toast__message">{{ toast.body }}</span>
+    </span>
+    <button type="button" class="toast-close" (click)="notificationService.dismissToast(toast.id)"
+      aria-label="Dismiss toast">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  }
+  }
+</div>
+
+@if (notificationService.notificationCenterOpen()) {
+<div class="notification-center-overlay" (click)="notificationService.closeNotificationCenter()">
+  <section class="notification-center" (click)="$event.stopPropagation()" role="dialog" aria-modal="true"
+    aria-labelledby="notification-center-title">
+    <header class="notification-center__header">
+      <div class="notification-center__title-wrap">
+        <div class="notification-center__icon" aria-hidden="true">
+          <i class="fa-regular fa-bell"></i>
+        </div>
+        <div class="notification-center__heading">
+          <h2 class="notification-center__title" id="notification-center-title">
+            Notifications
+          </h2>
+          <p class="notification-center__eyebrow">
+            @if (notificationService.unreadCount() > 0) {
+            {{ notificationService.unreadCount() }} unread
+            } @else {
+            All caught up
+            }
+          </p>
+        </div>
+      </div>
+
+      <div class="notification-center__actions">
+        @if (notificationService.unreadCount() > 0) {
+        <button type="button" class="notification-center__mark-read" (click)="notificationService.markAllRead()">
+          Mark all read
+        </button>
+        }
+        <button type="button" class="notification-center__close" (click)="notificationService.closeNotificationCenter()"
+          aria-label="Close notification center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="notification-center__filters" role="tablist" aria-label="Notification filters">
+      <button type="button" class="notification-filter"
+        [class.notification-filter--active]="notificationService.centerFilter() === 'all'"
+        (click)="notificationService.setCenterFilter('all')">
+        All
+        <span class="notification-filter__count">{{ notificationService.notifications().length }}</span>
+      </button>
+      <button type="button" class="notification-filter"
+        [class.notification-filter--active]="notificationService.centerFilter() === 'unread'"
+        (click)="notificationService.setCenterFilter('unread')">
+        Unread
+        <span class="notification-filter__count">{{ notificationService.unreadNotifications().length }}</span>
+      </button>
+      <button type="button" class="notification-filter"
+        [class.notification-filter--active]="notificationService.centerFilter() === 'read'"
+        (click)="notificationService.setCenterFilter('read')">
+        Read
+        <span class="notification-filter__count">{{ notificationService.readNotifications().length }}</span>
+      </button>
+      <button type="button" class="notification-filter"
+        [class.notification-filter--active]="notificationService.centerFilter() === 'reminders'"
+        (click)="notificationService.setCenterFilter('reminders')">
+        Reminders
+        <span class="notification-filter__count">{{ notificationService.reminderNotifications().length }}</span>
+      </button>
+      <button type="button" class="notification-filter"
+        [class.notification-filter--active]="notificationService.centerFilter() === 'confirmations'"
+        (click)="notificationService.setCenterFilter('confirmations')">
+        Confirmations
+        <span class="notification-filter__count">{{ notificationService.confirmationNotifications().length }}</span>
+      </button>
+    </div>
+
+    <div class="notification-center__body">
+      @if (notificationService.visibleNotifications().length === 0) {
+      <div class="notification-empty">
+        <div class="notification-empty__icon" aria-hidden="true">
+          <i class="fa-regular fa-bell"></i>
+        </div>
+        <p class="notification-empty__title">No notifications in this view</p>
+        <p class="notification-empty__body">New reminders, confirmations, and system alerts will appear here.</p>
+      </div>
+      } @else {
+      <div class="notification-list">
+        @for (notification of notificationService.visibleNotifications(); track notification.id) {
+        <button type="button" class="notification-item" [class.notification-item--unread]="!notification.read"
+          (click)="notificationService.openNotification(notification)">
+          <div class="notification-item__icon"
+            [class.notification-item__icon--reminder]="notification.type === 'reminder'"
+            [class.notification-item__icon--confirmation]="notification.type === 'confirmation'"
+            [class.notification-item__icon--appointment]="notification.type === 'appointment'"
+            [class.notification-item__icon--system]="notification.type === 'system'">
+            <i class="fa-solid"
+              [class.fa-bell]="notification.type === 'reminder'"
+              [class.fa-circle-check]="notification.type === 'confirmation'"
+              [class.fa-calendar-check]="notification.type === 'appointment'"
+              [class.fa-circle-info]="notification.type === 'system'"></i>
+          </div>
+
+          <div class="notification-item__content">
+            <div class="notification-item__top">
+              <p class="notification-item__title">{{ notification.title }}</p>
+              <span class="notification-item__time">{{ notification.createdAt | date:'shortTime' }}</span>
+            </div>
+            <p class="notification-item__body">{{ notification.body }}</p>
+            <div class="notification-item__meta">
+              <span class="notification-pill">{{ notification.type }}</span>
+              @if (!notification.read) {
+              <span class="notification-pill notification-pill--unread">Unread</span>
+              }
+            </div>
+          </div>
+        </button>
+        }
+      </div>
+      }
+    </div>
+  </section>
+</div>
+}
+
+@if (notificationService.reminderModalOpen() && notificationService.activeReminder()) {
+<div class="reminder-modal-overlay" (click)="notificationService.dismissReminder()">
+  <section class="reminder-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true"
+    aria-labelledby="reminder-modal-title">
+    <header class="reminder-modal__header">
+      <div class="reminder-modal__icon" aria-hidden="true">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+      <div class="reminder-modal__heading">
+        <p class="reminder-modal__eyebrow">Medication Reminder</p>
+        <h2 class="reminder-modal__title" id="reminder-modal-title">
+          {{ notificationService.activeReminder()!.medicineName }}
+        </h2>
+      </div>
+      <button type="button" class="reminder-modal__close" (click)="notificationService.dismissReminder()"
+        aria-label="Dismiss reminder">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+
+    <div class="reminder-modal__body">
+      <dl class="reminder-details">
+        <div class="reminder-details__row">
+          <dt>Medicine</dt>
+          <dd>{{ notificationService.activeReminder()!.medicineName }}</dd>
+        </div>
+        <div class="reminder-details__row">
+          <dt>Strength</dt>
+          <dd>{{ notificationService.activeReminder()!.strength || 'Not specified' }}</dd>
+        </div>
+        <div class="reminder-details__row">
+          <dt>Reminder Time</dt>
+          <dd>{{ notificationService.activeReminder()!.reminderTime }}</dd>
+        </div>
+      </dl>
+
+      @if (notificationService.activeReminder()!.notificationText) {
+      <p class="reminder-modal__message">
+        {{ notificationService.activeReminder()!.notificationText }}
+      </p>
+      }
+    </div>
+
+    <footer class="reminder-modal__footer">
+      <button type="button" class="reminder-btn reminder-btn--primary"
+        (click)="notificationService.takeCurrentReminder()" [disabled]="notificationService.confirmingReminder()">
+        @if (notificationService.confirmingReminder()) {
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Confirming...
+        } @else {
+        I Took It
+        }
+      </button>
+      <button type="button" class="reminder-btn reminder-btn--secondary"
+        (click)="notificationService.remindMeLater()" [disabled]="notificationService.confirmingReminder()">
+        Remind Me Later
+      </button>
+      <button type="button" class="reminder-btn reminder-btn--ghost"
+        (click)="notificationService.dismissReminder()" [disabled]="notificationService.confirmingReminder()">
+        Dismiss
+      </button>
+    </footer>
+  </section>
+</div>
+}

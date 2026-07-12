@@ -53,7 +53,7 @@ const blankForm = (): ApptForm => ({
 export class Appointments implements OnInit, OnDestroy {
   private readonly authSvc   = inject(AuthService);
   private readonly apptSvc   = inject(AppointmentsService);
-  private readonly notifSvc  = inject(NotificationService);
+  protected readonly notifSvc  = inject(NotificationService);
   private readonly router     = inject(Router);
   private readonly route      = inject(ActivatedRoute);
 

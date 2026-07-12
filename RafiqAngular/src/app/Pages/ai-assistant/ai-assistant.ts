@@ -32,7 +32,7 @@ const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 })
 export class AiAssistant implements OnInit {
   private readonly authService = inject(AuthService);
-  private readonly notifService = inject(NotificationService);
+  protected readonly notifService = inject(NotificationService);
   private readonly healthProfileService = inject(HealthProfileService);
   private readonly aiChatService = inject(AiChatService);
   private readonly router = inject(Router);

@@ -1,0 +1,71 @@
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
+using Rafiq.Application.Common.Interfaces;
+
+namespace Rafiq.Infrastructure.Services.Notifications
+{
+    public class SignalRNotificationService : INotificationService
+    {
+        private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IConnectionManager _connectionManager;
+        private readonly ILogger<SignalRNotificationService> _logger;
+
+        public SignalRNotificationService(
+            IHubContext<NotificationHub> hubContext,
+            IConnectionManager connectionManager,
+            ILogger<SignalRNotificationService> logger)
+        {
+            _hubContext = hubContext;
+            _connectionManager = connectionManager;
+            _logger = logger;
+        }
+
+        public async Task SendNotificationToUserAsync(
+            string userId,
+            string title,
+            string message,
+            CancellationToken cancellationToken = default)
+        {
+            await _hubContext.Clients.User(userId).SendAsync(
+                "ReceiveNotification",
+                title,
+                message,
+                cancellationToken);
+        }
+
+        public async Task SendMedicationReminderAsync(
+            string userId,
+            MedicationReminderNotificationPayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var connections = _connectionManager.GetConnections(userId);
+            var connectionList = connections as System.Collections.Generic.IReadOnlyList<string>
+                                 ?? new System.Collections.Generic.List<string>(connections);
+
+            _logger.LogInformation(
+                "SendMedicationReminderAsync: userId={UserId}, connectionsFound={Count}, knownUserIds=[{Known}]",
+                userId,
+                connectionList.Count,
+                string.Join(", ", _connectionManager.GetTrackedUserIds()));
+
+            if (connectionList.Count == 0)
+            {
+                _logger.LogWarning(
+                    "No SignalR connections registered for userId={UserId}. MedicationReminderDue NOT sent.",
+                    userId);
+                return;
+            }
+
+            await _hubContext.Clients.Clients(connectionList).SendAsync(
+                "MedicationReminderDue",
+                payload,
+                cancellationToken);
+
+            _logger.LogInformation(
+                "MedicationReminderDue sent to userId={UserId} over {Count} connection(s).",
+                userId, connectionList.Count);
+        }
+    }
+}

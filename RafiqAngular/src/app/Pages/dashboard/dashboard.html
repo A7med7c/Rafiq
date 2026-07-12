@@ -40,14 +40,17 @@
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
         <span>Appointments</span>
       </a>
+
       <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
         <span>AI Assistant</span>
       </a>
-      <a class="sb-link" href="#">
+
+      <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>Medications &amp; Reminders</span>
       </a>
+
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
         <span>Analytics</span>
@@ -101,7 +104,8 @@
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           Ask AI
         </button>
-        <button type="button" class="hdr-bell">
+        <button type="button" class="hdr-bell" (click)="notifService.toggleNotificationCenter()"
+          [class.hdr-bell--active]="notifService.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
           @if (unreadNotifCount() > 0) {
           <span class="hdr-badge">{{ unreadNotifCount() }}</span>
@@ -282,7 +286,8 @@
           </div>
           } @else {
           <div style="padding:16px 0;text-align:center;color:var(--text-3);font-size:13px">
-            <i class="fa-regular fa-calendar" style="font-size:24px;display:block;margin-bottom:8px;color:var(--text-4)"></i>
+            <i class="fa-regular fa-calendar"
+              style="font-size:24px;display:block;margin-bottom:8px;color:var(--text-4)"></i>
             No upcoming appointments
           </div>
           }
@@ -499,7 +504,7 @@
         <div class="card">
           <div class="bot-card-hdr">
             <span class="bot-card-title">Medications &amp; Reminders</span>
-            <a href="#" class="link-sm">View all</a>
+            <a routerLink="/medications" class="link-sm">View all</a>
           </div>
 
           @if (remindersLoading()) {
