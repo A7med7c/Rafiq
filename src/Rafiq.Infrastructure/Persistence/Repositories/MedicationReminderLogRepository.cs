@@ -29,10 +29,13 @@ public async Task<MedicationReminderLog?> GetByIdWithDetailsAsync(Guid id, Cance
 
 public async Task<bool> ExistsForDateAsync(Guid medicineReminderId, DateOnly date, CancellationToken cancellationToken = default)
 {
+    // A Cancelled stage-1 log (e.g. superseded by an edit) does not count as "already
+    // scheduled" — otherwise a reminder update could never recreate today's schedule.
     return await context.MedicationReminderLogs
         .AnyAsync(x => x.MedicineReminderId == medicineReminderId
                     && x.ScheduledDate == date
-                    && x.ReminderNumber == 1,
+                    && x.ReminderNumber == 1
+                    && x.Status != MedicationReminderStatus.Cancelled,
             cancellationToken);
 }
 

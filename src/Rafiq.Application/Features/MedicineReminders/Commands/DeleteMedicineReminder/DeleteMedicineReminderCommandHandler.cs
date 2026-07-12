@@ -11,6 +11,9 @@ public sealed class DeleteMedicineReminderCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
     IMedicineReminderRepository medicineReminderRepository,
+    IMedicationReminderLogRepository logRepository,
+    IMedicationReminderScheduler scheduler,
+    IDateTimeProvider dateTimeProvider,
     IUnitOfWork unitOfWork)
     : IRequestHandler<DeleteMedicineReminderCommand, ApiResponse<bool>>
 {
@@ -25,6 +28,21 @@ public sealed class DeleteMedicineReminderCommandHandler(
             ?? throw new NotFoundException(nameof(UserMedicine), reminder.UserMedicineId);
 
         await authorizationService.EnsureCanWriteAsync(userMedicine.UserHealthProfileId, cancellationToken);
+
+        // A deleted reminder must never notify again: cancel every not-yet-fired Hangfire job
+        // for today and mark those logs Cancelled before the reminder itself is soft-deleted.
+        var today = dateTimeProvider.Today;
+        var pendingLogs = await logRepository.GetPendingSubsequentLogsAsync(
+            reminder.Id, today, afterReminderNumber: 0, cancellationToken);
+
+        foreach (var pendingLog in pendingLogs)
+        {
+            if (pendingLog.NextJobId is not null)
+                scheduler.CancelJob(pendingLog.NextJobId);
+
+            pendingLog.Cancel();
+            logRepository.Update(pendingLog);
+        }
 
         medicineReminderRepository.Delete(reminder);
         await unitOfWork.SaveChangesAsync(cancellationToken);

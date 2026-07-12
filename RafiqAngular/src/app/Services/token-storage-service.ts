@@ -43,6 +43,10 @@ export class TokenStorageService {
     }
   }
 
+  markEmergencyCompleted(): void {
+    localStorage.setItem('hasEmergencyContacts', 'true');
+  }
+
   clear(): void {
     localStorage.removeItem(this.accessTokenKey);
     localStorage.removeItem(this.refreshTokenKey);

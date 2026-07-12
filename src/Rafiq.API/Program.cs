@@ -1,5 +1,6 @@
 
 using Hangfire;
+using Hangfire.Dashboard;
 using Rafiq.API.Extensions;
 using Rafiq.API.Middleware;
 using Rafiq.Application;
@@ -69,7 +70,10 @@ public class Program
         app.MapHub<NotificationHub>("/hubs/notifications");
         app.MapHealthChecks("/health");
 
-        app.UseHangfireDashboard("/hangfire");
+        app.UseHangfireDashboard("/hangfire", new DashboardOptions
+        {
+            Authorization = new[] { new HangfireDashboardAuthorizationFilter() }
+        });
 
         // Sweep runs at 00:05 in the reminder timezone, so "today" means the same thing
         // here as it does inside the scheduling service.

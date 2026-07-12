@@ -24,7 +24,7 @@ interface Toast {
 @Component({
   selector: 'app-appointments-content',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule],
   templateUrl: './appointments-content.html',
   styleUrl: '../../Pages/appointments/appointments.css',
   encapsulation: ViewEncapsulation.None
@@ -34,23 +34,23 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   @Input() compact = false;
   @Input() readOnly = false;
 
-  private readonly apptSvc   = inject(AppointmentsService);
-  private readonly notifSvc  = inject(NotificationService);
-  private readonly router     = inject(Router);
-  private readonly route      = inject(ActivatedRoute);
+  private readonly apptSvc = inject(AppointmentsService);
+  private readonly notifSvc = inject(NotificationService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   // ── Data ─────────────────────────────────────────────────────────────────
   readonly appointments = signal<AppointmentDto[]>([]);
-  readonly loading      = signal(true);
-  readonly loadError    = signal<string | null>(null);
+  readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
 
   // ── Filters ──────────────────────────────────────────────────────────────
-  readonly activeTab   = signal<ApptTab>('all');
+  readonly activeTab = signal<ApptTab>('all');
   readonly searchQuery = signal('');
-  readonly dateFrom    = signal('');
-  readonly dateTo      = signal('');
+  readonly dateFrom = signal('');
+  readonly dateTo = signal('');
   readonly currentPage = signal(1);
-  readonly PAGE_SIZE    = 5;
+  readonly PAGE_SIZE = 5;
   readonly tabDirection = signal<'left' | 'right'>('left');
   readonly tabAnimating = signal(false);
 
@@ -59,50 +59,50 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   // ── Add / Edit modal ──────────────────────────────────────────────────────
   readonly showAddModal = signal(false);
-  readonly editingId    = signal<string | null>(null);
-  readonly formStep     = signal<1 | 2>(1);
+  readonly editingId = signal<string | null>(null);
+  readonly formStep = signal<1 | 2>(1);
   // form fields as individual signals for clean ngModel binding
-  readonly fType        = signal<AppointmentType | null>(null);
-  readonly fCustomType  = signal('');
-  readonly fTitle       = signal('');
-  readonly fProvider    = signal('');
-  readonly fDate        = signal('');
-  readonly fTime        = signal('');
-  readonly fReminder    = signal<number | null>(30);
+  readonly fType = signal<AppointmentType | null>(null);
+  readonly fCustomType = signal('');
+  readonly fTitle = signal('');
+  readonly fProvider = signal('');
+  readonly fDate = signal('');
+  readonly fTime = signal('');
+  readonly fReminder = signal<number | null>(30);
   readonly fCustomReminder = signal<number | null>(null);
   readonly customReminderSelected = signal(false);
-  readonly fNotes       = signal('');
-  readonly formErrors   = signal<Record<string, string>>({});
-  readonly submitting   = signal(false);
+  readonly fNotes = signal('');
+  readonly formErrors = signal<Record<string, string>>({});
+  readonly submitting = signal(false);
 
   // ── View modal ────────────────────────────────────────────────────────────
   readonly showViewModal = signal(false);
-  readonly viewingAppt   = signal<AppointmentDto | null>(null);
+  readonly viewingAppt = signal<AppointmentDto | null>(null);
 
   // ── Delete modal ──────────────────────────────────────────────────────────
   readonly showDeleteModal = signal(false);
-  readonly deletingId      = signal<string | null>(null);
-  readonly deleting        = signal(false);
+  readonly deletingId = signal<string | null>(null);
+  readonly deleting = signal(false);
 
   // ── Cancel modal ──────────────────────────────────────────────────────────
   readonly showCancelModal = signal(false);
-  readonly cancellingId    = signal<string | null>(null);
-  readonly cancelling      = signal(false);
+  readonly cancellingId = signal<string | null>(null);
+  readonly cancelling = signal(false);
 
   // ── Toasts ───────────────────────────────────────────────────────────────
   private toastSeq = 0;
-  readonly toasts  = signal<Toast[]>([]);
+  readonly toasts = signal<Toast[]>([]);
 
   // ── Notification timer ────────────────────────────────────────────────────
   private notifTimer?: ReturnType<typeof setInterval>;
-  private firedIds   = new Set<string>();
+  private firedIds = new Set<string>();
 
   // ── Expose enums / constants to template ─────────────────────────────────
-  readonly AppointmentType   = AppointmentType;
+  readonly AppointmentType = AppointmentType;
   readonly AppointmentStatus = AppointmentStatus;
-  readonly TYPE_LABELS       = APPOINTMENT_TYPE_LABELS;
-  readonly TYPE_ICONS        = APPOINTMENT_TYPE_ICONS;
-  readonly ALL_TYPES         = [
+  readonly TYPE_LABELS = APPOINTMENT_TYPE_LABELS;
+  readonly TYPE_ICONS = APPOINTMENT_TYPE_ICONS;
+  readonly ALL_TYPES = [
     AppointmentType.DoctorVisit,
     AppointmentType.LabTest,
     AppointmentType.Imaging,
@@ -114,10 +114,10 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   ] as const;
 
   readonly REMINDER_OPTIONS = [
-    { value: 15,   label: '15 minutes before' },
-    { value: 30,   label: '30 minutes before' },
-    { value: 60,   label: '1 hour before' },
-    { value: 120,  label: '2 hours before' },
+    { value: 15, label: '15 minutes before' },
+    { value: 30, label: '30 minutes before' },
+    { value: 60, label: '1 hour before' },
+    { value: 120, label: '2 hours before' },
     { value: 1440, label: '1 day before' },
   ];
 
@@ -127,18 +127,18 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   );
 
   // ── Computed ──────────────────────────────────────────────────────────────
-  readonly upcomingCount   = computed(() =>
+  readonly upcomingCount = computed(() =>
     this.appointments().filter(a => a.status === AppointmentStatus.Upcoming).length
   );
-  readonly completedCount  = computed(() =>
+  readonly completedCount = computed(() =>
     this.appointments().filter(a => a.status === AppointmentStatus.Completed).length
   );
-  readonly cancelledCount  = computed(() =>
+  readonly cancelledCount = computed(() =>
     this.appointments().filter(
       a => a.status === AppointmentStatus.Cancelled || a.status === AppointmentStatus.Missed
     ).length
   );
-  readonly totalCount      = computed(() => this.appointments().length);
+  readonly totalCount = computed(() => this.appointments().length);
 
   readonly nextAppointment = computed(() => {
     const now = Date.now();
@@ -150,12 +150,12 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   readonly filtered = computed(() => {
     let list = this.appointments();
-    const tab  = this.activeTab();
-    const q    = this.searchQuery().toLowerCase().trim();
+    const tab = this.activeTab();
+    const q = this.searchQuery().toLowerCase().trim();
     const from = this.dateFrom();
-    const to   = this.dateTo();
+    const to = this.dateTo();
 
-    if (tab === 'upcoming')  list = list.filter(a => a.status === AppointmentStatus.Upcoming);
+    if (tab === 'upcoming') list = list.filter(a => a.status === AppointmentStatus.Upcoming);
     if (tab === 'completed') list = list.filter(a => a.status === AppointmentStatus.Completed);
     if (tab === 'cancelled') list = list.filter(
       a => a.status === AppointmentStatus.Cancelled || a.status === AppointmentStatus.Missed
@@ -170,7 +170,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     }
 
     if (from) list = list.filter(a => new Date(a.appointmentDateTime) >= new Date(from));
-    if (to)   list = list.filter(a => new Date(a.appointmentDateTime) <= new Date(`${to}T23:59:59`));
+    if (to) list = list.filter(a => new Date(a.appointmentDateTime) <= new Date(`${to}T23:59:59`));
 
     return list.sort(
       (a, b) => new Date(a.appointmentDateTime).getTime() - new Date(b.appointmentDateTime).getTime()
@@ -283,8 +283,8 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     this.loading.set(true);
     this.loadError.set(null);
     this.apptSvc.getAll(this.profileId).subscribe({
-      next:  data => { this.appointments.set(data); this.loading.set(false); },
-      error: err  => {
+      next: data => { this.appointments.set(data); this.loading.set(false); },
+      error: err => {
         this.loadError.set(
           err?.error?.message ?? 'Could not load appointments. Please try again.'
         );
@@ -459,10 +459,10 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     if (this.fType() === AppointmentType.Other && !this.fCustomType().trim()) {
       errs['customType'] = 'Please describe the appointment type.';
     }
-    if (!this.fTitle().trim())    errs['title']    = 'Title is required.';
+    if (!this.fTitle().trim()) errs['title'] = 'Title is required.';
     if (!this.fProvider().trim()) errs['provider'] = 'Provider name is required.';
-    if (!this.fDate())            errs['date']     = 'Date is required.';
-    if (!this.fTime())            errs['time']     = 'Time is required.';
+    if (!this.fDate()) errs['date'] = 'Date is required.';
+    if (!this.fTime()) errs['time'] = 'Time is required.';
     if (this.fDate() && this.fTime()) {
       const sel = new Date(`${this.fDate()}T${this.fTime()}`);
       if (sel <= new Date()) errs['date'] = 'Appointment must be scheduled in the future.';
@@ -486,17 +486,17 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     if (!this.validate()) return;
     const dt = new Date(`${this.fDate()}T${this.fTime()}`);
     const body: CreateAppointmentRequest = {
-      appointmentType:        this.fType()!,
-      customType:             this.fType() === AppointmentType.Other ? this.fCustomType().trim() : undefined,
-      title:                  this.fTitle().trim(),
-      provider:               this.fProvider().trim(),
+      appointmentType: this.fType()!,
+      customType: this.fType() === AppointmentType.Other ? this.fCustomType().trim() : undefined,
+      title: this.fTitle().trim(),
+      provider: this.fProvider().trim(),
       appointmentDateTime: `${this.fDate()}T${this.fTime()}:00`,
-      reminderOffsetMinutes:  this.getReminderOffset() ?? undefined,
-      notes:                  this.fNotes().trim() || undefined,
+      reminderOffsetMinutes: this.getReminderOffset() ?? undefined,
+      notes: this.fNotes().trim() || undefined,
     };
 
     this.submitting.set(true);
-    const id  = this.editingId();
+    const id = this.editingId();
     const op$ = id
       ? this.apptSvc.update(id, body as UpdateAppointmentRequest)
       : this.apptSvc.create(body, this.profileId);
@@ -539,7 +539,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     if (!id) return;
     this.deleting.set(true);
     this.apptSvc.delete(id).subscribe({
-      next:  ()  => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast('Appointment deleted.', 'success'); this.deleting.set(false); this.closeDelete(); },
+      next: () => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast('Appointment deleted.', 'success'); this.deleting.set(false); this.closeDelete(); },
       error: err => { this.toast(err?.error?.message ?? 'Delete failed.', 'error'); this.deleting.set(false); this.closeDelete(); },
     });
   }
@@ -552,16 +552,16 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     if (!id) return;
     this.cancelling.set(true);
     this.apptSvc.cancel(id).subscribe({
-      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Appointment cancelled.', 'success'); this.cancelling.set(false); this.closeCancel(); },
-      error: err   => { this.toast(err?.error?.message ?? 'Cancel failed.', 'error'); this.cancelling.set(false); this.closeCancel(); },
+      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Appointment cancelled.', 'success'); this.cancelling.set(false); this.closeCancel(); },
+      error: err => { this.toast(err?.error?.message ?? 'Cancel failed.', 'error'); this.cancelling.set(false); this.closeCancel(); },
     });
   }
 
   // ── Complete ──────────────────────────────────────────────────────────────
   markComplete(id: string): void {
     this.apptSvc.complete(id).subscribe({
-      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Marked as completed.', 'success'); },
-      error: err   => { this.toast(err?.error?.message ?? 'Failed.', 'error'); },
+      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Marked as completed.', 'success'); },
+      error: err => { this.toast(err?.error?.message ?? 'Failed.', 'error'); },
     });
   }
 
@@ -576,8 +576,8 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
           this.firedIds.add(a.id);
           this.notifSvc.push({
             title: 'Appointment Starting Now',
-            body:  `${a.title} with ${a.provider}`,
-            type:  'appointment',
+            body: `${a.title} with ${a.provider}`,
+            type: 'appointment',
           });
         }
       });
@@ -604,7 +604,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   relativeDate(dt: string): string {
     const diff = Math.ceil((new Date(dt).getTime() - Date.now()) / 86_400_000);
-    if (diff < 0)  return `${Math.abs(diff)}d ago`;
+    if (diff < 0) return `${Math.abs(diff)}d ago`;
     if (diff === 0) return 'Today';
     if (diff === 1) return 'Tomorrow';
     return `In ${diff} days`;
@@ -620,13 +620,17 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   }
 
   statusLabel(s: AppointmentStatus): string {
-    return { [AppointmentStatus.Upcoming]: 'Upcoming', [AppointmentStatus.Completed]: 'Completed',
-             [AppointmentStatus.Cancelled]: 'Cancelled', [AppointmentStatus.Missed]: 'Missed' }[s] ?? '';
+    return {
+      [AppointmentStatus.Upcoming]: 'Upcoming', [AppointmentStatus.Completed]: 'Completed',
+      [AppointmentStatus.Cancelled]: 'Cancelled', [AppointmentStatus.Missed]: 'Missed'
+    }[s] ?? '';
   }
 
   statusClass(s: AppointmentStatus): string {
-    return { [AppointmentStatus.Upcoming]: 'pill pill-blue-sm', [AppointmentStatus.Completed]: 'pill pill-green-sm',
-             [AppointmentStatus.Cancelled]: 'pill pill-red-sm', [AppointmentStatus.Missed]: 'pill pill-yellow-sm' }[s] ?? 'pill';
+    return {
+      [AppointmentStatus.Upcoming]: 'pill pill-blue-sm', [AppointmentStatus.Completed]: 'pill pill-green-sm',
+      [AppointmentStatus.Cancelled]: 'pill pill-red-sm', [AppointmentStatus.Missed]: 'pill pill-yellow-sm'
+    }[s] ?? 'pill';
   }
 
   pageEnd(): number {

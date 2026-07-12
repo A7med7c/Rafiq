@@ -1,4 +1,6 @@
 using Hangfire;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Rafiq.Application.Common.Interfaces;
@@ -25,6 +27,9 @@ public sealed class MedicationSchedulingService(
 {
     private readonly TimeSpan _lateGrace = TimeSpan.FromMinutes(options.Value.LateGraceMinutes);
 
+    // The three fixed stages every reminder occurrence must produce, relative to ReminderTime.
+    private const int StageOffsetMinutes = 10;
+
     public async Task<bool> ScheduleTodayIfApplicableAsync(
         MedicineReminder reminder,
         CancellationToken cancellationToken = default)
@@ -50,55 +55,120 @@ public sealed class MedicationSchedulingService(
             return false;
         }
 
-        var scheduledUtc = dateTimeProvider.ToUtc(today, reminder.ReminderTime);
-        var delay = scheduledUtc - dateTimeProvider.UtcNow;
+        // The "at time" instant anchors all three stages; ±10 minutes is applied to the
+        // absolute UTC instant (not the wall-clock TimeSpan) so a reminder near midnight
+        // doesn't produce an out-of-range time-of-day.
+        var anchorUtc = dateTimeProvider.ToUtc(today, reminder.ReminderTime);
 
-        // Every dose planned for today gets a log, even one whose time has already gone.
-        // Today's Schedule, adherence and history must show the whole day, not just its future.
-        var log = new MedicationReminderLog(
-            reminder.Id,
-            profileId.Value,
-            today,
-            reminder.ReminderTime,
-            reminderNumber: 1);
-
-        // Past the grace window there is no point notifying — the dose is simply recorded
-        // as missed. Inside it (or still ahead), the reminder is delivered as normal.
-        var notify = delay >= -_lateGrace;
-
-        if (!notify)
-            log.MarkAsOverdue();
-
-        await logRepository.AddAsync(log, cancellationToken);
-
-        // The log must be committed before any job is queued: with a zero delay Hangfire can
-        // run MedicationReminderJob immediately, and it looks the log up by id.
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        if (!notify)
+        var stageDefinitions = new (int ReminderNumber, TimeSpan Offset)[]
         {
-            logger.LogInformation(
-                "Recorded reminder {ReminderId} (log {LogId}) as Overdue: it was due at {ScheduledUtc:o}, beyond the {Grace} grace window. No notification sent.",
-                reminder.Id, log.Id, scheduledUtc, _lateGrace);
+            (1, TimeSpan.FromMinutes(-StageOffsetMinutes)),
+            (2, TimeSpan.Zero),
+            (3, TimeSpan.FromMinutes(StageOffsetMinutes)),
+        };
 
-            return true;
+        // Every dose planned for today gets all three stage logs, even ones whose time has
+        // already gone. Today's Schedule, adherence and history must show the whole day, not
+        // just its future.
+        var stages = new List<(MedicationReminderLog Log, DateTime ScheduledUtc, bool Notify)>();
+
+        foreach (var (reminderNumber, offset) in stageDefinitions)
+        {
+            var stageUtc = anchorUtc + offset;
+            var delay = stageUtc - dateTimeProvider.UtcNow;
+
+            // Past the grace window there is no point notifying — the dose is simply recorded
+            // as missed. Inside it (or still ahead), the reminder is delivered as normal.
+            var notify = delay >= -_lateGrace;
+
+            var log = new MedicationReminderLog(
+                reminder.Id,
+                profileId.Value,
+                today,
+                ClampToDay(reminder.ReminderTime + offset),
+                reminderNumber);
+
+            if (!notify)
+                log.MarkAsOverdue();
+
+            await logRepository.AddAsync(log, cancellationToken);
+            stages.Add((log, stageUtc, notify));
         }
 
-        if (delay < TimeSpan.Zero)
-            delay = TimeSpan.Zero;
+        // All three logs must be committed before any job is queued: with a zero delay
+        // Hangfire can run MedicationReminderJob immediately, and it looks the log up by id.
+        //
+        // ExistsForDateAsync above is only an optimistic pre-check — it can't stop two
+        // concurrent callers (e.g. the daily sweep racing a manual create) from both passing
+        // it and both reaching this insert. The unique filtered index on
+        // (MedicineReminderId, ScheduledDate, ReminderNumber) is the actual guarantee: the
+        // loser's insert fails here, and that failure is the signal that someone else already
+        // scheduled this occurrence — not a real error, so no jobs get queued for it.
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+        {
+            logger.LogInformation(
+                "Reminder {ReminderId} was scheduled for {Date} by a concurrent request; skipping duplicate.",
+                reminder.Id, today);
+            return false;
+        }
 
-        backgroundJobClient.Schedule<MedicationReminderJob>(
-            job => job.ExecuteAsync(log.Id),
-            delay);
+        foreach (var (log, scheduledUtc, notify) in stages)
+        {
+            if (!notify)
+            {
+                logger.LogInformation(
+                    "Recorded reminder {ReminderId} stage #{Number} (log {LogId}) as Overdue: it was due at {ScheduledUtc:o}, beyond the {Grace} grace window. No notification scheduled.",
+                    reminder.Id, log.ReminderNumber, log.Id, scheduledUtc, _lateGrace);
+                continue;
+            }
+
+            var delay = scheduledUtc - dateTimeProvider.UtcNow;
+            if (delay < TimeSpan.Zero)
+                delay = TimeSpan.Zero;
+
+            var jobId = backgroundJobClient.Schedule<MedicationReminderJob>(
+                job => job.ExecuteAsync(log.Id),
+                delay);
+
+            log.SetNextJobId(jobId);
+            logRepository.Update(log);
+
+            logger.LogInformation(
+                "Scheduled reminder {ReminderId} stage #{Number} (log {LogId}) for {ScheduledUtc:o} (in {Delay}).",
+                reminder.Id, log.ReminderNumber, log.Id, scheduledUtc, delay);
+        }
 
         reminder.RecordTrigger();
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        logger.LogInformation(
-            "Scheduled reminder {ReminderId} (log {LogId}) for {ScheduledUtc:o} (in {Delay}).",
-            reminder.Id, log.Id, scheduledUtc, delay);
-
         return true;
+    }
+
+    /// <summary>
+    /// SQL Server error 2601 (unique index) / 2627 (unique constraint) — the two codes a
+    /// violation of the unique filtered index on MedicationReminderLogs can surface as.
+    /// </summary>
+    private static bool IsUniqueConstraintViolation(DbUpdateException ex) =>
+        ex.InnerException is SqlException { Number: 2601 or 2627 };
+
+    /// <summary>
+    /// SQL Server's <c>time</c> column only holds 00:00:00 through 23:59:59.9999999 — a stage
+    /// offset can't be stored as a raw TimeSpan if it wraps past midnight. The persisted
+    /// <see cref="MedicationReminderLog.ScheduledTime"/> is clamped to the edge of the day in
+    /// that rare case; the actual delivery instant (computed from the UTC anchor above) is
+    /// unaffected and still fires exactly 10 minutes before/after the reminder time.
+    /// </summary>
+    private static TimeSpan ClampToDay(TimeSpan time)
+    {
+        if (time < TimeSpan.Zero)
+            return TimeSpan.Zero;
+
+        var oneDay = TimeSpan.FromDays(1);
+        return time >= oneDay ? oneDay - TimeSpan.FromTicks(1) : time;
     }
 
     /// <summary>

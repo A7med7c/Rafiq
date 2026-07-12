@@ -2,6 +2,7 @@ using Hangfire;
 using Microsoft.Extensions.Logging;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Domain.Entities.Documents;
+using Rafiq.Domain.Enums;
 using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Infrastructure.Services.MedicationReminders;
@@ -9,13 +10,9 @@ namespace Rafiq.Infrastructure.Services.MedicationReminders;
 public sealed class MedicationReminderJob(
     IMedicationReminderLogRepository logRepository,
     IUnitOfWork unitOfWork,
-    IBackgroundJobClient backgroundJobClient,
     INotificationService notificationService,
     ILogger<MedicationReminderJob> logger)
 {
-    private const int MaxReminderNumber = 3;
-    private const int MinutesBetweenReminders = 10;
-
     [AutomaticRetry(Attempts = 0)]
     public async Task ExecuteAsync(Guid logId)
     {
@@ -33,6 +30,38 @@ public sealed class MedicationReminderJob(
             "ReminderLog loaded: status={Status}, reminderNumber={Number}, profileId={ProfileId}, userId={UserId}",
             log.Status, log.ReminderNumber, log.UserHealthProfileId, log.UserHealthProfile?.UserId);
 
+        var reminder = log.MedicineReminder;
+
+        if (reminder is null)
+        {
+            logger.LogWarning(
+                "MedicineReminder for log {LogId} not found. Skipping.", logId);
+            return;
+        }
+
+        if (reminder.IsDeleted)
+        {
+            logger.LogInformation(
+                "MedicineReminder {ReminderId} has been deleted. Skipping log {LogId}.",
+                reminder.Id, logId);
+            return;
+        }
+
+        if (!reminder.IsEnabled)
+        {
+            logger.LogInformation(
+                "MedicineReminder {ReminderId} is disabled. Skipping log {LogId}.",
+                reminder.Id, logId);
+            return;
+        }
+
+        if (log.Status == MedicationReminderStatus.Cancelled)
+        {
+            logger.LogInformation(
+                "MedicationReminderLog {LogId} is cancelled. Skipping.", logId);
+            return;
+        }
+
         if (log.IsCompleted)
         {
             logger.LogInformation(
@@ -47,25 +76,8 @@ public sealed class MedicationReminderJob(
 
         log.MarkAsSent();
 
-        if (log.ReminderNumber < MaxReminderNumber)
-        {
-            var nextLog = new MedicationReminderLog(
-                log.MedicineReminderId,
-                log.UserHealthProfileId,
-                log.ScheduledDate,
-                log.ScheduledTime,
-                log.ReminderNumber + 1);
-
-            await logRepository.AddAsync(nextLog, CancellationToken.None);
-
-            // Schedule next reminder; ID is available because it's set in constructor
-            var nextJobId = backgroundJobClient.Schedule<MedicationReminderJob>(
-                job => job.ExecuteAsync(nextLog.Id),
-                TimeSpan.FromMinutes(MinutesBetweenReminders));
-
-            log.SetNextJobId(nextJobId);
-        }
-
+        // All three stages are scheduled up front by MedicationSchedulingService — this job
+        // only delivers the stage it was given, it never creates or schedules another one.
         logRepository.Update(log);
         await unitOfWork.SaveChangesAsync(CancellationToken.None);
 

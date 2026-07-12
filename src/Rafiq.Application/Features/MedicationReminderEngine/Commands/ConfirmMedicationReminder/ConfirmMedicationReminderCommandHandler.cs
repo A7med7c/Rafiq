@@ -29,14 +29,15 @@ public sealed class ConfirmMedicationReminderCommandHandler(
         if (log.Status == MedicationReminderStatus.Cancelled)
             throw new BadRequestException("This reminder has been cancelled and cannot be confirmed.");
 
-        // Cancel the next scheduled job (Reminder #N+1) if one was queued
+        // Cancel this stage's own job, in case it was confirmed before it fired
         if (log.NextJobId is not null)
             scheduler.CancelJob(log.NextJobId);
 
         log.MarkAsConfirmed();
         logRepository.Update(log);
 
-        // Mark any pending subsequent logs for the same schedule+day as Cancelled
+        // Every remaining stage (all three are scheduled up front) must be cancelled: both
+        // its Hangfire job and its log, so nothing further can send or be re-triggered.
         var pendingNext = await logRepository.GetPendingSubsequentLogsAsync(
             log.MedicineReminderId,
             log.ScheduledDate,
@@ -45,6 +46,9 @@ public sealed class ConfirmMedicationReminderCommandHandler(
 
         foreach (var pending in pendingNext)
         {
+            if (pending.NextJobId is not null)
+                scheduler.CancelJob(pending.NextJobId);
+
             pending.Cancel();
             logRepository.Update(pending);
         }

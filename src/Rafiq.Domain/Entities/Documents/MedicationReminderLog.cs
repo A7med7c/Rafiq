@@ -32,7 +32,8 @@ public class MedicationReminderLog : BaseEntity
     public DateTime? SentAt { get; private set; }
     public DateTime? ConfirmedAt { get; private set; }
 
-    // Hangfire job ID of the NEXT scheduled reminder — stored so it can be cancelled on confirmation
+    // Hangfire job ID of THIS stage's own scheduled delivery job — stored so it can be
+    // cancelled if the reminder is confirmed before this stage fires.
     public string? NextJobId { get; private set; }
 
     public virtual MedicineReminder MedicineReminder { get; private set; } = null!;

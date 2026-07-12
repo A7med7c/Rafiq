@@ -12,6 +12,10 @@ public sealed class UpdateMedicineReminderCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
     IMedicineReminderRepository medicineReminderRepository,
+    IMedicationReminderLogRepository logRepository,
+    IMedicationReminderScheduler scheduler,
+    IMedicationSchedulingService medicationSchedulingService,
+    IDateTimeProvider dateTimeProvider,
     IUnitOfWork unitOfWork)
     : IRequestHandler<UpdateMedicineReminderCommand, ApiResponse<MedicineReminderResponseDto>>
 {
@@ -27,7 +31,7 @@ public sealed class UpdateMedicineReminderCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(userMedicine.UserHealthProfileId, cancellationToken);
 
-        if (request.StartDate != reminder.StartDate && request.StartDate < DateOnly.FromDateTime(DateTime.UtcNow))
+        if (request.StartDate != reminder.StartDate && request.StartDate < dateTimeProvider.Today)
         {
             throw new ValidationException(new[] { "StartDate cannot be before today's date when modifying it." });
         }
@@ -46,9 +50,29 @@ public sealed class UpdateMedicineReminderCommandHandler(
             throw new ValidationException(new[] { "A reminder with the same details already exists." });
         }
 
+        // Cancel every not-yet-fired stage scheduled today under the OLD time/dates/repeat type.
+        // The user must never receive a reminder computed from a schedule that no longer applies.
+        var today = dateTimeProvider.Today;
+        var pendingLogs = await logRepository.GetPendingSubsequentLogsAsync(
+            reminder.Id, today, afterReminderNumber: 0, cancellationToken);
+
+        foreach (var pendingLog in pendingLogs)
+        {
+            if (pendingLog.NextJobId is not null)
+                scheduler.CancelJob(pendingLog.NextJobId);
+
+            pendingLog.Cancel();
+            logRepository.Update(pendingLog);
+        }
+
+        // Recalculate the reminder's own time/dates/repeat type.
         reminder.UpdateDetails(request.ReminderTime, request.StartDate, request.EndDate, request.RepeatType);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Recreate today's schedule from the new details: three fresh logs, three fresh jobs,
+        // computed from the recalculated reminder time.
+        await medicationSchedulingService.ScheduleTodayIfApplicableAsync(reminder, cancellationToken);
 
         var dto = new MedicineReminderResponseDto
         {
