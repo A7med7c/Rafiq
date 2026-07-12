@@ -140,7 +140,7 @@
           </div>
         </div>
         <div class="fp-title-actions">
-          <button type="button" class="fp-invitations-btn" (click)="showInvitationsPanel.set(true)">
+          <button type="button" class="fp-invitations-btn" (click)="showInvitationsPanel.set(true); loadSentInvitations()">
             <i class="fa-regular fa-envelope"></i>
             Invitations
             @if (pendingCount() > 0) {
@@ -266,9 +266,22 @@
               <i class="fa-solid fa-pen"></i> Edit Profile
             </button>
             }
-            <button type="button" class="fp-menu-btn">
-              <i class="fa-solid fa-ellipsis-vertical"></i>
-            </button>
+            <div class="fp-menu-wrap">
+              <button type="button" class="fp-menu-btn" (click)="$event.stopPropagation(); toggleProfileMenu()">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+              </button>
+              @if (showProfileMenu()) {
+              <div class="fp-menu-dropdown">
+                @if (selectedProfile()?.profileType === 'Managed') {
+                <button type="button" class="fp-menu-dropdown-item fp-menu-dropdown-item--danger"
+                  (click)="openDeleteProfileConfirm()">
+                  <i class="fa-solid fa-trash"></i>
+                  Delete Family Member
+                </button>
+                }
+              </div>
+              }
+            </div>
           </div>
         </div>
 
@@ -827,11 +840,12 @@
           <input class="fp-input" type="text" [(ngModel)]="editForm.lastName">
         </div>
       </div>
-      <div class="fp-form-row fp-form-row--2">
+      <div class="fp-form-row" [class.fp-form-row--2]="!selectedProfile()?.isSelf">
         <div class="fp-form-group">
           <label class="fp-label">Date of Birth <span class="fp-req">*</span></label>
           <input class="fp-input" type="date" [(ngModel)]="editForm.dateOfBirth">
         </div>
+        @if (!selectedProfile()?.isSelf) {
         <div class="fp-form-group">
           <label class="fp-label">Relationship <span class="fp-req">*</span></label>
           <select class="fp-input fp-select" [(ngModel)]="editForm.relationship">
@@ -841,6 +855,7 @@
             }
           </select>
         </div>
+        }
       </div>
       <div class="fp-form-group">
         <label class="fp-label">Gender <span class="fp-req">*</span></label>
@@ -959,7 +974,7 @@
         }
       </button>
       <button class="fp-inv-tab" [class.fp-inv-tab--active]="invitationsTab() === 'sent'"
-        (click)="invitationsTab.set('sent')">
+        (click)="invitationsTab.set('sent'); loadSentInvitations()">
         Sent
       </button>
     </div>
@@ -1010,12 +1025,50 @@
 
       <!-- Sent -->
       @if (invitationsTab() === 'sent') {
+      @if (sentInvitationsLoading()) {
+      <div class="fp-empty-state" style="padding:32px 0">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size:28px;color:var(--text-4)"></i>
+      </div>
+      } @else if (sentInvitations().length === 0) {
       <div class="fp-empty-state" style="padding:32px 0">
         <i class="fa-regular fa-paper-plane" style="font-size:36px;color:var(--text-4);margin-bottom:8px"></i>
-        <p style="color:var(--text-3);font-size:13px">Sent invitations are managed per profile.</p>
-        <p style="color:var(--text-4);font-size:12px;margin-top:4px">Select a profile and view members to see pending
-          invites.</p>
+        <p style="color:var(--text-3);font-size:13px">No sent invitations yet.</p>
       </div>
+      } @else {
+      <ul class="fp-inv-list">
+        @for (inv of sentInvitations(); track inv.id) {
+        <li class="fp-inv-item">
+          <div class="fp-inv-av">
+            {{ (inv.granteeFirstName?.[0] ?? inv.granteeEmail[0]).toUpperCase() }}
+          </div>
+          <div class="fp-inv-info">
+            <p class="fp-inv-who">
+              @if (inv.granteeFirstName) {
+              <strong>{{ inv.granteeFirstName }} {{ inv.granteeLastName }}</strong>
+              } @else {
+              <strong>{{ inv.granteeEmail }}</strong>
+              }
+            </p>
+            <p class="fp-inv-meta">
+              {{ inv.granteeEmail }} · Profile: {{ inv.profileFirstName }} {{ inv.profileLastName }} · Role: {{ inv.role }}
+            </p>
+          </div>
+          <div class="fp-inv-meta-right">
+            <span class="fp-inv-time">{{ formatInvitationDateTime(inv.createdAt) }}</span>
+            @if (inv.status === 'Pending') {
+            <div class="fp-inv-actions">
+              <button type="button" class="fp-inv-btn fp-inv-btn--reject" (click)="cancelSentInvitation(inv.id)">
+                Cancel
+              </button>
+            </div>
+            } @else {
+            <span [class]="getInvStatusClass(inv.status)">{{ inv.status }}</span>
+            }
+          </div>
+        </li>
+        }
+      </ul>
+      }
       }
 
     </div>
@@ -1072,48 +1125,62 @@
         <div class="fp-sup-search-wrap">
           <i class="fa-solid fa-magnifying-glass fp-sup-search-ico"></i>
           <input class="fp-sup-search" type="text" placeholder="Search by name…" [value]="supervisedSearch()"
-            (input)="supervisedSearch.set($any($event.target).value)">
+            (input)="setSupervisedSearch($any($event.target).value)">
         </div>
 
-        <!-- List -->
-        @if (filteredSupervised().length === 0) {
-        <div class="fp-sup-empty">
-          <i class="fa-solid fa-eye-slash"></i>
-          <p class="fp-sup-empty-title">No profiles found</p>
-          <p class="fp-sup-empty-sub">
-            @if (supervisedSearch()) {
-            No results for "{{ supervisedSearch() }}"
-            } @else {
-            You are not supervising anyone else's profiles yet.
-            }
-          </p>
-        </div>
-        } @else {
-        <ul class="fp-sup-list">
-          @for (p of filteredSupervised(); track p.userHealthProfileId) {
-          <li class="fp-sup-item">
-            <div class="fp-sup-av" [style.background]="getAvatarColor(profiles().indexOf(p))">
-              {{ p.firstName[0].toUpperCase() }}
-            </div>
-            <div class="fp-sup-info">
-              <span class="fp-sup-name">{{ p.firstName }} {{ p.lastName }}</span>
-              <span class="fp-sup-meta">
-                {{ p.relationship || 'Member' }}
-                <span class="fp-sup-role-pill fp-sup-role-pill--{{ p.accessRole.toLowerCase() }}">
-                  {{ p.accessRole }}
-                </span>
-              </span>
-            </div>
-            <div class="fp-sup-actions">
-              <button type="button" class="fp-sup-btn fp-sup-btn--danger" (click)="openLeaveConfirm(p)">
-                <i class="fa-solid fa-user-minus"></i>
-                Remove Access
-              </button>
-            </div>
-          </li>
+        <!-- Content area (fixed height, scrollable) -->
+        <div class="fp-sup-content">
+          @if (filteredSupervised().length === 0) {
+          <div class="fp-sup-empty">
+            <i class="fa-solid fa-eye-slash"></i>
+            <p class="fp-sup-empty-title">No profiles found</p>
+            <p class="fp-sup-empty-sub">
+              @if (supervisedSearch()) { No results for "{{ supervisedSearch() }}" }
+              @else { You are not supervising anyone else's profiles yet. }
+            </p>
+          </div>
+          } @else {
+          <div class="fp-sup-list-wrap" [class.fp-sup-list-wrap--hidden]="!supervisedVisible()">
+            <ul class="fp-sup-list">
+              @for (p of pagedSupervised(); track p.userHealthProfileId) {
+              <li class="fp-sup-item">
+                <div class="fp-sup-av" [style.background]="getAvatarColor(profiles().indexOf(p))">
+                  {{ p.firstName[0].toUpperCase() }}
+                </div>
+                <div class="fp-sup-info">
+                  <span class="fp-sup-name">{{ p.firstName }} {{ p.lastName }}</span>
+                  <span class="fp-sup-meta">
+                    {{ p.relationship || 'Member' }}
+                    <span class="fp-sup-role-pill fp-sup-role-pill--{{ p.accessRole.toLowerCase() }}">
+                      {{ p.accessRole }}
+                    </span>
+                  </span>
+                </div>
+                <div class="fp-sup-actions">
+                  <button type="button" class="fp-sup-btn fp-sup-btn--danger" (click)="openLeaveConfirm(p)">
+                    <i class="fa-solid fa-user-minus"></i>
+                    Remove Access
+                  </button>
+                </div>
+              </li>
+              }
+            </ul>
+          </div>
+          @if (supervisedTotalPages() > 1) {
+          <div class="fp-sup-pagination">
+            <button type="button" class="fp-sup-pg-btn" [disabled]="supervisedPage() === 0"
+              (click)="prevSupervisedPage()">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <span class="fp-sup-pg-info">{{ supervisedPage() + 1 }} / {{ supervisedTotalPages() }}</span>
+            <button type="button" class="fp-sup-pg-btn"
+              [disabled]="supervisedPage() >= supervisedTotalPages() - 1" (click)="nextSupervisedPage()">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
           }
-        </ul>
-        }
+          }
+        </div>
       </div>
       }
 
@@ -1124,68 +1191,79 @@
         <div class="fp-sup-search-wrap">
           <i class="fa-solid fa-magnifying-glass fp-sup-search-ico"></i>
           <input class="fp-sup-search" type="text" placeholder="Search by name or email…" [value]="supervisingSearch()"
-            (input)="supervisingSearch.set($any($event.target).value)">
+            (input)="setSupervisingSearch($any($event.target).value)">
         </div>
 
-        <!-- Loading -->
-        @if (supervisionLoading()) {
-        <div class="fp-sup-loading">
-          @for (s of [1,2,3]; track s) {
-          <div class="fp-sup-skeleton">
-            <div class="fp-sup-skl-av"></div>
-            <div class="fp-sup-skl-lines">
-              <div class="fp-sup-skl-line fp-sup-skl-60"></div>
-              <div class="fp-sup-skl-line fp-sup-skl-40"></div>
+        <!-- Content area (fixed height, scrollable) -->
+        <div class="fp-sup-content">
+          @if (supervisionLoading()) {
+          <div class="fp-sup-loading">
+            @for (s of [1,2,3]; track s) {
+            <div class="fp-sup-skeleton">
+              <div class="fp-sup-skl-av"></div>
+              <div class="fp-sup-skl-lines">
+                <div class="fp-sup-skl-line fp-sup-skl-60"></div>
+                <div class="fp-sup-skl-line fp-sup-skl-40"></div>
+              </div>
             </div>
+            }
+          </div>
+          } @else if (filteredSupervising().length === 0) {
+          <div class="fp-sup-empty">
+            <i class="fa-solid fa-users-slash"></i>
+            <p class="fp-sup-empty-title">No supervisors found</p>
+            <p class="fp-sup-empty-sub">
+              @if (supervisingSearch()) { No results for "{{ supervisingSearch() }}" }
+              @else { No one has access to your profiles yet. }
+            </p>
+          </div>
+          } @else {
+          <div class="fp-sup-list-wrap" [class.fp-sup-list-wrap--hidden]="!supervisingVisible()">
+            <ul class="fp-sup-list">
+              @for (m of pagedSupervising(); track m.accessId) {
+              <li class="fp-sup-item">
+                <div class="fp-sup-av fp-sup-av--purple">
+                  {{ m.firstName[0].toUpperCase() }}
+                </div>
+                <div class="fp-sup-info">
+                  <span class="fp-sup-name">{{ m.firstName }} {{ m.lastName }}</span>
+                  <span class="fp-sup-meta">
+                    {{ m.email }}
+                    <span class="fp-sup-role-pill fp-sup-role-pill--{{ m.role.toLowerCase() }}">
+                      {{ m.role }}
+                    </span>
+                    <span class="fp-sup-profile-badge">{{ m.profileName }}</span>
+                  </span>
+                </div>
+                <div class="fp-sup-actions">
+                  <button type="button" class="fp-sup-btn fp-sup-btn--secondary" (click)="openModifyAccess(m)">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    Modify
+                  </button>
+                  <button type="button" class="fp-sup-btn fp-sup-btn--danger" (click)="openRemoveConfirm(m)">
+                    <i class="fa-solid fa-user-minus"></i>
+                    Remove
+                  </button>
+                </div>
+              </li>
+              }
+            </ul>
+          </div>
+          @if (supervisingTotalPages() > 1) {
+          <div class="fp-sup-pagination">
+            <button type="button" class="fp-sup-pg-btn" [disabled]="supervisingPage() === 0"
+              (click)="prevSupervisingPage()">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <span class="fp-sup-pg-info">{{ supervisingPage() + 1 }} / {{ supervisingTotalPages() }}</span>
+            <button type="button" class="fp-sup-pg-btn"
+              [disabled]="supervisingPage() >= supervisingTotalPages() - 1" (click)="nextSupervisingPage()">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
           </div>
           }
-        </div>
-        }
-
-        <!-- List -->
-        @else if (filteredSupervising().length === 0) {
-        <div class="fp-sup-empty">
-          <i class="fa-solid fa-users-slash"></i>
-          <p class="fp-sup-empty-title">No supervisors found</p>
-          <p class="fp-sup-empty-sub">
-            @if (supervisingSearch()) {
-            No results for "{{ supervisingSearch() }}"
-            } @else {
-            No one has access to your profiles yet.
-            }
-          </p>
-        </div>
-        } @else {
-        <ul class="fp-sup-list">
-          @for (m of filteredSupervising(); track m.accessId) {
-          <li class="fp-sup-item">
-            <div class="fp-sup-av fp-sup-av--purple">
-              {{ m.firstName[0].toUpperCase() }}
-            </div>
-            <div class="fp-sup-info">
-              <span class="fp-sup-name">{{ m.firstName }} {{ m.lastName }}</span>
-              <span class="fp-sup-meta">
-                {{ m.email }}
-                <span class="fp-sup-role-pill fp-sup-role-pill--{{ m.role.toLowerCase() }}">
-                  {{ m.role }}
-                </span>
-                <span class="fp-sup-profile-badge">{{ m.profileName }}</span>
-              </span>
-            </div>
-            <div class="fp-sup-actions">
-              <button type="button" class="fp-sup-btn fp-sup-btn--secondary" (click)="openModifyAccess(m)">
-                <i class="fa-solid fa-pen-to-square"></i>
-                Modify
-              </button>
-              <button type="button" class="fp-sup-btn fp-sup-btn--danger" (click)="openRemoveConfirm(m)">
-                <i class="fa-solid fa-user-minus"></i>
-                Remove
-              </button>
-            </div>
-          </li>
           }
-        </ul>
-        }
+        </div>
       </div>
       }
 
@@ -1259,11 +1337,16 @@
       <i class="fa-solid fa-triangle-exclamation"></i>
     </div>
     <h3 class="fp-sup-confirm-title">
-      @if (removeTarget?.type === 'self') { Remove Your Access }
+      @if (removeTarget?.type === 'managed') { Delete Profile }
+      @else if (removeTarget?.type === 'self') { Remove Your Access }
       @else { Remove Access }
     </h3>
     <p class="fp-sup-confirm-msg">
-      @if (removeTarget?.type === 'self') {
+      @if (removeTarget?.type === 'managed') {
+      Are you sure you want to permanently delete
+      <strong>{{ removeTarget?.name }}</strong>'s profile?
+      All their health data will be removed and this cannot be undone.
+      } @else if (removeTarget?.type === 'self') {
       Are you sure you want to remove your access to
       <strong>{{ removeTarget?.name }}</strong>'s profile?
       You will no longer be able to view their health data.
@@ -1276,7 +1359,36 @@
       <button type="button" class="fp-btn-cancel" (click)="closeRemoveConfirm()">Cancel</button>
       <button type="button" class="fp-sup-btn-remove-confirm" [disabled]="removing()" (click)="confirmRemove()">
         @if (removing()) { <i class="fa-solid fa-spinner fa-spin"></i> }
-        Remove Access
+        @if (removeTarget?.type === 'managed') { Delete Profile } @else { Remove Access }
+      </button>
+    </div>
+
+  </div>
+</div>
+}
+
+
+<!-- ══════════════════════════════════════════════════════
+     DELETE FAMILY MEMBER CONFIRM MODAL (three-dot menu)
+══════════════════════════════════════════════════════ -->
+@if (showDeleteConfirm()) {
+<div class="fp-sup-overlay fp-sup-overlay--dim" (click)="closeDeleteConfirm()">
+  <div class="fp-sup-confirm-modal" (click)="$event.stopPropagation()">
+
+    <div class="fp-sup-confirm-ico">
+      <i class="fa-solid fa-trash"></i>
+    </div>
+    <h3 class="fp-sup-confirm-title">Delete Family Member</h3>
+    <p class="fp-sup-confirm-msg">
+      Are you sure you want to permanently delete
+      <strong>{{ selectedProfile()?.firstName }} {{ selectedProfile()?.lastName }}</strong>'s profile?
+      All health data will be removed and this cannot be undone.
+    </p>
+    <div class="fp-sup-confirm-actions">
+      <button type="button" class="fp-btn-cancel" (click)="closeDeleteConfirm()">Cancel</button>
+      <button type="button" class="fp-sup-btn-remove-confirm" [disabled]="deletingProfile()" (click)="confirmDeleteProfile()">
+        @if (deletingProfile()) { <i class="fa-solid fa-spinner fa-spin"></i> }
+        Delete
       </button>
     </div>
 

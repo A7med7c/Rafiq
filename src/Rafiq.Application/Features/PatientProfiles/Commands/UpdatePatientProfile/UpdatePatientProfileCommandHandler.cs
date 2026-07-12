@@ -1,8 +1,10 @@
 using MapsterMapper;
 using MediatR;
+using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.PatientProfiles.DTOs;
 using Rafiq.Domain.Entities.User;
+using Rafiq.Domain.Enums;
 using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 
@@ -10,6 +12,8 @@ namespace Rafiq.Application.Features.PatientProfiles.Commands.UpdatePatientProfi
 
 public sealed class UpdatePatientProfileCommandHandler(
     IPatientProfileRepository patientProfileRepository,
+    IHealthProfileAccessRepository healthProfileAccessRepository,
+    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork,
     IMapper mapper)
     : IRequestHandler<UpdatePatientProfileCommand, ApiResponse<PatientProfileDto>>
@@ -43,6 +47,22 @@ public sealed class UpdatePatientProfileCommandHandler(
 
         profile.SyncAllergies(newAllergies);
         profile.SyncChronicDiseases(newDiseases);
+
+        // Update relationship on the access record for managed (non-self) profiles
+        if (request.Relationship.HasValue)
+        {
+            var currentUserId = currentUserService.UserId;
+            if (currentUserId.HasValue)
+            {
+                var access = await healthProfileAccessRepository.GetActiveOwnerAsync(
+                    request.PatientProfileId, currentUserId.Value, cancellationToken);
+
+                if (access is not null && access.Relationship != RelationshipType.Self)
+                {
+                    access.UpdateRelationship(request.Relationship.Value);
+                }
+            }
+        }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

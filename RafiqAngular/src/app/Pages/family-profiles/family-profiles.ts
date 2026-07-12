@@ -1,6 +1,6 @@
 import {
   Component, ElementRef, HostListener, OnInit,
-  ViewChild, computed, inject, signal
+  ViewChild, computed, inject, signal, WritableSignal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -17,6 +17,7 @@ import {
   PatientProfileDetailDto,
   ReceivedInvitationDto,
   ProfileMemberDto,
+  SentInvitationDto,
 } from '../../Services/family-profiles.service';
 import { RecordsContentComponent } from '../../Components/records-content/records-content';
 import { AppointmentsContentComponent } from '../../Components/appointments-content/appointments-content';
@@ -96,7 +97,23 @@ export class FamilyProfiles implements OnInit {
   readonly modifySubmitting     = signal(false);
   modifyTarget: { accessId: string; profileId: string; name: string; currentRole: string } | null = null;
   modifyNewRole = 'Viewer';
-  removeTarget: { accessId: string; profileId: string; name: string; type: 'member' | 'self' } | null = null;
+  removeTarget: { accessId: string; profileId: string; name: string; type: 'member' | 'self' | 'managed' } | null = null;
+
+  // ─── Three-dot menu / Delete profile ────────────────────────
+  readonly showProfileMenu       = signal(false);
+  readonly showDeleteConfirm     = signal(false);
+  readonly deletingProfile       = signal(false);
+
+  // ─── Sent Invitations ────────────────────────────────────────
+  readonly sentInvitations        = signal<SentInvitationDto[]>([]);
+  readonly sentInvitationsLoading = signal(false);
+
+  // ─── Supervision pagination ───────────────────────────────────
+  readonly PAGE_SIZE = 5;
+  readonly supervisedPage     = signal(0);
+  readonly supervisingPage    = signal(0);
+  readonly supervisedVisible  = signal(true);
+  readonly supervisingVisible = signal(true);
 
   // ─── Medications / Reminders tab ────────────────────────────
   readonly fpMedicines        = signal<any[]>([]);
@@ -131,6 +148,24 @@ export class FamilyProfiles implements OnInit {
       m.email.toLowerCase().includes(q)
     );
   });
+
+  readonly pagedSupervised = computed(() => {
+    const all = this.filteredSupervised();
+    return all.slice(this.supervisedPage() * this.PAGE_SIZE, (this.supervisedPage() + 1) * this.PAGE_SIZE);
+  });
+
+  readonly supervisedTotalPages = computed(() =>
+    Math.ceil(this.filteredSupervised().length / this.PAGE_SIZE) || 1
+  );
+
+  readonly pagedSupervising = computed(() => {
+    const all = this.filteredSupervising();
+    return all.slice(this.supervisingPage() * this.PAGE_SIZE, (this.supervisingPage() + 1) * this.PAGE_SIZE);
+  });
+
+  readonly supervisingTotalPages = computed(() =>
+    Math.ceil(this.filteredSupervising().length / this.PAGE_SIZE) || 1
+  );
 
   readonly unreadNotifCount = this.notifSvc.unreadCount;
 
@@ -170,7 +205,7 @@ export class FamilyProfiles implements OnInit {
   ];
 
   readonly severityOptions     = ['Mild', 'Moderate', 'Severe'];
-  readonly diseaseStatusOptions = ['Active', 'Managed', 'Resolved'];
+  readonly diseaseStatusOptions = ['Active', 'Controlled', 'Resolved'];
 
   private readonly avatarColors = [
     '#0EAFD7','#7C3AED','#16A34A','#EA580C','#0D9488','#D97706','#DC2626',
@@ -366,6 +401,7 @@ export class FamilyProfiles implements OnInit {
     if (!profileId) return;
     this.editSubmitting.set(true);
     this.editError = '';
+    const isSelf = this.selectedProfile()?.isSelf ?? false;
     this.http.put<any>(`${this.base}/patient-profiles/${profileId}`, {
       patientProfileId: profileId,
       firstName: f.firstName.trim(),
@@ -375,6 +411,7 @@ export class FamilyProfiles implements OnInit {
       bloodType: f.bloodType || null,
       height: f.height,
       weight: f.weight,
+      relationship: isSelf ? null : (f.relationship || null),
       allergies: f.allergies
         .filter(a => a.name.trim())
         .map(a => ({ name: a.name.trim(), severity: a.severity, notes: null })),
@@ -414,6 +451,27 @@ export class FamilyProfiles implements OnInit {
     });
   }
 
+  loadSentInvitations(): void {
+    this.sentInvitationsLoading.set(true);
+    this.fpSvc.getSentInvitations().pipe(catchError(() => of([] as SentInvitationDto[]))).subscribe(list => {
+      this.sentInvitations.set(list);
+      this.sentInvitationsLoading.set(false);
+    });
+  }
+
+  cancelSentInvitation(id: string): void {
+    this.fpSvc.cancelInvitation(id).pipe(catchError(() => of(null))).subscribe(() => {
+      this.loadSentInvitations();
+    });
+  }
+
+  formatInvitationDateTime(dateStr: string): string {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      + ' · '
+      + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+
   // ─── Supervision Settings ────────────────────────────────────
   openSupervisionModal(): void {
     this.showSupervisionModal.set(true);
@@ -433,6 +491,23 @@ export class FamilyProfiles implements OnInit {
 
   switchSupervisionTab(tab: 'supervising' | 'supervised'): void {
     this.supervisionTab.set(tab);
+    this.supervisedPage.set(0);
+    this.supervisingPage.set(0);
+  }
+
+  // ─── Supervision search (resets page) ───────────────────────
+  setSupervisedSearch(val: string): void { this.supervisedSearch.set(val); this.supervisedPage.set(0); }
+  setSupervisingSearch(val: string): void { this.supervisingSearch.set(val); this.supervisingPage.set(0); }
+
+  // ─── Supervision pagination ───────────────────────────────────
+  prevSupervisedPage():  void { this.animatePage(() => this.supervisedPage.update(v => v - 1),  v => this.supervisedVisible.set(v)); }
+  nextSupervisedPage():  void { this.animatePage(() => this.supervisedPage.update(v => v + 1),  v => this.supervisedVisible.set(v)); }
+  prevSupervisingPage(): void { this.animatePage(() => this.supervisingPage.update(v => v - 1), v => this.supervisingVisible.set(v)); }
+  nextSupervisingPage(): void { this.animatePage(() => this.supervisingPage.update(v => v + 1), v => this.supervisingVisible.set(v)); }
+
+  private animatePage(changeFn: () => void, setVisible: (v: boolean) => void): void {
+    setVisible(false);
+    setTimeout(() => { changeFn(); setVisible(true); }, 160);
   }
 
   private loadSupervisingMembers(): void {
@@ -495,7 +570,8 @@ export class FamilyProfiles implements OnInit {
   }
 
   openLeaveConfirm(profile: AccessibleProfileDto): void {
-    this.removeTarget = { accessId: '', profileId: profile.userHealthProfileId, name: `${profile.firstName} ${profile.lastName}`, type: 'self' };
+    const type = profile.profileType === 'Managed' ? 'managed' : 'self';
+    this.removeTarget = { accessId: '', profileId: profile.userHealthProfileId, name: `${profile.firstName} ${profile.lastName}`, type };
     this.showRemoveConfirm.set(true);
   }
 
@@ -508,13 +584,18 @@ export class FamilyProfiles implements OnInit {
     if (!this.removeTarget) return;
     this.removing.set(true);
     const { type, profileId, accessId } = this.removeTarget;
-    const action$ = type === 'self'
-      ? this.fpSvc.leaveProfile(profileId)
-      : this.fpSvc.revokeMemberAccess(profileId, accessId);
+    let action$;
+    if (type === 'managed') {
+      action$ = this.fpSvc.deleteProfile(profileId);
+    } else if (type === 'self') {
+      action$ = this.fpSvc.leaveProfile(profileId);
+    } else {
+      action$ = this.fpSvc.revokeMemberAccess(profileId, accessId);
+    }
     action$.pipe(catchError(() => of(null))).subscribe(() => {
       this.removing.set(false);
       this.closeRemoveConfirm();
-      if (type === 'self') {
+      if (type === 'managed' || type === 'self') {
         this.loadProfiles();
       } else {
         this.loadSupervisingMembers();
@@ -522,12 +603,38 @@ export class FamilyProfiles implements OnInit {
     });
   }
 
+  // ─── Three-dot menu ─────────────────────────────────────────
+  toggleProfileMenu(): void { this.showProfileMenu.update(v => !v); }
+  closeProfileMenu(): void  { this.showProfileMenu.set(false); }
+
+  openDeleteProfileConfirm(): void {
+    this.showProfileMenu.set(false);
+    this.showDeleteConfirm.set(true);
+  }
+
+  closeDeleteConfirm(): void { this.showDeleteConfirm.set(false); }
+
+  confirmDeleteProfile(): void {
+    const profile = this.selectedProfile();
+    if (!profile) return;
+    this.deletingProfile.set(true);
+    this.fpSvc.deleteProfile(profile.userHealthProfileId)
+      .pipe(catchError(() => of(null)))
+      .subscribe(() => {
+        this.deletingProfile.set(false);
+        this.closeDeleteConfirm();
+        this.loadProfiles();
+      });
+  }
+
   // ─── Sidebar boilerplate ────────────────────────────────────
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.showDeleteConfirm()) { this.closeDeleteConfirm(); return; }
     if (this.showRemoveConfirm()) { this.closeRemoveConfirm(); return; }
     if (this.showModifyModal()) { this.closeModifyModal(); return; }
     if (this.showSupervisionModal()) { this.closeSupervisionModal(); return; }
+    if (this.showProfileMenu()) { this.closeProfileMenu(); return; }
   }
 
   @HostListener('window:resize')
@@ -547,6 +654,7 @@ export class FamilyProfiles implements OnInit {
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
     if (!(e.target as HTMLElement).closest('.hdr-user')) this.dropdownOpen.set(false);
+    if (!(e.target as HTMLElement).closest('.fp-menu-wrap')) this.showProfileMenu.set(false);
   }
 
   // ─── Display helpers ────────────────────────────────────────
