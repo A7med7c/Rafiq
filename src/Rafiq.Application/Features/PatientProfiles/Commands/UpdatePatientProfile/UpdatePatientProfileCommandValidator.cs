@@ -37,6 +37,10 @@ internal sealed class UpdatePatientProfileCommandValidator
             .InclusiveBetween(1m, 500m)
             .When(x => x.Weight.HasValue);
 
+        RuleFor(x => x.Relationship)
+            .IsInEnum()
+            .When(x => x.Relationship.HasValue);
+
         RuleForEach(x => x.Allergies)
             .SetValidator(new UpdateAllergyDtoValidator());
 

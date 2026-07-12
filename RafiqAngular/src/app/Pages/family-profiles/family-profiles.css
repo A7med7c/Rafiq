@@ -386,6 +386,44 @@
 }
 .fp-menu-btn:hover { border-color: #0EAFD7; color: #0EAFD7; }
 
+/* Three-dot menu wrapper + dropdown (Task 7) */
+.fp-menu-wrap {
+  position: relative;
+}
+
+.fp-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  min-width: 180px;
+  z-index: 500;
+  overflow: hidden;
+  animation: fp-modal-in 140ms ease both;
+}
+
+.fp-menu-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s;
+}
+.fp-menu-dropdown-item:hover { background: var(--bg); }
+.fp-menu-dropdown-item--danger { color: var(--red); }
+.fp-menu-dropdown-item--danger:hover { background: var(--red-lt); }
+
 /* Stats row */
 .fp-stats-row {
   display: flex;
@@ -591,11 +629,18 @@
   padding: 16px;
 }
 
+/* Edit Profile / Add Member opening animation (Task 6) */
+@keyframes fp-modal-in {
+  from { opacity: 0; transform: scale(0.97) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
 .fp-modal {
   background: var(--white);
   border-radius: var(--r);
   width: 100%;
   max-width: 520px;
+  animation: fp-modal-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -1007,13 +1052,14 @@
   z-index: 1200;
 }
 
-/* Main supervision modal */
+/* Main supervision modal — fixed height so it never grows/shrinks */
 .fp-sup-modal {
   background: var(--white);
   border-radius: var(--r);
   width: 100%;
   max-width: 640px;
-  max-height: 88vh;
+  height: 600px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 24px 64px rgba(0,0,0,.20);
@@ -1046,8 +1092,23 @@
   color: #0EAFD7;
 }
 
-/* Tab body with search + list */
+/* Tab body — animates in when tab switches (Task 5) */
 .fp-sup-tab-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  animation: fp-tab-fade 200ms ease both;
+}
+
+@keyframes fp-tab-fade {
+  from { opacity: 0; transform: translateX(6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Fixed-height scrollable content area inside each tab */
+.fp-sup-content {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -1090,6 +1151,19 @@
   box-shadow: 0 0 0 3px rgba(14,175,215,.10);
 }
 
+/* Page transition wrapper (Task 4) */
+.fp-sup-list-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.16s ease;
+}
+.fp-sup-list-wrap--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Member list */
 .fp-sup-list {
   list-style: none;
@@ -1097,6 +1171,49 @@
   padding: 0 20px;
   overflow-y: auto;
   flex: 1;
+}
+
+/* Pagination controls (Task 3) */
+.fp-sup-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 20px;
+  border-top: 1px solid var(--border-lt);
+  flex-shrink: 0;
+}
+
+.fp-sup-pg-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  background: var(--white);
+  color: var(--text-2);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.fp-sup-pg-btn:hover:not(:disabled) {
+  border-color: #0EAFD7;
+  color: #0EAFD7;
+  background: #f0fbff;
+}
+.fp-sup-pg-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.fp-sup-pg-info {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  min-width: 48px;
+  text-align: center;
 }
 
 .fp-sup-item {

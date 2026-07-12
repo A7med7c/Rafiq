@@ -73,6 +73,21 @@ internal static class HealthProfileAccessMappingExtensions
             isSelf);
     }
 
+    public static SentHealthProfileInvitationDto ToSentInvitationDto(
+        this HealthProfileAccess access,
+        AccountDto grantee)
+        => new(
+            access.Id,
+            access.UserHealthProfileId,
+            access.UserHealthProfile.FirstName,
+            access.UserHealthProfile.LastName,
+            grantee.Email,
+            grantee.FirstName,
+            grantee.LastName,
+            access.Role.ToString(),
+            access.Status.ToString(),
+            access.CreatedAt);
+
     public static ProfileMemberDto ToProfileMemberDto(
         this HealthProfileAccess access,
         AccountDto grantee,

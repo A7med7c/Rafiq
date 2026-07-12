@@ -52,6 +52,19 @@ export interface ReceivedInvitationDto {
   createdAt: string;
 }
 
+export interface SentInvitationDto {
+  id: string;
+  userHealthProfileId: string;
+  profileFirstName: string;
+  profileLastName: string;
+  granteeEmail: string;
+  granteeFirstName: string | null;
+  granteeLastName: string | null;
+  role: string;
+  status: string;
+  createdAt: string;
+}
+
 export interface ProfileMemberDto {
   accessId: string;
   granteeUserId: string;
@@ -139,5 +152,15 @@ export class FamilyProfilesService {
 
   leaveProfile(profileId: string): Observable<unknown> {
     return this.http.post(`${this.base}/${profileId}/leave`, {});
+  }
+
+  deleteProfile(profileId: string): Observable<unknown> {
+    return this.http.delete(`${this.base}/${profileId}`);
+  }
+
+  getSentInvitations(): Observable<SentInvitationDto[]> {
+    return this.http
+      .get<ApiResponse<SentInvitationDto[]>>(`${this.base}/invitations/sent`)
+      .pipe(map(r => r.data ?? []));
   }
 }
