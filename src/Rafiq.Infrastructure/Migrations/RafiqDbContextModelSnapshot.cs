@@ -938,7 +938,7 @@ namespace Rafiq.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Otps");
+                    b.ToTable("Otps", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.User.OtpVerification", b =>
@@ -988,7 +988,7 @@ namespace Rafiq.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PhoneVerifications");
+                    b.ToTable("PhoneVerifications", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.User.RefreshToken", b =>

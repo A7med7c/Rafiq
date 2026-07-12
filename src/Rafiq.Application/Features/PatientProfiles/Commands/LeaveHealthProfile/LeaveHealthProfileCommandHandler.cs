@@ -43,8 +43,6 @@ public sealed class LeaveHealthProfileCommandHandler(
 
         myAccess.Leave();
 
-        healthProfileAccessRepository.Update(myAccess);
-
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(

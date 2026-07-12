@@ -33,7 +33,6 @@ public sealed class UpdateGeneralDocumentCommandHandler(
             request.AiSummary,
             request.ImagePath);
 
-        repository.Update(document);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = new GeneralDocumentResponseDto

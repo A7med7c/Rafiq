@@ -10,6 +10,7 @@ import { RegisterRequest } from '../Modles/register-request';
 import { RegisterResponse } from '../Modles/register-response';
 import { environment } from '../Environments/Environment';
 import { TokenStorageService } from './token-storage-service';
+import { ProfileSelectionService } from './profile-selection.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +20,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly router = inject(Router);
+  private readonly profileSelectionSvc = inject(ProfileSelectionService);
 
   private readonly currentUserSubject = new BehaviorSubject<Account | null>(
     this.tokenStorage.getUser()
@@ -157,7 +159,9 @@ export class AuthService {
   }
 
   private clearLocalSession(): void {
+    this.sessionInitialized = false;
     this.tokenStorage.clear();
+    this.profileSelectionSvc.clear();
     this.currentUserSubject.next(null);
   }
 }

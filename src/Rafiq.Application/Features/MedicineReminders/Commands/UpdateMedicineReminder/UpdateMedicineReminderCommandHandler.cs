@@ -48,7 +48,6 @@ public sealed class UpdateMedicineReminderCommandHandler(
 
         reminder.UpdateDetails(request.ReminderTime, request.StartDate, request.EndDate, request.RepeatType);
 
-        medicineReminderRepository.Update(reminder);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = new MedicineReminderResponseDto

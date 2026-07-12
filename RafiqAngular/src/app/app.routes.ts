@@ -15,6 +15,7 @@ import { OnboardingAiUpload } from './Pages/onboarding/onboarding-ai-upload/onbo
 import { OnboardingEmergency } from './Pages/onboarding/onboarding-emergency/onboarding-emergency';
 import { authGuard } from './Guards/auth.guard';
 import { guestGuard } from './Guards/guest.guard';
+import { FamilyProfiles } from './Pages/family-profiles/family-profiles';
 
 export const routes: Routes = [
   { path: '', component: Landing },
@@ -24,6 +25,7 @@ export const routes: Routes = [
   { path: 'ai-assistant', component: AiAssistant, canActivate: [authGuard] },
   { path: 'login', component: Login, canActivate: [guestGuard] },
   { path: 'register', component: Register, canActivate: [guestGuard] },
+  { path: 'family-profiles', component: FamilyProfiles, canActivate: [authGuard] },
   { path: 'onboarding/welcome', component: OnboardingWelcome, canActivate: [authGuard] },
   { path: 'onboarding/step1',   component: OnboardingStep1,   canActivate: [authGuard] },
   { path: 'onboarding/step2',   component: OnboardingStep2,   canActivate: [authGuard] },

@@ -10,7 +10,6 @@ export class TokenStorageService {
   private readonly accessTokenKey = 'accessToken';
   private readonly refreshTokenKey = 'refreshToken';
   private readonly userKey = 'currentUser';
-  private readonly onboardingPrefix = 'onboardingCompleted_';
 
   setTokens(tokens: AuthResponse['data']): void {
     localStorage.setItem(this.accessTokenKey, tokens.accessToken);
@@ -53,23 +52,5 @@ export class TokenStorageService {
 
   isLoggedIn(): boolean {
     return this.getAccessToken() !== null;
-  }
-
-  isOnboardingCompleted(): boolean {
-    const user = this.getUser();
-    if (!user) return false;
-    const hasEmergency = localStorage.getItem('hasEmergencyContacts') === 'true';
-    return localStorage.getItem(this.onboardingPrefix + user.userId) === 'true' && hasEmergency;
-  }
-
-  markOnboardingCompleted(): void {
-    const user = this.getUser();
-    if (user) {
-      localStorage.setItem(this.onboardingPrefix + user.userId, 'true');
-    }
-  }
-
-  markEmergencyCompleted(): void {
-    localStorage.setItem('hasEmergencyContacts', 'true');
   }
 }

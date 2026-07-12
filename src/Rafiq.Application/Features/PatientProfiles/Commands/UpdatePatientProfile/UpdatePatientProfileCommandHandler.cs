@@ -24,32 +24,25 @@ public sealed class UpdatePatientProfileCommandHandler(
             ?? throw new NotFoundException("PatientProfile", request.PatientProfileId);
 
         profile.Update(
+            request.FirstName,
+            request.LastName,
             request.Gender,
             request.DateOfBirth,
             request.Height,
             request.Weight,
             request.BloodType);
 
-        profile.Allergies.Clear();
+        var newAllergies = (request.Allergies ?? []).Select(allergy => new Allergy(
+            allergy.Name,
+            allergy.Severity)).ToList();
 
-        foreach (var allergy in request.Allergies)
-        {
-            profile.Allergies.Add(new Allergy(
-                allergy.Name,
-                allergy.Severity));
-        }
+        var newDiseases = (request.ChronicDiseases ?? []).Select(disease => new ChronicDisease(
+            disease.Name,
+            disease.DiagnosedAt,
+            disease.Status)).ToList();
 
-        profile.ChronicDiseases.Clear();
-
-        foreach (var disease in request.ChronicDiseases)
-        {
-            profile.ChronicDiseases.Add(new ChronicDisease(
-                disease.Name,
-                disease.DiagnosedAt,
-                disease.Status));
-        }
-
-        patientProfileRepository.Update(profile);
+        profile.SyncAllergies(newAllergies);
+        profile.SyncChronicDiseases(newDiseases);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

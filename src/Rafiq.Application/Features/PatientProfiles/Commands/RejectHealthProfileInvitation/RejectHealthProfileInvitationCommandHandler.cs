@@ -32,8 +32,6 @@ public sealed class RejectHealthProfileInvitationCommandHandler(
 
         invitation.Reject();
 
-        healthProfileAccessRepository.Update(invitation);
-
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(

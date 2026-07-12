@@ -53,8 +53,6 @@ public sealed class ChangeMemberRoleCommandHandler(
 
         targetAccess.ChangeRole(request.Role);
 
-        healthProfileAccessRepository.Update(targetAccess);
-
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(

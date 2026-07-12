@@ -28,7 +28,6 @@ public sealed class ToggleMedicineReminderStatusCommandHandler(
 
         reminder.ToggleStatus();
 
-        medicineReminderRepository.Update(reminder);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var statusMessage = reminder.IsEnabled ? "enabled" : "disabled";
