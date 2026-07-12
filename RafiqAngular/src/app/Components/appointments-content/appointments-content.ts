@@ -24,7 +24,7 @@ interface Toast {
 @Component({
   selector: 'app-appointments-content',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule],
   templateUrl: './appointments-content.html',
   styleUrl: '../../Pages/appointments/appointments.css',
   encapsulation: ViewEncapsulation.None
