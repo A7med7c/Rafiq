@@ -132,7 +132,7 @@ export class OnboardingEmergency implements OnInit {
       return;
     }
 
-    this.tokenStorage.markEmergencyCompleted();
+    // this.tokenStorage.markEmergencyCompleted();
     this.router.navigate(['/onboarding/step2']);
   }
 }
