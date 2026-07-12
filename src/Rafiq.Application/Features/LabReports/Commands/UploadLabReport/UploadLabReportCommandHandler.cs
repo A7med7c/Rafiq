@@ -34,20 +34,11 @@ public sealed class UploadLabReportCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
 
-        var fileExtension = Path.GetExtension(request.Image.FileName);
-        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-
         using var imageStream = request.Image.OpenReadStream();
-        var imageUrl = await fileStorageService.UploadFileAsync(
-            imageStream,
-            uniqueFileName,
-            "labs",
-            cancellationToken);
-
         using var memoryStream = new MemoryStream();
-        imageStream.Position = 0;
         await imageStream.CopyToAsync(memoryStream, cancellationToken);
-        var base64Image = Convert.ToBase64String(memoryStream.ToArray());
+        var imageBytes = memoryStream.ToArray();
+        var base64Image = Convert.ToBase64String(imageBytes);
 
         var extracted = await bedrockService.AnalyzeAsync<BedrockLabReportDto>(
             base64Image,
@@ -55,8 +46,29 @@ public sealed class UploadLabReportCommandHandler(
             cancellationToken)
             ?? throw new BadRequestException("No lab report data could be extracted from the uploaded image.");
 
+        if (!extracted.IsValidDocument)
+        {
+            var detected = extracted.DetectedDocumentType;
+            var detailMessage = string.IsNullOrWhiteSpace(detected) || detected == "Unknown"
+                ? "The uploaded image could not be identified as a valid document."
+                : $"Detected document type: {detected}.";
+
+            throw new BadRequestException(
+                $"The uploaded document is not a lab report. {detailMessage} Please upload a valid laboratory report image.");
+        }
+
         if (extracted.Tests.Count == 0)
             throw new BadRequestException("No laboratory tests could be extracted from the uploaded image.");
+
+        var fileExtension = Path.GetExtension(request.Image.FileName);
+        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+        using var uploadStream = new MemoryStream(imageBytes);
+        var imageUrl = await fileStorageService.UploadFileAsync(
+            uploadStream,
+            uniqueFileName,
+            "labs",
+            cancellationToken);
 
         var reportDate = DateOnly.TryParseExact(
             extracted.ReportDate,

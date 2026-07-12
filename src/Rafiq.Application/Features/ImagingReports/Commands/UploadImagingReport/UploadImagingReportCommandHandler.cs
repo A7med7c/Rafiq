@@ -34,26 +34,38 @@ public sealed class UploadImagingReportCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
 
-        var fileExtension = Path.GetExtension(request.Image.FileName);
-        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-
         using var imageStream = request.Image.OpenReadStream();
-        var imageUrl = await fileStorageService.UploadFileAsync(
-            imageStream,
-            uniqueFileName,
-            "imaging",
-            cancellationToken);
-
         using var memoryStream = new MemoryStream();
-        imageStream.Position = 0;
         await imageStream.CopyToAsync(memoryStream, cancellationToken);
-        var base64Image = Convert.ToBase64String(memoryStream.ToArray());
+        var imageBytes = memoryStream.ToArray();
+        var base64Image = Convert.ToBase64String(imageBytes);
 
         var extracted = await bedrockService.AnalyzeAsync<BedrockImagingReportDto>(
             base64Image,
             ImagingReportPrompt.Build(),
             cancellationToken)
             ?? throw new BadRequestException("No imaging report data could be extracted from the uploaded image.");
+
+        if (!extracted.IsValidDocument)
+        {
+            var detected = extracted.DetectedDocumentType;
+            var detailMessage = string.IsNullOrWhiteSpace(detected) || detected == "Unknown"
+                ? "The uploaded image could not be identified as a valid document."
+                : $"Detected document type: {detected}.";
+
+            throw new BadRequestException(
+                $"The uploaded document is not an imaging report. {detailMessage} Please upload a valid imaging report image.");
+        }
+
+        var fileExtension = Path.GetExtension(request.Image.FileName);
+        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+        using var uploadStream = new MemoryStream(imageBytes);
+        var imageUrl = await fileStorageService.UploadFileAsync(
+            uploadStream,
+            uniqueFileName,
+            "imaging",
+            cancellationToken);
 
         var reportDate = DateOnly.TryParseExact(
             extracted.ReportDate,
