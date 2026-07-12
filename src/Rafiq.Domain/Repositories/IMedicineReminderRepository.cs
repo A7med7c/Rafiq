@@ -8,6 +8,7 @@ public interface IMedicineReminderRepository
     Task<List<MedicineReminder>> GetByUserMedicineIdAsync(Guid userMedicineId, CancellationToken cancellationToken = default);
     Task AddRangeAsync(IEnumerable<MedicineReminder> reminders, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(Guid userMedicineId, TimeSpan time, DateOnly startDate, DateOnly endDate, string repeatType, Guid? excludeId = null, CancellationToken cancellationToken = default);
+    Task<List<MedicineReminder>> GetActiveForDateAsync(DateOnly date, CancellationToken cancellationToken = default);
     void Update(MedicineReminder reminder);
     void Delete(MedicineReminder reminder);
 }

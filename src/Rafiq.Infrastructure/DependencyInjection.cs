@@ -1,3 +1,5 @@
+using Hangfire;
+using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +15,10 @@ using Rafiq.Infrastructure.Services.auth;
 using Rafiq.Infrastructure.Services.Auth;
 using Rafiq.Infrastructure.Services.Notifications;
 using Rafiq.Infrastructure.Services.BackgroundJobs;
+using Rafiq.Infrastructure.Services.MedicationReminders;
 using Rafiq.Infrastructure.Services.AiChat;
+using Rafiq.Infrastructure.Services.Common;
+
 
 namespace Rafiq.Infrastructure;
 
@@ -48,6 +53,9 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IOtpRepository, OtpRepository>();
         services.AddScoped<INotificationsService, NotificationsService>();
+        services.AddSingleton<IConnectionManager, ConnectionManager>();
+        services.AddSignalR();
+        services.AddScoped<INotificationService, SignalRNotificationService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddHttpContextAccessor();
@@ -84,8 +92,37 @@ public static class DependencyInjection
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
 
+
         services.AddHostedService<MissedAppointmentsBackgroundService>();
 
+        // ── Medication Reminder Engine ─────────────────────────────────────
+        services.Configure<MedicationReminderOptions>(
+            configuration.GetSection(MedicationReminderOptions.SectionName));
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+        services.AddScoped<IMedicationReminderLogRepository, MedicationReminderLogRepository>();
+        services.AddScoped<IMedicationReminderScheduler, MedicationReminderScheduler>();
+        services.AddScoped<IMedicationSchedulingService, MedicationSchedulingService>();
+        services.AddScoped<MedicationReminderJob>();
+        services.AddScoped<DailyMedicationSchedulerJob>();
+
+        // ── Hangfire ──────────────────────────────────────────────────────
+        var connectionString = configuration.GetConnectionString("DefaultConnection")!;
+
+        services.AddHangfire(config => config
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+            {
+                CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+                SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+                QueuePollInterval = TimeSpan.Zero,
+                UseRecommendedIsolationLevel = true,
+                DisableGlobalLocks = true
+            }));
+
+        services.AddHangfireServer();
+        services.AddHostedService<MissedAppointmentsBackgroundService>();
         return services;
     }
 }

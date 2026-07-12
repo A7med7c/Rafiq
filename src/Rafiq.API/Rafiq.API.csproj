@@ -7,6 +7,8 @@
     <UserSecretsId>848b2a12-dc2f-4a17-a9f5-354fc58d408c</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.*">
       <PrivateAssets>all</PrivateAssets>

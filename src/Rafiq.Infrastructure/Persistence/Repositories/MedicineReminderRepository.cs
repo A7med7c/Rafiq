@@ -26,16 +26,16 @@ public class MedicineReminderRepository(RafiqDbContext context) : IMedicineRemin
     }
 
     public async Task<bool> ExistsAsync(
-        Guid userMedicineId, 
-        TimeSpan time, 
-        DateOnly startDate, 
-        DateOnly endDate, 
-        string repeatType, 
-        Guid? excludeId = null, 
+        Guid userMedicineId,
+        TimeSpan time,
+        DateOnly startDate,
+        DateOnly endDate,
+        string repeatType,
+        Guid? excludeId = null,
         CancellationToken cancellationToken = default)
     {
         var query = context.MedicineReminders.AsQueryable()
-            .Where(x => x.UserMedicineId == userMedicineId && 
+            .Where(x => x.UserMedicineId == userMedicineId &&
                         x.ReminderTime == time &&
                         x.StartDate == startDate &&
                         x.EndDate == endDate &&
@@ -48,6 +48,17 @@ public class MedicineReminderRepository(RafiqDbContext context) : IMedicineRemin
         }
 
         return await query.AnyAsync(cancellationToken);
+    }
+
+    public async Task<List<MedicineReminder>> GetActiveForDateAsync(DateOnly date, CancellationToken cancellationToken = default)
+    {
+        return await context.MedicineReminders
+            .Include(r => r.UserMedicine)
+            .Where(r => r.IsEnabled && !r.IsDeleted
+                && r.StartDate <= date
+                && r.EndDate >= date
+                && !r.UserMedicine.IsDeleted)
+            .ToListAsync(cancellationToken);
     }
 
     public void Update(MedicineReminder reminder)

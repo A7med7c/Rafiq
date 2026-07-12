@@ -94,7 +94,8 @@
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           Ask AI
         </button>
-        <button type="button" class="hdr-bell">
+        <button type="button" class="hdr-bell" (click)="notifSvc.toggleNotificationCenter()"
+          [class.hdr-bell--active]="notifSvc.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
           @if (unreadCount() > 0) {
           <span class="hdr-badge">{{ unreadCount() }}</span>

@@ -436,6 +436,12 @@ a { text-decoration: none; }
 
 .hdr-bell:hover { background: var(--border-lt); }
 
+.hdr-bell--active {
+  background: rgba(14, 175, 215, 0.10);
+  color: var(--blue);
+  border-color: rgba(14, 175, 215, 0.22);
+}
+
 .hdr-badge {
   position: absolute;
   top: -2px;
