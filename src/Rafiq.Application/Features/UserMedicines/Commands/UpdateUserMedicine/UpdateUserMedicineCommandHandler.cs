@@ -29,7 +29,6 @@ public sealed class UpdateUserMedicineCommandHandler(
         userMedicine.Duration = request.Duration;
         userMedicine.Notes = request.Notes;
 
-        userMedicineRepository.Update(userMedicine);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = new UserMedicineResponseDto

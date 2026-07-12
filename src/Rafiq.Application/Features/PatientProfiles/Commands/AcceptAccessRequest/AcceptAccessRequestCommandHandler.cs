@@ -36,8 +36,6 @@ public sealed class AcceptAccessRequestCommandHandler(
 
         accessRequest.Accept();
 
-        healthProfileAccessRepository.Update(accessRequest);
-
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(

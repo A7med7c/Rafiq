@@ -1,7 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { TokenStorageService } from '../../../Services/token-storage-service';
 import { HealthProfileService } from '../../../Services/health-profile.service';
 import { Gender, BloodType, AllergySeverity, DiseaseStatus } from '../../../Modles/health-profile-enums';
 import { CreatePatientProfileRequest } from '../../../Modles/health-profile-request';
@@ -45,7 +44,6 @@ interface Step3Data {
 export class OnboardingStep4 implements OnInit {
 
   private readonly router = inject(Router);
-  private readonly tokenStorage = inject(TokenStorageService);
   private readonly healthProfile = inject(HealthProfileService);
 
   readonly steps = [
@@ -208,11 +206,7 @@ export class OnboardingStep4 implements OnInit {
       next: (res) => {
         this.isSubmitting = false;
         this.submitSuccess = res?.message || 'Patient profile created successfully!';
-        
-        // Success: mark onboarding done, clear temp data, go to dashboard
-        this.tokenStorage.markOnboardingCompleted();
         this.clearSessionStorage();
-        
         setTimeout(() => {
           this.router.navigate(['/dashboard']);
         }, 2000);
@@ -223,7 +217,6 @@ export class OnboardingStep4 implements OnInit {
         if (err.status === 409) {
           // Profile already exists — treat as success so the user can move forward
           this.submitSuccess = 'Your health profile is already complete.';
-          this.tokenStorage.markOnboardingCompleted();
           this.clearSessionStorage();
           setTimeout(() => {
             this.router.navigate(['/dashboard']);

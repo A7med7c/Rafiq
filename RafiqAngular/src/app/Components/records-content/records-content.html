@@ -1,0 +1,937 @@
+<div class="records-content-host">
+
+  <!-- ═══ HIDDEN FILE INPUTS ═══ -->
+  <input #labInput type="file" accept=".jpg,.jpeg,.png,.pdf,.webp" style="display:none"
+    (change)="onLabFileSelected($event)">
+  <input #prescriptionInput type="file" accept=".jpg,.jpeg,.png,.pdf,.webp" style="display:none"
+    (change)="onPrescriptionFileSelected($event)">
+  <input #imagingInput type="file" accept=".jpg,.jpeg,.png,.pdf,.dcm,.webp" style="display:none"
+    (change)="onImagingFileSelected($event)">
+  <input #medicineInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
+    (change)="onMedicineFileSelected($event)">
+  <input #generalInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
+    (change)="onGeneralFileSelected($event)">
+
+  <!-- UPLOAD CARDS GRID (hidden in compact mode) -->
+  @if (!compact) {
+  <section class="upload-grid">
+    <div class="up-card">
+      <div class="up-ico bg-blue"><i class="fa-solid fa-flask"></i></div>
+      <h2 class="up-title">Lab Analysis</h2>
+      <p class="up-desc">Upload blood tests, urine tests, and diagnostic lab results.</p>
+      <span class="up-count">{{ labCount() }} {{ labCount() === 1 ? 'Record' : 'Records' }}</span>
+      <button type="button" class="up-btn" [disabled]="getUploadState('lab').uploading"
+        [class.up-btn--loading]="getUploadState('lab').uploading" (click)="triggerUpload('Lab Analysis')">
+        @if (getUploadState('lab').uploading) {
+        <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('lab').indeterminate">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+            [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
+            [attr.stroke-dashoffset]="progressOffset(getUploadState('lab').progress)" stroke-linecap="round"
+            transform="rotate(-90 18 18)" />
+        </svg>
+        @if (!getUploadState('lab').indeterminate) { <span>{{ getUploadState('lab').progress }}%</span> }
+        } @else {
+        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+        }
+      </button>
+    </div>
+
+    <div class="up-card">
+      <div class="up-ico bg-purple"><i class="fa-solid fa-prescription-bottle-medical"></i></div>
+      <h2 class="up-title">Prescription</h2>
+      <p class="up-desc">Store medical prescriptions and extract medication schedules.</p>
+      <span class="up-count">{{ prescriptionCount() }} {{ prescriptionCount() === 1 ? 'Record' : 'Records' }}</span>
+      <button type="button" class="up-btn" [disabled]="getUploadState('prescription').uploading"
+        [class.up-btn--loading]="getUploadState('prescription').uploading" (click)="triggerUpload('Prescription')">
+        @if (getUploadState('prescription').uploading) {
+        <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('prescription').indeterminate">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+            [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
+            [attr.stroke-dashoffset]="progressOffset(getUploadState('prescription').progress)"
+            stroke-linecap="round" transform="rotate(-90 18 18)" />
+        </svg>
+        @if (!getUploadState('prescription').indeterminate) { <span>{{ getUploadState('prescription').progress }}%</span> }
+        } @else {
+        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+        }
+      </button>
+    </div>
+
+    <div class="up-card">
+      <div class="up-ico bg-teal"><i class="fa-solid fa-x-ray"></i></div>
+      <h2 class="up-title">X-Ray &amp; Imaging</h2>
+      <p class="up-desc">Keep MRI, CT scans, ultrasounds, and chest X-rays safe.</p>
+      <span class="up-count">{{ imagingCount() }} {{ imagingCount() === 1 ? 'Record' : 'Records' }}</span>
+      <button type="button" class="up-btn" [disabled]="getUploadState('imaging').uploading"
+        [class.up-btn--loading]="getUploadState('imaging').uploading" (click)="triggerUpload('X-Ray & Imaging')">
+        @if (getUploadState('imaging').uploading) {
+        <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('imaging').indeterminate">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+            [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
+            [attr.stroke-dashoffset]="progressOffset(getUploadState('imaging').progress)" stroke-linecap="round"
+            transform="rotate(-90 18 18)" />
+        </svg>
+        @if (!getUploadState('imaging').indeterminate) { <span>{{ getUploadState('imaging').progress }}%</span> }
+        } @else {
+        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+        }
+      </button>
+    </div>
+
+    <div class="up-card">
+      <div class="up-ico bg-orange"><i class="fa-solid fa-pills"></i></div>
+      <h2 class="up-title">Medicine Box</h2>
+      <p class="up-desc">Scan box packages to extract dosage instructions and info.</p>
+      <span class="up-count">{{ medicineCount() }} {{ medicineCount() === 1 ? 'Record' : 'Records' }}</span>
+      <button type="button" class="up-btn" [disabled]="getUploadState('medicine').uploading"
+        [class.up-btn--loading]="getUploadState('medicine').uploading" (click)="triggerUpload('Medicine Box')">
+        @if (getUploadState('medicine').uploading) {
+        <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('medicine').indeterminate">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+            [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
+            [attr.stroke-dashoffset]="progressOffset(getUploadState('medicine').progress)" stroke-linecap="round"
+            transform="rotate(-90 18 18)" />
+        </svg>
+        @if (!getUploadState('medicine').indeterminate) { <span>{{ getUploadState('medicine').progress }}%</span> }
+        } @else {
+        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+        }
+      </button>
+    </div>
+  </section>
+  }
+
+  <!-- TABS BAR + TOOLBAR -->
+  <section class="records-toolbar" style="margin-top: 15px;">
+    <div class="tabs-bar">
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'all'" (click)="setTab('all')">All Records</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'lab'" (click)="setTab('lab')">Lab Analysis</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'prescription'" (click)="setTab('prescription')">Prescriptions</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'imaging'" (click)="setTab('imaging')">X-Rays &amp; Imaging</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'medicine'" (click)="setTab('medicine')">Medicine Boxes</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'general'" (click)="setTab('general')">Other Documents</button>
+    </div>
+
+    <div class="records-table-tools">
+      <div class="search-wrap">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" placeholder="Search records..." [(ngModel)]="searchQueryValue" class="search-input">
+      </div>
+      <div class="filter-menu-wrap">
+        <button type="button" class="filter-btn" [class.menu-open]="filterMenuOpen()" (click)="toggleFilterMenu($event)">
+          <i class="fa-solid fa-sliders"></i> Filter
+        </button>
+        @if (filterMenuOpen()) {
+        <div class="filter-popover">
+          <div class="filter-section">
+            <p class="filter-section-title">Record Type</p>
+            @for (item of recordTypeOptions; track item.value) {
+            <label class="filter-option">
+              <input type="radio" name="rcRecordTypeFilter" [checked]="draftFilters().type === item.value"
+                (change)="updateDraftFilter('type', item.value)">
+              <span>{{ item.label }}</span>
+            </label>
+            }
+          </div>
+          <div class="filter-section">
+            <p class="filter-section-title">AI Status</p>
+            @for (item of aiStatusOptions; track item.value) {
+            <label class="filter-option">
+              <input type="radio" name="rcAiStatusFilter" [checked]="draftFilters().aiStatus === item.value"
+                (change)="updateDraftFilter('aiStatus', item.value)">
+              <span>{{ item.label }}</span>
+            </label>
+            }
+          </div>
+          <div class="filter-section">
+            <p class="filter-section-title">Uploaded By</p>
+            @for (item of uploadedByOptions; track item.value) {
+            <label class="filter-option">
+              <input type="radio" name="rcUploadedByFilter" [checked]="draftFilters().uploadedBy === item.value"
+                (change)="updateDraftFilter('uploadedBy', item.value)">
+              <span>{{ item.label }}</span>
+            </label>
+            }
+          </div>
+          <div class="filter-section">
+            <p class="filter-section-title">Date Range</p>
+            <div class="date-filter-grid">
+              <label class="date-filter-field">
+                <span>From</span>
+                <input type="date" [ngModel]="draftFilters().fromDate" (ngModelChange)="updateDraftFilter('fromDate', $event)">
+              </label>
+              <label class="date-filter-field">
+                <span>To</span>
+                <input type="date" [ngModel]="draftFilters().toDate" (ngModelChange)="updateDraftFilter('toDate', $event)">
+              </label>
+            </div>
+          </div>
+          <div class="filter-section">
+            <p class="filter-section-title">Sort By</p>
+            <select class="sort-select" [ngModel]="draftFilters().sortBy" (ngModelChange)="updateDraftFilter('sortBy', $event)">
+              @for (item of sortOptions; track item.value) {
+              <option [value]="item.value">{{ item.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="filter-actions">
+            <button type="button" class="filter-action-btn filter-action-btn--ghost" (click)="resetFilters()">Reset Filters</button>
+            <button type="button" class="filter-action-btn filter-action-btn--primary" (click)="applyFilters()">Apply Filters</button>
+          </div>
+        </div>
+        }
+      </div>
+      <!-- Add Record button (shown always — compact mode embeds it here) -->
+      @if (!readOnly) {
+      <div class="add-record-menu-wrap">
+        <button type="button" class="add-record-btn" [class.menu-open]="addRecordMenuOpen()"
+          (click)="toggleAddRecordMenu($event)">
+          <i class="fa-solid fa-plus"></i> Add Record
+        </button>
+        @if (addRecordMenuOpen()) {
+        <div class="add-record-menu">
+          <button type="button" class="dropdown-menu-item" (click)="selectUploadType('Lab Analysis')">
+            <i class="fa-solid fa-flask"></i><span>Lab Analysis</span>
+          </button>
+          <button type="button" class="dropdown-menu-item" (click)="selectUploadType('Prescription')">
+            <i class="fa-solid fa-prescription-bottle-medical"></i><span>Prescription</span>
+          </button>
+          <button type="button" class="dropdown-menu-item" (click)="selectUploadType('X-Ray & Imaging')">
+            <i class="fa-solid fa-x-ray"></i><span>X-Ray &amp; Imaging</span>
+          </button>
+          <button type="button" class="dropdown-menu-item" (click)="selectUploadType('Medicine Box')">
+            <i class="fa-solid fa-pills"></i><span>Medicine Box</span>
+          </button>
+          <button type="button" class="dropdown-menu-item" (click)="selectUploadType('General Medical Document')">
+            <i class="fa-solid fa-file-medical"></i><span>Other Medical Document</span>
+          </button>
+        </div>
+        }
+      </div>
+      }
+    </div>
+  </section>
+
+  @if (activeFilterChips().length > 0) {
+  <section class="active-filter-chips">
+    @for (chip of activeFilterChips(); track chip.key) {
+    <button type="button" class="filter-chip" (click)="removeFilterChip(chip.key)">
+      <span>{{ chip.label }}</span><i class="fa-solid fa-xmark"></i>
+    </button>
+    }
+    <button type="button" class="clear-filters-btn" (click)="clearAllFilters()">Clear All</button>
+  </section>
+  }
+
+  <!-- RECORDS TABLE -->
+  <section class="table-card" [class.tab-animating]="tabAnimating()"
+    [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
+    @if (loading()) {
+    <div class="table-loader">
+      <div class="skl-list">
+        @for (s of [1,2,3,4,5]; track s) {
+        <div class="skl-row">
+          <div class="skl-sq"></div>
+          <div class="skl-lines"><div class="skl-line skl-70"></div></div>
+          <div class="skl-pill"></div>
+        </div>
+        }
+      </div>
+    </div>
+    } @else if (filteredRecords().length === 0) {
+    <div class="empty-state table-empty">
+      <i class="fa-solid fa-folder-open empty-icon"></i>
+      <p class="empty-title">No medical records found</p>
+      <p class="empty-sub">Your reports, prescriptions and medicine scans will appear in this list.</p>
+    </div>
+    } @else {
+    <div class="table-responsive">
+      <table class="records-table">
+        <thead>
+          <tr>
+            <th>Record Name</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Uploaded By</th>
+            <th>AI Summary Status</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rec of pagedRecords(); track rec.id) {
+          <tr>
+            <td>
+              <div class="table-name-wrap">
+                <div class="table-ico" [class]="getRecordIconClass(rec.type)">
+                  <i [class]="'fa-solid ' + getRecordIcon(rec.type)"></i>
+                </div>
+                <div>
+                  <span class="table-rec-name">{{ rec.name }}</span>
+                  @if (rec.rawRecord.doctorName) {
+                  <span class="table-rec-sub">Dr. {{ rec.rawRecord.doctorName }}</span>
+                  }
+                </div>
+              </div>
+            </td>
+            <td><span class="type-pill" [class]="'type-' + rec.type">{{ rec.typeLabel }}</span></td>
+            <td class="table-date">{{ rec.date }}</td>
+            <td class="table-uploaded">{{ rec.uploadedBy }}</td>
+            <td>
+              <span class="pill" [class]="rec.hasAiSummary ? 'pill-green' : 'pill-yellow'">
+                <i class="fa-solid" [class.fa-check-double]="rec.hasAiSummary" [class.fa-spinner]="!rec.hasAiSummary"></i>
+                {{ rec.hasAiSummary ? 'Processed' : 'Pending' }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="actions-cell">
+                <button type="button" class="action-btn" title="View Details"
+                  [disabled]="loading() || deleting() || reviewSaving()" (click)="viewDetails(rec)">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+                <button type="button" class="action-btn" title="Download File"
+                  [disabled]="loading() || deleting() || reviewSaving()" (click)="downloadRecord(rec)">
+                  <i class="fa-solid fa-download"></i>
+                </button>
+                @if (!readOnly) {
+                <div class="record-actions">
+                  <button type="button" class="action-btn" title="Menu"
+                    [disabled]="loading() || deleting() || reviewSaving()"
+                    (click)="toggleActionMenu(rec.id, $event)">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                  </button>
+                  @if (actionMenuOpen() === rec.id) {
+                  <div class="record-menu" (click)="$event.stopPropagation()">
+                    <button type="button" class="record-menu-item" (click)="editRecord(rec)">
+                      <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                    <button type="button" class="record-menu-item record-menu-item--danger" (click)="openDeleteModal(rec)">
+                      <i class="fa-solid fa-trash-can"></i> Delete
+                    </button>
+                  </div>
+                  }
+                </div>
+                }
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination-bar">
+      <button type="button" class="page-btn" [disabled]="currentPage() === 1 || loading()" (click)="prevPage()">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      @for (page of pageNumbers(); track $index) {
+      <button type="button" class="page-btn" [class.active]="page === currentPage()"
+        [disabled]="page === '...' || loading()" (click)="goToPage(page)">
+        {{ page }}
+      </button>
+      }
+      <button type="button" class="page-btn" [disabled]="currentPage() === totalPages() || loading()" (click)="nextPage()">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+    }
+  </section>
+
+</div>
+
+<!-- ═══════════ DETAILS MODAL ═══════════ -->
+@if (selectedRecord(); as rec) {
+<div class="modal-overlay" (click)="closeDetails()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <header class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico" [class]="getRecordIconClass(rec.type)">
+          <i [class]="'fa-solid ' + getRecordIcon(rec.type)"></i>
+        </div>
+        <div>
+          <h3 class="modal-title">{{ rec.name }}</h3>
+          <p class="modal-sub">{{ rec.typeLabel }} · {{ rec.date }}</p>
+        </div>
+      </div>
+      <button type="button" class="close-modal-btn" (click)="closeDetails()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+    <div class="modal-body">
+      @if (getRecordImageUrl(rec); as imageUrl) {
+      <button type="button" class="view-document-card view-document-card--with-image" (click)="openLightbox(imageUrl)">
+        @if (!detailImageFailed()) {
+        <img [src]="imageUrl" alt="Original uploaded record" class="view-document-thumb"
+          (error)="detailImageFailed.set(true)">
+        } @else {
+        <div class="view-document-icon"><i class="fa-regular fa-file-image"></i></div>
+        }
+        <div class="view-document-content">
+          <h4>View Original Document</h4>
+          <p>Click to preview the uploaded image</p>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      </button>
+      } @else {
+      <div class="modal-image-placeholder">
+        <i class="fa-regular fa-image"></i><span>No image attached</span>
+      </div>
+      }
+
+      @if (rec.type === 'lab') {
+      <div class="detail-info-grid">
+        <div><span>Lab Name</span><strong>{{ rec.rawRecord.labName || '-' }}</strong></div>
+        <div><span>Doctor Name</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
+        <div><span>Report Date</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong></div>
+      </div>
+      }
+      @if (rec.type === 'imaging') {
+      <div class="detail-info-grid">
+        <div><span>Imaging Type</span><strong>{{ rec.rawRecord.imagingType || '-' }}</strong></div>
+        <div><span>Body Part</span><strong>{{ rec.rawRecord.bodyPart || '-' }}</strong></div>
+        <div><span>Doctor Name</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
+        <div><span>Report Date</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong></div>
+      </div>
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-magnifying-glass-chart"></i> Findings</h4>
+        <p class="detail-summary-text">{{ rec.rawRecord.findings || '-' }}</p>
+      </div>
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-clipboard-check"></i> Impression</h4>
+        <p class="detail-summary-text">{{ rec.rawRecord.impression || '-' }}</p>
+      </div>
+      }
+      @if (rec.type === 'general') {
+      <div class="detail-info-grid">
+        <div><span>Document Type</span><strong>{{ rec.rawRecord.documentType || '-' }}</strong></div>
+        <div><span>Doctor Name</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
+        <div><span>Hospital/Clinic</span><strong>{{ rec.rawRecord.hospitalOrClinic || '-' }}</strong></div>
+        <div><span>Document Date</span><strong>{{ rec.rawRecord.documentDate || rec.date || '-' }}</strong></div>
+      </div>
+      @if (rec.rawRecord.description) {
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-align-left"></i> Description</h4>
+        <p class="detail-summary-text">{{ rec.rawRecord.description }}</p>
+      </div>
+      }
+      }
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> AI Summary</h4>
+        <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
+      </div>
+      @if (rec.type === 'lab' && rec.rawRecord.results && rec.rawRecord.results.length > 0) {
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> Complete Lab Results</h4>
+        <ul class="labs-list">
+          @for (res of rec.rawRecord.results; track res.id) {
+          <li class="lab-result-item">
+            <div class="lab-result-l">
+              <span class="lab-test-name">{{ res.testName }}</span>
+              <span class="lab-normal-range">Normal: {{ res.normalRange }}</span>
+            </div>
+            <div class="lab-result-r">
+              <span class="lab-val">{{ res.value }} {{ res.unit }}</span>
+              <span class="pill" [class]="res.status === 'Normal' ? 'pill-green-sm' : 'pill-red-sm'">{{ res.status }}</span>
+            </div>
+          </li>
+          }
+        </ul>
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead><tr><th>Test Name</th><th>Value</th><th>Unit</th><th>Reference Range</th><th>Status</th></tr></thead>
+            <tbody>
+              @for (res of rec.rawRecord.results; track res.id) {
+              <tr>
+                <td>{{ res.testName }}</td><td>{{ res.value }}</td>
+                <td>{{ res.unit }}</td><td>{{ res.normalRange }}</td><td>{{ res.status }}</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      }
+      @if (rec.type === 'prescription' && rec.rawRecord.medicines && rec.rawRecord.medicines.length > 0) {
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-capsules"></i> Prescribed Medications</h4>
+        <ul class="pres-meds-list">
+          @for (med of rec.rawRecord.medicines; track med.id) {
+          <li class="pres-med-item">
+            <span class="pres-med-name">{{ med.medicineName }}</span>
+            <span class="pres-med-dose">{{ med.dosage }} — {{ med.frequency }} · {{ med.duration }}</span>
+          </li>
+          }
+        </ul>
+      </div>
+      }
+    </div>
+    <footer class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDetails()">Close</button>
+      <button type="button" class="modal-btn modal-btn-primary" (click)="downloadRecord(rec)">
+        <i class="fa-solid fa-arrow-down-to-bracket"></i> Download PDF
+      </button>
+    </footer>
+  </div>
+</div>
+}
+
+<!-- ═══════════ DELETE MODAL ═══════════ -->
+@if (deleteTarget(); as rec) {
+<div class="modal-overlay delete-overlay" (click)="closeDeleteModal()">
+  <div class="modal-card delete-modal" (click)="$event.stopPropagation()">
+    <header class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico delete-modal-ico"><i class="fa-solid fa-trash-can"></i></div>
+        <div>
+          <h3 class="modal-title">Delete Record</h3>
+          <p class="modal-sub">{{ rec.name }}</p>
+        </div>
+      </div>
+      <button type="button" class="close-modal-btn" [disabled]="deleting()" (click)="closeDeleteModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+    <div class="modal-body delete-modal-body">
+      <p>Are you sure you want to permanently delete this record?</p>
+      <p>This action cannot be undone.</p>
+    </div>
+    <footer class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="deleting()" (click)="closeDeleteModal()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-danger" [disabled]="deleting()" [class.modal-btn--saving]="deleting()"
+        (click)="deleteRecord()">
+        @if (deleting()) {
+        <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+            [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+            stroke-linecap="round" transform="rotate(-90 18 18)" />
+        </svg>
+        Deleting...
+        } @else {
+        <i class="fa-solid fa-trash-can"></i> Delete
+        }
+      </button>
+    </footer>
+  </div>
+</div>
+}
+
+<!-- ═══════════ GENERAL UPLOAD FORM ═══════════ -->
+@if (generalUploadFormOpen()) {
+<div class="modal-overlay" (click)="cancelGeneralUpload()">
+  <div class="modal-card scan-review-modal" (click)="$event.stopPropagation()">
+    <header class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico rec-ico-gray"><i class="fa-solid fa-file-medical"></i></div>
+        <div>
+          <h3 class="modal-title">Upload Other Medical Document</h3>
+          <p class="modal-sub">Add an image and optional description before analysis.</p>
+        </div>
+      </div>
+      <button type="button" class="close-modal-btn" [disabled]="uploadLoading()" (click)="cancelGeneralUpload()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+    <div class="modal-body scan-form-body">
+      <div class="scan-form-grid">
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">Document Image <span class="scan-required">*</span></label>
+          <input type="file" class="scan-input" accept=".jpg,.jpeg,.png,.webp"
+            [disabled]="uploadLoading()" (change)="onGeneralFileSelected($event)">
+          @if (generalUploadForm.fileName) {
+          <p class="scan-file-name"><i class="fa-regular fa-file-image"></i> {{ generalUploadForm.fileName }}</p>
+          }
+        </div>
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">Description <span class="scan-optional">(optional)</span></label>
+          <textarea class="scan-input scan-textarea" [(ngModel)]="generalUploadForm.description"
+            [disabled]="uploadLoading()" rows="4"></textarea>
+        </div>
+      </div>
+    </div>
+    <footer class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="uploadLoading()" (click)="cancelGeneralUpload()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary" [disabled]="uploadLoading() || !generalUploadForm.file"
+        [class.modal-btn--saving]="uploadLoading()" (click)="submitGeneralUpload()">
+        @if (uploadLoading()) {
+        <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+            [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+            stroke-linecap="round" transform="rotate(-90 18 18)" />
+        </svg>
+        Analysing...
+        } @else {
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Analyze Document
+        }
+      </button>
+    </footer>
+  </div>
+</div>
+}
+
+<!-- ═══ UPLOAD LOADING DIALOG ═══ -->
+@if (uploadLoading()) {
+<div class="scan-backdrop">
+  <div class="scan-dialog">
+    <div class="scan-ring-wrap">
+      <svg class="scan-spinner" viewBox="0 0 60 60">
+        <circle cx="30" cy="30" r="24" fill="none" stroke="#E0E7FF" stroke-width="4" />
+        <circle cx="30" cy="30" r="24" fill="none" stroke="#4A7CF7" stroke-width="4" stroke-dasharray="150.8"
+          stroke-dashoffset="75" stroke-linecap="round" transform="rotate(-90 30 30)" />
+      </svg>
+      <div class="scan-ico-center"><i class="fa-solid fa-file-medical"></i></div>
+    </div>
+    <p class="scan-title">{{ uploadLoadingLabel() }}</p>
+    <p class="scan-sub">Our AI is extracting the medical information.</p>
+    <div class="scan-dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+}
+
+<!-- ═══ REVIEW MODAL ═══ -->
+@if (reviewForm(); as rf) {
+<div class="modal-overlay" (click)="cancelReview()">
+  <div class="modal-card review-modal" (click)="$event.stopPropagation()">
+    <header class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico" [class]="getRecordIconClass(rf.type)">
+          <i [class]="'fa-solid ' + getRecordIcon(rf.type)"></i>
+        </div>
+        <div>
+          <h3 class="modal-title">{{ rf.mode === 'edit' ? 'Edit Record' : 'Review Extracted Data' }}</h3>
+          <p class="modal-sub">Edit any field before saving.</p>
+        </div>
+      </div>
+      <button type="button" class="close-modal-btn" [disabled]="reviewSaving()" (click)="cancelReview()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+    <div class="modal-body scan-form-body">
+      <div class="review-image-pad">
+        @if (getImageUrl(rf.imagePath); as imageUrl) {
+        @if (!reviewImageFailed()) {
+        <button type="button" class="modal-image-btn" (click)="openLightbox(imageUrl)">
+          <img [src]="imageUrl" alt="Uploaded medical record" class="modal-image" (error)="reviewImageFailed.set(true)">
+          <span class="modal-image-zoom"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></span>
+        </button>
+        } @else {
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>Image preview unavailable</span></div>
+        }
+        } @else {
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>No image attached</span></div>
+        }
+      </div>
+      <div class="scan-form-grid">
+        @if (rf.type === 'lab') {
+        <div class="scan-field">
+          <label class="scan-label">Lab Name</label>
+          <input type="text" class="scan-input" [(ngModel)]="rf.labName">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Doctor Name</label>
+          <input type="text" class="scan-input" [(ngModel)]="rf.doctorName">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Report Date</label>
+          <input type="text" class="scan-input" [(ngModel)]="rf.reportDate">
+        </div>
+        }
+        @if (rf.type === 'imaging') {
+        <div class="scan-field">
+          <label class="scan-label">Imaging Type</label>
+          <input type="text" class="scan-input" [(ngModel)]="rf.imagingType">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Body Part</label>
+          <input type="text" class="scan-input" [(ngModel)]="rf.bodyPart">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Doctor Name</label>
+          <input type="text" class="scan-input" [(ngModel)]="rf.doctorName">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Report Date</label>
+          <input type="text" class="scan-input" [(ngModel)]="rf.reportDate">
+        </div>
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">Findings</label>
+          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.findings" rows="3"></textarea>
+        </div>
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">Impression</label>
+          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.impression" rows="3"></textarea>
+        </div>
+        }
+        @if (rf.type === 'prescription') {
+        <div class="scan-field">
+          <label class="scan-label">Doctor Name</label>
+          <input type="text" class="scan-input" [(ngModel)]="rf.doctorName">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Patient Name</label>
+          <input type="text" class="scan-input" [(ngModel)]="rf.patientName">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Prescription Date</label>
+          <input type="text" class="scan-input" [(ngModel)]="rf.prescriptionDate">
+        </div>
+        }
+        @if (rf.type === 'general') {
+        <div class="scan-field">
+          <label class="scan-label">Document Title</label>
+          <input type="text" class="scan-input" [(ngModel)]="rf.title">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Document Type</label>
+          <input type="text" class="scan-input" [ngModel]="rf.documentType" readonly>
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Doctor Name</label>
+          <input type="text" class="scan-input" [ngModel]="rf.doctorName" readonly>
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Hospital/Clinic</label>
+          <input type="text" class="scan-input" [ngModel]="rf.hospitalOrClinic" readonly>
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Document Date</label>
+          <input type="text" class="scan-input" [ngModel]="rf.documentDate" readonly>
+        </div>
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">Description</label>
+          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.description" rows="3"></textarea>
+        </div>
+        }
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">AI Summary</label>
+          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
+        </div>
+        @if (rf.type !== 'general') {
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">OCR Text</label>
+          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.ocrText" rows="5"></textarea>
+        </div>
+        }
+      </div>
+      @if (rf.type === 'lab') {
+      <div class="review-table-section">
+        <div class="review-table-hdr">
+          <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> Complete Lab Results</h4>
+          <button type="button" class="mini-add-btn" [disabled]="reviewSaving()" (click)="addLabResult()">
+            <i class="fa-solid fa-plus"></i> Add Row
+          </button>
+        </div>
+        <div class="detail-table-wrap">
+          <table class="detail-table review-edit-table">
+            <thead><tr><th>Test Name</th><th>Value</th><th>Unit</th><th>Reference Range</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              @for (res of rf.results; track res.id) {
+              <tr>
+                <td><input class="table-edit-input" [(ngModel)]="res.testName"></td>
+                <td><input class="table-edit-input" [(ngModel)]="res.value"></td>
+                <td><input class="table-edit-input" [(ngModel)]="res.unit"></td>
+                <td><input class="table-edit-input" [(ngModel)]="res.normalRange"></td>
+                <td><input class="table-edit-input" [(ngModel)]="res.status"></td>
+                <td>
+                  <button type="button" class="row-delete-btn" [disabled]="reviewSaving()" (click)="removeLabResult(res.id)">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      }
+      @if (rf.type === 'prescription') {
+      <div class="review-table-section">
+        <div class="review-table-hdr">
+          <h4 class="detail-h4"><i class="fa-solid fa-capsules"></i> Medicines &amp; Instructions</h4>
+          <button type="button" class="mini-add-btn" [disabled]="reviewSaving()" (click)="addPrescriptionMed()">
+            <i class="fa-solid fa-plus"></i> Add Medicine
+          </button>
+        </div>
+        <div class="detail-table-wrap">
+          <table class="detail-table review-edit-table">
+            <thead><tr><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th><th></th></tr></thead>
+            <tbody>
+              @for (med of rf.prescriptionMedicines; track $index) {
+              <tr>
+                <td><input class="table-edit-input" [(ngModel)]="med.medicineName"></td>
+                <td><input class="table-edit-input" [(ngModel)]="med.dosage"></td>
+                <td><input class="table-edit-input" [(ngModel)]="med.frequency"></td>
+                <td><input class="table-edit-input" [(ngModel)]="med.duration"></td>
+                <td><input class="table-edit-input" [(ngModel)]="med.instructions"></td>
+                <td>
+                  <button type="button" class="row-delete-btn" [disabled]="reviewSaving()" (click)="removePrescriptionMed($index)">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      }
+    </div>
+    <footer class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="reviewSaving()" (click)="cancelReview()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary" [disabled]="reviewSaving()"
+        [class.modal-btn--saving]="reviewSaving()" (click)="confirmAndSave()">
+        @if (reviewSaving()) {
+        <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+            [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+            stroke-linecap="round" transform="rotate(-90 18 18)" />
+        </svg>
+        Saving...
+        } @else {
+        <i class="fa-solid fa-floppy-disk"></i>
+        @if (rf.mode === 'edit') { Save Changes } @else { Confirm &amp; Save }
+        }
+      </button>
+    </footer>
+  </div>
+</div>
+}
+
+<!-- ═══ MEDICINE SCAN LOADING ═══ -->
+@if (scanLoading()) {
+<div class="scan-backdrop">
+  <div class="scan-dialog">
+    <div class="scan-ring-wrap">
+      <svg class="scan-spinner" viewBox="0 0 60 60">
+        <circle cx="30" cy="30" r="24" fill="none" stroke="#E0E7FF" stroke-width="4" />
+        <circle cx="30" cy="30" r="24" fill="none" stroke="#4A7CF7" stroke-width="4" stroke-dasharray="150.8"
+          stroke-dashoffset="75" stroke-linecap="round" transform="rotate(-90 30 30)" />
+      </svg>
+      <div class="scan-ico-center"><i class="fa-solid fa-pills"></i></div>
+    </div>
+    <p class="scan-title">Scanning Medicine Box...</p>
+    <p class="scan-sub">Our AI is reading the label. Please wait a moment.</p>
+    <div class="scan-dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+}
+
+<!-- ═══ MEDICINE SCAN REVIEW MODAL ═══ -->
+@if (scanResult()) {
+<div class="modal-overlay" (click)="cancelScanReview()">
+  <div class="modal-card scan-review-modal" (click)="$event.stopPropagation()">
+    <header class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico rec-ico-orange"><i class="fa-solid fa-pills"></i></div>
+        <div>
+          <h3 class="modal-title">{{ scanMode() === 'edit' ? 'Edit Medicine Record' : 'Review Scanned Medicine' }}</h3>
+          <p class="modal-sub">Edit any field before saving to your record.</p>
+        </div>
+      </div>
+      <button type="button" class="close-modal-btn" [disabled]="scanSaving()" (click)="cancelScanReview()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+    <div class="modal-body scan-form-body">
+      <div class="review-image-pad">
+        @if (getImageUrl(scanForm.imagePath); as imageUrl) {
+        @if (!scanImageFailed()) {
+        <button type="button" class="modal-image-btn" (click)="openLightbox(imageUrl)">
+          <img [src]="imageUrl" alt="Uploaded medicine box" class="modal-image" (error)="scanImageFailed.set(true)">
+          <span class="modal-image-zoom"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></span>
+        </button>
+        } @else {
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>Image preview unavailable</span></div>
+        }
+        } @else {
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>No image attached</span></div>
+        }
+      </div>
+      <div class="scan-form-grid">
+        <div class="scan-field">
+          <label class="scan-label">Medicine Name <span class="scan-required">*</span></label>
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.medicineName" placeholder="e.g. Amoxicillin">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Strength / Dosage</label>
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.dosage" placeholder="e.g. 500mg">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Dosage Form</label>
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.dosageForm" placeholder="e.g. Capsule, Tablet, Syrup">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Manufacturer</label>
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.manufacturer" placeholder="e.g. Pfizer">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Frequency</label>
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.frequency" placeholder="e.g. Twice daily, Every 8 hours">
+        </div>
+        <div class="scan-field">
+          <label class="scan-label">Duration</label>
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.duration" placeholder="e.g. 7 days, 1 month">
+        </div>
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">Notes <span class="scan-optional">(optional)</span></label>
+          <textarea class="scan-input scan-textarea" [(ngModel)]="scanForm.notes"
+            placeholder="Any additional notes or instructions..." rows="3"></textarea>
+        </div>
+      </div>
+      @if (scanForm.medicineName.trim() === '') {
+      <p class="scan-validation"><i class="fa-solid fa-triangle-exclamation"></i> Medicine name is required to save.</p>
+      }
+    </div>
+    <footer class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="scanSaving()" (click)="cancelScanReview()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary"
+        [disabled]="scanSaving() || scanForm.medicineName.trim() === ''" [class.modal-btn--saving]="scanSaving()"
+        (click)="saveScanResult()">
+        @if (scanSaving()) {
+        <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
+          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+            [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+            stroke-linecap="round" transform="rotate(-90 18 18)" />
+        </svg>
+        Saving...
+        } @else {
+        <i class="fa-solid fa-floppy-disk"></i>
+        @if (scanMode() === 'edit') { Save Changes } @else { Save Medicine }
+        }
+      </button>
+    </footer>
+  </div>
+</div>
+}
+
+<!-- ═══════════ LIGHTBOX ═══════════ -->
+@if (lightboxUrl(); as imageUrl) {
+<div class="lightbox-overlay" (click)="closeLightbox()">
+  <button type="button" class="lightbox-close" (click)="closeLightbox()">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+  <img [src]="imageUrl" alt="Fullscreen medical record preview" class="lightbox-image"
+    (click)="$event.stopPropagation()">
+</div>
+}
+
+<!-- ═══════════ TOASTS ═══════════ -->
+<div class="toast-container">
+  @for (toast of toasts(); track toast.id) {
+  <div class="toast" [class.toast--success]="toast.type === 'success'" [class.toast--error]="toast.type === 'error'">
+    <span class="toast-icon">
+      @if (toast.type === 'success') { <i class="fa-solid fa-circle-check"></i> }
+      @else { <i class="fa-solid fa-circle-xmark"></i> }
+    </span>
+    <span class="toast-msg">{{ toast.message }}</span>
+    <button type="button" class="toast-close" (click)="removeToast(toast.id)">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  }
+</div>

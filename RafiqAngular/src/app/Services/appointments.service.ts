@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, switchMap } from 'rxjs';
+import { Observable, map, of, switchMap } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse } from '../Modles/api-response';
 import {
@@ -9,21 +9,24 @@ import {
   UpdateAppointmentRequest,
 } from '../Modles/appointment.models';
 import { HealthProfileService } from './health-profile.service';
+import { ProfileSelectionService } from './profile-selection.service';
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentsService {
   private readonly http               = inject(HttpClient);
   private readonly healthProfileSvc   = inject(HealthProfileService);
+  private readonly profileSelectSvc   = inject(ProfileSelectionService);
   private readonly base               = `${environment.apiUrl}/appointments`;
 
   private getCurrentProfileId(): Observable<string> {
-    return this.healthProfileSvc.getMyProfile().pipe(
-      map(r => r.data.id),
-    );
+    const stored = this.profileSelectSvc.selectedProfileId;
+    if (stored) return of(stored);
+    return this.healthProfileSvc.getMyProfile().pipe(map(r => r.data.id));
   }
 
-  getAll(): Observable<AppointmentDto[]> {
-    return this.getCurrentProfileId().pipe(
+  getAll(overrideProfileId?: string): Observable<AppointmentDto[]> {
+    const pid$ = overrideProfileId ? of(overrideProfileId) : this.getCurrentProfileId();
+    return pid$.pipe(
       switchMap(pid =>
         this.http.get<ApiResponse<AppointmentDto[]>>(`${this.base}?profileId=${pid}`)
       ),
@@ -31,8 +34,9 @@ export class AppointmentsService {
     );
   }
 
-  getUpcoming(): Observable<AppointmentDto[]> {
-    return this.getCurrentProfileId().pipe(
+  getUpcoming(overrideProfileId?: string): Observable<AppointmentDto[]> {
+    const pid$ = overrideProfileId ? of(overrideProfileId) : this.getCurrentProfileId();
+    return pid$.pipe(
       switchMap(pid =>
         this.http.get<ApiResponse<AppointmentDto[]>>(
           `${this.base}/upcoming?profileId=${pid}`
@@ -42,8 +46,9 @@ export class AppointmentsService {
     );
   }
 
-  create(body: CreateAppointmentRequest): Observable<AppointmentDto> {
-    return this.getCurrentProfileId().pipe(
+  create(body: CreateAppointmentRequest, overrideProfileId?: string): Observable<AppointmentDto> {
+    const pid$ = overrideProfileId ? of(overrideProfileId) : this.getCurrentProfileId();
+    return pid$.pipe(
       switchMap(pid =>
         this.http.post<ApiResponse<AppointmentDto>>(`${this.base}?profileId=${pid}`, body)
       ),

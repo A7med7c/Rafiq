@@ -47,8 +47,6 @@ public sealed class RevokeMemberAccessCommandHandler(
 
         targetAccess.Revoke();
 
-        healthProfileAccessRepository.Update(targetAccess);
-
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(

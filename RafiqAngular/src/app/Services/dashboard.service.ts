@@ -12,17 +12,19 @@ import {
   ReminderDisplayItem,
 } from '../Modles/dashboard.models';
 import { HealthProfileService } from './health-profile.service';
+import { ProfileSelectionService } from './profile-selection.service';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly http = inject(HttpClient);
   private readonly healthProfileSvc = inject(HealthProfileService);
+  private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly base = environment.apiUrl;
 
   private getCurrentProfileId(): Observable<string> {
-    return this.healthProfileSvc.getMyProfile().pipe(
-      map(r => r.data.id),
-    );
+    const stored = this.profileSelectSvc.selectedProfileId;
+    if (stored) return of(stored);
+    return this.healthProfileSvc.getMyProfile().pipe(map(r => r.data.id));
   }
 
   // ─── Medical Records ──────────────────────────────────────────────────────
