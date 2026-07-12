@@ -5,6 +5,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medical-records.service';
 import { ScanMedicineBoxResponse, AddUserMedicinePayload } from '../../Modles/dashboard.models';
@@ -141,6 +142,7 @@ export class RecordsContentComponent implements OnInit, OnChanges {
   private readonly healthProfileSvc = inject(HealthProfileService);
   private readonly pdfService = inject(PdfService);
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private readonly base = environment.apiUrl;
 
   readonly allRecords = signal<UnifiedMedicalRecord[]>([]);
@@ -212,6 +214,11 @@ export class RecordsContentComponent implements OnInit, OnChanges {
   readonly scanMode = signal<'create' | 'edit'>('create');
   readonly scanRecordId = signal<string | null>(null);
   scanForm: ScanForm = this.emptyScanForm();
+
+  /** Post-success "set a reminder now?" prompt shown after a medicine is saved. */
+  readonly showReminderPromptModal = signal(false);
+  readonly reminderPromptMode = signal<'single' | 'multi'>('single');
+  readonly reminderPromptMedicineId = signal<string | null>(null);
 
   readonly currentPage = signal(1);
   readonly pageSize = PAGE_SIZE;
@@ -303,6 +310,7 @@ export class RecordsContentComponent implements OnInit, OnChanges {
   @HostListener('document:keydown.escape')
   onEsc(): void {
     if (this.lightboxUrl()) { this.lightboxUrl.set(null); return; }
+    if (this.showReminderPromptModal()) { this.closeReminderPrompt(); return; }
     if (this.deleteTarget() && !this.deleting()) { this.closeDeleteModal(); return; }
     if (this.scanResult()) { this.cancelScanReview(); return; }
     if (this.reviewForm() && !this.reviewSaving()) { this.cancelReview(); return; }
@@ -823,6 +831,10 @@ export class RecordsContentComponent implements OnInit, OnChanges {
         this.reviewForm.set(null);
         this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : 'Record confirmed and saved.', 'success');
         this.loadData();
+
+        if (rf.type === 'prescription' && rf.mode !== 'edit') {
+          this.openReminderPrompt('multi');
+        }
       },
       error: err => {
         this.reviewSaving.set(false);
@@ -898,7 +910,7 @@ export class RecordsContentComponent implements OnInit, OnChanges {
     }
 
     request$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.scanSaving.set(false);
         this.scanResult.set(null);
         this.scanMode.set('create');
@@ -906,12 +918,40 @@ export class RecordsContentComponent implements OnInit, OnChanges {
         this.scanForm = this.emptyScanForm();
         this.showToast(mode === 'edit' ? 'Medicine record updated successfully.' : 'Medicine saved to your records.', 'success');
         this.loadData();
+
+        const savedMedicineId = res?.data?.id ?? null;
+        if (mode !== 'edit' && savedMedicineId) {
+          this.openReminderPrompt('single', savedMedicineId);
+        }
       },
       error: err => {
         this.scanSaving.set(false);
         this.showToast(err?.error?.message || 'Failed to save medicine.', 'error');
       },
     });
+  }
+
+  // ── Post-success reminder prompt ─────────────────────────────────────────
+  private openReminderPrompt(mode: 'single' | 'multi', medicineId?: string): void {
+    this.reminderPromptMode.set(mode);
+    this.reminderPromptMedicineId.set(medicineId ?? null);
+    this.showReminderPromptModal.set(true);
+  }
+
+  closeReminderPrompt(): void {
+    this.showReminderPromptModal.set(false);
+    this.reminderPromptMedicineId.set(null);
+  }
+
+  goToSetReminder(): void {
+    const mode = this.reminderPromptMode();
+    const medicineId = this.reminderPromptMedicineId();
+    this.showReminderPromptModal.set(false);
+    this.reminderPromptMedicineId.set(null);
+
+    const queryParams: Record<string, string> = { tab: 'medications' };
+    if (mode === 'single' && medicineId) queryParams['medicineId'] = medicineId;
+    this.router.navigate(['/medications'], { queryParams });
   }
 
   private emptyScanForm(): ScanForm {

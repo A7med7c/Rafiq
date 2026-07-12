@@ -2179,6 +2179,11 @@
   color: var(--red);
 }
 
+.reminder-prompt-ico {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
+}
+
 .delete-modal-body {
   gap: 8px;
 }

@@ -909,6 +909,44 @@
 </div>
 }
 
+<!-- ═══════════ POST-SUCCESS REMINDER PROMPT ═══════════ -->
+@if (showReminderPromptModal()) {
+<div class="modal-overlay" (click)="closeReminderPrompt()">
+  <div class="modal-card reminder-prompt-modal" (click)="$event.stopPropagation()">
+    <header class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico reminder-prompt-ico"><i class="fa-solid fa-circle-check"></i></div>
+        <div>
+          <h3 class="modal-title">
+            {{ reminderPromptMode() === 'multi' ? 'Medicines Added Successfully' : 'Medicine Added Successfully' }}
+          </h3>
+        </div>
+      </div>
+      <button type="button" class="close-modal-btn" (click)="closeReminderPrompt()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+    <div class="modal-body">
+      @if (reminderPromptMode() === 'multi') {
+      <p>Your medicines have been added successfully.</p>
+      <p>Would you like to set reminders for them now?</p>
+      } @else {
+      <p>Your medicine has been saved successfully.</p>
+      <p>Would you like to set a reminder for this medicine now?</p>
+      }
+    </div>
+    <footer class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeReminderPrompt()">
+        {{ reminderPromptMode() === 'multi' ? 'Later' : 'Maybe Later' }}
+      </button>
+      <button type="button" class="modal-btn modal-btn-primary" (click)="goToSetReminder()">
+        {{ reminderPromptMode() === 'multi' ? 'Set Reminders' : 'Set Reminder Now' }}
+      </button>
+    </footer>
+  </div>
+</div>
+}
+
 <!-- ═══════════ LIGHTBOX ═══════════ -->
 @if (lightboxUrl(); as imageUrl) {
 <div class="lightbox-overlay" (click)="closeLightbox()">
