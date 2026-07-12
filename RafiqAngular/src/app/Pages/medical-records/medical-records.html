@@ -26,11 +26,11 @@
     </div>
 
     <nav class="sb-nav">
-      <a class="sb-link" href="#" routerLink="/dashboard">
+      <a class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact:true}">
         <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
         <span>Dashboard</span>
       </a>
-      <a class="sb-link sb-active" href="#" routerLink="/medical-records">
+      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
         <span>Medical Records</span>
       </a>
@@ -68,7 +68,7 @@
     </nav>
 
     <div class="sb-help">
-      <img src="images/rafiq-robot.svg" alt="" class="sb-help-robot">
+      <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
       <div class="sb-help-copy">
         <p class="sb-help-title">Ask Rafiq AI</p>
         <p class="sb-help-sub">Get health insights and answers to your questions</p>
