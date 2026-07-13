@@ -1,9 +1,13 @@
 using Hangfire;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Domain.Entities.Documents;
 using Rafiq.Domain.Enums;
 using Rafiq.Domain.Repositories;
+using Rafiq.Infrastructure.Persistence.Identity;
+using Rafiq.Infrastructure.Services.Notifications;
 
 namespace Rafiq.Infrastructure.Services.MedicationReminders;
 
@@ -11,6 +15,9 @@ public sealed class MedicationReminderJob(
     IMedicationReminderLogRepository logRepository,
     IUnitOfWork unitOfWork,
     INotificationService notificationService,
+    IWhatsAppService whatsAppService,
+    UserManager<ApplicationUser> userManager,
+    IOptions<WhatsAppSettings> whatsAppOptions,
     ILogger<MedicationReminderJob> logger)
 {
     [AutomaticRetry(Attempts = 0)]
@@ -153,5 +160,52 @@ public sealed class MedicationReminderJob(
         logger.LogInformation(
             "After notificationService.SendMedicationReminderAsync: userId={UserId}, logId={LogId}",
             targetUserId, log.Id);
+
+        // Stage 2 is the primary at-dose-time reminder — also deliver it via WhatsApp so
+        // patients receive it even when the app is backgrounded or offline.
+        if (log.ReminderNumber == 2)
+        {
+            await SendWhatsAppMedicineReminderAsync(log, profile.UserId.Value, medicineName);
+        }
+    }
+
+    private async Task SendWhatsAppMedicineReminderAsync(
+        MedicationReminderLog log,
+        Guid userId,
+        string medicineName)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+
+        if (user?.PhoneNumber is null)
+        {
+            logger.LogWarning(
+                "No phone number found for user {UserId}. Skipping WhatsApp reminder for log {LogId}.",
+                userId, log.Id);
+            return;
+        }
+
+        var patientName = $"{log.UserHealthProfile.FirstName} {log.UserHealthProfile.LastName}";
+
+        var templateName = whatsAppOptions.Value.PrimaryReminderTemplate;
+
+        logger.LogInformation(
+            "Sending WhatsApp template '{Template}' to '{Phone}' for log {LogId}.",
+            templateName, user.PhoneNumber, log.Id);
+
+        try
+        {
+            await whatsAppService.SendTemplateAsync(
+                user.PhoneNumber,
+                templateName,
+                [patientName, medicineName],
+                CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            // WhatsApp failure must not abort the job — the SignalR notification already fired.
+            logger.LogError(ex,
+                "Failed to send WhatsApp reminder for log {LogId} to user {UserId}.",
+                log.Id, userId);
+        }
     }
 }
