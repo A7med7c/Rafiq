@@ -171,7 +171,8 @@
 
             <div class="sched-attempts-row rail-attempts-row" role="list" aria-label="Reminder attempts">
               @for (attempt of dose.attemptStates; track attempt.reminderNumber) {
-              <span class="sched-attempt-pill" [class]="attemptPillClass(attempt.state)" role="listitem">
+              <span class="sched-attempt-pill" [class]="attemptPillClass(attempt.state)" role="listitem"
+                    [title]="attemptLabel(attempt.state)">
                 <i class="fa-solid" [class]="attemptIcon(attempt.state)"></i>
                 {{ formatTime(attempt.scheduledTime) }}
               </span>
@@ -412,20 +413,24 @@
                   <i class="fa-regular fa-bell dose-card__detail-ico"></i>
                   <div class="dose-card__detail-content">
                     <span class="dose-card__detail-lbl">Reminder attempts</span>
-                    <strong class="dose-card__detail-val">{{ dose.attemptStates.length }} attempts</strong>
-                    <span class="dose-card__detail-sub">Every 10 minutes</span>
+                    <strong class="dose-card__detail-val">Up to {{ dose.attemptStates.length }} reminders</strong>
+                    <span class="dose-card__detail-sub">
+                      @if (doseInterval(dose); as interval) {
+                        {{ interval }} min between attempts
+                      }
+                    </span>
                   </div>
                 </div>
 
                 @if (dose.confirmedAt) {
                 <div class="dose-card__info-chip dose-card__info-chip--success">
                   <i class="fa-solid fa-circle-check"></i>
-                  Taken at {{ formatDate(dose.confirmedAt) }}
+                  Taken at {{ formatConfirmedTime(dose.confirmedAt) }}
                 </div>
                 } @else if (dose.actionable) {
                 <div class="dose-card__info-chip">
-                  <i class="fa-solid fa-circle-info"></i>
-                  You'll be reminded up to {{ dose.attemptStates.length }} times until you confirm.
+                  <i class="fa-solid fa-bell"></i>
+                  Tap "I Took It" once you've taken this dose.
                 </div>
                 }
               </div>
@@ -448,9 +453,9 @@
                     </span>
                     <span class="sched-attempt-pill dose-timeline__badge"
                           [class]="attemptPillClass(attempt.state)"
-                          aria-label="{{ attempt.state }}">
+                          [attr.aria-label]="attemptLabel(attempt.state)">
                       <i class="fa-solid" [class]="attemptIcon(attempt.state)"></i>
-                      {{ attempt.state }}
+                      {{ attemptLabel(attempt.state) }}
                     </span>
                   </div>
                   }
@@ -486,7 +491,7 @@
               </div>
             </div>
 
-            <!-- Legend -->
+            <!-- Legend — each dose appears in exactly one category -->
             <div class="overview-legend">
               <div class="overview-legend-item">
                 <span class="overview-legend-dot overview-dot--green"></span>
@@ -496,11 +501,11 @@
               <div class="overview-legend-item">
                 <span class="overview-legend-dot overview-dot--orange"></span>
                 <span class="overview-legend-name">Upcoming</span>
-                <span class="overview-legend-count">{{ dueCount() }}</span>
+                <span class="overview-legend-count">{{ upcomingCount() }}</span>
               </div>
               <div class="overview-legend-item">
                 <span class="overview-legend-dot overview-dot--red"></span>
-                <span class="overview-legend-name">Missed</span>
+                <span class="overview-legend-name">Overdue</span>
                 <span class="overview-legend-count">{{ overdueCount() }}</span>
               </div>
               <div class="overview-legend-item">
@@ -769,10 +774,14 @@
                         (click)="openMedView(med)">
                         <i class="fa-regular fa-eye"></i> View Details
                       </button>
+                      <button type="button" class="rec-menu-item"
+                        (click)="openEditMed(med)">
+                        <i class="fa-regular fa-pen-to-square"></i> Edit Medication
+                      </button>
                       @if (hasReminders(med.id)) {
                       <button type="button" class="rec-menu-item"
                         (click)="openEditReminder(med); openMedMenuId.set(null)">
-                        <i class="fa-regular fa-pen-to-square"></i> Edit Reminder
+                        <i class="fa-regular fa-bell"></i> Edit Reminder
                       </button>
                       <button type="button" class="rec-menu-item"
                         (click)="toggleAllReminders(med.id); openMedMenuId.set(null)">
@@ -781,14 +790,19 @@
                       </button>
                       <button type="button" class="rec-menu-item rec-menu-item--danger"
                         (click)="openDeleteReminder(med.id, med.medicineName); openMedMenuId.set(null)">
-                        <i class="fa-solid fa-trash-can"></i> Delete Reminder
+                        <i class="fa-solid fa-bell-slash"></i> Delete Reminder
                       </button>
                       } @else {
                       <button type="button" class="rec-menu-item"
                         (click)="openAddReminder(med); openMedMenuId.set(null)">
-                        <i class="fa-solid fa-plus"></i> Add Reminder
+                        <i class="fa-solid fa-bell"></i> Add Reminder
                       </button>
                       }
+                      <div class="rec-menu-divider"></div>
+                      <button type="button" class="rec-menu-item rec-menu-item--danger"
+                        (click)="openDeleteMed(med.id, med.medicineName)">
+                        <i class="fa-solid fa-trash-can"></i> Delete Medication
+                      </button>
                     </div>
                     }
                   </div>
@@ -848,15 +862,15 @@
         <span class="confirm-detail-val">{{ confirmingLog()!.medicineName }}</span>
       </div>
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Dosage</span>
+        <span class="confirm-detail-lbl">Strength</span>
         <span class="confirm-detail-val">{{ confirmingLog()!.dosage }}</span>
       </div>
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Scheduled</span>
-        <span class="confirm-detail-val">{{ formatTime(confirmingLog()!.scheduledTime) }}</span>
+        <span class="confirm-detail-lbl">Dose Time</span>
+        <span class="confirm-detail-val">{{ formatTime(confirmingLog()!.reminderTime) }}</span>
       </div>
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Reminder</span>
+        <span class="confirm-detail-lbl">Attempt</span>
         <span class="confirm-detail-val">{{ reminderAttemptLabel(confirmingLog()!.reminderNumber) }}</span>
       </div>
     </div>
@@ -1163,10 +1177,18 @@
 
     <div class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeMedView()">Close</button>
+      <button type="button" class="modal-btn modal-btn-danger"
+        (click)="openDeleteMed(viewingMed()!.id, viewingMed()!.medicineName)">
+        <i class="fa-solid fa-trash-can"></i> Delete
+      </button>
+      <button type="button" class="modal-btn modal-btn-secondary"
+        (click)="openEditMed(viewingMed()!)">
+        <i class="fa-regular fa-pen-to-square"></i> Edit
+      </button>
       @if (hasReminders(viewingMed()!.id)) {
       <button type="button" class="modal-btn modal-btn-primary"
         (click)="openEditReminder(viewingMed()!); closeMedView()">
-        <i class="fa-regular fa-pen-to-square"></i> Edit Reminder
+        <i class="fa-regular fa-bell"></i> Edit Reminder
       </button>
       } @else {
       <button type="button" class="modal-btn modal-btn-primary"
@@ -1272,6 +1294,153 @@
         <i class="fa-solid fa-circle-notch fa-spin"></i> Saving…
         } @else {
         <i class="fa-solid fa-plus"></i> Add Medication
+        }
+      </button>
+    </div>
+
+  </div>
+</div>
+}
+
+<!-- ═══════════ EDIT MEDICATION MODAL ═══════════ -->
+@if (showEditMedModal()) {
+<div class="modal-overlay" (click)="closeEditMed()">
+  <div class="modal-card reminder-modal" (click)="$event.stopPropagation()" role="dialog"
+    aria-modal="true" aria-labelledby="edit-med-title">
+
+    <div class="modal-hdr">
+      <div class="confirm-modal-ico" style="background:var(--blue-lt);color:var(--blue)">
+        <i class="fa-regular fa-pen-to-square"></i>
+      </div>
+      <div>
+        <h2 class="modal-title" id="edit-med-title">Edit Medication</h2>
+        <p class="modal-subtitle">{{ editingMed()?.medicineName }}</p>
+      </div>
+      <button type="button" class="rm-close-btn" (click)="closeEditMed()" aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="reminder-body">
+
+      <div class="rm-section rm-dates-grid">
+        <div>
+          <label class="rm-section-title" for="edit-med-name">
+            <i class="fa-solid fa-pills"></i> Medicine Name <span style="color:var(--red)">*</span>
+          </label>
+          <input id="edit-med-name" type="text" class="rm-time-input"
+            [(ngModel)]="editMedForm.medicineName"
+            placeholder="e.g. Paracetamol"
+            [class.rm-input-error]="editMedTouched() && !editMedForm.medicineName.trim()" />
+        </div>
+        <div>
+          <label class="rm-section-title" for="edit-med-dosage">
+            <i class="fa-solid fa-flask"></i> Dosage <span style="color:var(--red)">*</span>
+          </label>
+          <input id="edit-med-dosage" type="text" class="rm-time-input"
+            [(ngModel)]="editMedForm.dosage"
+            placeholder="e.g. 500mg"
+            [class.rm-input-error]="editMedTouched() && !editMedForm.dosage.trim()" />
+        </div>
+      </div>
+
+      <div class="rm-section rm-dates-grid">
+        <div>
+          <label class="rm-section-title" for="edit-med-frequency">
+            <i class="fa-regular fa-clock"></i> Frequency <span style="color:var(--red)">*</span>
+          </label>
+          <input id="edit-med-frequency" type="text" class="rm-time-input"
+            [(ngModel)]="editMedForm.frequency"
+            placeholder="e.g. Twice daily"
+            [class.rm-input-error]="editMedTouched() && !editMedForm.frequency.trim()" />
+        </div>
+        <div>
+          <label class="rm-section-title" for="edit-med-duration">
+            <i class="fa-solid fa-calendar-days"></i> Duration <span style="color:var(--red)">*</span>
+          </label>
+          <input id="edit-med-duration" type="text" class="rm-time-input"
+            [(ngModel)]="editMedForm.duration"
+            placeholder="e.g. 7 days"
+            [class.rm-input-error]="editMedTouched() && !editMedForm.duration.trim()" />
+        </div>
+      </div>
+
+      <div class="rm-section">
+        <label class="rm-section-title" for="edit-med-notes">
+          <i class="fa-regular fa-note-sticky"></i> Notes (optional)
+        </label>
+        <textarea id="edit-med-notes" class="rm-notes-area"
+          [(ngModel)]="editMedForm.notes"
+          placeholder="e.g. Take with food, avoid on empty stomach"
+          rows="2"></textarea>
+      </div>
+
+      @if (editMedTouched() && editMedErrors.length > 0) {
+      <ul class="rm-errors">
+        @for (e of editMedErrors; track e) {
+        <li class="rm-error-item"><i class="fa-solid fa-circle-exclamation"></i> {{ e }}</li>
+        }
+      </ul>
+      }
+
+    </div>
+
+    <div class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeEditMed()"
+        [disabled]="editMedSaving()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary" (click)="saveEditMed()"
+        [disabled]="editMedSaving()">
+        @if (editMedSaving()) {
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Saving…
+        } @else {
+        <i class="fa-regular fa-pen-to-square"></i> Save Changes
+        }
+      </button>
+    </div>
+
+  </div>
+</div>
+}
+
+<!-- ═══════════ DELETE MEDICATION CONFIRM MODAL ═══════════ -->
+@if (showDeleteMedModal()) {
+<div class="modal-overlay" (click)="closeDeleteMed()">
+  <div class="modal-card confirm-modal" (click)="$event.stopPropagation()" role="dialog"
+    aria-modal="true" aria-labelledby="delete-med-title">
+
+    <div class="modal-hdr">
+      <div class="confirm-modal-ico" style="background:var(--red-lt);color:var(--red)">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <div>
+        <h2 class="modal-title" id="delete-med-title">Delete Medication</h2>
+        <p class="modal-subtitle">This will remove the medication and cancel all its active reminders.</p>
+      </div>
+    </div>
+
+    <div class="confirm-med-detail">
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-lbl">Medication</span>
+        <span class="confirm-detail-val">{{ deleteMedName() }}</span>
+      </div>
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-lbl">What happens</span>
+        <span class="confirm-detail-val" style="color:var(--text-muted);font-size:0.85rem">
+          Active reminders are cancelled. Past history is kept.
+        </span>
+      </div>
+    </div>
+
+    <div class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDeleteMed()"
+        [disabled]="deletingMed()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary"
+        style="background:var(--red)" (click)="confirmDeleteMed()"
+        [disabled]="deletingMed()">
+        @if (deletingMed()) {
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Deleting…
+        } @else {
+        <i class="fa-solid fa-trash-can"></i> Delete Medication
         }
       </button>
     </div>

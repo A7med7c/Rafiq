@@ -160,3 +160,12 @@ export interface UpdateReminderPayload {
   endDate: string;        // "YYYY-MM-DD"
   repeatType: string;     // "Once" | "Daily" | "Weekly" | "Monthly"
 }
+
+// ===== Update UserMedicine Payload =====
+export interface UpdateUserMedicinePayload {
+  medicineName: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  notes?: string;
+}

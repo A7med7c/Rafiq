@@ -32,8 +32,9 @@ public sealed class DeleteMedicineReminderCommandHandler(
         // A deleted reminder must never notify again: cancel every not-yet-fired Hangfire job
         // for today and mark those logs Cancelled before the reminder itself is soft-deleted.
         var today = dateTimeProvider.Today;
-        var pendingLogs = await logRepository.GetPendingSubsequentLogsAsync(
-            reminder.Id, today, afterReminderNumber: 0, cancellationToken);
+        // Guid.Empty is intentional: we want all Pending logs for this occurrence, not a subset.
+        var pendingLogs = await logRepository.GetPendingOtherLogsAsync(
+            reminder.Id, today, Guid.Empty, cancellationToken);
 
         foreach (var pendingLog in pendingLogs)
         {

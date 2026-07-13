@@ -9,7 +9,7 @@ import { AuthService } from '../../Services/auth-service';
 import { NotificationService } from '../../Services/notification.service';
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
 import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
-import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UserMedicine } from '../../Modles/dashboard.models';
+import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UpdateUserMedicinePayload, UserMedicine } from '../../Modles/dashboard.models';
 
 type MedTab = 'schedule' | 'medications';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -38,8 +38,17 @@ interface AddMedForm {
   notes:        string;
 }
 
-/** Display-only state for a single reminder attempt chip — derived purely on the frontend. */
-type AttemptState = 'Upcoming' | 'Next' | 'Missed' | 'Completed' | 'Cancelled';
+/**
+ * Display-only state for a single reminder attempt chip.
+ *
+ * Upcoming   — scheduled, not yet fired (Pending)
+ * Sent       — notification delivered, awaiting confirmation (Sent, actionable)
+ * Overdue    — attempt time elapsed with no notification sent, still actionable
+ * NoResponse — earlier attempt passed without user response (not actionable)
+ * Completed  — user confirmed this occurrence
+ * Cancelled  — attempt cancelled (dose confirmed via a different attempt)
+ */
+type AttemptState = 'Upcoming' | 'Sent' | 'Overdue' | 'NoResponse' | 'Completed' | 'Cancelled';
 
 interface AttemptView {
   reminderNumber: number;
@@ -49,22 +58,27 @@ interface AttemptView {
 }
 
 /**
- * One scheduled dose. The backend escalates a single dose into up to three
- * reminder logs (#1, #2, #3), so the logs are folded back into the dose the
- * patient actually has to take.
+ * One scheduled dose. The backend creates three attempt logs per occurrence;
+ * this view folds them into a single card representing the medication the patient
+ * actually has to take.
  */
 interface Dose {
   key: string;
   medicineName: string;
   dosage: string;
+  /** Authoritative dose time from MedicineReminder.ReminderTime — the user-configured time. */
   scheduledTime: string;
   minutes: number;
   status: MedicationReminderStatus;
   attempts: number;
-  /** Reminder 1/2/3 folded into their own display state, for the attempt-progress chips. */
+  /** Each attempt rendered as a timeline chip. */
   attemptStates: AttemptView[];
   confirmedAt: string | null;
-  /** Newest log still awaiting an answer — the one "I took it" confirms. */
+  /**
+   * The one log the user should confirm right now.
+   * Null when the occurrence is done (Confirmed) or all Cancelled.
+   * Determined server-side via IsActionable — not inferred on the frontend.
+   */
   actionable: MedicationReminderLogDto | null;
   ids: string[];
 }
@@ -179,11 +193,24 @@ export class Medications implements OnInit, OnDestroy {
   readonly addMedSaving    = signal(false);
   readonly addMedTouched   = signal(false);
 
+  // ── Edit Medicine modal ───────────────────────────────────────────────────
+  readonly showEditMedModal = signal(false);
+  readonly editingMed       = signal<UserMedicine | null>(null);
+  readonly editMedSaving    = signal(false);
+  readonly editMedTouched   = signal(false);
+
+  // ── Delete Medicine confirm modal ─────────────────────────────────────────
+  readonly showDeleteMedModal = signal(false);
+  readonly deleteMedId        = signal<string | null>(null);
+  readonly deleteMedName      = signal('');
+  readonly deletingMed        = signal(false);
+
   // ── Reminder form ─────────────────────────────────────────────────────────
   reminderForm: ReminderForm = this.emptyReminderForm();
 
-  // ── Add Medicine form ─────────────────────────────────────────────────────
-  addMedForm: AddMedForm = this.emptyAddMedForm();
+  // ── Add / Edit Medicine forms ─────────────────────────────────────────────
+  addMedForm:  AddMedForm = this.emptyAddMedForm();
+  editMedForm: AddMedForm = this.emptyAddMedForm();
   readonly repeatOptions: { label: string; value: RepeatOption }[] = [
     { label: 'Once',    value: 'Once'    },
     { label: 'Daily',   value: 'Daily'   },
@@ -200,25 +227,20 @@ export class Medications implements OnInit, OnDestroy {
   readonly nowMinutes = signal(Medications.minutesNow());
   private clockId?: ReturnType<typeof setInterval>;
 
-  // ── Doses (escalation logs folded into the dose they belong to) ───────────
+  // ── Doses (escalation logs folded into the single dose they represent) ──────
   readonly doses = computed<Dose[]>(() => {
-    const today   = Medications.localToday();
-    const nowMins = this.nowMinutes();   // read the clock so doses recomputes every tick
-    const groups  = new Map<string, MedicationReminderLogDto[]>();
+    const today = Medications.localToday();
+    this.nowMinutes(); // read so computed re-evaluates on clock ticks
+
+    const groups = new Map<string, MedicationReminderLogDto[]>();
 
     for (const log of this.todayLogs()) {
-      // Safety-filter: only include logs whose scheduledDate is today in local time.
-      // The backend's /today endpoint should already scope to today, but backend date
-      // arithmetic is UTC-based and can return yesterday's Stage-1 logs for early doses.
+      // Safety-filter: backend /today endpoint scopes by the reminder timezone's "today",
+      // but the client may be in a different timezone; only show logs whose date matches.
       if (log.scheduledDate !== today) continue;
 
-      // Group by (reminderId, date) — NOT by scheduledTime.
-      //
-      // The scheduler creates three log rows per dose occurrence, each with a different
-      // scheduledTime (Stage 1 at -10 min, Stage 2 at 0, Stage 3 at +10 min).  Using
-      // scheduledTime as part of the key splits one dose into three separate cards.
-      // scheduledDate is the same for all three stages of the same occurrence, so it
-      // collapses them back into a single dose correctly.
+      // Group by (medicineReminderId, scheduledDate) — the same key the unique filtered
+      // index guarantees maps to exactly one dose occurrence.
       const key = `${log.medicineReminderId}|${log.scheduledDate}`;
       const bucket = groups.get(key);
       if (bucket) bucket.push(log);
@@ -230,51 +252,66 @@ export class Medications implements OnInit, OnDestroy {
     for (const [key, logs] of groups) {
       const ordered = [...logs].sort((a, b) => a.reminderNumber - b.reminderNumber);
 
-      // Stage 2 (offset 0) carries the original reminder time the user configured.
-      // Stage 1 is -10 min and Stage 3 is +10 min — neither is the "dose time".
-      const baseLog = ordered.find(l => l.reminderNumber === 2) ?? ordered[0];
+      // All logs in the group share the same MedicineReminder.ReminderTime — the user's
+      // configured dose time.  Use it directly instead of inferring from ReminderNumber.
+      const anyLog = ordered[0];
+      const doseTime = anyLog.reminderTime;   // e.g. "20:00:00"
 
-      const confirmed = ordered.find(l => l.status === 'Confirmed');
-      // Overdue is answerable too — a missed dose can still be confirmed late.
-      const open = [...ordered].reverse().find(
-        l => l.status === 'Pending' || l.status === 'Sent' || l.status === 'Overdue'
-      ) ?? null;
+      // The actionable log is determined by the backend (IsActionable flag).
+      // At most one log per occurrence has it set.  Do not re-derive it here.
+      const actionable = ordered.find(l => l.isActionable) ?? null;
+      const confirmed  = ordered.find(l => l.status === 'Confirmed') ?? null;
 
       let status: MedicationReminderStatus;
-      if (confirmed)                                        status = 'Confirmed';
-      else if (open)                                        status = open.status;
+      if (confirmed)                                          status = 'Confirmed';
+      else if (actionable)                                    status = actionable.status;
       else if (ordered.every(l => l.status === 'Cancelled')) status = 'Cancelled';
-      else                                                  status = baseLog.status;
+      else                                                    status = anyLog.status;
 
-      // Fold each individual reminder log into the attempt-progress chip it should show.
-      // The backend never retroactively relabels a superseded "Sent" log — once reminder 2
-      // fires, reminder 1's log just sits there as "Sent" forever — so "Missed" here is a
-      // purely presentational label: any not-yet-answered log other than the current one.
+      // Map each log to its display chip.
+      //
+      // Attempt statuses are kept strictly separate from the dose-level status:
+      //   • NoResponse — earlier reminder fired (Sent) or was skipped (Overdue) but user
+      //                  didn't respond; the dose cycle moved to the next attempt.
+      //   • Overdue    — the actionable attempt whose configured time has already passed
+      //                  (no notification was sent because scheduling was late).
+      //   • Sent       — the current actionable attempt; notification was delivered, awaiting
+      //                  confirmation.
+      //   • Upcoming   — a future Pending attempt not yet fired.
       const attemptStates: AttemptView[] = ordered.map(l => {
         let state: AttemptState;
-        if (l.status === 'Confirmed')        state = 'Completed';
-        else if (l.status === 'Cancelled')   state = 'Cancelled';
-        else if (open && l.id === open.id)
-          // If the attempt's own minute has arrived or passed, the reminder is no longer
-          // "next" — treat it as missed so the timeline stays consistent with the card header.
-          state = Medications.toMinutes(l.scheduledTime) <= nowMins ? 'Missed' : 'Next';
-        else if (l.status === 'Pending')     state = 'Upcoming';
-        else                                 state = 'Missed';
-        // scheduledTime comes from the actual log so the timeline shows the real fire time.
+        if (confirmed) {
+          state = l.status === 'Confirmed' ? 'Completed' : 'Cancelled';
+        } else if (l.status === 'Confirmed') {
+          state = 'Completed';
+        } else if (l.status === 'Cancelled') {
+          state = 'Cancelled';
+        } else if (l.isActionable) {
+          // This is the one attempt the user should act on right now.
+          state = l.status === 'Sent'    ? 'Sent'
+               : l.status === 'Overdue'  ? 'Overdue'
+               :                           'Upcoming';
+        } else if (l.status === 'Sent' || l.status === 'Overdue') {
+          // Earlier attempt passed without user response — label it accordingly,
+          // not as "Missed" (the dose is still active and can still be confirmed).
+          state = 'NoResponse';
+        } else {
+          state = 'Upcoming';
+        }
         return { reminderNumber: l.reminderNumber, state, scheduledTime: l.scheduledTime };
       });
 
       doses.push({
         key,
-        medicineName:  baseLog.medicineName,
-        dosage:        baseLog.dosage,
-        scheduledTime: baseLog.scheduledTime,       // Stage 2 = actual reminder time
-        minutes:       Medications.toMinutes(baseLog.scheduledTime),
+        medicineName:  anyLog.medicineName,
+        dosage:        anyLog.dosage,
+        scheduledTime: doseTime,
+        minutes:       Medications.toMinutes(doseTime),
         status,
-        attempts:      ordered.filter(l => l.status === 'Sent' || l.status === 'Confirmed').length || ordered.length,
+        attempts:      ordered.length,
         attemptStates,
         confirmedAt:   confirmed?.confirmedAt ?? null,
-        actionable:    confirmed ? null : open,
+        actionable,
         ids:           ordered.map(l => l.id),
       });
     }
@@ -307,8 +344,24 @@ export class Medications implements OnInit, OnDestroy {
     });
   });
 
-  readonly takenCount   = computed(() => this.doses().filter(d => d.status === 'Confirmed').length);
-  readonly dueCount     = computed(() => this.doses().filter(d => !!d.actionable).length);
+  readonly takenCount = computed(() => this.doses().filter(d => d.status === 'Confirmed').length);
+
+  /** All doses that still need a confirmation (both upcoming and overdue-but-still-active). */
+  readonly dueCount = computed(() => this.doses().filter(d => !!d.actionable).length);
+
+  /**
+   * Doses whose configured time has NOT yet passed and still have an actionable attempt.
+   * A dose counted here is never counted in overdueCount — no double-counting.
+   */
+  readonly upcomingCount = computed(() =>
+    this.doses().filter(d => !!d.actionable && d.minutes >= this.nowMinutes()).length
+  );
+
+  /**
+   * Doses whose configured time HAS passed and still have an actionable attempt.
+   * These doses are overdue but not yet confirmed — the user can still confirm them.
+   * This is mutually exclusive with upcomingCount.
+   */
   readonly overdueCount = computed(() =>
     this.doses().filter(d => !!d.actionable && d.minutes < this.nowMinutes()).length
   );
@@ -512,6 +565,8 @@ export class Medications implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEsc(): void {
+    if (this.showEditMedModal())        { this.closeEditMed(); return; }
+    if (this.showDeleteMedModal())      { this.closeDeleteMed(); return; }
     if (this.showAddMedModal())         { this.closeAddMed(); return; }
     if (this.showAddReminderModal())    { this.closeAddReminder(); return; }
     if (this.showDeleteReminderModal()) { this.closeDeleteReminder(); return; }
@@ -641,24 +696,50 @@ export class Medications implements OnInit, OnDestroy {
 
   attemptPillClass(state: AttemptState): string {
     const map: Record<AttemptState, string> = {
-      Upcoming:  'pill pill-yellow-sm',
-      Next:      'pill pill-blue-sm',
-      Missed:    'pill pill-red-sm',
-      Completed: 'pill pill-green-sm',
-      Cancelled: 'pill pill-gray-sm',
+      Upcoming:    'pill pill-yellow-sm',
+      Sent:        'pill pill-blue-sm',
+      Overdue:     'pill pill-orange-sm',
+      NoResponse:  'pill pill-gray-sm',
+      Completed:   'pill pill-green-sm',
+      Cancelled:   'pill pill-gray-sm',
     };
     return map[state];
   }
 
   attemptIcon(state: AttemptState): string {
     const map: Record<AttemptState, string> = {
-      Upcoming:  'fa-clock',
-      Next:      'fa-bell',
-      Missed:    'fa-triangle-exclamation',
-      Completed: 'fa-circle-check',
-      Cancelled: 'fa-ban',
+      Upcoming:    'fa-clock',
+      Sent:        'fa-bell',
+      Overdue:     'fa-hourglass-half',
+      NoResponse:  'fa-minus-circle',
+      Completed:   'fa-circle-check',
+      Cancelled:   'fa-ban',
     };
     return map[state];
+  }
+
+  attemptLabel(state: AttemptState): string {
+    const map: Record<AttemptState, string> = {
+      Upcoming:    'Upcoming',
+      Sent:        'Sent',
+      Overdue:     'Overdue',
+      NoResponse:  'No Response',
+      Completed:   'Completed',
+      Cancelled:   'Cancelled',
+    };
+    return map[state];
+  }
+
+  /**
+   * Returns the interval in minutes between attempt 1 and attempt 2,
+   * derived from the actual scheduled times on the dose.
+   * Returns null when fewer than 2 attempts exist.
+   */
+  doseInterval(dose: Dose): number | null {
+    if (dose.attemptStates.length < 2) return null;
+    const t1 = Medications.toMinutes(dose.attemptStates[0].scheduledTime);
+    const t2 = Medications.toMinutes(dose.attemptStates[1].scheduledTime);
+    return Math.max(0, t2 - t1);
   }
 
   // ── Confirm medication ────────────────────────────────────────────────────
@@ -724,26 +805,58 @@ export class Medications implements OnInit, OnDestroy {
         this.showConfirmModal.set(false);
         this.confirmingLog.set(null);
 
-        // Backend responds success:false (not an HTTP error) when the reminder was already
-        // confirmed/cancelled elsewhere by the time this request arrived — e.g. a duplicate
-        // click, a stale dialog, or a race with another browser tab. Treat it as a graceful
-        // no-op: refresh from the server instead of re-trusting this component's own guess.
+        // Backend responds success:false when the reminder was already confirmed/cancelled
+        // elsewhere (duplicate click, stale dialog, race with another tab).  Refresh from
+        // the server so the display reflects the actual persisted state.
         if (!res.success) {
           this.toast(res.message || `${log.medicineName} has already been updated.`, 'success');
           this.loadSchedule();
           return;
         }
 
+        // Optimistic update for the whole occurrence so the UI is instantly consistent.
+        //
+        // The backend cancels all Pending logs for the same (medicineReminderId, scheduledDate)
+        // pair except the confirmed one.  Mirror that here so no attempt chip stays "Upcoming"
+        // after the dose is already taken.  A subsequent loadSchedule() from the server
+        // remains the source of truth and will correct any edge-case discrepancy.
+        const confirmedAt = new Date().toISOString();
         this.todayLogs.update(list =>
-          list.map(l => l.id === log.id ? { ...l, status: 'Confirmed' as MedicationReminderStatus, confirmedAt: new Date().toISOString() } : l)
+          list.map(l => {
+            if (l.id === log.id) {
+              return { ...l, status: 'Confirmed' as MedicationReminderStatus, confirmedAt, isActionable: false };
+            }
+            if (
+              l.medicineReminderId === log.medicineReminderId &&
+              l.scheduledDate      === log.scheduledDate      &&
+              l.status === 'Pending'
+            ) {
+              return { ...l, status: 'Cancelled' as MedicationReminderStatus, isActionable: false };
+            }
+            // Sent logs retain their historical status; the occurrence-level Confirmed state
+            // on the dose card supersedes the individual attempt display.
+            if (
+              l.medicineReminderId === log.medicineReminderId &&
+              l.scheduledDate      === log.scheduledDate
+            ) {
+              return { ...l, isActionable: false };
+            }
+            return l;
+          })
         );
+
         this.toast(`${log.medicineName} marked as taken. Great job! 💊`, 'success');
         this.notifSvc.push({
           title: 'Medication Confirmed',
-          body:  `${log.medicineName} ${log.dosage} taken at ${this.formatTime(log.scheduledTime)}`,
+          body:  `${log.medicineName} ${log.dosage} taken at ${this.formatTime(log.reminderTime)}`,
           type:  'reminder',
         });
         this.notifSvc.notifyReminderChanged();
+
+        // Reload from the backend as the definitive source of truth.  This reconciles any
+        // Sent logs that were not mirrored optimistically above and picks up the server-set
+        // ConfirmedAt timestamp.
+        this.loadSchedule();
       },
       error: err => {
         this.toast(err?.error?.message ?? 'Could not confirm medication.', 'error');
@@ -775,13 +888,20 @@ export class Medications implements OnInit, OnDestroy {
     });
   }
 
+  /** "08:15 AM" from a full ISO datetime string — used for "Taken at" chips. */
+  formatConfirmedTime(dateStr: string): string {
+    return new Date(dateStr).toLocaleTimeString('en-US', {
+      hour: '2-digit', minute: '2-digit',
+    });
+  }
+
   statusLabel(status: MedicationReminderStatus): string {
     const map: Record<MedicationReminderStatus, string> = {
       Pending:   'Upcoming',
-      Sent:      'Reminder Sent',
+      Sent:      'Awaiting Confirmation',
       Confirmed: 'Completed',
       Cancelled: 'Cancelled',
-      Overdue:   'Missed',
+      Overdue:   'Overdue',
     };
     return map[status] ?? status;
   }
@@ -1220,7 +1340,9 @@ export class Medications implements OnInit, OnDestroy {
         }
       },
       error: err => {
-        this.toast(err?.error?.message ?? 'Could not add medication.', 'error');
+        // Prefer the first specific validation error over the generic "Validation failed." message.
+        const msg = err?.error?.errors?.[0] ?? err?.error?.message ?? 'Could not add medication.';
+        this.toast(msg, 'error');
         this.addMedSaving.set(false);
       },
     });
@@ -1228,5 +1350,121 @@ export class Medications implements OnInit, OnDestroy {
 
   private emptyAddMedForm(): AddMedForm {
     return { medicineName: '', dosage: '', frequency: '', duration: '', notes: '' };
+  }
+
+  get editMedErrors(): string[] {
+    const f = this.editMedForm;
+    const errs: string[] = [];
+    if (!f.medicineName.trim()) errs.push('Medicine name is required.');
+    if (!f.dosage.trim())       errs.push('Dosage is required.');
+    if (!f.frequency.trim())    errs.push('Frequency is required.');
+    if (!f.duration.trim())     errs.push('Duration is required.');
+    return errs;
+  }
+
+  // ── Edit Medicine modal ───────────────────────────────────────────────────
+  openEditMed(med: UserMedicine): void {
+    this.editMedForm = {
+      medicineName: med.medicineName,
+      dosage:       med.dosage,
+      frequency:    med.frequency,
+      duration:     med.duration,
+      notes:        med.notes ?? '',
+    };
+    this.editingMed.set(med);
+    this.editMedTouched.set(false);
+    this.showEditMedModal.set(true);
+    this.openMedMenuId.set(null);
+    if (this.viewingMed()) this.closeMedView();
+  }
+
+  closeEditMed(): void {
+    if (this.editMedSaving()) return;
+    this.showEditMedModal.set(false);
+    this.editingMed.set(null);
+  }
+
+  saveEditMed(): void {
+    this.editMedTouched.set(true);
+    if (this.editMedErrors.length > 0) return;
+
+    const med = this.editingMed();
+    if (!med) return;
+
+    const payload: UpdateUserMedicinePayload = {
+      medicineName: this.editMedForm.medicineName.trim(),
+      dosage:       this.editMedForm.dosage.trim(),
+      frequency:    this.editMedForm.frequency.trim(),
+      duration:     this.editMedForm.duration.trim(),
+      notes:        this.editMedForm.notes.trim() || undefined,
+    };
+
+    this.editMedSaving.set(true);
+    this.medSvc.updateMedicine(med.id, payload).subscribe({
+      next: res => {
+        this.editMedSaving.set(false);
+        this.showEditMedModal.set(false);
+        this.editingMed.set(null);
+        this.toast(`${payload.medicineName} updated successfully.`, 'success');
+        // Patch the medicine in the local list without a full reload
+        if (res.data) {
+          this.medicines.update(list =>
+            list.map(m => m.id === med.id ? { ...m, ...res.data! } : m)
+          );
+        } else {
+          this.loadMedicines();
+        }
+      },
+      error: err => {
+        const msg = err?.error?.errors?.[0] ?? err?.error?.message ?? 'Could not update medication.';
+        this.toast(msg, 'error');
+        this.editMedSaving.set(false);
+      },
+    });
+  }
+
+  // ── Delete Medicine confirm modal ─────────────────────────────────────────
+  openDeleteMed(medId: string, medName: string): void {
+    this.deleteMedId.set(medId);
+    this.deleteMedName.set(medName);
+    this.showDeleteMedModal.set(true);
+    this.openMedMenuId.set(null);
+    if (this.viewingMed()) this.closeMedView();
+  }
+
+  closeDeleteMed(): void {
+    if (this.deletingMed()) return;
+    this.showDeleteMedModal.set(false);
+    this.deleteMedId.set(null);
+    this.deleteMedName.set('');
+  }
+
+  confirmDeleteMed(): void {
+    const medId = this.deleteMedId();
+    if (!medId) return;
+    const medName = this.deleteMedName();
+
+    this.deletingMed.set(true);
+    this.medSvc.deleteMedicine(medId).subscribe({
+      next: () => {
+        this.deletingMed.set(false);
+        this.showDeleteMedModal.set(false);
+        this.deleteMedId.set(null);
+        this.deleteMedName.set('');
+        this.toast(`${medName} has been removed from your medication list.`, 'success');
+        // Remove from local list and reload schedule (reminders may have been cancelled)
+        this.medicines.update(list => list.filter(m => m.id !== medId));
+        this.medicineReminders.update(rec => {
+          const updated = { ...rec };
+          delete updated[medId];
+          return updated;
+        });
+        this.loadSchedule();
+      },
+      error: err => {
+        this.toast(err?.error?.message ?? 'Could not delete medication.', 'error');
+        this.deletingMed.set(false);
+      },
+    });
   }
 }

@@ -7,68 +7,71 @@ namespace Rafiq.Infrastructure.Persistence.Repositories;
 
 public sealed class MedicationReminderLogRepository(RafiqDbContext context) : IMedicationReminderLogRepository
 {
-public async Task AddAsync(MedicationReminderLog log, CancellationToken cancellationToken = default)
-{
-    await context.MedicationReminderLogs.AddAsync(log, cancellationToken);
-}
+    public async Task AddAsync(MedicationReminderLog log, CancellationToken cancellationToken = default)
+    {
+        await context.MedicationReminderLogs.AddAsync(log, cancellationToken);
+    }
 
-public async Task<MedicationReminderLog?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-{
-    return await context.MedicationReminderLogs
-        .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-}
+    public async Task<MedicationReminderLog?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 
-public async Task<MedicationReminderLog?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default)
-{
-    return await context.MedicationReminderLogs
-        .Include(x => x.MedicineReminder)
-            .ThenInclude(r => r.UserMedicine)
-        .Include(x => x.UserHealthProfile)
-        .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-}
+    public async Task<MedicationReminderLog?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .Include(x => x.MedicineReminder)
+                .ThenInclude(r => r.UserMedicine)
+            .Include(x => x.UserHealthProfile)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 
-public async Task<bool> ExistsForDateAsync(Guid medicineReminderId, DateOnly date, CancellationToken cancellationToken = default)
-{
-    // A Cancelled stage-1 log (e.g. superseded by an edit) does not count as "already
-    // scheduled" — otherwise a reminder update could never recreate today's schedule.
-    return await context.MedicationReminderLogs
-        .AnyAsync(x => x.MedicineReminderId == medicineReminderId
-                    && x.ScheduledDate == date
-                    && x.ReminderNumber == 1
-                    && x.Status != MedicationReminderStatus.Cancelled,
-            cancellationToken);
-}
+    public async Task<bool> ExistsForDateAsync(Guid medicineReminderId, DateOnly date, CancellationToken cancellationToken = default)
+    {
+        // A Cancelled stage-1 log (e.g. superseded by an edit) does not count as "already
+        // scheduled" — otherwise a reminder update could never recreate today's schedule.
+        return await context.MedicationReminderLogs
+            .AnyAsync(x => x.MedicineReminderId == medicineReminderId
+                        && x.ScheduledDate == date
+                        && x.ReminderNumber == 1
+                        && x.Status != MedicationReminderStatus.Cancelled,
+                cancellationToken);
+    }
 
-public async Task<List<MedicationReminderLog>> GetTodayByProfileIdAsync(
-    Guid userHealthProfileId,
-    DateOnly today,
-    CancellationToken cancellationToken = default)
-{
-    return await context.MedicationReminderLogs
-        .Include(x => x.MedicineReminder)
-            .ThenInclude(r => r.UserMedicine)
-        .Where(x => x.UserHealthProfileId == userHealthProfileId && x.ScheduledDate == today && !x.IsDeleted)
-        .OrderBy(x => x.ScheduledTime)
-        .ThenBy(x => x.ReminderNumber)
-        .ToListAsync(cancellationToken);
-}
+    public async Task<List<MedicationReminderLog>> GetTodayByProfileIdAsync(
+        Guid userHealthProfileId,
+        DateOnly today,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .Include(x => x.MedicineReminder)
+                .ThenInclude(r => r.UserMedicine)
+            .Where(x => x.UserHealthProfileId == userHealthProfileId && x.ScheduledDate == today && !x.IsDeleted)
+            .OrderBy(x => x.ScheduledTime)
+            .ThenBy(x => x.ReminderNumber)
+            .ToListAsync(cancellationToken);
+    }
 
-public async Task<List<MedicationReminderLog>> GetPendingSubsequentLogsAsync(
-    Guid medicineReminderId,
-    DateOnly date,
-    int afterReminderNumber,
-    CancellationToken cancellationToken = default)
-{
-    return await context.MedicationReminderLogs
-        .Where(x => x.MedicineReminderId == medicineReminderId
-                    && x.ScheduledDate == date
-                    && x.ReminderNumber > afterReminderNumber
-                    && x.Status == MedicationReminderStatus.Pending)
-        .ToListAsync(cancellationToken);
-}
+    public async Task<List<MedicationReminderLog>> GetPendingOtherLogsAsync(
+        Guid medicineReminderId,
+        DateOnly date,
+        Guid confirmedLogId,
+        CancellationToken cancellationToken = default)
+    {
+        // Fetches every Pending log in the same occurrence that is not the one being confirmed.
+        // Sent logs are excluded: their Hangfire jobs have already executed and their notifications
+        // have been delivered — there is no job to cancel and no reason to alter their status.
+        return await context.MedicationReminderLogs
+            .Where(x => x.MedicineReminderId == medicineReminderId
+                        && x.ScheduledDate == date
+                        && x.Id != confirmedLogId
+                        && x.Status == MedicationReminderStatus.Pending)
+            .ToListAsync(cancellationToken);
+    }
 
-public void Update(MedicationReminderLog log)
-{
-    context.MedicationReminderLogs.Update(log);
-}
+    public void Update(MedicationReminderLog log)
+    {
+        context.MedicationReminderLogs.Update(log);
+    }
 }

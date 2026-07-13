@@ -834,6 +834,17 @@
   background: var(--border);
 }
 
+.modal-btn-danger {
+  background: var(--red-lt);
+  color: var(--red);
+  border: 1px solid transparent;
+}
+
+.modal-btn-danger:not(:disabled):hover {
+  background: var(--red);
+  color: #fff;
+}
+
 .med-confirm-primary {
   background: var(--green);
 }
@@ -2025,8 +2036,28 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   box-shadow: 0 0 0 2px var(--border-lt);
 }
 
+/* Sent attempt — pulsing blue dot */
+.dose-timeline__entry--sent .dose-timeline__dot {
+  background: var(--blue);
+  box-shadow: 0 0 0 2px var(--blue-lt);
+  animation: tl-pulse-blue 2.4s ease-out infinite;
+}
+
+/* Overdue actionable attempt — amber dot */
+.dose-timeline__entry--overdue .dose-timeline__dot {
+  background: #F59E0B;
+  box-shadow: 0 0 0 2px #FEF3C7;
+}
+
+/* No-response (earlier attempt that received no reply) — muted gray dot */
+.dose-timeline__entry--noresponse .dose-timeline__dot {
+  background: var(--text-4);
+  box-shadow: 0 0 0 2px var(--border);
+}
+
 /* Dashed connector for future/inactive slots */
 .dose-timeline__entry--upcoming .dose-timeline__line,
+.dose-timeline__entry--noresponse .dose-timeline__line,
 .dose-timeline__entry--cancelled .dose-timeline__line {
   background: repeating-linear-gradient(
     90deg,
@@ -2035,6 +2066,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     transparent 4px,
     transparent 8px
   );
+}
+
+/* Solid connector for attempts that already fired */
+.dose-timeline__entry--sent .dose-timeline__line,
+.dose-timeline__entry--overdue .dose-timeline__line,
+.dose-timeline__entry--noresponse .dose-timeline__line {
+  background: var(--border);
+}
+
+@keyframes tl-pulse-blue {
+  0%   { box-shadow: 0 0 0 0   rgba(37, 99, 235, 0.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(37, 99, 235, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(37, 99, 235, 0);   }
 }
 
 @keyframes tl-pulse {
@@ -2680,6 +2724,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .rec-menu-item:hover { background: var(--bg); }
 .rec-menu-item--danger { color: var(--red); }
 .rec-menu-item--danger:hover { background: var(--red-lt); }
+
+.rec-menu-divider {
+  height: 1px;
+  background: var(--border-lt);
+  margin: 4px 0;
+}
 
 /* Pagination */
 .pagination-bar {

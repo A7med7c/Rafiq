@@ -23,6 +23,12 @@ public sealed class UpdateUserMedicineCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(userMedicine.UserHealthProfileId, cancellationToken);
 
+        var exists = await userMedicineRepository.ExistsByNameAsync(
+            userMedicine.UserHealthProfileId, request.MedicineName, request.Dosage, request.Id, cancellationToken);
+
+        if (exists)
+            throw new ValidationException("This medication already exists in your medication list.");
+
         userMedicine.MedicineName = request.MedicineName;
         userMedicine.Dosage = request.Dosage;
         userMedicine.Frequency = request.Frequency;
