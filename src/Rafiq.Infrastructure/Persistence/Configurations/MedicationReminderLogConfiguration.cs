@@ -40,6 +40,15 @@ internal sealed class MedicationReminderLogConfiguration : IEntityTypeConfigurat
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => new { x.UserHealthProfileId, x.ScheduledDate });
-        builder.HasIndex(x => new { x.MedicineReminderId, x.ScheduledDate, x.ReminderNumber });
+
+        // Enforces "no duplicate reminder logs" at the database level: two concurrent requests
+        // (e.g. the daily sweep and a manual create racing) can both pass the app-level
+        // ExistsForDateAsync check, but only one can win this unique index — the loser's
+        // SaveChanges throws and MedicationSchedulingService treats that as "already scheduled".
+        // Cancelled rows are excluded from the filter so an edit/delete can cancel a stage and
+        // have a replacement created for the same reminder+date+stage without a conflict.
+        builder.HasIndex(x => new { x.MedicineReminderId, x.ScheduledDate, x.ReminderNumber })
+            .IsUnique()
+            .HasFilter("[Status] <> N'Cancelled'");
     }
 }

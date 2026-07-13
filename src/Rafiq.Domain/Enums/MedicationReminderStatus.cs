@@ -12,5 +12,11 @@ public enum MedicationReminderStatus
     /// so no reminder was sent. It still counts against adherence and can still be
     /// confirmed late.
     /// </summary>
-    Overdue = 5
+    Overdue = 5,
+
+    /// <summary>
+    /// Stage 3 reminder was sent but the patient did not confirm within 15 minutes.
+    /// An escalation alert was dispatched to the patient and their emergency contacts.
+    /// </summary>
+    Missed = 6
 }

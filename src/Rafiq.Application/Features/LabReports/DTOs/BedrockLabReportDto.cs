@@ -6,6 +6,10 @@ namespace Rafiq.Application.Features.LabReports.DTOs;
 /// </summary>
 public sealed class BedrockLabReportDto
 {
+    public bool IsValidDocument { get; set; }
+
+    public string? DetectedDocumentType { get; set; }
+
     public string? LabName { get; set; }
 
     public string? DoctorName { get; set; }

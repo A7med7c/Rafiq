@@ -3,8 +3,8 @@ import { Router } from '@angular/router';
 import { AuthService } from './auth-service';
 import { AppointmentsService } from './appointments.service';
 import { MedicationRemindersService } from './medication-reminders.service';
-// import { NotificationSoundService } from './notification-sound.service';
 import { AppointmentReminderNotificationPayload, MedicationReminderNotificationPayload, NotificationEventPayload, SignalRService } from './signalr.service';
+import { NotificationSoundService } from './notification-sound.service';
 
 export interface AppNotification {
   id: string;
@@ -56,6 +56,7 @@ export class NotificationService {
   private readonly medicationRemindersService = inject(MedicationRemindersService);
   private readonly appointmentsService = inject(AppointmentsService);
   // private readonly notificationSoundService = inject(NotificationSoundService);
+
   private readonly router = inject(Router);
   private readonly ngZone = inject(NgZone);
 
@@ -262,21 +263,34 @@ export class NotificationService {
     this._confirmingReminder.set(true);
 
     this.medicationRemindersService.confirm(reminder.reminderId).subscribe({
-      next: () => {
+      next: res => {
+        // Either this request just confirmed it, or the backend reports it was already
+        // confirmed/cancelled elsewhere (stale popup, duplicate click, another tab) — in
+        // both cases the reminder is done and this popup must not offer to confirm it again.
         this.clearSnoozeTimer(reminder.reminderId);
         this.dequeueReminder(reminder.reminderId);
         this.markReadBySourceId(reminder.reminderId);
-        this.pushDerivedNotification({
-          title: `${reminder.medicineName} confirmed`,
-          body: reminder.notificationText || `You confirmed taking ${reminder.medicineName}.`,
-          type: 'confirmation',
-          sourceId: reminder.reminderId,
-        });
-        this.showToast(
-          'Medication Confirmed',
-          `${reminder.medicineName} has been marked as taken.`,
-          'success'
-        );
+
+        if (!res.success) {
+          this.showToast(
+            'Already up to date',
+            res.message || `${reminder.medicineName} has already been updated.`,
+            'info'
+          );
+        } else {
+          this.pushDerivedNotification({
+            title: `${reminder.medicineName} confirmed`,
+            body: reminder.notificationText || `You confirmed taking ${reminder.medicineName}.`,
+            type: 'confirmation',
+            sourceId: reminder.reminderId,
+          });
+          this.showToast(
+            'Medication Confirmed',
+            `${reminder.medicineName} has been marked as taken.`,
+            'success'
+          );
+        }
+
         this.notifyReminderChanged();
         this._confirmingReminder.set(false);
         this.closeReminderModalIfEmpty();
@@ -436,6 +450,13 @@ export class NotificationService {
       { sourceId: reminder.reminderId, action: 'open-reminder' }
     );
     this.showBrowserReminderNotification(reminder);
+    this.notificationSoundService.play();
+
+    // The Hangfire job that fired this SignalR event has also just transitioned the backend
+    // log from Pending → Sent.  Increment the refresh tick so the Medications page re-fetches
+    // todayLogs and picks up the updated statuses, attempt states, and sort order — without
+    // requiring a page reload.
+    this.notifyReminderChanged();
 
     if (isDevMode()) {
       console.debug('[NotificationService] MedicationReminderDue received', reminder);

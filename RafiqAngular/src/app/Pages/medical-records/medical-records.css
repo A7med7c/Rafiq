@@ -134,6 +134,7 @@
 }
 
 .title-right {
+  
   display: flex;
   align-items: center;
   gap: 12px;
@@ -2176,6 +2177,11 @@
 .delete-modal-ico {
   background: var(--red-lt);
   color: var(--red);
+}
+
+.reminder-prompt-ico {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
 }
 
 .delete-modal-body {

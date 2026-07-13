@@ -10,6 +10,14 @@ internal sealed class UpdatePatientProfileCommandValidator
         RuleFor(x => x.PatientProfileId)
             .NotEmpty();
 
+        RuleFor(x => x.FirstName)
+            .NotEmpty()
+            .MaximumLength(100);
+
+        RuleFor(x => x.LastName)
+            .NotEmpty()
+            .MaximumLength(100);
+
         RuleFor(x => x.DateOfBirth)
             .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
             .WithMessage("Date of birth cannot be in the future.");
@@ -18,13 +26,20 @@ internal sealed class UpdatePatientProfileCommandValidator
             .IsInEnum();
 
         RuleFor(x => x.BloodType)
-            .IsInEnum();
+            .IsInEnum()
+            .When(x => x.BloodType.HasValue);
 
         RuleFor(x => x.Height)
-            .InclusiveBetween(30m, 300m);
+            .InclusiveBetween(30m, 300m)
+            .When(x => x.Height.HasValue);
 
         RuleFor(x => x.Weight)
-            .InclusiveBetween(1m, 500m);
+            .InclusiveBetween(1m, 500m)
+            .When(x => x.Weight.HasValue);
+
+        RuleFor(x => x.Relationship)
+            .IsInEnum()
+            .When(x => x.Relationship.HasValue);
 
         RuleForEach(x => x.Allergies)
             .SetValidator(new UpdateAllergyDtoValidator());

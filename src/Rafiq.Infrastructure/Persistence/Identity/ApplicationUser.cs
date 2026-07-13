@@ -21,4 +21,6 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     // Navigation Properties
     public UserHealthProfile? HealthProfile { get; set; }
+
+    public ICollection<EmergencyContact> EmergencyContacts { get; set; } = new List<EmergencyContact>();
 }

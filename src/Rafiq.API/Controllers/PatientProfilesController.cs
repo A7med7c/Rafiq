@@ -22,6 +22,7 @@ using Rafiq.Application.Features.PatientProfiles.Queries.GetPatientProfileById;
 using Rafiq.Application.Features.PatientProfiles.Queries.GetProfileMembers;
 using Rafiq.Application.Features.PatientProfiles.Queries.GetReceivedAccessRequests;
 using Rafiq.Application.Features.PatientProfiles.Queries.GetReceivedHealthProfileInvitations;
+using Rafiq.Application.Features.PatientProfiles.Queries.GetSentHealthProfileInvitations;
 using Rafiq.Domain.Exceptions;
 
 namespace Rafiq.API.Controllers;
@@ -100,6 +101,13 @@ public sealed class PatientProfilesController(IMediator _mediator) : ControllerB
     public async Task<IActionResult> GetReceivedInvitations(CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetReceivedHealthProfileInvitationsQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("invitations/sent")]
+    public async Task<IActionResult> GetSentInvitations(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetSentHealthProfileInvitationsQuery(), cancellationToken);
         return Ok(result);
     }
 

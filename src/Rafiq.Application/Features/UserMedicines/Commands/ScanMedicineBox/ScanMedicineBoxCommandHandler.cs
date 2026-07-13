@@ -17,35 +17,42 @@ public sealed class ScanMedicineBoxCommandHandler(
         ScanMedicineBoxCommand request,
         CancellationToken cancellationToken)
     {
-        // 1. Ensure user is authenticated
         var userId = currentUserService.UserId
             ?? throw new UnauthorizedException("Authentication is required.");
 
-        // 2. Save physical file via IFileStorageService to medicine-boxes directory
-        var fileExtension = Path.GetExtension(request.Image.FileName);
-        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-
         using var imageStream = request.Image.OpenReadStream();
-        var imagePath = await fileStorageService.UploadFileAsync(
-            imageStream,
-            uniqueFileName,
-            "medicine-boxes",
-            cancellationToken);
-
-        // 3. Convert to Base64 for sending to Bedrock
         using var memoryStream = new MemoryStream();
-        imageStream.Position = 0;
         await imageStream.CopyToAsync(memoryStream, cancellationToken);
-        var base64Image = Convert.ToBase64String(memoryStream.ToArray());
+        var imageBytes = memoryStream.ToArray();
+        var base64Image = Convert.ToBase64String(imageBytes);
 
-        // 4. Analyze with Bedrock
         var extracted = await bedrockService.AnalyzeAsync<BedrockMedicineBoxDto>(
             base64Image,
             MedicineBoxPrompt.Build(),
             cancellationToken)
             ?? throw new BadRequestException("No medicine data could be extracted from the uploaded image.");
 
-        // 5. Return extracted data to client for review (does not save to UserMedicine yet)
+        if (!extracted.IsValidDocument)
+        {
+            var detected = extracted.DetectedDocumentType;
+            var detailMessage = string.IsNullOrWhiteSpace(detected) || detected == "Unknown"
+                ? "The uploaded image could not be identified as a valid document."
+                : $"Detected document type: {detected}.";
+
+            throw new BadRequestException(
+                $"The uploaded image is not a medicine box or blister pack. {detailMessage} Please upload a valid medicine box image.");
+        }
+
+        var fileExtension = Path.GetExtension(request.Image.FileName);
+        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+        using var uploadStream = new MemoryStream(imageBytes);
+        var imagePath = await fileStorageService.UploadFileAsync(
+            uploadStream,
+            uniqueFileName,
+            "medicine-boxes",
+            cancellationToken);
+
         var dto = new ScanMedicineBoxResponseDto
         {
             MedicineName = extracted.MedicineName,

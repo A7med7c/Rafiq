@@ -4,4 +4,5 @@ public sealed record AuthResponseDto(
     string AccessToken,
     string RefreshToken,
     DateTime AccessTokenExpiresAt,
-    DateTime RefreshTokenExpiresAt);
+    DateTime RefreshTokenExpiresAt,
+    bool HasEmergencyContacts);

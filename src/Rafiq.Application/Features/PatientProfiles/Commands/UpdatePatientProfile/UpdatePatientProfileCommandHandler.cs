@@ -1,8 +1,10 @@
 using MapsterMapper;
 using MediatR;
+using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.PatientProfiles.DTOs;
 using Rafiq.Domain.Entities.User;
+using Rafiq.Domain.Enums;
 using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 
@@ -10,6 +12,8 @@ namespace Rafiq.Application.Features.PatientProfiles.Commands.UpdatePatientProfi
 
 public sealed class UpdatePatientProfileCommandHandler(
     IPatientProfileRepository patientProfileRepository,
+    IHealthProfileAccessRepository healthProfileAccessRepository,
+    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork,
     IMapper mapper)
     : IRequestHandler<UpdatePatientProfileCommand, ApiResponse<PatientProfileDto>>
@@ -24,32 +28,41 @@ public sealed class UpdatePatientProfileCommandHandler(
             ?? throw new NotFoundException("PatientProfile", request.PatientProfileId);
 
         profile.Update(
+            request.FirstName,
+            request.LastName,
             request.Gender,
             request.DateOfBirth,
             request.Height,
             request.Weight,
             request.BloodType);
 
-        profile.Allergies.Clear();
+        var newAllergies = (request.Allergies ?? []).Select(allergy => new Allergy(
+            allergy.Name,
+            allergy.Severity)).ToList();
 
-        foreach (var allergy in request.Allergies)
+        var newDiseases = (request.ChronicDiseases ?? []).Select(disease => new ChronicDisease(
+            disease.Name,
+            disease.DiagnosedAt,
+            disease.Status)).ToList();
+
+        profile.SyncAllergies(newAllergies);
+        profile.SyncChronicDiseases(newDiseases);
+
+        // Update relationship on the access record for managed (non-self) profiles
+        if (request.Relationship.HasValue)
         {
-            profile.Allergies.Add(new Allergy(
-                allergy.Name,
-                allergy.Severity));
+            var currentUserId = currentUserService.UserId;
+            if (currentUserId.HasValue)
+            {
+                var access = await healthProfileAccessRepository.GetActiveOwnerAsync(
+                    request.PatientProfileId, currentUserId.Value, cancellationToken);
+
+                if (access is not null && access.Relationship != RelationshipType.Self)
+                {
+                    access.UpdateRelationship(request.Relationship.Value);
+                }
+            }
         }
-
-        profile.ChronicDiseases.Clear();
-
-        foreach (var disease in request.ChronicDiseases)
-        {
-            profile.ChronicDiseases.Add(new ChronicDisease(
-                disease.Name,
-                disease.DiagnosedAt,
-                disease.Status));
-        }
-
-        patientProfileRepository.Update(profile);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

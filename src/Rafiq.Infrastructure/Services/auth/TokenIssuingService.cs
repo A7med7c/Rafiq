@@ -1,11 +1,15 @@
-﻿using Rafiq.Application.Common.Interfaces;
+using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Features.Auth.DTOs;
 using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Infrastructure.Services.auth
 {
-    public class TokenIssuingService(ITokenService tokenService, ITokenHasher tokenHasher
-        , IRefreshTokenRepository refreshTokenRepository, IUnitOfWork unitOfWork) : ITokenIssuingService
+    public class TokenIssuingService(
+        ITokenService tokenService,
+        ITokenHasher tokenHasher,
+        IRefreshTokenRepository refreshTokenRepository,
+        IUnitOfWork unitOfWork,
+        IEmergencyContactRepository emergencyContactRepository) : ITokenIssuingService
     {
         public async Task<AuthResponseDto> IssueTokensAsync(IdentityUserDto user, CancellationToken cancellationToken)
         {
@@ -35,11 +39,15 @@ namespace Rafiq.Infrastructure.Services.auth
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
+            var contacts = await emergencyContactRepository.GetAllByUserIdAsync(user.UserId, cancellationToken);
+            var hasEmergencyContacts = contacts.Any();
+
             return new AuthResponseDto(
                     accessToken,
                     refreshToken,
                     accessTokenExpiresAt,
-                    refreshTokenExpiresAt);
+                    refreshTokenExpiresAt,
+                    hasEmergencyContacts);
         }
     }
 }

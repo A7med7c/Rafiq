@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.Extensions.Logging;
 using Rafiq.Domain.Common;
 using Rafiq.Domain.Entities.Chat;
 using Rafiq.Domain.Entities.Documents;
@@ -38,6 +40,7 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<ChronicDisease> ChronicDiseases => Set<ChronicDisease>();
     public DbSet<Otp> Otps => Set<Otp>();
+    public DbSet<EmergencyContact> EmergencyContacts => Set<EmergencyContact>();
 
     #endregion
 
@@ -93,22 +96,52 @@ public sealed class RafiqDbContext : IdentityDbContext<
     public override Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default)
     {
-        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Deleted:
-                    entry.State = EntityState.Modified;
-                    entry.Entity.SoftDelete();
-                    break;
+        // 1. Detect all changes first so EF has a complete picture of what changed.
+        ChangeTracker.DetectChanges();
 
-                case EntityState.Modified:
-                    entry.Entity.MarkUpdated();
-                    break;
+        var now = DateTime.UtcNow;
+
+        // 2. Process each tracked BaseEntity entry.
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>().ToList())
+        {
+            if (entry.State == EntityState.Deleted)
+            {
+                // Convert hard-delete to soft-delete by staying in Modified state
+                // and only stamping the three soft-delete columns via property accessors.
+                // This keeps EF's internal tracking of which properties actually changed
+                // intact and avoids generating spurious WHERE conditions that cause
+                // DbUpdateConcurrencyException.
+                entry.State = EntityState.Modified;
+
+                // Mark only the soft-delete columns as changed
+                entry.Property(nameof(BaseEntity.IsDeleted)).CurrentValue   = true;
+                entry.Property(nameof(BaseEntity.DeletedAt)).CurrentValue   = now;
+                entry.Property(nameof(BaseEntity.UpdatedAt)).CurrentValue   = now;
+                entry.Property(nameof(BaseEntity.IsDeleted)).IsModified     = true;
+                entry.Property(nameof(BaseEntity.DeletedAt)).IsModified     = true;
+                entry.Property(nameof(BaseEntity.UpdatedAt)).IsModified     = true;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                // Stamp UpdatedAt on every legitimately modified entity.
+                entry.Property(nameof(BaseEntity.UpdatedAt)).CurrentValue = now;
+                entry.Property(nameof(BaseEntity.UpdatedAt)).IsModified   = true;
             }
         }
 
-        return base.SaveChangesAsync(cancellationToken);
+        // 3. Disable auto-detect during the actual save to prevent EF's internal
+        //    second-pass DetectChanges() from resetting any of our manual state edits.
+        var originalAutoDetect = ChangeTracker.AutoDetectChangesEnabled;
+        ChangeTracker.AutoDetectChangesEnabled = false;
+
+        try
+        {
+            return base.SaveChangesAsync(cancellationToken);
+        }
+        finally
+        {
+            ChangeTracker.AutoDetectChangesEnabled = originalAutoDetect;
+        }
     }
 
 

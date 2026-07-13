@@ -44,7 +44,6 @@ public sealed class UpdateImagingReportCommandHandler(
             request.ImageUrl,
             request.OcrText);
 
-        imagingReportRepository.Update(imagingReport);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = new ImagingReportResponseDto

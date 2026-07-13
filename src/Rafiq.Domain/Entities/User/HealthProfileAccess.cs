@@ -172,6 +172,12 @@ public class HealthProfileAccess : BaseEntity
         MarkUpdated();
     }
 
+    public void UpdateRelationship(RelationshipType relationship)
+    {
+        Relationship = relationship;
+        MarkUpdated();
+    }
+
     private void EnsureStatus(AccessStatus expected, string action)
     {
         if (Status != expected)

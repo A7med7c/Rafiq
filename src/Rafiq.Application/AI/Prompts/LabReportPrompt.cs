@@ -11,7 +11,12 @@ public static class LabReportPrompt
         """
         You are an expert medical laboratory report analyzer.
 
-        Your task is to analyze the uploaded laboratory report image and extract structured medical information.
+        Your first task is to determine whether the uploaded image is a medical laboratory report.
+        A laboratory report is a document that shows the results of blood tests, urine tests,
+        cultures, or other diagnostic laboratory analyses, typically listing test names, values,
+        units, and reference ranges.
+
+        Your second task is to extract structured medical information only if the document is a valid laboratory report.
 
         Return ONLY valid JSON.
 
@@ -23,6 +28,8 @@ public static class LabReportPrompt
         Return EXACTLY this JSON schema:
 
         {
+          "isValidDocument": true,
+          "detectedDocumentType": "LabReport",
           "labName": "",
           "doctorName": "",
           "reportDate": "yyyy-MM-dd",
@@ -39,7 +46,17 @@ public static class LabReportPrompt
           ]
         }
 
-        Extraction Rules:
+        Document Validation Rules:
+
+        - Determine the type of the uploaded image before extracting any data.
+        - Use ONLY these values for detectedDocumentType: "Prescription", "LabReport", "ImagingReport", "MedicineBox", "Unknown".
+        - If the image is a valid laboratory report, set "isValidDocument": true and "detectedDocumentType": "LabReport".
+        - If the image is NOT a laboratory report (e.g., it is a prescription, imaging report, medicine box, unrelated photo, blank page, or unclear image), set "isValidDocument": false.
+        - Set detectedDocumentType to the actual detected type when it can be identified with confidence, otherwise set it to "Unknown".
+        - If the image is unreadable, unclear, unrelated, or cannot be classified confidently, set "isValidDocument": false and "detectedDocumentType": "Unknown".
+        - Do NOT guess or infer the document type. Only classify with confidence.
+
+        Extraction Rules (apply ONLY when isValidDocument is true):
 
         - Extract the laboratory name.
         - Extract the doctor's name if present.
@@ -55,14 +72,20 @@ public static class LabReportPrompt
         - If no status exists, compare the reference with the value and generate a flag of (H,L,...etc).
         - If any field is missing or unreadable, return null.
 
+        Rules when isValidDocument is false:
+
+        - Return null for ALL extraction fields: labName, doctorName, reportDate, ocrText, summary.
+        - Return an empty array for tests.
+        - Do NOT extract, infer, generate, complete, or guess any medical information.
+
         Formatting Rules:
 
         - Every JSON property must exist.
-        - Every value must be returned as a STRING except null values.
+        - Every value must be returned as a STRING except null values and boolean values.
         - Numeric values must also be returned as strings.
         - reportDate must always use the format yyyy-MM-dd.
 
-        Summary Rules:
+        Summary Rules (apply ONLY when isValidDocument is true):
 
         Generate a short patient-friendly explanation (2–3 sentences).
 

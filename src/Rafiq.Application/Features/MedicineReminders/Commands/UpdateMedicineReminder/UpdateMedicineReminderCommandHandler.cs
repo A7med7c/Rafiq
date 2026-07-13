@@ -28,7 +28,7 @@ public sealed class UpdateMedicineReminderCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(userMedicine.UserHealthProfileId, cancellationToken);
 
-        if (request.StartDate != reminder.StartDate && request.StartDate < DateOnly.FromDateTime(DateTime.UtcNow))
+        if (request.StartDate != reminder.StartDate && request.StartDate < dateTimeProvider.Today)
         {
             throw new ValidationException(new[] { "StartDate cannot be before today's date when modifying it." });
         }
@@ -62,8 +62,11 @@ public sealed class UpdateMedicineReminderCommandHandler(
         // Recalculate the reminder's own time/dates/repeat type.
         reminder.UpdateDetails(request.ReminderTime, request.StartDate, request.EndDate, request.RepeatType);
 
-        medicineReminderRepository.Update(reminder);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Recreate today's schedule from the new details: three fresh logs, three fresh jobs,
+        // computed from the recalculated reminder time.
+        await medicationSchedulingService.ScheduleTodayIfApplicableAsync(reminder, cancellationToken);
 
         var dto = new MedicineReminderResponseDto
         {

@@ -87,11 +87,15 @@ public static class DependencyInjection
         services.AddScoped<IUserMedicineRepository, UserMedicineRepository>();
         services.AddScoped<IMedicineReminderRepository, MedicineReminderRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        services.AddScoped<IEmergencyContactRepository, EmergencyContactRepository>();
         services.AddScoped<IAiConversationRepository, AiConversationRepository>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
 
+        // ── WhatsApp ──────────────────────────────────────────────────────
+        services.Configure<WhatsAppSettings>(configuration.GetSection(WhatsAppSettings.SectionName));
+        services.AddHttpClient<IWhatsAppService, WhatsAppService>();
 
         // ── Medication Reminder Engine ─────────────────────────────────────
         services.Configure<MedicationReminderOptions>(
@@ -124,7 +128,6 @@ public static class DependencyInjection
             }));
 
         services.AddHangfireServer();
-        services.AddHostedService<MissedAppointmentsBackgroundService>();
         return services;
     }
 }

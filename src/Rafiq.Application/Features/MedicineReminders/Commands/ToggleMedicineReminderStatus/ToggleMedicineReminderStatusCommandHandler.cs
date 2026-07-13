@@ -11,6 +11,9 @@ public sealed class ToggleMedicineReminderStatusCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
     IMedicineReminderRepository medicineReminderRepository,
+    IMedicationReminderLogRepository logRepository,
+    IMedicationReminderScheduler scheduler,
+    IDateTimeProvider dateTimeProvider,
     IUnitOfWork unitOfWork)
     : IRequestHandler<ToggleMedicineReminderStatusCommand, ApiResponse<bool>>
 {
@@ -26,9 +29,29 @@ public sealed class ToggleMedicineReminderStatusCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(userMedicine.UserHealthProfileId, cancellationToken);
 
+        var wasEnabled = reminder.IsEnabled;
+
         reminder.ToggleStatus();
 
-        medicineReminderRepository.Update(reminder);
+        // Only a disable (enabled -> disabled) needs to stop today's notifications; enabling
+        // a reminder is out of scope here and creates no new schedule on its own.
+        if (wasEnabled && !reminder.IsEnabled)
+        {
+            var today = dateTimeProvider.Today;
+            // Guid.Empty is intentional: we want all Pending logs for this occurrence, not a subset.
+            var pendingLogs = await logRepository.GetPendingOtherLogsAsync(
+                reminder.Id, today, Guid.Empty, cancellationToken);
+
+            foreach (var pendingLog in pendingLogs)
+            {
+                if (pendingLog.NextJobId is not null)
+                    scheduler.CancelJob(pendingLog.NextJobId);
+
+                pendingLog.Cancel();
+                logRepository.Update(pendingLog);
+            }
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var statusMessage = reminder.IsEnabled ? "enabled" : "disabled";

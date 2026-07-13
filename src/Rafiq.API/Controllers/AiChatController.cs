@@ -5,6 +5,7 @@ using Rafiq.Application.Features.AiChat.Commands.ArchiveConversation;
 using Rafiq.Application.Features.AiChat.Commands.CreateConversation;
 using Rafiq.Application.Features.AiChat.Commands.RenameConversation;
 using Rafiq.Application.Features.AiChat.Commands.SendMessage;
+using Rafiq.Application.Features.AiChat.Queries.GenerateHealthSummary;
 using Rafiq.Application.Features.AiChat.Queries.GetConversationHistory;
 using Rafiq.Application.Features.AiChat.Queries.GetConversations;
 
@@ -78,6 +79,17 @@ public class AiChatController : ControllerBase
     public async Task<IActionResult> ArchiveConversation(Guid conversationId, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new ArchiveConversationCommand(conversationId), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Generates an AI health summary for a profile using all available health data.
+    /// Returns HasData=false without calling the AI when there is insufficient data.
+    /// </summary>
+    [HttpGet("health-summary/{profileId:guid}")]
+    public async Task<IActionResult> GetHealthSummary(Guid profileId, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GenerateHealthSummaryQuery(profileId), cancellationToken);
         return Ok(result);
     }
 

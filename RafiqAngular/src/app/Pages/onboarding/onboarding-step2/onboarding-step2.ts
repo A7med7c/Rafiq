@@ -19,6 +19,7 @@ export class OnboardingStep2 implements OnInit {
 
   readonly steps = [
     { label: 'Basic Info' },
+    { label: 'Emergency Contacts' },
     { label: 'Allergies' },
     { label: 'Chronic Diseases' },
     { label: 'Review' },
@@ -105,7 +106,7 @@ export class OnboardingStep2 implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/onboarding/step1']);
+    this.router.navigate(['/onboarding/emergency']);
   }
 
   continue(): void {

@@ -2,6 +2,10 @@ namespace Rafiq.Application.Features.ImagingReports.DTOs;
 
 public sealed class BedrockImagingReportDto
 {
+    public bool IsValidDocument { get; set; }
+
+    public string? DetectedDocumentType { get; set; }
+
     public string? ImagingType { get; set; }
 
     public string? BodyPart { get; set; }
