@@ -13,6 +13,11 @@ internal sealed class UpdateChronicDiseaseDtoValidator
         RuleFor(x => x.Status)
             .IsInEnum();
 
+        RuleFor(x => x.DiagnosedAt)
+            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .WithMessage("Chronic disease diagnosis date cannot be in the future.")
+            .When(x => x.DiagnosedAt.HasValue);
+
         RuleFor(x => x.Notes)
             .MaximumLength(1000);
     }

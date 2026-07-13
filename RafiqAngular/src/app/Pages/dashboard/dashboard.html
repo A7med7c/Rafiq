@@ -174,30 +174,42 @@
       <!-- ── MIDDLE ROW: AI + STATUS + APPOINTMENT ── -->
       <div class="mid-row">
 
-        <!-- AI Insights -->
+        <!-- AI Health Summary -->
         <div class="card ai-card">
           <div class="ai-hdr">
             <div class="ai-hdr-left">
               <i class="fa-solid fa-wand-magic-sparkles ai-ico"></i>
-              <span class="ai-title">Rafiq AI Insights</span>
+              <span class="ai-title">AI Health Summary</span>
             </div>
             <span class="pill pill-blue">
               <i class="fa-solid fa-circle ai-dot"></i> AI Active
             </span>
           </div>
-          <p class="ai-body">
-            Based on recent data, Sarah's hydration levels are improving significantly.
-            However, the local pollen count is
-            <strong class="ai-danger">High (8.4)</strong>
-            today—ensure Dad stays indoors or uses his prescribed antihistamine.
-          </p>
+
+          <div class="dash-summary-scroll">
+            @if (summaryLoading()) {
+            <div class="ai-summary-loading">
+              <div class="ai-summary-spinner">
+                <i class="fa-solid fa-wand-magic-sparkles ai-summary-spinner-ico"></i>
+                <svg class="ai-summary-ring" viewBox="0 0 60 60">
+                  <circle cx="30" cy="30" r="26" fill="none" stroke-width="3"/>
+                </svg>
+              </div>
+              <p class="ai-summary-loading-text">Generating AI Summary<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
+            </div>
+            } @else if (!healthSummary()?.hasData) {
+            <p class="ai-body ai-body--empty">
+              Not enough health information to generate an AI Health Summary yet. Upload more medical records to receive personalized health insights.
+            </p>
+            } @else {
+            <p class="ai-body">{{ healthSummary()!.summary }}</p>
+            }
+          </div>
+
           <div class="ai-tags">
-            <span class="ai-tag ai-tag-teal">
-              <i class="fa-solid fa-droplet"></i> Hydration Tracking +15%
-            </span>
-            <span class="ai-tag ai-tag-orange">
-              <i class="fa-solid fa-triangle-exclamation"></i> Pollen Alert: High
-            </span>
+            <a routerLink="/ai-assistant" class="ai-tag ai-tag-teal">
+              <i class="fa-solid fa-robot"></i> Open AI Assistant
+            </a>
           </div>
         </div>
 
@@ -306,141 +318,65 @@
       <div class="family-section">
         <div class="section-hdr">
           <span class="section-title">Family Overview</span>
-          <a href="#" class="link-sm">View All Profiles</a>
+          <a routerLink="/family-profiles" class="link-sm">View All Profiles</a>
         </div>
         <div class="family-grid">
 
-          <!-- Ahmed -->
-          <div class="fam-card">
-            <div class="fam-top">
-              <div class="fam-av-wrap">
-                <img src="images/ahmed_avatar.png" alt="Ahmed" class="fam-av">
-                <span class="fam-dot dot-green"></span>
+          @if (familyLoading()) {
+            @for (s of [1,2,3,4]; track s) {
+            <div class="fam-card fam-card--skeleton">
+              <div class="skl-row">
+                <div class="skl-sq" style="border-radius:50%"></div>
+                <div class="skl-lines">
+                  <div class="skl-line skl-70"></div>
+                  <div class="skl-line skl-45"></div>
+                </div>
               </div>
-              <div class="fam-id">
-                <p class="fam-name">Ahmed <span class="fam-you">(You)</span></p>
-                <span class="pill pill-green-sm">Stable</span>
-              </div>
-            </div>
-            <div class="fam-vitals">
-              <div class="fam-v-row">
-                <span class="fam-v-lbl">BP</span>
-                <span class="fam-v-val">118/76 mmHg</span>
-              </div>
-              <div class="fam-bar">
-                <div class="fam-bar-fill bar-green" style="width:62%"></div>
-              </div>
-              <div class="fam-v-row">
-                <span class="fam-v-lbl">Glucose</span>
-                <span class="fam-v-val">92 mg/dL</span>
-              </div>
-              <div class="fam-bar">
-                <div class="fam-bar-fill bar-green" style="width:55%"></div>
+              <div class="skl-list" style="margin:0">
+                <div class="skl-line"></div>
+                <div class="skl-line skl-70"></div>
               </div>
             </div>
-            <button type="button" class="fam-checkin-btn">
-              <i class="fa-solid fa-person-walking"></i> Check-in
-            </button>
-          </div>
+            }
+          } @else {
+            @for (slot of familySlots(); track $index) {
+              @if (slot.type === 'profile') {
+              <div class="fam-card">
+                <div class="fam-top">
+                  <div class="fam-av-wrap">
+                    <div class="fam-av fam-av-letter">{{ getInitial(slot.data!.firstName) }}</div>
+                  </div>
+                  <div class="fam-id">
+                    <p class="fam-name">
+                      {{ slot.data!.firstName }} {{ slot.data!.lastName }}
+                      @if (slot.data!.isSelf) { <span class="fam-you">(You)</span> }
+                    </p>
+                    <span class="pill pill-blue-sm" style="text-align: center;">{{ slot.data!.relationship || 'Self' }}</span>
+                  </div>
+                </div>
+                <div class="fam-vitals">
+                  <div class="fam-v-row">
+                    <span class="fam-v-lbl">Gender</span>
+                    <span class="fam-v-val">{{ slot.data!.gender }}</span>
+                  </div>
+                  <div class="fam-v-row">
+                    <span class="fam-v-lbl">Age</span>
+                    <span class="fam-v-val">{{ getAge(slot.data!.dateOfBirth) }} yrs</span>
+                  </div>
+                </div>
+                <button type="button" class="fam-checkin-btn">
+                  <i class="fa-solid fa-person-walking"></i> Check-in
+                </button>
+              </div>
+              } @else {
+              <a class="fam-card fam-card--add" routerLink="/family-profiles">
+                <i class="fa-solid fa-plus fam-add-ico"></i>
+                <span class="fam-add-lbl">Add Family Member</span>
+              </a>
+              }
+            }
+          }
 
-          <!-- Sarah -->
-          <div class="fam-card">
-            <div class="fam-top">
-              <div class="fam-av-wrap">
-                <img src="images/sarah_avatar.png" alt="Sarah" class="fam-av">
-                <span class="fam-dot dot-green"></span>
-              </div>
-              <div class="fam-id">
-                <p class="fam-name">Sarah</p>
-                <span class="pill pill-green-sm">Healthy</span>
-              </div>
-            </div>
-            <div class="fam-vitals">
-              <div class="fam-v-row">
-                <span class="fam-v-lbl">Heart Rate</span>
-                <span class="fam-v-val">68 bpm</span>
-              </div>
-              <div class="fam-bar">
-                <div class="fam-bar-fill bar-green" style="width:66%"></div>
-              </div>
-              <div class="fam-v-row">
-                <span class="fam-v-lbl">Sleep Quality</span>
-                <span class="fam-v-val">Excellent</span>
-              </div>
-              <div class="fam-bar">
-                <div class="fam-bar-fill bar-green" style="width:90%"></div>
-              </div>
-            </div>
-            <button type="button" class="fam-checkin-btn">
-              <i class="fa-solid fa-person-walking"></i> Check-in
-            </button>
-          </div>
-
-          <!-- Zaid -->
-          <div class="fam-card">
-            <div class="fam-top">
-              <div class="fam-av-wrap">
-                <div class="fam-av fam-av-letter">Z</div>
-                <span class="fam-dot dot-blue"></span>
-              </div>
-              <div class="fam-id">
-                <p class="fam-name">Zaid</p>
-                <span class="pill pill-blue-sm">Active</span>
-              </div>
-            </div>
-            <div class="fam-vitals">
-              <div class="fam-v-row">
-                <span class="fam-v-lbl">Temperature</span>
-                <span class="fam-v-val">98.6 °F</span>
-              </div>
-              <div class="fam-bar">
-                <div class="fam-bar-fill bar-blue" style="width:50%"></div>
-              </div>
-              <div class="fam-v-row">
-                <span class="fam-v-lbl">Vaccination</span>
-                <span class="fam-v-val">Next: Oct 12</span>
-              </div>
-              <div class="fam-bar">
-                <div class="fam-bar-fill bar-blue" style="width:40%"></div>
-              </div>
-            </div>
-            <button type="button" class="fam-checkin-btn">
-              <i class="fa-solid fa-person-walking"></i> Check-in
-            </button>
-          </div>
-
-          <!-- Dad -->
-          <div class="fam-card">
-            <div class="fam-top">
-              <div class="fam-av-wrap">
-                <img src="images/dad_avatar.png" alt="Dad" class="fam-av">
-                <span class="fam-dot dot-red"></span>
-              </div>
-              <div class="fam-id">
-                <p class="fam-name">Dad</p>
-                <span class="pill pill-red-sm">Checkup Due</span>
-              </div>
-            </div>
-            <div class="fam-vitals">
-              <div class="fam-v-row">
-                <span class="fam-v-lbl">BP Trend</span>
-                <span class="fam-v-val fam-v-red"><strong>High</strong> (138/92)</span>
-              </div>
-              <div class="fam-bar">
-                <div class="fam-bar-fill bar-red" style="width:88%"></div>
-              </div>
-              <div class="fam-v-row">
-                <span class="fam-v-lbl">Medication</span>
-                <span class="fam-v-val">8 AM Taken</span>
-              </div>
-              <div class="fam-bar">
-                <div class="fam-bar-fill bar-red" style="width:75%"></div>
-              </div>
-            </div>
-            <button type="button" class="fam-checkin-btn fam-checkin-red">
-              <i class="fa-solid fa-person-walking"></i> Check-in
-            </button>
-          </div>
 
         </div>
       </div>

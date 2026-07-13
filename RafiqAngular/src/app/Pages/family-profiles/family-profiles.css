@@ -2011,3 +2011,99 @@
   .fp-allergy-row--3 .fp-select--sm:nth-child(2) { display: none; }
   .fp-allergy-row--3 .fp-input.fp-select--sm { display: none; }
 }
+
+/* --- Health Summary tab ------------------------------------ */
+.ai-body {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+.ai-body--empty {
+  color: var(--text-3);
+  font-style: italic;
+}
+
+.fp-summary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fp-summary-body .ai-body { margin: 0; }
+
+.fp-summary-toggle {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity .15s;
+}
+.fp-summary-toggle:hover { opacity: .75; }
+.fp-summary-toggle i { font-size: 10px; }
+
+/* Skeleton for health summary loading */
+.fp-summary-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+.fp-summary-skl {
+  height: 12px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-3, #e8e8e8) 50%, var(--bg-2) 75%);
+  background-size: 200% 100%;
+  animation: skl-shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+.fp-summary-skl--70 { width: 70%; }
+.fp-summary-skl--50 { width: 50%; }
+
+/* --- Health Summary tab ------------------------------------ */
+.ai-body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+.ai-body--empty {
+  color: var(--text-3);
+  font-style: italic;
+}
+
+/* scrollable area for health summary text */
+.fp-summary-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.fp-summary-scroll::-webkit-scrollbar { width: 4px; }
+.fp-summary-scroll::-webkit-scrollbar-track { background: transparent; }
+.fp-summary-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Skeleton for health summary loading */
+.fp-summary-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+.fp-summary-skl {
+  height: 12px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-3, #e8e8e8) 50%, var(--bg-2) 75%);
+  background-size: 200% 100%;
+  animation: skl-shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+.fp-summary-skl--70 { width: 70%; }
+.fp-summary-skl--50 { width: 50%; }
