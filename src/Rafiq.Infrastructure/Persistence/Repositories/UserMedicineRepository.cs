@@ -32,6 +32,26 @@ public sealed class UserMedicineRepository : IUserMedicineRepository
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
 
+    public Task<bool> ExistsByNameAsync(
+        Guid userHealthProfileId,
+        string medicineName,
+        string dosage,
+        Guid? excludeId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedName   = medicineName.Trim().ToLower();
+        var normalizedDosage = dosage.Trim().ToLower();
+
+        return _context.UserMedicines
+            .Where(m => m.UserHealthProfileId == userHealthProfileId
+                     && !m.IsDeleted
+                     && (excludeId == null || m.Id != excludeId.Value))
+            .AnyAsync(
+                m => m.MedicineName.ToLower() == normalizedName
+                  && m.Dosage.ToLower()       == normalizedDosage,
+                cancellationToken);
+    }
+
     public void Update(UserMedicine userMedicine)
     {
         _context.UserMedicines.Update(userMedicine);

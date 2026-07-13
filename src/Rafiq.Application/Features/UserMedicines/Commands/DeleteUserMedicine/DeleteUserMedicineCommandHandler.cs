@@ -9,6 +9,10 @@ namespace Rafiq.Application.Features.UserMedicines.Commands.DeleteUserMedicine;
 public sealed class DeleteUserMedicineCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
+    IMedicineReminderRepository medicineReminderRepository,
+    IMedicationReminderLogRepository logRepository,
+    IMedicationReminderScheduler scheduler,
+    IDateTimeProvider dateTimeProvider,
     IUnitOfWork unitOfWork)
     : IRequestHandler<DeleteUserMedicineCommand, ApiResponse<bool>>
 {
@@ -21,6 +25,32 @@ public sealed class DeleteUserMedicineCommandHandler(
             ?? throw new NotFoundException(nameof(Domain.Entities.Documents.UserMedicine), request.Id);
 
         await authorizationService.EnsureCanWriteAsync(userMedicine.UserHealthProfileId, cancellationToken);
+
+        // Cancel every pending reminder notification for this medicine and soft-delete
+        // all its reminder schedules so the daily sweep never re-schedules them.
+        // Confirmed and sent logs are intentionally preserved for history.
+        var reminders = await medicineReminderRepository.GetByUserMedicineIdAsync(
+            userMedicine.Id, cancellationToken);
+
+        var today = dateTimeProvider.Today;
+
+        foreach (var reminder in reminders)
+        {
+            // Guid.Empty: cancel ALL pending logs for this occurrence, not a subset.
+            var pendingLogs = await logRepository.GetPendingOtherLogsAsync(
+                reminder.Id, today, Guid.Empty, cancellationToken);
+
+            foreach (var pendingLog in pendingLogs)
+            {
+                if (pendingLog.NextJobId is not null)
+                    scheduler.CancelJob(pendingLog.NextJobId);
+
+                pendingLog.Cancel();
+                logRepository.Update(pendingLog);
+            }
+
+            medicineReminderRepository.Delete(reminder);
+        }
 
         userMedicineRepository.Delete(userMedicine);
         await unitOfWork.SaveChangesAsync(cancellationToken);

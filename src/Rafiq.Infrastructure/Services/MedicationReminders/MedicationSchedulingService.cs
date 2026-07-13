@@ -11,9 +11,10 @@ using Rafiq.Domain.Repositories;
 namespace Rafiq.Infrastructure.Services.MedicationReminders;
 
 /// <summary>
-/// The one place that decides whether a reminder is due today, materialises its log,
-/// and hands the delivery job to Hangfire. Both the daily scheduler and the create-reminder
-/// flow go through here, so a reminder created after the daily sweep still fires today.
+/// The one place that decides whether a reminder is due today, materialises its logs,
+/// and hands the delivery jobs to Hangfire. Both the daily scheduler and the
+/// create-reminder flow go through here, so a reminder created after the daily sweep
+/// still fires today.
 /// </summary>
 public sealed class MedicationSchedulingService(
     IMedicationReminderLogRepository logRepository,
@@ -27,8 +28,20 @@ public sealed class MedicationSchedulingService(
 {
     private readonly TimeSpan _lateGrace = TimeSpan.FromMinutes(options.Value.LateGraceMinutes);
 
-    // The three fixed stages every reminder occurrence must produce, relative to ReminderTime.
-    private const int StageOffsetMinutes = 1;
+    /// <summary>
+    /// Minutes between successive escalation attempts for one dose occurrence.
+    /// The configured ReminderTime is the dose time (middle attempt).
+    ///
+    /// Attempt 1 fires StageIntervalMinutes before the dose time (early warning).
+    /// Attempt 2 fires at the configured dose time (main reminder).
+    /// Attempt 3 fires StageIntervalMinutes after the dose time (overdue reminder).
+    ///
+    /// Example — configured dose time 8:00 PM (StageIntervalMinutes = 10):
+    ///   Attempt 1 → 7:50 PM  (early warning)
+    ///   Attempt 2 → 8:00 PM  (main reminder, at configured dose time)
+    ///   Attempt 3 → 8:10 PM  (overdue reminder)
+    /// </summary>
+    private const int StageIntervalMinutes = 1;
 
     public async Task<bool> ScheduleTodayIfApplicableAsync(
         MedicineReminder reminder,
@@ -55,30 +68,28 @@ public sealed class MedicationSchedulingService(
             return false;
         }
 
-        // The "at time" instant anchors all three stages; ±10 minutes is applied to the
-        // absolute UTC instant (not the wall-clock TimeSpan) so a reminder near midnight
-        // doesn't produce an out-of-range time-of-day.
+        // The anchor is the UTC instant that corresponds to the user's configured reminder
+        // time on today's date in the reminder timezone.  All three attempts are offset from
+        // this single anchor so that midnight-crossing is handled correctly at the UTC level
+        // rather than by manipulating wall-clock TimeSpans.
         var anchorUtc = dateTimeProvider.ToUtc(today, reminder.ReminderTime);
 
         var stageDefinitions = new (int ReminderNumber, TimeSpan Offset)[]
         {
-            (1, TimeSpan.FromMinutes(-StageOffsetMinutes)),
-            (2, TimeSpan.Zero),
-            (3, TimeSpan.FromMinutes(StageOffsetMinutes)),
+            (1, TimeSpan.FromMinutes(-StageIntervalMinutes)),  // early warning, before dose time
+            (2, TimeSpan.Zero),                                 // main reminder, at dose time
+            (3, TimeSpan.FromMinutes(StageIntervalMinutes)),   // overdue reminder, after dose time
         };
 
-        // Every dose planned for today gets all three stage logs, even ones whose time has
-        // already gone. Today's Schedule, adherence and history must show the whole day, not
-        // just its future.
+        // All three logs are materialised for today — even for a dose whose time has fully
+        // passed.  Today's Schedule, adherence and history must show the complete picture,
+        // not only the future.
         var stages = new List<(MedicationReminderLog Log, DateTime ScheduledUtc, bool Notify)>();
 
         foreach (var (reminderNumber, offset) in stageDefinitions)
         {
             var stageUtc = anchorUtc + offset;
             var delay = stageUtc - dateTimeProvider.UtcNow;
-
-            // Past the grace window there is no point notifying — the dose is simply recorded
-            // as missed. Inside it (or still ahead), the reminder is delivered as normal.
             var notify = delay >= -_lateGrace;
 
             var log = new MedicationReminderLog(
@@ -98,9 +109,9 @@ public sealed class MedicationSchedulingService(
         // All three logs must be committed before any job is queued: with a zero delay
         // Hangfire can run MedicationReminderJob immediately, and it looks the log up by id.
         //
-        // ExistsForDateAsync above is only an optimistic pre-check — it can't stop two
+        // ExistsForDateAsync above is only an optimistic pre-check — it cannot stop two
         // concurrent callers (e.g. the daily sweep racing a manual create) from both passing
-        // it and both reaching this insert. The unique filtered index on
+        // it and both reaching this insert.  The unique filtered index on
         // (MedicineReminderId, ScheduledDate, ReminderNumber) is the actual guarantee: the
         // loser's insert fails here, and that failure is the signal that someone else already
         // scheduled this occurrence — not a real error, so no jobs get queued for it.
@@ -121,7 +132,8 @@ public sealed class MedicationSchedulingService(
             if (!notify)
             {
                 logger.LogInformation(
-                    "Recorded reminder {ReminderId} stage #{Number} (log {LogId}) as Overdue: it was due at {ScheduledUtc:o}, beyond the {Grace} grace window. No notification scheduled.",
+                    "Recorded reminder {ReminderId} stage #{Number} (log {LogId}) as Overdue: " +
+                    "it was due at {ScheduledUtc:o}, beyond the {Grace} grace window. No notification scheduled.",
                     reminder.Id, log.ReminderNumber, log.Id, scheduledUtc, _lateGrace);
                 continue;
             }
@@ -156,11 +168,11 @@ public sealed class MedicationSchedulingService(
         ex.InnerException is SqlException { Number: 2601 or 2627 };
 
     /// <summary>
-    /// SQL Server's <c>time</c> column only holds 00:00:00 through 23:59:59.9999999 — a stage
-    /// offset can't be stored as a raw TimeSpan if it wraps past midnight. The persisted
-    /// <see cref="MedicationReminderLog.ScheduledTime"/> is clamped to the edge of the day in
-    /// that rare case; the actual delivery instant (computed from the UTC anchor above) is
-    /// unaffected and still fires exactly 10 minutes before/after the reminder time.
+    /// SQL Server's <c>time</c> column only holds 00:00:00–23:59:59.9999999.
+    /// A stage offset applied to a reminder time near midnight can produce a value that
+    /// overflows (e.g. 23:50 + 20 min = 24:10).  The persisted ScheduledTime is clamped to
+    /// the day boundary in that case; the actual delivery instant computed from the UTC anchor
+    /// is unaffected and still fires at the correct wall-clock time.
     /// </summary>
     private static TimeSpan ClampToDay(TimeSpan time)
     {
@@ -171,9 +183,7 @@ public sealed class MedicationSchedulingService(
         return time >= oneDay ? oneDay - TimeSpan.FromTicks(1) : time;
     }
 
-    /// <summary>
-    /// <paramref name="date"/> is a date in the reminder's timezone, never a UTC date.
-    /// </summary>
+    /// <param name="date">A date in the reminder's timezone, not a UTC date.</param>
     private static bool IsApplicableForDate(MedicineReminder reminder, DateOnly date)
     {
         if (!reminder.IsEnabled || reminder.IsDeleted)
@@ -184,11 +194,11 @@ public sealed class MedicationSchedulingService(
 
         return reminder.RepeatType switch
         {
-            RepeatType.Once => reminder.StartDate == date,
-            RepeatType.Daily => true,
-            RepeatType.Weekly => (date.DayNumber - reminder.StartDate.DayNumber) % 7 == 0,
+            RepeatType.Once    => reminder.StartDate == date,
+            RepeatType.Daily   => true,
+            RepeatType.Weekly  => (date.DayNumber - reminder.StartDate.DayNumber) % 7 == 0,
             RepeatType.Monthly => date.Day == reminder.StartDate.Day,
-            _ => false
+            _                  => false
         };
     }
 

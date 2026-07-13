@@ -4,7 +4,7 @@ import { Observable, map, shareReplay, switchMap } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse, ApiResponseBase } from '../Modles/api-response';
 import { MedicationReminderLogDto } from '../Modles/medication-reminder.models';
-import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UserMedicine } from '../Modles/dashboard.models';
+import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UpdateUserMedicinePayload, UserMedicine } from '../Modles/dashboard.models';
 import { HealthProfileService } from './health-profile.service';
 
 @Injectable({ providedIn: 'root' })
@@ -79,5 +79,13 @@ export class MedicationRemindersService {
         this.http.post<ApiResponse<UserMedicine>>(`${this.medBase}?profileId=${pid}`, payload)
       ),
     );
+  }
+
+  updateMedicine(id: string, payload: UpdateUserMedicinePayload): Observable<ApiResponse<UserMedicine>> {
+    return this.http.put<ApiResponse<UserMedicine>>(`${this.medBase}/${id}`, payload);
+  }
+
+  deleteMedicine(id: string): Observable<ApiResponseBase> {
+    return this.http.delete<ApiResponseBase>(`${this.medBase}/${id}`);
   }
 }

@@ -38,8 +38,9 @@ public sealed class ToggleMedicineReminderStatusCommandHandler(
         if (wasEnabled && !reminder.IsEnabled)
         {
             var today = dateTimeProvider.Today;
-            var pendingLogs = await logRepository.GetPendingSubsequentLogsAsync(
-                reminder.Id, today, afterReminderNumber: 0, cancellationToken);
+            // Guid.Empty is intentional: we want all Pending logs for this occurrence, not a subset.
+            var pendingLogs = await logRepository.GetPendingOtherLogsAsync(
+                reminder.Id, today, Guid.Empty, cancellationToken);
 
             foreach (var pendingLog in pendingLogs)
             {

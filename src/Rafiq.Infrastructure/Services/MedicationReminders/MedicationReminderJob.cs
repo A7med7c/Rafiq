@@ -86,6 +86,17 @@ public sealed class MedicationReminderJob(
             log.ReminderNumber, logId);
     }
 
+    /// <summary>Formats a <see cref="TimeSpan"/> as "hh:mm AM/PM".</summary>
+    private static string FormatTimeSpan(TimeSpan time)
+    {
+        var totalMinutes = (int)time.TotalMinutes;
+        var h = (totalMinutes / 60) % 24;
+        var m = totalMinutes % 60;
+        var period = h >= 12 ? "PM" : "AM";
+        var hour12 = h % 12 == 0 ? 12 : h % 12;
+        return $"{hour12:D2}:{m:D2} {period}";
+    }
+
     private async Task SendNotificationAsync(MedicationReminderLog log)
     {
         var profile = log.UserHealthProfile;
@@ -101,9 +112,17 @@ public sealed class MedicationReminderJob(
         var medicineName = log.MedicineReminder?.UserMedicine?.MedicineName ?? "your medication";
         var dosage = log.MedicineReminder?.UserMedicine?.Dosage ?? string.Empty;
 
-        var message = log.ReminderNumber == 1
-            ? $"Time to take {medicineName} ({dosage}). Confirm once taken."
-            : $"Reminder #{log.ReminderNumber}: Please take {medicineName} ({dosage}) now.";
+        var message = log.ReminderNumber switch
+        {
+            1 => $"{medicineName} ({dosage}) is due soon. Get ready to take it.",
+            2 => $"Time to take {medicineName} ({dosage}). Confirm once taken.",
+            _ => $"{medicineName} ({dosage}) is overdue. Please confirm if taken.",
+        };
+
+        // Use the MedicineReminder's configured time (not the attempt's offset time) so the
+        // modal always shows the dose time the user set, not the escalation fire time.
+        var configuredTime = log.MedicineReminder?.ReminderTime ?? log.ScheduledTime;
+        var reminderTimeFormatted = FormatTimeSpan(configuredTime);
 
         var payload = new MedicationReminderNotificationPayload
         {
@@ -111,9 +130,11 @@ public sealed class MedicationReminderJob(
             MedicineId = log.MedicineReminder?.UserMedicineId.ToString() ?? string.Empty,
             MedicineName = medicineName,
             GenericName = string.Empty,
-            Strength = string.Empty,
+            // Strength and Dosage carry the same value (the user's entered dosage/strength).
+            // The modal displays Strength; setting both avoids a "Not specified" fallback.
+            Strength = dosage,
             Dosage = dosage,
-            ReminderTime = log.ScheduledTime.ToString(),
+            ReminderTime = reminderTimeFormatted,
             Status = log.Status.ToString(),
             NotificationText = message
         };
