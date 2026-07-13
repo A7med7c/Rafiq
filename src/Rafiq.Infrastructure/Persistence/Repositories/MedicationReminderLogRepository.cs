@@ -29,8 +29,6 @@ public sealed class MedicationReminderLogRepository(RafiqDbContext context) : IM
 
     public async Task<bool> ExistsForDateAsync(Guid medicineReminderId, DateOnly date, CancellationToken cancellationToken = default)
     {
-        // A Cancelled stage-1 log (e.g. superseded by an edit) does not count as "already
-        // scheduled" — otherwise a reminder update could never recreate today's schedule.
         return await context.MedicationReminderLogs
             .AnyAsync(x => x.MedicineReminderId == medicineReminderId
                         && x.ScheduledDate == date
@@ -47,7 +45,10 @@ public sealed class MedicationReminderLogRepository(RafiqDbContext context) : IM
         return await context.MedicationReminderLogs
             .Include(x => x.MedicineReminder)
                 .ThenInclude(r => r.UserMedicine)
-            .Where(x => x.UserHealthProfileId == userHealthProfileId && x.ScheduledDate == today && !x.IsDeleted)
+            .Where(x => x.UserHealthProfileId == userHealthProfileId
+                        && x.ScheduledDate == today
+                        && !x.IsDeleted
+                        && x.Status != MedicationReminderStatus.Cancelled)
             .OrderBy(x => x.ScheduledTime)
             .ThenBy(x => x.ReminderNumber)
             .ToListAsync(cancellationToken);
@@ -59,9 +60,6 @@ public sealed class MedicationReminderLogRepository(RafiqDbContext context) : IM
         Guid confirmedLogId,
         CancellationToken cancellationToken = default)
     {
-        // Fetches every Pending log in the same occurrence that is not the one being confirmed.
-        // Sent logs are excluded: their Hangfire jobs have already executed and their notifications
-        // have been delivered — there is no job to cancel and no reason to alter their status.
         return await context.MedicationReminderLogs
             .Where(x => x.MedicineReminderId == medicineReminderId
                         && x.ScheduledDate == date
@@ -70,27 +68,16 @@ public sealed class MedicationReminderLogRepository(RafiqDbContext context) : IM
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<MedicationReminderLog>> GetSentStage3LogsOlderThanAsync(
-        DateTime cutoff,
+    public async Task<List<MedicationReminderLog>> GetPendingAndOverdueLogsAsync(
+        Guid medicineReminderId,
+        DateOnly date,
         CancellationToken cancellationToken = default)
     {
-        // Confirmed sibling IDs for the same (MedicineReminderId, ScheduledDate) pair.
-        var confirmedReminders = context.MedicationReminderLogs
-            .Where(l => l.Status == MedicationReminderStatus.Confirmed)
-            .Select(l => new { l.MedicineReminderId, l.ScheduledDate });
-
         return await context.MedicationReminderLogs
-            .Include(l => l.MedicineReminder)
-                .ThenInclude(r => r.UserMedicine)
-            .Include(l => l.UserHealthProfile)
-            .Where(l =>
-                l.ReminderNumber == 3
-                && l.Status == MedicationReminderStatus.Sent
-                && l.SentAt <= cutoff
-                && !context.MedicationReminderLogs.Any(c =>
-                    c.MedicineReminderId == l.MedicineReminderId
-                    && c.ScheduledDate == l.ScheduledDate
-                    && c.Status == MedicationReminderStatus.Confirmed))
+            .Where(x => x.MedicineReminderId == medicineReminderId
+                        && x.ScheduledDate == date
+                        && (x.Status == MedicationReminderStatus.Pending
+                            || x.Status == MedicationReminderStatus.Overdue))
             .ToListAsync(cancellationToken);
     }
 

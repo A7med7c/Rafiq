@@ -10,6 +10,7 @@ public interface IMedicationReminderLogRepository
     Task<bool> ExistsForDateAsync(Guid medicineReminderId, DateOnly date, CancellationToken cancellationToken = default);
     Task<List<MedicationReminderLog>> GetTodayByProfileIdAsync(Guid userHealthProfileId, DateOnly today, CancellationToken cancellationToken = default);
 
+
     /// <summary>
     /// Returns all Pending logs that belong to the same dose occurrence as
     /// <paramref name="confirmedLogId"/> but are not that log itself.
@@ -27,13 +28,13 @@ public interface IMedicationReminderLogRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Returns stage-3 logs that are still in <see cref="MedicationReminderStatus.Sent"/>
-    /// and whose <see cref="MedicationReminderLog.SentAt"/> is on or before
-    /// <paramref name="cutoff"/> with no sibling log for the same dose occurrence that
-    /// has been confirmed. Used by the missed-medication escalation background service.
+    /// Returns all Pending and Overdue logs for a reminder occurrence on a given date.
+    /// Used by the update flow to cancel every not-yet-confirmed attempt from the old schedule,
+    /// including Overdue logs whose time already passed without a Hangfire job firing.
     /// </summary>
-    Task<List<MedicationReminderLog>> GetSentStage3LogsOlderThanAsync(
-        DateTime cutoff,
+    Task<List<MedicationReminderLog>> GetPendingAndOverdueLogsAsync(
+        Guid medicineReminderId,
+        DateOnly date,
         CancellationToken cancellationToken = default);
 
     void Update(MedicationReminderLog log);

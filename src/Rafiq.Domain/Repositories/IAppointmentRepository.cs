@@ -9,6 +9,8 @@ public interface IAppointmentRepository
 
     Task<Appointment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
+    Task<Appointment?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<Appointment>> GetAllByUserHealthProfileIdAsync(Guid userHealthProfileId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Appointment>> GetUpcomingByUserHealthProfileIdAsync(Guid userHealthProfileId, CancellationToken cancellationToken = default);

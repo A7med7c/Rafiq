@@ -1,5 +1,5 @@
 import {
-  Component, inject, OnInit, OnDestroy, signal, computed, HostListener,
+  Component, inject, OnInit, OnDestroy, effect, signal, computed, HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -266,6 +266,15 @@ nextPage() {
 
   readonly unreadCount = this.notifSvc.unreadCount;
 
+  constructor() {
+    // Reload when an appointment is confirmed from the reminder modal so the
+    // status updates immediately without requiring a page refresh.
+    effect(() => {
+      const tick = this.notifSvc.appointmentDataRefreshTick();
+      if (tick > 0) this.loadAppointments();
+    });
+  }
+
   // ── Auth helpers ──────────────────────────────────────────────────────────
   get displayName(): string {
     const u = this.authSvc.currentUser;
@@ -322,8 +331,17 @@ nextPage() {
     this.loading.set(true);
     this.loadError.set(null);
     this.apptSvc.getAll().subscribe({
-      next:  data => { this.appointments.set(data); this.loading.set(false); },
-      error: err  => {
+      next: data => {
+        this.appointments.set(data);
+        this.loading.set(false);
+        // Keep the detail modal in sync if it's open
+        const viewing = this.viewingAppt();
+        if (viewing) {
+          const updated = data.find(a => a.id === viewing.id);
+          if (updated) this.viewingAppt.set(updated);
+        }
+      },
+      error: err => {
         this.loadError.set(
           err?.error?.message ?? 'Could not load appointments. Please try again.'
         );

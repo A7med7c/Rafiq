@@ -49,6 +49,11 @@ public class Appointment : BaseEntity
 
     public AppointmentStatus Status { get; private set; }
 
+    public string? HangfireJobId { get; private set; }
+
+    public void SetJobId(string jobId) => HangfireJobId = jobId;
+    public void ClearJobId() => HangfireJobId = null;
+
     public void UpdateDetails(
         AppointmentType appointmentType,
         string? customType,
@@ -71,12 +76,6 @@ public class Appointment : BaseEntity
     {
         if (Status != AppointmentStatus.Upcoming)
             throw new Rafiq.Domain.Exceptions.BadRequestException("Only upcoming appointments can be marked as completed.");
-
-        if (AppointmentDateTime > DateTime.Now)
-            throw new Rafiq.Domain.Exceptions.BadRequestException("A future appointment cannot be marked as completed.");
-
-        if (DateTime.UtcNow > AppointmentDateTime.AddHours(3))
-            throw new Rafiq.Domain.Exceptions.BadRequestException("The 3-hour completion grace period has expired.");
 
         Status = AppointmentStatus.Completed;
     }

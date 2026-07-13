@@ -10,6 +10,7 @@ namespace Rafiq.Application.Features.Appointments.Commands.UpdateAppointment;
 public sealed class UpdateAppointmentCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IAppointmentRepository appointmentRepository,
+    IAppointmentReminderScheduler reminderScheduler,
     IUnitOfWork unitOfWork)
     : IRequestHandler<UpdateAppointmentCommand, ApiResponse<AppointmentResponseDto>>
 {
@@ -34,6 +35,10 @@ public sealed class UpdateAppointmentCommandHandler(
         if (duplicateExists)
             throw new ValidationException(new[] { "An appointment with the same type, title, provider, and date/time already exists." });
 
+        // Cancel the previous reminder job before updating appointment details.
+        reminderScheduler.CancelJob(appointment.HangfireJobId);
+        appointment.ClearJobId();
+
         appointment.UpdateDetails(
             request.AppointmentType,
             request.CustomType,
@@ -42,6 +47,10 @@ public sealed class UpdateAppointmentCommandHandler(
             request.AppointmentDateTime,
             request.ReminderOffsetMinutes,
             request.Notes);
+
+        var jobId = reminderScheduler.ScheduleReminder(appointment);
+        if (jobId is not null)
+            appointment.SetJobId(jobId);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
