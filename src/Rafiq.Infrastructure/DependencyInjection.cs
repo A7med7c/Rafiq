@@ -92,8 +92,12 @@ public static class DependencyInjection
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
 
+        // ── WhatsApp ──────────────────────────────────────────────────────
+        services.Configure<WhatsAppSettings>(configuration.GetSection(WhatsAppSettings.SectionName));
+        services.AddHttpClient<IWhatsAppService, WhatsAppService>();
 
         services.AddHostedService<MissedAppointmentsBackgroundService>();
+        services.AddHostedService<MissedMedicationBackgroundService>();
 
         // ── Medication Reminder Engine ─────────────────────────────────────
         services.Configure<MedicationReminderOptions>(
@@ -122,7 +126,6 @@ public static class DependencyInjection
             }));
 
         services.AddHangfireServer();
-        services.AddHostedService<MissedAppointmentsBackgroundService>();
         return services;
     }
 }

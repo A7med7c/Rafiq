@@ -66,6 +66,12 @@ public class MedicationReminderLog : BaseEntity
         MarkUpdated();
     }
 
+    public void MarkAsMissed()
+    {
+        Status = MedicationReminderStatus.Missed;
+        MarkUpdated();
+    }
+
     public void Cancel()
     {
         Status = MedicationReminderStatus.Cancelled;

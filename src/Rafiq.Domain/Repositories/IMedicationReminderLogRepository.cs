@@ -26,5 +26,15 @@ public interface IMedicationReminderLogRepository
         Guid confirmedLogId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns stage-3 logs that are still in <see cref="MedicationReminderStatus.Sent"/>
+    /// and whose <see cref="MedicationReminderLog.SentAt"/> is on or before
+    /// <paramref name="cutoff"/> with no sibling log for the same dose occurrence that
+    /// has been confirmed. Used by the missed-medication escalation background service.
+    /// </summary>
+    Task<List<MedicationReminderLog>> GetSentStage3LogsOlderThanAsync(
+        DateTime cutoff,
+        CancellationToken cancellationToken = default);
+
     void Update(MedicationReminderLog log);
 }

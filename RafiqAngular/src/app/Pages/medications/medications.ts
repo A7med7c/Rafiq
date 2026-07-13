@@ -32,10 +32,10 @@ interface Toast {
 
 interface AddMedForm {
   medicineName: string;
-  dosage:       string;
-  frequency:    string;
-  duration:     string;
-  notes:        string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  notes: string;
 }
 
 /**
@@ -115,11 +115,11 @@ export class Medications implements OnInit, OnDestroy {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-  private readonly authSvc   = inject(AuthService);
-  protected readonly notifSvc  = inject(NotificationService);
-  private readonly medSvc    = inject(MedicationRemindersService);
-  private readonly route     = inject(ActivatedRoute);
-  private readonly router    = inject(Router);
+  private readonly authSvc = inject(AuthService);
+  protected readonly notifSvc = inject(NotificationService);
+  private readonly medSvc = inject(MedicationRemindersService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {
@@ -131,96 +131,96 @@ export class Medications implements OnInit, OnDestroy {
   });
 
   // ── Layout ──────────────────────────────────────────────────────────────
-  readonly sidebarCollapsed  = signal(false);
+  readonly sidebarCollapsed = signal(false);
   readonly mobileSidebarOpen = signal(false);
-  readonly dropdownOpen      = signal(false);
+  readonly dropdownOpen = signal(false);
 
   // ── Tabs ─────────────────────────────────────────────────────────────────
   readonly activeTab = signal<MedTab>('schedule');
 
   // ── Today's Schedule ──────────────────────────────────────────────────────
-  readonly todayLogs       = signal<MedicationReminderLogDto[]>([]);
+  readonly todayLogs = signal<MedicationReminderLogDto[]>([]);
   readonly scheduleLoading = signal(true);
-  readonly scheduleError   = signal<string | null>(null);
+  readonly scheduleError = signal<string | null>(null);
 
   // ── My Medications ────────────────────────────────────────────────────────
-  readonly medicines     = signal<UserMedicine[]>([]);
-  readonly medsLoading   = signal(false);
-  readonly medsError     = signal<string | null>(null);
+  readonly medicines = signal<UserMedicine[]>([]);
+  readonly medsLoading = signal(false);
+  readonly medsError = signal<string | null>(null);
 
   // ── My Medications — sub-tab, search, filters, pagination, menus ──────────
-  readonly medSubTab       = signal<MedSubTab>('all');
-  readonly medSearch       = signal('');
+  readonly medSubTab = signal<MedSubTab>('all');
+  readonly medSearch = signal('');
   readonly medSourceFilter = signal('');
-  readonly openMedMenuId   = signal<string | null>(null);
-  readonly viewingMed      = signal<UserMedicine | null>(null);
-  readonly medPage         = signal(1);
+  readonly openMedMenuId = signal<string | null>(null);
+  readonly viewingMed = signal<UserMedicine | null>(null);
+  readonly medPage = signal(1);
   private readonly MED_PAGE_SIZE = 8;
 
   // ── Medicine Reminders ────────────────────────────────────────────────────
-  readonly medicineReminders     = signal<Record<string, MedicineReminder[]>>({});
-  readonly remindersLoading      = signal(false);
-  readonly highlightNoReminders  = signal(false);
+  readonly medicineReminders = signal<Record<string, MedicineReminder[]>>({});
+  readonly remindersLoading = signal(false);
+  readonly highlightNoReminders = signal(false);
 
   readonly hasAnyReminders = computed(() => {
     return this.medicines().some(m => this.hasReminders(m.id));
   });
 
   // ── Add / Edit Reminder modal ─────────────────────────────────────────────
-  readonly editMode        = signal(false);
+  readonly editMode = signal(false);
   private readonly editReminderIds = signal<string[]>([]);
-  readonly showAddReminderModal    = signal(false);
-  readonly addReminderMedicineId   = signal<string | null>(null);
+  readonly showAddReminderModal = signal(false);
+  readonly addReminderMedicineId = signal<string | null>(null);
   readonly addReminderMedicineName = signal('');
-  readonly addReminderSaving       = signal(false);
+  readonly addReminderSaving = signal(false);
 
   // ── Delete Reminder confirm modal ─────────────────────────────────────────
   readonly showDeleteReminderModal = signal(false);
-  readonly deleteReminderMedId     = signal<string | null>(null);
-  readonly deleteReminderMedName   = signal('');
-  readonly deletingReminder        = signal(false);
+  readonly deleteReminderMedId = signal<string | null>(null);
+  readonly deleteReminderMedName = signal('');
+  readonly deletingReminder = signal(false);
 
   // ── Confirm modal ─────────────────────────────────────────────────────────
-  readonly showConfirmModal  = signal(false);
-  readonly confirmingLog     = signal<MedicationReminderLogDto | null>(null);
-  readonly confirming        = signal(false);
+  readonly showConfirmModal = signal(false);
+  readonly confirmingLog = signal<MedicationReminderLogDto | null>(null);
+  readonly confirming = signal(false);
   readonly pendingReminderId = signal<string | null>(null);
   readonly highlightReminderId = signal<string | null>(null);
   readonly pendingReminderMedicineId = signal<string | null>(null);
 
   // ── Add Medicine modal ────────────────────────────────────────────────────
   readonly showAddMedModal = signal(false);
-  readonly addMedSaving    = signal(false);
-  readonly addMedTouched   = signal(false);
+  readonly addMedSaving = signal(false);
+  readonly addMedTouched = signal(false);
 
   // ── Edit Medicine modal ───────────────────────────────────────────────────
   readonly showEditMedModal = signal(false);
-  readonly editingMed       = signal<UserMedicine | null>(null);
-  readonly editMedSaving    = signal(false);
-  readonly editMedTouched   = signal(false);
+  readonly editingMed = signal<UserMedicine | null>(null);
+  readonly editMedSaving = signal(false);
+  readonly editMedTouched = signal(false);
 
   // ── Delete Medicine confirm modal ─────────────────────────────────────────
   readonly showDeleteMedModal = signal(false);
-  readonly deleteMedId        = signal<string | null>(null);
-  readonly deleteMedName      = signal('');
-  readonly deletingMed        = signal(false);
+  readonly deleteMedId = signal<string | null>(null);
+  readonly deleteMedName = signal('');
+  readonly deletingMed = signal(false);
 
   // ── Reminder form ─────────────────────────────────────────────────────────
   reminderForm: ReminderForm = this.emptyReminderForm();
 
   // ── Add / Edit Medicine forms ─────────────────────────────────────────────
-  addMedForm:  AddMedForm = this.emptyAddMedForm();
+  addMedForm: AddMedForm = this.emptyAddMedForm();
   editMedForm: AddMedForm = this.emptyAddMedForm();
   readonly repeatOptions: { label: string; value: RepeatOption }[] = [
-    { label: 'Once',    value: 'Once'    },
-    { label: 'Daily',   value: 'Daily'   },
-    { label: 'Weekly',  value: 'Weekly'  },
+    { label: 'Once', value: 'Once' },
+    { label: 'Daily', value: 'Daily' },
+    { label: 'Weekly', value: 'Weekly' },
     { label: 'Monthly', value: 'Monthly' },
   ];
 
   // ── Toasts ───────────────────────────────────────────────────────────────
   private toastSeq = 0;
-  readonly toasts  = signal<Toast[]>([]);
+  readonly toasts = signal<Toast[]>([]);
 
   // ── Clock ────────────────────────────────────────────────────────────────
   /** Minutes since midnight, ticked every 30s so the rail and countdowns stay live. */
@@ -260,13 +260,13 @@ export class Medications implements OnInit, OnDestroy {
       // The actionable log is determined by the backend (IsActionable flag).
       // At most one log per occurrence has it set.  Do not re-derive it here.
       const actionable = ordered.find(l => l.isActionable) ?? null;
-      const confirmed  = ordered.find(l => l.status === 'Confirmed') ?? null;
+      const confirmed = ordered.find(l => l.status === 'Confirmed') ?? null;
 
       let status: MedicationReminderStatus;
-      if (confirmed)                                          status = 'Confirmed';
-      else if (actionable)                                    status = actionable.status;
+      if (confirmed) status = 'Confirmed';
+      else if (actionable) status = actionable.status;
       else if (ordered.every(l => l.status === 'Cancelled')) status = 'Cancelled';
-      else                                                    status = anyLog.status;
+      else status = anyLog.status;
 
       // Map each log to its display chip.
       //
@@ -288,9 +288,9 @@ export class Medications implements OnInit, OnDestroy {
           state = 'Cancelled';
         } else if (l.isActionable) {
           // This is the one attempt the user should act on right now.
-          state = l.status === 'Sent'    ? 'Sent'
-               : l.status === 'Overdue'  ? 'Overdue'
-               :                           'Upcoming';
+          state = l.status === 'Sent' ? 'Sent'
+            : l.status === 'Overdue' ? 'Overdue'
+              : 'Upcoming';
         } else if (l.status === 'Sent' || l.status === 'Overdue') {
           // Earlier attempt passed without user response — label it accordingly,
           // not as "Missed" (the dose is still active and can still be confirmed).
@@ -303,16 +303,16 @@ export class Medications implements OnInit, OnDestroy {
 
       doses.push({
         key,
-        medicineName:  anyLog.medicineName,
-        dosage:        anyLog.dosage,
+        medicineName: anyLog.medicineName,
+        dosage: anyLog.dosage,
         scheduledTime: doseTime,
-        minutes:       Medications.toMinutes(doseTime),
+        minutes: Medications.toMinutes(doseTime),
         status,
-        attempts:      ordered.length,
+        attempts: ordered.length,
         attemptStates,
-        confirmedAt:   confirmed?.confirmedAt ?? null,
+        confirmedAt: confirmed?.confirmedAt ?? null,
         actionable,
-        ids:           ordered.map(l => l.id),
+        ids: ordered.map(l => l.id),
       });
     }
 
@@ -332,8 +332,8 @@ export class Medications implements OnInit, OnDestroy {
     const now = this.nowMinutes();
     const priority = (d: Dose): number => {
       if (d.actionable && d.minutes < now) return 0;
-      if (d.actionable)                    return 1;
-      if (d.status === 'Confirmed')        return 2;
+      if (d.actionable) return 1;
+      if (d.status === 'Confirmed') return 2;
       return 3;
     };
     return [...this.doses()].sort((a, b) => {
@@ -383,7 +383,7 @@ export class Medications implements OnInit, OnDestroy {
     const open = this.doses().filter(d => !!d.actionable);
     if (open.length === 0) return null;
     const now = this.nowMinutes();
-    const overdue  = open.filter(d => d.minutes < now);
+    const overdue = open.filter(d => d.minutes < now);
     // An overdue dose outranks an upcoming one; the most overdue comes first.
     if (overdue.length > 0) return overdue[0];
     return open.find(d => d.minutes >= now) ?? open[0];
@@ -413,12 +413,12 @@ export class Medications implements OnInit, OnDestroy {
   );
   readonly filteredMedicines = computed(() => {
     const subTab = this.medSubTab();
-    const q      = this.medSearch().toLowerCase().trim();
-    const src    = this.medSourceFilter();
+    const q = this.medSearch().toLowerCase().trim();
+    const src = this.medSourceFilter();
     return this.medicines().filter(m => {
       if (subTab === 'with-reminder' && !this.hasReminders(m.id)) return false;
-      if (subTab === 'no-reminder'   &&  this.hasReminders(m.id)) return false;
-      if (subTab === 'paused'        && !this.isPaused(m.id))     return false;
+      if (subTab === 'no-reminder' && this.hasReminders(m.id)) return false;
+      if (subTab === 'paused' && !this.isPaused(m.id)) return false;
       if (q && !m.medicineName.toLowerCase().includes(q) && !m.dosage.toLowerCase().includes(q)) return false;
       if (src && m.source !== src) return false;
       return true;
@@ -428,7 +428,7 @@ export class Medications implements OnInit, OnDestroy {
     Math.max(1, Math.ceil(this.filteredMedicines().length / this.MED_PAGE_SIZE))
   );
   readonly paginatedMedicines = computed(() => {
-    const page  = this.medPage();
+    const page = this.medPage();
     const start = (page - 1) * this.MED_PAGE_SIZE;
     return this.filteredMedicines().slice(start, start + this.MED_PAGE_SIZE);
   });
@@ -450,7 +450,7 @@ export class Medications implements OnInit, OnDestroy {
   /** Per-time-index inline errors: past-time or duplicate. */
   get timeErrors(): Record<number, string> {
     const result: Record<number, string> = {};
-    const today   = Medications.localToday();
+    const today = Medications.localToday();
     const isToday = this.reminderForm.startDate === today;
     const nowMins = this.nowMinutes();
 
@@ -490,7 +490,7 @@ export class Medications implements OnInit, OnDestroy {
 
   /** True only when global errors, per-time errors, and date errors are all clear. */
   get reminderFormValid(): boolean {
-    const f     = this.reminderForm;
+    const f = this.reminderForm;
     const today = Medications.localToday();
     if (this.reminderFormErrors.length > 0) return false;
     if (Object.keys(this.timeErrors).length > 0) return false;
@@ -522,9 +522,9 @@ export class Medications implements OnInit, OnDestroy {
     const f = this.addMedForm;
     const errs: string[] = [];
     if (!f.medicineName.trim()) errs.push('Medicine name is required.');
-    if (!f.dosage.trim())       errs.push('Dosage is required.');
-    if (!f.frequency.trim())    errs.push('Frequency is required.');
-    if (!f.duration.trim())     errs.push('Duration is required.');
+    if (!f.dosage.trim()) errs.push('Dosage is required.');
+    if (!f.frequency.trim()) errs.push('Frequency is required.');
+    if (!f.duration.trim()) errs.push('Duration is required.');
     return errs;
   }
 
@@ -565,19 +565,19 @@ export class Medications implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEsc(): void {
-    if (this.showEditMedModal())        { this.closeEditMed(); return; }
-    if (this.showDeleteMedModal())      { this.closeDeleteMed(); return; }
-    if (this.showAddMedModal())         { this.closeAddMed(); return; }
-    if (this.showAddReminderModal())    { this.closeAddReminder(); return; }
+    if (this.showEditMedModal()) { this.closeEditMed(); return; }
+    if (this.showDeleteMedModal()) { this.closeDeleteMed(); return; }
+    if (this.showAddMedModal()) { this.closeAddMed(); return; }
+    if (this.showAddReminderModal()) { this.closeAddReminder(); return; }
     if (this.showDeleteReminderModal()) { this.closeDeleteReminder(); return; }
-    if (this.viewingMed())              { this.closeMedView(); return; }
-    if (this.showConfirmModal())        { this.closeConfirm(); }
+    if (this.viewingMed()) { this.closeMedView(); return; }
+    if (this.showConfirmModal()) { this.closeConfirm(); }
   }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
     const t = e.target as HTMLElement;
-    if (!t.closest('.hdr-user'))     this.dropdownOpen.set(false);
+    if (!t.closest('.hdr-user')) this.dropdownOpen.set(false);
     if (!t.closest('.record-actions')) this.openMedMenuId.set(null);
   }
 
@@ -586,9 +586,9 @@ export class Medications implements OnInit, OnDestroy {
     if (window.innerWidth > 768) this.mobileSidebarOpen.set(false);
   }
 
-  toggleSidebar(): void       { this.sidebarCollapsed.update(v => !v); }
+  toggleSidebar(): void { this.sidebarCollapsed.update(v => !v); }
   toggleMobileSidebar(): void { this.mobileSidebarOpen.update(v => !v); }
-  toggleDropdown(): void      { this.dropdownOpen.update(v => !v); }
+  toggleDropdown(): void { this.dropdownOpen.update(v => !v); }
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
@@ -610,12 +610,12 @@ export class Medications implements OnInit, OnDestroy {
     this.scheduleLoading.set(true);
     this.scheduleError.set(null);
     this.medSvc.getToday().subscribe({
-      next:  data => {
+      next: data => {
         this.todayLogs.set(data);
         this.scheduleLoading.set(false);
         this.tryOpenReminderDetails();
       },
-      error: err  => {
+      error: err => {
         this.scheduleError.set(err?.error?.message ?? 'Could not load today\'s schedule.');
         this.scheduleLoading.set(false);
       },
@@ -647,8 +647,8 @@ export class Medications implements OnInit, OnDestroy {
       meds.map(m => [m.id, this.medSvc.getRemindersForMedicine(m.id)])
     );
     forkJoin(calls).subscribe({
-      next:  result => { this.medicineReminders.set(result as Record<string, MedicineReminder[]>); this.remindersLoading.set(false); },
-      error: ()     => this.remindersLoading.set(false),
+      next: result => { this.medicineReminders.set(result as Record<string, MedicineReminder[]>); this.remindersLoading.set(false); },
+      error: () => this.remindersLoading.set(false),
     });
   }
 
@@ -659,9 +659,9 @@ export class Medications implements OnInit, OnDestroy {
   }
 
   readonly railTicks = [
-    { minutes: 360,  label: '6am'  },
-    { minutes: 720,  label: 'noon' },
-    { minutes: 1080, label: '6pm'  },
+    { minutes: 360, label: '6am' },
+    { minutes: 720, label: 'noon' },
+    { minutes: 1080, label: '6pm' },
   ];
 
   isOverdue(dose: Dose): boolean {
@@ -696,36 +696,36 @@ export class Medications implements OnInit, OnDestroy {
 
   attemptPillClass(state: AttemptState): string {
     const map: Record<AttemptState, string> = {
-      Upcoming:    'pill pill-yellow-sm',
-      Sent:        'pill pill-blue-sm',
-      Overdue:     'pill pill-orange-sm',
-      NoResponse:  'pill pill-gray-sm',
-      Completed:   'pill pill-green-sm',
-      Cancelled:   'pill pill-gray-sm',
+      Upcoming: 'pill pill-yellow-sm',
+      Sent: 'pill pill-blue-sm',
+      Overdue: 'pill pill-orange-sm',
+      NoResponse: 'pill pill-gray-sm',
+      Completed: 'pill pill-green-sm',
+      Cancelled: 'pill pill-gray-sm',
     };
     return map[state];
   }
 
   attemptIcon(state: AttemptState): string {
     const map: Record<AttemptState, string> = {
-      Upcoming:    'fa-clock',
-      Sent:        'fa-bell',
-      Overdue:     'fa-hourglass-half',
-      NoResponse:  'fa-minus-circle',
-      Completed:   'fa-circle-check',
-      Cancelled:   'fa-ban',
+      Upcoming: 'fa-clock',
+      Sent: 'fa-bell',
+      Overdue: 'fa-hourglass-half',
+      NoResponse: 'fa-minus-circle',
+      Completed: 'fa-circle-check',
+      Cancelled: 'fa-ban',
     };
     return map[state];
   }
 
   attemptLabel(state: AttemptState): string {
     const map: Record<AttemptState, string> = {
-      Upcoming:    'Upcoming',
-      Sent:        'Sent',
-      Overdue:     'Overdue',
-      NoResponse:  'No Response',
-      Completed:   'Completed',
-      Cancelled:   'Cancelled',
+      Upcoming: 'Upcoming',
+      Sent: 'Sent',
+      Overdue: 'Overdue',
+      NoResponse: 'No Response',
+      Completed: 'Completed',
+      Cancelled: 'Cancelled',
     };
     return map[state];
   }
@@ -828,7 +828,7 @@ export class Medications implements OnInit, OnDestroy {
             }
             if (
               l.medicineReminderId === log.medicineReminderId &&
-              l.scheduledDate      === log.scheduledDate      &&
+              l.scheduledDate === log.scheduledDate &&
               l.status === 'Pending'
             ) {
               return { ...l, status: 'Cancelled' as MedicationReminderStatus, isActionable: false };
@@ -837,7 +837,7 @@ export class Medications implements OnInit, OnDestroy {
             // on the dose card supersedes the individual attempt display.
             if (
               l.medicineReminderId === log.medicineReminderId &&
-              l.scheduledDate      === log.scheduledDate
+              l.scheduledDate === log.scheduledDate
             ) {
               return { ...l, isActionable: false };
             }
@@ -848,8 +848,8 @@ export class Medications implements OnInit, OnDestroy {
         this.toast(`${log.medicineName} marked as taken. Great job! 💊`, 'success');
         this.notifSvc.push({
           title: 'Medication Confirmed',
-          body:  `${log.medicineName} ${log.dosage} taken at ${this.formatTime(log.reminderTime)}`,
-          type:  'reminder',
+          body: `${log.medicineName} ${log.dosage} taken at ${this.formatTime(log.reminderTime)}`,
+          type: 'reminder',
         });
         this.notifSvc.notifyReminderChanged();
 
@@ -878,7 +878,7 @@ export class Medications implements OnInit, OnDestroy {
     // "08:00:00" → "08:00 AM"
     const [h, m] = time.split(':').map(Number);
     const period = h >= 12 ? 'PM' : 'AM';
-    const hour   = h % 12 || 12;
+    const hour = h % 12 || 12;
     return `${String(hour).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
   }
 
@@ -890,40 +890,43 @@ export class Medications implements OnInit, OnDestroy {
 
   /** "08:15 AM" from a full ISO datetime string — used for "Taken at" chips. */
   formatConfirmedTime(dateStr: string): string {
+    console.log('confirmedAt =', dateStr);
+
     return new Date(dateStr).toLocaleTimeString('en-US', {
-      hour: '2-digit', minute: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 
   statusLabel(status: MedicationReminderStatus): string {
     const map: Record<MedicationReminderStatus, string> = {
-      Pending:   'Upcoming',
-      Sent:      'Awaiting Confirmation',
+      Pending: 'Upcoming',
+      Sent: 'Awaiting Confirmation',
       Confirmed: 'Completed',
       Cancelled: 'Cancelled',
-      Overdue:   'Overdue',
+      Overdue: 'Overdue',
     };
     return map[status] ?? status;
   }
 
   statusClass(status: MedicationReminderStatus): string {
     const map: Record<MedicationReminderStatus, string> = {
-      Pending:   'pill pill-yellow-sm',
-      Sent:      'pill pill-blue-sm',
+      Pending: 'pill pill-yellow-sm',
+      Sent: 'pill pill-blue-sm',
       Confirmed: 'pill pill-green-sm',
       Cancelled: 'pill pill-red-sm',
-      Overdue:   'pill pill-red-sm',
+      Overdue: 'pill pill-red-sm',
     };
     return map[status] ?? 'pill';
   }
 
   statusIcon(status: MedicationReminderStatus): string {
     const map: Record<MedicationReminderStatus, string> = {
-      Pending:   'fa-clock',
-      Sent:      'fa-bell',
+      Pending: 'fa-clock',
+      Sent: 'fa-bell',
       Confirmed: 'fa-circle-check',
       Cancelled: 'fa-ban',
-      Overdue:   'fa-triangle-exclamation',
+      Overdue: 'fa-triangle-exclamation',
     };
     return map[status] ?? 'fa-circle';
   }
@@ -938,9 +941,9 @@ export class Medications implements OnInit, OnDestroy {
 
   sourceLabel(source: string): string {
     const map: Record<string, string> = {
-      Manual:       'Manual',
+      Manual: 'Manual',
       Prescription: 'Prescription',
-      MedicineBox:  'Box Scan',
+      MedicineBox: 'Box Scan',
       '1': 'Manual',
       '2': 'Prescription',
       '3': 'Box Scan',
@@ -950,7 +953,7 @@ export class Medications implements OnInit, OnDestroy {
 
   sourceClass(source: string): string {
     if (source === 'Prescription' || source === '2') return 'pill pill-purple-sm';
-    if (source === 'MedicineBox'  || source === '3') return 'pill pill-teal-sm';
+    if (source === 'MedicineBox' || source === '3') return 'pill pill-teal-sm';
     return 'pill pill-blue-sm';
   }
 
@@ -1032,7 +1035,7 @@ export class Medications implements OnInit, OnDestroy {
       reminderTimes: reminders.map(r => r.reminderTime.substring(0, 5)),
       repeatType: (first.repeatType as RepeatOption) ?? 'Daily',
       startDate: first.startDate?.slice(0, 10) ?? today,
-      endDate:   first.endDate?.slice(0, 10)   ?? today,
+      endDate: first.endDate?.slice(0, 10) ?? today,
       notificationsEnabled: true,
       notes: '',
     };
@@ -1061,10 +1064,10 @@ export class Medications implements OnInit, OnDestroy {
     const f = this.reminderForm;
     const payload: CreateReminderPayload = {
       userMedicineId: medId,
-      times:          f.reminderTimes.filter(t => t.trim()),
-      startDate:      f.startDate,
-      endDate:        f.repeatType === 'Once' ? f.startDate : f.endDate,
-      repeatType:     f.repeatType,
+      times: f.reminderTimes.filter(t => t.trim()),
+      startDate: f.startDate,
+      endDate: f.repeatType === 'Once' ? f.startDate : f.endDate,
+      repeatType: f.repeatType,
     };
     const medName = this.addReminderMedicineName();
 
@@ -1246,7 +1249,7 @@ export class Medications implements OnInit, OnDestroy {
     times[index] = value;
     // Sort filled times chronologically after each change; empty slots stay at the end
     const filled = times.filter(t => t.trim()).sort();
-    const empty  = times.filter(t => !t.trim());
+    const empty = times.filter(t => !t.trim());
     this.reminderForm = { ...this.reminderForm, reminderTimes: [...filled, ...empty] };
   }
 
@@ -1294,18 +1297,18 @@ export class Medications implements OnInit, OnDestroy {
   private emptyReminderForm(): ReminderForm {
     const today = Medications.localToday();
     return {
-      reminderTimes:        ['08:00'],
-      repeatType:           'Daily',
-      startDate:            today,
-      endDate:              today,
+      reminderTimes: ['08:00'],
+      repeatType: 'Daily',
+      startDate: today,
+      endDate: today,
       notificationsEnabled: true,
-      notes:                '',
+      notes: '',
     };
   }
 
   // ── Add Medicine modal ────────────────────────────────────────────────────
   openAddMed(): void {
-    this.addMedForm  = this.emptyAddMedForm();
+    this.addMedForm = this.emptyAddMedForm();
     this.addMedTouched.set(false);
     this.showAddMedModal.set(true);
   }
@@ -1321,11 +1324,11 @@ export class Medications implements OnInit, OnDestroy {
 
     const payload: AddUserMedicinePayload = {
       medicineName: this.addMedForm.medicineName.trim(),
-      dosage:       this.addMedForm.dosage.trim(),
-      frequency:    this.addMedForm.frequency.trim(),
-      duration:     this.addMedForm.duration.trim(),
-      notes:        this.addMedForm.notes.trim() || undefined,
-      source:       1,
+      dosage: this.addMedForm.dosage.trim(),
+      frequency: this.addMedForm.frequency.trim(),
+      duration: this.addMedForm.duration.trim(),
+      notes: this.addMedForm.notes.trim() || undefined,
+      source: 1,
     };
 
     this.addMedSaving.set(true);
@@ -1356,9 +1359,9 @@ export class Medications implements OnInit, OnDestroy {
     const f = this.editMedForm;
     const errs: string[] = [];
     if (!f.medicineName.trim()) errs.push('Medicine name is required.');
-    if (!f.dosage.trim())       errs.push('Dosage is required.');
-    if (!f.frequency.trim())    errs.push('Frequency is required.');
-    if (!f.duration.trim())     errs.push('Duration is required.');
+    if (!f.dosage.trim()) errs.push('Dosage is required.');
+    if (!f.frequency.trim()) errs.push('Frequency is required.');
+    if (!f.duration.trim()) errs.push('Duration is required.');
     return errs;
   }
 
@@ -1366,10 +1369,10 @@ export class Medications implements OnInit, OnDestroy {
   openEditMed(med: UserMedicine): void {
     this.editMedForm = {
       medicineName: med.medicineName,
-      dosage:       med.dosage,
-      frequency:    med.frequency,
-      duration:     med.duration,
-      notes:        med.notes ?? '',
+      dosage: med.dosage,
+      frequency: med.frequency,
+      duration: med.duration,
+      notes: med.notes ?? '',
     };
     this.editingMed.set(med);
     this.editMedTouched.set(false);
@@ -1393,10 +1396,10 @@ export class Medications implements OnInit, OnDestroy {
 
     const payload: UpdateUserMedicinePayload = {
       medicineName: this.editMedForm.medicineName.trim(),
-      dosage:       this.editMedForm.dosage.trim(),
-      frequency:    this.editMedForm.frequency.trim(),
-      duration:     this.editMedForm.duration.trim(),
-      notes:        this.editMedForm.notes.trim() || undefined,
+      dosage: this.editMedForm.dosage.trim(),
+      frequency: this.editMedForm.frequency.trim(),
+      duration: this.editMedForm.duration.trim(),
+      notes: this.editMedForm.notes.trim() || undefined,
     };
 
     this.editMedSaving.set(true);
