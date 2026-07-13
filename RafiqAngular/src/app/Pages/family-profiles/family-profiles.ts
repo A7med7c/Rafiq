@@ -21,11 +21,12 @@ import {
 } from '../../Services/family-profiles.service';
 import { RecordsContentComponent } from '../../Components/records-content/records-content';
 import { AppointmentsContentComponent } from '../../Components/appointments-content/appointments-content';
+import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.service';
 
 type AddStep = 'choose' | 'create' | 'invite' | 'invited';
 
-interface AllergyEntry      { name: string; severity: string; }
-interface DiseaseEntry      { name: string; status: string; diagnosedAt: string; }
+interface AllergyEntry { name: string; severity: string; }
+interface DiseaseEntry { name: string; status: string; diagnosedAt: string; }
 
 interface SupervisionMemberEntry {
   accessId: string;
@@ -47,83 +48,133 @@ interface SupervisionMemberEntry {
 export class FamilyProfiles implements OnInit {
   @ViewChild('carouselEl') carouselElRef?: ElementRef<HTMLDivElement>;
 
-  private readonly authSvc          = inject(AuthService);
-  private readonly fpSvc            = inject(FamilyProfilesService);
+  private readonly authSvc = inject(AuthService);
+  private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
-  private readonly notifSvc         = inject(NotificationService);
-  private readonly http             = inject(HttpClient);
-  private readonly base             = environment.apiUrl;
-  readonly router                   = inject(Router);
+  private readonly notifSvc = inject(NotificationService);
+  private readonly http = inject(HttpClient);
+  private readonly base = environment.apiUrl;
+  readonly router = inject(Router);
 
   // ─── Sidebar ────────────────────────────────────────────────
-  readonly sidebarCollapsed  = signal(false);
+  readonly sidebarCollapsed = signal(false);
   readonly mobileSidebarOpen = signal(false);
-  readonly dropdownOpen      = signal(false);
-
+  readonly dropdownOpen = signal(false);
   // ─── Data ───────────────────────────────────────────────────
-  readonly profiles            = signal<AccessibleProfileDto[]>([]);
-  readonly selectedProfile     = signal<AccessibleProfileDto | null>(null);
-  readonly selectedDetail      = signal<PatientProfileDetailDto | null>(null);
+  readonly profiles = signal<AccessibleProfileDto[]>([]);
+  readonly selectedProfile = signal<AccessibleProfileDto | null>(null);
+  readonly selectedDetail = signal<PatientProfileDetailDto | null>(null);
   readonly receivedInvitations = signal<ReceivedInvitationDto[]>([]);
 
   // ─── Loading ────────────────────────────────────────────────
   readonly profilesLoading = signal(true);
-  readonly detailLoading   = signal(false);
-  readonly submitting      = signal(false);
+  readonly detailLoading = signal(false);
+  readonly submitting = signal(false);
 
   // ─── UI state ───────────────────────────────────────────────
-  readonly activeTab            = signal<string>('overview');
-  readonly tabDirection         = signal<'left' | 'right'>('left');
-  readonly tabAnimating         = signal(false);
-  readonly showAddModal         = signal(false);
-  readonly addStep              = signal<AddStep>('choose');
+  readonly activeTab = signal<string>('overview');
+  readonly tabDirection = signal<'left' | 'right'>('left');
+  readonly tabAnimating = signal(false);
+  readonly showAddModal = signal(false);
+  readonly addStep = signal<AddStep>('choose');
   readonly showInvitationsPanel = signal(false);
-  readonly invitationsTab       = signal<'received' | 'sent'>('received');
-  readonly showEditModal        = signal(false);
-  readonly editSubmitting       = signal(false);
-  errorMessage  = '';
-  editError     = '';
+  readonly invitationsTab = signal<'received' | 'sent'>('received');
+  readonly showEditModal = signal(false);
+  readonly editSubmitting = signal(false);
+  errorMessage = '';
+  editError = '';
 
   // ─── Supervision Settings ────────────────────────────────────
   readonly showSupervisionModal = signal(false);
-  readonly supervisionTab       = signal<'supervising' | 'supervised'>('supervising');
-  readonly supervisingSearch    = signal('');
-  readonly supervisedSearch     = signal('');
-  readonly supervisionLoading   = signal(false);
-  readonly supervisingList      = signal<SupervisionMemberEntry[]>([]);
-  readonly showModifyModal      = signal(false);
-  readonly showRemoveConfirm    = signal(false);
-  readonly removing             = signal(false);
-  readonly modifySubmitting     = signal(false);
+  readonly supervisionTab = signal<'supervising' | 'supervised'>('supervising');
+  readonly supervisingSearch = signal('');
+  readonly supervisedSearch = signal('');
+  readonly supervisionLoading = signal(false);
+  readonly supervisingList = signal<SupervisionMemberEntry[]>([]);
+  readonly showModifyModal = signal(false);
+  readonly showRemoveConfirm = signal(false);
+  readonly removing = signal(false);
+  readonly modifySubmitting = signal(false);
   modifyTarget: { accessId: string; profileId: string; name: string; currentRole: string } | null = null;
   modifyNewRole = 'Viewer';
   removeTarget: { accessId: string; profileId: string; name: string; type: 'member' | 'self' | 'managed' } | null = null;
 
   // ─── Three-dot menu / Delete profile ────────────────────────
-  readonly showProfileMenu       = signal(false);
-  readonly showDeleteConfirm     = signal(false);
-  readonly deletingProfile       = signal(false);
+  readonly showProfileMenu = signal(false);
+  readonly showDeleteConfirm = signal(false);
+  readonly deletingProfile = signal(false);
 
   // ─── Sent Invitations ────────────────────────────────────────
-  readonly sentInvitations        = signal<SentInvitationDto[]>([]);
+  readonly sentInvitations = signal<SentInvitationDto[]>([]);
   readonly sentInvitationsLoading = signal(false);
 
   // ─── Supervision pagination ───────────────────────────────────
   readonly PAGE_SIZE = 5;
-  readonly supervisedPage     = signal(0);
-  readonly supervisingPage    = signal(0);
-  readonly supervisedVisible  = signal(true);
+  readonly supervisedPage = signal(0);
+  readonly supervisingPage = signal(0);
+  readonly supervisedVisible = signal(true);
   readonly supervisingVisible = signal(true);
 
   // ─── Medications / Reminders tab ────────────────────────────
-  readonly fpMedicines        = signal<any[]>([]);
+  readonly fpMedicines = signal<any[]>([]);
   readonly fpMedicinesLoading = signal(false);
 
   // ─── Computed ───────────────────────────────────────────────
   readonly pendingCount = computed(() =>
     this.receivedInvitations().filter(i => i.status === 'Pending').length
   );
+  //────── Health Summary ─────────────────────────────────────────
 
+  private readonly dashboardService = inject(DashboardService);
+
+  readonly healthSummary = signal<HealthSummaryDto | null>(null);
+  readonly summaryLoading = signal(false);
+  readonly summaryExpanded = signal(false);
+
+  readonly SUMMARY_CHAR_LIMIT = 260;
+
+  getTruncatedSummary(full: string): string {
+    if (this.summaryExpanded() || full.length <= this.SUMMARY_CHAR_LIMIT) return full;
+    return full.slice(0, this.SUMMARY_CHAR_LIMIT).trimEnd() + '…';
+  }
+
+  isSummaryTruncatable(full: string): boolean {
+    return full.length > this.SUMMARY_CHAR_LIMIT;
+  }
+
+
+
+  loadHealthSummary() {
+    const profileId = this.selectedProfile()?.userHealthProfileId;
+    this.summaryLoading.set(true);
+    this.summaryExpanded.set(false);
+    const obs$ = profileId
+      ? this.dashboardService.getHealthSummaryForProfile(profileId)
+      : this.dashboardService.getHealthSummary();
+
+    obs$.subscribe({
+      next: summary => {
+        this.healthSummary.set(summary);
+        this.summaryLoading.set(false);
+      },
+      error: () => {
+        this.healthSummary.set(null);
+        this.summaryLoading.set(false);
+      }
+    });
+  }
+  selectedTab = signal('overview');
+  selectTab(tab: string) {
+
+    this.selectedTab.set(tab);
+
+    if (tab === 'health-summary') {
+
+      this.loadHealthSummary();
+
+    }
+
+  }
   readonly ownerProfiles = computed(() =>
     this.profiles().filter(p => p.accessRole === 'Owner')
   );
@@ -193,8 +244,8 @@ export class FamilyProfiles implements OnInit {
 
   // ─── Static options ─────────────────────────────────────────
   readonly relationships = [
-    'Son','Daughter','Father','Mother','Husband','Wife',
-    'Brother','Sister','Grandfather','Grandmother','Other',
+    'Son', 'Daughter', 'Father', 'Mother', 'Husband', 'Wife',
+    'Brother', 'Sister', 'Grandfather', 'Grandmother', 'Other',
   ];
 
   readonly bloodTypes = [
@@ -204,11 +255,11 @@ export class FamilyProfiles implements OnInit {
     { value: 'OPositive', label: 'O+' }, { value: 'ONegative', label: 'O-' },
   ];
 
-  readonly severityOptions     = ['Mild', 'Moderate', 'Severe'];
+  readonly severityOptions = ['Mild', 'Moderate', 'Severe'];
   readonly diseaseStatusOptions = ['Active', 'Controlled', 'Resolved'];
 
   private readonly avatarColors = [
-    '#0EAFD7','#7C3AED','#16A34A','#EA580C','#0D9488','#D97706','#DC2626',
+    '#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488', '#D97706', '#DC2626',
   ];
 
   // ─── Lifecycle ──────────────────────────────────────────────
@@ -243,6 +294,7 @@ export class FamilyProfiles implements OnInit {
     this.fpMedicines.set([]);
     this.detailLoading.set(true);
     this.selectedDetail.set(null);
+    this.healthSummary.set(null);
     this.fpSvc.getById(p.userHealthProfileId).pipe(catchError(() => of(null))).subscribe(d => {
       this.selectedDetail.set(d);
       this.detailLoading.set(false);
@@ -259,6 +311,9 @@ export class FamilyProfiles implements OnInit {
     this.activeTab.set(tab);
     if ((tab === 'medications' || tab === 'reminders') && this.fpMedicines().length === 0) {
       this.loadFpMedicines();
+    }
+    if (tab === 'summary') {
+      this.loadHealthSummary();
     }
   }
 
@@ -291,13 +346,13 @@ export class FamilyProfiles implements OnInit {
   // ─── Add modal ──────────────────────────────────────────────
   openAddModal(): void {
     this.createForm = {
-      firstName:'', lastName:'', dateOfBirth:'', gender:'', bloodType:'',
-      height:null, weight:null, relationship:'',
+      firstName: '', lastName: '', dateOfBirth: '', gender: '', bloodType: '',
+      height: null, weight: null, relationship: '',
       showAllergies: false, allergies: [],
       showDiseases: false, chronicDiseases: [],
     };
     const firstOwner = this.ownerProfiles()[0];
-    this.inviteForm = { profileId: firstOwner?.userHealthProfileId ?? '', email:'', role:'Viewer' };
+    this.inviteForm = { profileId: firstOwner?.userHealthProfileId ?? '', email: '', role: 'Viewer' };
     this.errorMessage = '';
     this.addStep.set('choose');
     this.showAddModal.set(true);
@@ -309,14 +364,14 @@ export class FamilyProfiles implements OnInit {
   backToChoose(): void { this.addStep.set('choose'); this.errorMessage = ''; }
 
   // Allergy helpers
-  addAllergyToCreate(): void    { this.createForm.allergies.push({ name: '', severity: 'Mild' }); }
+  addAllergyToCreate(): void { this.createForm.allergies.push({ name: '', severity: 'Mild' }); }
   removeAllergyFromCreate(i: number): void { this.createForm.allergies.splice(i, 1); }
-  addDiseaseToCreate(): void    { this.createForm.chronicDiseases.push({ name: '', status: 'Active', diagnosedAt: '' }); }
+  addDiseaseToCreate(): void { this.createForm.chronicDiseases.push({ name: '', status: 'Active', diagnosedAt: '' }); }
   removeDiseaseFromCreate(i: number): void { this.createForm.chronicDiseases.splice(i, 1); }
 
-  addAllergyToEdit(): void      { this.editForm.allergies.push({ name: '', severity: 'Mild' }); }
+  addAllergyToEdit(): void { this.editForm.allergies.push({ name: '', severity: 'Mild' }); }
   removeAllergyFromEdit(i: number): void { this.editForm.allergies.splice(i, 1); }
-  addDiseaseToEdit(): void      { this.editForm.chronicDiseases.push({ name: '', status: 'Active', diagnosedAt: '' }); }
+  addDiseaseToEdit(): void { this.editForm.chronicDiseases.push({ name: '', status: 'Active', diagnosedAt: '' }); }
   removeDiseaseFromEdit(i: number): void { this.editForm.chronicDiseases.splice(i, 1); }
 
   submitCreateManaged(): void {
@@ -339,7 +394,8 @@ export class FamilyProfiles implements OnInit {
       allergies: f.showAllergies ? f.allergies.filter(a => a.name.trim()) : [],
       chronicDiseases: f.showDiseases ? f.chronicDiseases.filter(d => d.name.trim()) : [],
     }).pipe(catchError(err => {
-      this.errorMessage = err?.error?.message || 'Failed to create profile.';
+      const apiErrors: string[] = err?.error?.errors ?? [];
+      this.errorMessage = apiErrors.length ? apiErrors.join(' ') : (err?.error?.message || 'Failed to create profile.');
       this.submitting.set(false);
       return of(null);
     })).subscribe(result => {
@@ -358,7 +414,8 @@ export class FamilyProfiles implements OnInit {
     this.errorMessage = '';
     this.fpSvc.sendInvitation(f.profileId, f.email.trim(), f.role).pipe(
       catchError(err => {
-        this.errorMessage = err?.error?.message || 'Failed to send invitation.';
+        const apiErrors: string[] = err?.error?.errors ?? [];
+        this.errorMessage = apiErrors.length ? apiErrors.join(' ') : (err?.error?.message || 'Failed to send invitation.');
         this.submitting.set(false);
         return of(null);
       })
@@ -376,12 +433,12 @@ export class FamilyProfiles implements OnInit {
     this.editError = '';
     this.editForm = {
       firstName: p.firstName,
-      lastName:  p.lastName,
+      lastName: p.lastName,
       dateOfBirth: d.dateOfBirth?.split('T')[0] ?? '',
-      gender:    d.gender ?? '',
+      gender: d.gender ?? '',
       bloodType: d.bloodType ?? '',
-      height:    d.height,
-      weight:    d.weight,
+      height: d.height,
+      weight: d.weight,
       relationship: p.relationship ?? '',
       allergies: (d.allergies ?? []).map((a: any) => ({ name: a.name, severity: a.severity })),
       chronicDiseases: (d.chronicDiseases ?? []).map((c: any) => ({ name: c.name, status: c.status, diagnosedAt: c.diagnosedAt?.split('T')[0] ?? '' })),
@@ -420,7 +477,8 @@ export class FamilyProfiles implements OnInit {
         .map(d => ({ name: d.name.trim(), diagnosedAt: d.diagnosedAt || null, status: d.status, notes: null })),
     }).pipe(
       catchError(err => {
-        this.editError = err?.error?.message || 'Failed to update profile.';
+        const apiErrors: string[] = err?.error?.errors ?? [];
+        this.editError = apiErrors.length ? apiErrors.join(' ') : (err?.error?.message || 'Failed to update profile.');
         this.editSubmitting.set(false);
         return of(null);
       })
@@ -440,14 +498,14 @@ export class FamilyProfiles implements OnInit {
   acceptInvitation(id: string): void {
     this.fpSvc.acceptInvitation(id).subscribe({
       next: () => { this.loadReceivedInvitations(); this.loadProfiles(); },
-      error: () => {},
+      error: () => { },
     });
   }
 
   rejectInvitation(id: string): void {
     this.fpSvc.rejectInvitation(id).subscribe({
       next: () => { this.loadReceivedInvitations(); },
-      error: () => {},
+      error: () => { },
     });
   }
 
@@ -500,8 +558,8 @@ export class FamilyProfiles implements OnInit {
   setSupervisingSearch(val: string): void { this.supervisingSearch.set(val); this.supervisingPage.set(0); }
 
   // ─── Supervision pagination ───────────────────────────────────
-  prevSupervisedPage():  void { this.animatePage(() => this.supervisedPage.update(v => v - 1),  v => this.supervisedVisible.set(v)); }
-  nextSupervisedPage():  void { this.animatePage(() => this.supervisedPage.update(v => v + 1),  v => this.supervisedVisible.set(v)); }
+  prevSupervisedPage(): void { this.animatePage(() => this.supervisedPage.update(v => v - 1), v => this.supervisedVisible.set(v)); }
+  nextSupervisedPage(): void { this.animatePage(() => this.supervisedPage.update(v => v + 1), v => this.supervisedVisible.set(v)); }
   prevSupervisingPage(): void { this.animatePage(() => this.supervisingPage.update(v => v - 1), v => this.supervisingVisible.set(v)); }
   nextSupervisingPage(): void { this.animatePage(() => this.supervisingPage.update(v => v + 1), v => this.supervisingVisible.set(v)); }
 
@@ -605,7 +663,7 @@ export class FamilyProfiles implements OnInit {
 
   // ─── Three-dot menu ─────────────────────────────────────────
   toggleProfileMenu(): void { this.showProfileMenu.update(v => !v); }
-  closeProfileMenu(): void  { this.showProfileMenu.set(false); }
+  closeProfileMenu(): void { this.showProfileMenu.set(false); }
 
   openDeleteProfileConfirm(): void {
     this.showProfileMenu.set(false);
@@ -645,9 +703,9 @@ export class FamilyProfiles implements OnInit {
     if (window.innerWidth > 768) this.mobileSidebarOpen.set(false);
   }
 
-  toggleSidebar():       void { this.sidebarCollapsed.update(v => !v); }
+  toggleSidebar(): void { this.sidebarCollapsed.update(v => !v); }
   toggleMobileSidebar(): void { this.mobileSidebarOpen.update(v => !v); }
-  toggleDropdown():      void { this.dropdownOpen.update(v => !v); }
+  toggleDropdown(): void { this.dropdownOpen.update(v => !v); }
 
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
@@ -658,6 +716,10 @@ export class FamilyProfiles implements OnInit {
   }
 
   // ─── Display helpers ────────────────────────────────────────
+  get todayStr(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
   get displayName(): string {
     const u = this.authSvc.currentUser;
     return u?.firstName?.trim() || u?.email || 'there';
@@ -674,13 +736,13 @@ export class FamilyProfiles implements OnInit {
   getRelBadgeClass(p: AccessibleProfileDto): string {
     if (p.isSelf) return 'fp-badge fp-badge--blue';
     const r = p.relationship ?? '';
-    return ['Husband','Wife'].includes(r) ? 'fp-badge fp-badge--blue' : 'fp-badge fp-badge--orange';
+    return ['Husband', 'Wife'].includes(r) ? 'fp-badge fp-badge--blue' : 'fp-badge fp-badge--orange';
   }
 
   getRelIcon(p: AccessibleProfileDto): string {
     if (p.isSelf) return 'fa-solid fa-user';
     const r = p.relationship ?? '';
-    return ['Husband','Wife'].includes(r) ? 'fa-solid fa-heart' : 'fa-solid fa-person';
+    return ['Husband', 'Wife'].includes(r) ? 'fa-solid fa-heart' : 'fa-solid fa-person';
   }
 
   getStatusLabel(p: AccessibleProfileDto): string { return p.isSelf ? 'Self' : 'Active'; }
@@ -699,7 +761,7 @@ export class FamilyProfiles implements OnInit {
   }
 
   formatDob(dob: string): string {
-    return new Date(dob).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    return new Date(dob).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   getAge(dob: string): number {
@@ -729,9 +791,9 @@ export class FamilyProfiles implements OnInit {
   getInvStatusClass(status: string): string {
     const map: Record<string, string> = {
       Pending: 'fp-inv-status--pending',
-      Active:  'fp-inv-status--active',
-      Rejected:'fp-inv-status--rejected',
-      Cancelled:'fp-inv-status--cancelled',
+      Active: 'fp-inv-status--active',
+      Rejected: 'fp-inv-status--rejected',
+      Cancelled: 'fp-inv-status--cancelled',
     };
     return `fp-inv-status ${map[status] ?? ''}`;
   }

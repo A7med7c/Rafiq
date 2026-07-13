@@ -140,7 +140,8 @@
           </div>
         </div>
         <div class="fp-title-actions">
-          <button type="button" class="fp-invitations-btn" (click)="showInvitationsPanel.set(true); loadSentInvitations()">
+          <button type="button" class="fp-invitations-btn"
+            (click)="showInvitationsPanel.set(true); loadSentInvitations()">
             <i class="fa-regular fa-envelope"></i>
             Invitations
             @if (pendingCount() > 0) {
@@ -272,7 +273,7 @@
               </button>
               @if (showProfileMenu()) {
               <div class="fp-menu-dropdown">
-                @if (selectedProfile()?.profileType === 'Managed') {
+                @if (selectedProfile()?.profileType === 'Managed' && selectedProfile()?.accessRole === 'Owner') {
                 <button type="button" class="fp-menu-dropdown-item fp-menu-dropdown-item--danger"
                   (click)="openDeleteProfileConfirm()">
                   <i class="fa-solid fa-trash"></i>
@@ -512,12 +513,28 @@
 
           <!-- HEALTH SUMMARY -->
           @else {
-          <div class="fp-tab-nav">
-            <i class="fa-solid fa-chart-simple fp-tab-nav-ico"></i>
-            <p class="fp-tab-nav-title">Health Summary</p>
-            <p class="fp-tab-nav-sub">AI-powered health summary coming soon.</p>
+          <div class="fp-summary-scroll">
+            @if (summaryLoading()) {
+            <div class="ai-summary-loading">
+              <div class="ai-summary-spinner">
+                <i class="fa-solid fa-wand-magic-sparkles ai-summary-spinner-ico"></i>
+                <svg class="ai-summary-ring" viewBox="0 0 60 60">
+                  <circle cx="30" cy="30" r="26" fill="none" stroke-width="3"/>
+                </svg>
+              </div>
+              <p class="ai-summary-loading-text">Generating AI Summary<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
+            </div>
+            } @else if (!healthSummary()?.hasData) {
+            <p class="ai-body ai-body--empty">
+              Not enough health information to generate an AI Health Summary yet. Upload more medical records to receive
+              personalized health insights.
+            </p>
+            } @else {
+            <p class="ai-body">{{ healthSummary()!.summary }}</p>
+            }
           </div>
           }
+
 
         </div><!-- /fp-tab-content -->
 
@@ -711,7 +728,7 @@
               @for (s of diseaseStatusOptions; track s) { <option [value]="s">{{ s }}</option> }
             </select>
             <input class="fp-input fp-select--sm" type="date" [(ngModel)]="createForm.chronicDiseases[i].diagnosedAt"
-              placeholder="Diagnosed">
+              [max]="todayStr" placeholder="Diagnosed">
             <button type="button" class="fp-remove-btn" (click)="removeDiseaseFromCreate(i)">
               <i class="fa-solid fa-xmark"></i>
             </button>
@@ -929,7 +946,8 @@
           <select class="fp-input fp-select fp-select--sm" [(ngModel)]="editForm.chronicDiseases[i].status">
             @for (s of diseaseStatusOptions; track s) { <option [value]="s">{{ s }}</option> }
           </select>
-          <input class="fp-input fp-select--sm" type="date" [(ngModel)]="editForm.chronicDiseases[i].diagnosedAt">
+          <input class="fp-input fp-select--sm" type="date" [(ngModel)]="editForm.chronicDiseases[i].diagnosedAt"
+            [max]="todayStr">
           <button type="button" class="fp-remove-btn" (click)="removeDiseaseFromEdit(i)">
             <i class="fa-solid fa-xmark"></i>
           </button>
@@ -1050,7 +1068,8 @@
               }
             </p>
             <p class="fp-inv-meta">
-              {{ inv.granteeEmail }} · Profile: {{ inv.profileFirstName }} {{ inv.profileLastName }} · Role: {{ inv.role }}
+              {{ inv.granteeEmail }} · Profile: {{ inv.profileFirstName }} {{ inv.profileLastName }} · Role: {{ inv.role
+              }}
             </p>
           </div>
           <div class="fp-inv-meta-right">
@@ -1173,8 +1192,8 @@
               <i class="fa-solid fa-chevron-left"></i>
             </button>
             <span class="fp-sup-pg-info">{{ supervisedPage() + 1 }} / {{ supervisedTotalPages() }}</span>
-            <button type="button" class="fp-sup-pg-btn"
-              [disabled]="supervisedPage() >= supervisedTotalPages() - 1" (click)="nextSupervisedPage()">
+            <button type="button" class="fp-sup-pg-btn" [disabled]="supervisedPage() >= supervisedTotalPages() - 1"
+              (click)="nextSupervisedPage()">
               <i class="fa-solid fa-chevron-right"></i>
             </button>
           </div>
@@ -1256,8 +1275,8 @@
               <i class="fa-solid fa-chevron-left"></i>
             </button>
             <span class="fp-sup-pg-info">{{ supervisingPage() + 1 }} / {{ supervisingTotalPages() }}</span>
-            <button type="button" class="fp-sup-pg-btn"
-              [disabled]="supervisingPage() >= supervisingTotalPages() - 1" (click)="nextSupervisingPage()">
+            <button type="button" class="fp-sup-pg-btn" [disabled]="supervisingPage() >= supervisingTotalPages() - 1"
+              (click)="nextSupervisingPage()">
               <i class="fa-solid fa-chevron-right"></i>
             </button>
           </div>
@@ -1386,7 +1405,8 @@
     </p>
     <div class="fp-sup-confirm-actions">
       <button type="button" class="fp-btn-cancel" (click)="closeDeleteConfirm()">Cancel</button>
-      <button type="button" class="fp-sup-btn-remove-confirm" [disabled]="deletingProfile()" (click)="confirmDeleteProfile()">
+      <button type="button" class="fp-sup-btn-remove-confirm" [disabled]="deletingProfile()"
+        (click)="confirmDeleteProfile()">
         @if (deletingProfile()) { <i class="fa-solid fa-spinner fa-spin"></i> }
         Delete
       </button>

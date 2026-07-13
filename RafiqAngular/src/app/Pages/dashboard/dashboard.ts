@@ -8,6 +8,8 @@ import { NotificationService } from '../../Services/notification.service';
 import { MedicalRecord, ReminderDisplayItem } from '../../Modles/dashboard.models';
 import { AppointmentDto, AppointmentStatus } from '../../Modles/appointment.models';
 import { catchError, of } from 'rxjs';
+import { AccessibleProfileDto } from '../../Services/family-profiles.service';
+import { HealthSummaryDto } from '../../Services/dashboard.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -42,6 +44,34 @@ export class Dashboard implements OnInit {
 
   readonly apptLoading     = signal(true);
   readonly allAppointments = signal<AppointmentDto[]>([]);
+
+  readonly familyProfiles  = signal<AccessibleProfileDto[]>([]);
+  readonly familyLoading   = signal(true);
+  readonly healthSummary   = signal<HealthSummaryDto | null>(null);
+  readonly summaryLoading  = signal(true);
+  readonly summaryExpanded = signal(false);
+
+  readonly SUMMARY_CHAR_LIMIT = 260;
+
+  getTruncatedSummary(full: string): string {
+    if (this.summaryExpanded() || full.length <= this.SUMMARY_CHAR_LIMIT) return full;
+    return full.slice(0, this.SUMMARY_CHAR_LIMIT).trimEnd() + '…';
+  }
+
+  isSummaryTruncatable(full: string): boolean {
+    return full.length > this.SUMMARY_CHAR_LIMIT;
+  }
+
+
+
+  readonly familySlots = computed(() => {
+    const profiles = this.familyProfiles().slice(0, 4);
+    const placeholderCount = Math.max(0, 4 - profiles.length);
+    return [
+      ...profiles.map(p => ({ type: 'profile' as const, data: p })),
+      ...Array.from({ length: placeholderCount }, () => ({ type: 'add' as const, data: null as AccessibleProfileDto | null })),
+    ];
+  });
 
   readonly nextAppointment = computed(() => {
     const now = Date.now();
@@ -93,6 +123,8 @@ export class Dashboard implements OnInit {
     this.recordsLoading.set(true);
     this.remindersLoading.set(true);
     this.apptLoading.set(true);
+    this.familyLoading.set(true);
+    this.summaryLoading.set(true);
 
     this.dashboardService.getMedicalRecords().subscribe({
       next: d => { this.records.set(d); this.recordsLoading.set(false); },
@@ -109,6 +141,16 @@ export class Dashboard implements OnInit {
     ).subscribe(data => {
       this.allAppointments.set(data);
       this.apptLoading.set(false);
+    });
+
+    this.dashboardService.getFamilyProfiles().subscribe({
+      next: d => { this.familyProfiles.set(d); this.familyLoading.set(false); },
+      error: () => { this.familyProfiles.set([]); this.familyLoading.set(false); },
+    });
+
+    this.dashboardService.getHealthSummary().subscribe({
+      next: d => { this.healthSummary.set(d); this.summaryLoading.set(false); },
+      error: () => { this.healthSummary.set(null); this.summaryLoading.set(false); },
     });
   }
 
@@ -188,5 +230,18 @@ export class Dashboard implements OnInit {
   getMedIconClass(index: number): string {
     const classes = ['med-ico-orange', 'med-ico-yellow', 'med-ico-pink', 'med-ico-blue', 'med-ico-teal'];
     return classes[index % classes.length];
+  }
+
+  getInitial(firstName: string): string {
+    return firstName?.charAt(0).toUpperCase() ?? '?';
+  }
+
+  getAge(dateOfBirth: string): number {
+    const today = new Date();
+    const birth = new Date(dateOfBirth);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
   }
 }

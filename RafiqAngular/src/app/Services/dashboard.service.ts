@@ -13,13 +13,23 @@ import {
 } from '../Modles/dashboard.models';
 import { HealthProfileService } from './health-profile.service';
 import { ProfileSelectionService } from './profile-selection.service';
+import { FamilyProfilesService, AccessibleProfileDto } from './family-profiles.service';
+
+export interface HealthSummaryDto {
+  summary: string;
+  hasData: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly http = inject(HttpClient);
   private readonly healthProfileSvc = inject(HealthProfileService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
+  private readonly familyProfilesSvc = inject(FamilyProfilesService);
   private readonly base = environment.apiUrl;
+
+  private _cachedSummary: HealthSummaryDto | null = null;
+  private _summaryProfileId: string | null = null;
 
   private getCurrentProfileId(): Observable<string> {
     const stored = this.profileSelectSvc.selectedProfileId;
@@ -99,5 +109,43 @@ export class DashboardService {
     if (fl.includes('night') || fl.includes('evening')) return 'Next: 9:00 PM';
     if (fl.includes('noon')  || fl.includes('lunch'))   return 'Next: 12:00 PM';
     return 'Next: 8:00 AM';
+  }
+
+  // ─── Family Profiles ──────────────────────────────────────────────────────
+  getFamilyProfiles(): Observable<AccessibleProfileDto[]> {
+    return this.familyProfilesSvc.getAccessible().pipe(
+      catchError(() => of([] as AccessibleProfileDto[]))
+    );
+  }
+
+  // ─── AI Health Summary ────────────────────────────────────────────────────
+  getHealthSummary(): Observable<HealthSummaryDto | null> {
+    return this.getCurrentProfileId().pipe(
+      switchMap(profileId => {
+        if (this._cachedSummary !== null && this._summaryProfileId === profileId) {
+          return of(this._cachedSummary);
+        }
+        return this.http
+          .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}`)
+          .pipe(
+            map(r => {
+              const data = r.data ?? null;
+              this._cachedSummary = data;
+              this._summaryProfileId = profileId;
+              return data;
+            })
+          );
+      }),
+      catchError(() => of(null))
+    );
+  }
+
+  getHealthSummaryForProfile(profileId: string): Observable<HealthSummaryDto | null> {
+    return this.http
+      .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}`)
+      .pipe(
+        map(r => r.data ?? null),
+        catchError(() => of(null))
+      );
   }
 }
