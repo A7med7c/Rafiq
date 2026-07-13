@@ -32,6 +32,14 @@ export class Dashboard implements OnInit {
     this.loadReminderData();
   });
 
+  private readonly appointmentRefreshEffect = effect(() => {
+    if (this.notifService.appointmentDataRefreshTick() === 0) {
+      return;
+    }
+
+    this.loadAppointmentData();
+  });
+
   readonly records          = signal<MedicalRecord[]>([]);
   readonly reminders        = signal<ReminderDisplayItem[]>([]);
   readonly recordsLoading   = signal(true);
@@ -118,6 +126,17 @@ export class Dashboard implements OnInit {
     this.dashboardService.getMedicinesWithReminders().subscribe({
       next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
       error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
+    });
+  }
+
+  private loadAppointmentData(): void {
+    this.apptLoading.set(true);
+
+    this.apptService.getAll().pipe(
+      catchError(() => of([] as AppointmentDto[]))
+    ).subscribe(data => {
+      this.allAppointments.set(data);
+      this.apptLoading.set(false);
     });
   }
 

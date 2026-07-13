@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Rafiq.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Rafiq.Infrastructure.Persistence;
 namespace Rafiq.Infrastructure.Migrations
 {
     [DbContext(typeof(RafiqDbContext))]
-    partial class RafiqDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260713165419_AddAppointmentHangfireJobId")]
+    partial class AddAppointmentHangfireJobId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -567,7 +570,9 @@ namespace Rafiq.Infrastructure.Migrations
 
                     b.HasIndex("UserHealthProfileId", "ScheduledDate");
 
-                    b.HasIndex("MedicineReminderId", "ScheduledDate", "ReminderNumber");
+                    b.HasIndex("MedicineReminderId", "ScheduledDate", "ReminderNumber")
+                        .IsUnique()
+                        .HasFilter("[Status] <> N'Cancelled'");
 
                     b.ToTable("MedicationReminderLogs", (string)null);
                 });
@@ -858,6 +863,49 @@ namespace Rafiq.Infrastructure.Migrations
                     b.HasIndex("UserHealthProfileId");
 
                     b.ToTable("ChronicDiseases", (string)null);
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.User.EmergencyContact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Relation")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("EmergencyContacts", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.User.HealthProfileAccess", b =>
@@ -1454,6 +1502,15 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("UserHealthProfile");
                 });
 
+            modelBuilder.Entity("Rafiq.Domain.Entities.User.EmergencyContact", b =>
+                {
+                    b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
+                        .WithMany("EmergencyContacts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Rafiq.Domain.Entities.User.HealthProfileAccess", b =>
                 {
                     b.HasOne("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", null)
@@ -1536,6 +1593,11 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Navigation("Allergies");
 
                     b.Navigation("ChronicDiseases");
+                });
+
+            modelBuilder.Entity("Rafiq.Infrastructure.Persistence.Identity.ApplicationUser", b =>
+                {
+                    b.Navigation("EmergencyContacts");
                 });
 #pragma warning restore 612, 618
         }

@@ -19,6 +19,29 @@
       <i class="fa-solid fa-xmark"></i>
     </button>
   </div>
+  } @else if (toast.action === 'open-appointment' && toast.sourceId) {
+  <div class="toast" role="alert">
+    <span class="toast__icon">
+      <i class="fa-solid fa-calendar-check"></i>
+    </span>
+    <span class="toast__body">
+      <span class="toast__title">{{ toast.title }}</span>
+      <span class="toast__message">{{ toast.body }}</span>
+    </span>
+    <button type="button" class="reminder-btn reminder-btn--primary"
+      (click)="notificationService.acknowledgeAppointmentReminder(toast.sourceId!)"
+      [disabled]="notificationService.confirmingAppointment()">
+      @if (notificationService.confirmingAppointment()) {
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
+      } @else {
+      Confirm Attendance
+      }
+    </button>
+    <button type="button" class="toast-close" (click)="notificationService.dismissToast(toast.id)"
+      aria-label="Dismiss toast">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
   } @else {
   <div class="toast" [class.toast--success]="toast.type === 'success'" [class.toast--error]="toast.type === 'error'">
     <span class="toast__icon">
@@ -219,3 +242,4 @@
   </section>
 </div>
 }
+

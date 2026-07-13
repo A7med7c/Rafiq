@@ -1,8 +1,10 @@
 import { Injectable, NgZone, computed, effect, inject, isDevMode, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from './auth-service';
+import { AppointmentsService } from './appointments.service';
 import { MedicationRemindersService } from './medication-reminders.service';
-import { MedicationReminderNotificationPayload, NotificationEventPayload, SignalRService } from './signalr.service';
+// import { NotificationSoundService } from './notification-sound.service';
+import { AppointmentReminderNotificationPayload, MedicationReminderNotificationPayload, NotificationEventPayload, SignalRService } from './signalr.service';
 
 export interface AppNotification {
   id: string;
@@ -21,7 +23,7 @@ export interface NotificationToast {
   type: 'success' | 'error' | 'info';
   createdAt: Date;
   sourceId?: string;
-  action?: 'open-reminder';
+  action?: 'open-reminder' | 'open-appointment';
 }
 
 export interface BrowserNotificationItem {
@@ -52,6 +54,8 @@ export class NotificationService {
   private readonly authService = inject(AuthService);
   private readonly signalr = inject(SignalRService);
   private readonly medicationRemindersService = inject(MedicationRemindersService);
+  private readonly appointmentsService = inject(AppointmentsService);
+  // private readonly notificationSoundService = inject(NotificationSoundService);
   private readonly router = inject(Router);
   private readonly ngZone = inject(NgZone);
 
@@ -63,7 +67,11 @@ export class NotificationService {
   private readonly _notificationCenterOpen = signal(false);
   private readonly _browserNotificationPermission = signal<NotificationPermission>(this.readBrowserNotificationPermission());
   private readonly _confirmingReminder = signal(false);
+  private readonly _confirmingAppointment = signal(false);
   private readonly _reminderDataRefreshTick = signal(0);
+  private readonly _appointmentReminderQueue = signal<AppointmentReminderNotificationPayload[]>([]);
+  private readonly _appointmentReminderModalOpen = signal(false);
+  private readonly _appointmentDataRefreshTick = signal(0);
 
   private readonly toastTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly snoozeTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -86,11 +94,16 @@ export class NotificationService {
   readonly activeReminder = this.nextReminder;
   readonly reminderModalOpen = this._reminderModalOpen.asReadonly();
   readonly confirmingReminder = this._confirmingReminder.asReadonly();
+  readonly confirmingAppointment = this._confirmingAppointment.asReadonly();
   readonly toasts = this._toasts.asReadonly();
   readonly browserNotifications = this._browserNotifications.asReadonly();
   readonly notificationCenterOpen = this._notificationCenterOpen.asReadonly();
   readonly browserNotificationPermission = this._browserNotificationPermission.asReadonly();
   readonly reminderDataRefreshTick = this._reminderDataRefreshTick.asReadonly();
+  readonly appointmentReminderQueue = this._appointmentReminderQueue.asReadonly();
+  readonly activeAppointmentReminder = computed(() => this._appointmentReminderQueue()[0] ?? null);
+  readonly appointmentReminderModalOpen = this._appointmentReminderModalOpen.asReadonly();
+  readonly appointmentDataRefreshTick = this._appointmentDataRefreshTick.asReadonly();
   readonly centerFilter = signal<NotificationCenterFilter>('all');
   readonly visibleNotifications = computed(() => {
     const filter = this.centerFilter();
@@ -144,8 +157,9 @@ export class NotificationService {
     effect(() => {
       const reminderEvents = this.signalr.reminderEvents();
       const notificationEvents = this.signalr.notificationEvents();
+      const appointmentReminderEvents = this.signalr.appointmentReminderEvents();
 
-      if (!reminderEvents.length && !notificationEvents.length) {
+      if (!reminderEvents.length && !notificationEvents.length && !appointmentReminderEvents.length) {
         return;
       }
 
@@ -155,6 +169,10 @@ export class NotificationService {
 
       if (notificationEvents.length) {
         this.ingestNotificationEvents(this.signalr.drainNotificationEvents());
+      }
+
+      if (appointmentReminderEvents.length) {
+        this.ingestAppointmentReminderEvents(this.signalr.drainAppointmentReminderEvents());
       }
     });
   }
@@ -389,6 +407,12 @@ export class NotificationService {
     }
   }
 
+  private ingestAppointmentReminderEvents(events: AppointmentReminderNotificationPayload[]): void {
+    for (const event of events) {
+      this.recordAppointmentReminder(event);
+    }
+  }
+
   private recordReminder(reminder: MedicationReminderNotificationPayload): void {
     if (this.processedReminderIds.has(reminder.reminderId)) {
       return;
@@ -426,6 +450,42 @@ export class NotificationService {
     });
 
     this.showToast(notification.title, notification.body, 'info');
+  }
+
+  private recordAppointmentReminder(event: AppointmentReminderNotificationPayload): void {
+    if (this.processedReminderIds.has(event.appointmentId)) {
+      return;
+    }
+
+    this.processedReminderIds.add(event.appointmentId);
+
+    this.pushDerivedNotification({
+      title: 'Appointment Reminder',
+      body: event.notificationText || `Upcoming appointment: ${event.title} with ${event.provider}`,
+      type: 'appointment',
+      sourceId: event.appointmentId,
+    });
+
+    this._appointmentReminderQueue.update(q => [...q, event]);
+
+    // Create a persistent toast (no auto-dismiss timer) so the "Confirm Attendance"
+    // button remains visible until the user acts or explicitly closes it.
+    const persistentToast: NotificationToast = {
+      id: crypto.randomUUID(),
+      title: event.title,
+      body: event.notificationText || `${event.title} with ${event.provider}`,
+      type: 'info',
+      createdAt: new Date(),
+      sourceId: event.appointmentId,
+      action: 'open-appointment',
+    };
+    this._toasts.update(list => [persistentToast, ...list]);
+
+    // this.notificationSoundService.play();
+
+    if (isDevMode()) {
+      console.debug('[NotificationService] AppointmentReminderDue received', event);
+    }
   }
 
   private pushDerivedNotification(notification: Omit<AppNotification, 'id' | 'createdAt' | 'read'>): AppNotification {
@@ -628,6 +688,115 @@ export class NotificationService {
     this._reminderDataRefreshTick.update(tick => tick + 1);
   }
 
+  openAppointmentReminderFromToast(appointmentId: string): void {
+    const queue = this._appointmentReminderQueue();
+    const target = queue.find(a => a.appointmentId === appointmentId);
+    if (!target) return;
+    this._appointmentReminderQueue.set([target, ...queue.filter(a => a.appointmentId !== appointmentId)]);
+    this._appointmentReminderModalOpen.set(true);
+  }
+
+  /** "Confirm Attendance" — mark the appointment as Completed and dismiss the reminder toast. */
+  acknowledgeAppointmentReminder(appointmentId: string): void {
+    const queue = this._appointmentReminderQueue();
+    const reminder = queue.find(r => r.appointmentId === appointmentId);
+    if (!reminder || this._confirmingAppointment()) return;
+
+    this._confirmingAppointment.set(true);
+
+    this.appointmentsService.complete(appointmentId).subscribe({
+      next: () => {
+        this.clearSnoozeTimer(appointmentId);
+        this._appointmentReminderQueue.update(q => q.filter(r => r.appointmentId !== appointmentId));
+        this.markReadBySourceId(appointmentId);
+        this.dismissAppointmentToast(appointmentId);
+
+        this.pushDerivedNotification({
+          title: 'Appointment confirmed',
+          body: `${reminder.title} with ${reminder.provider} – marked as completed.`,
+          type: 'confirmation',
+          sourceId: appointmentId,
+        });
+
+        this.showToast('Appointment Confirmed', `${reminder.title} marked as completed.`, 'success');
+        this._confirmingAppointment.set(false);
+        this.notifyAppointmentChanged();
+      },
+      error: err => {
+        this._confirmingAppointment.set(false);
+        this.showToast(
+          'Could not confirm appointment',
+          err?.error?.message || `We could not confirm ${reminder.title}. Please try again.`,
+          'error'
+        );
+      },
+    });
+  }
+
+  private dismissAppointmentToast(appointmentId: string): void {
+    const toast = this._toasts().find(t => t.action === 'open-appointment' && t.sourceId === appointmentId);
+    if (toast) this.dismissToast(toast.id);
+  }
+
+  /** "Remind Me Later" — snooze and re-show the reminder after 10 minutes. */
+  remindAppointmentLater(): void {
+    const reminder = this.activeAppointmentReminder();
+    if (!reminder) {
+      this.closeAppointmentReminderModalIfEmpty();
+      return;
+    }
+
+    this.dequeueAppointmentReminder(reminder.appointmentId);
+    this.scheduleAppointmentSnooze(reminder);
+    this.closeAppointmentReminderModalIfEmpty();
+  }
+
+  /** "Dismiss" — close the modal without any further action. */
+  dismissAppointmentReminder(appointmentId?: string): void {
+    const queue = this._appointmentReminderQueue();
+    const targetId = appointmentId ?? queue[0]?.appointmentId;
+    if (!targetId) return;
+
+    this.clearSnoozeTimer(targetId);
+    this._appointmentReminderQueue.update(q => q.filter(a => a.appointmentId !== targetId));
+    this.markReadBySourceId(targetId);
+    this.closeAppointmentReminderModalIfEmpty();
+  }
+
+  notifyAppointmentChanged(): void {
+    this._appointmentDataRefreshTick.update(t => t + 1);
+  }
+
+  private dequeueAppointmentReminder(appointmentId: string): AppointmentReminderNotificationPayload | null {
+    const queue = this._appointmentReminderQueue();
+    const removed = queue.find(a => a.appointmentId === appointmentId) ?? null;
+    if (!removed) return null;
+    this._appointmentReminderQueue.update(q => q.filter(a => a.appointmentId !== appointmentId));
+    return removed;
+  }
+
+  private closeAppointmentReminderModalIfEmpty(): void {
+    this._appointmentReminderModalOpen.set(this._appointmentReminderQueue().length > 0);
+  }
+
+  private scheduleAppointmentSnooze(reminder: AppointmentReminderNotificationPayload): void {
+    this.clearSnoozeTimer(reminder.appointmentId);
+
+    const timer = setTimeout(() => {
+      this.snoozeTimers.delete(reminder.appointmentId);
+
+      if (this._appointmentReminderQueue().some(a => a.appointmentId === reminder.appointmentId)) {
+        return;
+      }
+
+      this._appointmentReminderQueue.update(q => [reminder, ...q]);
+      this._appointmentReminderModalOpen.set(true);
+      // this.notificationSoundService.play();
+    }, NotificationService.snoozeDelayMs);
+
+    this.snoozeTimers.set(reminder.appointmentId, timer);
+  }
+
   private persistNotifications(): void {
     if (!this.persistenceKey || typeof window === 'undefined') {
       return;
@@ -688,6 +857,10 @@ export class NotificationService {
     this._browserNotifications.set([]);
     this._reminderModalOpen.set(false);
     this._notificationCenterOpen.set(false);
+    this._confirmingReminder.set(false);
+    this._confirmingAppointment.set(false);
+    this._appointmentReminderQueue.set([]);
+    this._appointmentReminderModalOpen.set(false);
     this.toastTimers.forEach(timer => clearTimeout(timer));
     this.toastTimers.clear();
     this.snoozeTimers.forEach(timer => clearTimeout(timer));

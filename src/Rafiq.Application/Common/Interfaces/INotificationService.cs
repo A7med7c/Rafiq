@@ -16,6 +16,17 @@ namespace Rafiq.Application.Common.Interfaces
         public string NotificationText { get; set; } = string.Empty;
     }
 
+    public class AppointmentReminderNotificationPayload
+    {
+        public string AppointmentId { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public string AppointmentDateTime { get; set; } = string.Empty;
+        public string NotificationText { get; set; } = string.Empty;
+        public string AppointmentType { get; set; } = string.Empty;
+        public string? CustomType { get; set; }
+    }
+
     public interface INotificationService
     {
         Task SendNotificationToUserAsync(
@@ -27,6 +38,11 @@ namespace Rafiq.Application.Common.Interfaces
         Task SendMedicationReminderAsync(
             string userId,
             MedicationReminderNotificationPayload payload,
+            CancellationToken cancellationToken = default);
+
+        Task SendAppointmentReminderAsync(
+            string userId,
+            AppointmentReminderNotificationPayload payload,
             CancellationToken cancellationToken = default);
     }
 }

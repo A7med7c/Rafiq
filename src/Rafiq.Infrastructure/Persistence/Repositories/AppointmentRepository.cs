@@ -16,6 +16,13 @@ public sealed class AppointmentRepository(RafiqDbContext context) : IAppointment
         => context.Appointments
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<Appointment?> GetByIdWithDetailsAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+        => context.Appointments
+            .Include(x => x.UserHealthProfile)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
     public async Task<IReadOnlyList<Appointment>> GetAllByUserHealthProfileIdAsync(
         Guid userHealthProfileId,
         CancellationToken cancellationToken = default)

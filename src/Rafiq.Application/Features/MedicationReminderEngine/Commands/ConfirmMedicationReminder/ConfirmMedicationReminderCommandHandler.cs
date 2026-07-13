@@ -37,12 +37,11 @@ public sealed class ConfirmMedicationReminderCommandHandler(
         logRepository.Update(log);
 
         // Mark any pending subsequent logs for the same schedule+day as Cancelled
-        var pendingNext = await logRepository.GetPendingSubsequentLogsAsync(
-            log.MedicineReminderId,
-            log.ScheduledDate,
-            log.ReminderNumber,
-            cancellationToken);
-
+        var pendingNext = await logRepository.GetPendingOtherLogsAsync(
+         log.MedicineReminderId,
+         log.ScheduledDate,
+         log.Id,
+         cancellationToken);
         foreach (var pending in pendingNext)
         {
             pending.Cancel();

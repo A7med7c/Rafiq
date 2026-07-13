@@ -12,7 +12,8 @@ public sealed class UpdateMedicineReminderCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
     IMedicineReminderRepository medicineReminderRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork, IMedicationReminderLogRepository logRepository,
+    IDateTimeProvider dateTimeProvider, IAppointmentReminderScheduler schedulingService)
     : IRequestHandler<UpdateMedicineReminderCommand, ApiResponse<MedicineReminderResponseDto>>
 {
     public async Task<ApiResponse<MedicineReminderResponseDto>> Handle(
@@ -46,6 +47,19 @@ public sealed class UpdateMedicineReminderCommandHandler(
             throw new ValidationException(new[] { "A reminder with the same details already exists." });
         }
 
+        var today = dateTimeProvider.Today;
+        var staleLogs = await logRepository.GetPendingAndOverdueLogsAsync(reminder.Id, today, cancellationToken);
+
+        foreach (var staleLog in staleLogs)
+        {
+            if (staleLog.NextJobId is not null)
+                schedulingService.CancelJob(staleLog.NextJobId);
+
+            staleLog.Cancel();
+            logRepository.Update(staleLog);
+        }
+
+        // Recalculate the reminder's own time/dates/repeat type.
         reminder.UpdateDetails(request.ReminderTime, request.StartDate, request.EndDate, request.RepeatType);
 
         medicineReminderRepository.Update(reminder);

@@ -12,6 +12,7 @@ public sealed class CreateAppointmentCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IAppointmentRepository appointmentRepository,
+    IAppointmentReminderScheduler reminderScheduler,
     IUnitOfWork unitOfWork)
     : IRequestHandler<CreateAppointmentCommand, ApiResponse<AppointmentResponseDto>>
 {
@@ -48,6 +49,13 @@ public sealed class CreateAppointmentCommandHandler(
 
         await appointmentRepository.AddAsync(appointment, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var jobId = reminderScheduler.ScheduleReminder(appointment);
+        if (jobId is not null)
+        {
+            appointment.SetJobId(jobId);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
 
         return ApiResponse<AppointmentResponseDto>.SuccessResponse(
             appointment.ToDto(),
