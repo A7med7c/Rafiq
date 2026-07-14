@@ -55,7 +55,7 @@ export class NotificationService {
   private readonly signalr = inject(SignalRService);
   private readonly medicationRemindersService = inject(MedicationRemindersService);
   private readonly appointmentsService = inject(AppointmentsService);
-  // private readonly notificationSoundService = inject(NotificationSoundService);
+  private readonly notificationSoundService = inject(NotificationSoundService);
 
   private readonly router = inject(Router);
   private readonly ngZone = inject(NgZone);
@@ -123,7 +123,6 @@ export class NotificationService {
         return list;
     }
   });
-  notificationSoundService: any;
 
   constructor() {
     this.authService.currentUser$.subscribe((user) => {
@@ -503,7 +502,7 @@ export class NotificationService {
     };
     this._toasts.update(list => [persistentToast, ...list]);
 
-    // this.notificationSoundService.play();
+    this.notificationSoundService.play();
 
     if (isDevMode()) {
       console.debug('[NotificationService] AppointmentReminderDue received', event);
@@ -813,7 +812,7 @@ export class NotificationService {
 
       this._appointmentReminderQueue.update(q => [reminder, ...q]);
       this._appointmentReminderModalOpen.set(true);
-      // this.notificationSoundService.play();
+      this.notificationSoundService.play();
     }, NotificationService.snoozeDelayMs);
 
     this.snoozeTimers.set(reminder.appointmentId, timer);
