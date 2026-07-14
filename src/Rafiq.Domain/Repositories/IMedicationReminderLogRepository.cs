@@ -37,5 +37,14 @@ public interface IMedicationReminderLogRepository
         DateOnly date,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns Stage-3 (ReminderNumber == 3) logs that were marked Sent before
+    /// <paramref name="cutoffUtc"/> and have not yet been confirmed or escalated.
+    /// Used by the missed-medication background service to find doses to escalate.
+    /// </summary>
+    Task<List<MedicationReminderLog>> GetSentStage3LogsOlderThanAsync(
+        DateTime cutoffUtc,
+        CancellationToken cancellationToken = default);
+
     void Update(MedicationReminderLog log);
 }

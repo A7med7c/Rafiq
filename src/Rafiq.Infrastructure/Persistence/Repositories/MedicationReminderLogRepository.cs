@@ -81,6 +81,21 @@ public sealed class MedicationReminderLogRepository(RafiqDbContext context) : IM
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<MedicationReminderLog>> GetSentStage3LogsOlderThanAsync(
+        DateTime cutoffUtc,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .Include(x => x.MedicineReminder)
+                .ThenInclude(r => r.UserMedicine)
+            .Include(x => x.UserHealthProfile)
+            .Where(x => x.ReminderNumber == 3
+                        && x.Status == MedicationReminderStatus.Sent
+                        && x.SentAt != null
+                        && x.SentAt < cutoffUtc)
+            .ToListAsync(cancellationToken);
+    }
+
     public void Update(MedicationReminderLog log)
     {
         context.MedicationReminderLogs.Update(log);

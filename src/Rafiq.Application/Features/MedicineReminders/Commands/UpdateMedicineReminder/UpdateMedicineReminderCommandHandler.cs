@@ -13,7 +13,8 @@ public sealed class UpdateMedicineReminderCommandHandler(
     IUserMedicineRepository userMedicineRepository,
     IMedicineReminderRepository medicineReminderRepository,
     IUnitOfWork unitOfWork, IMedicationReminderLogRepository logRepository,
-    IDateTimeProvider dateTimeProvider, IAppointmentReminderScheduler schedulingService)
+    IDateTimeProvider dateTimeProvider, IAppointmentReminderScheduler schedulingService,
+     IMedicationSchedulingService medicationSchedulingService)
     : IRequestHandler<UpdateMedicineReminderCommand, ApiResponse<MedicineReminderResponseDto>>
 {
     public async Task<ApiResponse<MedicineReminderResponseDto>> Handle(
