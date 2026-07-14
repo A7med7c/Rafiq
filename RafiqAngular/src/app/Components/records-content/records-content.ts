@@ -12,8 +12,8 @@ import { ScanMedicineBoxResponse, AddUserMedicinePayload } from '../../Modles/da
 import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
-import { of } from 'rxjs';
-import { switchMap } from 'rxjs';
+import { of, forkJoin } from 'rxjs';
+import { switchMap, map } from 'rxjs';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -214,6 +214,15 @@ export class RecordsContentComponent implements OnInit, OnChanges {
   readonly scanMode = signal<'create' | 'edit'>('create');
   readonly scanRecordId = signal<string | null>(null);
   scanForm: ScanForm = this.emptyScanForm();
+
+  // Task 1: per-medicine add-to-medications state
+  readonly addingMedIndex = signal<number | null>(null);
+  readonly addedMedIndices = signal<Set<number>>(new Set());
+  readonly addingAllMeds = signal(false);
+
+  // Task 2: change-detection snapshots
+  private _reviewFormSnapshot: string | null = null;
+  private _scanFormSnapshot: string | null = null;
 
   /** Post-success "set a reminder now?" prompt shown after a medicine is saved. */
   readonly showReminderPromptModal = signal(false);
@@ -584,6 +593,7 @@ export class RecordsContentComponent implements OnInit, OnChanges {
       this.scanImageFailed.set(false);
       this.scanMode.set('edit');
       this.scanRecordId.set(record.id);
+      this._scanFormSnapshot = this.snapshotScanForm(this.scanForm);
       this.scanResult.set({
         medicineName: this.scanForm.medicineName,
         strength: this.scanForm.dosage,
@@ -748,6 +758,7 @@ export class RecordsContentComponent implements OnInit, OnChanges {
     };
     this.reviewImageFailed.set(false);
     this.reviewForm.set(form);
+    this._reviewFormSnapshot = this.snapshotReviewForm(form);
   }
 
   addLabResult(): void {
@@ -778,11 +789,25 @@ export class RecordsContentComponent implements OnInit, OnChanges {
     this.reviewForm.set({ ...rf });
   }
 
-  cancelReview(): void { this.reviewSaving.set(false); this.reviewForm.set(null); }
+  cancelReview(): void {
+    this.reviewSaving.set(false);
+    this.reviewForm.set(null);
+    this._reviewFormSnapshot = null;
+    this.addedMedIndices.set(new Set());
+    this.addingMedIndex.set(null);
+    this.addingAllMeds.set(false);
+  }
 
   confirmAndSave(): void {
     const rf = this.reviewForm();
     if (!rf) return;
+
+    if (rf.mode === 'edit' && this._reviewFormSnapshot !== null &&
+        this.snapshotReviewForm(rf) === this._reviewFormSnapshot) {
+      this.showToast('No changes detected. Please edit at least one field before saving.', 'error');
+      return;
+    }
+
     this.reviewSaving.set(true);
 
     const pid = this.profileId ? `?profileId=${this.profileId}` : '';
@@ -829,6 +854,10 @@ export class RecordsContentComponent implements OnInit, OnChanges {
       next: () => {
         this.reviewSaving.set(false);
         this.reviewForm.set(null);
+        this._reviewFormSnapshot = null;
+        this.addedMedIndices.set(new Set());
+        this.addingMedIndex.set(null);
+        this.addingAllMeds.set(false);
         this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : 'Record confirmed and saved.', 'success');
         this.loadData();
 
@@ -866,6 +895,7 @@ export class RecordsContentComponent implements OnInit, OnChanges {
         this.scanMode.set('create');
         this.scanRecordId.set(null);
         this.scanResult.set(data);
+        this._scanFormSnapshot = this.snapshotScanForm(this.scanForm);
       },
       error: err => {
         this.scanLoading.set(false);
@@ -880,10 +910,18 @@ export class RecordsContentComponent implements OnInit, OnChanges {
     this.scanMode.set('create');
     this.scanRecordId.set(null);
     this.scanForm = this.emptyScanForm();
+    this._scanFormSnapshot = null;
   }
 
   saveScanResult(): void {
     if (!this.scanForm.medicineName.trim()) return;
+
+    if (this.scanMode() === 'edit' && this._scanFormSnapshot !== null &&
+        this.snapshotScanForm(this.scanForm) === this._scanFormSnapshot) {
+      this.showToast('No changes detected. Please edit at least one field before saving.', 'error');
+      return;
+    }
+
     this.scanSaving.set(true);
     const payload: AddUserMedicinePayload = {
       medicineName: this.scanForm.medicineName.trim(),
@@ -916,6 +954,7 @@ export class RecordsContentComponent implements OnInit, OnChanges {
         this.scanMode.set('create');
         this.scanRecordId.set(null);
         this.scanForm = this.emptyScanForm();
+        this._scanFormSnapshot = null;
         this.showToast(mode === 'edit' ? 'Medicine record updated successfully.' : 'Medicine saved to your records.', 'success');
         this.loadData();
 
@@ -952,6 +991,118 @@ export class RecordsContentComponent implements OnInit, OnChanges {
     const queryParams: Record<string, string> = { tab: 'medications' };
     if (mode === 'single' && medicineId) queryParams['medicineId'] = medicineId;
     this.router.navigate(['/medications'], { queryParams });
+  }
+
+  // ── Task 2: snapshot helpers ─────────────────────────────────────────────
+  private snapshotReviewForm(rf: ReviewForm): string {
+    if (rf.type === 'lab') {
+      return JSON.stringify({
+        labName: rf.labName, doctorName: rf.doctorName, reportDate: rf.reportDate,
+        summary: rf.summary, ocrText: rf.ocrText,
+        results: rf.results.map(r => ({ testName: r.testName, value: r.value, unit: r.unit, normalRange: r.normalRange, status: r.status })),
+      });
+    }
+    if (rf.type === 'imaging') {
+      return JSON.stringify({
+        imagingType: rf.imagingType, bodyPart: rf.bodyPart, findings: rf.findings,
+        impression: rf.impression, doctorName: rf.doctorName, reportDate: rf.reportDate,
+        summary: rf.summary, ocrText: rf.ocrText,
+      });
+    }
+    if (rf.type === 'prescription') {
+      return JSON.stringify({
+        doctorName: rf.doctorName, patientName: rf.patientName, prescriptionDate: rf.prescriptionDate,
+        prescriptionMedicines: rf.prescriptionMedicines.map(m => ({
+          medicineName: m.medicineName, dosage: m.dosage, frequency: m.frequency,
+          duration: m.duration, instructions: m.instructions,
+        })),
+      });
+    }
+    return JSON.stringify({ title: rf.title, description: rf.description, summary: rf.summary });
+  }
+
+  private snapshotScanForm(sf: ScanForm): string {
+    return JSON.stringify({
+      medicineName: sf.medicineName, dosage: sf.dosage, dosageForm: sf.dosageForm,
+      manufacturer: sf.manufacturer, frequency: sf.frequency, duration: sf.duration, notes: sf.notes,
+    });
+  }
+
+  // ── Task 1: add prescription medicines to Medications module ─────────────
+  addPrescriptionMedToMedications(index: number): void {
+    const rf = this.reviewForm();
+    if (!rf || rf.type !== 'prescription') return;
+    const med = rf.prescriptionMedicines[index];
+    if (!med?.medicineName?.trim() || this.addedMedIndices().has(index)) return;
+
+    this.addingMedIndex.set(index);
+    const payload: AddUserMedicinePayload = {
+      medicineName: med.medicineName.trim(),
+      dosage: med.dosage.trim() || 'N/A',
+      frequency: med.frequency.trim() || 'As directed',
+      duration: med.duration.trim() || 'As needed',
+      notes: med.instructions.trim() || undefined,
+      source: 2,
+    };
+
+    const profileId$ = this.profileId
+      ? of(this.profileId)
+      : this.healthProfileSvc.getMyProfile().pipe(map((r: any) => r.data.id));
+
+    profileId$.pipe(
+      switchMap(pid => this.http.post(`${this.base}/user-medicines?profileId=${pid}`, payload))
+    ).subscribe({
+      next: () => {
+        this.addingMedIndex.set(null);
+        this.addedMedIndices.update(s => new Set([...s, index]));
+        this.showToast(`${med.medicineName} added to your medications.`, 'success');
+      },
+      error: err => {
+        this.addingMedIndex.set(null);
+        this.showToast(err?.error?.message || 'Failed to add medicine.', 'error');
+      },
+    });
+  }
+
+  addAllPrescriptionMedsToMedications(): void {
+    const rf = this.reviewForm();
+    if (!rf || rf.type !== 'prescription') return;
+
+    const notYetAdded = rf.prescriptionMedicines
+      .map((m, i) => ({ m, i }))
+      .filter(({ m, i }) => m.medicineName.trim() && !this.addedMedIndices().has(i));
+
+    if (notYetAdded.length === 0) return;
+
+    this.addingAllMeds.set(true);
+    const profileId$ = this.profileId
+      ? of(this.profileId)
+      : this.healthProfileSvc.getMyProfile().pipe(map((r: any) => r.data.id));
+
+    profileId$.pipe(
+      switchMap(pid =>
+        forkJoin(notYetAdded.map(({ m }) =>
+          this.http.post(`${this.base}/user-medicines?profileId=${pid}`, {
+            medicineName: m.medicineName.trim(),
+            dosage: m.dosage.trim() || 'N/A',
+            frequency: m.frequency.trim() || 'As directed',
+            duration: m.duration.trim() || 'As needed',
+            notes: m.instructions.trim() || undefined,
+            source: 2,
+          } as AddUserMedicinePayload)
+        ))
+      )
+    ).subscribe({
+      next: () => {
+        this.addingAllMeds.set(false);
+        this.addedMedIndices.update(s => new Set([...s, ...notYetAdded.map(({ i }) => i)]));
+        this.showToast('All medicines added to your medications.', 'success');
+      },
+      error: err => {
+        this.addingAllMeds.set(false);
+        this.showToast(err?.error?.message || 'Failed to add medicines.', 'error');
+      },
+    });
   }
 
   private emptyScanForm(): ScanForm {

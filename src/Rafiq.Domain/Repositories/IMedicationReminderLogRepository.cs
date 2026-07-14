@@ -37,5 +37,16 @@ public interface IMedicationReminderLogRepository
         DateOnly date,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns all Stage-3 (ReminderNumber == 3) logs in Sent status whose SentAt
+    /// is older than <paramref name="cutoff"/> and that have no Confirmed sibling log
+    /// for the same (MedicineReminderId, ScheduledDate) occurrence.
+    /// Includes MedicineReminder → UserMedicine and UserHealthProfile navigations
+    /// required by the missed-medication escalation flow.
+    /// </summary>
+    Task<List<MedicationReminderLog>> GetSentStage3LogsOlderThanAsync(
+        DateTime cutoff,
+        CancellationToken cancellationToken = default);
+
     void Update(MedicationReminderLog log);
 }

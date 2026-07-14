@@ -751,9 +751,25 @@
       <div class="review-table-section">
         <div class="review-table-hdr">
           <h4 class="detail-h4"><i class="fa-solid fa-capsules"></i> Medicines &amp; Instructions</h4>
-          <button type="button" class="mini-add-btn" [disabled]="reviewSaving()" (click)="addPrescriptionMed()">
-            <i class="fa-solid fa-plus"></i> Add Medicine
-          </button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button type="button" class="mini-add-btn" [disabled]="reviewSaving() || addingAllMeds() || addingMedIndex() !== null"
+              (click)="addAllPrescriptionMedsToMedications()">
+              @if (addingAllMeds()) {
+                <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:12px;height:12px;">
+                  <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3"/>
+                  <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+                    [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+                    stroke-linecap="round" transform="rotate(-90 18 18)"/>
+                </svg>
+                Adding...
+              } @else {
+                <i class="fa-solid fa-pills"></i> Add All to Medications
+              }
+            </button>
+            <button type="button" class="mini-add-btn" [disabled]="reviewSaving()" (click)="addPrescriptionMed()">
+              <i class="fa-solid fa-plus"></i> Add Medicine
+            </button>
+          </div>
         </div>
         <div class="detail-table-wrap">
           <table class="detail-table review-edit-table">
@@ -766,7 +782,29 @@
                 <td><input class="table-edit-input" [(ngModel)]="med.frequency"></td>
                 <td><input class="table-edit-input" [(ngModel)]="med.duration"></td>
                 <td><input class="table-edit-input" [(ngModel)]="med.instructions"></td>
-                <td>
+                <td style="white-space:nowrap;">
+                  @if (addedMedIndices().has($index)) {
+                    <span style="color:var(--color-success,#22c55e);font-size:12px;padding:0 4px;">
+                      <i class="fa-solid fa-circle-check"></i> Added
+                    </span>
+                  } @else {
+                    <button type="button" class="row-delete-btn"
+                      title="Add to Medications"
+                      style="color:var(--color-primary,#4a7cf7);"
+                      [disabled]="reviewSaving() || addingAllMeds() || addingMedIndex() !== null || !med.medicineName.trim()"
+                      (click)="addPrescriptionMedToMedications($index)">
+                      @if (addingMedIndex() === $index) {
+                        <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:12px;height:12px;">
+                          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3"/>
+                          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+                            [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+                            stroke-linecap="round" transform="rotate(-90 18 18)"/>
+                        </svg>
+                      } @else {
+                        <i class="fa-solid fa-pills"></i>
+                      }
+                    </button>
+                  }
                   <button type="button" class="row-delete-btn" [disabled]="reviewSaving()" (click)="removePrescriptionMed($index)">
                     <i class="fa-solid fa-trash-can"></i>
                   </button>

@@ -123,6 +123,7 @@ export class NotificationService {
         return list;
     }
   });
+  notificationSoundService: any;
 
   constructor() {
     this.authService.currentUser$.subscribe((user) => {
