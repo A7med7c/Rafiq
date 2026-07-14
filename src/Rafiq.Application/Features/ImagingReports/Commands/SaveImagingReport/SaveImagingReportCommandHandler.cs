@@ -38,10 +38,16 @@ public sealed class SaveImagingReportCommandHandler(
             ? parsed
             : DateOnly.FromDateTime(DateTime.UtcNow);
 
+        var imagingType = request.ImagingType ?? "Unknown";
+        var bodyPart = request.BodyPart ?? "Unknown";
+
+        if (await imagingReportRepository.ExistsDuplicateAsync(profileId, reportDate, imagingType, bodyPart, cancellationToken))
+            throw new ConflictException("This document already exists in your medical records.");
+
         var imagingReport = new ImagingReport(
             profileId,
-            request.ImagingType ?? "Unknown",
-            request.BodyPart ?? "Unknown",
+            imagingType,
+            bodyPart,
             request.Findings ?? string.Empty,
             request.Impression ?? string.Empty,
             request.DoctorName,

@@ -9,8 +9,19 @@ public interface IImagingReportRepository
     Task<ImagingReport?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ImagingReport>> GetAllByProfileIdAsync(Guid userHealthProfileId, CancellationToken cancellationToken = default);
-    
+
+    /// <summary>
+    /// Returns true if a non-deleted imaging report already exists for the same profile
+    /// with identical report date, imaging type, and body part.
+    /// </summary>
+    Task<bool> ExistsDuplicateAsync(
+        Guid userHealthProfileId,
+        DateOnly reportDate,
+        string imagingType,
+        string bodyPart,
+        CancellationToken cancellationToken = default);
+
     void Update(ImagingReport imagingReport);
-    
+
     void Remove(ImagingReport imagingReport);
 }

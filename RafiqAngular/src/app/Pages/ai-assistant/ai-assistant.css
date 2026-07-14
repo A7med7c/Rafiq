@@ -306,6 +306,11 @@ a { text-decoration: none; }
   min-height: 0;
   overflow: hidden;
   font-family: 'Inter', 'Outfit', 'Segoe UI', Tahoma, Arial, sans-serif;
+  transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-wrap.panel-collapsed {
+  grid-template-columns: 0px minmax(0, 1fr);
 }
 
 .chat-empty-page {
@@ -318,11 +323,34 @@ a { text-decoration: none; }
 .chat-list-panel {
   border-left: 1px solid var(--border);
   background: var(--white);
-  padding: 18px 16px;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: visible;
+  position: relative;
+  transition: border-color 0.28s ease;
+}
+
+.panel-collapsed .chat-list-panel {
+  border-color: transparent;
+}
+
+/* Scrollable inner content — fades out when collapsed */
+.chat-list-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 18px 16px;
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: opacity 0.2s ease;
+}
+
+.panel-collapsed .chat-list-inner {
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
 }
 
 .chat-new-btn {
@@ -386,6 +414,34 @@ a { text-decoration: none; }
   flex-direction: column;
   min-height: 0;
   background: var(--bg);
+}
+
+/* ── Conversation list toggle button ─────────── */
+.chat-panel-toggle {
+  position: absolute;
+  left: -13px;
+  top: 14px;
+  z-index: 20;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1px solid var(--border);
+  box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  font-size: 9px;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+
+.chat-panel-toggle:hover {
+  background: #EFF9FF;
+  color: var(--blue);
+  box-shadow: -2px 2px 12px rgba(14, 175, 215, 0.18), 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .chat-empty-state {
@@ -554,6 +610,7 @@ a { text-decoration: none; }
 
 @media (max-width: 900px) {
   .chat-wrap { grid-template-columns: 260px minmax(0, 1fr); }
+  .chat-wrap.panel-collapsed { grid-template-columns: 0px minmax(0, 1fr); }
 }
 
 @media (max-width: 768px) {
@@ -602,5 +659,6 @@ a { text-decoration: none; }
   .hdr-search { display: none; }
 
   .chat-wrap { grid-template-columns: 1fr; }
+  .chat-wrap.panel-collapsed { grid-template-columns: 1fr; }
   .chat-list-panel { display: none; }
 }

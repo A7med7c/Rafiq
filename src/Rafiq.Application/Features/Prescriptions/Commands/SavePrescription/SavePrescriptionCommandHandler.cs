@@ -43,10 +43,16 @@ public sealed class SavePrescriptionCommandHandler(
             ? parsed
             : DateOnly.FromDateTime(DateTime.UtcNow);
 
+        var doctorName = request.DoctorName ?? string.Empty;
+        var patientName = request.PatientName ?? string.Empty;
+
+        if (await prescriptionRepository.ExistsDuplicateAsync(profileId, prescriptionDate, doctorName, patientName, cancellationToken))
+            throw new ConflictException("This document already exists in your medical records.");
+
         var prescription = new Prescription(
             profileId,
-            request.DoctorName ?? string.Empty,
-            request.PatientName ?? string.Empty,
+            doctorName,
+            patientName,
             prescriptionDate,
             request.ImagePath ?? string.Empty);
 

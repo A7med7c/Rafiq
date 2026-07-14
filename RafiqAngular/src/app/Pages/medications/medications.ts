@@ -119,7 +119,7 @@ export class Medications implements OnInit, OnDestroy {
   protected readonly notifSvc = inject(NotificationService);
   private readonly medSvc = inject(MedicationRemindersService);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
+  protected readonly router = inject(Router);
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {
@@ -129,6 +129,11 @@ export class Medications implements OnInit, OnDestroy {
     this.loadSchedule();
     this.loadAllMedicineReminders();
   });
+
+  // ── Family profile override (set from query params) ──────────────────────
+  readonly fpProfileId = signal<string | null>(null);
+  readonly fpReadOnly = signal(false);
+  readonly fpProfileName = signal<string | null>(null);
 
   // ── Layout ──────────────────────────────────────────────────────────────
   readonly sidebarCollapsed = signal(false);
@@ -530,12 +535,20 @@ export class Medications implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.applyResponsiveSidebar();
-    this.loadSchedule();
-    this.loadMedicines();
 
     this.clockId = setInterval(() => this.nowMinutes.set(Medications.minutesNow()), 30_000);
 
     this.route.queryParams.subscribe(params => {
+      const fpId = params['profileId'] ?? null;
+      if (fpId !== this.fpProfileId()) {
+        this.fpProfileId.set(fpId);
+        this.fpReadOnly.set(params['readOnly'] === 'true');
+        this.fpProfileName.set(params['name'] ?? null);
+      }
+
+      this.loadSchedule();
+      this.loadMedicines();
+
       if (params['tab'] === 'medications' || params['tab'] === 'schedule') {
         this.setTab(params['tab']);
       }
@@ -609,7 +622,7 @@ export class Medications implements OnInit, OnDestroy {
   loadSchedule(): void {
     this.scheduleLoading.set(true);
     this.scheduleError.set(null);
-    this.medSvc.getToday().subscribe({
+    this.medSvc.getToday(this.fpProfileId() ?? undefined).subscribe({
       next: data => {
         this.todayLogs.set(data);
         this.scheduleLoading.set(false);
@@ -625,7 +638,7 @@ export class Medications implements OnInit, OnDestroy {
   loadMedicines(): void {
     this.medsLoading.set(true);
     this.medsError.set(null);
-    this.medSvc.getUserMedicines().subscribe({
+    this.medSvc.getUserMedicines(this.fpProfileId() ?? undefined).subscribe({
       next: data => {
         this.medicines.set(data);
         this.medsLoading.set(false);
@@ -1332,7 +1345,7 @@ export class Medications implements OnInit, OnDestroy {
     };
 
     this.addMedSaving.set(true);
-    this.medSvc.createMedicine(payload).subscribe({
+    this.medSvc.createMedicine(payload, this.fpProfileId() ?? undefined).subscribe({
       next: res => {
         this.addMedSaving.set(false);
         this.showAddMedModal.set(false);

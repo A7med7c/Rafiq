@@ -71,7 +71,7 @@
         <p class="sb-help-title">Ask Rafiq AI</p>
         <p class="sb-help-sub">Get health insights and answers to your questions</p>
       </div>
-      <button type="button" class="sb-help-btn">
+      <button type="button" class="sb-help-btn" routerLink="/ai-assistant">
         <i class="fa-regular fa-comment-dots"></i>
         Ask Now
       </button>
@@ -137,15 +137,36 @@
     <!-- BODY -->
     <div class="dsh-body">
 
+      <!-- ── Family profile banner ── -->
+      @if (fpProfileId()) {
+      <div class="fp-context-banner">
+        <span class="fp-context-icon"><i class="fa-solid fa-people-group"></i></span>
+        <div class="fp-context-info">
+          <span class="fp-context-label">Viewing medications for:</span>
+          <strong class="fp-context-name">{{ fpProfileName() ?? 'Family Member' }}</strong>
+        </div>
+        @if (fpReadOnly()) {
+        <span class="fp-context-badge fp-context-badge--viewer">
+          <i class="fa-solid fa-eye"></i> View Only
+        </span>
+        }
+        <button type="button" class="fp-context-back" (click)="router.navigate(['/family-profiles'])">
+          <i class="fa-solid fa-arrow-right"></i> Back
+        </button>
+      </div>
+      }
+
       <!-- ── Title Bar ── -->
       <div class="med-title-bar">
         <div>
           <h1 class="med-title">Medications &amp; Reminders</h1>
           <p class="med-subtitle">{{ todayLabel() }}</p>
         </div>
+        @if (!fpReadOnly()) {
         <button type="button" class="add-med-btn" (click)="openAddMed()">
           <i class="fa-solid fa-plus"></i> Add Medication
         </button>
+        }
       </div>
 
       <!-- ── Day Rail: the next dose, and the shape of the day ── -->
@@ -753,6 +774,7 @@
                 <!-- Actions -->
                 <td class="actions-cell">
                   <div class="record-actions" (click)="$event.stopPropagation()">
+                    @if (!fpReadOnly()) {
                     @if (hasReminders(med.id)) {
                     <button type="button" class="rec-action-btn" title="Edit reminder"
                       (click)="openEditReminder(med)">
@@ -764,6 +786,7 @@
                       <i class="fa-solid fa-bell"></i>
                     </button>
                     }
+                    }
                     <button type="button" class="rec-action-btn" title="More options"
                       (click)="toggleMedMenu(med.id)">
                       <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -774,6 +797,7 @@
                         (click)="openMedView(med)">
                         <i class="fa-regular fa-eye"></i> View Details
                       </button>
+                      @if (!fpReadOnly()) {
                       <button type="button" class="rec-menu-item"
                         (click)="openEditMed(med)">
                         <i class="fa-regular fa-pen-to-square"></i> Edit Medication
@@ -803,6 +827,7 @@
                         (click)="openDeleteMed(med.id, med.medicineName)">
                         <i class="fa-solid fa-trash-can"></i> Delete Medication
                       </button>
+                      }
                     </div>
                     }
                   </div>
@@ -1177,6 +1202,7 @@
 
     <div class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeMedView()">Close</button>
+      @if (!fpReadOnly()) {
       <button type="button" class="modal-btn modal-btn-danger"
         (click)="openDeleteMed(viewingMed()!.id, viewingMed()!.medicineName)">
         <i class="fa-solid fa-trash-can"></i> Delete
@@ -1195,6 +1221,7 @@
         (click)="openAddReminder(viewingMed()!); closeMedView()">
         <i class="fa-solid fa-plus"></i> Add Reminder
       </button>
+      }
       }
     </div>
 
