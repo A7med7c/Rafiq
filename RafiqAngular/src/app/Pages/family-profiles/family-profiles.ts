@@ -309,9 +309,6 @@ export class FamilyProfiles implements OnInit {
     this.animateTabContent(nextIndex >= currentIndex ? 'left' : 'right');
 
     this.activeTab.set(tab);
-    if ((tab === 'medications' || tab === 'reminders') && this.fpMedicines().length === 0) {
-      this.loadFpMedicines();
-    }
     if (tab === 'summary') {
       this.loadHealthSummary();
     }

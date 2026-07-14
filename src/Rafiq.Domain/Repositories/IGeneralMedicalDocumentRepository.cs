@@ -12,7 +12,16 @@ public interface IGeneralDocumentRepository
     Task<IReadOnlyList<GeneralDocument>> GetAllByUserIdAsync(
         Guid userHealthProfileId,
         CancellationToken cancellationToken = default);
-    
+
+    /// <summary>
+    /// Returns true if a non-deleted general document already exists for the same profile
+    /// with an identical title (case-insensitive).
+    /// </summary>
+    Task<bool> ExistsDuplicateAsync(
+        Guid userHealthProfileId,
+        string title,
+        CancellationToken cancellationToken = default);
+
     void Update(GeneralDocument document);
 
     void Remove(GeneralDocument document);

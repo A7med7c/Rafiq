@@ -46,6 +46,7 @@ export class AiAssistant implements OnInit {
   readonly mobileSidebarOpen = signal(false);
   readonly dropdownOpen = signal(false);
   readonly unreadNotifCount = this.notifService.unreadCount;
+  readonly rightPanelCollapsed = signal(false);
 
   // ── Profile ──
   readonly profileId = signal<string | null>(null);

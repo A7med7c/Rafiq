@@ -138,7 +138,7 @@
     </header>
 
     <!-- ═══════════ CHAT BODY (RTL) ═══════════ -->
-    <div class="chat-wrap" dir="rtl">
+    <div class="chat-wrap" dir="rtl" [class.panel-collapsed]="rightPanelCollapsed()">
 
       @if (profileError()) {
       <div class="chat-empty-page">
@@ -149,69 +149,81 @@
 
       <!-- LEFT: conversation list -->
       <aside class="chat-list-panel">
-        <button type="button" class="chat-new-btn" (click)="startNewConversation()">
-          <i class="fa-solid fa-plus"></i>
-          محادثة جديدة
+        <!-- Toggle button — always visible at the top-left corner of the sidebar -->
+        <button type="button" class="chat-panel-toggle"
+          (click)="rightPanelCollapsed.set(!rightPanelCollapsed())"
+          [attr.aria-label]="rightPanelCollapsed() ? 'فتح قائمة المحادثات' : 'إغلاق قائمة المحادثات'">
+          <i class="fa-solid"
+             [class.fa-chevron-left]="!rightPanelCollapsed()"
+             [class.fa-chevron-right]="rightPanelCollapsed()"></i>
         </button>
 
-        <div class="chat-search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input
-            type="text"
-            placeholder="ابحث في المحادثات..."
-            [value]="searchTerm()"
-            (input)="searchTerm.set($any($event.target).value)"
-          >
-          <button type="button" class="chat-search-filter" aria-label="فلترة">
-            <i class="fa-solid fa-sliders"></i>
+        <!-- Scrollable content — fades out on collapse -->
+        <div class="chat-list-inner">
+          <button type="button" class="chat-new-btn" (click)="startNewConversation()">
+            <i class="fa-solid fa-plus"></i>
+            محادثة جديدة
           </button>
-        </div>
 
-        <p class="chat-list-label">المحادثات الحديثة</p>
-
-        @if (conversationsLoading()) {
-        <div class="chat-list-skel">
-          @for (s of [1,2,3,4]; track s) {
-          <div class="chat-skel-row">
-            <div class="chat-skel-ico"></div>
-            <div class="chat-skel-lines">
-              <div class="chat-skel-line chat-skel-70"></div>
-              <div class="chat-skel-line chat-skel-45"></div>
-            </div>
+          <div class="chat-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+              type="text"
+              placeholder="ابحث في المحادثات..."
+              [value]="searchTerm()"
+              (input)="searchTerm.set($any($event.target).value)"
+            >
+            <button type="button" class="chat-search-filter" aria-label="فلترة">
+              <i class="fa-solid fa-sliders"></i>
+            </button>
           </div>
-          }
-        </div>
-        } @else if (filteredConversations().length === 0) {
-        <div class="chat-list-empty">
-          <i class="fa-regular fa-comments"></i>
-          <p>لا توجد محادثات بعد</p>
-        </div>
-        } @else {
-        <ul class="chat-conv-list">
-          @for (conv of visibleConversations(); track conv.id) {
-          <li
-            class="chat-conv-item"
-            [class.chat-conv-item--active]="conv.id === selectedConversationId()"
-            (click)="selectConversation(conv)"
-          >
-            <span class="chat-conv-ico"><i class="fa-regular fa-comment-dots"></i></span>
-            <div class="chat-conv-info">
-              <div class="chat-conv-top">
-                <span class="chat-conv-title">{{ conv.title }}</span>
-                <span class="chat-conv-time">{{ formatSidebarTime(conv) }}</span>
+
+          <p class="chat-list-label">المحادثات الحديثة</p>
+
+          @if (conversationsLoading()) {
+          <div class="chat-list-skel">
+            @for (s of [1,2,3,4]; track s) {
+            <div class="chat-skel-row">
+              <div class="chat-skel-ico"></div>
+              <div class="chat-skel-lines">
+                <div class="chat-skel-line chat-skel-70"></div>
+                <div class="chat-skel-line chat-skel-45"></div>
               </div>
             </div>
-          </li>
-          }
-        </ul>
+            }
+          </div>
+          } @else if (filteredConversations().length === 0) {
+          <div class="chat-list-empty">
+            <i class="fa-regular fa-comments"></i>
+            <p>لا توجد محادثات بعد</p>
+          </div>
+          } @else {
+          <ul class="chat-conv-list">
+            @for (conv of visibleConversations(); track conv.id) {
+            <li
+              class="chat-conv-item"
+              [class.chat-conv-item--active]="conv.id === selectedConversationId()"
+              (click)="selectConversation(conv)"
+            >
+              <span class="chat-conv-ico"><i class="fa-regular fa-comment-dots"></i></span>
+              <div class="chat-conv-info">
+                <div class="chat-conv-top">
+                  <span class="chat-conv-title">{{ conv.title }}</span>
+                  <span class="chat-conv-time">{{ formatSidebarTime(conv) }}</span>
+                </div>
+              </div>
+            </li>
+            }
+          </ul>
 
-        @if (filteredConversations().length > 6) {
-        <button type="button" class="chat-show-more" (click)="toggleShowAllConversations()">
-          {{ showAllConversations() ? 'عرض أقل' : 'عرض المزيد' }}
-          <i class="fa-solid" [class.fa-chevron-down]="!showAllConversations()" [class.fa-chevron-up]="showAllConversations()"></i>
-        </button>
-        }
-        }
+          @if (filteredConversations().length > 6) {
+          <button type="button" class="chat-show-more" (click)="toggleShowAllConversations()">
+            {{ showAllConversations() ? 'عرض أقل' : 'عرض المزيد' }}
+            <i class="fa-solid" [class.fa-chevron-down]="!showAllConversations()" [class.fa-chevron-up]="showAllConversations()"></i>
+          </button>
+          }
+          }
+        </div>
       </aside>
 
       <!-- RIGHT: active chat -->

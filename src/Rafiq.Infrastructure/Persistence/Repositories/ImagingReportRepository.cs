@@ -32,9 +32,23 @@ public sealed class ImagingReportRepository : IImagingReportRepository
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
     
+    public Task<bool> ExistsDuplicateAsync(
+        Guid userHealthProfileId,
+        DateOnly reportDate,
+        string imagingType,
+        string bodyPart,
+        CancellationToken cancellationToken = default)
+        => _context.ImagingReports.AnyAsync(
+            r => r.UserHealthProfileId == userHealthProfileId
+                 && !r.IsDeleted
+                 && r.ReportDate == reportDate
+                 && r.ImagingType.ToLower() == imagingType.ToLower()
+                 && r.BodyPart.ToLower() == bodyPart.ToLower(),
+            cancellationToken);
+
     public void Update(ImagingReport imagingReport)
         => _context.ImagingReports.Update(imagingReport);
-    
+
     public void Remove(ImagingReport imagingReport)
         => _context.ImagingReports.Remove(imagingReport);
 }

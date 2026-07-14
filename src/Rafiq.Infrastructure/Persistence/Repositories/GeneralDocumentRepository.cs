@@ -35,6 +35,16 @@ public sealed class GeneralDocumentRepository
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
     
+    public Task<bool> ExistsDuplicateAsync(
+        Guid userHealthProfileId,
+        string title,
+        CancellationToken cancellationToken = default)
+        => _context.GeneralDocuments.AnyAsync(
+            d => d.UserHealthProfileId == userHealthProfileId
+                 && !d.IsDeleted
+                 && d.Title.ToLower() == title.ToLower(),
+            cancellationToken);
+
     public void Update(GeneralDocument document)
     {
         _context.GeneralDocuments.Update(document);

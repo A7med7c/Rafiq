@@ -70,7 +70,7 @@
         <p class="sb-help-title">Ask Rafiq AI</p>
         <p class="sb-help-sub">Get health insights and answers to your questions</p>
       </div>
-      <button type="button" class="sb-help-btn">
+      <button type="button" class="sb-help-btn" routerLink="/ai-assistant">
         <i class="fa-regular fa-comment-dots"></i>
         Ask Now
       </button>
@@ -420,95 +420,63 @@
 
           <!-- MEDICATIONS -->
           @else if (activeTab() === 'medications') {
-          @if (fpMedicinesLoading()) {
-          <div class="fp-rec-loading">
-            @for (s of [1,2,3]; track s) {
-            <div class="fp-skl-row">
-              <div class="fp-skl-sq"></div>
-              <div class="fp-skl-lines">
-                <div class="fp-skl-line fp-skl-60"></div>
-                <div class="fp-skl-line fp-skl-40"></div>
-              </div>
-            </div>
-            }
-          </div>
-          } @else if (fpMedicines().length === 0) {
-          <div class="fp-empty-state" style="padding:40px 0">
-            <i class="fa-solid fa-pills" style="font-size:36px;color:var(--text-4);margin-bottom:10px"></i>
-            <p style="font-weight:600;color:var(--text);margin-bottom:4px">No medications</p>
-            <p style="color:var(--text-3);font-size:13px">No medications recorded for {{ selectedProfile()!.firstName
-              }}.</p>
-          </div>
-          } @else {
-          <div class="fp-med-list">
-            @for (med of fpMedicines(); track med.id) {
-            <div class="fp-med-card">
-              <div class="fp-med-ico">
-                <i class="fa-solid fa-pills"></i>
-              </div>
-              <div class="fp-med-body">
-                <p class="fp-med-name">{{ med.medicineName }}</p>
-                <p class="fp-med-meta">
-                  {{ med.dosage }}
-                  @if (med.frequency) { · {{ med.frequency }} }
-                  @if (med.duration) { · {{ med.duration }} }
-                </p>
-                @if (med.notes) {
-                <p class="fp-med-notes">{{ med.notes }}</p>
+          <div class="fp-manage-meds-cta">
+            <div class="fp-manage-meds-ico"><i class="fa-solid fa-pills"></i></div>
+            <div class="fp-manage-meds-info">
+              <p class="fp-manage-meds-title">Medications &amp; Reminders</p>
+              <p class="fp-manage-meds-sub">
+                @if (selectedProfile()!.accessRole === 'Viewer') {
+                  View {{ selectedProfile()!.firstName }}'s medications and reminders
+                } @else {
+                  Manage {{ selectedProfile()!.firstName }}'s medications and reminders
                 }
-              </div>
-              <span class="fp-med-src">{{ med.source || 'Manual' }}</span>
+              </p>
             </div>
-            }
+            <a class="fp-manage-meds-btn"
+              [routerLink]="['/medications']"
+              [queryParams]="{
+                profileId: selectedProfile()!.userHealthProfileId,
+                readOnly: selectedProfile()!.accessRole === 'Viewer',
+                name: selectedProfile()!.firstName + ' ' + selectedProfile()!.lastName
+              }">
+              @if (selectedProfile()!.accessRole === 'Viewer') {
+              <i class="fa-regular fa-eye"></i> View Medications
+              } @else {
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Manage Medications
+              }
+            </a>
           </div>
-          }
           }
 
           <!-- REMINDERS -->
           @else if (activeTab() === 'reminders') {
-          @if (fpMedicinesLoading()) {
-          <div class="fp-rec-loading">
-            @for (s of [1,2,3]; track s) {
-            <div class="fp-skl-row">
-              <div class="fp-skl-sq"></div>
-              <div class="fp-skl-lines">
-                <div class="fp-skl-line fp-skl-60"></div>
-                <div class="fp-skl-line fp-skl-40"></div>
-              </div>
+          <div class="fp-manage-meds-cta">
+            <div class="fp-manage-meds-ico" style="background:var(--teal-lt);color:var(--teal)"><i class="fa-regular fa-bell"></i></div>
+            <div class="fp-manage-meds-info">
+              <p class="fp-manage-meds-title">Medication Reminders</p>
+              <p class="fp-manage-meds-sub">
+                @if (selectedProfile()!.accessRole === 'Viewer') {
+                  View {{ selectedProfile()!.firstName }}'s reminders on the Medications page
+                } @else {
+                  Add and manage reminders for {{ selectedProfile()!.firstName }}'s medications
+                }
+              </p>
             </div>
-            }
+            <a class="fp-manage-meds-btn"
+              [routerLink]="['/medications']"
+              [queryParams]="{
+                profileId: selectedProfile()!.userHealthProfileId,
+                readOnly: selectedProfile()!.accessRole === 'Viewer',
+                name: selectedProfile()!.firstName + ' ' + selectedProfile()!.lastName,
+                tab: 'medications'
+              }">
+              @if (selectedProfile()!.accessRole === 'Viewer') {
+              <i class="fa-regular fa-eye"></i> View Reminders
+              } @else {
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Manage Reminders
+              }
+            </a>
           </div>
-          } @else if (fpMedicines().length === 0) {
-          <div class="fp-empty-state" style="padding:40px 0">
-            <i class="fa-regular fa-bell" style="font-size:36px;color:var(--text-4);margin-bottom:10px"></i>
-            <p style="font-weight:600;color:var(--text);margin-bottom:4px">No reminders set</p>
-            <p style="color:var(--text-3);font-size:13px">Add medications to see reminders for {{
-              selectedProfile()!.firstName }}.</p>
-          </div>
-          } @else {
-          <div class="fp-med-list">
-            @for (med of fpMedicines(); track med.id) {
-            <div class="fp-med-card fp-med-card--reminder">
-              <div class="fp-med-ico fp-med-ico--bell">
-                <i class="fa-regular fa-bell"></i>
-              </div>
-              <div class="fp-med-body">
-                <p class="fp-med-name">{{ med.medicineName }}</p>
-                <p class="fp-med-meta">
-                  <i class="fa-regular fa-clock"></i>
-                  {{ med.frequency || 'Schedule not set' }}
-                  @if (med.duration) { · {{ med.duration }} }
-                </p>
-                <p class="fp-med-dose-badge">{{ med.dosage }}</p>
-              </div>
-              <div class="fp-med-reminder-status">
-                <i class="fa-solid fa-circle-check" style="color:var(--green)"></i>
-                <span>Active</span>
-              </div>
-            </div>
-            }
-          </div>
-          }
           }
 
           <!-- HEALTH SUMMARY -->

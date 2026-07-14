@@ -23,6 +23,9 @@ public sealed class SaveGeneralDocumentCommandHandler(
         var profile = await patientProfileRepository.GetByUserIdAsync(userId, cancellationToken)
     ?? throw new NotFoundException("UserHealthProfile", userId);
 
+        if (await repository.ExistsDuplicateAsync(profile.Id, request.Title, cancellationToken))
+            throw new ConflictException("This document already exists in your medical records.");
+
         var document = new GeneralDocument(
     profile.Id,
     request.Title,
