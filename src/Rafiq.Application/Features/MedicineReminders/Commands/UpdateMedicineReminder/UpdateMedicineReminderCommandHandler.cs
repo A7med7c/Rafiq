@@ -12,11 +12,8 @@ public sealed class UpdateMedicineReminderCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
     IMedicineReminderRepository medicineReminderRepository,
-    IMedicationReminderLogRepository logRepository,
-    IMedicationReminderScheduler scheduler,
-    IMedicationSchedulingService medicationSchedulingService,
-    IDateTimeProvider dateTimeProvider,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork, IMedicationReminderLogRepository logRepository,
+    IDateTimeProvider dateTimeProvider, IAppointmentReminderScheduler schedulingService)
     : IRequestHandler<UpdateMedicineReminderCommand, ApiResponse<MedicineReminderResponseDto>>
 {
     public async Task<ApiResponse<MedicineReminderResponseDto>> Handle(
@@ -50,20 +47,16 @@ public sealed class UpdateMedicineReminderCommandHandler(
             throw new ValidationException(new[] { "A reminder with the same details already exists." });
         }
 
-        // Cancel every not-yet-fired stage scheduled today under the OLD time/dates/repeat type.
-        // The user must never receive a reminder computed from a schedule that no longer applies.
         var today = dateTimeProvider.Today;
-        // Guid.Empty is intentional: we want all Pending logs for this occurrence, not a subset.
-        var pendingLogs = await logRepository.GetPendingOtherLogsAsync(
-            reminder.Id, today, Guid.Empty, cancellationToken);
+        var staleLogs = await logRepository.GetPendingAndOverdueLogsAsync(reminder.Id, today, cancellationToken);
 
-        foreach (var pendingLog in pendingLogs)
+        foreach (var staleLog in staleLogs)
         {
-            if (pendingLog.NextJobId is not null)
-                scheduler.CancelJob(pendingLog.NextJobId);
+            if (staleLog.NextJobId is not null)
+                schedulingService.CancelJob(staleLog.NextJobId);
 
-            pendingLog.Cancel();
-            logRepository.Update(pendingLog);
+            staleLog.Cancel();
+            logRepository.Update(staleLog);
         }
 
         // Recalculate the reminder's own time/dates/repeat type.

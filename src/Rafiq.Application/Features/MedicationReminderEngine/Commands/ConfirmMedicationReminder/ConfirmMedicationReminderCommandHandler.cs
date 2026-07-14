@@ -40,25 +40,13 @@ public sealed class ConfirmMedicationReminderCommandHandler(
         log.MarkAsConfirmed();
         logRepository.Update(log);
 
-        // Cancel every other Pending attempt in the same dose occurrence.
-        //
-        // "Same occurrence" is (MedicineReminderId, ScheduledDate) — guaranteed by the
-        // unique filtered index to map to exactly one set of up to three attempt logs.
-        //
-        // This intentionally covers BOTH earlier and later stages: confirming Stage 3
-        // cancels Stage 1 and Stage 2 if they are still Pending, preventing their
-        // Hangfire jobs from firing and sending spurious notifications for a dose
-        // the user has already marked as taken.
-        //
-        // Sent logs are left untouched: their jobs have already executed, their
-        // notifications have been delivered, and their historical status is preserved.
-        var pendingOthers = await logRepository.GetPendingOtherLogsAsync(
-            log.MedicineReminderId,
-            log.ScheduledDate,
-            log.Id,
-            cancellationToken);
-
-        foreach (var pending in pendingOthers)
+        // Mark any pending subsequent logs for the same schedule+day as Cancelled
+        var pendingNext = await logRepository.GetPendingOtherLogsAsync(
+         log.MedicineReminderId,
+         log.ScheduledDate,
+         log.Id,
+         cancellationToken);
+        foreach (var pending in pendingNext)
         {
             if (pending.NextJobId is not null)
                 scheduler.CancelJob(pending.NextJobId);

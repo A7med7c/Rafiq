@@ -37,6 +37,9 @@ public sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appointm
         builder.Property(x => x.Notes)
             .HasColumnType("nvarchar(max)");
 
+        builder.Property(x => x.HangfireJobId)
+            .HasMaxLength(200);
+
         builder.HasOne(x => x.UserHealthProfile)
             .WithMany()
             .HasForeignKey(x => x.UserHealthProfileId)

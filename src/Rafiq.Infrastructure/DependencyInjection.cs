@@ -16,6 +16,7 @@ using Rafiq.Infrastructure.Services.Auth;
 using Rafiq.Infrastructure.Services.Notifications;
 using Rafiq.Infrastructure.Services.BackgroundJobs;
 using Rafiq.Infrastructure.Services.MedicationReminders;
+using Rafiq.Infrastructure.Services.AppointmentReminders;
 using Rafiq.Infrastructure.Services.AiChat;
 using Rafiq.Infrastructure.Services.Common;
 
@@ -96,9 +97,6 @@ public static class DependencyInjection
         services.Configure<WhatsAppSettings>(configuration.GetSection(WhatsAppSettings.SectionName));
         services.AddHttpClient<IWhatsAppService, WhatsAppService>();
 
-        services.AddHostedService<MissedAppointmentsBackgroundService>();
-        services.AddHostedService<MissedMedicationBackgroundService>();
-
         // ── Medication Reminder Engine ─────────────────────────────────────
         services.Configure<MedicationReminderOptions>(
             configuration.GetSection(MedicationReminderOptions.SectionName));
@@ -108,6 +106,10 @@ public static class DependencyInjection
         services.AddScoped<IMedicationSchedulingService, MedicationSchedulingService>();
         services.AddScoped<MedicationReminderJob>();
         services.AddScoped<DailyMedicationSchedulerJob>();
+
+        // ── Appointment Reminder Engine ────────────────────────────────────
+        services.AddScoped<IAppointmentReminderScheduler, AppointmentReminderScheduler>();
+        services.AddScoped<AppointmentReminderJob>();
 
         // ── Hangfire ──────────────────────────────────────────────────────
         var connectionString = configuration.GetConnectionString("DefaultConnection")!;

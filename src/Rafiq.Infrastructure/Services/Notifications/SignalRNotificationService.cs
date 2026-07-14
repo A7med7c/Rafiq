@@ -67,5 +67,32 @@ namespace Rafiq.Infrastructure.Services.Notifications
                 "MedicationReminderDue sent to userId={UserId} over {Count} connection(s).",
                 userId, connectionList.Count);
         }
+
+        public async Task SendAppointmentReminderAsync(
+            string userId,
+            AppointmentReminderNotificationPayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var connections = _connectionManager.GetConnections(userId);
+            var connectionList = connections as System.Collections.Generic.IReadOnlyList<string>
+                                 ?? new System.Collections.Generic.List<string>(connections);
+
+            if (connectionList.Count == 0)
+            {
+                _logger.LogWarning(
+                    "No SignalR connections registered for userId={UserId}. AppointmentReminderDue NOT sent.",
+                    userId);
+                return;
+            }
+
+            await _hubContext.Clients.Clients(connectionList).SendAsync(
+                "AppointmentReminderDue",
+                payload,
+                cancellationToken);
+
+            _logger.LogInformation(
+                "AppointmentReminderDue sent to userId={UserId} over {Count} connection(s).",
+                userId, connectionList.Count);
+        }
     }
 }

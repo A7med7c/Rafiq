@@ -20,6 +20,16 @@ export interface NotificationEventPayload {
   message: string;
 }
 
+export interface AppointmentReminderNotificationPayload {
+  appointmentId: string;
+  title: string;
+  provider: string;
+  appointmentDateTime: string;
+  notificationText: string;
+  appointmentType: string;
+  customType?: string;
+}
+
 export type ConnectionState = 'Disconnected' | 'Connecting' | 'Connected' | 'Reconnecting';
 
 @Injectable({
@@ -34,6 +44,7 @@ export class SignalRService {
   readonly connectionState = signal<ConnectionState>('Disconnected');
   readonly reminderEvents = signal<MedicationReminderNotificationPayload[]>([]);
   readonly notificationEvents = signal<NotificationEventPayload[]>([]);
+  readonly appointmentReminderEvents = signal<AppointmentReminderNotificationPayload[]>([]);
 
   constructor() {
     // Connect only while a user is signed in; never negotiate anonymously.
@@ -86,6 +97,10 @@ export class SignalRService {
 
     this.connection.on('ReceiveNotification', (title: string, message: string) => {
       this.notificationEvents.update((currentQueue) => [...currentQueue, { title, message }]);
+    });
+
+    this.connection.on('AppointmentReminderDue', (payload: AppointmentReminderNotificationPayload) => {
+      this.appointmentReminderEvents.update((currentQueue) => [...currentQueue, payload]);
     });
 
     this.connection.onclose(() => {
@@ -161,6 +176,16 @@ export class SignalRService {
     }
 
     this.notificationEvents.set([]);
+    return events;
+  }
+
+  drainAppointmentReminderEvents(): AppointmentReminderNotificationPayload[] {
+    const events = this.appointmentReminderEvents();
+    if (!events.length) {
+      return [];
+    }
+
+    this.appointmentReminderEvents.set([]);
     return events;
   }
 

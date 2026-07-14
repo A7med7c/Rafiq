@@ -9,6 +9,7 @@ namespace Rafiq.Application.Features.Appointments.Commands.DeleteAppointment;
 public sealed class DeleteAppointmentCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IAppointmentRepository appointmentRepository,
+    IAppointmentReminderScheduler reminderScheduler,
     IUnitOfWork unitOfWork)
     : IRequestHandler<DeleteAppointmentCommand, ApiResponse<bool>>
 {
@@ -18,6 +19,8 @@ public sealed class DeleteAppointmentCommandHandler(
             ?? throw new NotFoundException(nameof(Domain.Entities.Documents.Appointment), request.Id);
 
         await authorizationService.EnsureCanWriteAsync(appointment.UserHealthProfileId, cancellationToken);
+
+        reminderScheduler.CancelJob(appointment.HangfireJobId);
 
         appointment.SoftDelete();
 

@@ -9,6 +9,7 @@ namespace Rafiq.Application.Features.Appointments.Commands.CancelAppointment;
 public sealed class CancelAppointmentCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IAppointmentRepository appointmentRepository,
+    IAppointmentReminderScheduler reminderScheduler,
     IUnitOfWork unitOfWork)
     : IRequestHandler<CancelAppointmentCommand, ApiResponse<bool>>
 {
@@ -18,6 +19,8 @@ public sealed class CancelAppointmentCommandHandler(
             ?? throw new NotFoundException(nameof(Domain.Entities.Documents.Appointment), request.Id);
 
         await authorizationService.EnsureCanWriteAsync(appointment.UserHealthProfileId, cancellationToken);
+
+        reminderScheduler.CancelJob(appointment.HangfireJobId);
 
         appointment.MarkAsCancelled();
 
