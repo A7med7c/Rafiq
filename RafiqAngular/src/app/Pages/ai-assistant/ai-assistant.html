@@ -42,7 +42,7 @@
         <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
         <span>AI Assistant</span>
       </a>
-      <a class="sb-link" href="#">
+      <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>Medications &amp; Reminders</span>
       </a>
@@ -54,7 +54,7 @@
         <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
         <span>SOS &amp; Emergency</span>
       </a>
-      <a class="sb-link" href="#">
+      <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>Family Profiles</span>
       </a>
@@ -65,7 +65,7 @@
     </nav>
 
     <div class="sb-help">
-      <img src="images/rafiq-robot.svg" alt="" class="sb-help-robot">
+      <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
       <div class="sb-help-copy">
         <p class="sb-help-title">Ask Rafiq AI</p>
         <p class="sb-help-sub">Get health insights and answers to your questions</p>
@@ -220,7 +220,7 @@
         @if (!selectedConversationId()) {
         <div class="chat-empty-state">
           <div class="chat-empty-avatar"><i class="fa-solid fa-robot"></i></div>
-          <h2>اسأل رفيق أي أي</h2>
+          <h2>اسأل رفيقك الذكي</h2>
           <p>اسأل عن التحاليل، الأدوية، الحساسية، أو المواعيد المسجلة عندك في رفيق.</p>
         </div>
         } @else {

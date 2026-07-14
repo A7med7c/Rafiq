@@ -20,7 +20,6 @@ namespace Rafiq.Application.Features.Auth.Commands.Logout
             if (token.IsActive)
             {
                 token.Revoke();
-                _refreshTokenRepository.Update(token);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
             return ApiResponseBase.SuccessResponse("Logged out successfully.");

@@ -43,6 +43,10 @@ public interface IHealthProfileAccessRepository
         Guid userHealthProfileId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<HealthProfileAccess>> GetSentInvitationsAsync(
+        Guid inviterUserId,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(HealthProfileAccess healthProfileAccess, CancellationToken cancellationToken = default);
 
     void Update(HealthProfileAccess healthProfileAccess);

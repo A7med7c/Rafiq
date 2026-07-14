@@ -6,6 +6,10 @@ namespace Rafiq.Application.Features.Prescriptions.DTOs;
 /// </summary>
 public sealed class BedrockPrescriptionDto
 {
+    public bool IsValidDocument { get; set; }
+
+    public string? DetectedDocumentType { get; set; }
+
     public string? DoctorName { get; set; }
 
     public string? PatientName { get; set; }

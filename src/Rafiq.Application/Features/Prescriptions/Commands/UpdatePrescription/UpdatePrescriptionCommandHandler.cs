@@ -38,7 +38,6 @@ public sealed class UpdatePrescriptionCommandHandler(
             prescription.PrescriptionDate = parsed;
         }
 
-        prescriptionRepository.Update(prescription);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = new PrescriptionResponseDto

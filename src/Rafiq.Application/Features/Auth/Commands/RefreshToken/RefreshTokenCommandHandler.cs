@@ -12,6 +12,7 @@ public sealed class RefreshTokenCommandHandler(
     IIdentityService identityService,
     ITokenService tokenService,
     ITokenHasher tokenHasher,
+    IEmergencyContactRepository emergencyContactRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<RefreshTokenCommand, ApiResponse<AuthResponseDto>>
 {
@@ -81,14 +82,16 @@ public sealed class RefreshTokenCommandHandler(
             newRefreshToken,
             cancellationToken);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        var contacts = await emergencyContactRepository.GetAllByUserIdAsync(existingToken.UserId, cancellationToken);
+        var hasEmergencyContacts = contacts.Any();
 
         return ApiResponse<AuthResponseDto>.SuccessResponse(
             new AuthResponseDto(
                 accessToken,
                 refreshToken,
                 accessTokenExpiresAt,
-                refreshTokenExpiresAt),
+                refreshTokenExpiresAt,
+                hasEmergencyContacts),
             "Token refreshed successfully.");
     }
 }

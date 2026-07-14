@@ -18,6 +18,7 @@ export class OnboardingStep3 implements OnInit {
 
   readonly steps = [
     { label: 'Basic Info' },
+    { label: 'Emergency Contacts' },
     { label: 'Allergies' },
     { label: 'Chronic Diseases' },
     { label: 'Review' },

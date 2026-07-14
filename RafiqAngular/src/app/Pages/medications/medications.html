@@ -39,7 +39,7 @@
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
         <span>Appointments</span>
       </a>
-      <a class="sb-link" href="#">
+      <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
         <span>AI Assistant</span>
       </a>
@@ -55,7 +55,7 @@
         <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
         <span>SOS &amp; Emergency</span>
       </a>
-      <a class="sb-link" href="#">
+      <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>Family Profiles</span>
       </a>
@@ -66,7 +66,7 @@
     </nav>
 
     <div class="sb-help">
-      <img src="images/rafiq-robot.svg" alt="" class="sb-help-robot">
+      <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
       <div class="sb-help-copy">
         <p class="sb-help-title">Ask Rafiq AI</p>
         <p class="sb-help-sub">Get health insights and answers to your questions</p>
@@ -91,7 +91,7 @@
         <input type="text" class="hdr-search-inp" placeholder="Search records, symptoms, medications..." readonly>
       </div>
       <div class="hdr-right">
-        <button type="button" class="hdr-ask-btn">
+        <button type="button" class="hdr-ask-btn" routerLink="/ai-assistant">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           Ask AI
         </button>
@@ -143,6 +143,9 @@
           <h1 class="med-title">Medications &amp; Reminders</h1>
           <p class="med-subtitle">{{ todayLabel() }}</p>
         </div>
+        <button type="button" class="add-med-btn" (click)="openAddMed()">
+          <i class="fa-solid fa-plus"></i> Add Medication
+        </button>
       </div>
 
       <!-- ── Day Rail: the next dose, and the shape of the day ── -->
@@ -165,6 +168,17 @@
               <span class="rail-sep" aria-hidden="true">·</span>
               <span class="rail-countdown">{{ countdownLabel(dose) }}</span>
             </p>
+
+            <div class="sched-attempts-row rail-attempts-row" role="list" aria-label="Reminder attempts">
+              @for (attempt of dose.attemptStates; track attempt.reminderNumber) {
+              <span class="sched-attempt-pill" [class]="attemptPillClass(attempt.state)" role="listitem"
+                    [title]="attemptLabel(attempt.state)">
+                <i class="fa-solid" [class]="attemptIcon(attempt.state)"></i>
+                {{ formatTime(attempt.scheduledTime) }}
+              </span>
+              }
+            </div>
+
             <button type="button" class="med-confirm-btn rail-cta" (click)="confirmDose(dose)">
               <i class="fa-solid fa-check"></i>
               I took it
@@ -203,7 +217,7 @@
             <span class="rail-now-dot"></span>
           </div>
 
-          @for (dose of doses(); track dose.key) {
+          @for (dose of sortedDoses(); track dose.key) {
           <button type="button"
             class="rail-pip"
             [class]="'rail-pip--' + doseState(dose)"
@@ -286,123 +300,365 @@
            TAB: TODAY'S SCHEDULE
       ════════════════════════════════════════ -->
       @if (activeTab() === 'schedule') {
-      <div class="card med-card">
+      <div class="sched-layout">
 
-        @if (scheduleLoading()) {
-        <div class="skl-list">
-          @for (s of [1,2,3]; track s) {
-          <div class="skl-row" style="padding:16px 0;border-bottom:1px solid var(--border-lt)">
-            <div class="skl-sq" style="width:48px;height:48px;border-radius:var(--r-sm)"></div>
-            <div class="skl-lines" style="flex:1">
-              <div class="skl-line skl-70"></div>
-              <div class="skl-line skl-45"></div>
+        <!-- ── LEFT: dose cards ── -->
+        <div class="sched-main">
+
+          @if (scheduleLoading()) {
+          <div class="card med-card">
+            <div class="skl-list">
+              @for (s of [1,2,3]; track s) {
+              <div class="skl-row" style="padding:16px 0;border-bottom:1px solid var(--border-lt)">
+                <div class="skl-sq" style="width:48px;height:48px;border-radius:var(--r-sm)"></div>
+                <div class="skl-lines" style="flex:1">
+                  <div class="skl-line skl-70"></div>
+                  <div class="skl-line skl-45"></div>
+                </div>
+                <div class="skl-pill" style="width:80px;height:24px"></div>
+              </div>
+              }
             </div>
-            <div class="skl-pill" style="width:80px;height:24px"></div>
           </div>
-          }
-        </div>
 
-        } @else if (scheduleError()) {
-        <div class="empty-state">
-          <i class="fa-solid fa-triangle-exclamation empty-icon" style="color:var(--red)"></i>
-          <p class="empty-title">Could not load schedule</p>
-          <p class="empty-sub">{{ scheduleError() }}</p>
-          <button type="button" class="med-retry-btn" (click)="loadSchedule()">Try Again</button>
-        </div>
-
-        } @else if (todayLogs().length === 0) {
-        <div class="empty-state">
-          @if (medicines().length > 0 && !hasAnyReminders()) {
-          <i class="fa-solid fa-bell-slash empty-icon"></i>
-          <p class="empty-title">No reminders scheduled yet</p>
-          <p class="empty-sub">Create reminders for your medicines to receive notifications.</p>
-          <button type="button" class="med-add-reminder-btn" style="margin-top: 12px;" (click)="goToMedsAndHighlight()">
-            <i class="fa-solid fa-plus"></i> Create Reminder
-          </button>
-          } @else {
-          <i class="fa-solid fa-bell-slash empty-icon"></i>
-          <p class="empty-title">No Reminders Today</p>
-          <p class="empty-sub">Your medication reminders for today will appear here once scheduled.</p>
-          }
-        </div>
-
-        } @else {
-        <ul class="sched-full-list">
-          @for (dose of doses(); track dose.key) {
-          <li class="sched-full-item"
-            [class.sched-item--done]="dose.status === 'Confirmed'"
-            [class.sched-item--cancelled]="dose.status === 'Cancelled'"
-            [class.sched-item--overdue]="isOverdue(dose)"
-            [class.sched-item--next]="nextDose()?.key === dose.key"
-            [class.sched-full-item--highlighted]="dose.ids.includes(highlightReminderId() ?? '')">
-
-            <!-- Time column -->
-            <div class="sched-time-col">
-              <span class="sched-full-time">{{ formatTime(dose.scheduledTime) }}</span>
-              <span class="sched-attempt">{{ countdownLabel(dose) }}</span>
+          } @else if (scheduleError()) {
+          <div class="card med-card">
+            <div class="empty-state">
+              <i class="fa-solid fa-triangle-exclamation empty-icon" style="color:var(--red)"></i>
+              <p class="empty-title">Could not load schedule</p>
+              <p class="empty-sub">{{ scheduleError() }}</p>
+              <button type="button" class="med-retry-btn" (click)="loadSchedule()">Try Again</button>
             </div>
+          </div>
 
-            <!-- Icon -->
-            <div class="sched-med-ico" [class]="'sched-med-ico--' + doseState(dose)">
-              <i class="fa-solid" [class]="'fa-' + statusIcon(dose.status)"></i>
-            </div>
-
-            <!-- Info -->
-            <div class="sched-med-info">
-              <p class="sched-med-name">{{ dose.medicineName }}</p>
-              <p class="sched-med-dose">{{ dose.dosage }}</p>
-              @if (dose.confirmedAt) {
-              <p class="sched-confirmed-at">
-                <i class="fa-solid fa-circle-check" style="color:var(--green);font-size:11px"></i>
-                Confirmed at {{ formatDate(dose.confirmedAt) }}
-              </p>
-              } @else if (attemptLabel(dose); as attempts) {
-              <p class="sched-attempts-note">
-                <i class="fa-solid fa-bell" style="font-size:11px"></i>
-                {{ attempts }}
-              </p>
-              }
-            </div>
-
-            <!-- Status + Action -->
-            <div class="sched-med-right">
-              @if (isOverdue(dose)) {
-              <span class="pill pill-red-sm">Overdue</span>
-              } @else {
-              <span [class]="statusClass(dose.status)">{{ statusLabel(dose.status) }}</span>
-              }
-              @if (dose.actionable) {
-              <button type="button" class="med-confirm-btn" (click)="confirmDose(dose)"
-                [attr.aria-label]="'Confirm I took ' + dose.medicineName">
-                <i class="fa-solid fa-check"></i>
-                I Took It
+          } @else if (todayLogs().length === 0 || doses().length === 0) {
+          <div class="card med-card">
+            <div class="empty-state">
+              @if (medicines().length > 0 && !hasAnyReminders()) {
+              <i class="fa-solid fa-bell-slash empty-icon"></i>
+              <p class="empty-title">No reminders scheduled yet</p>
+              <p class="empty-sub">Create reminders for your medicines to receive notifications.</p>
+              <button type="button" class="med-add-reminder-btn" style="margin-top: 12px;" (click)="goToMedsAndHighlight()">
+                <i class="fa-solid fa-plus"></i> Create Reminder
               </button>
+              } @else {
+              <i class="fa-solid fa-calendar-check empty-icon" style="color:var(--blue)"></i>
+              <p class="empty-title">No medications scheduled for today</p>
+              <p class="empty-sub">Your medication reminders for today will appear here once scheduled.</p>
               }
             </div>
+          </div>
 
-          </li>
+          } @else {
+          <ul class="dose-list">
+            @for (dose of sortedDoses(); track dose.key) {
+            <li class="dose-card"
+              [class.dose-card--done]="dose.status === 'Confirmed'"
+              [class.dose-card--cancelled]="dose.status === 'Cancelled'"
+              [class.dose-card--overdue]="isOverdue(dose)"
+              [class.dose-card--focus]="nextDose()?.key === dose.key"
+              [class.dose-card--highlighted]="dose.ids.includes(highlightReminderId() ?? '')">
+
+              <!-- ① Header: icon · name · status · primary CTA -->
+              <div class="dose-card__hdr">
+                <div class="sched-med-ico dose-card__ico" [class]="'sched-med-ico--' + doseState(dose)">
+                  <i class="fa-solid" [class]="'fa-' + statusIcon(dose.status)"></i>
+                </div>
+
+                <div class="dose-card__title-col">
+                  <p class="dose-card__name">{{ dose.medicineName }}</p>
+                  <p class="dose-card__dosage">{{ dose.dosage }}</p>
+                </div>
+
+                <div class="dose-card__status-col">
+                  @if (isOverdue(dose)) {
+                  <span class="pill pill-red-sm">
+                    <i class="fa-solid fa-triangle-exclamation"></i>&nbsp;Overdue
+                  </span>
+                  } @else {
+                  <span [class]="statusClass(dose.status)">{{ statusLabel(dose.status) }}</span>
+                  }
+                  @if (dose.status !== 'Confirmed' && dose.status !== 'Cancelled') {
+                  <span class="dose-card__countdown">{{ countdownLabel(dose) }}</span>
+                  }
+                </div>
+
+                @if (dose.actionable) {
+                <button type="button" class="med-confirm-btn dose-card__cta"
+                  (click)="confirmDose(dose)"
+                  [attr.aria-label]="'Confirm I took ' + dose.medicineName">
+                  <i class="fa-solid fa-check"></i> I Took It
+                </button>
+                } @else if (dose.status === 'Confirmed') {
+                <span class="dose-card__taken-chip">
+                  <i class="fa-solid fa-circle-check"></i> Taken
+                </span>
+                }
+              </div>
+
+              <!-- ② Body: dose time · attempt count · info note -->
+              <div class="dose-card__body">
+                <div class="dose-card__detail-box">
+                  <i class="fa-regular fa-calendar dose-card__detail-ico"></i>
+                  <div class="dose-card__detail-content">
+                    <span class="dose-card__detail-lbl">Dose time</span>
+                    <strong class="dose-card__detail-val">{{ formatTime(dose.scheduledTime) }}</strong>
+                    <span class="dose-card__detail-sub">
+                      {{ dose.status === 'Confirmed' ? 'Confirmed' : 'Scheduled' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="dose-card__detail-box">
+                  <i class="fa-regular fa-bell dose-card__detail-ico"></i>
+                  <div class="dose-card__detail-content">
+                    <span class="dose-card__detail-lbl">Reminder attempts</span>
+                    <strong class="dose-card__detail-val">Up to {{ dose.attemptStates.length }} reminders</strong>
+                    <span class="dose-card__detail-sub">
+                      @if (doseInterval(dose); as interval) {
+                        {{ interval }} min between attempts
+                      }
+                    </span>
+                  </div>
+                </div>
+
+                @if (dose.confirmedAt) {
+                <div class="dose-card__info-chip dose-card__info-chip--success">
+                  <i class="fa-solid fa-circle-check"></i>
+                  Taken at {{ formatConfirmedTime(dose.confirmedAt) }}
+                </div>
+                } @else if (dose.actionable) {
+                <div class="dose-card__info-chip">
+                  <i class="fa-solid fa-bell"></i>
+                  Tap "I Took It" once you've taken this dose.
+                </div>
+                }
+              </div>
+
+              <!-- ③ Reminder timeline: visual journey of each attempt -->
+              @if (dose.attemptStates.length > 0) {
+              <div class="dose-card__timeline-section">
+                <span class="dose-card__timeline-lbl">Reminder times</span>
+                <div class="dose-timeline" role="list" aria-label="Reminder schedule">
+                  @for (attempt of dose.attemptStates; track attempt.reminderNumber; let last = $last) {
+                  <div class="dose-timeline__entry"
+                       [class]="'dose-timeline__entry--' + attempt.state.toLowerCase()"
+                       role="listitem">
+                    <div class="dose-timeline__track">
+                      <div class="dose-timeline__dot"></div>
+                      @if (!last) { <div class="dose-timeline__line"></div> }
+                    </div>
+                    <span class="dose-timeline__time">
+                      {{ formatTime(attempt.scheduledTime) }}
+                    </span>
+                    <span class="sched-attempt-pill dose-timeline__badge"
+                          [class]="attemptPillClass(attempt.state)"
+                          [attr.aria-label]="attemptLabel(attempt.state)">
+                      <i class="fa-solid" [class]="attemptIcon(attempt.state)"></i>
+                      {{ attemptLabel(attempt.state) }}
+                    </span>
+                  </div>
+                  }
+                </div>
+              </div>
+              }
+
+            </li>
+            }
+          </ul>
           }
-        </ul>
-        }
-      </div>
+
+        </div><!-- /sched-main -->
+
+        <!-- ── RIGHT: overview sidebar ── -->
+        <aside class="sched-overview" aria-label="Today's overview">
+
+          <div class="overview-card">
+            <h3 class="overview-title">Today's Overview</h3>
+
+            <!-- Progress ring -->
+            <div class="overview-ring-wrap">
+              <svg viewBox="0 0 100 100" class="overview-ring-svg" aria-hidden="true">
+                <circle cx="50" cy="50" r="38" class="overview-ring-bg" />
+                <circle cx="50" cy="50" r="38" class="overview-ring-fill"
+                  transform="rotate(-90 50 50)"
+                  [style.stroke-dasharray]="'238.76'"
+                  [style.stroke-dashoffset]="238.76 - ((adherencePct() ?? 0) / 100 * 238.76)" />
+              </svg>
+              <div class="overview-ring-label">
+                <span class="overview-ring-pct">{{ adherencePct() ?? 0 }}%</span>
+                <span class="overview-ring-sub">of doses taken</span>
+              </div>
+            </div>
+
+            <!-- Legend — each dose appears in exactly one category -->
+            <div class="overview-legend">
+              <div class="overview-legend-item">
+                <span class="overview-legend-dot overview-dot--green"></span>
+                <span class="overview-legend-name">Taken</span>
+                <span class="overview-legend-count">{{ takenCount() }}</span>
+              </div>
+              <div class="overview-legend-item">
+                <span class="overview-legend-dot overview-dot--orange"></span>
+                <span class="overview-legend-name">Upcoming</span>
+                <span class="overview-legend-count">{{ upcomingCount() }}</span>
+              </div>
+              <div class="overview-legend-item">
+                <span class="overview-legend-dot overview-dot--red"></span>
+                <span class="overview-legend-name">Overdue</span>
+                <span class="overview-legend-count">{{ overdueCount() }}</span>
+              </div>
+              <div class="overview-legend-item">
+                <span class="overview-legend-dot overview-dot--gray"></span>
+                <span class="overview-legend-name">Cancelled</span>
+                <span class="overview-legend-count">{{ cancelledCount() }}</span>
+              </div>
+            </div>
+          </div><!-- /overview-card -->
+
+          <!-- Tips -->
+          <div class="overview-card overview-tips-card">
+            <div class="overview-tips-head">
+              <i class="fa-solid fa-lightbulb" style="color:var(--yellow)"></i>
+              <span class="overview-tips-title">Tips</span>
+            </div>
+            <ul class="overview-tips-list">
+              <li>
+                <i class="fa-solid fa-arrow-trend-up"></i>
+                Take your medication consistently for the best results.
+              </li>
+              <li>
+                <i class="fa-regular fa-clock"></i>
+                You can confirm early if you take it before the scheduled time.
+              </li>
+              <li>
+                <i class="fa-regular fa-bell-slash"></i>
+                We'll stop reminding you once you confirm.
+              </li>
+            </ul>
+          </div><!-- /tips -->
+
+          <!-- Reschedule -->
+          <div class="overview-card overview-reschedule-card">
+            <p class="overview-reschedule-title">Need to reschedule?</p>
+            <p class="overview-reschedule-sub">Manage your medications or update reminder times.</p>
+            <button type="button" class="overview-reschedule-btn" (click)="setTab('medications')">
+              Manage Medications <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+
+        </aside><!-- /sched-overview -->
+
+      </div><!-- /sched-layout -->
       }
 
       <!-- ════════════════════════════════════════
            TAB: MY MEDICATIONS
       ════════════════════════════════════════ -->
       @if (activeTab() === 'medications') {
-      <div class="card med-card">
+
+      <!-- Stat Cards -->
+      <div class="meds-stat-grid">
+        <div class="stat-card" style="cursor:pointer" (click)="setMedSubTab('all')">
+          <div class="stat-ico-wrap stat-ico--blue">
+            <i class="fa-solid fa-pills"></i>
+          </div>
+          <div class="stat-body">
+            <p class="stat-lbl">Total Medicines</p>
+            <p class="stat-num">{{ medicines().length }}</p>
+            <p class="stat-sub">All registered</p>
+          </div>
+        </div>
+        <div class="stat-card" style="cursor:pointer" (click)="setMedSubTab('with-reminder')">
+          <div class="stat-ico-wrap stat-ico--green">
+            <i class="fa-solid fa-bell"></i>
+          </div>
+          <div class="stat-body">
+            <p class="stat-lbl">Active Reminders</p>
+            <p class="stat-num">{{ activeMedCount() }}</p>
+            <p class="stat-sub">With active reminders</p>
+          </div>
+        </div>
+        <div class="stat-card" style="cursor:pointer" (click)="setMedSubTab('no-reminder')">
+          <div class="stat-ico-wrap stat-ico--gray">
+            <i class="fa-solid fa-bell-slash"></i>
+          </div>
+          <div class="stat-body">
+            <p class="stat-lbl">No Reminder</p>
+            <p class="stat-num">{{ noReminderCount() }}</p>
+            <p class="stat-sub">No reminder set</p>
+          </div>
+        </div>
+        <div class="stat-card" style="cursor:pointer" (click)="setMedSubTab('paused')">
+          <div class="stat-ico-wrap stat-ico--yellow">
+            <i class="fa-solid fa-pause"></i>
+          </div>
+          <div class="stat-body">
+            <p class="stat-lbl">Paused</p>
+            <p class="stat-num">{{ pausedMedCount() }}</p>
+            <p class="stat-sub">Reminders paused</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table card -->
+      <div class="card appts-table-card">
+
+        <!-- Toolbar: tabs + search + filters -->
+        <div class="appts-toolbar">
+          <div class="appts-tab-bar">
+            <button type="button" class="tab-btn" [class.tab-btn--active]="medSubTab() === 'all'"
+              (click)="setMedSubTab('all')">
+              All
+              <span class="tab-count" [class.tab-count-blue]="medSubTab() === 'all'">{{ medicines().length }}</span>
+            </button>
+            <button type="button" class="tab-btn" [class.tab-btn--active]="medSubTab() === 'with-reminder'"
+              (click)="setMedSubTab('with-reminder')">
+              With Reminder
+              <span class="tab-count" [class.tab-count-green]="medSubTab() === 'with-reminder'">{{ withReminderCount() }}</span>
+            </button>
+            <button type="button" class="tab-btn" [class.tab-btn--active]="medSubTab() === 'no-reminder'"
+              (click)="setMedSubTab('no-reminder')">
+              No Reminder
+              <span class="tab-count">{{ noReminderCount() }}</span>
+            </button>
+            <button type="button" class="tab-btn" [class.tab-btn--active]="medSubTab() === 'paused'"
+              (click)="setMedSubTab('paused')">
+              Paused
+              <span class="tab-count">{{ pausedMedCount() }}</span>
+            </button>
+          </div>
+          <div class="appts-controls-row">
+            <div class="appts-search-wrap">
+              <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
+              <input type="text" class="appts-search-inp" placeholder="Search medicines…"
+                [value]="medSearch()" (input)="onMedSearch($any($event.target).value)">
+            </div>
+            <select class="meds-filter-select"
+              [value]="medSourceFilter()" (change)="onMedSourceFilter($any($event.target).value)">
+              <option value="">All Sources</option>
+              <option value="Manual">Manual</option>
+              <option value="Prescription">Prescription</option>
+              <option value="MedicineBox">Box Scan</option>
+            </select>
+            @if (medSearch() || medSourceFilter()) {
+            <button type="button" class="clear-filters-btn" (click)="clearMedFilters()">
+              <i class="fa-solid fa-xmark"></i> Clear
+            </button>
+            }
+          </div>
+        </div>
 
         @if (medsLoading()) {
         <div class="skl-list">
           @for (s of [1,2,3,4]; track s) {
-          <div class="skl-row" style="padding:16px 0;border-bottom:1px solid var(--border-lt)">
-            <div class="skl-sq" style="width:44px;height:44px;border-radius:var(--r-sm)"></div>
+          <div class="skl-row" style="padding:14px 0;border-bottom:1px solid var(--border-lt)">
+            <div class="skl-sq" style="width:36px;height:36px;border-radius:var(--r-xs)"></div>
             <div class="skl-lines" style="flex:1">
               <div class="skl-line skl-70"></div>
               <div class="skl-line skl-45"></div>
             </div>
-            <div class="skl-pill" style="width:70px;height:22px"></div>
+            <div class="skl-pill" style="width:80px;height:22px"></div>
           </div>
           }
         </div>
@@ -415,95 +671,165 @@
           <button type="button" class="med-retry-btn" (click)="loadMedicines()">Try Again</button>
         </div>
 
-        } @else if (medicines().length === 0) {
+        } @else if (filteredMedicines().length === 0) {
         <div class="empty-state">
+          @if (medicines().length === 0) {
           <i class="fa-solid fa-pills empty-icon"></i>
           <p class="empty-title">No Medications Found</p>
           <p class="empty-sub">Your medications will appear here once added.</p>
+          } @else {
+          <i class="fa-solid fa-filter empty-icon"></i>
+          <p class="empty-title">No Results</p>
+          <p class="empty-sub">No medicines match your current filters.</p>
+          <button type="button" class="clear-filters-btn" style="margin-top:12px" (click)="clearMedFilters()">
+            <i class="fa-solid fa-xmark"></i> Clear Filters
+          </button>
+          }
         </div>
 
         } @else {
-        <ul class="med-full-list">
-          @for (med of medicines(); track med.id; let i = $index) {
-          <li class="med-full-item"
-              [class.med-full-item--active]="hasActiveReminders(med.id)"
-              [class.med-full-item--paused]="isPaused(med.id)"
-              [class.med-full-item--no-reminders]="!hasReminders(med.id)"
-              [class.med-full-item--highlighted]="highlightNoReminders() && !hasReminders(med.id)">
-            <div class="med-full-ico" [class]="medIconClass(i)">
-              <i class="fa-solid fa-capsules"></i>
-              @if (hasActiveReminders(med.id)) {
-              <span class="med-reminder-dot" aria-hidden="true"></span>
-              }
-            </div>
-            <div class="med-full-body">
-              <div class="med-full-info">
-                <div class="med-full-top">
-                  <p class="med-full-name">{{ med.medicineName }}</p>
+        <div class="meds-results-bar">
+          <span>{{ filteredMedicines().length }} medication{{ filteredMedicines().length !== 1 ? 's' : '' }}</span>
+          @if (medSearch() || medSourceFilter() || medSubTab() !== 'all') {
+          <span class="meds-results-filter-note"><i class="fa-solid fa-filter"></i> Filtered</span>
+          }
+        </div>
+        <div class="records-table-wrap">
+          <table class="meds-table">
+            <thead>
+              <tr>
+                <th>Medication</th>
+                <th>Schedule</th>
+                <th>Reminder</th>
+                <th>Source</th>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (med of paginatedMedicines(); track med.id; let i = $index) {
+              <tr [class.meds-row--highlighted]="highlightNoReminders() && !hasReminders(med.id)"
+                  (click)="openMedView(med)">
+                <!-- Medication -->
+                <td>
+                  <div class="table-name-wrap">
+                    <div class="appt-type-ico" [class]="'appt-type-ico-' + ((i % 7) + 1)">
+                      <i class="fa-solid fa-capsules"></i>
+                    </div>
+                    <div>
+                      <p class="meds-name">{{ med.medicineName }}</p>
+                      <p class="meds-dosage">{{ med.dosage }}</p>
+                    </div>
+                  </div>
+                </td>
+                <!-- Schedule -->
+                <td>
+                  <p class="meds-freq">{{ med.frequency }}</p>
+                  <p class="meds-dur">{{ med.duration }}</p>
+                </td>
+                <!-- Reminder -->
+                <td>
                   @if (hasActiveReminders(med.id)) {
-                  <span class="pill pill-green-sm"><i class="fa-solid fa-bell"></i> Reminder Active</span>
-                  } @else if (isPaused(med.id)) {
-                  <span class="pill pill-orange-sm"><i class="fa-solid fa-pause"></i> Reminder Paused</span>
-                  } @else {
-                  <span class="pill pill-gray-sm"><i class="fa-solid fa-bell-slash"></i> No Reminder</span>
-                  }
-                  <span [class]="sourceClass(med.source)">{{ sourceLabel(med.source) }}</span>
-                </div>
-                <p class="med-full-dose">{{ med.dosage }}</p>
-                <div class="med-full-meta">
-                  <span class="med-meta-item">
-                    <i class="fa-regular fa-clock"></i> {{ med.frequency }}
-                  </span>
-                  <span class="med-meta-item">
-                    <i class="fa-solid fa-calendar-days"></i> {{ med.duration }}
-                  </span>
-                  @if (med.notes) {
-                  <span class="med-meta-item med-meta-notes">
-                    <i class="fa-regular fa-note-sticky"></i> {{ med.notes }}
-                  </span>
-                  }
-                </div>
-              </div>
-
-              <div class="med-reminder-panel"
-                   [class.med-reminder-panel--active]="hasActiveReminders(med.id)"
-                   [class.med-reminder-panel--paused]="isPaused(med.id)"
-                   [class.med-reminder-panel--empty]="!hasReminders(med.id)">
-                @if (hasReminders(med.id)) {
-                <div class="med-reminder-panel__schedule">
-                  @if (isPaused(med.id)) {
-                  <span class="med-paused-badge"><i class="fa-solid fa-pause"></i> Paused</span>
-                  }
-                  <span class="med-reminder-repeat">{{ getRepeatType(med.id) }}</span>
-                  <div class="med-reminder-times">
-                    @for (time of getSortedReminderTimes(med.id); track time) {
-                    <span class="med-time-chip">{{ time }}</span>
+                  <div class="meds-rem-times">
+                    @for (t of getSortedReminderTimes(med.id); track t) {
+                    <span class="med-time-chip">{{ t }}</span>
                     }
                   </div>
-                </div>
-                <div class="med-rem-action-group" role="group" [attr.aria-label]="'Reminder actions for ' + med.medicineName">
-                  <button type="button" class="med-rem-action" (click)="openEditReminder(med)">
-                    Edit Reminder
-                  </button>
-                  <button type="button" class="med-rem-action" (click)="toggleAllReminders(med.id)">
-                    {{ isPaused(med.id) ? 'Resume Reminder' : 'Pause Reminder' }}
-                  </button>
-                  <button type="button" class="med-rem-action med-rem-action--danger"
-                    (click)="openDeleteReminder(med.id, med.medicineName)">
-                    Delete Reminder
-                  </button>
-                </div>
-                } @else {
-                <span class="med-no-reminder">No reminders</span>
-                <button type="button" class="med-add-reminder-btn" (click)="openAddReminder(med)">
-                  Add Reminder
-                </button>
-                }
-              </div>
-            </div>
-          </li>
+                  <span class="pill pill-green-sm meds-rem-status-pill"><i class="fa-solid fa-bell"></i>&nbsp;Active</span>
+                  } @else if (isPaused(med.id)) {
+                  <span class="pill pill-orange-sm"><i class="fa-solid fa-pause"></i>&nbsp;Paused</span>
+                  <div class="meds-rem-times" style="margin-top:4px">
+                    @for (t of getSortedReminderTimes(med.id); track t) {
+                    <span class="med-time-chip med-time-chip--paused">{{ t }}</span>
+                    }
+                  </div>
+                  } @else {
+                  <span class="pill pill-gray-sm"><i class="fa-solid fa-bell-slash"></i>&nbsp;Not set</span>
+                  }
+                </td>
+                <!-- Source -->
+                <td>
+                  <span [class]="sourceClass(med.source)">{{ sourceLabel(med.source) }}</span>
+                </td>
+                <!-- Actions -->
+                <td class="actions-cell">
+                  <div class="record-actions" (click)="$event.stopPropagation()">
+                    @if (hasReminders(med.id)) {
+                    <button type="button" class="rec-action-btn" title="Edit reminder"
+                      (click)="openEditReminder(med)">
+                      <i class="fa-regular fa-bell"></i>
+                    </button>
+                    } @else {
+                    <button type="button" class="rec-action-btn" title="Add reminder"
+                      (click)="openAddReminder(med)">
+                      <i class="fa-solid fa-bell"></i>
+                    </button>
+                    }
+                    <button type="button" class="rec-action-btn" title="More options"
+                      (click)="toggleMedMenu(med.id)">
+                      <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    @if (openMedMenuId() === med.id) {
+                    <div class="record-menu" [class.record-menu-up]="isLastMedRow(i)">
+                      <button type="button" class="rec-menu-item"
+                        (click)="openMedView(med)">
+                        <i class="fa-regular fa-eye"></i> View Details
+                      </button>
+                      <button type="button" class="rec-menu-item"
+                        (click)="openEditMed(med)">
+                        <i class="fa-regular fa-pen-to-square"></i> Edit Medication
+                      </button>
+                      @if (hasReminders(med.id)) {
+                      <button type="button" class="rec-menu-item"
+                        (click)="openEditReminder(med); openMedMenuId.set(null)">
+                        <i class="fa-regular fa-bell"></i> Edit Reminder
+                      </button>
+                      <button type="button" class="rec-menu-item"
+                        (click)="toggleAllReminders(med.id); openMedMenuId.set(null)">
+                        <i class="fa-solid" [class]="isPaused(med.id) ? 'fa-play' : 'fa-pause'"></i>
+                        {{ isPaused(med.id) ? 'Resume Reminder' : 'Pause Reminder' }}
+                      </button>
+                      <button type="button" class="rec-menu-item rec-menu-item--danger"
+                        (click)="openDeleteReminder(med.id, med.medicineName); openMedMenuId.set(null)">
+                        <i class="fa-solid fa-bell-slash"></i> Delete Reminder
+                      </button>
+                      } @else {
+                      <button type="button" class="rec-menu-item"
+                        (click)="openAddReminder(med); openMedMenuId.set(null)">
+                        <i class="fa-solid fa-bell"></i> Add Reminder
+                      </button>
+                      }
+                      <div class="rec-menu-divider"></div>
+                      <button type="button" class="rec-menu-item rec-menu-item--danger"
+                        (click)="openDeleteMed(med.id, med.medicineName)">
+                        <i class="fa-solid fa-trash-can"></i> Delete Medication
+                      </button>
+                    </div>
+                    }
+                  </div>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (medTotalPages() > 1) {
+        <div class="pagination-bar">
+          <button type="button" class="page-btn" [disabled]="medPage() === 1"
+            (click)="setMedPage(medPage() - 1)">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          @for (p of medPageNumbers(); track p) {
+          <button type="button" class="page-btn"
+            [class.page-btn--active]="medPage() === p"
+            (click)="setMedPage(p)">{{ p }}</button>
           }
-        </ul>
+          <button type="button" class="page-btn" [disabled]="medPage() === medTotalPages()"
+            (click)="setMedPage(medPage() + 1)">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+        }
         }
 
       </div>
@@ -536,15 +862,15 @@
         <span class="confirm-detail-val">{{ confirmingLog()!.medicineName }}</span>
       </div>
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Dosage</span>
+        <span class="confirm-detail-lbl">Strength</span>
         <span class="confirm-detail-val">{{ confirmingLog()!.dosage }}</span>
       </div>
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Scheduled</span>
-        <span class="confirm-detail-val">{{ formatTime(confirmingLog()!.scheduledTime) }}</span>
+        <span class="confirm-detail-lbl">Dose Time</span>
+        <span class="confirm-detail-val">{{ formatTime(confirmingLog()!.reminderTime) }}</span>
       </div>
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Reminder</span>
+        <span class="confirm-detail-lbl">Attempt</span>
         <span class="confirm-detail-val">{{ reminderAttemptLabel(confirmingLog()!.reminderNumber) }}</span>
       </div>
     </div>
@@ -591,30 +917,58 @@
 
     <div class="reminder-body">
 
-      <!-- Times -->
+      <!-- ── Reminder Times ── -->
       <div class="rm-section">
         <div class="rm-section-hdr">
-          <span class="rm-section-title"><i class="fa-regular fa-clock"></i> Reminder Times</span>
-          <button type="button" class="rm-add-btn" (click)="addReminderTime()">
+          <span class="rm-section-title">
+            <i class="fa-regular fa-clock"></i> Reminder Times
+            @if (reminderForm.reminderTimes.filter(t => !!t.trim()).length > 0) {
+            <span class="rm-count-badge">{{ reminderForm.reminderTimes.filter(t => !!t.trim()).length }}</span>
+            }
+          </span>
+          <button type="button" class="rm-add-btn" (click)="addReminderTime()"
+            [disabled]="reminderForm.reminderTimes.length >= 6"
+            aria-label="Add another reminder time">
             <i class="fa-solid fa-plus"></i> Add Time
           </button>
         </div>
+
         @for (t of reminderForm.reminderTimes; track $index) {
-        <div class="rm-time-row">
-          <span class="rm-time-badge"><i class="fa-solid fa-clock"></i></span>
-          <input type="time" class="rm-time-input"
-            [value]="t"
-            (change)="updateReminderTime($index, $any($event.target).value)" />
-          @if (reminderForm.reminderTimes.length > 1) {
-          <button type="button" class="rm-remove-btn" (click)="removeReminderTime($index)" aria-label="Remove time">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
+        <div class="rm-time-field" [class.rm-time-field--error]="!!timeErrors[$index]">
+          <div class="rm-time-row">
+            <span class="rm-time-badge" [class.rm-time-badge--error]="!!timeErrors[$index]">
+              <i class="fa-solid"
+                [class.fa-clock]="!timeErrors[$index]"
+                [class.fa-triangle-exclamation]="!!timeErrors[$index]"></i>
+            </span>
+            <input type="time"
+              class="rm-time-input"
+              [class.rm-field--error]="!!timeErrors[$index]"
+              [class.rm-field--valid]="!!t && !timeErrors[$index]"
+              [value]="t"
+              [min]="reminderForm.startDate === todayDate ? currentTimeHHMM : ''"
+              [attr.aria-label]="'Reminder time ' + ($index + 1)"
+              [attr.aria-invalid]="!!timeErrors[$index]"
+              [attr.aria-describedby]="timeErrors[$index] ? 'time-err-' + $index : null"
+              (change)="updateReminderTime($index, $any($event.target).value)" />
+            @if (reminderForm.reminderTimes.length > 1) {
+            <button type="button" class="rm-remove-btn"
+              (click)="removeReminderTime($index)"
+              [attr.aria-label]="'Remove reminder time ' + ($index + 1)">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            }
+          </div>
+          @if (timeErrors[$index]) {
+          <p class="rm-field-error" [id]="'time-err-' + $index" role="alert">
+            <i class="fa-solid fa-circle-exclamation"></i> {{ timeErrors[$index] }}
+          </p>
           }
         </div>
         }
       </div>
 
-      <!-- Repeat -->
+      <!-- ── Repeat ── -->
       <div class="rm-section">
         <p class="rm-section-title"><i class="fa-solid fa-repeat"></i> Repeat</p>
         <div class="rm-repeat-group">
@@ -627,45 +981,76 @@
         </div>
       </div>
 
-      <!-- Dates -->
+      <!-- ── Dates ── -->
       <div class="rm-section rm-dates-grid">
-        <div>
-          <label class="rm-section-title"><i class="fa-regular fa-calendar"></i> Start Date</label>
-          <input type="date" class="rm-time-input"
+        <div class="rm-date-field">
+          <label class="rm-section-title" for="rm-start-date">
+            <i class="fa-regular fa-calendar"></i> Start Date
+          </label>
+          <input id="rm-start-date" type="date"
+            class="rm-time-input"
+            [class.rm-field--error]="reminderForm.startDate < todayDate"
+            [class.rm-field--valid]="reminderForm.startDate >= todayDate"
             [(ngModel)]="reminderForm.startDate"
+            [min]="todayDate"
+            aria-label="Reminder start date"
             (ngModelChange)="onReminderStartDateChange()" />
+          @if (reminderForm.startDate && reminderForm.startDate < todayDate) {
+          <p class="rm-field-error" role="alert">
+            <i class="fa-solid fa-circle-exclamation"></i> Start date cannot be in the past.
+          </p>
+          }
         </div>
-        <div>
-          <label class="rm-section-title"><i class="fa-regular fa-calendar-check"></i> End Date</label>
-          <input type="date" class="rm-time-input"
+        <div class="rm-date-field">
+          <label class="rm-section-title" for="rm-end-date">
+            <i class="fa-regular fa-calendar-check"></i> End Date
+          </label>
+          <input id="rm-end-date" type="date"
+            class="rm-time-input"
+            [class.rm-field--error]="reminderForm.repeatType !== 'Once' && !!reminderForm.endDate && reminderForm.endDate < reminderForm.startDate"
+            [class.rm-field--valid]="reminderForm.repeatType !== 'Once' && !!reminderForm.endDate && reminderForm.endDate >= reminderForm.startDate"
+            [class.rm-date-locked]="reminderForm.repeatType === 'Once'"
             [(ngModel)]="reminderForm.endDate"
+            [min]="minEndDate"
             [disabled]="reminderForm.repeatType === 'Once'"
-            [class.rm-date-locked]="reminderForm.repeatType === 'Once'" />
+            aria-label="Reminder end date" />
+          @if (reminderForm.repeatType !== 'Once' && reminderForm.endDate && reminderForm.endDate < reminderForm.startDate) {
+          <p class="rm-field-error" role="alert">
+            <i class="fa-solid fa-circle-exclamation"></i> End date must be after start date.
+          </p>
+          }
         </div>
       </div>
 
-      <!-- Toggle -->
+      <!-- ── Push Notifications toggle ── -->
       <div class="rm-section rm-toggle-row">
         <span class="rm-section-title"><i class="fa-solid fa-bell"></i> Push Notifications</span>
         <button type="button"
           class="rm-toggle"
           [class.rm-toggle--on]="reminderForm.notificationsEnabled"
           (click)="reminderForm.notificationsEnabled = !reminderForm.notificationsEnabled"
-          [attr.aria-checked]="reminderForm.notificationsEnabled" role="switch">
+          [attr.aria-checked]="reminderForm.notificationsEnabled"
+          role="switch"
+          aria-label="Enable push notifications">
           <span class="rm-toggle-thumb"></span>
         </button>
       </div>
 
-      <!-- Notes -->
+      <!-- ── Notes ── -->
       <div class="rm-section">
-        <label class="rm-section-title"><i class="fa-regular fa-note-sticky"></i> Notes (optional)</label>
-        <textarea class="rm-notes-area" [(ngModel)]="reminderForm.notes"
-          placeholder="e.g. Take with food" rows="2"></textarea>
+        <label class="rm-section-title" for="rm-notes">
+          <i class="fa-regular fa-note-sticky"></i> Notes (optional)
+        </label>
+        <textarea id="rm-notes" class="rm-notes-area"
+          [(ngModel)]="reminderForm.notes"
+          placeholder="e.g. Take with food, avoid on empty stomach"
+          rows="2"
+          aria-label="Additional notes"></textarea>
       </div>
 
-      <!-- Errors -->
+      <!-- ── Global summary errors ── -->
       @if (reminderFormErrors.length > 0) {
-      <ul class="rm-errors">
+      <ul class="rm-errors" role="alert" aria-label="Form errors">
         @for (e of reminderFormErrors; track e) {
         <li class="rm-error-item"><i class="fa-solid fa-circle-exclamation"></i> {{ e }}</li>
         }
@@ -724,6 +1109,338 @@
         <i class="fa-solid fa-circle-notch fa-spin"></i> Deleting…
         } @else {
         <i class="fa-solid fa-trash-can"></i> Delete Reminder
+        }
+      </button>
+    </div>
+
+  </div>
+</div>
+}
+
+<!-- ═══════════ VIEW MEDICINE MODAL ═══════════ -->
+@if (viewingMed()) {
+<div class="modal-overlay" (click)="closeMedView()">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog"
+    aria-modal="true" aria-labelledby="view-med-title">
+
+    <div class="modal-hdr">
+      <div class="confirm-modal-ico" style="background:var(--blue-lt);color:var(--blue)">
+        <i class="fa-solid fa-pills"></i>
+      </div>
+      <div>
+        <h2 class="modal-title" id="view-med-title">{{ viewingMed()!.medicineName }}</h2>
+        <p class="modal-subtitle">{{ viewingMed()!.dosage }}</p>
+      </div>
+      <button type="button" class="rm-close-btn" (click)="closeMedView()" aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="view-med-body">
+      <div class="view-detail-grid">
+        <div class="view-detail-item">
+          <span class="view-detail-lbl"><i class="fa-regular fa-clock"></i> Frequency</span>
+          <span class="view-detail-val">{{ viewingMed()!.frequency }}</span>
+        </div>
+        <div class="view-detail-item">
+          <span class="view-detail-lbl"><i class="fa-solid fa-calendar-days"></i> Duration</span>
+          <span class="view-detail-val">{{ viewingMed()!.duration }}</span>
+        </div>
+        <div class="view-detail-item">
+          <span class="view-detail-lbl"><i class="fa-solid fa-tag"></i> Source</span>
+          <span class="view-detail-val">{{ sourceLabel(viewingMed()!.source) }}</span>
+        </div>
+        <div class="view-detail-item">
+          <span class="view-detail-lbl"><i class="fa-regular fa-bell"></i> Reminder</span>
+          <span class="view-detail-val">
+            @if (hasActiveReminders(viewingMed()!.id)) {
+            Active · {{ getSortedReminderTimes(viewingMed()!.id).join(', ') }}
+            } @else if (isPaused(viewingMed()!.id)) {
+            Paused
+            } @else {
+            Not set
+            }
+          </span>
+        </div>
+        <div class="view-detail-item">
+          <span class="view-detail-lbl"><i class="fa-regular fa-calendar"></i> Added</span>
+          <span class="view-detail-val">{{ formatDate(viewingMed()!.createdAt) }}</span>
+        </div>
+      </div>
+      @if (viewingMed()!.notes) {
+      <div class="view-notes-block">
+        <span class="view-detail-lbl"><i class="fa-regular fa-note-sticky"></i> Notes</span>
+        <p class="view-notes-text">{{ viewingMed()!.notes }}</p>
+      </div>
+      }
+    </div>
+
+    <div class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeMedView()">Close</button>
+      <button type="button" class="modal-btn modal-btn-danger"
+        (click)="openDeleteMed(viewingMed()!.id, viewingMed()!.medicineName)">
+        <i class="fa-solid fa-trash-can"></i> Delete
+      </button>
+      <button type="button" class="modal-btn modal-btn-secondary"
+        (click)="openEditMed(viewingMed()!)">
+        <i class="fa-regular fa-pen-to-square"></i> Edit
+      </button>
+      @if (hasReminders(viewingMed()!.id)) {
+      <button type="button" class="modal-btn modal-btn-primary"
+        (click)="openEditReminder(viewingMed()!); closeMedView()">
+        <i class="fa-regular fa-bell"></i> Edit Reminder
+      </button>
+      } @else {
+      <button type="button" class="modal-btn modal-btn-primary"
+        (click)="openAddReminder(viewingMed()!); closeMedView()">
+        <i class="fa-solid fa-plus"></i> Add Reminder
+      </button>
+      }
+    </div>
+
+  </div>
+</div>
+}
+
+<!-- ═══════════ ADD MEDICATION MODAL ═══════════ -->
+@if (showAddMedModal()) {
+<div class="modal-overlay" (click)="closeAddMed()">
+  <div class="modal-card reminder-modal" (click)="$event.stopPropagation()" role="dialog"
+    aria-modal="true" aria-labelledby="add-med-title">
+
+    <div class="modal-hdr">
+      <div class="confirm-modal-ico" style="background:var(--blue-lt);color:var(--blue)">
+        <i class="fa-solid fa-pills"></i>
+      </div>
+      <div>
+        <h2 class="modal-title" id="add-med-title">Add Medication</h2>
+        <p class="modal-subtitle">Enter the details for the new medication</p>
+      </div>
+      <button type="button" class="rm-close-btn" (click)="closeAddMed()" aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="reminder-body">
+
+      <div class="rm-section rm-dates-grid">
+        <div>
+          <label class="rm-section-title" for="add-med-name">
+            <i class="fa-solid fa-pills"></i> Medicine Name <span style="color:var(--red)">*</span>
+          </label>
+          <input id="add-med-name" type="text" class="rm-time-input"
+            [(ngModel)]="addMedForm.medicineName"
+            placeholder="e.g. Paracetamol"
+            [class.rm-input-error]="addMedTouched() && !addMedForm.medicineName.trim()" />
+        </div>
+        <div>
+          <label class="rm-section-title" for="add-med-dosage">
+            <i class="fa-solid fa-flask"></i> Dosage <span style="color:var(--red)">*</span>
+          </label>
+          <input id="add-med-dosage" type="text" class="rm-time-input"
+            [(ngModel)]="addMedForm.dosage"
+            placeholder="e.g. 500mg"
+            [class.rm-input-error]="addMedTouched() && !addMedForm.dosage.trim()" />
+        </div>
+      </div>
+
+      <div class="rm-section rm-dates-grid">
+        <div>
+          <label class="rm-section-title" for="add-med-frequency">
+            <i class="fa-regular fa-clock"></i> Frequency <span style="color:var(--red)">*</span>
+          </label>
+          <input id="add-med-frequency" type="text" class="rm-time-input"
+            [(ngModel)]="addMedForm.frequency"
+            placeholder="e.g. Twice daily"
+            [class.rm-input-error]="addMedTouched() && !addMedForm.frequency.trim()" />
+        </div>
+        <div>
+          <label class="rm-section-title" for="add-med-duration">
+            <i class="fa-solid fa-calendar-days"></i> Duration <span style="color:var(--red)">*</span>
+          </label>
+          <input id="add-med-duration" type="text" class="rm-time-input"
+            [(ngModel)]="addMedForm.duration"
+            placeholder="e.g. 7 days"
+            [class.rm-input-error]="addMedTouched() && !addMedForm.duration.trim()" />
+        </div>
+      </div>
+
+      <div class="rm-section">
+        <label class="rm-section-title" for="add-med-notes">
+          <i class="fa-regular fa-note-sticky"></i> Notes (optional)
+        </label>
+        <textarea id="add-med-notes" class="rm-notes-area"
+          [(ngModel)]="addMedForm.notes"
+          placeholder="e.g. Take with food, avoid on empty stomach"
+          rows="2"></textarea>
+      </div>
+
+      @if (addMedTouched() && addMedErrors.length > 0) {
+      <ul class="rm-errors">
+        @for (e of addMedErrors; track e) {
+        <li class="rm-error-item"><i class="fa-solid fa-circle-exclamation"></i> {{ e }}</li>
+        }
+      </ul>
+      }
+
+    </div><!-- /reminder-body -->
+
+    <div class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddMed()"
+        [disabled]="addMedSaving()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary" (click)="saveAddMed()"
+        [disabled]="addMedSaving()">
+        @if (addMedSaving()) {
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Saving…
+        } @else {
+        <i class="fa-solid fa-plus"></i> Add Medication
+        }
+      </button>
+    </div>
+
+  </div>
+</div>
+}
+
+<!-- ═══════════ EDIT MEDICATION MODAL ═══════════ -->
+@if (showEditMedModal()) {
+<div class="modal-overlay" (click)="closeEditMed()">
+  <div class="modal-card reminder-modal" (click)="$event.stopPropagation()" role="dialog"
+    aria-modal="true" aria-labelledby="edit-med-title">
+
+    <div class="modal-hdr">
+      <div class="confirm-modal-ico" style="background:var(--blue-lt);color:var(--blue)">
+        <i class="fa-regular fa-pen-to-square"></i>
+      </div>
+      <div>
+        <h2 class="modal-title" id="edit-med-title">Edit Medication</h2>
+        <p class="modal-subtitle">{{ editingMed()?.medicineName }}</p>
+      </div>
+      <button type="button" class="rm-close-btn" (click)="closeEditMed()" aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="reminder-body">
+
+      <div class="rm-section rm-dates-grid">
+        <div>
+          <label class="rm-section-title" for="edit-med-name">
+            <i class="fa-solid fa-pills"></i> Medicine Name <span style="color:var(--red)">*</span>
+          </label>
+          <input id="edit-med-name" type="text" class="rm-time-input"
+            [(ngModel)]="editMedForm.medicineName"
+            placeholder="e.g. Paracetamol"
+            [class.rm-input-error]="editMedTouched() && !editMedForm.medicineName.trim()" />
+        </div>
+        <div>
+          <label class="rm-section-title" for="edit-med-dosage">
+            <i class="fa-solid fa-flask"></i> Dosage <span style="color:var(--red)">*</span>
+          </label>
+          <input id="edit-med-dosage" type="text" class="rm-time-input"
+            [(ngModel)]="editMedForm.dosage"
+            placeholder="e.g. 500mg"
+            [class.rm-input-error]="editMedTouched() && !editMedForm.dosage.trim()" />
+        </div>
+      </div>
+
+      <div class="rm-section rm-dates-grid">
+        <div>
+          <label class="rm-section-title" for="edit-med-frequency">
+            <i class="fa-regular fa-clock"></i> Frequency <span style="color:var(--red)">*</span>
+          </label>
+          <input id="edit-med-frequency" type="text" class="rm-time-input"
+            [(ngModel)]="editMedForm.frequency"
+            placeholder="e.g. Twice daily"
+            [class.rm-input-error]="editMedTouched() && !editMedForm.frequency.trim()" />
+        </div>
+        <div>
+          <label class="rm-section-title" for="edit-med-duration">
+            <i class="fa-solid fa-calendar-days"></i> Duration <span style="color:var(--red)">*</span>
+          </label>
+          <input id="edit-med-duration" type="text" class="rm-time-input"
+            [(ngModel)]="editMedForm.duration"
+            placeholder="e.g. 7 days"
+            [class.rm-input-error]="editMedTouched() && !editMedForm.duration.trim()" />
+        </div>
+      </div>
+
+      <div class="rm-section">
+        <label class="rm-section-title" for="edit-med-notes">
+          <i class="fa-regular fa-note-sticky"></i> Notes (optional)
+        </label>
+        <textarea id="edit-med-notes" class="rm-notes-area"
+          [(ngModel)]="editMedForm.notes"
+          placeholder="e.g. Take with food, avoid on empty stomach"
+          rows="2"></textarea>
+      </div>
+
+      @if (editMedTouched() && editMedErrors.length > 0) {
+      <ul class="rm-errors">
+        @for (e of editMedErrors; track e) {
+        <li class="rm-error-item"><i class="fa-solid fa-circle-exclamation"></i> {{ e }}</li>
+        }
+      </ul>
+      }
+
+    </div>
+
+    <div class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeEditMed()"
+        [disabled]="editMedSaving()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary" (click)="saveEditMed()"
+        [disabled]="editMedSaving()">
+        @if (editMedSaving()) {
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Saving…
+        } @else {
+        <i class="fa-regular fa-pen-to-square"></i> Save Changes
+        }
+      </button>
+    </div>
+
+  </div>
+</div>
+}
+
+<!-- ═══════════ DELETE MEDICATION CONFIRM MODAL ═══════════ -->
+@if (showDeleteMedModal()) {
+<div class="modal-overlay" (click)="closeDeleteMed()">
+  <div class="modal-card confirm-modal" (click)="$event.stopPropagation()" role="dialog"
+    aria-modal="true" aria-labelledby="delete-med-title">
+
+    <div class="modal-hdr">
+      <div class="confirm-modal-ico" style="background:var(--red-lt);color:var(--red)">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <div>
+        <h2 class="modal-title" id="delete-med-title">Delete Medication</h2>
+        <p class="modal-subtitle">This will remove the medication and cancel all its active reminders.</p>
+      </div>
+    </div>
+
+    <div class="confirm-med-detail">
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-lbl">Medication</span>
+        <span class="confirm-detail-val">{{ deleteMedName() }}</span>
+      </div>
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-lbl">What happens</span>
+        <span class="confirm-detail-val" style="color:var(--text-muted);font-size:0.85rem">
+          Active reminders are cancelled. Past history is kept.
+        </span>
+      </div>
+    </div>
+
+    <div class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDeleteMed()"
+        [disabled]="deletingMed()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary"
+        style="background:var(--red)" (click)="confirmDeleteMed()"
+        [disabled]="deletingMed()">
+        @if (deletingMed()) {
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Deleting…
+        } @else {
+        <i class="fa-solid fa-trash-can"></i> Delete Medication
         }
       </button>
     </div>

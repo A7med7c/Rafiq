@@ -23,13 +23,17 @@ public sealed class ConfirmMedicationReminderCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(log.UserHealthProfileId, cancellationToken);
 
+        // Idempotent guard: a reminder can only ever be confirmed once.  A stale
+        // notification/dialog, a duplicate click, or a second browser tab racing this
+        // same request must not throw or mutate the log again — just report the final
+        // state that already exists so the caller can treat it as a graceful no-op.
         if (log.Status == MedicationReminderStatus.Confirmed)
-            throw new BadRequestException("Medication has already been confirmed.");
+            return ApiResponseBase.FailureResponse("Medication has already been marked as taken.");
 
         if (log.Status == MedicationReminderStatus.Cancelled)
-            throw new BadRequestException("This reminder has been cancelled and cannot be confirmed.");
+            return ApiResponseBase.FailureResponse("This reminder is no longer active and cannot be confirmed.");
 
-        // Cancel the next scheduled job (Reminder #N+1) if one was queued
+        // Cancel this attempt's own Hangfire job in case it was confirmed before it fired.
         if (log.NextJobId is not null)
             scheduler.CancelJob(log.NextJobId);
 
@@ -44,6 +48,9 @@ public sealed class ConfirmMedicationReminderCommandHandler(
          cancellationToken);
         foreach (var pending in pendingNext)
         {
+            if (pending.NextJobId is not null)
+                scheduler.CancelJob(pending.NextJobId);
+
             pending.Cancel();
             logRepository.Update(pending);
         }

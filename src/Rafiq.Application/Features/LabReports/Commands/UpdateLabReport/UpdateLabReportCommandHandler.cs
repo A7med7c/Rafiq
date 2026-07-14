@@ -41,21 +41,17 @@ public sealed class UpdateLabReportCommandHandler(
             request.ImageUrl,
             request.OcrText);
 
-        labReport.Results.Clear();
-
-        foreach (var result in request.Results ?? [])
+        var newResults = (request.Results ?? []).Select(result => new LabResult
         {
-            labReport.Results.Add(new LabResult
-            {
-                TestName = result.TestName ?? string.Empty,
-                Value = result.Value ?? string.Empty,
-                Unit = result.Unit ?? string.Empty,
-                NormalRange = result.NormalRange ?? string.Empty,
-                Status = result.Status
-            });
-        }
+            TestName = result.TestName ?? string.Empty,
+            Value = result.Value ?? string.Empty,
+            Unit = result.Unit ?? string.Empty,
+            NormalRange = result.NormalRange ?? string.Empty,
+            Status = result.Status
+        }).ToList();
 
-        labReportRepository.Update(labReport);
+        labReport.SyncResults(newResults);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = new LabReportResponseDto

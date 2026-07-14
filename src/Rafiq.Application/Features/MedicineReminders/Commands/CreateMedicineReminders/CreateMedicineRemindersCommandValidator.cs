@@ -1,18 +1,23 @@
 using FluentValidation;
+using Rafiq.Application.Common.Interfaces;
 using Rafiq.Domain.Enums;
 
 namespace Rafiq.Application.Features.MedicineReminders.Commands.CreateMedicineReminders;
 
 public class CreateMedicineRemindersCommandValidator : AbstractValidator<CreateMedicineRemindersCommand>
 {
-    public CreateMedicineRemindersCommandValidator()
+    private readonly IDateTimeProvider _dateTimeProvider;
+
+    public CreateMedicineRemindersCommandValidator(IDateTimeProvider dateTimeProvider)
     {
+        _dateTimeProvider = dateTimeProvider;
+
         RuleFor(v => v.UserMedicineId)
             .NotEmpty().WithMessage("UserMedicineId is required.");
 
         RuleFor(v => v.StartDate)
             .NotEmpty().WithMessage("StartDate is required.")
-            .GreaterThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .GreaterThanOrEqualTo(_ => _dateTimeProvider.Today)
             .WithMessage("StartDate cannot be before today's date.");
 
         RuleFor(v => v.EndDate)
@@ -55,12 +60,14 @@ public class CreateMedicineRemindersCommandValidator : AbstractValidator<CreateM
     private bool BeFutureTimesIfToday(DateOnly startDate, List<string> times)
     {
         if (times == null) return true;
-        
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var today = _dateTimeProvider.Today;
         if (startDate > today) return true;
 
-        var now = DateTime.UtcNow.TimeOfDay;
-        
+        // Reminder times are wall-clock values in ReminderTimeZone, so "now" must be
+        // converted into that same zone before comparing — not left as raw UTC.
+        var now = TimeZoneInfo.ConvertTimeFromUtc(_dateTimeProvider.UtcNow, _dateTimeProvider.ReminderTimeZone).TimeOfDay;
+
         foreach (var t in times)
         {
             if (TimeSpan.TryParse(t, out var parsedTime))

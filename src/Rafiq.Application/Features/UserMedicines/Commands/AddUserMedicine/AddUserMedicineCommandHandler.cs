@@ -20,6 +20,13 @@ public sealed class AddUserMedicineCommandHandler(
     {
         await authorizationService.EnsureCanWriteAsync(request.ProfileId, cancellationToken);
 
+        var exists = await userMedicineRepository.ExistsByNameAsync(
+            request.ProfileId, request.MedicineName, request.Dosage, null, cancellationToken);
+
+        if (exists)
+            throw new ValidationException(
+                "This medication already exists in your medication list.");
+
         var userMedicine = new UserMedicine(
             userHealthProfileId: request.ProfileId,
             medicineName: request.MedicineName,

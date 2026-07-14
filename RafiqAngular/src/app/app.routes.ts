@@ -13,8 +13,10 @@ import { OnboardingStep2 } from './Pages/onboarding/onboarding-step2/onboarding-
 import { OnboardingStep3 } from './Pages/onboarding/onboarding-step3/onboarding-step3';
 import { OnboardingStep4 } from './Pages/onboarding/onboarding-step4/onboarding-step4';
 import { OnboardingAiUpload } from './Pages/onboarding/onboarding-ai-upload/onboarding-ai-upload';
+import { OnboardingEmergency } from './Pages/onboarding/onboarding-emergency/onboarding-emergency';
 import { authGuard } from './Guards/auth.guard';
 import { guestGuard } from './Guards/guest.guard';
+import { FamilyProfiles } from './Pages/family-profiles/family-profiles';
 
 export const routes: Routes = [
   { path: '', component: Landing },
@@ -26,11 +28,12 @@ export const routes: Routes = [
 
   { path: 'login', component: Login, canActivate: [guestGuard] },
   { path: 'register', component: Register, canActivate: [guestGuard] },
-
+  { path: 'family-profiles', component: FamilyProfiles, canActivate: [authGuard] },
   { path: 'onboarding/welcome', component: OnboardingWelcome, canActivate: [authGuard] },
   { path: 'onboarding/step1', component: OnboardingStep1, canActivate: [authGuard] },
   { path: 'onboarding/step2', component: OnboardingStep2, canActivate: [authGuard] },
   { path: 'onboarding/step3', component: OnboardingStep3, canActivate: [authGuard] },
   { path: 'onboarding/step4', component: OnboardingStep4, canActivate: [authGuard] },
   { path: 'onboarding/ai-upload', component: OnboardingAiUpload, canActivate: [authGuard] },
+  { path: 'onboarding/emergency', component: OnboardingEmergency, canActivate: [authGuard] },
 ];

@@ -9,9 +9,10 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { filter, take, switchMap } from 'rxjs';
 import { GoogleService } from '../../../Services/google-service';
 import { AuthService } from '../../../Services/auth-service';
-import { TokenStorageService } from '../../../Services/token-storage-service';
+import { HealthProfileService } from '../../../Services/health-profile.service';
 import { environment } from '../../../Environments/Environment';
 import { getApiErrorMessages } from '../../../Utils/api-error.util';
 
@@ -40,7 +41,7 @@ export class LoginFormComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly googleService = inject(GoogleService);
   private readonly authService = inject(AuthService);
-  private readonly tokenStorage = inject(TokenStorageService);
+  private readonly healthProfileSvc = inject(HealthProfileService);
   private readonly router = inject(Router);
   private readonly changeDetector = inject(ChangeDetectorRef);
 
@@ -119,15 +120,19 @@ export class LoginFormComponent implements OnInit {
   }
 
   private navigateAfterLogin(): void {
-    // Wait for getMe() to load the user profile, then check onboarding status
-    this.authService.currentUser$.subscribe((user) => {
-      if (user) {
-        if (this.tokenStorage.isOnboardingCompleted()) {
-          this.router.navigate(['/dashboard']);
-        } else {
+    this.authService.currentUser$.pipe(
+      filter(user => !!user),
+      take(1),
+      switchMap(() => this.healthProfileSvc.getMyProfile()),
+    ).subscribe({
+      next: () => this.router.navigate(['/dashboard']),
+      error: (err: HttpErrorResponse) => {
+        if (err.status === 404) {
           this.router.navigate(['/onboarding/welcome']);
+        } else {
+          this.router.navigate(['/dashboard']);
         }
-      }
+      },
     });
   }
 }

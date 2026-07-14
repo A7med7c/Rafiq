@@ -1,8 +1,13 @@
 import {
-  Component, inject, OnInit, OnDestroy, signal, computed,
-  ElementRef, ViewChild, HostListener,
+  Component, OnInit, signal,
+  HostListener,
+  computed,
+  ElementRef,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { inject } from '@angular/core';
+import { RecordsContentComponent } from '../../Components/records-content/records-content';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -133,34 +138,35 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 @Component({
   selector: 'app-medical-records',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent],
   templateUrl: './medical-records.html',
   styleUrl: './medical-records.css',
 })
-export class MedicalRecords implements OnInit, OnDestroy {
-  private readonly authService      = inject(AuthService);
-  private readonly recordsService   = inject(MedicalRecordsService);
+export class MedicalRecords implements OnInit {
+  private readonly authService = inject(AuthService);
+  private readonly recordsService = inject(MedicalRecordsService);
+  private readonly reminderSvc = inject(MedicationRemindersService);
   private readonly healthProfileSvc = inject(HealthProfileService);
-  protected readonly notificationSvc  = inject(NotificationService);
-  private readonly reminderSvc      = inject(MedicationRemindersService);
-  private readonly router           = inject(Router);
-  private readonly http             = inject(HttpClient);
-  private readonly base             = environment.apiUrl;
+  readonly notificationSvc = inject(NotificationService);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly base = environment.apiUrl;
 
-  @ViewChild('labInput') labInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('prescriptionInput') prescriptionInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('imagingInput') imagingInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('medicineInput') medicineInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('generalInput') generalInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('labInput') labInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('prescriptionInput') prescriptionInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('imagingInput') imagingInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('medicineInput') medicineInput?: ElementRef<HTMLInputElement>;
 
+  readonly loading = signal(false);
   readonly allRecords = signal<UnifiedMedicalRecord[]>([]);
-  readonly loading = signal(true);
   readonly searchQuery = signal('');
   readonly activeTab = signal<RecordTab>('all');
-  readonly sidebarCollapsed  = signal(false);
+
+  readonly sidebarCollapsed = signal(false);
   readonly mobileSidebarOpen = signal(false);
-  readonly selectedRecord = signal<UnifiedMedicalRecord | null>(null);
+
   readonly dropdownOpen = signal(false);
+  readonly selectedRecord = signal<UnifiedMedicalRecord | null>(null);
   readonly addRecordMenuOpen = signal(false);
   readonly filterMenuOpen = signal(false);
   readonly actionMenuOpen = signal<string | null>(null);
@@ -218,25 +224,25 @@ export class MedicalRecords implements OnInit, OnDestroy {
   readonly generalUploadFormOpen = signal(false);
   generalUploadForm: GeneralUploadForm = this.emptyGeneralUploadForm();
 
-  readonly scanLoading           = signal(false);
-  readonly scanResult            = signal<ScanMedicineBoxResponse | null>(null);
-  readonly scanSaving            = signal(false);
-  readonly scanMode              = signal<'create' | 'edit'>('create');
-  readonly scanRecordId          = signal<string | null>(null);
+  readonly scanLoading = signal(false);
+  readonly scanResult = signal<ScanMedicineBoxResponse | null>(null);
+  readonly scanSaving = signal(false);
+  readonly scanMode = signal<'create' | 'edit'>('create');
+  readonly scanRecordId = signal<string | null>(null);
   readonly scanSavedMedicineName = signal<string | null>(null);
-  readonly scanSavedMedicineId   = signal<string | null>(null);
+  readonly scanSavedMedicineId = signal<string | null>(null);
   scanForm: ScanForm = this.emptyScanForm();
 
-  readonly showReminderModal  = signal(false);
-  readonly reminderMedicineId   = signal<string | null>(null);
+  readonly showReminderModal = signal(false);
+  readonly reminderMedicineId = signal<string | null>(null);
   readonly reminderMedicineName = signal<string | null>(null);
-  readonly reminderSaving       = signal(false);
+  readonly reminderSaving = signal(false);
   reminderForm: ReminderForm = this.emptyReminderForm();
 
   readonly repeatOptions: Array<{ value: RepeatOption; label: string }> = [
-    { value: 'Once',    label: 'Once'    },
-    { value: 'Daily',   label: 'Daily'   },
-    { value: 'Weekly',  label: 'Weekly'  },
+    { value: 'Once', label: 'Once' },
+    { value: 'Daily', label: 'Daily' },
+    { value: 'Weekly', label: 'Weekly' },
     { value: 'Monthly', label: 'Monthly' },
   ];
 
@@ -282,26 +288,10 @@ export class MedicalRecords implements OnInit, OnDestroy {
     return u.firstName?.trim() || u.email;
   }
 
-  get userEmail(): string {
-    return this.authService.currentUser?.email ?? '';
-  }
+  get userEmail(): string { return this.authService.currentUser?.email ?? ''; }
 
-  readonly filteredRecords = computed(() => {
-    let list = this.applySmartFilters(this.allRecords(), this.appliedFilters());
-    const q = this.searchQuery().trim().toLowerCase();
-    const tab = this.activeTab();
-    if (tab !== 'all') list = list.filter(r => r.type === tab);
-    if (q) {
-      list = list.filter(r =>
-        r.name.toLowerCase().includes(q) ||
-        r.typeLabel.toLowerCase().includes(q) ||
-        r.uploadedBy.toLowerCase().includes(q) ||
-        (r.summary && r.summary.toLowerCase().includes(q))
-      );
-    }
-    return this.sortRecords(list, this.appliedFilters().sortBy);
-  });
-
+  @HostListener('window:resize')
+  onWindowResize(): void { this.applyResponsiveSidebar(); }
   readonly countedRecords = computed(() =>
     this.applySmartFilters(this.allRecords(), this.appliedFilters())
   );
@@ -311,6 +301,10 @@ export class MedicalRecords implements OnInit, OnDestroy {
   readonly imagingCount = computed(() => this.countedRecords().filter(r => r.type === 'imaging').length);
   readonly medicineCount = computed(() => this.countedRecords().filter(r => r.type === 'medicine').length);
   readonly generalCount = computed(() => this.countedRecords().filter(r => r.type === 'general').length);
+
+  readonly filteredRecords = computed(() =>
+    this.sortRecords(this.countedRecords(), this.appliedFilters().sortBy)
+  );
 
   readonly activeFilterChips = computed(() => {
     const filters = this.appliedFilters();
@@ -354,7 +348,7 @@ export class MedicalRecords implements OnInit, OnDestroy {
     this.applyResponsiveSidebar();
     this.loadData();
   }
-  ngOnDestroy(): void {}
+  ngOnDestroy(): void { }
 
   @HostListener('document:keydown.escape')
   onEsc(): void {
@@ -377,37 +371,15 @@ export class MedicalRecords implements OnInit, OnDestroy {
     if (!(event.target as HTMLElement).closest('.hdr-user')) {
       this.dropdownOpen.set(false);
     }
-    if (!(event.target as HTMLElement).closest('.record-actions')) {
-      this.actionMenuOpen.set(null);
-    }
-    if (!(event.target as HTMLElement).closest('.add-record-menu-wrap')) {
-      this.addRecordMenuOpen.set(false);
-    }
-    if (!(event.target as HTMLElement).closest('.filter-menu-wrap')) {
-      this.filterMenuOpen.set(false);
-    }
-  }
-
-  @HostListener('window:resize')
-  onWindowResize(): void {
-    this.applyResponsiveSidebar();
   }
 
   private applyResponsiveSidebar(): void {
     this.sidebarCollapsed.set(window.innerWidth <= 1024);
-    if (window.innerWidth > 768) {
-      this.mobileSidebarOpen.set(false);
-    }
+    if (window.innerWidth > 768) this.mobileSidebarOpen.set(false);
   }
 
-  toggleSidebar(): void {
-    this.sidebarCollapsed.update(v => !v);
-  }
-
-  toggleMobileSidebar(): void {
-    this.mobileSidebarOpen.update(v => !v);
-  }
-
+  toggleSidebar(): void { this.sidebarCollapsed.update(v => !v); }
+  toggleMobileSidebar(): void { this.mobileSidebarOpen.update(v => !v); }
   toggleDropdown(): void { this.dropdownOpen.update(v => !v); }
   logout(): void { this.dropdownOpen.set(false); this.authService.logout().subscribe(); }
 
@@ -537,7 +509,7 @@ export class MedicalRecords implements OnInit, OnDestroy {
   private saveSortOption(sortBy: SortOption): void {
     try {
       localStorage.setItem(FILTER_SORT_STORAGE_KEY, sortBy);
-    } catch {}
+    } catch { }
   }
 
   typeLabel(type: RecordTab): string {
@@ -1057,7 +1029,7 @@ export class MedicalRecords implements OnInit, OnDestroy {
   }
 
   openReminderFromScan(): void {
-    const id   = this.scanSavedMedicineId();
+    const id = this.scanSavedMedicineId();
     const name = this.scanSavedMedicineName();
     this.resetScanState();
     if (!id) return;
@@ -1082,9 +1054,9 @@ export class MedicalRecords implements OnInit, OnDestroy {
     const startDate = this.reminderForm.startDate;
     const payload: CreateReminderPayload = {
       userMedicineId: medicineId,
-      times:          this.reminderForm.reminderTimes.filter(t => t.trim()),
+      times: this.reminderForm.reminderTimes.filter(t => t.trim()),
       startDate,
-      endDate:    this.reminderForm.repeatType === 'Once' ? startDate : this.reminderForm.endDate,
+      endDate: this.reminderForm.repeatType === 'Once' ? startDate : this.reminderForm.endDate,
       repeatType: this.reminderForm.repeatType,
     };
     this.reminderSvc.createReminder(medicineId, payload).subscribe({
@@ -1118,10 +1090,10 @@ export class MedicalRecords implements OnInit, OnDestroy {
     const request$ = mode === 'edit' && this.scanRecordId()
       ? this.http.put(`${this.base}/user-medicines/${this.scanRecordId()}`, payload)
       : this.healthProfileSvc.getMyProfile().pipe(
-          switchMap(res =>
-            this.http.post(`${this.base}/user-medicines?profileId=${res.data.id}`, payload)
-          )
-        );
+        switchMap(res =>
+          this.http.post(`${this.base}/user-medicines?profileId=${res.data.id}`, payload)
+        )
+      );
 
     request$.subscribe({
       next: (res: any) => {
@@ -1131,7 +1103,7 @@ export class MedicalRecords implements OnInit, OnDestroy {
           this.showToast('Medicine record updated successfully.', 'success');
           this.loadData();
         } else {
-          const savedId   = res?.data?.id ?? null;
+          const savedId = res?.data?.id ?? null;
           const savedName = this.scanForm.medicineName.trim();
           this.scanSavedMedicineId.set(savedId);
           this.scanSavedMedicineName.set(savedName);

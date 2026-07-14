@@ -105,6 +105,17 @@ public sealed class HealthProfileAccessRepository : IHealthProfileAccessReposito
                     && x.Status == AccessStatus.Active,
                 cancellationToken);
 
+    public async Task<IReadOnlyList<HealthProfileAccess>> GetSentInvitationsAsync(
+        Guid inviterUserId,
+        CancellationToken cancellationToken = default)
+        => await _dbContext.HealthProfileAccesses
+            .AsNoTracking()
+            .Include(x => x.UserHealthProfile)
+            .Where(x => x.InvitedByUserId == inviterUserId
+                && x.Origin == AccessOrigin.GrantInvitation)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+
     public Task AddAsync(HealthProfileAccess healthProfileAccess, CancellationToken cancellationToken = default)
         => _dbContext.HealthProfileAccesses.AddAsync(healthProfileAccess, cancellationToken).AsTask();
 

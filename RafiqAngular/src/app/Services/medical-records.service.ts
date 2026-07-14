@@ -12,6 +12,7 @@ import {
   GeneralMedicalDocument,
 } from '../Modles/dashboard.models';
 import { HealthProfileService } from './health-profile.service';
+import { ProfileSelectionService } from './profile-selection.service';
 
 export interface UnifiedMedicalRecord {
   id: string;
@@ -29,53 +30,58 @@ export interface UnifiedMedicalRecord {
 export class MedicalRecordsService {
   private readonly http = inject(HttpClient);
   private readonly healthProfileSvc = inject(HealthProfileService);
+  private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly base = environment.apiUrl;
 
   private getCurrentProfileId(): Observable<string> {
-    return this.healthProfileSvc.getMyProfile().pipe(
-      map(r => r.data.id),
-    );
+    const stored = this.profileSelectSvc.selectedProfileId;
+    if (stored) return of(stored);
+    return this.healthProfileSvc.getMyProfile().pipe(map(r => r.data.id));
   }
 
-  // Fetch all categories
-  getAllData(): Observable<{
+  // Fetch all categories. Pass overrideProfileId to filter by a specific family profile.
+  getAllData(overrideProfileId?: string): Observable<{
     labs: LabReport[];
     imaging: ImagingReport[];
     prescriptions: Prescription[];
     medicines: UserMedicine[];
     generalDocuments: GeneralMedicalDocument[];
   }> {
-    const labs$ = this.http.get<ApiResponse<LabReport[]>>(`${this.base}/documents/labs`).pipe(
-      map(r => r.data ?? []),
-      catchError(() => of([] as LabReport[]))
-    );
-    const imaging$ = this.http.get<ApiResponse<ImagingReport[]>>(`${this.base}/documents/imaging`).pipe(
-      map(r => r.data ?? []),
-      catchError(() => of([] as ImagingReport[]))
-    );
-    const prescriptions$ = this.http.get<ApiResponse<Prescription[]>>(`${this.base}/prescriptions`).pipe(
-      map(r => r.data ?? []),
-      catchError(() => of([] as Prescription[]))
-    );
-    const medicines$ = this.getCurrentProfileId().pipe(
-      switchMap(profileId =>
-        this.http.get<ApiResponse<UserMedicine[]>>(`${this.base}/user-medicines?profileId=${profileId}`)
-      ),
-      map(r => r.data ?? []),
-      catchError(() => of([] as UserMedicine[]))
-    );
-    const generalDocuments$ = this.http.get<ApiResponse<GeneralMedicalDocument[]>>(`${this.base}/documents/general`).pipe(
-      map(r => r.data ?? []),
-      catchError(() => of([] as GeneralMedicalDocument[]))
-    );
+    const profileId$ = overrideProfileId ? of(overrideProfileId) : this.getCurrentProfileId();
 
-    return forkJoin({
-      labs: labs$,
-      imaging: imaging$,
-      prescriptions: prescriptions$,
-      medicines: medicines$,
-      generalDocuments: generalDocuments$,
-    });
+    return profileId$.pipe(
+      switchMap(profileId => {
+        const pid = `?profileId=${profileId}`;
+        const labs$ = this.http.get<ApiResponse<LabReport[]>>(`${this.base}/documents/labs${pid}`).pipe(
+          map(r => r.data ?? []),
+          catchError(() => of([] as LabReport[]))
+        );
+        const imaging$ = this.http.get<ApiResponse<ImagingReport[]>>(`${this.base}/documents/imaging${pid}`).pipe(
+          map(r => r.data ?? []),
+          catchError(() => of([] as ImagingReport[]))
+        );
+        const prescriptions$ = this.http.get<ApiResponse<Prescription[]>>(`${this.base}/prescriptions${pid}`).pipe(
+          map(r => r.data ?? []),
+          catchError(() => of([] as Prescription[]))
+        );
+        const medicines$ = this.http.get<ApiResponse<UserMedicine[]>>(`${this.base}/user-medicines${pid}`).pipe(
+          map(r => r.data ?? []),
+          catchError(() => of([] as UserMedicine[]))
+        );
+        const generalDocuments$ = this.http.get<ApiResponse<GeneralMedicalDocument[]>>(`${this.base}/documents/general`).pipe(
+          map(r => r.data ?? []),
+          catchError(() => of([] as GeneralMedicalDocument[]))
+        );
+
+        return forkJoin({
+          labs: labs$,
+          imaging: imaging$,
+          prescriptions: prescriptions$,
+          medicines: medicines$,
+          generalDocuments: generalDocuments$,
+        });
+      })
+    );
   }
 
   // Helper to map raw backend models to unified frontend representation
@@ -142,7 +148,7 @@ export class MedicalRecordsService {
         typeLabel: 'Medicine Box',
         date: new Date(m.createdAt).toLocaleDateString(),
         uploadedBy: m.source || 'Self',
-        hasAiSummary: !!m.notes,
+        hasAiSummary: true,
         summary: m.notes || `Dosage: ${m.dosage}. Frequency: ${m.frequency}.`,
         rawRecord: m,
       });

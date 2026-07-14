@@ -34,20 +34,11 @@ public sealed class UploadPrescriptionCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
 
-        var fileExtension = Path.GetExtension(request.Image.FileName);
-        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-
         using var imageStream = request.Image.OpenReadStream();
-        var imagePath = await fileStorageService.UploadFileAsync(
-            imageStream,
-            uniqueFileName,
-            "prescriptions",
-            cancellationToken);
-
         using var memoryStream = new MemoryStream();
-        imageStream.Position = 0;
         await imageStream.CopyToAsync(memoryStream, cancellationToken);
-        var base64Image = Convert.ToBase64String(memoryStream.ToArray());
+        var imageBytes = memoryStream.ToArray();
+        var base64Image = Convert.ToBase64String(imageBytes);
 
         var extracted = await bedrockService.AnalyzeAsync<BedrockPrescriptionDto>(
             base64Image,
@@ -55,8 +46,29 @@ public sealed class UploadPrescriptionCommandHandler(
             cancellationToken)
             ?? throw new BadRequestException("No prescription data could be extracted from the uploaded image.");
 
+        if (!extracted.IsValidDocument)
+        {
+            var detected = extracted.DetectedDocumentType;
+            var detailMessage = string.IsNullOrWhiteSpace(detected) || detected == "Unknown"
+                ? "The uploaded image could not be identified as a valid document."
+                : $"Detected document type: {detected}.";
+
+            throw new BadRequestException(
+                $"The uploaded document is not a prescription. {detailMessage} Please upload a valid prescription image.");
+        }
+
         if (extracted.Medicines.Count == 0)
             throw new BadRequestException("No medicines could be extracted from the uploaded prescription image.");
+
+        var fileExtension = Path.GetExtension(request.Image.FileName);
+        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+        using var uploadStream = new MemoryStream(imageBytes);
+        var imagePath = await fileStorageService.UploadFileAsync(
+            uploadStream,
+            uniqueFileName,
+            "prescriptions",
+            cancellationToken);
 
         var prescriptionDate = DateOnly.TryParseExact(
             extracted.PrescriptionDate,

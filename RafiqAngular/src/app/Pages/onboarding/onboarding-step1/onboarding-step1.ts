@@ -21,6 +21,7 @@ export class OnboardingStep1 implements OnInit {
 
   readonly steps = [
     { label: 'Basic Info' },
+    { label: 'Emergency Contacts' },
     { label: 'Allergies' },
     { label: 'Chronic Diseases' },
     { label: 'Review' },
@@ -73,7 +74,7 @@ export class OnboardingStep1 implements OnInit {
     }
     // Store step 1 data so later steps can access it
     sessionStorage.setItem('onboarding_step1', JSON.stringify(this.form.getRawValue()));
-    this.router.navigate(['/onboarding/step2']);
+    this.router.navigate(['/onboarding/emergency']);
   }
 
   getDateOfBirthError(): string {

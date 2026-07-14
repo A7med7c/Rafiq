@@ -14,6 +14,8 @@ export interface AuthResponse {
 
         refreshTokenExpiresAt: string;
 
+        hasEmergencyContacts: boolean;
+
     };
 
 }
