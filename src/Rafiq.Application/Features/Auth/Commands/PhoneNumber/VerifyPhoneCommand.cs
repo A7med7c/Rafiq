@@ -5,7 +5,7 @@ using Rafiq.Domain.Enums;
 namespace Rafiq.Application.Features.Auth.Commands.PhoneNumber
 {
     public sealed record VerifyPhoneCommand(
-     string PhoneNumber,
+     string Email,
      string Code,
      OtpPurpose Purpose)
      : IRequest<ApiResponseBase>;

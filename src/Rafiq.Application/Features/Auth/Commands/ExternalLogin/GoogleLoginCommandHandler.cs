@@ -19,9 +19,9 @@ namespace Rafiq.Application.Features.Auth.Commands.ExternalLogin
                 request.IdToken,
                 cancellationToken);
 
-            if (!user.PhoneNumberConfirmed)
+            if (!user.EmailConfirmed)
                 throw new AuthenticationException(
-                    "Please verify your phone number before logging in.");
+                    "Please verify your email before logging in.");
 
             var dto = await tokenIssuingService.IssueTokensAsync(user, cancellationToken);
 

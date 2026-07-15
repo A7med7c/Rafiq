@@ -102,6 +102,10 @@ export class AiAssistant implements OnInit {
     return this.authService.currentUser?.email ?? '';
   }
 
+  get avatarUrl(): string {
+    return this.authService.avatarUrl;
+  }
+
   ngOnInit(): void {
     this.applyResponsiveSidebar();
     this.loadProfileThenConversations();

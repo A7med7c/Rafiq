@@ -10,6 +10,7 @@ public sealed record AccessibleHealthProfileDto(
     string? BloodType,
     decimal? Height,
     decimal? Weight,
+    string? ProfileImageUrl,
     string AccessRole,
     string? Relationship,
     string AccessOrigin,

@@ -1,11 +1,14 @@
 
 using Hangfire;
 using Hangfire.Dashboard;
+using Microsoft.AspNetCore.Identity;
 using Rafiq.API.Extensions;
 using Rafiq.API.Middleware;
 using Rafiq.Application;
 using Rafiq.Application.Common.Interfaces;
+using Rafiq.Domain.Constants;
 using Rafiq.Infrastructure;
+using Rafiq.Infrastructure.Persistence.Identity;
 using Rafiq.Infrastructure.Services.auth;
 using Rafiq.Infrastructure.Services.MedicationReminders;
 using System.Text.Json.Serialization;
@@ -15,7 +18,7 @@ namespace Rafiq.API;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -75,6 +78,8 @@ public class Program
             Authorization = new[] { new HangfireDashboardAuthorizationFilter() }
         });
 
+        await SeedRolesAndAdminAsync(app);
+
         // Sweep runs at 00:05 in the reminder timezone, so "today" means the same thing
         // here as it does inside the scheduling service.
         var reminderTimeZone = app.Services
@@ -88,5 +93,68 @@ public class Program
             new RecurringJobOptions { TimeZone = reminderTimeZone });
 
         app.Run();
+    }
+
+    private static async Task SeedRolesAndAdminAsync(WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var logger = app.Logger;
+
+        foreach (var roleName in new[] { Roles.User, Roles.Admin })
+        {
+            if (!await roleManager.RoleExistsAsync(roleName))
+            {
+                await roleManager.CreateAsync(new IdentityRole<Guid>(roleName));
+            }
+        }
+
+        var adminUsers = await userManager.GetUsersInRoleAsync(Roles.Admin);
+        if (adminUsers.Count > 0)
+        {
+            return;
+        }
+
+        const string adminEmail = "admin@rafiq.com";
+        var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
+
+        if (existingAdmin is not null)
+        {
+            await userManager.AddToRoleAsync(existingAdmin, Roles.Admin);
+            return;
+        }
+
+        var adminPassword = $"Test_123";
+
+        var adminUser = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            FirstName = "Rafiq",
+            LastName = "Admin",
+            Email = adminEmail,
+            UserName = adminEmail,
+            PhoneNumber = "0100000000",
+            EmailConfirmed = true,
+            PhoneNumberConfirmed = true,
+            IsActive = true
+        };
+
+        var createResult = await userManager.CreateAsync(adminUser, adminPassword);
+
+        if (!createResult.Succeeded)
+        {
+            logger.LogError(
+                "Failed to seed admin account: {Errors}",
+                string.Join("; ", createResult.Errors.Select(e => e.Description)));
+            return;
+        }
+
+        await userManager.AddToRoleAsync(adminUser, Roles.Admin);
+
+        logger.LogWarning(
+            "Seeded admin account {Email} with temporary password {Password} — change it after first login.",
+            adminEmail,
+            adminPassword);
     }
 }

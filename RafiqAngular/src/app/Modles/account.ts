@@ -8,4 +8,5 @@ export interface Account {
   phoneNumber: string;
   phoneNumberConfirmed: boolean;
   role: UserRole;
+  profileImageUrl?: string | null;
 }

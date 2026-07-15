@@ -47,7 +47,8 @@ namespace Rafiq.Infrastructure.Services.auth
                     refreshToken,
                     accessTokenExpiresAt,
                     refreshTokenExpiresAt,
-                    hasEmergencyContacts);
+                    hasEmergencyContacts,
+                    user.ProfileImageUrl);
         }
     }
 }

@@ -1,4 +1,5 @@
 using Hangfire.Dashboard;
+using Rafiq.Domain.Constants;
 
 namespace Rafiq.API.Middleware;
 
@@ -9,6 +10,6 @@ public sealed class HangfireDashboardAuthorizationFilter : IDashboardAuthorizati
         var httpContext = context.GetHttpContext();
 
         return httpContext.User.Identity is { IsAuthenticated: true }
-            && httpContext.User.IsInRole("Admin");
+            && httpContext.User.IsInRole(Roles.Admin);
     }
 }
