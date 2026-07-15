@@ -19,6 +19,8 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     public DateTime? DeletedAt { get; set; }
 
+    public string? ProfileImageUrl { get; set; }
+
     // Navigation Properties
     public UserHealthProfile? HealthProfile { get; set; }
 

@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { Login } from './Pages/Auth/login/login';
 import { Register } from './Pages/Auth/register/register';
+import { ForgotPassword } from './Pages/Auth/forgot-password/forgot-password';
+import { VerifyAccount } from './Pages/Auth/verify-account/verify-account';
 import { Landing } from './Pages/landing/landing';
 import { Dashboard } from './Pages/dashboard/dashboard';
 import { MedicalRecords } from './Pages/medical-records/medical-records';
@@ -28,6 +30,8 @@ export const routes: Routes = [
 
   { path: 'login', component: Login, canActivate: [guestGuard] },
   { path: 'register', component: Register, canActivate: [guestGuard] },
+  { path: 'forgot-password', component: ForgotPassword, canActivate: [guestGuard] },
+  { path: 'verify-account', component: VerifyAccount, canActivate: [guestGuard] },
   { path: 'family-profiles', component: FamilyProfiles, canActivate: [authGuard] },
   { path: 'onboarding/welcome', component: OnboardingWelcome, canActivate: [authGuard] },
   { path: 'onboarding/step1', component: OnboardingStep1, canActivate: [authGuard] },

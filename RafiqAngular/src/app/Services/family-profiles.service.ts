@@ -14,6 +14,7 @@ export interface AccessibleProfileDto {
   bloodType: string | null;
   height: number | null;
   weight: number | null;
+  profileImageUrl: string | null;
   accessRole: string;
   relationship: string | null;
   accessOrigin: string;
@@ -31,6 +32,7 @@ export interface PatientProfileDetailDto {
   bloodType: string | null;
   height: number | null;
   weight: number | null;
+  profileImageUrl: string | null;
   allergies: { id: string; name: string; severity: string }[];
   chronicDiseases: { id: string; name: string; status: string; diagnosedAt: string | null }[];
   createdAt: string;
@@ -71,6 +73,7 @@ export interface ProfileMemberDto {
   firstName: string;
   lastName: string;
   email: string;
+  profileImageUrl: string | null;
   role: string;
   status: string;
   origin: string;
@@ -111,6 +114,18 @@ export class FamilyProfilesService {
   createManaged(body: CreateManagedProfileRequest): Observable<PatientProfileDetailDto> {
     return this.http
       .post<ApiResponse<PatientProfileDetailDto>>(`${this.base}/managed`, body)
+      .pipe(map(r => r.data));
+  }
+
+  updateProfileImage(profileId: string, image: File | null, removeImage = false): Observable<PatientProfileDetailDto> {
+    const formData = new FormData();
+    if (image) {
+      formData.append('profileImage', image, image.name);
+    }
+    formData.append('removeImage', String(removeImage));
+
+    return this.http
+      .post<ApiResponse<PatientProfileDetailDto>>(`${this.base}/${profileId}/image`, formData)
       .pipe(map(r => r.data));
   }
 

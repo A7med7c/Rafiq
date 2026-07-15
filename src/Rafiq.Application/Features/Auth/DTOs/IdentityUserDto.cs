@@ -5,4 +5,6 @@ public sealed record IdentityUserDto(
     string Email,
     string PhoneNumber,
     string Role,
-    bool PhoneNumberConfirmed);
+    bool PhoneNumberConfirmed,
+    string? ProfileImageUrl,
+    bool EmailConfirmed);

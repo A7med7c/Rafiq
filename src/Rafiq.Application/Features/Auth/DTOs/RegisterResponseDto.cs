@@ -5,4 +5,5 @@ public sealed record RegisterResponseDto(
     string Email,
     string PhoneNumber,
     string Role,
-    bool RequiresPhoneVerification);
+    bool RequiresEmailVerification,
+    string? ProfileImageUrl);

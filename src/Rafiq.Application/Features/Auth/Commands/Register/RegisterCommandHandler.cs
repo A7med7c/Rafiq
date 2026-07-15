@@ -9,7 +9,8 @@ namespace Rafiq.Application.Features.Auth.Commands.Register;
 
 public sealed class RegisterCommandHandler(
     IIdentityService identityService,
-    IOtpService otpService)
+    IOtpService otpService,
+    IFileStorageService fileStorageService)
     : IRequestHandler<RegisterCommand, ApiResponse<RegisterResponseDto>>
 {
     public async Task<ApiResponse<RegisterResponseDto>> Handle(
@@ -24,23 +25,39 @@ public sealed class RegisterCommandHandler(
                 "An account with this phone number already exists.");
         }
 
+        string? profileImageUrl = null;
+
+        if (request.ProfileImage is not null)
+        {
+            var extension = Path.GetExtension(request.ProfileImage.FileName);
+            var fileName = $"{Guid.NewGuid()}{extension}";
+
+            using var imageStream = request.ProfileImage.OpenReadStream();
+
+            profileImageUrl = await fileStorageService.UploadFileAsync(
+                imageStream,
+                fileName,
+                "profile-images",
+                cancellationToken);
+        }
+
         var user = await identityService.CreateUserAsync(
             request.FirstName,
             request.LastName,
             request.Email,
             request.PhoneNumber,
             request.Password,
-            request.Role,
+            profileImageUrl,
             cancellationToken);
 
         await otpService.SendOtpAsync(
             user.UserId,
-            user.PhoneNumber,
-            OtpPurpose.PhoneVerification,
+            user.Email,
+            OtpPurpose.EmailVerification,
             cancellationToken);
 
         return ApiResponse<RegisterResponseDto>.SuccessResponse(
             user,
-            "Registration successful. Please verify your phone number.");
+            "Registration successful. Please verify your email.");
     }
 }

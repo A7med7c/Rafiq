@@ -7,10 +7,10 @@ namespace Rafiq.Application.Features.Auth.Commands.ForgetPassword
     {
         public ForgotPasswordCommandValidator()
         {
-            RuleFor(x => x.PhoneNumber)
+            RuleFor(x => x.Email)
                 .NotEmpty()
-                .Matches(@"^01[0125][0-9]{8}$")
-                .WithMessage("Invalid Egyptian phone number.");
+                .EmailAddress()
+                .WithMessage("Invalid email address.");
         }
     }
 }

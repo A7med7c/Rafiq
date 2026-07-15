@@ -1,4 +1,4 @@
-export type UserRole = 'Patient' | 'Caregiver';
+export type UserRole = 'User' | 'Admin';
 
 export interface RegisterRequest {
   firstName: string;
@@ -7,5 +7,4 @@ export interface RegisterRequest {
   phoneNumber: string;
   password: string;
   confirmPassword: string;
-  role: UserRole;
 }

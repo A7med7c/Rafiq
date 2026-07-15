@@ -5,4 +5,5 @@ public sealed record AuthResponseDto(
     string RefreshToken,
     DateTime AccessTokenExpiresAt,
     DateTime RefreshTokenExpiresAt,
-    bool HasEmergencyContacts);
+    bool HasEmergencyContacts,
+    string? ProfileImageUrl);

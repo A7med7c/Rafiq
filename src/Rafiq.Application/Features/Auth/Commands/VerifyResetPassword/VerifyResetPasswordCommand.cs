@@ -4,5 +4,5 @@ using Rafiq.Application.Features.Auth.DTOs;
 
 namespace Rafiq.Application.Features.Auth.Commands.ResetPassword
 {
-    public sealed record VerifyResetPasswordCommand(string phoneNumber, string code) : IRequest<ApiResponse<VerifyResetOtpResponseDto>>;
+    public sealed record VerifyResetPasswordCommand(string email, string code) : IRequest<ApiResponse<VerifyResetOtpResponseDto>>;
 }

@@ -16,6 +16,8 @@ export interface AuthResponse {
 
         hasEmergencyContacts: boolean;
 
+        profileImageUrl: string | null;
+
     };
 
 }

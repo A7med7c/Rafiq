@@ -290,6 +290,8 @@ export class MedicalRecords implements OnInit {
 
   get userEmail(): string { return this.authService.currentUser?.email ?? ''; }
 
+  get avatarUrl(): string { return this.authService.avatarUrl; }
+
   @HostListener('window:resize')
   onWindowResize(): void { this.applyResponsiveSidebar(); }
   readonly countedRecords = computed(() =>
