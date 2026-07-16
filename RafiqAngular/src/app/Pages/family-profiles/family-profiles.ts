@@ -553,6 +553,10 @@ export class FamilyProfiles implements OnInit {
       relationship: p.relationship ?? '',
       allergies: (d.allergies ?? []).map((a: any) => ({ id: a.id, name: a.name, severity: a.severity })),
       chronicDiseases: (d.chronicDiseases ?? []).map((c: any) => ({ id: c.id, name: c.name, status: c.status, diagnosedAt: c.diagnosedAt?.split('T')[0] ?? '' })),
+      profileImage: null,
+      profileImagePreview: null,
+      existingImageUrl: this.resolveProfileImageUrl(p.profileImageUrl ?? null),
+      removeImage: false,
     };
     this.showEditModal.set(true);
   }

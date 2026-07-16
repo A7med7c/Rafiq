@@ -234,8 +234,6 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly manualMedicineMode = signal(false);
   readonly scanSource = signal<1 | 3>(3);
 
-  // Manual image upload
-  readonly manualImageUploading = signal(false);
   readonly reviewDateError = signal<string | null>(null);
 
   readonly todayStr = (() => {
@@ -295,8 +293,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     if (container) container.style.overflowY = '';
     const sidebar = this._doc.querySelector('.dsh-sb') as HTMLElement | null;
     if (sidebar) sidebar.classList.remove('sb--modal-blur');
-    this._clearManualImage();
-    this._clearManualMedicineImage();
+    this.clearManualImage('review');
+    this.clearManualImage('medicine');
   }
 
   private _searchQuery = '';
@@ -659,7 +657,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       this.scanMode.set('edit');
       this.scanRecordId.set(record.id);
       this.isMedicineManualMode.set(false);
-      this._clearManualMedicineImage();
+      this.clearManualImage('medicine');
       this._scanFormSnapshot = this.snapshotScanForm(this.scanForm);
       this.scanResult.set({
         medicineName: this.scanForm.medicineName,
@@ -1293,4 +1291,29 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   readonly RING_CIRCUMFERENCE = 2 * Math.PI * 14;
+
+  closeAiFailDialog(): void {
+    this.showAiFailDialog.set(false);
+    this._failedFile = null;
+    this._failedType = null;
+    this._failedDesc = '';
+  }
+
+  continueManually(): void {
+    const type = this._failedType;
+    this.closeAiFailDialog();
+    if (type) this.openManualEntry(type);
+  }
+
+  retryUpload(): void {
+    const type = this._failedType;
+    const file = this._failedFile;
+    if (!type || !file) return;
+    this.showAiFailDialog.set(false);
+    if (type === 'medicine') {
+      this.startMedicineScan(file);
+    } else {
+      this.uploadAndReview(type, file, this._failedDesc);
+    }
+  }
 }
