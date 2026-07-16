@@ -2385,6 +2385,74 @@
   background: #B91C1C;
 }
 
+/* ── AI Failure Recovery Dialog ─────────────────────────── */
+.ai-fail-modal {
+  max-width: 400px;
+}
+
+.ai-fail-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 36px 28px 20px;
+  gap: 12px;
+}
+
+.ai-fail-ico-wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.12);
+  color: #F59E0B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.ai-fail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.ai-fail-desc {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-2);
+  line-height: 1.65;
+  max-width: 300px;
+}
+
+.ai-fail-ftr {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ai-fail-cancel-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  padding: 8px 12px;
+  margin-right: auto;
+}
+
+.ai-fail-cancel-btn:hover {
+  background: var(--border-lt);
+  color: var(--text);
+}
+
+.ai-fail-manual-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .tab-animating.tab-slide-left {
   animation: records-slide-left 250ms ease-in-out;
 }
