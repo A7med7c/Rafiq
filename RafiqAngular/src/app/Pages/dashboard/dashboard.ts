@@ -74,11 +74,21 @@ export class Dashboard implements OnInit {
 
   readonly familySlots = computed(() => {
     const profiles = this.familyProfiles().slice(0, 4);
-    const placeholderCount = Math.max(0, 4 - profiles.length);
-    return [
-      ...profiles.map(p => ({ type: 'profile' as const, data: p })),
-      ...Array.from({ length: placeholderCount }, () => ({ type: 'add' as const, data: null as AccessibleProfileDto | null })),
-    ];
+    const slots: { type: 'profile' | 'add' | 'empty'; data: AccessibleProfileDto | null }[] = [];
+    
+    profiles.forEach(p => {
+      slots.push({ type: 'profile', data: p });
+    });
+
+    if (slots.length < 4) {
+      slots.push({ type: 'add', data: null });
+    }
+
+    while (slots.length < 4) {
+      slots.push({ type: 'empty', data: null });
+    }
+
+    return slots;
   });
 
   readonly nextAppointment = computed(() => {

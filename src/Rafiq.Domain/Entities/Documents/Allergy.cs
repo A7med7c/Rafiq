@@ -23,4 +23,10 @@ public class Allergy : BaseEntity
     public AllergySeverity Severity { get; set; }
 
     public UserHealthProfile UserHealthProfile { get; set; } = null!;
+
+    public void Update(string name, AllergySeverity severity)
+    {
+        Name = name;
+        Severity = severity;
+    }
 }

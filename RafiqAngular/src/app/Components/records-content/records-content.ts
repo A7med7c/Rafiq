@@ -1,8 +1,9 @@
 import {
-  Component, Input, OnInit, OnChanges, SimpleChanges,
-  inject, signal, computed,
+  Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges,
+  inject, signal, computed, effect,
   ElementRef, ViewChild, HostListener, ViewEncapsulation,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -126,7 +127,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
   styleUrl: '../../Pages/medical-records/medical-records.css',
   encapsulation: ViewEncapsulation.None,
 })
-export class RecordsContentComponent implements OnInit, OnChanges {
+export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   @Input() profileId: string | undefined;
   /** When true, hides the upload cards grid (used in family profiles) */
   @Input() compact = false;
@@ -215,6 +216,12 @@ export class RecordsContentComponent implements OnInit, OnChanges {
   readonly scanRecordId = signal<string | null>(null);
   scanForm: ScanForm = this.emptyScanForm();
 
+  // Manual entry & AI failure recovery
+  readonly showAiFailDialog = signal(false);
+  private _failedFile: File | null = null;
+  private _failedType: 'lab' | 'imaging' | 'prescription' | 'general' | 'medicine' | null = null;
+  private _failedDesc = '';
+
   // Task 1: per-medicine add-to-medications state
   readonly addingMedIndex = signal<number | null>(null);
   readonly addedMedIndices = signal<Set<number>>(new Set());
@@ -233,6 +240,48 @@ export class RecordsContentComponent implements OnInit, OnChanges {
   readonly pageSize = PAGE_SIZE;
   readonly toasts = signal<Toast[]>([]);
   private toastCounter = 0;
+
+  // Manual entry mode (lab / imaging / prescription / general)
+  readonly isManualMode = signal(false);
+  readonly manualImageFile = signal<File | null>(null);
+  readonly manualImagePreviewUrl = signal<string | null>(null);
+  readonly manualImageUploading = signal(false);
+
+  // Manual entry mode — medicine box
+  readonly isMedicineManualMode = signal(false);
+  readonly manualMedicineImageFile = signal<File | null>(null);
+  readonly manualMedicineImagePreviewUrl = signal<string | null>(null);
+  readonly manualMedicineImageUploading = signal(false);
+
+  private readonly _doc = inject(DOCUMENT);
+
+  constructor() {
+    effect(() => {
+      const open = !!(
+        this.selectedRecord() || this.deleteTarget() || this.reviewForm() ||
+        this.generalUploadFormOpen() || this.uploadLoading() || this.scanLoading() ||
+        this.scanResult() || this.showReminderPromptModal() || this.lightboxUrl() ||
+        this.showAiFailDialog()
+      );
+      const container = this._doc.querySelector('.dsh-body') as HTMLElement | null;
+      if (container) {
+        container.style.overflowY = open ? 'hidden' : '';
+      }
+      const sidebar = this._doc.querySelector('.dsh-sb') as HTMLElement | null;
+      if (sidebar) {
+        sidebar.classList.toggle('sb--modal-blur', open);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    const container = this._doc.querySelector('.dsh-body') as HTMLElement | null;
+    if (container) container.style.overflowY = '';
+    const sidebar = this._doc.querySelector('.dsh-sb') as HTMLElement | null;
+    if (sidebar) sidebar.classList.remove('sb--modal-blur');
+    this._clearManualImage();
+    this._clearManualMedicineImage();
+  }
 
   private _searchQuery = '';
   get searchQueryValue(): string { return this._searchQuery; }
@@ -593,6 +642,8 @@ export class RecordsContentComponent implements OnInit, OnChanges {
       this.scanImageFailed.set(false);
       this.scanMode.set('edit');
       this.scanRecordId.set(record.id);
+      this.isMedicineManualMode.set(false);
+      this._clearManualMedicineImage();
       this._scanFormSnapshot = this.snapshotScanForm(this.scanForm);
       this.scanResult.set({
         medicineName: this.scanForm.medicineName,
@@ -706,10 +757,13 @@ export class RecordsContentComponent implements OnInit, OnChanges {
         }
         this.openReviewModal(type, data);
       },
-      error: err => {
+      error: _err => {
         this.uploadLoading.set(false);
         this.setUploading(type, false);
-        this.showToast(err?.error?.message || 'Upload failed. Please try again.', 'error');
+        this._failedFile = file;
+        this._failedType = type;
+        this._failedDesc = description;
+        this.showAiFailDialog.set(true);
       },
     });
   }
@@ -796,6 +850,8 @@ export class RecordsContentComponent implements OnInit, OnChanges {
     this.addedMedIndices.set(new Set());
     this.addingMedIndex.set(null);
     this.addingAllMeds.set(false);
+    this.isManualMode.set(false);
+    this._clearManualImage();
   }
 
   confirmAndSave(): void {
@@ -858,6 +914,8 @@ export class RecordsContentComponent implements OnInit, OnChanges {
         this.addedMedIndices.set(new Set());
         this.addingMedIndex.set(null);
         this.addingAllMeds.set(false);
+        this.isManualMode.set(false);
+        this._clearManualImage();
         this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : 'Record confirmed and saved.', 'success');
         this.loadData();
 
@@ -900,7 +958,10 @@ export class RecordsContentComponent implements OnInit, OnChanges {
       error: err => {
         this.scanLoading.set(false);
         this.setUploading('medicine', false);
-        this.showToast(err?.error?.message || 'Scan failed. Please try again.', 'error');
+        this._failedFile = file;
+        this._failedType = 'medicine';
+        this._failedDesc = '';
+        this.showAiFailDialog.set(true);
       },
     });
   }
@@ -911,10 +972,143 @@ export class RecordsContentComponent implements OnInit, OnChanges {
     this.scanRecordId.set(null);
     this.scanForm = this.emptyScanForm();
     this._scanFormSnapshot = null;
+    this.isMedicineManualMode.set(false);
+    this._clearManualMedicineImage();
+  }
+
+  // ── Manual Entry ─────────────────────────────────────────────
+  openManually(type: 'lab' | 'imaging' | 'prescription' | 'general' | 'medicine'): void {
+    if (type === 'medicine') {
+      this.scanForm = this.emptyScanForm();
+      this.scanMode.set('create');
+      this.scanRecordId.set(null);
+      this.scanImageFailed.set(false);
+      this._scanFormSnapshot = null;
+      this.isMedicineManualMode.set(true);
+      this._clearManualMedicineImage();
+      this.scanResult.set({} as ScanMedicineBoxResponse);
+      return;
+    }
+    this.openReviewModal(type, {});
+    this.isManualMode.set(true);
+  }
+
+  onManualMedicineImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.showToast('Please select a valid image file (JPG, PNG, WEBP).', 'error');
+      return;
+    }
+
+    this._clearManualMedicineImage();
+    this.manualMedicineImageFile.set(file);
+    this.manualMedicineImagePreviewUrl.set(URL.createObjectURL(file));
+
+    this.manualMedicineImageUploading.set(true);
+    const form = new FormData();
+    form.append('image', file);
+
+    this.http.post<any>(`${this.base}/user-medicines/upload-image`, form).subscribe({
+      next: res => {
+        const data = res?.data ?? res;
+        const path = data?.imagePath ?? data?.imageUrl ?? '';
+        if (path) this.scanForm = { ...this.scanForm, imagePath: path };
+        this.manualMedicineImageUploading.set(false);
+      },
+      error: () => {
+        this.manualMedicineImageUploading.set(false);
+        this._clearManualMedicineImage();
+        this.showToast('Image upload failed. You can still save without an image.', 'error');
+      },
+    });
+  }
+
+  private _clearManualMedicineImage(): void {
+    const url = this.manualMedicineImagePreviewUrl();
+    if (url) URL.revokeObjectURL(url);
+    this.manualMedicineImageFile.set(null);
+    this.manualMedicineImagePreviewUrl.set(null);
+    this.manualMedicineImageUploading.set(false);
+  }
+
+  onManualImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    this._clearManualImage();
+    this.manualImageFile.set(file);
+    this.manualImagePreviewUrl.set(URL.createObjectURL(file));
+
+    const rf = this.reviewForm();
+    if (!rf) return;
+
+    this.manualImageUploading.set(true);
+    const pid = this.profileId ? `?profileId=${this.profileId}` : '';
+    const urls: Record<string, string> = {
+      lab: `${this.base}/documents/upload/lab${pid}`,
+      imaging: `${this.base}/documents/upload/imaging${pid}`,
+      prescription: `${this.base}/prescriptions/upload${pid}`,
+      general: `${this.base}/documents/general/upload`,
+    };
+    const form = new FormData();
+    form.append('image', file);
+
+    this.http.post<{ data: any }>(urls[rf.type], form).subscribe({
+      next: res => {
+        const data = res?.data ?? (res as any);
+        const path = data.imageUrl ?? data.imagePath ?? '';
+        if (path) this.reviewForm.update(f => f ? { ...f, imagePath: path } : f);
+        this.manualImageUploading.set(false);
+      },
+      error: () => {
+        this.manualImageUploading.set(false);
+        this.showToast('Image upload failed. The record will be saved without an image.', 'error');
+      },
+    });
+  }
+
+  private _clearManualImage(): void {
+    const url = this.manualImagePreviewUrl();
+    if (url) URL.revokeObjectURL(url);
+    this.manualImageFile.set(null);
+    this.manualImagePreviewUrl.set(null);
+    this.manualImageUploading.set(false);
+  }
+
+  retryUpload(): void {
+    const type = this._failedType;
+    const file = this._failedFile;
+    if (!type || !file) return;
+    this.showAiFailDialog.set(false);
+    if (type === 'medicine') {
+      this.startMedicineScan(file);
+    } else {
+      this.uploadAndReview(type, file, this._failedDesc);
+    }
+  }
+
+  continueManually(): void {
+    const type = this._failedType;
+    this.closeAiFailDialog();
+    if (type) this.openManually(type);
+  }
+
+  closeAiFailDialog(): void {
+    this.showAiFailDialog.set(false);
+    this._failedFile = null;
+    this._failedType = null;
+    this._failedDesc = '';
   }
 
   saveScanResult(): void {
     if (!this.scanForm.medicineName.trim()) return;
+    if (this.manualMedicineImageUploading()) return;
 
     if (this.scanMode() === 'edit' && this._scanFormSnapshot !== null &&
         this.snapshotScanForm(this.scanForm) === this._scanFormSnapshot) {
@@ -955,6 +1149,8 @@ export class RecordsContentComponent implements OnInit, OnChanges {
         this.scanRecordId.set(null);
         this.scanForm = this.emptyScanForm();
         this._scanFormSnapshot = null;
+        this.isMedicineManualMode.set(false);
+        this._clearManualMedicineImage();
         this.showToast(mode === 'edit' ? 'Medicine record updated successfully.' : 'Medicine saved to your records.', 'success');
         this.loadData();
 

@@ -3,8 +3,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rafiq.Application.Features.PatientProfiles.Commands.AcceptAccessRequest;
 using Rafiq.Application.Features.PatientProfiles.Commands.AcceptHealthProfileInvitation;
+using Rafiq.Application.Features.PatientProfiles.Commands.Allergies.CreateAllergy;
+using Rafiq.Application.Features.PatientProfiles.Commands.Allergies.DeleteAllergy;
+using Rafiq.Application.Features.PatientProfiles.Commands.Allergies.UpdateAllergy;
 using Rafiq.Application.Features.PatientProfiles.Commands.CancelHealthProfileInvitation;
 using Rafiq.Application.Features.PatientProfiles.Commands.ChangeMemberRole;
+using Rafiq.Application.Features.PatientProfiles.Commands.ChronicDiseases.CreateChronicDisease;
+using Rafiq.Application.Features.PatientProfiles.Commands.ChronicDiseases.DeleteChronicDisease;
+using Rafiq.Application.Features.PatientProfiles.Commands.ChronicDiseases.UpdateChronicDisease;
 using Rafiq.Application.Features.PatientProfiles.Commands.CreateManagedProfile;
 using Rafiq.Application.Features.PatientProfiles.Commands.CreatePatientProfile;
 using Rafiq.Application.Features.PatientProfiles.Commands.DeletePatientProfile;
@@ -192,6 +198,84 @@ public sealed class PatientProfilesController(IMediator _mediator) : ControllerB
     public async Task<IActionResult> Leave(Guid profileId, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new LeaveHealthProfileCommand(profileId), cancellationToken);
+        return Ok(result);
+    }
+
+    // ── Allergies ──────────────────────────────────────────────────────────
+
+    [HttpPost("{profileId:guid}/allergies")]
+    public async Task<IActionResult> CreateAllergy(
+        Guid profileId,
+        [FromBody] CreateAllergyCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (profileId != command.PatientProfileId)
+            throw new BadRequestException("Route id doesn't match body id.");
+
+        var result = await _mediator.Send(command, cancellationToken);
+        return StatusCode(StatusCodes.Status201Created, result);
+    }
+
+    [HttpPut("{profileId:guid}/allergies/{allergyId:guid}")]
+    public async Task<IActionResult> UpdateAllergy(
+        Guid profileId,
+        Guid allergyId,
+        [FromBody] UpdateAllergyCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (profileId != command.PatientProfileId || allergyId != command.AllergyId)
+            throw new BadRequestException("Route ids don't match body ids.");
+
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpDelete("{profileId:guid}/allergies/{allergyId:guid}")]
+    public async Task<IActionResult> DeleteAllergy(
+        Guid profileId,
+        Guid allergyId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new DeleteAllergyCommand(profileId, allergyId), cancellationToken);
+        return Ok(result);
+    }
+
+    // ── Chronic Diseases ───────────────────────────────────────────────────
+
+    [HttpPost("{profileId:guid}/chronic-diseases")]
+    public async Task<IActionResult> CreateChronicDisease(
+        Guid profileId,
+        [FromBody] CreateChronicDiseaseCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (profileId != command.PatientProfileId)
+            throw new BadRequestException("Route id doesn't match body id.");
+
+        var result = await _mediator.Send(command, cancellationToken);
+        return StatusCode(StatusCodes.Status201Created, result);
+    }
+
+    [HttpPut("{profileId:guid}/chronic-diseases/{diseaseId:guid}")]
+    public async Task<IActionResult> UpdateChronicDisease(
+        Guid profileId,
+        Guid diseaseId,
+        [FromBody] UpdateChronicDiseaseCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (profileId != command.PatientProfileId || diseaseId != command.DiseaseId)
+            throw new BadRequestException("Route ids don't match body ids.");
+
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpDelete("{profileId:guid}/chronic-diseases/{diseaseId:guid}")]
+    public async Task<IActionResult> DeleteChronicDisease(
+        Guid profileId,
+        Guid diseaseId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new DeleteChronicDiseaseCommand(profileId, diseaseId), cancellationToken);
         return Ok(result);
     }
 }

@@ -50,10 +50,10 @@
         <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
         <span>Analytics</span>
       </a>
-      <a class="sb-link sb-sos" href="#">
+      <!-- <a class="sb-link sb-sos" href="#">
         <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
         <span>SOS &amp; Emergency</span>
-      </a>
+      </a> -->
       <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>Family Profiles</span>
@@ -449,6 +449,17 @@
           </button>
 
           }
+
+          <!-- Sort dropdown -->
+          <div class="appts-sort-wrap">
+            <i class="fa-solid fa-arrow-down-wide-short appts-sort-ico"></i>
+            <select class="appts-sort-sel" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event); currentPage.set(1)">
+              <option value="recent">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="az">A → Z</option>
+              <option value="za">Z → A</option>
+            </select>
+          </div>
 
         </div>
 

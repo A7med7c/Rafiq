@@ -14,8 +14,6 @@ public sealed record UpdatePatientProfileCommand(
     BloodType? BloodType,
     decimal? Height,
     decimal? Weight,
-    List<UpdateAllergyDto> Allergies,
-    List<UpdateChronicDiseaseDto> ChronicDiseases,
     RelationshipType? Relationship
 ) : IRequest<ApiResponse<PatientProfileDto>>
 {

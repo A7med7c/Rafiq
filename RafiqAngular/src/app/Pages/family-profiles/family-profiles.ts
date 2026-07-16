@@ -25,8 +25,8 @@ import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.ser
 
 type AddStep = 'choose' | 'create' | 'invite' | 'invited';
 
-interface AllergyEntry { name: string; severity: string; }
-interface DiseaseEntry { name: string; status: string; diagnosedAt: string; }
+interface AllergyEntry { id?: string; name: string; severity: string; }
+interface DiseaseEntry { id?: string; name: string; status: string; diagnosedAt: string; }
 
 interface SupervisionMemberEntry {
   accessId: string;
@@ -437,8 +437,8 @@ export class FamilyProfiles implements OnInit {
       height: d.height,
       weight: d.weight,
       relationship: p.relationship ?? '',
-      allergies: (d.allergies ?? []).map((a: any) => ({ name: a.name, severity: a.severity })),
-      chronicDiseases: (d.chronicDiseases ?? []).map((c: any) => ({ name: c.name, status: c.status, diagnosedAt: c.diagnosedAt?.split('T')[0] ?? '' })),
+      allergies: (d.allergies ?? []).map((a: any) => ({ id: a.id, name: a.name, severity: a.severity })),
+      chronicDiseases: (d.chronicDiseases ?? []).map((c: any) => ({ id: c.id, name: c.name, status: c.status, diagnosedAt: c.diagnosedAt?.split('T')[0] ?? '' })),
     };
     this.showEditModal.set(true);
   }
@@ -466,12 +466,6 @@ export class FamilyProfiles implements OnInit {
       height: f.height,
       weight: f.weight,
       relationship: isSelf ? null : (f.relationship || null),
-      allergies: f.allergies
-        .filter(a => a.name.trim())
-        .map(a => ({ name: a.name.trim(), severity: a.severity, notes: null })),
-      chronicDiseases: f.chronicDiseases
-        .filter(d => d.name.trim())
-        .map(d => ({ name: d.name.trim(), diagnosedAt: d.diagnosedAt || null, status: d.status, notes: null })),
     }).pipe(
       catchError(err => {
         const apiErrors: string[] = err?.error?.errors ?? [];
@@ -480,14 +474,84 @@ export class FamilyProfiles implements OnInit {
         return of(null);
       })
     ).subscribe(result => {
-      this.editSubmitting.set(false);
-      if (result !== null) {
+      if (result === null) return;
+
+      const detail = this.selectedDetail();
+      const origAllergies = detail?.allergies ?? [];
+      const origDiseases = detail?.chronicDiseases ?? [];
+      const origAllergyMap = new Map(origAllergies.map(a => [a.id, a]));
+      const origDiseaseMap = new Map(origDiseases.map(d => [d.id, d]));
+
+      const finalAllergies = f.allergies.filter(a => a.name.trim());
+      const finalDiseases = f.chronicDiseases.filter(d => d.name.trim());
+      const finalAllergyIds = new Set(finalAllergies.filter(a => a.id).map(a => a.id!));
+      const finalDiseaseIds = new Set(finalDiseases.filter(d => d.id).map(d => d.id!));
+
+      const ops: any[] = [];
+
+      // Allergies: delete removed
+      for (const orig of origAllergies) {
+        if (!finalAllergyIds.has(orig.id)) {
+          ops.push(this.http.delete(`${this.base}/patient-profiles/${profileId}/allergies/${orig.id}`));
+        }
+      }
+      // Allergies: create new / update changed
+      for (const a of finalAllergies) {
+        if (!a.id) {
+          ops.push(this.http.post(`${this.base}/patient-profiles/${profileId}/allergies`, {
+            patientProfileId: profileId, name: a.name.trim(), severity: a.severity,
+          }));
+        } else {
+          const orig = origAllergyMap.get(a.id);
+          if (!orig || orig.name !== a.name.trim() || orig.severity !== a.severity) {
+            ops.push(this.http.put(`${this.base}/patient-profiles/${profileId}/allergies/${a.id}`, {
+              patientProfileId: profileId, allergyId: a.id, name: a.name.trim(), severity: a.severity,
+            }));
+          }
+        }
+      }
+
+      // Diseases: delete removed
+      for (const orig of origDiseases) {
+        if (!finalDiseaseIds.has(orig.id)) {
+          ops.push(this.http.delete(`${this.base}/patient-profiles/${profileId}/chronic-diseases/${orig.id}`));
+        }
+      }
+      // Diseases: create new / update changed
+      for (const d of finalDiseases) {
+        if (!d.id) {
+          ops.push(this.http.post(`${this.base}/patient-profiles/${profileId}/chronic-diseases`, {
+            patientProfileId: profileId, name: d.name.trim(), diagnosedAt: d.diagnosedAt || null, status: d.status,
+          }));
+        } else {
+          const orig = origDiseaseMap.get(d.id);
+          if (!orig || orig.name !== d.name.trim() || orig.status !== d.status || (orig.diagnosedAt?.split('T')[0] ?? '') !== d.diagnosedAt) {
+            ops.push(this.http.put(`${this.base}/patient-profiles/${profileId}/chronic-diseases/${d.id}`, {
+              patientProfileId: profileId, diseaseId: d.id, name: d.name.trim(), diagnosedAt: d.diagnosedAt || null, status: d.status,
+            }));
+          }
+        }
+      }
+
+      const finish = () => {
+        this.editSubmitting.set(false);
         this.closeEditModal();
         this.fpSvc.getById(profileId).pipe(catchError(() => of(null))).subscribe(d => {
           this.selectedDetail.set(d);
         });
         this.loadProfiles();
-      }
+      };
+
+      if (ops.length === 0) { finish(); return; }
+
+      forkJoin(ops).pipe(
+        catchError(err => {
+          const apiErrors: string[] = err?.error?.errors ?? [];
+          this.editError = apiErrors.length ? apiErrors.join(' ') : (err?.error?.message || 'Failed to update allergies or diseases.');
+          this.editSubmitting.set(false);
+          return of(null);
+        })
+      ).subscribe(res => { if (res !== null) finish(); });
     });
   }
 

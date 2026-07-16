@@ -3,7 +3,6 @@ using MediatR;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.PatientProfiles.DTOs;
-using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Enums;
 using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
@@ -36,19 +35,6 @@ public sealed class UpdatePatientProfileCommandHandler(
             request.Weight,
             request.BloodType);
 
-        var newAllergies = (request.Allergies ?? []).Select(allergy => new Allergy(
-            allergy.Name,
-            allergy.Severity)).ToList();
-
-        var newDiseases = (request.ChronicDiseases ?? []).Select(disease => new ChronicDisease(
-            disease.Name,
-            disease.DiagnosedAt,
-            disease.Status)).ToList();
-
-        profile.SyncAllergies(newAllergies);
-        profile.SyncChronicDiseases(newDiseases);
-
-        // Update relationship on the access record for managed (non-self) profiles
         if (request.Relationship.HasValue)
         {
             var currentUserId = currentUserService.UserId;
@@ -58,9 +44,7 @@ public sealed class UpdatePatientProfileCommandHandler(
                     request.PatientProfileId, currentUserId.Value, cancellationToken);
 
                 if (access is not null && access.Relationship != RelationshipType.Self)
-                {
                     access.UpdateRelationship(request.Relationship.Value);
-                }
             }
         }
 
