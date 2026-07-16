@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Features.Auth.DTOs;
+using Rafiq.Domain.Constants;
 using Rafiq.Domain.Exceptions;
 using Rafiq.Infrastructure.Persistence.Identity;
 
@@ -25,10 +26,10 @@ public sealed class IdentityService(
         string email,
         string phoneNumber,
         string password,
-        string role,
+        string? profileImageUrl = null,
         CancellationToken cancellationToken = default)
     {
-        await EnsureRoleExistsAsync(role, cancellationToken);
+        await EnsureRoleExistsAsync(Roles.User, cancellationToken);
 
         var user = new ApplicationUser
         {
@@ -38,9 +39,10 @@ public sealed class IdentityService(
             Email = email,
             UserName = email,
             PhoneNumber = phoneNumber,
-            EmailConfirmed = true,
+            EmailConfirmed = false,
             PhoneNumberConfirmed = false,
-            IsActive = true
+            IsActive = true,
+            ProfileImageUrl = profileImageUrl
         };
 
         var createResult = await _userManager.CreateAsync(user, password);
@@ -48,7 +50,7 @@ public sealed class IdentityService(
         if (!createResult.Succeeded)
             throw new ValidationException(createResult.Errors.Select(x => x.Description));
 
-        var roleResult = await _userManager.AddToRoleAsync(user, role);
+        var roleResult = await _userManager.AddToRoleAsync(user, Roles.User);
 
         if (!roleResult.Succeeded)
             throw new ValidationException(roleResult.Errors.Select(x => x.Description));
@@ -57,8 +59,9 @@ public sealed class IdentityService(
             user.Id,
             user.Email!,
             user.PhoneNumber!,
-            role,
-            user.PhoneNumberConfirmed);
+            Roles.User,
+            !user.EmailConfirmed,
+            user.ProfileImageUrl);
     }
     public async Task<IdentityUserDto?> ValidateCredentialsAsync(
      string loginIdentifier,
@@ -101,7 +104,9 @@ public sealed class IdentityService(
             user.Email!,
             user.PhoneNumber!,
             role,
-            user.PhoneNumberConfirmed);
+            user.PhoneNumberConfirmed,
+            user.ProfileImageUrl,
+            user.EmailConfirmed);
     }
 
     public async Task<IdentityUserDto?> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -113,7 +118,7 @@ public sealed class IdentityService(
         }
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
-        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed);
+        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed, user.ProfileImageUrl, user.EmailConfirmed);
     }
 
     public async Task<IdentityUserDto?> GetByPhoneAsync(string phoneNumber, CancellationToken cancellationToken = default)
@@ -125,7 +130,7 @@ public sealed class IdentityService(
 
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
-        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed);
+        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed, user.ProfileImageUrl, user.EmailConfirmed);
     }
 
     public async Task<IdentityUserDto?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
@@ -135,7 +140,7 @@ public sealed class IdentityService(
             return null;
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
-        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed);
+        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed, user.ProfileImageUrl, user.EmailConfirmed);
     }
 
     public async Task ConfirmPhoneNumberAsync(
@@ -155,6 +160,22 @@ public sealed class IdentityService(
         if (!result.Succeeded)
             throw new ValidationException(result.Errors.Select(x => x.Description));
     }
+
+    public async Task ConfirmEmailAsync(
+    Guid userId,
+    CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+            ?? throw new NotFoundException("User", userId);
+
+        user.EmailConfirmed = true;
+
+        var result = await _userManager.UpdateAsync(user);
+
+        if (!result.Succeeded)
+            throw new ValidationException(result.Errors.Select(x => x.Description));
+    }
     public async Task<IdentityUserDto> LoginWithGoogleAsync(string IdToken, CancellationToken cancellationToken = default)
     {
         var googleUser = await _googleTokenValidator.ValidateAsync(IdToken, cancellationToken);
@@ -164,7 +185,7 @@ public sealed class IdentityService(
         var user = await _userManager.FindByEmailAsync(googleUser.Email);
         if (user is null)
         {
-            await EnsureRoleExistsAsync("Patient", cancellationToken);
+            await EnsureRoleExistsAsync(Roles.User, cancellationToken);
             user = new ApplicationUser
             {
                 Id = Guid.NewGuid(),
@@ -180,7 +201,7 @@ public sealed class IdentityService(
             if (!createResult.Succeeded)
                 throw new ValidationException(createResult.Errors.Select(x => x.Description));
 
-            var roleResult = await _userManager.AddToRoleAsync(user, "Patient");
+            var roleResult = await _userManager.AddToRoleAsync(user, Roles.User);
             if (!roleResult.Succeeded)
                 throw new ValidationException(createResult.Errors.Select(x => x.Description));
         }
@@ -189,7 +210,7 @@ public sealed class IdentityService(
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
 
-        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed);
+        return new IdentityUserDto(user.Id, user.Email!, user.PhoneNumber!, role, user.PhoneNumberConfirmed, user.ProfileImageUrl, user.EmailConfirmed);
 
     }
 
@@ -213,7 +234,7 @@ public sealed class IdentityService(
                             ?? throw new NotFoundException("User", userId);
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
-        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, role!);
+        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, role!, user.ProfileImageUrl);
     }
 
     public async Task<AccountDto> UpdateAccountAsync(Guid userId, string firstName, string lastName, string phoneNumber, CancellationToken cancellationToken = default)
@@ -233,7 +254,7 @@ public sealed class IdentityService(
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
 
-        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, role!);
+        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, role!, user.ProfileImageUrl);
     }
 
     public async Task ResetPasswordAsync(Guid userId, string newPassword, CancellationToken cancellationToken)

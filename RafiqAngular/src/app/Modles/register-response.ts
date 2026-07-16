@@ -5,5 +5,6 @@ export interface RegisterResponse {
   email: string;
   phoneNumber: string;
   role: UserRole;
-  requiresPhoneVerification: boolean;
+  requiresEmailVerification: boolean;
+  profileImageUrl?: string | null;
 }

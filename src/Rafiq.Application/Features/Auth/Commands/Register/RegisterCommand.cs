@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.Auth.DTOs;
 
@@ -11,4 +12,4 @@ public record RegisterCommand(
     string PhoneNumber,
     string Password,
     string ConfirmPassword,
-    string Role) : IRequest<ApiResponse<RegisterResponseDto>>;
+    IFormFile? ProfileImage = null) : IRequest<ApiResponse<RegisterResponseDto>>;

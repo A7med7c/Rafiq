@@ -1,0 +1,92 @@
+<section class="login-container" dir="ltr">
+    <div class="login-card">
+
+        <div class="card-header">
+            <h2>Verify Your Account</h2>
+            @if (email) {
+                <p>Verification code sent to:</p>
+                <p class="verification-email">{{ email }}</p>
+            } @else {
+                <p>Enter your email and the verification code sent to it.</p>
+            }
+        </div>
+
+        @if (successMessage) {
+            <div class="alert alert-success" role="status">
+                {{ successMessage }}
+            </div>
+        }
+
+        @if (apiErrors.length) {
+            <div class="alert alert-error" role="alert">
+                @for (error of apiErrors; track error) {
+                    <p>{{ error }}</p>
+                }
+            </div>
+        }
+
+        <div class="verification-panel">
+
+            @if (!email) {
+                <div class="field">
+                    <label for="email">Email</label>
+                    <div class="input-shell">
+                        <input
+                            id="email"
+                            type="email"
+                            [value]="email"
+                            (input)="email = $any($event.target).value"
+                            placeholder="Enter your email"
+                            autocomplete="email">
+                    </div>
+                </div>
+            }
+
+            <div class="field">
+                <label for="verificationCode">Verification Code</label>
+                <div class="input-shell">
+                    <input
+                        id="verificationCode"
+                        type="text"
+                        inputmode="numeric"
+                        [value]="verificationCode"
+                        (input)="verificationCode = $any($event.target).value"
+                        placeholder="Enter verification code"
+                        autocomplete="one-time-code">
+                </div>
+            </div>
+
+            <button
+                class="submit-button"
+                type="button"
+                (click)="verify()"
+                [disabled]="isVerifying">
+                @if (isVerifying) {
+                    Verifying...
+                } @else {
+                    Verify
+                }
+            </button>
+
+            <button
+                class="secondary-button"
+                type="button"
+                (click)="resend()"
+                [disabled]="isResending || resendCooldown > 0">
+                @if (isResending) {
+                    Sending...
+                } @else if (resendCooldown > 0) {
+                    Resend Code ({{ resendCooldown }}s)
+                } @else {
+                    Resend Code
+                }
+            </button>
+        </div>
+
+        <p class="register">
+            Already verified?
+            <a routerLink="/login">Log In</a>
+        </p>
+
+    </div>
+</section>

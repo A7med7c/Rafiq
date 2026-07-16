@@ -53,6 +53,19 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  /** Resolves the current user's avatar to an absolute URL, falling back to the default avatar. */
+  get avatarUrl(): string {
+    return this.resolveAvatarUrl(this.currentUser?.profileImageUrl);
+  }
+
+  resolveAvatarUrl(profileImageUrl: string | null | undefined): string {
+    if (!profileImageUrl) {
+      return 'images/ahmed_avatar.png';
+    }
+
+    return `${environment.fileBaseUrl}${profileImageUrl}`;
+  }
+
   initializeSession(): Observable<Account | null> {
     if (this.sessionInitialized) {
       return of(this.currentUserSubject.value);
@@ -81,31 +94,64 @@ export class AuthService {
     );
   }
 
-  register(request: RegisterRequest): Observable<ApiResponse<RegisterResponse>> {
+  register(request: RegisterRequest, profileImage?: File | null): Observable<ApiResponse<RegisterResponse>> {
+    const formData = new FormData();
+    formData.append('firstName', request.firstName);
+    formData.append('lastName', request.lastName);
+    formData.append('email', request.email);
+    formData.append('phoneNumber', request.phoneNumber);
+    formData.append('password', request.password);
+    formData.append('confirmPassword', request.confirmPassword);
+
+    if (profileImage) {
+      formData.append('profileImage', profileImage, profileImage.name);
+    }
+
     return this.http.post<ApiResponse<RegisterResponse>>(
       `${environment.apiUrl}/auth/register`,
-      request
+      formData
     );
   }
 
-  verifyPhone(phoneNumber: string, code: string): Observable<ApiResponseBase> {
+  verifyAccount(email: string, code: string): Observable<ApiResponseBase> {
     return this.http.post<ApiResponseBase>(
       `${environment.apiUrl}/auth/verify-phone`,
       {
-        phoneNumber,
+        email,
         code,
-        purpose: 'PhoneVerification'
+        purpose: 'EmailVerification'
       }
     );
   }
 
-  resendPhoneCode(phoneNumber: string): Observable<ApiResponseBase> {
+  resendOtp(email: string): Observable<ApiResponseBase> {
     return this.http.post<ApiResponseBase>(
       `${environment.apiUrl}/auth/resend-phone-code`,
       {
-        phoneNumber,
-        purpose: 'PhoneVerification'
+        email,
+        purpose: 'EmailVerification'
       }
+    );
+  }
+
+  forgotPassword(email: string): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(
+      `${environment.apiUrl}/auth/forget-password`,
+      { email }
+    );
+  }
+
+  verifyResetOtp(email: string, code: string): Observable<ApiResponse<{ resetToken: string }>> {
+    return this.http.post<ApiResponse<{ resetToken: string }>>(
+      `${environment.apiUrl}/auth/verify-reset-otp`,
+      { email, code }
+    );
+  }
+
+  resetPassword(resetToken: string, newPassword: string): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(
+      `${environment.apiUrl}/auth/reset-password`,
+      { resetToken, newPassword }
     );
   }
 

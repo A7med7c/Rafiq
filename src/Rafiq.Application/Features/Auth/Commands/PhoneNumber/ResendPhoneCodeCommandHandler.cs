@@ -15,20 +15,20 @@ public sealed class ResendPhoneCodeCommandHandler(
      ResendPhoneCodeCommand request,
      CancellationToken cancellationToken)
     {
-        var user = await identityService.GetByPhoneAsync(
-            request.PhoneNumber,
+        var user = await identityService.GetByEmailAsync(
+            request.Email,
             cancellationToken);
 
         if (user is null)
-            throw new NotFoundException("ApplicationUser", request.PhoneNumber);
+            throw new NotFoundException("ApplicationUser", request.Email);
 
-        if (user.PhoneNumberConfirmed)
-            throw new ConflictException("Phone number is already verified.");
+        if (user.EmailConfirmed)
+            throw new ConflictException("Email is already verified.");
 
         await otpService.SendOtpAsync(
             user.UserId,
-            user.PhoneNumber,
-            OtpPurpose.PhoneVerification,
+            user.Email,
+            OtpPurpose.EmailVerification,
             cancellationToken);
 
         return ApiResponseBase.SuccessResponse(

@@ -9,7 +9,7 @@ public sealed class RegisterCommandValidatorTests
     public void Validate_WhenCommandIsValid_ReturnsNoErrors()
     {
         var validator = new RegisterCommandValidator();
-        var command = new RegisterCommand("Patient", "User", "patient@example.com", "01001234567", "Password1!", "Password1!", "Patient");
+        var command = new RegisterCommand("Patient", "User", "patient@example.com", "01001234567", "Password1!", "Password1!");
 
         var result = validator.Validate(command);
 
@@ -20,7 +20,7 @@ public sealed class RegisterCommandValidatorTests
     public void Validate_WhenPasswordIsWeak_ReturnsErrors()
     {
         var validator = new RegisterCommandValidator();
-        var command = new RegisterCommand("Patient", "User", "patient@example.com", "01001234567", "password", "password", "Patient");
+        var command = new RegisterCommand("Patient", "User", "patient@example.com", "01001234567", "password", "password");
 
         var result = validator.Validate(command);
 

@@ -281,6 +281,7 @@ nextPage() {
     return u?.firstName?.trim() || u?.email || 'there';
   }
   get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
+  get avatarUrl(): string { return this.authSvc.avatarUrl; }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {

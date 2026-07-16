@@ -6,6 +6,7 @@ public sealed record ProfileMemberDto(
     string FirstName,
     string LastName,
     string Email,
+    string? ProfileImageUrl,
     string Role,
     string Status,
     string Origin,

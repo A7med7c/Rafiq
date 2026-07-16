@@ -37,6 +37,9 @@ public sealed class UserHealthProfileConfiguration
         builder.Property(x => x.Weight)
             .HasPrecision(5, 2);
 
+        builder.Property(x => x.ProfileImageUrl)
+            .HasMaxLength(500);
+
         builder.HasOne<ApplicationUser>()
             .WithOne()
             .HasForeignKey<UserHealthProfile>(x => x.UserId)

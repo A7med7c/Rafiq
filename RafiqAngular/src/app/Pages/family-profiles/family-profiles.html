@@ -100,13 +100,13 @@
           }
         </button>
         <div class="hdr-user" (click)="toggleDropdown()">
-          <img src="images/ahmed_avatar.png" alt="user" class="hdr-avatar">
+          <img [src]="avatarUrl" alt="user" class="hdr-avatar">
           <span class="hdr-username">{{ displayName }}</span>
           <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
           @if (dropdownOpen()) {
           <div class="user-dropdown" (click)="$event.stopPropagation()">
             <div class="user-dropdown-hdr">
-              <div class="user-dropdown-av"><img src="images/ahmed_avatar.png" alt="avatar"></div>
+              <div class="user-dropdown-av"><img [src]="avatarUrl" alt="avatar"></div>
               <div class="user-dropdown-info">
                 <span class="user-dropdown-name">{{ displayName }}</span>
                 <span class="user-dropdown-email">{{ userEmail }}</span>
@@ -182,9 +182,13 @@
             [class.fp-profile-card--selected]="selectedProfile()?.userHealthProfileId === profile.userHealthProfileId"
             (click)="selectProfile(profile)">
             <div class="fp-av-wrap">
+              @if (profileAvatarUrl(profile); as avUrl) {
+              <img class="fp-av fp-av-img" [src]="avUrl" alt="{{ profile.firstName }}">
+              } @else {
               <div class="fp-av" [style.background]="getAvatarColor(i)">
                 {{ profile.firstName[0].toUpperCase() }}
               </div>
+              }
               <span class="fp-dot" [class]="getDotClass(profile)"></span>
             </div>
             <p class="fp-card-name">{{ profile.firstName }} {{ profile.lastName }}</p>
@@ -222,9 +226,13 @@
         <!-- Detail header -->
         <div class="fp-detail-hdr">
           <div class="fp-detail-av-wrap">
+            @if (profileAvatarUrl(selectedProfile()!); as avUrl) {
+            <img class="fp-detail-av fp-detail-av-img" [src]="avUrl" alt="{{ selectedProfile()!.firstName }}">
+            } @else {
             <div class="fp-detail-av" [style.background]="getAvatarColor(profiles().indexOf(selectedProfile()!))">
               {{ selectedProfile()!.firstName[0].toUpperCase() }}
             </div>
+            }
           </div>
           <div class="fp-detail-info">
             <div class="fp-detail-name-row">
@@ -584,6 +592,25 @@
       @if (errorMessage) {
       <div class="fp-form-error">{{ errorMessage }}</div>
       }
+      <div class="fp-form-group fp-img-field">
+        <label class="fp-label">Profile Photo (optional)</label>
+        <div class="fp-img-picker">
+          <div class="fp-img-preview">
+            @if (createForm.profileImagePreview) {
+            <img [src]="createForm.profileImagePreview" alt="Profile preview">
+            } @else {
+            <div class="fp-img-placeholder"><i class="fa-solid fa-user"></i></div>
+            }
+          </div>
+          <div class="fp-img-actions">
+            <input #createImageInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+              (change)="onCreateImageSelected($event)">
+            @if (createForm.profileImage) {
+            <button type="button" class="fp-remove-btn" (click)="removeCreateImage(createImageInput)">Remove</button>
+            }
+          </div>
+        </div>
+      </div>
       <div class="fp-form-row fp-form-row--2">
         <div class="fp-form-group">
           <label class="fp-label">First Name <span class="fp-req">*</span></label>
@@ -808,6 +835,27 @@
       @if (editError) {
       <div class="fp-form-error">{{ editError }}</div>
       }
+      <div class="fp-form-group fp-img-field">
+        <label class="fp-label">Profile Photo (optional)</label>
+        <div class="fp-img-picker">
+          <div class="fp-img-preview">
+            @if (editForm.profileImagePreview) {
+            <img [src]="editForm.profileImagePreview" alt="Profile preview">
+            } @else if (!editForm.removeImage && editForm.existingImageUrl) {
+            <img [src]="memberAvatarUrl(editForm.existingImageUrl)" alt="Current profile photo">
+            } @else {
+            <div class="fp-img-placeholder"><i class="fa-solid fa-user"></i></div>
+            }
+          </div>
+          <div class="fp-img-actions">
+            <input #editImageInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+              (change)="onEditImageSelected($event)">
+            @if (editForm.profileImage || (editForm.existingImageUrl && !editForm.removeImage)) {
+            <button type="button" class="fp-remove-btn" (click)="removeEditImage(editImageInput)">Remove</button>
+            }
+          </div>
+        </div>
+      </div>
       <div class="fp-form-row fp-form-row--2">
         <div class="fp-form-group">
           <label class="fp-label">First Name <span class="fp-req">*</span></label>
@@ -1124,9 +1172,13 @@
             <ul class="fp-sup-list">
               @for (p of pagedSupervised(); track p.userHealthProfileId) {
               <li class="fp-sup-item">
+                @if (profileAvatarUrl(p); as avUrl) {
+                <img class="fp-sup-av fp-sup-av-img" [src]="avUrl" alt="{{ p.firstName }}">
+                } @else {
                 <div class="fp-sup-av" [style.background]="getAvatarColor(profiles().indexOf(p))">
                   {{ p.firstName[0].toUpperCase() }}
                 </div>
+                }
                 <div class="fp-sup-info">
                   <span class="fp-sup-name">{{ p.firstName }} {{ p.lastName }}</span>
                   <span class="fp-sup-meta">
@@ -1202,9 +1254,13 @@
             <ul class="fp-sup-list">
               @for (m of pagedSupervising(); track m.accessId) {
               <li class="fp-sup-item">
+                @if (memberAvatarUrl(m.profileImageUrl); as avUrl) {
+                <img class="fp-sup-av fp-sup-av-img" [src]="avUrl" alt="{{ m.firstName }}">
+                } @else {
                 <div class="fp-sup-av fp-sup-av--purple">
                   {{ m.firstName[0].toUpperCase() }}
                 </div>
+                }
                 <div class="fp-sup-info">
                   <span class="fp-sup-name">{{ m.firstName }} {{ m.lastName }}</span>
                   <span class="fp-sup-meta">

@@ -91,7 +91,8 @@ public sealed class RefreshTokenCommandHandler(
                 refreshToken,
                 accessTokenExpiresAt,
                 refreshTokenExpiresAt,
-                hasEmergencyContacts),
+                hasEmergencyContacts,
+                user.ProfileImageUrl),
             "Token refreshed successfully.");
     }
 }

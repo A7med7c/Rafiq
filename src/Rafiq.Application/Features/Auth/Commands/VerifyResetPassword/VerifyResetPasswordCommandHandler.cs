@@ -13,8 +13,8 @@ namespace Rafiq.Application.Features.Auth.Commands.ResetPassword
     {
         public async Task<ApiResponse<VerifyResetOtpResponseDto>> Handle(VerifyResetPasswordCommand request, CancellationToken cancellationToken)
         {
-            var user = await _identityService.GetByPhoneAsync(request.phoneNumber, cancellationToken)
-               ?? throw new NotFoundException("user", request.phoneNumber);
+            var user = await _identityService.GetByEmailAsync(request.email, cancellationToken)
+               ?? throw new NotFoundException("user", request.email);
 
             var verified = await _otpService.VerifyOtpAsync(user.UserId, request.code, OtpPurpose.PasswordReset, cancellationToken);
 

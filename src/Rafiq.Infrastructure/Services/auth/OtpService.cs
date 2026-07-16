@@ -3,17 +3,20 @@ using Rafiq.Domain.Entities.User;
 using Rafiq.Domain.Enums;
 using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
+using Rafiq.Infrastructure.Services.Notifications.EmailTemplates;
 
 namespace Rafiq.Infrastructure.Services.auth
 {
     internal sealed class OtpService(
     IOtpGenerator otpGenerator, IOtpHasher otpHasher, IOtpVerificationRepository otpRepository,
-    IUnitOfWork unitOfWork, INotificationsService notificationsService)
+    IUnitOfWork unitOfWork, IEmailSender emailSender)
     : IOtpService
     {
+        private const int OtpExpirationMinutes = 5;
+
         public async Task SendOtpAsync(
      Guid userId,
-     string phoneNumber,
+     string email,
      OtpPurpose purpose,
      CancellationToken cancellationToken)
         {
@@ -49,7 +52,7 @@ namespace Rafiq.Infrastructure.Services.auth
                 userId,
                 hash,
                 purpose,
-                DateTime.UtcNow.AddMinutes(5));
+                DateTime.UtcNow.AddMinutes(OtpExpirationMinutes));
 
             // Save
             await otpRepository.AddAsync(
@@ -58,10 +61,25 @@ namespace Rafiq.Infrastructure.Services.auth
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Send SMS
-            await notificationsService.SendSMSAsync(
-                phoneNumber,
-                $"Your verification code is {code}",
+            // Send Email
+            var subject = purpose == OtpPurpose.PasswordReset
+                ? "Reset Your Password - Rafiq"
+                : "Verify Your Email - Rafiq";
+
+            var introText = purpose == OtpPurpose.PasswordReset
+                ? "We received a request to reset your password. Use the verification code below to continue."
+                : "Welcome to Rafiq! Thank you for creating your account. Please use the verification code below to activate your account.";
+
+            var displayName = email.Contains('@') ? email[..email.IndexOf('@')] : email;
+
+            var htmlBody = EmailTemplateBuilder.Layout(
+                previewText: subject,
+                bodyHtml: EmailTemplateBuilder.OtpBody(displayName, introText, code, OtpExpirationMinutes));
+
+            await emailSender.SendEmailAsync(
+                email,
+                subject,
+                htmlBody,
                 cancellationToken);
         }
 
