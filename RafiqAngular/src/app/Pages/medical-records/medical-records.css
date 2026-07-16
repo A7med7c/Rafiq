@@ -19,6 +19,60 @@
   min-width: 250px;
 }
 
+/* ── Profile Context Banner ─────────────────── */
+.records-context-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--color-primary-10, #e8f6fb);
+  border: 1px solid var(--color-primary-30, #b3e0f0);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+}
+
+.records-context-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.records-context-text i {
+  color: var(--color-primary, #0EAFD7);
+  font-size: 0.9rem;
+}
+
+.records-context-text strong {
+  color: var(--color-text-primary, #111827);
+  font-weight: 600;
+}
+
+.records-context-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-primary, #0EAFD7);
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-primary-30, #b3e0f0);
+  background: white;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.records-context-back:hover {
+  background: var(--color-primary, #0EAFD7);
+  color: white;
+  border-color: var(--color-primary, #0EAFD7);
+}
+
 .view-document-card{
 
     width:100%;
@@ -380,6 +434,109 @@
   background: var(--blue-lt);
   color: var(--blue);
   border-color: var(--blue-mid);
+}
+
+/* ── Two-button row inside each upload card ── */
+.up-btn-group {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.up-btn-group .up-btn {
+  flex: 1;
+  width: auto;
+}
+
+.up-btn--scan:hover {
+  background: var(--blue-lt);
+  color: var(--blue);
+  border-color: var(--blue-mid);
+}
+
+.up-btn--manual {
+  background: var(--white);
+  color: var(--text-2);
+  border-color: var(--border);
+}
+
+.up-btn--manual:hover {
+  background: #F5F3FF;
+  color: #7C3AED;
+  border-color: #C4B5FD;
+}
+
+/* ── Manual image upload inside review/scan modals ── */
+.manual-img-upload-pad {
+  min-height: 100px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-xs);
+  background: #F9FAFB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.manual-img-choose-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-xs);
+  background: var(--white);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.manual-img-choose-btn:hover:not(:disabled) {
+  background: var(--blue-lt);
+  color: var(--blue);
+  border-color: var(--blue-mid);
+}
+
+.manual-img-choose-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.manual-img-loading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.manual-img-remove-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  background: var(--white);
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.manual-img-remove-btn:hover:not(:disabled) {
+  background: var(--red-lt);
+  border-color: #FECACA;
+}
+
+.manual-img-remove-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ── Tabs Bar ──────────────────────────────── */

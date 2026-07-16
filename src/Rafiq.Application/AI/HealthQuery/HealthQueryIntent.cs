@@ -17,4 +17,11 @@ public sealed class HealthQueryIntent
     public string? SearchTerm { get; set; }
 
     public string? Timeframe { get; set; }
+
+    /// <summary>
+    /// Set by the AI only when it cannot classify the target from categories/operations alone
+    /// and the prompt's <c>includeTargetProfile</c> mode is active. Contains the exact name
+    /// the user typed. Null when the profile was already resolved deterministically.
+    /// </summary>
+    public string? TargetProfile { get; set; }
 }

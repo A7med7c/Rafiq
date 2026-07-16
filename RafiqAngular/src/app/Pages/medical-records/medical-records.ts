@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { RecordsContentComponent } from '../../Components/records-content/records-content';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../Services/auth-service';
 import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medical-records.service';
@@ -19,7 +19,9 @@ import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { NotificationService } from '../../Services/notification.service';
-import { switchMap } from 'rxjs';
+import { switchMap, catchError, of, map } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -150,7 +152,30 @@ export class MedicalRecords implements OnInit {
   readonly notificationSvc = inject(NotificationService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fpSvc = inject(FamilyProfilesService);
   private readonly base = environment.apiUrl;
+
+  readonly viewingProfile = toSignal<AccessibleProfileDto | null>(
+    this.route.queryParamMap.pipe(
+      map(params => params.get('profileId')),
+      switchMap(profileId => {
+        if (!profileId) return of(null);
+        return this.fpSvc.getAccessible().pipe(
+          map(profiles => profiles.find(p => p.userHealthProfileId === profileId) ?? null),
+          catchError(() => of(null))
+        );
+      })
+    ),
+    { initialValue: null }
+  );
+
+  readonly contextProfileId = computed(() => this.viewingProfile()?.userHealthProfileId ?? undefined);
+  readonly contextProfileName = computed(() => {
+    const p = this.viewingProfile();
+    return p ? `${p.firstName} ${p.lastName}` : null;
+  });
+  readonly contextReadOnly = computed(() => this.viewingProfile()?.accessRole === 'Viewer');
 
   @ViewChild('labInput') labInput?: ElementRef<HTMLInputElement>;
   @ViewChild('prescriptionInput') prescriptionInput?: ElementRef<HTMLInputElement>;

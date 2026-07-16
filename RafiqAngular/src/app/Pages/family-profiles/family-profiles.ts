@@ -19,7 +19,6 @@ import {
   ProfileMemberDto,
   SentInvitationDto,
 } from '../../Services/family-profiles.service';
-import { RecordsContentComponent } from '../../Components/records-content/records-content';
 import { AppointmentsContentComponent } from '../../Components/appointments-content/appointments-content';
 import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.service';
 
@@ -41,7 +40,7 @@ interface SupervisionMemberEntry {
 @Component({
   selector: 'app-family-profiles',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RecordsContentComponent, AppointmentsContentComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AppointmentsContentComponent],
   templateUrl: './family-profiles.html',
   styleUrl: './family-profiles.css',
 })
@@ -299,6 +298,12 @@ export class FamilyProfiles implements OnInit {
       this.selectedDetail.set(d);
       this.detailLoading.set(false);
     });
+  }
+
+  navigateToRecords(): void {
+    const p = this.selectedProfile();
+    if (!p) return;
+    this.router.navigate(['/medical-records'], { queryParams: { profileId: p.userHealthProfileId } });
   }
 
   switchTab(tab: string): void {

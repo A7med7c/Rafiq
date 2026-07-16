@@ -137,6 +137,8 @@ export class RecordsContentComponent implements OnInit, OnChanges {
   @ViewChild('imagingInput') imagingInput!: ElementRef<HTMLInputElement>;
   @ViewChild('medicineInput') medicineInput!: ElementRef<HTMLInputElement>;
   @ViewChild('generalInput') generalInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('manualImageInput') manualImageInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('manualMedImageInput') manualMedImageInput!: ElementRef<HTMLInputElement>;
 
   private readonly recordsService = inject(MedicalRecordsService);
   private readonly healthProfileSvc = inject(HealthProfileService);
@@ -219,6 +221,20 @@ export class RecordsContentComponent implements OnInit, OnChanges {
   readonly addingMedIndex = signal<number | null>(null);
   readonly addedMedIndices = signal<Set<number>>(new Set());
   readonly addingAllMeds = signal(false);
+
+  // Manual entry mode tracking
+  readonly manualReviewMode = signal(false);
+  readonly manualMedicineMode = signal(false);
+  readonly scanSource = signal<1 | 3>(3);
+
+  // Manual image upload
+  readonly manualImageUploading = signal(false);
+  readonly reviewDateError = signal<string | null>(null);
+
+  readonly todayStr = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
 
   // Task 2: change-detection snapshots
   private _reviewFormSnapshot: string | null = null;
@@ -796,11 +812,21 @@ export class RecordsContentComponent implements OnInit, OnChanges {
     this.addedMedIndices.set(new Set());
     this.addingMedIndex.set(null);
     this.addingAllMeds.set(false);
+    this.manualReviewMode.set(false);
+    this.manualImageUploading.set(false);
+    this.reviewDateError.set(null);
   }
 
   confirmAndSave(): void {
     const rf = this.reviewForm();
     if (!rf) return;
+
+    const dateStr = rf.type === 'prescription' ? rf.prescriptionDate : rf.reportDate;
+    if (dateStr && dateStr > this.todayStr) {
+      this.reviewDateError.set('Date cannot be later than today.');
+      return;
+    }
+    this.reviewDateError.set(null);
 
     if (rf.mode === 'edit' && this._reviewFormSnapshot !== null &&
         this.snapshotReviewForm(rf) === this._reviewFormSnapshot) {
@@ -858,7 +884,10 @@ export class RecordsContentComponent implements OnInit, OnChanges {
         this.addedMedIndices.set(new Set());
         this.addingMedIndex.set(null);
         this.addingAllMeds.set(false);
-        this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : 'Record confirmed and saved.', 'success');
+        this.manualReviewMode.set(false);
+        this.manualImageUploading.set(false);
+        this.reviewDateError.set(null);
+        this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : 'Record saved successfully.', 'success');
         this.loadData();
 
         if (rf.type === 'prescription' && rf.mode !== 'edit') {
@@ -911,6 +940,77 @@ export class RecordsContentComponent implements OnInit, OnChanges {
     this.scanRecordId.set(null);
     this.scanForm = this.emptyScanForm();
     this._scanFormSnapshot = null;
+    this.manualMedicineMode.set(false);
+    this.scanSource.set(3);
+    this.manualImageUploading.set(false);
+  }
+
+  onManualImageSelected(e: Event): void {
+    const f = this.extractFile(e);
+    if (f) this.uploadManualImage(f, 'review');
+  }
+
+  onManualMedImageSelected(e: Event): void {
+    const f = this.extractFile(e);
+    if (f) this.uploadManualImage(f, 'medicine');
+  }
+
+  private uploadManualImage(file: File, target: 'review' | 'medicine'): void {
+    this.manualImageUploading.set(true);
+    const form = new FormData();
+    form.append('image', file);
+    this.http.post<{ data: { path: string } }>(`${this.base}/documents/upload-image`, form).subscribe({
+      next: res => {
+        this.manualImageUploading.set(false);
+        const path = res?.data?.path ?? '';
+        if (target === 'review') {
+          const rf = this.reviewForm();
+          if (rf) { this.reviewForm.set({ ...rf, imagePath: path }); this.reviewImageFailed.set(false); }
+        } else {
+          this.scanForm.imagePath = path;
+          this.scanImageFailed.set(false);
+        }
+      },
+      error: () => {
+        this.manualImageUploading.set(false);
+        this.showToast('Failed to upload image. Please try again.', 'error');
+      },
+    });
+  }
+
+  clearManualImage(target: 'review' | 'medicine'): void {
+    if (target === 'review') {
+      const rf = this.reviewForm();
+      if (rf) this.reviewForm.set({ ...rf, imagePath: '' });
+    } else {
+      this.scanForm.imagePath = '';
+    }
+  }
+
+  openManualEntry(type: UploadCardKey): void {
+    if (type === 'medicine') {
+      this.scanForm = this.emptyScanForm();
+      this.scanImageFailed.set(false);
+      this.manualMedicineMode.set(true);
+      this.scanSource.set(1);
+      this.scanMode.set('create');
+      this.scanRecordId.set(null);
+      this._scanFormSnapshot = null;
+      this.scanResult.set({ medicineName: '', strength: '', dosageForm: '', manufacturer: '', imagePath: '' });
+      return;
+    }
+    const typeMap: Record<string, 'lab' | 'imaging' | 'prescription'> = {
+      lab: 'lab', imaging: 'imaging', prescription: 'prescription',
+    };
+    const reviewType = typeMap[type];
+    if (!reviewType) return;
+    const seedData: Record<string, any> = {
+      lab: { results: [{ testName: '', value: '', unit: '', normalRange: '', status: 'Normal' }] },
+      prescription: { medicines: [{ medicineName: '', dosage: '', frequency: '', duration: '', instructions: '' }] },
+      imaging: {},
+    };
+    this.manualReviewMode.set(true);
+    this.openReviewModal(reviewType, seedData[reviewType], 'create');
   }
 
   saveScanResult(): void {
@@ -930,7 +1030,7 @@ export class RecordsContentComponent implements OnInit, OnChanges {
       duration: this.scanForm.duration.trim() || 'As needed',
       notes: this.scanForm.notes.trim() || undefined,
       imagePath: this.scanForm.imagePath || undefined,
-      source: 3,
+      source: this.scanSource(),
     };
 
     const mode = this.scanMode();
@@ -955,6 +1055,8 @@ export class RecordsContentComponent implements OnInit, OnChanges {
         this.scanRecordId.set(null);
         this.scanForm = this.emptyScanForm();
         this._scanFormSnapshot = null;
+        this.manualMedicineMode.set(false);
+        this.scanSource.set(3);
         this.showToast(mode === 'edit' ? 'Medicine record updated successfully.' : 'Medicine saved to your records.', 'success');
         this.loadData();
 

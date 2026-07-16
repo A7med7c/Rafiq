@@ -11,6 +11,10 @@
     (change)="onMedicineFileSelected($event)">
   <input #generalInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
     (change)="onGeneralFileSelected($event)">
+  <input #manualImageInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
+    (change)="onManualImageSelected($event)">
+  <input #manualMedImageInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
+    (change)="onManualMedImageSelected($event)">
 
   <!-- UPLOAD CARDS GRID (hidden in compact mode) -->
   @if (!compact) {
@@ -20,21 +24,27 @@
       <h2 class="up-title">Lab Analysis</h2>
       <p class="up-desc">Upload blood tests, urine tests, and diagnostic lab results.</p>
       <span class="up-count">{{ labCount() }} {{ labCount() === 1 ? 'Record' : 'Records' }}</span>
-      <button type="button" class="up-btn" [disabled]="getUploadState('lab').uploading"
-        [class.up-btn--loading]="getUploadState('lab').uploading" (click)="triggerUpload('Lab Analysis')">
-        @if (getUploadState('lab').uploading) {
-        <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('lab').indeterminate">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
-            [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
-            [attr.stroke-dashoffset]="progressOffset(getUploadState('lab').progress)" stroke-linecap="round"
-            transform="rotate(-90 18 18)" />
-        </svg>
-        @if (!getUploadState('lab').indeterminate) { <span>{{ getUploadState('lab').progress }}%</span> }
-        } @else {
-        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
-        }
-      </button>
+      <div class="up-btn-group">
+        <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('lab').uploading"
+          [class.up-btn--loading]="getUploadState('lab').uploading" (click)="triggerUpload('Lab Analysis')">
+          @if (getUploadState('lab').uploading) {
+          <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('lab').indeterminate">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+              [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
+              [attr.stroke-dashoffset]="progressOffset(getUploadState('lab').progress)" stroke-linecap="round"
+              transform="rotate(-90 18 18)" />
+          </svg>
+          @if (!getUploadState('lab').indeterminate) { <span>{{ getUploadState('lab').progress }}%</span> }
+          } @else {
+          <i class="fa-solid fa-cloud-arrow-up"></i> Scan with AI
+          }
+        </button>
+        <button type="button" class="up-btn up-btn--manual"
+          [disabled]="getUploadState('lab').uploading" (click)="openManualEntry('lab')">
+          <i class="fa-solid fa-pen-to-square"></i> Add Manually
+        </button>
+      </div>
     </div>
 
     <div class="up-card">
@@ -42,21 +52,27 @@
       <h2 class="up-title">Prescription</h2>
       <p class="up-desc">Store medical prescriptions and extract medication schedules.</p>
       <span class="up-count">{{ prescriptionCount() }} {{ prescriptionCount() === 1 ? 'Record' : 'Records' }}</span>
-      <button type="button" class="up-btn" [disabled]="getUploadState('prescription').uploading"
-        [class.up-btn--loading]="getUploadState('prescription').uploading" (click)="triggerUpload('Prescription')">
-        @if (getUploadState('prescription').uploading) {
-        <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('prescription').indeterminate">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
-            [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
-            [attr.stroke-dashoffset]="progressOffset(getUploadState('prescription').progress)"
-            stroke-linecap="round" transform="rotate(-90 18 18)" />
-        </svg>
-        @if (!getUploadState('prescription').indeterminate) { <span>{{ getUploadState('prescription').progress }}%</span> }
-        } @else {
-        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
-        }
-      </button>
+      <div class="up-btn-group">
+        <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('prescription').uploading"
+          [class.up-btn--loading]="getUploadState('prescription').uploading" (click)="triggerUpload('Prescription')">
+          @if (getUploadState('prescription').uploading) {
+          <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('prescription').indeterminate">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+              [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
+              [attr.stroke-dashoffset]="progressOffset(getUploadState('prescription').progress)"
+              stroke-linecap="round" transform="rotate(-90 18 18)" />
+          </svg>
+          @if (!getUploadState('prescription').indeterminate) { <span>{{ getUploadState('prescription').progress }}%</span> }
+          } @else {
+          <i class="fa-solid fa-cloud-arrow-up"></i> Scan with AI
+          }
+        </button>
+        <button type="button" class="up-btn up-btn--manual"
+          [disabled]="getUploadState('prescription').uploading" (click)="openManualEntry('prescription')">
+          <i class="fa-solid fa-pen-to-square"></i> Add Manually
+        </button>
+      </div>
     </div>
 
     <div class="up-card">
@@ -64,21 +80,27 @@
       <h2 class="up-title">X-Ray &amp; Imaging</h2>
       <p class="up-desc">Keep MRI, CT scans, ultrasounds, and chest X-rays safe.</p>
       <span class="up-count">{{ imagingCount() }} {{ imagingCount() === 1 ? 'Record' : 'Records' }}</span>
-      <button type="button" class="up-btn" [disabled]="getUploadState('imaging').uploading"
-        [class.up-btn--loading]="getUploadState('imaging').uploading" (click)="triggerUpload('X-Ray & Imaging')">
-        @if (getUploadState('imaging').uploading) {
-        <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('imaging').indeterminate">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
-            [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
-            [attr.stroke-dashoffset]="progressOffset(getUploadState('imaging').progress)" stroke-linecap="round"
-            transform="rotate(-90 18 18)" />
-        </svg>
-        @if (!getUploadState('imaging').indeterminate) { <span>{{ getUploadState('imaging').progress }}%</span> }
-        } @else {
-        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
-        }
-      </button>
+      <div class="up-btn-group">
+        <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('imaging').uploading"
+          [class.up-btn--loading]="getUploadState('imaging').uploading" (click)="triggerUpload('X-Ray & Imaging')">
+          @if (getUploadState('imaging').uploading) {
+          <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('imaging').indeterminate">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+              [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
+              [attr.stroke-dashoffset]="progressOffset(getUploadState('imaging').progress)" stroke-linecap="round"
+              transform="rotate(-90 18 18)" />
+          </svg>
+          @if (!getUploadState('imaging').indeterminate) { <span>{{ getUploadState('imaging').progress }}%</span> }
+          } @else {
+          <i class="fa-solid fa-cloud-arrow-up"></i> Scan with AI
+          }
+        </button>
+        <button type="button" class="up-btn up-btn--manual"
+          [disabled]="getUploadState('imaging').uploading" (click)="openManualEntry('imaging')">
+          <i class="fa-solid fa-pen-to-square"></i> Add Manually
+        </button>
+      </div>
     </div>
 
     <div class="up-card">
@@ -86,21 +108,27 @@
       <h2 class="up-title">Medicine Box</h2>
       <p class="up-desc">Scan box packages to extract dosage instructions and info.</p>
       <span class="up-count">{{ medicineCount() }} {{ medicineCount() === 1 ? 'Record' : 'Records' }}</span>
-      <button type="button" class="up-btn" [disabled]="getUploadState('medicine').uploading"
-        [class.up-btn--loading]="getUploadState('medicine').uploading" (click)="triggerUpload('Medicine Box')">
-        @if (getUploadState('medicine').uploading) {
-        <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('medicine').indeterminate">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
-            [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
-            [attr.stroke-dashoffset]="progressOffset(getUploadState('medicine').progress)" stroke-linecap="round"
-            transform="rotate(-90 18 18)" />
-        </svg>
-        @if (!getUploadState('medicine').indeterminate) { <span>{{ getUploadState('medicine').progress }}%</span> }
-        } @else {
-        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
-        }
-      </button>
+      <div class="up-btn-group">
+        <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('medicine').uploading"
+          [class.up-btn--loading]="getUploadState('medicine').uploading" (click)="triggerUpload('Medicine Box')">
+          @if (getUploadState('medicine').uploading) {
+          <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('medicine').indeterminate">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+              [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
+              [attr.stroke-dashoffset]="progressOffset(getUploadState('medicine').progress)" stroke-linecap="round"
+              transform="rotate(-90 18 18)" />
+          </svg>
+          @if (!getUploadState('medicine').indeterminate) { <span>{{ getUploadState('medicine').progress }}%</span> }
+          } @else {
+          <i class="fa-solid fa-cloud-arrow-up"></i> Scan with AI
+          }
+        </button>
+        <button type="button" class="up-btn up-btn--manual"
+          [disabled]="getUploadState('medicine').uploading" (click)="openManualEntry('medicine')">
+          <i class="fa-solid fa-pen-to-square"></i> Add Manually
+        </button>
+      </div>
     </div>
   </section>
   }
@@ -601,8 +629,12 @@
           <i [class]="'fa-solid ' + getRecordIcon(rf.type)"></i>
         </div>
         <div>
-          <h3 class="modal-title">{{ rf.mode === 'edit' ? 'Edit Record' : 'Review Extracted Data' }}</h3>
-          <p class="modal-sub">Edit any field before saving.</p>
+          <h3 class="modal-title">
+            {{ rf.mode === 'edit' ? 'Edit Record' : manualReviewMode() ? 'Add Record Manually' : 'Review Extracted Data' }}
+          </h3>
+          <p class="modal-sub">
+            {{ manualReviewMode() ? 'Fill in the details and save.' : 'Edit any field before saving.' }}
+          </p>
         </div>
       </div>
       <button type="button" class="close-modal-btn" [disabled]="reviewSaving()" (click)="cancelReview()">
@@ -617,11 +649,38 @@
           <img [src]="imageUrl" alt="Uploaded medical record" class="modal-image" (error)="reviewImageFailed.set(true)">
           <span class="modal-image-zoom"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></span>
         </button>
+        @if (manualReviewMode()) {
+        <button type="button" class="manual-img-remove-btn" [disabled]="manualImageUploading() || reviewSaving()"
+          (click)="clearManualImage('review')">
+          <i class="fa-solid fa-trash-can"></i> Remove Image
+        </button>
+        }
         } @else {
         <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>Image preview unavailable</span></div>
         }
         } @else {
+        @if (manualReviewMode()) {
+        <div class="manual-img-upload-pad">
+          @if (manualImageUploading()) {
+          <div class="manual-img-loading">
+            <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:18px;height:18px;">
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+                [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+                stroke-linecap="round" transform="rotate(-90 18 18)"/>
+            </svg>
+            <span>Uploading image…</span>
+          </div>
+          } @else {
+          <button type="button" class="manual-img-choose-btn" [disabled]="reviewSaving()"
+            (click)="manualImageInput.click()">
+            <i class="fa-solid fa-image"></i> Choose Image <span class="scan-optional">(optional)</span>
+          </button>
+          }
+        </div>
+        } @else {
         <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>No image attached</span></div>
+        }
         }
       </div>
       <div class="scan-form-grid">
@@ -636,7 +695,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">Report Date</label>
-          <input type="text" class="scan-input" [(ngModel)]="rf.reportDate">
+          <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
         </div>
         }
         @if (rf.type === 'imaging') {
@@ -654,7 +713,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">Report Date</label>
-          <input type="text" class="scan-input" [(ngModel)]="rf.reportDate">
+          <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
         </div>
         <div class="scan-field scan-field--full">
           <label class="scan-label">Findings</label>
@@ -676,7 +735,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">Prescription Date</label>
-          <input type="text" class="scan-input" [(ngModel)]="rf.prescriptionDate">
+          <input type="date" class="scan-input" [(ngModel)]="rf.prescriptionDate" [max]="todayStr">
         </div>
         }
         @if (rf.type === 'general') {
@@ -705,17 +764,22 @@
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.description" rows="3"></textarea>
         </div>
         }
+        @if (!manualReviewMode()) {
         <div class="scan-field scan-field--full">
           <label class="scan-label">AI Summary</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
         </div>
-        @if (rf.type !== 'general') {
+        }
+        @if (!manualReviewMode() && rf.type !== 'general') {
         <div class="scan-field scan-field--full">
           <label class="scan-label">OCR Text</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.ocrText" rows="5"></textarea>
         </div>
         }
       </div>
+      @if (reviewDateError()) {
+      <p class="scan-validation"><i class="fa-solid fa-triangle-exclamation"></i> {{ reviewDateError() }}</p>
+      }
       @if (rf.type === 'lab') {
       <div class="review-table-section">
         <div class="review-table-hdr">
@@ -866,8 +930,12 @@
       <div class="modal-hdr-left">
         <div class="modal-ico rec-ico-orange"><i class="fa-solid fa-pills"></i></div>
         <div>
-          <h3 class="modal-title">{{ scanMode() === 'edit' ? 'Edit Medicine Record' : 'Review Scanned Medicine' }}</h3>
-          <p class="modal-sub">Edit any field before saving to your record.</p>
+          <h3 class="modal-title">
+            {{ scanMode() === 'edit' ? 'Edit Medicine Record' : manualMedicineMode() ? 'Add Medicine Manually' : 'Review Scanned Medicine' }}
+          </h3>
+          <p class="modal-sub">
+            {{ manualMedicineMode() ? 'Fill in the details and save to your medications.' : 'Edit any field before saving to your record.' }}
+          </p>
         </div>
       </div>
       <button type="button" class="close-modal-btn" [disabled]="scanSaving()" (click)="cancelScanReview()">
@@ -882,11 +950,38 @@
           <img [src]="imageUrl" alt="Uploaded medicine box" class="modal-image" (error)="scanImageFailed.set(true)">
           <span class="modal-image-zoom"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></span>
         </button>
+        @if (manualMedicineMode()) {
+        <button type="button" class="manual-img-remove-btn" [disabled]="manualImageUploading() || scanSaving()"
+          (click)="clearManualImage('medicine')">
+          <i class="fa-solid fa-trash-can"></i> Remove Image
+        </button>
+        }
         } @else {
         <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>Image preview unavailable</span></div>
         }
         } @else {
+        @if (manualMedicineMode()) {
+        <div class="manual-img-upload-pad">
+          @if (manualImageUploading()) {
+          <div class="manual-img-loading">
+            <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:18px;height:18px;">
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+                [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+                stroke-linecap="round" transform="rotate(-90 18 18)"/>
+            </svg>
+            <span>Uploading image…</span>
+          </div>
+          } @else {
+          <button type="button" class="manual-img-choose-btn" [disabled]="scanSaving()"
+            (click)="manualMedImageInput.click()">
+            <i class="fa-solid fa-image"></i> Choose Image <span class="scan-optional">(optional)</span>
+          </button>
+          }
+        </div>
+        } @else {
         <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>No image attached</span></div>
+        }
         }
       </div>
       <div class="scan-form-grid">

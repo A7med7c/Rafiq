@@ -1,4 +1,5 @@
 using Rafiq.Application.AI.HealthQuery;
+using Rafiq.Application.AI.Resolution;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Domain.Entities.Documents;
 using Rafiq.Domain.Repositories;
@@ -8,11 +9,9 @@ namespace Rafiq.Application.Features.AiChat.Services;
 
 /// <summary>
 /// Renders a validated <see cref="ParsedHealthQueryIntent"/> into a compact, plain-text
-/// health context for the AI prompt. Only queries the categories present in the intent,
-/// applies the intent's searchTerm/timeframe as in-memory filters over data the caller has
-/// already been authorized to read (via IHealthProfileAuthorizationService, checked once
-/// by the caller before this class is invoked), and caps list sizes so only the minimum
-/// data needed for the question is ever sent to the model.
+/// health context for the AI prompt. Supports both single-profile and family-wide scopes.
+/// Only queries the categories present in the intent, applies searchTerm/timeframe filters
+/// in-memory, and caps list sizes so only the minimum data needed is ever sent to the model.
 /// </summary>
 public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
 {
@@ -24,6 +23,7 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
     private readonly ILabReportRepository _labReportRepository;
     private readonly IPrescriptionRepository _prescriptionRepository;
     private readonly IImagingReportRepository _imagingReportRepository;
+    private readonly IMedicineReminderRepository _medicineReminderRepository;
 
     public HealthQueryContextBuilder(
         IPatientProfileRepository patientProfileRepository,
@@ -31,7 +31,8 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         IUserMedicineRepository userMedicineRepository,
         ILabReportRepository labReportRepository,
         IPrescriptionRepository prescriptionRepository,
-        IImagingReportRepository imagingReportRepository)
+        IImagingReportRepository imagingReportRepository,
+        IMedicineReminderRepository medicineReminderRepository)
     {
         _patientProfileRepository = patientProfileRepository;
         _appointmentRepository = appointmentRepository;
@@ -39,31 +40,81 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         _labReportRepository = labReportRepository;
         _prescriptionRepository = prescriptionRepository;
         _imagingReportRepository = imagingReportRepository;
+        _medicineReminderRepository = medicineReminderRepository;
     }
 
     public async Task<string> BuildAsync(
         ParsedHealthQueryIntent intent,
-        Guid userHealthProfileId,
+        QueryScope scope,
         CancellationToken cancellationToken = default)
     {
         if (intent.HasNoCategories)
             return string.Empty;
 
+        return scope switch
+        {
+            SingleProfileScope single => await BuildSingleProfileAsync(intent, single, cancellationToken),
+            FamilyWideScope family    => await BuildFamilyWideAsync(intent, family, cancellationToken),
+            _                         => string.Empty
+        };
+    }
+
+    // ── Single-profile path ──────────────────────────────────────────────────
+
+    private async Task<string> BuildSingleProfileAsync(
+        ParsedHealthQueryIntent intent,
+        SingleProfileScope scope,
+        CancellationToken ct)
+    {
         var sections = new List<string>();
 
         foreach (var category in intent.Categories)
         {
             var section = category switch
             {
-                HealthQueryCategory.Profile => await BuildProfileSectionAsync(userHealthProfileId, cancellationToken),
-                HealthQueryCategory.Allergies => await BuildAllergiesSectionAsync(userHealthProfileId, intent, cancellationToken),
-                HealthQueryCategory.ChronicDiseases => await BuildChronicDiseasesSectionAsync(userHealthProfileId, intent, cancellationToken),
-                HealthQueryCategory.Medicines => await BuildMedicinesSectionAsync(userHealthProfileId, intent, cancellationToken),
-                HealthQueryCategory.Appointments => await BuildAppointmentsSectionAsync(userHealthProfileId, intent, cancellationToken),
-                HealthQueryCategory.LabReports => await BuildLabReportsSectionAsync(userHealthProfileId, intent, cancellationToken),
-                HealthQueryCategory.Prescriptions => await BuildPrescriptionsSectionAsync(userHealthProfileId, intent, cancellationToken),
-                HealthQueryCategory.ImagingReports => await BuildImagingReportsSectionAsync(userHealthProfileId, intent, cancellationToken),
-                _ => null
+                HealthQueryCategory.Profile            => await BuildProfileSectionAsync(scope.ProfileId, ct),
+                HealthQueryCategory.Allergies          => await BuildAllergiesSectionAsync(scope.ProfileId, intent, ct),
+                HealthQueryCategory.ChronicDiseases    => await BuildChronicDiseasesSectionAsync(scope.ProfileId, intent, ct),
+                HealthQueryCategory.Medicines          => await BuildMedicinesSectionAsync(scope.ProfileId, intent, ct),
+                HealthQueryCategory.Appointments       => await BuildAppointmentsSectionAsync(scope.ProfileId, intent, ct),
+                HealthQueryCategory.LabReports         => await BuildLabReportsSectionAsync(scope.ProfileId, intent, ct),
+                HealthQueryCategory.Prescriptions      => await BuildPrescriptionsSectionAsync(scope.ProfileId, intent, ct),
+                HealthQueryCategory.ImagingReports     => await BuildImagingReportsSectionAsync(scope.ProfileId, intent, ct),
+                HealthQueryCategory.MedicationReminders=> await BuildMedicationRemindersSectionAsync(scope.ProfileId, intent, ct),
+                HealthQueryCategory.FamilyOverview     => null, // no data when viewing single profile
+                _                                      => null
+            };
+
+            if (!string.IsNullOrWhiteSpace(section))
+                sections.Add(section!);
+        }
+
+        // Prefix with profile name when viewing a family member (not self)
+        var result = string.Join("\n\n", sections);
+        if (!string.IsNullOrEmpty(scope.DisplayName) && !string.IsNullOrWhiteSpace(result))
+            result = $"[Data for: {scope.DisplayName}]\n\n{result}";
+
+        return result;
+    }
+
+    // ── Family-wide path ─────────────────────────────────────────────────────
+
+    private async Task<string> BuildFamilyWideAsync(
+        ParsedHealthQueryIntent intent,
+        FamilyWideScope scope,
+        CancellationToken ct)
+    {
+        if (scope.Profiles.Count == 0)
+            return "Family overview: no accessible family members found.";
+
+        var sections = new List<string>();
+
+        foreach (var category in intent.Categories)
+        {
+            string? section = category switch
+            {
+                HealthQueryCategory.FamilyOverview => await BuildFamilyOverviewSectionAsync(scope, ct),
+                _ => await BuildFamilyWideCategorySectionAsync(category, scope, intent, ct)
             };
 
             if (!string.IsNullOrWhiteSpace(section))
@@ -73,15 +124,90 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         return string.Join("\n\n", sections);
     }
 
-    private async Task<string?> BuildProfileSectionAsync(Guid profileId, CancellationToken cancellationToken)
+    private async Task<string> BuildFamilyOverviewSectionAsync(FamilyWideScope scope, CancellationToken ct)
     {
-        var profile = await _patientProfileRepository.GetByIdAsync(profileId, cancellationToken);
+        var sb = new StringBuilder();
+        sb.AppendLine($"Family overview ({scope.Profiles.Count} accessible member(s)):");
+
+        foreach (var profile in scope.Profiles)
+        {
+            var relationship = profile.Relationship?.ToString() ?? "Member";
+            var label = $"{profile.FirstName} {profile.LastName} ({relationship})";
+
+            var patientProfile = await _patientProfileRepository.GetByIdAsync(profile.ProfileId, ct);
+            var medicines = await _userMedicineRepository.GetAllByProfileIdAsync(profile.ProfileId, ct);
+            var appointments = await _appointmentRepository.GetUpcomingByUserHealthProfileIdAsync(profile.ProfileId, ct);
+            var labReports = await _labReportRepository.GetAllByProfileIdAsync(profile.ProfileId, ct);
+
+            sb.AppendLine();
+            sb.AppendLine(label + ":");
+            if (patientProfile is not null)
+            {
+                sb.AppendLine($"  - Allergies: {patientProfile.Allergies.Count}" +
+                    (patientProfile.Allergies.Count > 0
+                        ? $" ({string.Join(", ", patientProfile.Allergies.Take(3).Select(a => $"{a.Name} - {a.Severity}"))})"
+                        : string.Empty));
+                sb.AppendLine($"  - Chronic diseases: {patientProfile.ChronicDiseases.Count}" +
+                    (patientProfile.ChronicDiseases.Count > 0
+                        ? $" ({string.Join(", ", patientProfile.ChronicDiseases.Take(3).Select(d => d.Name))})"
+                        : string.Empty));
+            }
+            sb.AppendLine($"  - Medicines registered: {medicines.Count}");
+            sb.AppendLine($"  - Upcoming appointments: {appointments.Count}");
+            sb.AppendLine($"  - Lab reports: {labReports.Count}");
+        }
+
+        return sb.ToString().TrimEnd();
+    }
+
+    private async Task<string?> BuildFamilyWideCategorySectionAsync(
+        HealthQueryCategory category,
+        FamilyWideScope scope,
+        ParsedHealthQueryIntent intent,
+        CancellationToken ct)
+    {
+        var header = $"{CategoryLabel(category)} (family - {scope.Profiles.Count} member(s)):";
+        var perProfile = new List<string>();
+
+        foreach (var profile in scope.Profiles)
+        {
+            var relationship = profile.Relationship?.ToString() ?? "Member";
+            var label = $"{profile.FirstName} {profile.LastName} ({relationship})";
+
+            var section = category switch
+            {
+                HealthQueryCategory.Profile            => await BuildProfileSectionAsync(profile.ProfileId, ct),
+                HealthQueryCategory.Allergies          => await BuildAllergiesSectionAsync(profile.ProfileId, intent, ct),
+                HealthQueryCategory.ChronicDiseases    => await BuildChronicDiseasesSectionAsync(profile.ProfileId, intent, ct),
+                HealthQueryCategory.Medicines          => await BuildMedicinesSectionAsync(profile.ProfileId, intent, ct),
+                HealthQueryCategory.Appointments       => await BuildAppointmentsSectionAsync(profile.ProfileId, intent, ct),
+                HealthQueryCategory.LabReports         => await BuildLabReportsSectionAsync(profile.ProfileId, intent, ct),
+                HealthQueryCategory.Prescriptions      => await BuildPrescriptionsSectionAsync(profile.ProfileId, intent, ct),
+                HealthQueryCategory.ImagingReports     => await BuildImagingReportsSectionAsync(profile.ProfileId, intent, ct),
+                HealthQueryCategory.MedicationReminders=> await BuildMedicationRemindersSectionAsync(profile.ProfileId, intent, ct),
+                _                                      => null
+            };
+
+            if (!string.IsNullOrWhiteSpace(section))
+                perProfile.Add($"{label}:\n{section}");
+        }
+
+        return perProfile.Count == 0
+            ? null
+            : header + "\n\n" + string.Join("\n\n", perProfile);
+    }
+
+    // ── Single-profile section builders ──────────────────────────────────────
+
+    private async Task<string?> BuildProfileSectionAsync(Guid profileId, CancellationToken ct)
+    {
+        var profile = await _patientProfileRepository.GetByIdAsync(profileId, ct);
         if (profile is null)
             return null;
 
-        var medicines = await _userMedicineRepository.GetAllByProfileIdAsync(profileId, cancellationToken);
-        var appointments = await _appointmentRepository.GetUpcomingByUserHealthProfileIdAsync(profileId, cancellationToken);
-        var labReports = await _labReportRepository.GetAllByProfileIdAsync(profileId, cancellationToken);
+        var medicines = await _userMedicineRepository.GetAllByProfileIdAsync(profileId, ct);
+        var appointments = await _appointmentRepository.GetUpcomingByUserHealthProfileIdAsync(profileId, ct);
+        var labReports = await _labReportRepository.GetAllByProfileIdAsync(profileId, ct);
 
         var sb = new StringBuilder();
         sb.AppendLine("Profile summary:");
@@ -102,9 +228,9 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         return sb.ToString().TrimEnd();
     }
 
-    private async Task<string?> BuildAllergiesSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken cancellationToken)
+    private async Task<string?> BuildAllergiesSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken ct)
     {
-        var profile = await _patientProfileRepository.GetByIdAsync(profileId, cancellationToken);
+        var profile = await _patientProfileRepository.GetByIdAsync(profileId, ct);
         if (profile is null)
             return null;
 
@@ -127,9 +253,9 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         };
     }
 
-    private async Task<string?> BuildChronicDiseasesSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken cancellationToken)
+    private async Task<string?> BuildChronicDiseasesSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken ct)
     {
-        var profile = await _patientProfileRepository.GetByIdAsync(profileId, cancellationToken);
+        var profile = await _patientProfileRepository.GetByIdAsync(profileId, ct);
         if (profile is null)
             return null;
 
@@ -158,9 +284,9 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         };
     }
 
-    private async Task<string?> BuildMedicinesSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken cancellationToken)
+    private async Task<string?> BuildMedicinesSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken ct)
     {
-        var medicines = await _userMedicineRepository.GetAllByProfileIdAsync(profileId, cancellationToken);
+        var medicines = await _userMedicineRepository.GetAllByProfileIdAsync(profileId, ct);
 
         var terms = intent.SearchTerm is null ? null : MedicalTermSynonyms.Expand(intent.SearchTerm);
         IEnumerable<UserMedicine> items = medicines;
@@ -186,9 +312,9 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         };
     }
 
-    private async Task<string?> BuildAppointmentsSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken cancellationToken)
+    private async Task<string?> BuildAppointmentsSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken ct)
     {
-        var appointments = await _appointmentRepository.GetAllByUserHealthProfileIdAsync(profileId, cancellationToken);
+        var appointments = await _appointmentRepository.GetAllByUserHealthProfileIdAsync(profileId, ct);
 
         var terms = intent.SearchTerm is null ? null : MedicalTermSynonyms.Expand(intent.SearchTerm);
         IEnumerable<Appointment> items = appointments;
@@ -214,6 +340,16 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
                 var next = materialized.Where(a => a.AppointmentDateTime >= now).OrderBy(a => a.AppointmentDateTime).FirstOrDefault();
                 return FormatSingleOrEmpty("Appointments", next, Describe);
 
+            case HealthQueryOperation.GetUpcoming:
+                var upcoming = materialized
+                    .Where(a => a.AppointmentDateTime >= now && a.AppointmentDateTime <= now.AddDays(7))
+                    .OrderBy(a => a.AppointmentDateTime)
+                    .Take(MaxItemsPerCategory)
+                    .ToList();
+                return upcoming.Count == 0
+                    ? "Appointments: no upcoming appointments in the next 7 days."
+                    : "Upcoming appointments (next 7 days):\n" + string.Join("\n", upcoming.Select(a => $"- {Describe(a)}"));
+
             case HealthQueryOperation.GetPrevious:
             case HealthQueryOperation.GetLatest:
                 var previous = materialized.Where(a => a.AppointmentDateTime < now).OrderByDescending(a => a.AppointmentDateTime).FirstOrDefault();
@@ -231,9 +367,9 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         }
     }
 
-    private async Task<string?> BuildLabReportsSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken cancellationToken)
+    private async Task<string?> BuildLabReportsSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken ct)
     {
-        var reports = await _labReportRepository.GetAllByProfileIdAsync(profileId, cancellationToken);
+        var reports = await _labReportRepository.GetAllByProfileIdAsync(profileId, ct);
 
         var terms = intent.SearchTerm is null ? null : MedicalTermSynonyms.Expand(intent.SearchTerm);
         IEnumerable<LabReport> items = reports;
@@ -279,9 +415,9 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         }
     }
 
-    private async Task<string?> BuildPrescriptionsSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken cancellationToken)
+    private async Task<string?> BuildPrescriptionsSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken ct)
     {
-        var prescriptions = await _prescriptionRepository.GetAllByProfileIdAsync(profileId, cancellationToken);
+        var prescriptions = await _prescriptionRepository.GetAllByProfileIdAsync(profileId, ct);
 
         var terms = intent.SearchTerm is null ? null : MedicalTermSynonyms.Expand(intent.SearchTerm);
         IEnumerable<Prescription> items = prescriptions;
@@ -327,9 +463,9 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         }
     }
 
-    private async Task<string?> BuildImagingReportsSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken cancellationToken)
+    private async Task<string?> BuildImagingReportsSectionAsync(Guid profileId, ParsedHealthQueryIntent intent, CancellationToken ct)
     {
-        var reports = await _imagingReportRepository.GetAllByProfileIdAsync(profileId, cancellationToken);
+        var reports = await _imagingReportRepository.GetAllByProfileIdAsync(profileId, ct);
 
         var terms = intent.SearchTerm is null ? null : MedicalTermSynonyms.Expand(intent.SearchTerm);
         IEnumerable<ImagingReport> items = reports;
@@ -365,6 +501,148 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         }
     }
 
+    private async Task<string?> BuildMedicationRemindersSectionAsync(
+        Guid profileId, ParsedHealthQueryIntent intent, CancellationToken ct)
+    {
+        var reminders = await _medicineReminderRepository.GetAllWithMedicineByProfileIdAsync(profileId, ct);
+
+        var today    = DateOnly.FromDateTime(DateTime.UtcNow);
+        var tomorrow = today.AddDays(1);
+        var now      = DateTime.UtcNow;
+
+        // Apply timeframe filter
+        IEnumerable<MedicineReminder> items = reminders;
+        if (intent.Timeframe == HealthQueryTimeframe.Today)
+            items = items.Where(r => r.IsEnabled && r.StartDate <= today && r.EndDate >= today);
+        else if (intent.Timeframe == HealthQueryTimeframe.Tomorrow)
+            items = items.Where(r => r.IsEnabled && r.StartDate <= tomorrow && r.EndDate >= tomorrow);
+
+        // Apply searchTerm against medicine name
+        var terms = intent.SearchTerm is null ? null : MedicalTermSynonyms.Expand(intent.SearchTerm);
+        if (terms is not null)
+            items = items.Where(r => ContainsAny(r.UserMedicine.MedicineName, terms));
+
+        string DescribeReminder(MedicineReminder r)
+        {
+            var time = $"{r.ReminderTime:hh\\:mm}";
+            var lastTrigger = r.LastTriggeredAt.HasValue
+                ? $", last taken: {r.LastTriggeredAt.Value:yyyy-MM-dd HH:mm}"
+                : ", never taken";
+            return $"- {r.UserMedicine.MedicineName}: {time} ({r.RepeatType}, until {r.EndDate:yyyy-MM-dd}{lastTrigger})";
+        }
+
+        switch (intent.Operation)
+        {
+            case HealthQueryOperation.GetNext:
+            {
+                // Next upcoming active reminder (today, time not yet passed)
+                var activeToday = items
+                    .Where(r => r.IsEnabled && r.StartDate <= today && r.EndDate >= today)
+                    .ToList();
+                var nextToday = activeToday
+                    .Where(r => r.ReminderTime > now.TimeOfDay)
+                    .OrderBy(r => r.ReminderTime)
+                    .FirstOrDefault();
+                if (nextToday is not null)
+                    return $"Medication reminders - next dose:\n{DescribeReminder(nextToday)}";
+
+                // If all of today's passed, find earliest active tomorrow
+                var nextTomorrow = items
+                    .Where(r => r.IsEnabled && r.StartDate <= tomorrow && r.EndDate >= tomorrow)
+                    .OrderBy(r => r.ReminderTime)
+                    .FirstOrDefault();
+                return nextTomorrow is not null
+                    ? $"Medication reminders - next dose (tomorrow):\n{DescribeReminder(nextTomorrow)}"
+                    : "Medication reminders: no upcoming reminders scheduled.";
+            }
+
+            case HealthQueryOperation.GetLatest:
+            {
+                var latest = items
+                    .Where(r => r.LastTriggeredAt.HasValue)
+                    .OrderByDescending(r => r.LastTriggeredAt)
+                    .FirstOrDefault();
+                return latest is not null
+                    ? $"Medication reminders - last dose taken:\n{DescribeReminder(latest)}"
+                    : "Medication reminders: no doses recorded as taken yet.";
+            }
+
+            case HealthQueryOperation.GetUpcoming:
+            {
+                var upcoming = reminders
+                    .Where(r => r.IsEnabled && r.StartDate <= today.AddDays(7) && r.EndDate >= today)
+                    .OrderBy(r => r.ReminderTime)
+                    .Take(MaxItemsPerCategory)
+                    .ToList();
+                return upcoming.Count == 0
+                    ? "Medication reminders: no active reminders in the next 7 days."
+                    : "Upcoming medication reminders (next 7 days):\n" + string.Join("\n", upcoming.Select(DescribeReminder));
+            }
+
+            case HealthQueryOperation.GetMissed:
+            {
+                // Active today, time has passed, not triggered today
+                var missed = reminders
+                    .Where(r => r.IsEnabled
+                        && r.StartDate <= today
+                        && r.EndDate >= today
+                        && r.ReminderTime <= now.TimeOfDay
+                        && (r.LastTriggeredAt is null
+                            || DateOnly.FromDateTime(r.LastTriggeredAt.Value) < today))
+                    .OrderBy(r => r.ReminderTime)
+                    .Take(MaxItemsPerCategory)
+                    .ToList();
+                return missed.Count == 0
+                    ? "Medication reminders: no missed doses today."
+                    : $"Missed medication reminders today ({missed.Count}):\n" +
+                      string.Join("\n", missed.Select(DescribeReminder));
+            }
+
+            case HealthQueryOperation.Count:
+            {
+                var activeCount = items.Count(r => r.IsEnabled && r.StartDate <= today && r.EndDate >= today);
+                return DescribeCount("Medication reminders (active today)", intent.SearchTerm, activeCount);
+            }
+
+            case HealthQueryOperation.Exists:
+            {
+                var any = items.Any(r => r.IsEnabled && r.StartDate <= today && r.EndDate >= today);
+                return any
+                    ? "Medication reminders: yes, active reminders are set up."
+                    : "Medication reminders: no active reminders are currently set up.";
+            }
+
+            default:
+            {
+                var list = items
+                    .Where(r => r.IsEnabled && r.StartDate <= today && r.EndDate >= today)
+                    .OrderBy(r => r.ReminderTime)
+                    .Take(MaxItemsPerCategory)
+                    .ToList();
+                return list.Count == 0
+                    ? "Medication reminders: no active reminders are currently set up in Rafiq."
+                    : "Medication reminders (active today):\n" + string.Join("\n", list.Select(DescribeReminder));
+            }
+        }
+    }
+
+    // ── Utility helpers ───────────────────────────────────────────────────────
+
+    private static string CategoryLabel(HealthQueryCategory category) => category switch
+    {
+        HealthQueryCategory.Profile             => "Profile",
+        HealthQueryCategory.Allergies           => "Allergies",
+        HealthQueryCategory.ChronicDiseases     => "Chronic diseases",
+        HealthQueryCategory.Medicines           => "Medicines",
+        HealthQueryCategory.Appointments        => "Appointments",
+        HealthQueryCategory.LabReports          => "Lab reports",
+        HealthQueryCategory.Prescriptions       => "Prescriptions",
+        HealthQueryCategory.ImagingReports      => "Imaging reports",
+        HealthQueryCategory.MedicationReminders => "Medication reminders",
+        HealthQueryCategory.FamilyOverview      => "Family overview",
+        _                                       => category.ToString()
+    };
+
     private static bool ContainsAny(string? candidate, IReadOnlyList<string> terms)
     {
         if (string.IsNullOrEmpty(candidate))
@@ -385,10 +663,11 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
 
         return timeframe switch
         {
-            HealthQueryTimeframe.Today => date == today,
-            HealthQueryTimeframe.ThisWeek => date >= StartOfWeek(today) && date <= today,
+            HealthQueryTimeframe.Today     => date == today,
+            HealthQueryTimeframe.Tomorrow  => date == today.AddDays(1),
+            HealthQueryTimeframe.ThisWeek  => date >= StartOfWeek(today) && date <= today,
             HealthQueryTimeframe.ThisMonth => date.Year == today.Year && date.Month == today.Month,
-            _ => true
+            _                              => true
         };
     }
 

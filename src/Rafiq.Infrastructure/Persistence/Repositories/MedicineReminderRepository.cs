@@ -61,6 +61,18 @@ public class MedicineReminderRepository(RafiqDbContext context) : IMedicineRemin
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<MedicineReminder>> GetAllWithMedicineByProfileIdAsync(
+        Guid profileId, CancellationToken cancellationToken = default)
+    {
+        return await context.MedicineReminders
+            .Include(r => r.UserMedicine)
+            .Where(r => !r.IsDeleted
+                && !r.UserMedicine.IsDeleted
+                && r.UserMedicine.UserHealthProfileId == profileId)
+            .OrderBy(r => r.ReminderTime)
+            .ToListAsync(cancellationToken);
+    }
+
     public void Update(MedicineReminder reminder)
     {
         context.MedicineReminders.Update(reminder);

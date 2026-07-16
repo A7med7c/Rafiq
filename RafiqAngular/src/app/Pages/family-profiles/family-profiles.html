@@ -341,7 +341,7 @@
           <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'overview'" (click)="switchTab('overview')">
             <i class="fa-solid fa-house"></i> Overview
           </button>
-          <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'records'" (click)="switchTab('records')">
+          <button class="fp-tab" (click)="navigateToRecords()">
             <i class="fa-regular fa-folder-open"></i> Medical Records
           </button>
           <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'appointments'"
@@ -402,13 +402,6 @@
             }
           </div>
           }
-          }
-
-          <!-- MEDICAL RECORDS -->
-          @else if (activeTab() === 'records') {
-          <app-records-content [profileId]="selectedProfile()?.userHealthProfileId" [compact]="true"
-            [readOnly]="selectedProfile()?.accessRole === 'Viewer'">
-          </app-records-content>
           }
 
           <!-- APPOINTMENTS -->

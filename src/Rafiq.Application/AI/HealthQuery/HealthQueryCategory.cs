@@ -14,5 +14,14 @@ public enum HealthQueryCategory
     Appointments,
     LabReports,
     Prescriptions,
-    ImagingReports
+    ImagingReports,
+
+    /// <summary>Reminder schedules for registered medicines (times, next/last/missed).</summary>
+    MedicationReminders,
+
+    /// <summary>
+    /// Cross-family summary. Use ONLY when the question spans multiple family members
+    /// without naming a specific person (e.g. "who has the most medications?").
+    /// </summary>
+    FamilyOverview
 }

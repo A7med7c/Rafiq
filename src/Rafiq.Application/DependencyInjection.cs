@@ -3,6 +3,7 @@ using MediatR;
 using Mapster;
 using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
+using Rafiq.Application.AI.Resolution;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Features.AiChat.Services;
 using System.Reflection;
@@ -29,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<IMapper, ServiceMapper>();
 
         services.AddScoped<IHealthQueryContextBuilder, HealthQueryContextBuilder>();
+        services.AddScoped<IFamilyProfileResolver, FamilyProfileResolver>();
+        services.AddSingleton<IConversationStateCache, ConversationStateCache>();
 
         return services;
     }
