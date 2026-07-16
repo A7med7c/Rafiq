@@ -61,9 +61,10 @@ public class UserHealthProfile : BaseEntity
         DateOnly dateOfBirth,
         decimal? height,
         decimal? weight,
-        BloodType? bloodType)
+        BloodType? bloodType,
+        string? profileImageUrl = null)
     {
-        return new UserHealthProfile(
+        var profile = new UserHealthProfile(
             null,
             firstName,
             lastName,
@@ -72,6 +73,10 @@ public class UserHealthProfile : BaseEntity
             height,
             weight,
             bloodType);
+
+        profile.ProfileImageUrl = profileImageUrl;
+
+        return profile;
     }
 
     /// <summary>
@@ -92,6 +97,8 @@ public class UserHealthProfile : BaseEntity
     public decimal? Weight { get; set; }
 
     public BloodType? BloodType { get; set; }
+
+    public string? ProfileImageUrl { get; private set; }
 
     public ICollection<Allergy> Allergies { get; set; }
         = new List<Allergy>();
@@ -115,6 +122,11 @@ public class UserHealthProfile : BaseEntity
         Height = height;
         Weight = weight;
         BloodType = bloodType;
+    }
+
+    public void SetProfileImage(string? profileImageUrl)
+    {
+        ProfileImageUrl = profileImageUrl;
     }
 
     public void SyncAllergies(IEnumerable<Allergy> newAllergies)

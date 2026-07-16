@@ -2,7 +2,7 @@
 {
     public enum OtpPurpose
     {
-        PhoneVerification = 1,
+        EmailVerification = 1,
 
         PasswordReset = 2
     }

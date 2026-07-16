@@ -10,8 +10,6 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../Services/auth-service';
-import { RegisterResponse } from '../../../Modles/register-response';
-import { UserRole } from '../../../Modles/register-request';
 import { getApiErrorMessages } from '../../../Utils/api-error.util';
 
 const EGYPTIAN_PHONE_PATTERN = /^01[0125][0-9]{8}$/;
@@ -39,16 +37,16 @@ export class RegisterFormComponent {
   private readonly changeDetector = inject(ChangeDetectorRef);
 
   isSubmitting = false;
-  isVerifying = false;
-  isResending = false;
   showPassword = false;
   showConfirmPassword = false;
   apiErrors: string[] = [];
   successMessage = '';
-  registeredUser: RegisterResponse | null = null;
-  verificationCode = '';
 
-  readonly roles: UserRole[] = ['Patient', 'Caregiver'];
+  profileImage: File | null = null;
+  profileImagePreview: string | null = null;
+
+  private static readonly MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+  private static readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
   readonly registerForm = this.formBuilder.nonNullable.group(
     {
@@ -57,8 +55,7 @@ export class RegisterFormComponent {
       email: ['', [Validators.required, Validators.email, Validators.maxLength(256)]],
       phoneNumber: ['', [Validators.required, Validators.pattern(EGYPTIAN_PHONE_PATTERN)]],
       password: ['', [Validators.required, Validators.minLength(8), Validators.pattern(PASSWORD_PATTERN)]],
-      confirmPassword: ['', [Validators.required]],
-      role: ['Patient' as UserRole, [Validators.required]]
+      confirmPassword: ['', [Validators.required]]
     },
     { validators: passwordsMatchValidator }
   );
@@ -72,6 +69,45 @@ export class RegisterFormComponent {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
+  onProfileImageSelected(event: Event): void {
+    this.apiErrors = [];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+
+    if (!file) {
+      this.profileImage = null;
+      this.profileImagePreview = null;
+      return;
+    }
+
+    if (!RegisterFormComponent.ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      this.apiErrors = ['Profile image must be a JPEG, PNG, WEBP, or GIF file.'];
+      input.value = '';
+      return;
+    }
+
+    if (file.size > RegisterFormComponent.MAX_IMAGE_SIZE_BYTES) {
+      this.apiErrors = ['Profile image must not exceed 5 MB.'];
+      input.value = '';
+      return;
+    }
+
+    this.profileImage = file;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.profileImagePreview = reader.result as string;
+      this.changeDetector.detectChanges();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeProfileImage(input: HTMLInputElement): void {
+    this.profileImage = null;
+    this.profileImagePreview = null;
+    input.value = '';
+  }
+
   onSubmit(): void {
     this.apiErrors = [];
     this.successMessage = '';
@@ -83,71 +119,21 @@ export class RegisterFormComponent {
 
     this.isSubmitting = true;
 
-    this.authService.register(this.registerForm.getRawValue()).subscribe({
+    this.authService.register(this.registerForm.getRawValue(), this.profileImage).subscribe({
       next: (response) => {
-        this.successMessage = response.message;
-        this.registeredUser = response.data;
+        this.successMessage = 'Your account has been created successfully. We\'ve sent a verification code to your email.';
+        const email = response.data.email;
+
+        setTimeout(() => {
+          this.router.navigate(['/verify-account'], {
+            queryParams: { email, message: this.successMessage }
+          });
+        }, 1200);
       },
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error);
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
-      },
-      complete: () => {
-        this.isSubmitting = false;
-      }
-    });
-  }
-
-  verifyPhone(): void {
-    if (!this.registeredUser || !this.verificationCode.trim()) {
-      this.apiErrors = ['Please enter the verification code.'];
-      return;
-    }
-
-    this.apiErrors = [];
-    this.successMessage = '';
-    this.isVerifying = true;
-
-    this.authService.verifyPhone(
-      this.registeredUser.phoneNumber,
-      this.verificationCode.trim()
-    ).subscribe({
-      next: (response) => {
-        this.successMessage = response.message;
-        setTimeout(() => this.router.navigate(['/login']), 1500);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
-        this.isVerifying = false;
-        this.changeDetector.detectChanges();
-      },
-      complete: () => {
-        this.isVerifying = false;
-      }
-    });
-  }
-
-  resendCode(): void {
-    if (!this.registeredUser) {
-      return;
-    }
-
-    this.apiErrors = [];
-    this.successMessage = '';
-    this.isResending = true;
-
-    this.authService.resendPhoneCode(this.registeredUser.phoneNumber).subscribe({
-      next: (response) => {
-        this.successMessage = response.message;
-      },
-      error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
-        this.isResending = false;
-        this.changeDetector.detectChanges();
-      },
-      complete: () => {
-        this.isResending = false;
       }
     });
   }

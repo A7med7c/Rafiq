@@ -15,8 +15,19 @@ public sealed class GenerateHealthSummaryQueryHandler(
 {
     private const int SummaryMaxTokens = 400;
 
+    // FamilyOverview and MedicationReminders are not included in the health summary —
+    // the summary is always for the user's own profile only.
     private static readonly IReadOnlyList<HealthQueryCategory> AllCategories =
-        Enum.GetValues<HealthQueryCategory>().ToArray();
+    [
+        HealthQueryCategory.Profile,
+        HealthQueryCategory.Allergies,
+        HealthQueryCategory.ChronicDiseases,
+        HealthQueryCategory.Medicines,
+        HealthQueryCategory.Appointments,
+        HealthQueryCategory.LabReports,
+        HealthQueryCategory.Prescriptions,
+        HealthQueryCategory.ImagingReports
+    ];
 
     private const string SummarySystemPrompt =
         "You are Rafiq, a concise and professional AI health assistant. " +
@@ -39,7 +50,7 @@ public sealed class GenerateHealthSummaryQueryHandler(
             HealthQueryTimeframe.None);
 
         var healthContext = await healthQueryContextBuilder.BuildAsync(
-            intent, request.UserHealthProfileId, cancellationToken);
+            intent, new SingleProfileScope(request.UserHealthProfileId), cancellationToken);
 
         if (!HasMeaningfulData(healthContext))
             return ApiResponse<HealthSummaryDto>.SuccessResponse(new HealthSummaryDto(string.Empty, false));

@@ -15,28 +15,28 @@ namespace Rafiq.Application.Features.Auth.Commands.PhoneNumber
      VerifyPhoneCommand request,
      CancellationToken cancellationToken)
         {
-            var user = await identityService.GetByPhoneAsync(
-                request.PhoneNumber,
+            var user = await identityService.GetByEmailAsync(
+                request.Email,
                 cancellationToken);
 
             if (user is null)
-                throw new NotFoundException("ApplicationUser", request.PhoneNumber);
+                throw new NotFoundException("ApplicationUser", request.Email);
 
-            if (user.PhoneNumberConfirmed)
-                throw new ConflictException("Phone number already verified.");
+            if (user.EmailConfirmed)
+                throw new ConflictException("Email already verified.");
 
             await otpService.VerifyOtpAsync(
                 user.UserId,
                 request.Code,
-                OtpPurpose.PhoneVerification,
+                OtpPurpose.EmailVerification,
                 cancellationToken);
 
-            await identityService.ConfirmPhoneNumberAsync(
+            await identityService.ConfirmEmailAsync(
                 user.UserId,
                 cancellationToken);
 
             return ApiResponseBase.SuccessResponse(
-                "Phone number verified successfully.");
+                "Email verified successfully.");
         }
     }
 }

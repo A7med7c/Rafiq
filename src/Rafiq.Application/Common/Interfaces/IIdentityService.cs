@@ -6,14 +6,15 @@ public interface IIdentityService
 {
     Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
     Task<bool> PhoneNumberExistsAsync(string phoneNumber, CancellationToken cancellationToken = default);
-    Task<RegisterResponseDto> CreateUserAsync(string firstName, string lastName, string email, string phoneNumber, string password, string role,
-            CancellationToken cancellationToken = default);
+    Task<RegisterResponseDto> CreateUserAsync(string firstName, string lastName, string email, string phoneNumber, string password,
+            string? profileImageUrl = null, CancellationToken cancellationToken = default);
     Task<IdentityUserDto?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default);
     Task<IdentityUserDto?> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<IdentityUserDto?> GetByPhoneAsync(string phoneNumber, CancellationToken cancellationToken = default);
     Task<IdentityUserDto?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     Task ConfirmPhoneNumberAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task ConfirmEmailAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<IdentityUserDto> LoginWithGoogleAsync(string IdToken, CancellationToken cancellationToken = default);
     Task ChangePasswordAsync(Guid userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default);
     Task<AccountDto> GetAccountAsync(Guid userId, CancellationToken cancellationToken);

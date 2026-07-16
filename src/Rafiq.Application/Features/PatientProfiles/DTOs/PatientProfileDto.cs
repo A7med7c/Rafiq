@@ -10,6 +10,7 @@ public sealed record PatientProfileDto(
     string? BloodType,
     decimal? Height,
     decimal? Weight,
+    string? ProfileImageUrl,
     IReadOnlyList<AllergyDto> Allergies,
     IReadOnlyList<ChronicDiseaseDto> ChronicDiseases,
     DateTime CreatedAt,

@@ -56,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IOtpRepository, OtpRepository>();
         services.AddScoped<INotificationsService, NotificationsService>();
+        services.AddScoped<IEmailSender, EmailSender>();
         services.AddSingleton<IConnectionManager, ConnectionManager>();
         services.AddSignalR();
         services.AddScoped<INotificationService, SignalRNotificationService>();
@@ -94,6 +95,7 @@ public static class DependencyInjection
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
+        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
 
         // ── WhatsApp ──────────────────────────────────────────────────────
         services.Configure<WhatsAppSettings>(configuration.GetSection(WhatsAppSettings.SectionName));

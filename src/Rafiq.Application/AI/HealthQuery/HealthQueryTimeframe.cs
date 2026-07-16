@@ -7,6 +7,7 @@ public enum HealthQueryTimeframe
 {
     None,
     Today,
+    Tomorrow,
     ThisWeek,
     ThisMonth
 }

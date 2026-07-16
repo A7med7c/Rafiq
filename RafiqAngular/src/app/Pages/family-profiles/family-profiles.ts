@@ -1,5 +1,5 @@
 import {
-  Component, ElementRef, HostListener, OnInit,
+  ChangeDetectorRef, Component, ElementRef, HostListener, OnInit,
   ViewChild, computed, inject, signal, WritableSignal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -19,7 +19,6 @@ import {
   ProfileMemberDto,
   SentInvitationDto,
 } from '../../Services/family-profiles.service';
-import { RecordsContentComponent } from '../../Components/records-content/records-content';
 import { AppointmentsContentComponent } from '../../Components/appointments-content/appointments-content';
 import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.service';
 
@@ -35,13 +34,14 @@ interface SupervisionMemberEntry {
   firstName: string;
   lastName: string;
   email: string;
+  profileImageUrl: string | null;
   role: string;
 }
 
 @Component({
   selector: 'app-family-profiles',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RecordsContentComponent, AppointmentsContentComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AppointmentsContentComponent],
   templateUrl: './family-profiles.html',
   styleUrl: './family-profiles.css',
 })
@@ -53,6 +53,7 @@ export class FamilyProfiles implements OnInit {
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly notifSvc = inject(NotificationService);
   private readonly http = inject(HttpClient);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly base = environment.apiUrl;
   readonly router = inject(Router);
 
@@ -229,6 +230,8 @@ export class FamilyProfiles implements OnInit {
     allergies: [] as AllergyEntry[],
     showDiseases: false,
     chronicDiseases: [] as DiseaseEntry[],
+    profileImage: null as File | null,
+    profileImagePreview: null as string | null,
   };
 
   inviteForm = { profileId: '', email: '', role: 'Viewer' };
@@ -240,7 +243,14 @@ export class FamilyProfiles implements OnInit {
     weight: null as number | null, relationship: '',
     allergies: [] as AllergyEntry[],
     chronicDiseases: [] as DiseaseEntry[],
+    profileImage: null as File | null,
+    profileImagePreview: null as string | null,
+    existingImageUrl: null as string | null,
+    removeImage: false,
   };
+
+  private static readonly MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+  private static readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
   // ─── Static options ─────────────────────────────────────────
   readonly relationships = [
@@ -261,6 +271,22 @@ export class FamilyProfiles implements OnInit {
   private readonly avatarColors = [
     '#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488', '#D97706', '#DC2626',
   ];
+
+  /** Resolves a stored relative image path to an absolute URL, or null when there's no image. */
+  private resolveProfileImageUrl(path: string | null | undefined): string | null {
+    return path ? `${environment.fileBaseUrl}${path}` : null;
+  }
+
+  /** The photo to show for a family/self profile, or null to fall back to the initials avatar. */
+  profileAvatarUrl(profile: AccessibleProfileDto): string | null {
+    const path = profile.isSelf ? this.authSvc.currentUser?.profileImageUrl : profile.profileImageUrl;
+    return this.resolveProfileImageUrl(path ?? null);
+  }
+
+  /** The photo to show for a profile member (registered account), or null for the initials avatar. */
+  memberAvatarUrl(profileImageUrl: string | null | undefined): string | null {
+    return this.resolveProfileImageUrl(profileImageUrl);
+  }
 
   // ─── Lifecycle ──────────────────────────────────────────────
   ngOnInit(): void {
@@ -299,6 +325,12 @@ export class FamilyProfiles implements OnInit {
       this.selectedDetail.set(d);
       this.detailLoading.set(false);
     });
+  }
+
+  navigateToRecords(): void {
+    const p = this.selectedProfile();
+    if (!p) return;
+    this.router.navigate(['/medical-records'], { queryParams: { profileId: p.userHealthProfileId } });
   }
 
   switchTab(tab: string): void {
@@ -347,6 +379,7 @@ export class FamilyProfiles implements OnInit {
       height: null, weight: null, relationship: '',
       showAllergies: false, allergies: [],
       showDiseases: false, chronicDiseases: [],
+      profileImage: null, profileImagePreview: null,
     };
     const firstOwner = this.ownerProfiles()[0];
     this.inviteForm = { profileId: firstOwner?.userHealthProfileId ?? '', email: '', role: 'Viewer' };
@@ -370,6 +403,72 @@ export class FamilyProfiles implements OnInit {
   removeAllergyFromEdit(i: number): void { this.editForm.allergies.splice(i, 1); }
   addDiseaseToEdit(): void { this.editForm.chronicDiseases.push({ name: '', status: 'Active', diagnosedAt: '' }); }
   removeDiseaseFromEdit(i: number): void { this.editForm.chronicDiseases.splice(i, 1); }
+
+  // ─── Profile image pickers ────────────────────────────────────
+  private validateAndPreviewImage(
+    file: File,
+    onValid: (file: File, preview: string) => void,
+    onError: (message: string) => void
+  ): void {
+    if (!FamilyProfiles.ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      onError('Profile image must be a JPEG, PNG, WEBP, or GIF file.');
+      return;
+    }
+    if (file.size > FamilyProfiles.MAX_IMAGE_SIZE_BYTES) {
+      onError('Profile image must not exceed 5 MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      onValid(file, reader.result as string);
+      this.changeDetector.detectChanges();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  onCreateImageSelected(event: Event): void {
+    this.errorMessage = '';
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (!file) { return; }
+
+    this.validateAndPreviewImage(
+      file,
+      (f, preview) => { this.createForm.profileImage = f; this.createForm.profileImagePreview = preview; },
+      (message) => { this.errorMessage = message; input.value = ''; }
+    );
+  }
+
+  removeCreateImage(input: HTMLInputElement): void {
+    this.createForm.profileImage = null;
+    this.createForm.profileImagePreview = null;
+    input.value = '';
+  }
+
+  onEditImageSelected(event: Event): void {
+    this.editError = '';
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (!file) { return; }
+
+    this.validateAndPreviewImage(
+      file,
+      (f, preview) => {
+        this.editForm.profileImage = f;
+        this.editForm.profileImagePreview = preview;
+        this.editForm.removeImage = false;
+      },
+      (message) => { this.editError = message; input.value = ''; }
+    );
+  }
+
+  removeEditImage(input: HTMLInputElement): void {
+    this.editForm.profileImage = null;
+    this.editForm.profileImagePreview = null;
+    this.editForm.removeImage = true;
+    input.value = '';
+  }
 
   submitCreateManaged(): void {
     const f = this.createForm;
@@ -396,8 +495,23 @@ export class FamilyProfiles implements OnInit {
       this.submitting.set(false);
       return of(null);
     })).subscribe(result => {
-      this.submitting.set(false);
-      if (result) { this.closeAddModal(); this.loadProfiles(); }
+      if (!result) { return; }
+
+      const profileImage = f.profileImage;
+      if (!profileImage) {
+        this.submitting.set(false);
+        this.closeAddModal();
+        this.loadProfiles();
+        return;
+      }
+
+      this.fpSvc.updateProfileImage(result.id, profileImage).pipe(
+        catchError(() => of(null))
+      ).subscribe(() => {
+        this.submitting.set(false);
+        this.closeAddModal();
+        this.loadProfiles();
+      });
     });
   }
 
@@ -651,7 +765,10 @@ export class FamilyProfiles implements OnInit {
       for (const { profileId, profileName, members } of results) {
         for (const m of members) {
           if (!m.isCurrentUser) {
-            entries.push({ accessId: m.accessId, profileId, profileName, firstName: m.firstName, lastName: m.lastName, email: m.email, role: m.role });
+            entries.push({
+              accessId: m.accessId, profileId, profileName, firstName: m.firstName, lastName: m.lastName,
+              email: m.email, profileImageUrl: m.profileImageUrl, role: m.role
+            });
           }
         }
       }
@@ -787,6 +904,8 @@ export class FamilyProfiles implements OnInit {
   }
 
   get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
+
+  get avatarUrl(): string { return this.authSvc.avatarUrl; }
 
   getAvatarColor(i: number): string { return this.avatarColors[i % this.avatarColors.length]; }
 

@@ -15,8 +15,8 @@ public sealed class LoginCommandHandler(
         var user = await identityService.ValidateCredentialsAsync(request.LoginIdentifier, request.Password, cancellationToken)
             ?? throw new AuthenticationException("Invalid email / phone number or password.");
 
-        if (!user.PhoneNumberConfirmed)
-            throw new AuthenticationException("Please verify your phone number before logging in.");
+        if (!user.EmailConfirmed)
+            throw new AuthenticationException("Please verify your email before logging in.");
 
         var dto = await tokenIssuingService.IssueTokensAsync(user, cancellationToken);
 

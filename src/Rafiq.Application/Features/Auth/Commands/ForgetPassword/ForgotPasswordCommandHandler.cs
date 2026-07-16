@@ -10,11 +10,11 @@ namespace Rafiq.Application.Features.Auth.Commands.ForgetPassword
     {
         public async Task<ApiResponseBase> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
         {
-            var userDto = await _identityService.GetByPhoneAsync(request.PhoneNumber, cancellationToken);
+            var userDto = await _identityService.GetByEmailAsync(request.Email, cancellationToken);
             if (userDto is null)
                 return ApiResponseBase.SuccessResponse();
 
-            await otpService.SendOtpAsync(userDto.UserId, request.PhoneNumber, OtpPurpose.PasswordReset, cancellationToken);
+            await otpService.SendOtpAsync(userDto.UserId, request.Email, OtpPurpose.PasswordReset, cancellationToken);
             return ApiResponseBase.SuccessResponse("Otp has been sent successfully");
         }
     }

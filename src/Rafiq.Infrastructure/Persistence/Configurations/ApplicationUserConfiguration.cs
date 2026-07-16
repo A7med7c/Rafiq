@@ -12,6 +12,7 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
         builder.Property(x => x.CreatedAt).HasColumnType("datetime2(7)");
         builder.Property(x => x.UpdatedAt).HasColumnType("datetime2(7)");
         builder.Property(x => x.DeletedAt).HasColumnType("datetime2(7)");
+        builder.Property(x => x.ProfileImageUrl).HasMaxLength(500);
 
         builder.HasIndex(x => x.PhoneNumber)
             .IsUnique()

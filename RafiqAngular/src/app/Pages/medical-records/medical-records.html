@@ -105,7 +105,7 @@
           }
         </button>
         <div class="hdr-user" (click)="toggleDropdown()">
-          <img src="images/ahmed_avatar.png" alt="user" class="hdr-avatar">
+          <img [src]="avatarUrl" alt="user" class="hdr-avatar">
           <span class="hdr-username">{{ displayName }}</span>
           <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
 
@@ -113,7 +113,7 @@
           <div class="user-dropdown" (click)="$event.stopPropagation()">
             <div class="user-dropdown-hdr">
               <div class="user-dropdown-av">
-                <img src="images/ahmed_avatar.png" alt="avatar">
+                <img [src]="avatarUrl" alt="avatar">
               </div>
               <div class="user-dropdown-info">
                 <span class="user-dropdown-name">{{ displayName }}</span>
@@ -152,7 +152,18 @@
       </section>
 
       <!-- RECORDS CONTENT (upload cards + table + modals) -->
-      <app-records-content></app-records-content>
+      @if (contextProfileName()) {
+      <div class="records-context-banner">
+        <span class="records-context-text">
+          <i class="fa-solid fa-user-group"></i>
+          Viewing <strong>{{ contextProfileName() }}</strong>'s records
+        </span>
+        <a class="records-context-back" routerLink="/family-profiles">
+          <i class="fa-solid fa-arrow-left"></i> Back to Family Profiles
+        </a>
+      </div>
+      }
+      <app-records-content [profileId]="contextProfileId()" [readOnly]="contextReadOnly()"></app-records-content>
 
     </div>
   </div>

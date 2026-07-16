@@ -113,6 +113,10 @@ export class Dashboard implements OnInit {
     return this.authService.currentUser?.email ?? '';
   }
 
+  get avatarUrl(): string {
+    return this.authService.avatarUrl;
+  }
+
   get greeting(): string {
     const h = new Date().getHours();
     if (h < 12) return 'Good morning';

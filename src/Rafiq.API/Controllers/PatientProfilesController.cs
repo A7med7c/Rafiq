@@ -21,6 +21,7 @@ using Rafiq.Application.Features.PatientProfiles.Commands.RequestHealthProfileAc
 using Rafiq.Application.Features.PatientProfiles.Commands.RevokeMemberAccess;
 using Rafiq.Application.Features.PatientProfiles.Commands.SendHealthProfileInvitation;
 using Rafiq.Application.Features.PatientProfiles.Commands.UpdatePatientProfile;
+using Rafiq.Application.Features.PatientProfiles.Commands.UpdateProfileImage;
 using Rafiq.Application.Features.PatientProfiles.DTOs;
 using Rafiq.Application.Features.PatientProfiles.Queries.GetAccessibleHealthProfiles;
 using Rafiq.Application.Features.PatientProfiles.Queries.GetMyPatientProfile;
@@ -92,11 +93,29 @@ public sealed class PatientProfilesController(IMediator _mediator) : ControllerB
         return Ok(result);
     }
 
+    [HttpPost("{id:guid}/image")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    public async Task<IActionResult> UpdateProfileImage(
+         Guid id,
+         [FromForm] UpdateProfileImageRequestDto request,
+         CancellationToken cancellationToken)
+    {
+        var command = new UpdateProfileImageCommand(
+            id,
+            request.ProfileImage,
+            request.RemoveImage);
+
+        var result = await _mediator.Send(command, cancellationToken);
+
+        return Ok(result);
+    }
+
     [HttpPost("{profileId:guid}/invitations")]
     public async Task<IActionResult> SendInvitation(
-        Guid profileId,
-        [FromBody] SendHealthProfileInvitationRequestDto request,
-        CancellationToken cancellationToken)
+            Guid profileId,
+            [FromBody] SendHealthProfileInvitationRequestDto request,
+            CancellationToken cancellationToken)
     {
         var command = new SendHealthProfileInvitationCommand(profileId, request.Email, request.Role);
         var result = await _mediator.Send(command, cancellationToken);
