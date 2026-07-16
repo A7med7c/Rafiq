@@ -770,16 +770,31 @@
   padding: 16px 0;
 }
 
+/* ── Sidebar — disable interaction while any modal is open.
+   The modal overlay's backdrop-filter already blurs the sidebar
+   visually (it's position:fixed; inset:0 and sits above the sidebar
+   in stacking order). We only need pointer-events off here; adding
+   CSS filter would break position:fixed containment for the modals. */
+.dsh-sb.sb--modal-blur {
+  pointer-events: none;
+  user-select: none;
+}
+
 /* ── Detail Modal Overlay ──────────────────── */
 .modal-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(17, 24, 39, 0.45);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px;
 }
 
@@ -791,7 +806,8 @@
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
-  max-height: 85vh;
+  max-height: calc(100vh - 40px);
+  margin: auto;
   animation: modal-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1319,7 +1335,10 @@
 -------------------------------------------------- */
 .scan-backdrop {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -1327,6 +1346,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overscroll-behavior: contain;
   animation: fade-in 0.2s ease;
 }
 
@@ -2647,6 +2667,57 @@
   background: rgba(255,255,255,.12);
   color: var(--white);
   cursor: pointer;
+}
+
+/* ── Manual Image Upload (review modal, manual mode) ─── */
+.manual-img-wrap {
+  position: relative;
+  border-radius: var(--r-xs);
+  overflow: hidden;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-lt);
+}
+
+.manual-img-uploading {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.manual-img-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-xs);
+  background: #F9FAFB;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.manual-img-upload-btn:hover:not(:disabled) {
+  background: var(--blue-lt);
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.manual-img-upload-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 @media (max-width: 768px) {

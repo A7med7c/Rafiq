@@ -643,6 +643,33 @@
     </header>
     <div class="modal-body scan-form-body">
       <div class="review-image-pad">
+        @if (isManualMode()) {
+        <!-- Manual mode: local preview + upload button -->
+        <input #manualImgInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
+          (change)="onManualImageSelected($event)">
+        @if (manualImagePreviewUrl()) {
+        <div class="manual-img-wrap">
+          <img [src]="manualImagePreviewUrl()" class="modal-image" alt="Selected image">
+          @if (manualImageUploading()) {
+          <div class="manual-img-uploading">
+            <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:18px;height:18px;">
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+                [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+                stroke-linecap="round" transform="rotate(-90 18 18)" />
+            </svg>
+            <span>Uploading...</span>
+          </div>
+          }
+        </div>
+        }
+        <button type="button" class="manual-img-upload-btn" [disabled]="manualImageUploading()"
+          (click)="manualImgInput.click()">
+          <i class="fa-solid fa-image"></i>
+          {{ manualImagePreviewUrl() ? 'Change Image' : 'Attach Image (optional)' }}
+        </button>
+        } @else {
+        <!-- AI / Edit mode: show server image or placeholder -->
         @if (getImageUrl(rf.imagePath); as imageUrl) {
         @if (!reviewImageFailed()) {
         <button type="button" class="modal-image-btn" (click)="openLightbox(imageUrl)">
@@ -775,6 +802,7 @@
           <label class="scan-label">OCR Text</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.ocrText" rows="5"></textarea>
         </div>
+        }
         }
       </div>
       @if (reviewDateError()) {
@@ -944,6 +972,33 @@
     </header>
     <div class="modal-body scan-form-body">
       <div class="review-image-pad">
+        @if (isMedicineManualMode()) {
+        <!-- Manual mode: local file picker + preview, same as other manual record forms -->
+        <input #manualMedImgInput type="file" accept=".jpg,.jpeg,.png,.webp,.gif" style="display:none"
+          (change)="onManualMedicineImageSelected($event)">
+        @if (manualMedicineImagePreviewUrl()) {
+        <div class="manual-img-wrap">
+          <img [src]="manualMedicineImagePreviewUrl()" class="modal-image" alt="Selected medicine box image">
+          @if (manualMedicineImageUploading()) {
+          <div class="manual-img-uploading">
+            <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:18px;height:18px;">
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+                [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+                stroke-linecap="round" transform="rotate(-90 18 18)" />
+            </svg>
+            <span>Uploading...</span>
+          </div>
+          }
+        </div>
+        }
+        <button type="button" class="manual-img-upload-btn" [disabled]="manualMedicineImageUploading()"
+          (click)="manualMedImgInput.click()">
+          <i class="fa-solid fa-image"></i>
+          {{ manualMedicineImagePreviewUrl() ? 'Change Image' : 'Attach Image (optional)' }}
+        </button>
+        } @else {
+        <!-- AI scan / Edit mode: show server image or placeholder -->
         @if (getImageUrl(scanForm.imagePath); as imageUrl) {
         @if (!scanImageFailed()) {
         <button type="button" class="modal-image-btn" (click)="openLightbox(imageUrl)">
@@ -1020,18 +1075,20 @@
       }
     </div>
     <footer class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="scanSaving()" (click)="cancelScanReview()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-secondary"
+        [disabled]="scanSaving() || manualMedicineImageUploading()" (click)="cancelScanReview()">Cancel</button>
       <button type="button" class="modal-btn modal-btn-primary"
-        [disabled]="scanSaving() || scanForm.medicineName.trim() === ''" [class.modal-btn--saving]="scanSaving()"
+        [disabled]="scanSaving() || manualMedicineImageUploading() || scanForm.medicineName.trim() === ''"
+        [class.modal-btn--saving]="scanSaving() || manualMedicineImageUploading()"
         (click)="saveScanResult()">
-        @if (scanSaving()) {
+        @if (scanSaving() || manualMedicineImageUploading()) {
         <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
           <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
           <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
             [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
             stroke-linecap="round" transform="rotate(-90 18 18)" />
         </svg>
-        Saving...
+        {{ manualMedicineImageUploading() ? 'Uploading image...' : 'Saving...' }}
         } @else {
         <i class="fa-solid fa-floppy-disk"></i>
         @if (scanMode() === 'edit') { Save Changes } @else { Save Medicine }
@@ -1088,6 +1145,34 @@
   </button>
   <img [src]="imageUrl" alt="Fullscreen medical record preview" class="lightbox-image"
     (click)="$event.stopPropagation()">
+</div>
+}
+
+<!-- ═══════════ AI FAILURE RECOVERY DIALOG ═══════════ -->
+@if (showAiFailDialog()) {
+<div class="modal-overlay" (click)="closeAiFailDialog()">
+  <div class="modal-card ai-fail-modal" (click)="$event.stopPropagation()" role="alertdialog"
+    aria-labelledby="ai-fail-title" aria-describedby="ai-fail-desc">
+    <div class="ai-fail-ico">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+    </div>
+    <h3 class="ai-fail-title" id="ai-fail-title">AI Analysis Failed</h3>
+    <p class="ai-fail-desc" id="ai-fail-desc">
+      We couldn't analyze your document at the moment.<br>
+      You can try again or continue by entering the information manually.
+    </p>
+    <div class="ai-fail-actions">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAiFailDialog()">
+        Cancel
+      </button>
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="continueManually()">
+        <i class="fa-solid fa-pen-to-square"></i> Continue Manually
+      </button>
+      <button type="button" class="modal-btn modal-btn-primary" (click)="retryUpload()">
+        <i class="fa-solid fa-rotate-right"></i> Try Again
+      </button>
+    </div>
+  </div>
 </div>
 }
 

@@ -1225,6 +1225,14 @@ a { text-decoration: none; }
   animation: skl-pulse 1.5s ease-in-out infinite;
 }
 
+/* Empty family placeholder card */
+.fam-card--empty {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+}
+
 /* Empty-state AI body */
 .ai-body--empty {
   color: var(--text-3);

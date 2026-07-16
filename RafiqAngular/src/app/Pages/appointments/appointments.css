@@ -646,9 +646,34 @@
 
 }
 
+/* Sort dropdown */
+.appts-sort-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  padding: 0 12px;
+  height: 38px;
+  box-shadow: var(--shadow-sm);
+  gap: 8px;
+}
 
+.appts-sort-ico {
+  color: var(--text-4);
+  font-size: 13px;
+  flex-shrink: 0;
+}
 
-.clear-filters-btn {
+.appts-sort-sel {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 500;
+}.clear-filters-btn {
   border: 1px solid var(--border);
   background: var(--white);
   border-radius: var(--r-xs);

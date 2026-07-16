@@ -21,7 +21,6 @@ img {
     display: block;
 }
 
-/* Landing page shared layout */
 .landing-page .container {
     width: min(1180px, calc(100% - 40px));
     max-width: none;
@@ -83,3 +82,47 @@ img {
   align-items: center;
 }
 
+/* ═══════════════════════════════════════════════
+   SHARED SIDEBAR LINK TRANSITIONS  (Task 4)
+   Written once here — applies to every sidebar page.
+═══════════════════════════════════════════════ */
+
+/* Smooth colour + transform — NO padding animation to avoid layout shift */
+.sb-link {
+  transition:
+    background-color 0.25s ease-in-out,
+    color            0.25s ease-in-out,
+    border-color     0.25s ease-in-out,
+    transform        0.25s ease-in-out !important;
+}
+
+/* Keep active-link left-padding identical to normal links so nothing shifts */
+.sb-active {
+  padding-left: 10px !important;
+}
+
+/* Subtle nudge on hover */
+.sb-link:hover {
+  transform: translateX(2px);
+}
+
+/* ═══════════════════════════════════════════════
+   SHARED PAGE-CONTENT TRANSITION  (Task 5)
+   .dsh-main exists in every sidebar-routed component.
+   One rule here replaces per-page duplication.
+═══════════════════════════════════════════════ */
+
+@keyframes pageFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dsh-main {
+  animation: pageFadeInUp 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}

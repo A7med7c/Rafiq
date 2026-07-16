@@ -72,6 +72,7 @@ export class Appointments implements OnInit, OnDestroy {
   readonly searchQuery = signal('');
   readonly dateFrom    = signal('');
   readonly dateTo      = signal('');
+  readonly sortBy      = signal<'recent' | 'oldest' | 'az' | 'za'>('recent');
   readonly currentPage = signal(1);
   readonly PAGE_SIZE    = 5;
   readonly tabDirection = signal<'left' | 'right'>('left');
@@ -195,9 +196,13 @@ export class Appointments implements OnInit, OnDestroy {
     if (from) list = list.filter(a => new Date(a.appointmentDateTime) >= new Date(from));
     if (to)   list = list.filter(a => new Date(a.appointmentDateTime) <= new Date(`${to}T23:59:59`));
 
-    return list.sort(
-      (a, b) => new Date(a.appointmentDateTime).getTime() - new Date(b.appointmentDateTime).getTime()
-    );
+    const sort = this.sortBy();
+    if (sort === 'recent')  list = [...list].sort((a, b) => new Date(b.appointmentDateTime).getTime() - new Date(a.appointmentDateTime).getTime());
+    if (sort === 'oldest')  list = [...list].sort((a, b) => new Date(a.appointmentDateTime).getTime() - new Date(b.appointmentDateTime).getTime());
+    if (sort === 'az')      list = [...list].sort((a, b) => a.title.localeCompare(b.title));
+    if (sort === 'za')      list = [...list].sort((a, b) => b.title.localeCompare(a.title));
+
+    return list;
   });
 
   readonly paginated = computed(() => {

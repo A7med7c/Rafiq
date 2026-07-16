@@ -1,8 +1,9 @@
 import {
-  Component, Input, OnInit, OnChanges, SimpleChanges,
-  inject, signal, computed,
+  Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges,
+  inject, signal, computed, effect,
   ElementRef, ViewChild, HostListener, ViewEncapsulation,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -126,7 +127,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
   styleUrl: '../../Pages/medical-records/medical-records.css',
   encapsulation: ViewEncapsulation.None,
 })
-export class RecordsContentComponent implements OnInit, OnChanges {
+export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   @Input() profileId: string | undefined;
   /** When true, hides the upload cards grid (used in family profiles) */
   @Input() compact = false;
@@ -217,6 +218,12 @@ export class RecordsContentComponent implements OnInit, OnChanges {
   readonly scanRecordId = signal<string | null>(null);
   scanForm: ScanForm = this.emptyScanForm();
 
+  // Manual entry & AI failure recovery
+  readonly showAiFailDialog = signal(false);
+  private _failedFile: File | null = null;
+  private _failedType: 'lab' | 'imaging' | 'prescription' | 'general' | 'medicine' | null = null;
+  private _failedDesc = '';
+
   // Task 1: per-medicine add-to-medications state
   readonly addingMedIndex = signal<number | null>(null);
   readonly addedMedIndices = signal<Set<number>>(new Set());
@@ -249,6 +256,48 @@ export class RecordsContentComponent implements OnInit, OnChanges {
   readonly pageSize = PAGE_SIZE;
   readonly toasts = signal<Toast[]>([]);
   private toastCounter = 0;
+
+  // Manual entry mode (lab / imaging / prescription / general)
+  readonly isManualMode = signal(false);
+  readonly manualImageFile = signal<File | null>(null);
+  readonly manualImagePreviewUrl = signal<string | null>(null);
+  readonly manualImageUploading = signal(false);
+
+  // Manual entry mode — medicine box
+  readonly isMedicineManualMode = signal(false);
+  readonly manualMedicineImageFile = signal<File | null>(null);
+  readonly manualMedicineImagePreviewUrl = signal<string | null>(null);
+  readonly manualMedicineImageUploading = signal(false);
+
+  private readonly _doc = inject(DOCUMENT);
+
+  constructor() {
+    effect(() => {
+      const open = !!(
+        this.selectedRecord() || this.deleteTarget() || this.reviewForm() ||
+        this.generalUploadFormOpen() || this.uploadLoading() || this.scanLoading() ||
+        this.scanResult() || this.showReminderPromptModal() || this.lightboxUrl() ||
+        this.showAiFailDialog()
+      );
+      const container = this._doc.querySelector('.dsh-body') as HTMLElement | null;
+      if (container) {
+        container.style.overflowY = open ? 'hidden' : '';
+      }
+      const sidebar = this._doc.querySelector('.dsh-sb') as HTMLElement | null;
+      if (sidebar) {
+        sidebar.classList.toggle('sb--modal-blur', open);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    const container = this._doc.querySelector('.dsh-body') as HTMLElement | null;
+    if (container) container.style.overflowY = '';
+    const sidebar = this._doc.querySelector('.dsh-sb') as HTMLElement | null;
+    if (sidebar) sidebar.classList.remove('sb--modal-blur');
+    this._clearManualImage();
+    this._clearManualMedicineImage();
+  }
 
   private _searchQuery = '';
   get searchQueryValue(): string { return this._searchQuery; }
@@ -609,6 +658,8 @@ export class RecordsContentComponent implements OnInit, OnChanges {
       this.scanImageFailed.set(false);
       this.scanMode.set('edit');
       this.scanRecordId.set(record.id);
+      this.isMedicineManualMode.set(false);
+      this._clearManualMedicineImage();
       this._scanFormSnapshot = this.snapshotScanForm(this.scanForm);
       this.scanResult.set({
         medicineName: this.scanForm.medicineName,
@@ -722,10 +773,13 @@ export class RecordsContentComponent implements OnInit, OnChanges {
         }
         this.openReviewModal(type, data);
       },
-      error: err => {
+      error: _err => {
         this.uploadLoading.set(false);
         this.setUploading(type, false);
-        this.showToast(err?.error?.message || 'Upload failed. Please try again.', 'error');
+        this._failedFile = file;
+        this._failedType = type;
+        this._failedDesc = description;
+        this.showAiFailDialog.set(true);
       },
     });
   }
@@ -929,7 +983,10 @@ export class RecordsContentComponent implements OnInit, OnChanges {
       error: err => {
         this.scanLoading.set(false);
         this.setUploading('medicine', false);
-        this.showToast(err?.error?.message || 'Scan failed. Please try again.', 'error');
+        this._failedFile = file;
+        this._failedType = 'medicine';
+        this._failedDesc = '';
+        this.showAiFailDialog.set(true);
       },
     });
   }
@@ -1015,6 +1072,7 @@ export class RecordsContentComponent implements OnInit, OnChanges {
 
   saveScanResult(): void {
     if (!this.scanForm.medicineName.trim()) return;
+    if (this.manualMedicineImageUploading()) return;
 
     if (this.scanMode() === 'edit' && this._scanFormSnapshot !== null &&
         this.snapshotScanForm(this.scanForm) === this._scanFormSnapshot) {
