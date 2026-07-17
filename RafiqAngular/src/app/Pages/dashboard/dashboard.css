@@ -159,6 +159,17 @@ a { text-decoration: none; }
   margin-bottom: 0;
   padding: 0 4px;
   min-width: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: start;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+}
+
+.sb-logo:hover .sb-logo-title {
+  color: var(--primary);
 }
 
 .sb-logo-icon {

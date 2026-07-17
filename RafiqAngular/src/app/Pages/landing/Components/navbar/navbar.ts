@@ -57,6 +57,7 @@ export class Navbar implements AfterViewInit, OnDestroy {
       contact: 'Contact',
       login: 'Login',
       cta: 'Get Started',
+      dashboard: 'Dashboard',
       account: 'Account',
       signOut: 'Sign Out',
       signingOut: 'Signing out...',
@@ -73,6 +74,7 @@ export class Navbar implements AfterViewInit, OnDestroy {
       contact: '\u062a\u0648\u0627\u0635\u0644',
       login: '\u062f\u062e\u0648\u0644',
       cta: '\u0627\u0628\u062f\u0623 \u0627\u0644\u0622\u0646',
+      dashboard: '\u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u062d\u0643\u0645',
       account: '\u0627\u0644\u062d\u0633\u0627\u0628',
       signOut: '\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062e\u0631\u0648\u062c',
       signingOut: '\u062c\u0627\u0631\u064a \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062e\u0631\u0648\u062c...',
@@ -110,7 +112,7 @@ export class Navbar implements AfterViewInit, OnDestroy {
 
   @HostListener('window:resize')
   onWindowResize(): void {
-    if (window.innerWidth > 1040 && this.isMenuOpen()) {
+    if (window.innerWidth > 1180 && this.isMenuOpen()) {
       this.closeMenu();
     }
   }
@@ -171,6 +173,11 @@ export class Navbar implements AfterViewInit, OnDestroy {
     }
 
     this.scrollToSection(sectionId);
+  }
+
+  onGetStarted(): void {
+    this.closeMenu();
+    this.authService.navigateToAppEntry();
   }
 
   signOut(): void {

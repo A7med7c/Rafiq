@@ -1,14 +1,15 @@
-import { Component, Input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, Input, inject } from '@angular/core';
+import { AuthService } from '../../../../Services/auth-service';
 import { LandingLanguage } from '../../landing';
 
 @Component({
   selector: 'app-hero',
-  imports: [RouterLink],
   templateUrl: './hero.html',
   styleUrl: './hero.css',
 })
 export class Hero {
+  private readonly authService = inject(AuthService);
+
   @Input() language: LandingLanguage = 'en';
 
   text = {
@@ -38,5 +39,9 @@ export class Hero {
 
   get t() {
     return this.text[this.language];
+  }
+
+  onGetStarted(): void {
+    this.authService.navigateToAppEntry();
   }
 }

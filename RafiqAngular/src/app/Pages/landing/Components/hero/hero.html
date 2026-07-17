@@ -13,7 +13,7 @@
       <p class="description">{{ t.description }}</p>
 
       <div class="hero-actions">
-        <a class="hero-btn" routerLink="/register">{{ t.cta }}</a>
+        <button type="button" class="hero-btn" (click)="onGetStarted()">{{ t.cta }}</button>
         <button type="button" class="watch-demo">
           <span class="play-circle">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">

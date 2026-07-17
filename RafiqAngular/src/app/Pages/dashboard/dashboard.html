@@ -8,7 +8,7 @@
   <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <!-- Logo -->
     <div class="sb-top">
-      <div class="sb-logo">
+      <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
         <div class="sb-logo-icon">
           <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
@@ -16,7 +16,7 @@
           <span class="sb-logo-title">Rafiq AI</span>
           <span class="sb-logo-sub">Family Health Assistant</span>
         </div>
-      </div>
+      </button>
       <button type="button" class="sb-toggle"
         [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'" (click)="toggleSidebar()">
         <i class="fa-solid fa-chevron-left"></i>
