@@ -235,8 +235,17 @@ export const ar: Translations = {
     learnMore: 'اعرف أكثر',
     goodMorning: 'صباح الخير',
     goodAfternoon: 'مساء الخير',
-    goodEvening: 'مسا النور',
+    goodEvening: 'مساء النور',
     reminder: 'تذكير',
+    medicalReport:'الملف الطبي',
+    generateAndDown:'نزل ملفك الطبي',
+    chooseMedicalType:'اختار نوع الملف اللي محتاجه',
+    doctorSummary:'ملخص من دكتور',
+    pagesRange: 'من صفحتين ل تلاتة',
+    doctorSummaryDesc:'ملخص سريع للدكتور فيه العلامات الحيوية، والحالات المرضية، والأدوية، وآخر النتائج، وملخص بالذكاء الاصطناعي.',
+    completeHistory:'الملف الطبي بالكامل',
+    completeHistoryDesc:'تقرير كامل فيه كل سجلاتك الطبية، والروشتات، وتاريخ التحاليل والأشعات، وتسلسل حالتك مع الوقت، وملخص طبي بالذكاء الاصطناعي.',
+    generatingReportSub:'ممكن يستغرق ثواني قليلة أثناء إعداد الذكاء الاصطناعي لتلخيصك',   
   },
 
   medicalRecordsPage: {
@@ -808,6 +817,18 @@ export const ar: Translations = {
     deleteProfileBtn: 'امسح الملف',
     removeAccessBtn: 'إزالة الوصول',
     cannotBeUndone: 'مش هتقدر ترجع فيها.',
+    brother: 'الأخ',
+    sister: 'الأخت',
+    father: 'الأب',
+    mother: 'الأم',
+    son: 'الابن',
+    daughter: 'البنت',
+    husband: 'الرجل',
+    wife: 'الزوجة',
+    guardian: 'الوصي',
+    caregiver: 'المعالج',
+    self: 'أنت',
+    member: 'عضو'
   },
 
   onboarding: {

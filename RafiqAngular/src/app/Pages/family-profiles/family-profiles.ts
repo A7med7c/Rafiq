@@ -916,9 +916,15 @@ export class FamilyProfiles implements OnInit {
 
   getAvatarColor(i: number): string { return this.avatarColors[i % this.avatarColors.length]; }
 
-  getRelLabel(p: AccessibleProfileDto): string {
-    return p.isSelf ? 'You' : (p.relationship ?? 'Member');
+getRelLabel(p: AccessibleProfileDto): string {
+  if (p.isSelf) {
+    return this.t().family.self;
   }
+
+  const key = (p.relationship ?? 'member').toLowerCase();
+
+  return (this.t().family as any)[key] ?? this.t().family.member;
+}
 
   getRelBadgeClass(p: AccessibleProfileDto): string {
     if (p.isSelf) return 'fp-badge fp-badge--blue';
@@ -932,7 +938,8 @@ export class FamilyProfiles implements OnInit {
     return ['Husband', 'Wife'].includes(r) ? 'fa-solid fa-heart' : 'fa-solid fa-person';
   }
 
-  getStatusLabel(p: AccessibleProfileDto): string { return p.isSelf ? 'Self' : 'Active'; }
+  getStatusLabel(p: AccessibleProfileDto): string {   const key = (p.relationship ?? 'member').toLowerCase();
+return p.isSelf ? (this.t().family as any)[key] ?? this.t().family.member : 'Active'; }
 
   getStatusBadgeClass(p: AccessibleProfileDto): string {
     return p.isSelf ? 'fp-badge fp-badge--green' : 'fp-badge fp-badge--blue';

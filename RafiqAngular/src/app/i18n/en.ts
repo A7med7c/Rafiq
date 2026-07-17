@@ -235,6 +235,15 @@ export const en = {
     goodAfternoon: 'Good afternoon',
     goodEvening: 'Good evening',
     reminder: 'Reminder',
+    medicalReport:'Medical Report',
+    generateAndDown:'Generate & Download',
+    chooseMedicalType: 'Choose the report type to generate',
+    doctorSummary:'Doctor Summary',
+    pagesRange:'1 - 2 Pages',
+    doctorSummaryDesc: 'A concise report for doctor consultations — vitals, conditions, medications, latest results and AI summary.',
+    completeHistory:'Complete Medical History',
+    completeHistoryDesc:'Full report with all records, prescriptions, lab and imaging history, timeline and AI clinical summary.',
+    generatingReportSub: 'This may take a few seconds while the AI prepares your summary'
   },
 
   medicalRecordsPage: {
@@ -806,6 +815,18 @@ export const en = {
     deleteProfileBtn: 'Delete Profile',
     removeAccessBtn: 'Remove Access',
     cannotBeUndone: 'This action cannot be undone.',
+    brother: 'Brother',
+    sister: 'Sister',
+    father: 'Father',
+    mother: 'Mother',
+    son: 'Son',
+    daughter: 'Daughter',
+    husband: 'Husband',
+    wife: 'Wife',
+    guardian: 'Guardian',
+    caregiver: 'Caregiver',
+    self: 'You',
+    member:'Member'
   },
 
   onboarding: {

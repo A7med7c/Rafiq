@@ -158,8 +158,8 @@
             <i class="fa-solid fa-file-medical"></i>
           </div>
           <div class="report-btn-text">
-            <span class="report-btn-title">Medical Report</span>
-            <span class="report-btn-sub">Generate & Download</span>
+            <span class="report-btn-title">{{t().dashboard.medicalReport}}</span>
+            <span class="report-btn-sub">{{t().dashboard.generateAndDown}}</span>
           </div>
         </button>
       </div>
@@ -357,11 +357,11 @@
                     <span class="fam-v-val">{{ getAge(slot.data!.dateOfBirth) }} {{ t().dashboard.yrs }}</span>
                   </div>
                 </div>
-                <button type="button" class="fam-checkin-btn">
+                <!-- <button type="button" class="fam-checkin-btn">
                   <i class="fa-solid fa-person-walking"></i> {{ t().dashboard.checkIn }}
-                </button>
+                </button> -->
                 <button type="button" class="fam-summary-btn" (click)="openFamilySummary(slot.data!)">
-                  <i class="fa-solid fa-wand-magic-sparkles"></i> AI Summary
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> {{t().dashboard.aiHealthSummary}}
                 </button>
               </div>
               } @else if (slot.type === 'add') {
@@ -564,8 +564,8 @@
           <i class="fa-solid fa-file-medical"></i>
         </div>
         <div>
-          <h2 class="modal-title">Medical Report</h2>
-          <p class="modal-subtitle">Choose the report type to generate</p>
+          <h2 class="modal-title">{{t().dashboard.medicalReport}}</h2>
+          <p class="modal-subtitle">{{t().dashboard.chooseMedicalType}}</p>
         </div>
       </div>
       @if (!reportGenerating()) {
@@ -585,10 +585,10 @@
         <div class="report-option-body">
           <div class="report-option-title">
             <i class="fa-solid fa-user-doctor"></i>
-            Doctor Summary
-            <span class="report-option-badge">2–3 pages</span>
+            {{ t().dashboard.doctorSummary }}
+            <span class="report-option-badge">{{t().dashboard.pagesRange}}</span>
           </div>
-          <p class="report-option-desc">A concise report for doctor consultations — vitals, conditions, medications, latest results and AI summary.</p>
+          <p class="report-option-desc">{{t().dashboard.doctorSummaryDesc}}</p>
         </div>
       </label>
 
@@ -600,17 +600,17 @@
         <div class="report-option-body">
           <div class="report-option-title">
             <i class="fa-solid fa-folder-open"></i>
-            Complete Medical History
+            {{ t().dashboard.completeHistory }}
           </div>
-          <p class="report-option-desc">Full report with all records, prescriptions, lab and imaging history, timeline and AI clinical summary.</p>
+          <p class="report-option-desc">{{t().dashboard.completeHistoryDesc}}</p>
         </div>
       </label>
     </div>
 
     <div class="modal-footer">
-      <button type="button" class="btn-ghost" (click)="closeReportDialog()">Cancel</button>
+      <button type="button" class="btn-ghost" (click)="closeReportDialog()">{{t().records.cancelBtn}}</button>
       <button type="button" class="btn-primary" (click)="generateReport()">
-        <i class="fa-solid fa-file-arrow-down"></i> Generate Report
+        <i class="fa-solid fa-file-arrow-down"></i> {{t().dashboard.generateAndDown}}
       </button>
     </div>
     } @else {
@@ -621,8 +621,8 @@
           <circle cx="30" cy="30" r="26" fill="none" stroke-width="3"/>
         </svg>
       </div>
-      <p class="report-gen-text">Generating your medical report<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
-      <p class="report-gen-sub">This may take a few seconds while the AI prepares your summary</p>
+      <p class="report-gen-text">{{t().family.generatingAiSummary}}<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
+      <p class="report-gen-sub">{{t().dashboard.generatingReportSub}}</p>
     </div>
     }
   </div>
