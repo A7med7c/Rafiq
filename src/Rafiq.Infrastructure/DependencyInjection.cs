@@ -19,6 +19,7 @@ using Rafiq.Infrastructure.Services.MedicationReminders;
 using Rafiq.Infrastructure.Services.AppointmentReminders;
 using Rafiq.Infrastructure.Services.AiChat;
 using Rafiq.Infrastructure.Services.Common;
+using Rafiq.Infrastructure.Services.MedicalReport;
 
 
 namespace Rafiq.Infrastructure;
@@ -81,6 +82,9 @@ public static class DependencyInjection
         // ── AiChat ────────────────────────────────────────────────────────
         services.Configure<AiChatSettings>(configuration.GetSection("AiChat"));
         services.AddHttpClient<IAiChatService, AiChatService>();
+
+        // ── Medical Report ────────────────────────────────────────────────
+        services.AddScoped<IMedicalReportPdfGenerator, MedicalReportPdfGenerator>();
 
         // ── Documents ─────────────────────────────────────────────────────
         services.AddScoped<ILabReportRepository, LabReportRepository>();

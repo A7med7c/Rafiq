@@ -37,6 +37,10 @@ export class DashboardService {
     return this.healthProfileSvc.getMyProfile().pipe(map(r => r.data.id));
   }
 
+  getActiveProfileId(): Observable<string> {
+    return this.getCurrentProfileId();
+  }
+
   // ─── Medical Records ──────────────────────────────────────────────────────
   getMedicalRecords(): Observable<MedicalRecord[]> {
     const labs$ = this.http.get<ApiResponse<LabReport[]>>(`${this.base}/documents/labs`).pipe(

@@ -53,6 +53,7 @@ export class Navbar implements AfterViewInit, OnDestroy {
       contact: 'Contact',
       login: 'Login',
       cta: 'Get Started',
+      dashboard: 'Dashboard',
       account: 'Account',
       signOut: 'Sign Out',
       signingOut: 'Signing out...',
@@ -106,7 +107,7 @@ export class Navbar implements AfterViewInit, OnDestroy {
 
   @HostListener('window:resize')
   onWindowResize(): void {
-    if (window.innerWidth > 1040 && this.isMenuOpen()) {
+    if (window.innerWidth > 1180 && this.isMenuOpen()) {
       this.closeMenu();
     }
   }
@@ -167,6 +168,11 @@ export class Navbar implements AfterViewInit, OnDestroy {
     }
 
     this.scrollToSection(sectionId);
+  }
+
+  onGetStarted(): void {
+    this.closeMenu();
+    this.authService.navigateToAppEntry();
   }
 
   signOut(): void {

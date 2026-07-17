@@ -53,6 +53,10 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  navigateToAppEntry(): void {
+    void this.router.navigate([this.isLoggedIn ? '/dashboard' : '/login']);
+  }
+
   /** Resolves the current user's avatar to an absolute URL, falling back to the default avatar. */
   get avatarUrl(): string {
     return this.resolveAvatarUrl(this.currentUser?.profileImageUrl);

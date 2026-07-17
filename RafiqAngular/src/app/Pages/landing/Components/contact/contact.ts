@@ -1,14 +1,15 @@
-import { Component, Input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, Input, inject } from '@angular/core';
+import { AuthService } from '../../../../Services/auth-service';
 import { LandingLanguage } from '../../landing';
 
 @Component({
   selector: 'app-contact',
-  imports: [RouterLink],
   templateUrl: './contact.html',
   styleUrl: './contact.css',
 })
 export class Contact {
+  private readonly authService = inject(AuthService);
+
   @Input() language: LandingLanguage = 'en';
 
   text = {
@@ -28,5 +29,9 @@ export class Contact {
 
   get t() {
     return this.text[this.language];
+  }
+
+  onGetStarted(): void {
+    this.authService.navigateToAppEntry();
   }
 }
