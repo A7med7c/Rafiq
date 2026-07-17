@@ -398,7 +398,7 @@ export const ar: Translations = {
     enterManually: 'اكتب بنفسك',
     tryAgain: 'حاول تاني',
     clearFilters: 'امسح الفلاتر',
-    filteredLabel: 'مفلتر',
+    filteredLabel: 'مفلتر', 
   },
 
   aiAssistant: {
@@ -440,7 +440,7 @@ export const ar: Translations = {
     addAppointment: 'أضف موعد',
     nextAppointment: 'الموعد الجاي',
     noUpcomingAppointment: 'مفيش موعد جاي',
-    noUpcomingText: 'معندكش مواعيد جاية. حدد موعد عشان تاخد تذكيرات.',
+    noUpcomingText: 'معندكش مواعيد جاية...',
     upcoming: 'الجاية',
     completed: 'خلصت',
     cancelledMissed: 'اتلغت / فاتت',

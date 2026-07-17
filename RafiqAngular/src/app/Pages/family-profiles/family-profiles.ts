@@ -996,4 +996,14 @@ return p.isSelf ? (this.t().family as any)[key] ?? this.t().family.member : 'Act
     const p = this.profiles().find(x => x.userHealthProfileId === profileId);
     return p ? `${p.firstName} ${p.lastName}` : 'Unknown Profile';
   }
+
+  getGenderLabel(gender: string | null | undefined): string {
+  if (!gender) {
+    return '-';
+  }
+
+  const key = gender.toLowerCase();
+
+  return (this.t().common as any)[key] ?? gender;
+}
 }

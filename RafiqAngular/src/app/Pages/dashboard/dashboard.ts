@@ -344,4 +344,25 @@ export class Dashboard implements OnInit {
   }
 
   closeFamilySummary(): void { this.familySummaryOpen.set(false); }
+
+ getRelationshipLabel(relationship: string | null | undefined): string {
+  if (!relationship) {
+    return this.t().family.self;
+  }
+
+  const key = relationship.toLowerCase();
+
+  return (this.t().family as any)[key] ?? relationship;
 }
+
+getGenderLabel(gender: string | null | undefined): string {
+  if (!gender) {
+    return '-';
+  }
+
+  const key = gender.toLowerCase();
+
+  return (this.t().common as any)[key] ?? gender;
+}
+}
+

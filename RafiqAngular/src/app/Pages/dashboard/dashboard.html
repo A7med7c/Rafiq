@@ -18,10 +18,12 @@
         </div>
       </button>
       <button type="button" class="sb-toggle"
-        [attr.aria-label]="sidebarCollapsed() ? t().sidebar.expandSidebar : t().sidebar.collapseSidebar" (click)="toggleSidebar()">
+        [attr.aria-label]="sidebarCollapsed() ? t().sidebar.expandSidebar : t().sidebar.collapseSidebar"
+        (click)="toggleSidebar()">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
-      <button type="button" class="sb-mobile-close" [attr.aria-label]="t().sidebar.closeSidebar" (click)="toggleMobileSidebar()">
+      <button type="button" class="sb-mobile-close" [attr.aria-label]="t().sidebar.closeSidebar"
+        (click)="toggleMobileSidebar()">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -84,7 +86,8 @@
 
     <!-- HEADER -->
     <header class="dsh-hdr">
-      <button type="button" class="sb-mobile-toggle" [attr.aria-label]="t().header.openSidebar" (click)="toggleMobileSidebar()">
+      <button type="button" class="sb-mobile-toggle" [attr.aria-label]="t().header.openSidebar"
+        (click)="toggleMobileSidebar()">
         <i class="fa-solid fa-bars"></i>
       </button>
       <div class="hdr-search">
@@ -97,8 +100,7 @@
           {{ t().header.askAI }}
         </button>
         <button type="button" class="hdr-bell" (click)="notifService.toggleNotificationCenter()"
-          [attr.aria-label]="t().header.notifications"
-          [class.hdr-bell--active]="notifService.notificationCenterOpen()">
+          [attr.aria-label]="t().header.notifications" [class.hdr-bell--active]="notifService.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
           @if (unreadNotifCount() > 0) {
           <span class="hdr-badge">{{ unreadNotifCount() }}</span>
@@ -185,10 +187,11 @@
               <div class="ai-summary-spinner">
                 <i class="fa-solid fa-wand-magic-sparkles ai-summary-spinner-ico"></i>
                 <svg class="ai-summary-ring" viewBox="0 0 60 60">
-                  <circle cx="30" cy="30" r="26" fill="none" stroke-width="3"/>
+                  <circle cx="30" cy="30" r="26" fill="none" stroke-width="3" />
                 </svg>
               </div>
-              <p class="ai-summary-loading-text">{{ t().dashboard.generatingAiSummary }}<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
+              <p class="ai-summary-loading-text">{{ t().dashboard.generatingAiSummary }}<span
+                  class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
             </div>
             } @else if (!healthSummary()?.hasData) {
             <p class="ai-body ai-body--empty">
@@ -286,7 +289,8 @@
                 </span>
                 <span class="pill pill-green-sm">{{ formatApptRelative(nextAppointment()!.appointmentDateTime) }}</span>
               </div>
-              <button type="button" class="appt-detail-btn" routerLink="/appointments">{{ t().common.viewDetails }}</button>
+              <button type="button" class="appt-detail-btn" routerLink="/appointments">{{ t().common.viewDetails
+                }}</button>
             </div>
           </div>
           } @else {
@@ -316,63 +320,64 @@
         <div class="family-grid">
 
           @if (familyLoading()) {
-            @for (s of [1,2,3,4]; track s) {
-            <div class="fam-card fam-card--skeleton">
-              <div class="skl-row">
-                <div class="skl-sq" style="border-radius:50%"></div>
-                <div class="skl-lines">
-                  <div class="skl-line skl-70"></div>
-                  <div class="skl-line skl-45"></div>
-                </div>
-              </div>
-              <div class="skl-list" style="margin:0">
-                <div class="skl-line"></div>
+          @for (s of [1,2,3,4]; track s) {
+          <div class="fam-card fam-card--skeleton">
+            <div class="skl-row">
+              <div class="skl-sq" style="border-radius:50%"></div>
+              <div class="skl-lines">
                 <div class="skl-line skl-70"></div>
+                <div class="skl-line skl-45"></div>
               </div>
             </div>
-            }
+            <div class="skl-list" style="margin:0">
+              <div class="skl-line"></div>
+              <div class="skl-line skl-70"></div>
+            </div>
+          </div>
+          }
           } @else {
-            @for (slot of familySlots(); track $index) {
-              @if (slot.type === 'profile') {
-              <div class="fam-card">
-                <div class="fam-top">
-                  <div class="fam-av-wrap">
-                    <div class="fam-av fam-av-letter">{{ getInitial(slot.data!.firstName) }}</div>
-                  </div>
-                  <div class="fam-id">
-                    <p class="fam-name">
-                       {{ slot.data!.firstName }} {{ slot.data!.lastName }}
-                      @if (slot.data!.isSelf) { <span class="fam-you">({{ t().dashboard.you }})</span> }
-                    </p>
-                    <span class="pill pill-blue-sm" style="text-align: center;">{{ slot.data!.relationship || t().dashboard.self }}</span>
-                  </div>
-                </div>
-                <div class="fam-vitals">
-                  <div class="fam-v-row">
-                    <span class="fam-v-lbl">{{ t().dashboard.gender }}</span>
-                    <span class="fam-v-val">{{ slot.data!.gender }}</span>
-                  </div>
-                  <div class="fam-v-row">
-                    <span class="fam-v-lbl">{{ t().dashboard.age }}</span>
-                    <span class="fam-v-val">{{ getAge(slot.data!.dateOfBirth) }} {{ t().dashboard.yrs }}</span>
-                  </div>
-                </div>
-                <!-- <button type="button" class="fam-checkin-btn">
+          @for (slot of familySlots(); track $index) {
+          @if (slot.type === 'profile') {
+          <div class="fam-card">
+            <div class="fam-top">
+              <div class="fam-av-wrap">
+                <div class="fam-av fam-av-letter">{{ getInitial(slot.data!.firstName) }}</div>
+              </div>
+              <div class="fam-id">
+                <p class="fam-name">
+                  {{ slot.data!.firstName }} {{ slot.data!.lastName }}
+                  @if (slot.data!.isSelf) { <span class="fam-you">({{ t().dashboard.you }})</span> }
+                </p>
+                <span class="pill pill-blue-sm" style="text-align: center;">{{
+                  getRelationshipLabel(slot.data!.relationship) || t().dashboard.self }}</span>
+              </div>
+            </div>
+            <div class="fam-vitals">
+              <div class="fam-v-row">
+                <span class="fam-v-lbl">{{ t().dashboard.gender }}</span>
+                <span class="fam-v-val">{{ getGenderLabel(slot.data!.gender )}}</span>
+              </div>
+              <div class="fam-v-row">
+                <span class="fam-v-lbl">{{ t().dashboard.age }}</span>
+                <span class="fam-v-val">{{ getAge(slot.data!.dateOfBirth) }} {{ t().dashboard.yrs }}</span>
+              </div>
+            </div>
+            <!-- <button type="button" class="fam-checkin-btn">
                   <i class="fa-solid fa-person-walking"></i> {{ t().dashboard.checkIn }}
                 </button> -->
-                <button type="button" class="fam-summary-btn" (click)="openFamilySummary(slot.data!)">
-                  <i class="fa-solid fa-wand-magic-sparkles"></i> {{t().dashboard.aiHealthSummary}}
-                </button>
-              </div>
-              } @else if (slot.type === 'add') {
-              <a class="fam-card fam-card--add" routerLink="/family-profiles">
-                <i class="fa-solid fa-plus fam-add-ico"></i>
-                <span class="fam-add-lbl">{{ t().dashboard.addFamilyMember }}</span>
-              </a>
-              } @else {
-              <div class="fam-card fam-card--empty"></div>
-              }
-            }
+            <button type="button" class="fam-summary-btn" (click)="openFamilySummary(slot.data!)">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> {{t().dashboard.aiHealthSummary}}
+            </button>
+          </div>
+          } @else if (slot.type === 'add') {
+          <a class="fam-card fam-card--add" routerLink="/family-profiles">
+            <i class="fa-solid fa-plus fam-add-ico"></i>
+            <span class="fam-add-lbl">{{ t().dashboard.addFamilyMember }}</span>
+          </a>
+          } @else {
+          <div class="fam-card fam-card--empty"></div>
+          }
+          }
           }
 
 
@@ -580,7 +585,8 @@
       <label class="report-option" [class.report-option--selected]="selectedReportType() === 'DoctorSummary'"
         (click)="selectedReportType.set('DoctorSummary')">
         <div class="report-option-radio">
-          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'DoctorSummary'"></div>
+          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'DoctorSummary'">
+          </div>
         </div>
         <div class="report-option-body">
           <div class="report-option-title">
@@ -595,7 +601,8 @@
       <label class="report-option" [class.report-option--selected]="selectedReportType() === 'CompleteHistory'"
         (click)="selectedReportType.set('CompleteHistory')">
         <div class="report-option-radio">
-          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'CompleteHistory'"></div>
+          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'CompleteHistory'">
+          </div>
         </div>
         <div class="report-option-body">
           <div class="report-option-title">
@@ -618,10 +625,11 @@
       <div class="report-gen-spinner-wrap">
         <i class="fa-solid fa-file-medical report-gen-ico"></i>
         <svg class="report-gen-ring" viewBox="0 0 60 60">
-          <circle cx="30" cy="30" r="26" fill="none" stroke-width="3"/>
+          <circle cx="30" cy="30" r="26" fill="none" stroke-width="3" />
         </svg>
       </div>
-      <p class="report-gen-text">{{t().family.generatingAiSummary}}<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
+      <p class="report-gen-text">{{t().family.generatingAiSummary}}<span
+          class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
       <p class="report-gen-sub">{{t().dashboard.generatingReportSub}}</p>
     </div>
     }
@@ -653,10 +661,11 @@
       <div class="ai-summary-spinner">
         <i class="fa-solid fa-wand-magic-sparkles ai-summary-spinner-ico"></i>
         <svg class="ai-summary-ring" viewBox="0 0 60 60">
-          <circle cx="30" cy="30" r="26" fill="none" stroke-width="3"/>
+          <circle cx="30" cy="30" r="26" fill="none" stroke-width="3" />
         </svg>
       </div>
-      <p class="ai-summary-loading-text">Generating AI Summary<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
+      <p class="ai-summary-loading-text">Generating AI Summary<span
+          class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
     </div>
     } @else if (!familySummaryData()?.hasData) {
     <div class="family-summary-empty">

@@ -826,7 +826,8 @@ export const en = {
     guardian: 'Guardian',
     caregiver: 'Caregiver',
     self: 'You',
-    member:'Member'
+    member:'Member',
+    
   },
 
   onboarding: {
