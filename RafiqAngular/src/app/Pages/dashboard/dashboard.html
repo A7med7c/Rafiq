@@ -160,13 +160,13 @@
             All family members are doing well today.
           </p>
         </div>
-        <button type="button" class="sos-btn">
-          <div class="sos-ico-bg">
-            <i class="fa-solid fa-star-of-life"></i>
+        <button type="button" class="report-btn" (click)="openReportDialog()">
+          <div class="report-btn-ico-bg">
+            <i class="fa-solid fa-file-medical"></i>
           </div>
-          <div class="sos-text">
-            <span class="sos-title">QUICK SOS</span>
-            <span class="sos-sub">Emergency Hub</span>
+          <div class="report-btn-text">
+            <span class="report-btn-title">Medical Report</span>
+            <span class="report-btn-sub">Generate & Download</span>
           </div>
         </button>
       </div>
@@ -364,8 +364,8 @@
                     <span class="fam-v-val">{{ getAge(slot.data!.dateOfBirth) }} yrs</span>
                   </div>
                 </div>
-                <button type="button" class="fam-checkin-btn">
-                  <i class="fa-solid fa-person-walking"></i> Check-in
+                <button type="button" class="fam-summary-btn" (click)="openFamilySummary(slot.data!)">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> AI Summary
                 </button>
               </div>
               } @else if (slot.type === 'add') {
@@ -556,4 +556,130 @@
 
     </div><!-- /dsh-body -->
   </div><!-- /dsh-main -->
+
+<!-- ═══════════ MEDICAL REPORT DIALOG ═══════════ -->
+@if (reportDialogOpen()) {
+<div class="modal-backdrop" (click)="closeReportDialog()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico-wrap">
+          <i class="fa-solid fa-file-medical"></i>
+        </div>
+        <div>
+          <h2 class="modal-title">Medical Report</h2>
+          <p class="modal-subtitle">Choose the report type to generate</p>
+        </div>
+      </div>
+      @if (!reportGenerating()) {
+      <button type="button" class="modal-close-btn" (click)="closeReportDialog()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      }
+    </div>
+
+    @if (!reportGenerating()) {
+    <div class="report-options">
+      <label class="report-option" [class.report-option--selected]="selectedReportType() === 'DoctorSummary'"
+        (click)="selectedReportType.set('DoctorSummary')">
+        <div class="report-option-radio">
+          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'DoctorSummary'"></div>
+        </div>
+        <div class="report-option-body">
+          <div class="report-option-title">
+            <i class="fa-solid fa-user-doctor"></i>
+            Doctor Summary
+            <span class="report-option-badge">2–3 pages</span>
+          </div>
+          <p class="report-option-desc">A concise report for doctor consultations — vitals, conditions, medications, latest results and AI summary.</p>
+        </div>
+      </label>
+
+      <label class="report-option" [class.report-option--selected]="selectedReportType() === 'CompleteHistory'"
+        (click)="selectedReportType.set('CompleteHistory')">
+        <div class="report-option-radio">
+          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'CompleteHistory'"></div>
+        </div>
+        <div class="report-option-body">
+          <div class="report-option-title">
+            <i class="fa-solid fa-folder-open"></i>
+            Complete Medical History
+          </div>
+          <p class="report-option-desc">Full report with all records, prescriptions, lab and imaging history, timeline and AI clinical summary.</p>
+        </div>
+      </label>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" (click)="closeReportDialog()">Cancel</button>
+      <button type="button" class="btn-primary" (click)="generateReport()">
+        <i class="fa-solid fa-file-arrow-down"></i> Generate Report
+      </button>
+    </div>
+    } @else {
+    <div class="report-generating">
+      <div class="report-gen-spinner-wrap">
+        <i class="fa-solid fa-file-medical report-gen-ico"></i>
+        <svg class="report-gen-ring" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="26" fill="none" stroke-width="3"/>
+        </svg>
+      </div>
+      <p class="report-gen-text">Generating your medical report<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
+      <p class="report-gen-sub">This may take a few seconds while the AI prepares your summary</p>
+    </div>
+    }
+  </div>
+</div>
+}
+
+<!-- ═══════════ FAMILY SUMMARY MODAL ═══════════ -->
+@if (familySummaryOpen()) {
+<div class="modal-backdrop" (click)="closeFamilySummary()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico-wrap">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </div>
+        <div>
+          <h2 class="modal-title">AI Health Summary</h2>
+          <p class="modal-subtitle">{{ familySummaryProfile()?.firstName }} {{ familySummaryProfile()?.lastName }}</p>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" (click)="closeFamilySummary()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    @if (familySummaryLoading()) {
+    <div class="family-summary-loading">
+      <div class="ai-summary-spinner">
+        <i class="fa-solid fa-wand-magic-sparkles ai-summary-spinner-ico"></i>
+        <svg class="ai-summary-ring" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="26" fill="none" stroke-width="3"/>
+        </svg>
+      </div>
+      <p class="ai-summary-loading-text">Generating AI Summary<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
+    </div>
+    } @else if (!familySummaryData()?.hasData) {
+    <div class="family-summary-empty">
+      <i class="fa-solid fa-folder-open family-summary-empty-ico"></i>
+      <p>Not enough health data available yet for {{ familySummaryProfile()?.firstName }}.</p>
+      <p class="family-summary-empty-sub">Upload medical records to generate an AI summary.</p>
+    </div>
+    } @else {
+    <p class="family-summary-text">{{ familySummaryData()!.summary }}</p>
+    }
+
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" (click)="closeFamilySummary()">Close</button>
+      <button type="button" class="btn-primary"
+        (click)="closeFamilySummary(); selectedReportType.set('DoctorSummary'); openReportDialog(familySummaryProfile()!.userHealthProfileId)">
+        <i class="fa-solid fa-file-medical"></i> Generate Report
+      </button>
+    </div>
+  </div>
+</div>
+}
+
 </div><!-- /dsh -->

@@ -10,6 +10,7 @@ import { AppointmentDto, AppointmentStatus } from '../../Modles/appointment.mode
 import { catchError, of } from 'rxjs';
 import { AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { HealthSummaryDto } from '../../Services/dashboard.service';
+import { MedicalReportService, ReportType } from '../../Services/medical-report.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -19,12 +20,13 @@ import { HealthSummaryDto } from '../../Services/dashboard.service';
   styleUrl: './dashboard.css',
 })
 export class Dashboard implements OnInit {
-  private readonly authService      = inject(AuthService);
-  private readonly dashboardService = inject(DashboardService);
-  private readonly apptService      = inject(AppointmentsService);
+  private readonly authService        = inject(AuthService);
+  private readonly dashboardService   = inject(DashboardService);
+  private readonly apptService        = inject(AppointmentsService);
   protected readonly notifService     = inject(NotificationService);
-  private readonly router           = inject(Router);
-  private readonly elRef            = inject(ElementRef);
+  private readonly router             = inject(Router);
+  private readonly elRef              = inject(ElementRef);
+  private readonly medicalReportSvc   = inject(MedicalReportService);
 
   private readonly dashboardRefreshEffect = effect(() => {
     if (this.notifService.reminderDataRefreshTick() === 0) {
@@ -60,6 +62,18 @@ export class Dashboard implements OnInit {
   readonly summaryExpanded = signal(false);
 
   readonly SUMMARY_CHAR_LIMIT = 260;
+
+  // ── Medical Report dialog ─────────────────────────────────────────────────
+  readonly reportDialogOpen      = signal(false);
+  readonly selectedReportType    = signal<ReportType>('DoctorSummary');
+  readonly reportGenerating      = signal(false);
+  readonly reportTargetProfileId = signal<string | null>(null);
+
+  // ── Family member AI summary modal ────────────────────────────────────────
+  readonly familySummaryOpen      = signal(false);
+  readonly familySummaryProfile   = signal<AccessibleProfileDto | null>(null);
+  readonly familySummaryLoading   = signal(false);
+  readonly familySummaryData      = signal<HealthSummaryDto | null>(null);
 
   getTruncatedSummary(full: string): string {
     if (this.summaryExpanded() || full.length <= this.SUMMARY_CHAR_LIMIT) return full;
@@ -277,4 +291,54 @@ export class Dashboard implements OnInit {
     if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
     return age;
   }
+
+  // ── Medical Report methods ────────────────────────────────────────────────
+  openReportDialog(profileId?: string): void {
+    if (profileId) {
+      this.reportTargetProfileId.set(profileId);
+      this.reportDialogOpen.set(true);
+    } else {
+      this.dashboardService.getActiveProfileId().subscribe(id => {
+        this.reportTargetProfileId.set(id);
+        this.reportDialogOpen.set(true);
+      });
+    }
+  }
+
+  closeReportDialog(): void { if (!this.reportGenerating()) this.reportDialogOpen.set(false); }
+
+  generateReport(): void {
+    const profileId = this.reportTargetProfileId();
+    if (!profileId) return;
+
+    this.reportGenerating.set(true);
+    this.medicalReportSvc.generateReport(profileId, this.selectedReportType()).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href    = url;
+        a.download = `RafiqMedicalReport_${this.selectedReportType()}_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.reportGenerating.set(false);
+        this.reportDialogOpen.set(false);
+      },
+      error: () => { this.reportGenerating.set(false); }
+    });
+  }
+
+  // ── Family summary methods ────────────────────────────────────────────────
+  openFamilySummary(profile: AccessibleProfileDto): void {
+    this.familySummaryProfile.set(profile);
+    this.familySummaryData.set(null);
+    this.familySummaryOpen.set(true);
+    this.familySummaryLoading.set(true);
+
+    this.dashboardService.getHealthSummaryForProfile(profile.userHealthProfileId).subscribe({
+      next: (d) => { this.familySummaryData.set(d); this.familySummaryLoading.set(false); },
+      error: ()  => { this.familySummaryData.set(null); this.familySummaryLoading.set(false); }
+    });
+  }
+
+  closeFamilySummary(): void { this.familySummaryOpen.set(false); }
 }
