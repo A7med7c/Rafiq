@@ -21,9 +21,9 @@
   <section class="upload-grid">
     <div class="up-card">
       <div class="up-ico bg-blue"><i class="fa-solid fa-flask"></i></div>
-      <h2 class="up-title">Lab Analysis</h2>
-      <p class="up-desc">Upload blood tests, urine tests, and diagnostic lab results.</p>
-      <span class="up-count">{{ labCount() }} {{ labCount() === 1 ? 'Record' : 'Records' }}</span>
+      <h2 class="up-title">{{ t().records.labAnalysis }}</h2>
+      <p class="up-desc">{{ t().records.labDesc }}</p>
+      <span class="up-count">{{ labCount() }} {{ t().records.recordsSuffix }}</span>
       <div class="up-btn-group">
         <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('lab').uploading"
           [class.up-btn--loading]="getUploadState('lab').uploading" (click)="triggerUpload('Lab Analysis')">
@@ -37,21 +37,21 @@
           </svg>
           @if (!getUploadState('lab').indeterminate) { <span>{{ getUploadState('lab').progress }}%</span> }
           } @else {
-          <i class="fa-solid fa-cloud-arrow-up"></i> Scan with AI
+          <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().records.scanWithAI }}
           }
         </button>
         <button type="button" class="up-btn up-btn--manual"
           [disabled]="getUploadState('lab').uploading" (click)="openManualEntry('lab')">
-          <i class="fa-solid fa-pen-to-square"></i> Add Manually
+          <i class="fa-solid fa-pen-to-square"></i> {{ t().records.addManually }}
         </button>
       </div>
     </div>
 
     <div class="up-card">
       <div class="up-ico bg-purple"><i class="fa-solid fa-prescription-bottle-medical"></i></div>
-      <h2 class="up-title">Prescription</h2>
-      <p class="up-desc">Store medical prescriptions and extract medication schedules.</p>
-      <span class="up-count">{{ prescriptionCount() }} {{ prescriptionCount() === 1 ? 'Record' : 'Records' }}</span>
+      <h2 class="up-title">{{ t().records.prescription }}</h2>
+      <p class="up-desc">{{ t().records.prescriptionDesc }}</p>
+      <span class="up-count">{{ prescriptionCount() }} {{ t().records.recordsSuffix }}</span>
       <div class="up-btn-group">
         <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('prescription').uploading"
           [class.up-btn--loading]="getUploadState('prescription').uploading" (click)="triggerUpload('Prescription')">
@@ -65,21 +65,21 @@
           </svg>
           @if (!getUploadState('prescription').indeterminate) { <span>{{ getUploadState('prescription').progress }}%</span> }
           } @else {
-          <i class="fa-solid fa-cloud-arrow-up"></i> Scan with AI
+          <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().records.scanWithAI }}
           }
         </button>
         <button type="button" class="up-btn up-btn--manual"
           [disabled]="getUploadState('prescription').uploading" (click)="openManualEntry('prescription')">
-          <i class="fa-solid fa-pen-to-square"></i> Add Manually
+          <i class="fa-solid fa-pen-to-square"></i> {{ t().records.addManually }}
         </button>
       </div>
     </div>
 
     <div class="up-card">
       <div class="up-ico bg-teal"><i class="fa-solid fa-x-ray"></i></div>
-      <h2 class="up-title">X-Ray &amp; Imaging</h2>
-      <p class="up-desc">Keep MRI, CT scans, ultrasounds, and chest X-rays safe.</p>
-      <span class="up-count">{{ imagingCount() }} {{ imagingCount() === 1 ? 'Record' : 'Records' }}</span>
+      <h2 class="up-title">{{ t().records.xrayImaging }}</h2>
+      <p class="up-desc">{{ t().records.xrayDesc }}</p>
+      <span class="up-count">{{ imagingCount() }} {{ t().records.recordsSuffix }}</span>
       <div class="up-btn-group">
         <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('imaging').uploading"
           [class.up-btn--loading]="getUploadState('imaging').uploading" (click)="triggerUpload('X-Ray & Imaging')">
@@ -93,21 +93,21 @@
           </svg>
           @if (!getUploadState('imaging').indeterminate) { <span>{{ getUploadState('imaging').progress }}%</span> }
           } @else {
-          <i class="fa-solid fa-cloud-arrow-up"></i> Scan with AI
+          <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().records.scanWithAI }}
           }
         </button>
         <button type="button" class="up-btn up-btn--manual"
           [disabled]="getUploadState('imaging').uploading" (click)="openManualEntry('imaging')">
-          <i class="fa-solid fa-pen-to-square"></i> Add Manually
+          <i class="fa-solid fa-pen-to-square"></i> {{ t().records.addManually }}
         </button>
       </div>
     </div>
 
     <div class="up-card">
       <div class="up-ico bg-orange"><i class="fa-solid fa-pills"></i></div>
-      <h2 class="up-title">Medicine Box</h2>
-      <p class="up-desc">Scan box packages to extract dosage instructions and info.</p>
-      <span class="up-count">{{ medicineCount() }} {{ medicineCount() === 1 ? 'Record' : 'Records' }}</span>
+      <h2 class="up-title">{{ t().records.medicineBox }}</h2>
+      <p class="up-desc">{{ t().records.medicineBoxDesc }}</p>
+      <span class="up-count">{{ medicineCount() }} {{ t().records.recordsSuffix }}</span>
       <div class="up-btn-group">
         <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('medicine').uploading"
           [class.up-btn--loading]="getUploadState('medicine').uploading" (click)="triggerUpload('Medicine Box')">
@@ -121,12 +121,12 @@
           </svg>
           @if (!getUploadState('medicine').indeterminate) { <span>{{ getUploadState('medicine').progress }}%</span> }
           } @else {
-          <i class="fa-solid fa-cloud-arrow-up"></i> Scan with AI
+          <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().records.scanWithAI }}
           }
         </button>
         <button type="button" class="up-btn up-btn--manual"
           [disabled]="getUploadState('medicine').uploading" (click)="openManualEntry('medicine')">
-          <i class="fa-solid fa-pen-to-square"></i> Add Manually
+          <i class="fa-solid fa-pen-to-square"></i> {{ t().records.addManually }}
         </button>
       </div>
     </div>
@@ -136,27 +136,27 @@
   <!-- TABS BAR + TOOLBAR -->
   <section class="records-toolbar" style="margin-top: 15px;">
     <div class="tabs-bar">
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'all'" (click)="setTab('all')">All Records</button>
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'lab'" (click)="setTab('lab')">Lab Analysis</button>
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'prescription'" (click)="setTab('prescription')">Prescriptions</button>
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'imaging'" (click)="setTab('imaging')">X-Rays &amp; Imaging</button>
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'medicine'" (click)="setTab('medicine')">Medicine Boxes</button>
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'general'" (click)="setTab('general')">Other Documents</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'all'" (click)="setTab('all')">{{ t().records.allRecords }}</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'lab'" (click)="setTab('lab')">{{ t().records.labAnalysisTab }}</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'prescription'" (click)="setTab('prescription')">{{ t().records.prescriptionsTab }}</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'imaging'" (click)="setTab('imaging')">{{ t().records.xraysImagingTab }}</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'medicine'" (click)="setTab('medicine')">{{ t().records.medicineBoxesTab }}</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'general'" (click)="setTab('general')">{{ t().records.otherDocumentsTab }}</button>
     </div>
 
     <div class="records-table-tools">
       <div class="search-wrap">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input type="text" placeholder="Search records..." [(ngModel)]="searchQueryValue" class="search-input">
+        <input type="text" [attr.placeholder]="t().records.searchPlaceholder" [(ngModel)]="searchQueryValue" class="search-input">
       </div>
       <div class="filter-menu-wrap">
         <button type="button" class="filter-btn" [class.menu-open]="filterMenuOpen()" (click)="toggleFilterMenu($event)">
-          <i class="fa-solid fa-sliders"></i> Filter
+          <i class="fa-solid fa-sliders"></i> {{ t().records.filter }}
         </button>
         @if (filterMenuOpen()) {
         <div class="filter-popover">
           <div class="filter-section">
-            <p class="filter-section-title">Record Type</p>
+            <p class="filter-section-title">{{ t().records.recordType }}</p>
             @for (item of recordTypeOptions; track item.value) {
             <label class="filter-option">
               <input type="radio" name="rcRecordTypeFilter" [checked]="draftFilters().type === item.value"
@@ -166,7 +166,7 @@
             }
           </div>
           <div class="filter-section">
-            <p class="filter-section-title">AI Status</p>
+            <p class="filter-section-title">{{ t().records.aiStatus }}</p>
             @for (item of aiStatusOptions; track item.value) {
             <label class="filter-option">
               <input type="radio" name="rcAiStatusFilter" [checked]="draftFilters().aiStatus === item.value"
@@ -176,7 +176,7 @@
             }
           </div>
           <div class="filter-section">
-            <p class="filter-section-title">Uploaded By</p>
+            <p class="filter-section-title">{{ t().records.uploadedBy }}</p>
             @for (item of uploadedByOptions; track item.value) {
             <label class="filter-option">
               <input type="radio" name="rcUploadedByFilter" [checked]="draftFilters().uploadedBy === item.value"
@@ -186,14 +186,14 @@
             }
           </div>
           <div class="filter-section">
-            <p class="filter-section-title">Date Range</p>
+            <p class="filter-section-title">{{ t().records.dateRange }}</p>
             <div class="date-filter-grid">
               <label class="date-filter-field">
-                <span>From</span>
+                <span>{{ t().records.fromDate }}</span>
                 <input type="date" [ngModel]="draftFilters().fromDate" (ngModelChange)="updateDraftFilter('fromDate', $event)">
               </label>
               <label class="date-filter-field">
-                <span>To</span>
+                <span>{{ t().records.toDate }}</span>
                 <input type="date" [ngModel]="draftFilters().toDate" (ngModelChange)="updateDraftFilter('toDate', $event)">
               </label>
             </div>
@@ -207,8 +207,8 @@
             </select>
           </div>
           <div class="filter-actions">
-            <button type="button" class="filter-action-btn filter-action-btn--ghost" (click)="resetFilters()">Reset Filters</button>
-            <button type="button" class="filter-action-btn filter-action-btn--primary" (click)="applyFilters()">Apply Filters</button>
+            <button type="button" class="filter-action-btn filter-action-btn--ghost" (click)="resetFilters()">{{ t().records.resetFilters }}</button>
+            <button type="button" class="filter-action-btn filter-action-btn--primary" (click)="applyFilters()">{{ t().records.applyFilters }}</button>
           </div>
         </div>
         }
@@ -218,24 +218,24 @@
       <div class="add-record-menu-wrap">
         <button type="button" class="add-record-btn" [class.menu-open]="addRecordMenuOpen()"
           (click)="toggleAddRecordMenu($event)">
-          <i class="fa-solid fa-plus"></i> Add Record
+          <i class="fa-solid fa-plus"></i> {{ t().records.addRecord }}
         </button>
         @if (addRecordMenuOpen()) {
         <div class="add-record-menu">
           <button type="button" class="dropdown-menu-item" (click)="selectUploadType('Lab Analysis')">
-            <i class="fa-solid fa-flask"></i><span>Lab Analysis</span>
+            <i class="fa-solid fa-flask"></i><span>{{ t().records.labAnalysisItem }}</span>
           </button>
           <button type="button" class="dropdown-menu-item" (click)="selectUploadType('Prescription')">
-            <i class="fa-solid fa-prescription-bottle-medical"></i><span>Prescription</span>
+            <i class="fa-solid fa-prescription-bottle-medical"></i><span>{{ t().records.prescriptionItem }}</span>
           </button>
           <button type="button" class="dropdown-menu-item" (click)="selectUploadType('X-Ray & Imaging')">
-            <i class="fa-solid fa-x-ray"></i><span>X-Ray &amp; Imaging</span>
+            <i class="fa-solid fa-x-ray"></i><span>{{ t().records.xrayImagingItem }}</span>
           </button>
           <button type="button" class="dropdown-menu-item" (click)="selectUploadType('Medicine Box')">
-            <i class="fa-solid fa-pills"></i><span>Medicine Box</span>
+            <i class="fa-solid fa-pills"></i><span>{{ t().records.medicineBoxItem }}</span>
           </button>
           <button type="button" class="dropdown-menu-item" (click)="selectUploadType('General Medical Document')">
-            <i class="fa-solid fa-file-medical"></i><span>Other Medical Document</span>
+            <i class="fa-solid fa-file-medical"></i><span>{{ t().records.otherMedicalDoc }}</span>
           </button>
         </div>
         }
@@ -251,7 +251,7 @@
       <span>{{ chip.label }}</span><i class="fa-solid fa-xmark"></i>
     </button>
     }
-    <button type="button" class="clear-filters-btn" (click)="clearAllFilters()">Clear All</button>
+    <button type="button" class="clear-filters-btn" (click)="clearAllFilters()">{{ t().common.clearAll }}</button>
   </section>
   }
 
@@ -273,20 +273,20 @@
     } @else if (filteredRecords().length === 0) {
     <div class="empty-state table-empty">
       <i class="fa-solid fa-folder-open empty-icon"></i>
-      <p class="empty-title">No medical records found</p>
-      <p class="empty-sub">Your reports, prescriptions and medicine scans will appear in this list.</p>
+      <p class="empty-title">{{ t().records.noRecordsFound }}</p>
+      <p class="empty-sub">{{ t().records.noRecordsSub }}</p>
     </div>
     } @else {
     <div class="table-responsive">
       <table class="records-table">
         <thead>
           <tr>
-            <th>Record Name</th>
-            <th>Type</th>
-            <th>Date</th>
-            <th>Uploaded By</th>
-            <th>AI Summary Status</th>
-            <th class="text-right">Actions</th>
+            <th>{{ t().records.recordName }}</th>
+            <th>{{ t().records.type }}</th>
+            <th>{{ t().records.date }}</th>
+            <th>{{ t().records.uploadedBy }}</th>
+            <th>{{ t().records.aiSummaryStatus }}</th>
+            <th class="text-right">{{ t().records.actions }}</th>
           </tr>
         </thead>
         <tbody>
@@ -311,22 +311,22 @@
             <td>
               <span class="pill" [class]="rec.hasAiSummary ? 'pill-green' : 'pill-yellow'">
                 <i class="fa-solid" [class.fa-check-double]="rec.hasAiSummary" [class.fa-spinner]="!rec.hasAiSummary"></i>
-                {{ rec.hasAiSummary ? 'Processed' : 'Pending' }}
+                {{ rec.hasAiSummary ? t().records.processed : t().records.pending }}
               </span>
             </td>
             <td class="text-right">
               <div class="actions-cell">
-                <button type="button" class="action-btn" title="View Details"
+                <button type="button" class="action-btn" [attr.title]="t().records.viewDetails"
                   [disabled]="loading() || deleting() || reviewSaving()" (click)="viewDetails(rec)">
                   <i class="fa-regular fa-eye"></i>
                 </button>
-                <button type="button" class="action-btn" title="Download File"
+                <button type="button" class="action-btn" [attr.title]="t().records.downloadFile"
                   [disabled]="loading() || deleting() || reviewSaving()" (click)="downloadRecord(rec)">
                   <i class="fa-solid fa-download"></i>
                 </button>
                 @if (!readOnly) {
                 <div class="record-actions">
-                  <button type="button" class="action-btn" title="Menu"
+                  <button type="button" class="action-btn" [attr.title]="t().records.menu"
                     [disabled]="loading() || deleting() || reviewSaving()"
                     (click)="toggleActionMenu(rec.id, $event)">
                     <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -334,10 +334,10 @@
                   @if (actionMenuOpen() === rec.id) {
                   <div class="record-menu" (click)="$event.stopPropagation()">
                     <button type="button" class="record-menu-item" (click)="editRecord(rec)">
-                      <i class="fa-solid fa-pen-to-square"></i> Edit
+                      <i class="fa-solid fa-pen-to-square"></i> {{ t().records.editAction }}
                     </button>
                     <button type="button" class="record-menu-item record-menu-item--danger" (click)="openDeleteModal(rec)">
-                      <i class="fa-solid fa-trash-can"></i> Delete
+                      <i class="fa-solid fa-trash-can"></i> {{ t().records.deleteAction }}
                     </button>
                   </div>
                   }
@@ -397,67 +397,67 @@
         <div class="view-document-icon"><i class="fa-regular fa-file-image"></i></div>
         }
         <div class="view-document-content">
-          <h4>View Original Document</h4>
-          <p>Click to preview the uploaded image</p>
+          <h4>{{ t().records.viewOriginalDoc }}</h4>
+          <p>{{ t().records.clickToPreview }}</p>
         </div>
         <i class="fa-solid fa-arrow-up-right-from-square"></i>
       </button>
       } @else {
       <div class="modal-image-placeholder">
-        <i class="fa-regular fa-image"></i><span>No image attached</span>
+        <i class="fa-regular fa-image"></i><span>{{ t().records.noImageAttached }}</span>
       </div>
       }
 
       @if (rec.type === 'lab') {
       <div class="detail-info-grid">
-        <div><span>Lab Name</span><strong>{{ rec.rawRecord.labName || '-' }}</strong></div>
-        <div><span>Doctor Name</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
-        <div><span>Report Date</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong></div>
+        <div><span>{{ t().records.labName }}</span><strong>{{ rec.rawRecord.labName || '-' }}</strong></div>
+        <div><span>{{ t().records.doctorName }}</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
+        <div><span>{{ t().records.reportDate }}</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong></div>
       </div>
       }
       @if (rec.type === 'imaging') {
       <div class="detail-info-grid">
-        <div><span>Imaging Type</span><strong>{{ rec.rawRecord.imagingType || '-' }}</strong></div>
-        <div><span>Body Part</span><strong>{{ rec.rawRecord.bodyPart || '-' }}</strong></div>
-        <div><span>Doctor Name</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
-        <div><span>Report Date</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong></div>
+        <div><span>{{ t().records.imagingType }}</span><strong>{{ rec.rawRecord.imagingType || '-' }}</strong></div>
+        <div><span>{{ t().records.bodyPart }}</span><strong>{{ rec.rawRecord.bodyPart || '-' }}</strong></div>
+        <div><span>{{ t().records.doctorName }}</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
+        <div><span>{{ t().records.reportDate }}</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong></div>
       </div>
       <div class="detail-section">
-        <h4 class="detail-h4"><i class="fa-solid fa-magnifying-glass-chart"></i> Findings</h4>
+        <h4 class="detail-h4"><i class="fa-solid fa-magnifying-glass-chart"></i> {{ t().records.findings }}</h4>
         <p class="detail-summary-text">{{ rec.rawRecord.findings || '-' }}</p>
       </div>
       <div class="detail-section">
-        <h4 class="detail-h4"><i class="fa-solid fa-clipboard-check"></i> Impression</h4>
+        <h4 class="detail-h4"><i class="fa-solid fa-clipboard-check"></i> {{ t().records.impression }}</h4>
         <p class="detail-summary-text">{{ rec.rawRecord.impression || '-' }}</p>
       </div>
       }
       @if (rec.type === 'general') {
       <div class="detail-info-grid">
-        <div><span>Document Type</span><strong>{{ rec.rawRecord.documentType || '-' }}</strong></div>
-        <div><span>Doctor Name</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
-        <div><span>Hospital/Clinic</span><strong>{{ rec.rawRecord.hospitalOrClinic || '-' }}</strong></div>
-        <div><span>Document Date</span><strong>{{ rec.rawRecord.documentDate || rec.date || '-' }}</strong></div>
+        <div><span>{{ t().records.documentType }}</span><strong>{{ rec.rawRecord.documentType || '-' }}</strong></div>
+        <div><span>{{ t().records.doctorName }}</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
+        <div><span>{{ t().records.hospitalClinic }}</span><strong>{{ rec.rawRecord.hospitalOrClinic || '-' }}</strong></div>
+        <div><span>{{ t().records.documentDate }}</span><strong>{{ rec.rawRecord.documentDate || rec.date || '-' }}</strong></div>
       </div>
       @if (rec.rawRecord.description) {
       <div class="detail-section">
-        <h4 class="detail-h4"><i class="fa-solid fa-align-left"></i> Description</h4>
+        <h4 class="detail-h4"><i class="fa-solid fa-align-left"></i> {{ t().records.description }}</h4>
         <p class="detail-summary-text">{{ rec.rawRecord.description }}</p>
       </div>
       }
       }
       <div class="detail-section">
-        <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> AI Summary</h4>
+        <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> {{ t().records.aiSummary }}</h4>
         <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
       </div>
       @if (rec.type === 'lab' && rec.rawRecord.results && rec.rawRecord.results.length > 0) {
       <div class="detail-section">
-        <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> Complete Lab Results</h4>
+        <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> {{ t().records.completeLabResults }}</h4>
         <ul class="labs-list">
           @for (res of rec.rawRecord.results; track res.id) {
           <li class="lab-result-item">
             <div class="lab-result-l">
               <span class="lab-test-name">{{ res.testName }}</span>
-              <span class="lab-normal-range">Normal: {{ res.normalRange }}</span>
+              <span class="lab-normal-range">{{ t().records.normalPrefix }} {{ res.normalRange }}</span>
             </div>
             <div class="lab-result-r">
               <span class="lab-val">{{ res.value }} {{ res.unit }}</span>
@@ -468,7 +468,13 @@
         </ul>
         <div class="detail-table-wrap">
           <table class="detail-table">
-            <thead><tr><th>Test Name</th><th>Value</th><th>Unit</th><th>Reference Range</th><th>Status</th></tr></thead>
+            <thead><tr>
+              <th>{{ t().records.testName }}</th>
+              <th>{{ t().records.value }}</th>
+              <th>{{ t().records.unit }}</th>
+              <th>{{ t().records.referenceRange }}</th>
+              <th>{{ t().records.status }}</th>
+            </tr></thead>
             <tbody>
               @for (res of rec.rawRecord.results; track res.id) {
               <tr>
@@ -483,7 +489,7 @@
       }
       @if (rec.type === 'prescription' && rec.rawRecord.medicines && rec.rawRecord.medicines.length > 0) {
       <div class="detail-section">
-        <h4 class="detail-h4"><i class="fa-solid fa-capsules"></i> Prescribed Medications</h4>
+        <h4 class="detail-h4"><i class="fa-solid fa-capsules"></i> {{ t().records.prescribedMedications }}</h4>
         <ul class="pres-meds-list">
           @for (med of rec.rawRecord.medicines; track med.id) {
           <li class="pres-med-item">
@@ -496,9 +502,9 @@
       }
     </div>
     <footer class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDetails()">Close</button>
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDetails()">{{ t().records.closeBtn }}</button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="downloadRecord(rec)">
-        <i class="fa-solid fa-arrow-down-to-bracket"></i> Download PDF
+        <i class="fa-solid fa-arrow-down-to-bracket"></i> {{ t().records.downloadPDF }}
       </button>
     </footer>
   </div>
@@ -513,7 +519,7 @@
       <div class="modal-hdr-left">
         <div class="modal-ico delete-modal-ico"><i class="fa-solid fa-trash-can"></i></div>
         <div>
-          <h3 class="modal-title">Delete Record</h3>
+          <h3 class="modal-title">{{ t().records.deleteRecord }}</h3>
           <p class="modal-sub">{{ rec.name }}</p>
         </div>
       </div>
@@ -522,11 +528,11 @@
       </button>
     </header>
     <div class="modal-body delete-modal-body">
-      <p>Are you sure you want to permanently delete this record?</p>
-      <p>This action cannot be undone.</p>
+      <p>{{ t().records.deleteConfirm }}</p>
+      <p>{{ t().records.cannotBeUndone }}</p>
     </div>
     <footer class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="deleting()" (click)="closeDeleteModal()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="deleting()" (click)="closeDeleteModal()">{{ t().records.cancelBtn }}</button>
       <button type="button" class="modal-btn modal-btn-danger" [disabled]="deleting()" [class.modal-btn--saving]="deleting()"
         (click)="deleteRecord()">
         @if (deleting()) {
@@ -536,9 +542,9 @@
             [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
             stroke-linecap="round" transform="rotate(-90 18 18)" />
         </svg>
-        Deleting...
+        {{ t().common.deleting }}
         } @else {
-        <i class="fa-solid fa-trash-can"></i> Delete
+        <i class="fa-solid fa-trash-can"></i> {{ t().records.deleteAction }}
         }
       </button>
     </footer>
@@ -554,8 +560,8 @@
       <div class="modal-hdr-left">
         <div class="modal-ico rec-ico-gray"><i class="fa-solid fa-file-medical"></i></div>
         <div>
-          <h3 class="modal-title">Upload Other Medical Document</h3>
-          <p class="modal-sub">Add an image and optional description before analysis.</p>
+          <h3 class="modal-title">{{ t().records.uploadOtherDoc }}</h3>
+          <p class="modal-sub">{{ t().records.uploadAddDesc }}</p>
         </div>
       </div>
       <button type="button" class="close-modal-btn" [disabled]="uploadLoading()" (click)="cancelGeneralUpload()">
@@ -565,7 +571,7 @@
     <div class="modal-body scan-form-body">
       <div class="scan-form-grid">
         <div class="scan-field scan-field--full">
-          <label class="scan-label">Document Image <span class="scan-required">*</span></label>
+          <label class="scan-label">{{ t().records.documentImage }} <span class="scan-required">*</span></label>
           <input type="file" class="scan-input" accept=".jpg,.jpeg,.png,.webp"
             [disabled]="uploadLoading()" (change)="onGeneralFileSelected($event)">
           @if (generalUploadForm.fileName) {
@@ -573,14 +579,14 @@
           }
         </div>
         <div class="scan-field scan-field--full">
-          <label class="scan-label">Description <span class="scan-optional">(optional)</span></label>
+          <label class="scan-label">{{ t().records.description }} <span class="scan-optional">(optional)</span></label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="generalUploadForm.description"
             [disabled]="uploadLoading()" rows="4"></textarea>
         </div>
       </div>
     </div>
     <footer class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="uploadLoading()" (click)="cancelGeneralUpload()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="uploadLoading()" (click)="cancelGeneralUpload()">{{ t().records.cancelBtn }}</button>
       <button type="button" class="modal-btn modal-btn-primary" [disabled]="uploadLoading() || !generalUploadForm.file"
         [class.modal-btn--saving]="uploadLoading()" (click)="submitGeneralUpload()">
         @if (uploadLoading()) {
@@ -590,9 +596,9 @@
             [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
             stroke-linecap="round" transform="rotate(-90 18 18)" />
         </svg>
-        Analysing...
+        {{ t().records.analysingBtn }}
         } @else {
-        <i class="fa-solid fa-wand-magic-sparkles"></i> Analyze Document
+        <i class="fa-solid fa-wand-magic-sparkles"></i> {{ t().records.analyzeDocument }}
         }
       </button>
     </footer>
@@ -613,7 +619,7 @@
       <div class="scan-ico-center"><i class="fa-solid fa-file-medical"></i></div>
     </div>
     <p class="scan-title">{{ uploadLoadingLabel() }}</p>
-    <p class="scan-sub">Our AI is extracting the medical information.</p>
+    <p class="scan-sub">{{ t().records.extractingInfo }}</p>
     <div class="scan-dots"><span></span><span></span><span></span></div>
   </div>
 </div>
@@ -630,10 +636,10 @@
         </div>
         <div>
           <h3 class="modal-title">
-            {{ rf.mode === 'edit' ? 'Edit Record' : manualReviewMode() ? 'Add Record Manually' : 'Review Extracted Data' }}
+            {{ rf.mode === 'edit' ? t().records.editRecord : manualReviewMode() ? t().records.addRecordManually : t().records.reviewExtractedData }}
           </h3>
           <p class="modal-sub">
-            {{ manualReviewMode() ? 'Fill in the details and save.' : 'Edit any field before saving.' }}
+            {{ manualReviewMode() ? t().records.fillAndSave : t().records.editBeforeSaving }}
           </p>
         </div>
       </div>
@@ -653,11 +659,11 @@
         @if (manualReviewMode()) {
         <button type="button" class="manual-img-remove-btn" [disabled]="manualImageUploading() || reviewSaving()"
           (click)="clearManualImage('review')">
-          <i class="fa-solid fa-trash-can"></i> Remove Image
+          <i class="fa-solid fa-trash-can"></i> {{ t().records.removeImage }}
         </button>
         }
         } @else {
-        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>Image preview unavailable</span></div>
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{ t().records.imagePreviewUnavailable }}</span></div>
         }
         } @else {
         @if (manualReviewMode()) {
@@ -670,64 +676,64 @@
                 [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
                 stroke-linecap="round" transform="rotate(-90 18 18)"/>
             </svg>
-            <span>Uploading image…</span>
+            <span>{{ t().records.uploadingImage }}</span>
           </div>
           } @else {
           <button type="button" class="manual-img-choose-btn" [disabled]="reviewSaving()"
             (click)="manualImageInput.click()">
-            <i class="fa-solid fa-image"></i> Choose Image <span class="scan-optional">(optional)</span>
+            <i class="fa-solid fa-image"></i> {{ t().records.chooseImageOptional }}
           </button>
           }
         </div>
         } @else {
-        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>No image attached</span></div>
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{ t().records.noImageAttachedReview }}</span></div>
         }
         }
       </div>
       <div class="scan-form-grid">
         @if (rf.type === 'lab') {
         <div class="scan-field">
-          <label class="scan-label">Lab Name</label>
+          <label class="scan-label">{{ t().records.labName }}</label>
           <input type="text" class="scan-input" [(ngModel)]="rf.labName">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Doctor Name</label>
+          <label class="scan-label">{{ t().records.doctorName }}</label>
           <input type="text" class="scan-input" [(ngModel)]="rf.doctorName">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Report Date</label>
+          <label class="scan-label">{{ t().records.reportDate }}</label>
           <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
         </div>
         }
         @if (rf.type === 'imaging') {
         <div class="scan-field">
-          <label class="scan-label">Imaging Type</label>
+          <label class="scan-label">{{ t().records.imagingType }}</label>
           <input type="text" class="scan-input" [(ngModel)]="rf.imagingType">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Body Part</label>
+          <label class="scan-label">{{ t().records.bodyPart }}</label>
           <input type="text" class="scan-input" [(ngModel)]="rf.bodyPart">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Doctor Name</label>
+          <label class="scan-label">{{ t().records.doctorName }}</label>
           <input type="text" class="scan-input" [(ngModel)]="rf.doctorName">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Report Date</label>
+          <label class="scan-label">{{ t().records.reportDate }}</label>
           <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
         </div>
         <div class="scan-field scan-field--full">
-          <label class="scan-label">Findings</label>
+          <label class="scan-label">{{ t().records.findings }}</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.findings" rows="3"></textarea>
         </div>
         <div class="scan-field scan-field--full">
-          <label class="scan-label">Impression</label>
+          <label class="scan-label">{{ t().records.impression }}</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.impression" rows="3"></textarea>
         </div>
         }
         @if (rf.type === 'prescription') {
         <div class="scan-field">
-          <label class="scan-label">Doctor Name</label>
+          <label class="scan-label">{{ t().records.doctorName }}</label>
           <input type="text" class="scan-input" [(ngModel)]="rf.doctorName">
         </div>
         <div class="scan-field">
@@ -745,35 +751,35 @@
           <input type="text" class="scan-input" [(ngModel)]="rf.title">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Document Type</label>
+          <label class="scan-label">{{ t().records.documentType }}</label>
           <input type="text" class="scan-input" [ngModel]="rf.documentType" readonly>
         </div>
         <div class="scan-field">
-          <label class="scan-label">Doctor Name</label>
+          <label class="scan-label">{{ t().records.doctorName }}</label>
           <input type="text" class="scan-input" [ngModel]="rf.doctorName" readonly>
         </div>
         <div class="scan-field">
-          <label class="scan-label">Hospital/Clinic</label>
+          <label class="scan-label">{{ t().records.hospitalClinic }}</label>
           <input type="text" class="scan-input" [ngModel]="rf.hospitalOrClinic" readonly>
         </div>
         <div class="scan-field">
-          <label class="scan-label">Document Date</label>
+          <label class="scan-label">{{ t().records.documentDate }}</label>
           <input type="text" class="scan-input" [ngModel]="rf.documentDate" readonly>
         </div>
         <div class="scan-field scan-field--full">
-          <label class="scan-label">Description</label>
+          <label class="scan-label">{{ t().records.description }}</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.description" rows="3"></textarea>
         </div>
         }
         @if (!manualReviewMode()) {
         <div class="scan-field scan-field--full">
-          <label class="scan-label">AI Summary</label>
+          <label class="scan-label">{{ t().records.aiSummary }}</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
         </div>
         }
         @if (!manualReviewMode() && rf.type !== 'general') {
         <div class="scan-field scan-field--full">
-          <label class="scan-label">OCR Text</label>
+          <label class="scan-label">{{ t().records.ocrText }}</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.ocrText" rows="5"></textarea>
         </div>
         }
@@ -784,14 +790,21 @@
       @if (rf.type === 'lab') {
       <div class="review-table-section">
         <div class="review-table-hdr">
-          <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> Complete Lab Results</h4>
+          <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> {{ t().records.completeLabResults }}</h4>
           <button type="button" class="mini-add-btn" [disabled]="reviewSaving()" (click)="addLabResult()">
-            <i class="fa-solid fa-plus"></i> Add Row
+            <i class="fa-solid fa-plus"></i> {{ t().records.addRow }}
           </button>
         </div>
         <div class="detail-table-wrap">
           <table class="detail-table review-edit-table">
-            <thead><tr><th>Test Name</th><th>Value</th><th>Unit</th><th>Reference Range</th><th>Status</th><th></th></tr></thead>
+            <thead><tr>
+              <th>{{ t().records.testName }}</th>
+              <th>{{ t().records.value }}</th>
+              <th>{{ t().records.unit }}</th>
+              <th>{{ t().records.referenceRange }}</th>
+              <th>{{ t().records.status }}</th>
+              <th></th>
+            </tr></thead>
             <tbody>
               @for (res of rf.results; track res.id) {
               <tr>
@@ -826,19 +839,26 @@
                     [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
                     stroke-linecap="round" transform="rotate(-90 18 18)"/>
                 </svg>
-                Adding...
+                {{ t().records.adding }}
               } @else {
-                <i class="fa-solid fa-pills"></i> Add All to Medications
+                <i class="fa-solid fa-pills"></i> {{ t().records.addAllToMedications }}
               }
             </button>
             <button type="button" class="mini-add-btn" [disabled]="reviewSaving()" (click)="addPrescriptionMed()">
-              <i class="fa-solid fa-plus"></i> Add Medicine
+              <i class="fa-solid fa-plus"></i> {{ t().records.addMedicine }}
             </button>
           </div>
         </div>
         <div class="detail-table-wrap">
           <table class="detail-table review-edit-table">
-            <thead><tr><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th><th></th></tr></thead>
+            <thead><tr>
+              <th>Medicine</th>
+              <th>{{ t().records.dosage }}</th>
+              <th>{{ t().records.frequency }}</th>
+              <th>{{ t().records.duration }}</th>
+              <th>{{ t().records.instructions }}</th>
+              <th></th>
+            </tr></thead>
             <tbody>
               @for (med of rf.prescriptionMedicines; track $index) {
               <tr>
@@ -850,11 +870,11 @@
                 <td style="white-space:nowrap;">
                   @if (addedMedIndices().has($index)) {
                     <span style="color:var(--color-success,#22c55e);font-size:12px;padding:0 4px;">
-                      <i class="fa-solid fa-circle-check"></i> Added
+                      <i class="fa-solid fa-circle-check"></i> {{ t().records.added }}
                     </span>
                   } @else {
                     <button type="button" class="row-delete-btn"
-                      title="Add to Medications"
+                      [attr.title]="t().records.addAllToMedications"
                       style="color:var(--color-primary,#4a7cf7);"
                       [disabled]="reviewSaving() || addingAllMeds() || addingMedIndex() !== null || !med.medicineName.trim()"
                       (click)="addPrescriptionMedToMedications($index)">
@@ -883,7 +903,7 @@
       }
     </div>
     <footer class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="reviewSaving()" (click)="cancelReview()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="reviewSaving()" (click)="cancelReview()">{{ t().records.cancelBtn }}</button>
       <button type="button" class="modal-btn modal-btn-primary" [disabled]="reviewSaving()"
         [class.modal-btn--saving]="reviewSaving()" (click)="confirmAndSave()">
         @if (reviewSaving()) {
@@ -893,10 +913,10 @@
             [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
             stroke-linecap="round" transform="rotate(-90 18 18)" />
         </svg>
-        Saving...
+        {{ t().records.savingBtn }}
         } @else {
         <i class="fa-solid fa-floppy-disk"></i>
-        @if (rf.mode === 'edit') { Save Changes } @else { Confirm &amp; Save }
+        @if (rf.mode === 'edit') { {{ t().records.saveChanges }} } @else { {{ t().records.confirmSave }} }
         }
       </button>
     </footer>
@@ -916,8 +936,8 @@
       </svg>
       <div class="scan-ico-center"><i class="fa-solid fa-pills"></i></div>
     </div>
-    <p class="scan-title">Scanning Medicine Box...</p>
-    <p class="scan-sub">Our AI is reading the label. Please wait a moment.</p>
+    <p class="scan-title">{{ t().records.scanningMedicineBox }}</p>
+    <p class="scan-sub">{{ t().records.readingLabel }}</p>
     <div class="scan-dots"><span></span><span></span><span></span></div>
   </div>
 </div>
@@ -932,10 +952,10 @@
         <div class="modal-ico rec-ico-orange"><i class="fa-solid fa-pills"></i></div>
         <div>
           <h3 class="modal-title">
-            {{ scanMode() === 'edit' ? 'Edit Medicine Record' : manualMedicineMode() ? 'Add Medicine Manually' : 'Review Scanned Medicine' }}
+            {{ scanMode() === 'edit' ? t().records.editMedicineRecord : manualMedicineMode() ? t().records.addMedicineManually : t().records.reviewScannedMedicine }}
           </h3>
           <p class="modal-sub">
-            {{ manualMedicineMode() ? 'Fill in the details and save to your medications.' : 'Edit any field before saving to your record.' }}
+            {{ manualMedicineMode() ? t().records.fillMedicineSave : t().records.editMedicineBeforeSave }}
           </p>
         </div>
       </div>
@@ -960,7 +980,7 @@
                 [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
                 stroke-linecap="round" transform="rotate(-90 18 18)" />
             </svg>
-            <span>Uploading...</span>
+            <span>{{ t().records.uploadingImageBtn }}</span>
           </div>
           }
         </div>
@@ -981,11 +1001,11 @@
         @if (manualMedicineMode()) {
         <button type="button" class="manual-img-remove-btn" [disabled]="manualImageUploading() || scanSaving()"
           (click)="clearManualImage('medicine')">
-          <i class="fa-solid fa-trash-can"></i> Remove Image
+          <i class="fa-solid fa-trash-can"></i> {{ t().records.removeImage }}
         </button>
         }
         } @else {
-        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>Image preview unavailable</span></div>
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{ t().records.imagePreviewUnavailable }}</span></div>
         }
         } @else {
         @if (manualMedicineMode()) {
@@ -998,59 +1018,59 @@
                 [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
                 stroke-linecap="round" transform="rotate(-90 18 18)"/>
             </svg>
-            <span>Uploading image…</span>
+            <span>{{ t().records.uploadingImage }}</span>
           </div>
           } @else {
           <button type="button" class="manual-img-choose-btn" [disabled]="scanSaving()"
             (click)="manualMedImageInput.click()">
-            <i class="fa-solid fa-image"></i> Choose Image <span class="scan-optional">(optional)</span>
+            <i class="fa-solid fa-image"></i> {{ t().records.chooseImageOptional }}
           </button>
           }
         </div>
         } @else {
-        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>No image attached</span></div>
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{ t().records.noImageAttached }}</span></div>
         }
         }
         }
       </div>
       <div class="scan-form-grid">
         <div class="scan-field">
-          <label class="scan-label">Medicine Name <span class="scan-required">*</span></label>
+          <label class="scan-label">{{ t().records.medicineName }} <span class="scan-required">*</span></label>
           <input type="text" class="scan-input" [(ngModel)]="scanForm.medicineName" placeholder="e.g. Amoxicillin">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Strength / Dosage</label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.dosage" placeholder="e.g. 500mg">
+          <label class="scan-label">{{ t().records.strengthDosage }}</label>
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.dosage" [attr.placeholder]="t().records.strengthPlaceholder">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Dosage Form</label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.dosageForm" placeholder="e.g. Capsule, Tablet, Syrup">
+          <label class="scan-label">{{ t().records.dosageForm }}</label>
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.dosageForm" [attr.placeholder]="t().records.dosageFormPlaceholder">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Manufacturer</label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.manufacturer" placeholder="e.g. Pfizer">
+          <label class="scan-label">{{ t().records.manufacturer }}</label>
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.manufacturer" [attr.placeholder]="t().records.manufacturerPlaceholder">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Frequency</label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.frequency" placeholder="e.g. Twice daily, Every 8 hours">
+          <label class="scan-label">{{ t().records.frequency }}</label>
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.frequency" [attr.placeholder]="t().records.frequencyPlaceholder">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Duration</label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.duration" placeholder="e.g. 7 days, 1 month">
+          <label class="scan-label">{{ t().records.duration }}</label>
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.duration" [attr.placeholder]="t().records.durationPlaceholder">
         </div>
         <div class="scan-field scan-field--full">
-          <label class="scan-label">Notes <span class="scan-optional">(optional)</span></label>
+          <label class="scan-label">{{ t().records.notesOptional }}</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="scanForm.notes"
-            placeholder="Any additional notes or instructions..." rows="3"></textarea>
+            [attr.placeholder]="t().records.notesPlaceholder" rows="3"></textarea>
         </div>
       </div>
       @if (scanForm.medicineName.trim() === '') {
-      <p class="scan-validation"><i class="fa-solid fa-triangle-exclamation"></i> Medicine name is required to save.</p>
+      <p class="scan-validation"><i class="fa-solid fa-triangle-exclamation"></i> {{ t().records.medNameRequired }}</p>
       }
     </div>
     <footer class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary"
-        [disabled]="scanSaving() || manualMedicineImageUploading()" (click)="cancelScanReview()">Cancel</button>
+        [disabled]="scanSaving() || manualMedicineImageUploading()" (click)="cancelScanReview()">{{ t().records.cancelBtn }}</button>
       <button type="button" class="modal-btn modal-btn-primary"
         [disabled]="scanSaving() || manualMedicineImageUploading() || scanForm.medicineName.trim() === ''"
         [class.modal-btn--saving]="scanSaving() || manualMedicineImageUploading()"
@@ -1062,10 +1082,10 @@
             [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
             stroke-linecap="round" transform="rotate(-90 18 18)" />
         </svg>
-        {{ manualMedicineImageUploading() ? 'Uploading image...' : 'Saving...' }}
+        {{ manualMedicineImageUploading() ? t().records.uploadingImageBtn : t().records.savingBtn }}
         } @else {
         <i class="fa-solid fa-floppy-disk"></i>
-        @if (scanMode() === 'edit') { Save Changes } @else { Save Medicine }
+        @if (scanMode() === 'edit') { {{ t().records.saveChanges }} } @else { {{ t().records.saveMedicine }} }
         }
       </button>
     </footer>
@@ -1082,7 +1102,7 @@
         <div class="modal-ico reminder-prompt-ico"><i class="fa-solid fa-circle-check"></i></div>
         <div>
           <h3 class="modal-title">
-            {{ reminderPromptMode() === 'multi' ? 'Medicines Added Successfully' : 'Medicine Added Successfully' }}
+            {{ reminderPromptMode() === 'multi' ? t().records.medicinesAddedSuccess : t().records.medicineAddedSuccess }}
           </h3>
         </div>
       </div>
@@ -1092,19 +1112,17 @@
     </header>
     <div class="modal-body">
       @if (reminderPromptMode() === 'multi') {
-      <p>Your medicines have been added successfully.</p>
-      <p>Would you like to set reminders for them now?</p>
+      <p>{{ t().records.medicinesAddedText }}</p>
       } @else {
-      <p>Your medicine has been saved successfully.</p>
-      <p>Would you like to set a reminder for this medicine now?</p>
+      <p>{{ t().records.medicineAddedText }}</p>
       }
     </div>
     <footer class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeReminderPrompt()">
-        {{ reminderPromptMode() === 'multi' ? 'Later' : 'Maybe Later' }}
+        {{ reminderPromptMode() === 'multi' ? t().records.later : t().records.maybeLater }}
       </button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="goToSetReminder()">
-        {{ reminderPromptMode() === 'multi' ? 'Set Reminders' : 'Set Reminder Now' }}
+        {{ reminderPromptMode() === 'multi' ? t().records.setReminders : t().records.setReminderNow }}
       </button>
     </footer>
   </div>
@@ -1131,20 +1149,20 @@
       <div class="ai-fail-ico-wrap">
         <i class="fa-solid fa-triangle-exclamation"></i>
       </div>
-      <h3 class="ai-fail-title" id="ai-fail-title">AI Analysis Failed</h3>
+      <h3 class="ai-fail-title" id="ai-fail-title">{{ t().records.aiAnalysisFailed }}</h3>
       <p class="ai-fail-desc" id="ai-fail-desc">
-        We couldn't analyze your document right now. Try again or fill in the details yourself.
+        {{ t().records.aiFailureText }}
       </p>
     </div>
     <footer class="modal-ftr ai-fail-ftr">
       <button type="button" class="modal-btn ai-fail-cancel-btn" (click)="closeAiFailDialog()">
-        Cancel
+        {{ t().records.cancelBtn }}
       </button>
       <button type="button" class="modal-btn modal-btn-secondary ai-fail-manual-btn" (click)="continueManually()">
-        <i class="fa-solid fa-pen-to-square"></i> Enter Manually
+        <i class="fa-solid fa-pen-to-square"></i> {{ t().records.enterManually }}
       </button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="retryUpload()">
-        <i class="fa-solid fa-rotate-right"></i> Try Again
+        <i class="fa-solid fa-rotate-right"></i> {{ t().records.tryAgain }}
       </button>
     </footer>
   </div>

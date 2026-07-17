@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { LocalizationService } from '../../../Services/localization.service';
 
 @Component({
   selector: 'app-onboarding-welcome',
@@ -7,6 +8,9 @@ import { Router } from '@angular/router';
   styleUrl: './onboarding-welcome.css',
 })
 export class OnboardingWelcome {
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
+
   constructor(private readonly router: Router) {}
 
   getStarted(): void {

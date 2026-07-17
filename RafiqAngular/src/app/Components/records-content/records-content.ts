@@ -14,6 +14,7 @@ import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { of, forkJoin } from 'rxjs';
+import { LocalizationService } from '../../Services/localization.service';
 import { switchMap, map } from 'rxjs';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
@@ -140,6 +141,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('generalInput') generalInput!: ElementRef<HTMLInputElement>;
   @ViewChild('manualImageInput') manualImageInput!: ElementRef<HTMLInputElement>;
   @ViewChild('manualMedImageInput') manualMedImageInput!: ElementRef<HTMLInputElement>;
+
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   private readonly recordsService = inject(MedicalRecordsService);
   private readonly healthProfileSvc = inject(HealthProfileService);

@@ -24,10 +24,10 @@
 
       <!-- Welcome Text -->
       <div class="welcome-content">
-        <h1 class="welcome-title">Welcome to Rafiq! 👋</h1>
-        <p class="welcome-subtitle">Let's build your Health Profile</p>
+        <h1 class="welcome-title">{{ t().onboarding.welcome.title }}</h1>
+        <p class="welcome-subtitle">{{ t().onboarding.welcome.subtitle }}</p>
         <p class="welcome-description">
-          This helps us personalize your experience and provide better AI insights for you.
+          {{ t().onboarding.welcome.subtitle2 }}
         </p>
       </div>
 
@@ -38,8 +38,8 @@
             <i class="fas fa-brain"></i>
           </div>
           <div class="feature-text">
-            <span class="feature-title">Personalized AI</span>
-            <span class="feature-desc">Better insights for your health</span>
+            <span class="feature-title">{{ t().onboarding.welcome.personalized }}</span>
+            <span class="feature-desc">{{ t().onboarding.welcome.personalizedSub }}</span>
           </div>
         </div>
         <div class="feature-card">
@@ -47,22 +47,22 @@
             <i class="fas fa-chart-line"></i>
           </div>
           <div class="feature-text">
-            <span class="feature-title">Smarter Tracking</span>
-            <span class="feature-desc">Track what matters most</span>
+            <span class="feature-title">{{ t().onboarding.welcome.smarterTracking }}</span>
+            <span class="feature-desc">{{ t().onboarding.welcome.smarterTrackingSub }}</span>
           </div>
         </div>
       </div>
 
       <!-- CTA Button -->
       <button class="cta-button" (click)="getStarted()">
-        <span>Get Started</span>
+        <span>{{ t().onboarding.welcome.getStarted }}</span>
         <i class="fas fa-arrow-right"></i>
       </button>
 
       <!-- Footer note -->
       <p class="footer-note">
         <i class="far fa-clock"></i>
-        This will take less than 2 minutes
+        {{ t().onboarding.welcome.lessThanTwoMinutes }}
       </p>
     </div>
   </div>

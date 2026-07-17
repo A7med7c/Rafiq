@@ -1,18 +1,16 @@
 import {
   AfterViewInit,
   Component,
-  EventEmitter,
   HostListener,
-  Input,
   OnDestroy,
-  Output,
   inject,
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../Services/auth-service';
-import { LandingLanguage, LandingSection } from '../../landing';
+import { LocalizationService } from '../../../../Services/localization.service';
+import { LandingSection } from '../../landing';
 
 @Component({
   selector: 'app-navbar',
@@ -23,9 +21,7 @@ import { LandingLanguage, LandingSection } from '../../landing';
 export class Navbar implements AfterViewInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
-
-  @Input() language: LandingLanguage = 'en';
-  @Output() languageChange = new EventEmitter<LandingLanguage>();
+  readonly l10n = inject(LocalizationService);
 
   readonly currentUser = toSignal(this.authService.currentUser$, {
     initialValue: this.authService.currentUser,
@@ -48,7 +44,7 @@ export class Navbar implements AfterViewInit, OnDestroy {
 
   text = {
     en: {
-      brand: 'Rafiq | \u0631\u0641\u064a\u0642',
+      brand: 'Rafiq | رفيق',
       home: 'Home',
       about: 'About',
       features: 'Features',
@@ -65,26 +61,25 @@ export class Navbar implements AfterViewInit, OnDestroy {
       closeMenu: 'Close menu',
     },
     ar: {
-      brand: 'Rafiq | \u0631\u0641\u064a\u0642',
-      home: '\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629',
-      about: '\u0639\u0646 \u0631\u0641\u064a\u0642',
-      features: '\u0627\u0644\u0645\u0645\u064a\u0632\u0627\u062a',
-      howItWorks: '\u0643\u064a\u0641 \u064a\u0639\u0645\u0644',
-      testimonials: '\u0627\u0644\u0622\u0631\u0627\u0621',
-      contact: '\u062a\u0648\u0627\u0635\u0644',
-      login: '\u062f\u062e\u0648\u0644',
-      cta: '\u0627\u0628\u062f\u0623 \u0627\u0644\u0622\u0646',
-      dashboard: '\u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u062d\u0643\u0645',
-      account: '\u0627\u0644\u062d\u0633\u0627\u0628',
-      signOut: '\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062e\u0631\u0648\u062c',
-      signingOut: '\u062c\u0627\u0631\u064a \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062e\u0631\u0648\u062c...',
-      openMenu: '\u0641\u062a\u062d \u0627\u0644\u0642\u0627\u0626\u0645\u0629',
-      closeMenu: '\u0625\u063a\u0644\u0627\u0642 \u0627\u0644\u0642\u0627\u0626\u0645\u0629',
+      brand: 'رفيق | Rafiq',
+      home: 'الرئيسية',
+      about: 'عن رفيق',
+      features: 'المميزات',
+      howItWorks: 'إزاي بيشتغل',
+      testimonials: 'آراء المستخدمين',
+      contact: 'تواصل معنا',
+      login: 'تسجيل الدخول',
+      cta: 'ابدأ دلوقتي',
+      account: 'الحساب',
+      signOut: 'تسجيل خروج',
+      signingOut: 'جاري الخروج...',
+      openMenu: 'افتح القائمة',
+      closeMenu: 'قفل القائمة',
     },
   };
 
   get t() {
-    return this.text[this.language];
+    return this.text[this.l10n.lang()];
   }
 
   get isAuthenticated(): boolean {
@@ -143,8 +138,8 @@ export class Navbar implements AfterViewInit, OnDestroy {
     document.body.style.overflow = '';
   }
 
-  setLanguage(language: LandingLanguage): void {
-    this.languageChange.emit(language);
+  setLanguage(language: 'en' | 'ar'): void {
+    this.l10n.setLanguage(language);
   }
 
   toggleMenu(): void {

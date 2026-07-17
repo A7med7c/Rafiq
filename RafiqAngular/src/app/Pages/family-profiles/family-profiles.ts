@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { catchError, of, map, forkJoin } from 'rxjs';
+import { LocalizationService } from '../../Services/localization.service';
 import { AuthService } from '../../Services/auth-service';
 import { NotificationService } from '../../Services/notification.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
@@ -48,6 +49,8 @@ interface SupervisionMemberEntry {
 export class FamilyProfiles implements OnInit {
   @ViewChild('carouselEl') carouselElRef?: ElementRef<HTMLDivElement>;
 
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
   private readonly authSvc = inject(AuthService);
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);

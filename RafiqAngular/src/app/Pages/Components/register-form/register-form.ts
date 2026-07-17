@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../Services/auth-service';
+import { LocalizationService } from '../../../Services/localization.service';
 import { getApiErrorMessages } from '../../../Utils/api-error.util';
 
 const EGYPTIAN_PHONE_PATTERN = /^01[0125][0-9]{8}$/;
@@ -35,6 +36,8 @@ export class RegisterFormComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   isSubmitting = false;
   showPassword = false;

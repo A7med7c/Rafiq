@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Navbar } from './Components/navbar/navbar';
 import { Hero } from './Components/hero/hero';
 import { Features } from './Components/features/features';
@@ -8,6 +8,7 @@ import { Stats } from './Components/stats/stats';
 import { Testimonials } from './Components/testimonials/testimonials';
 import { Contact } from './Components/contact/contact';
 import { Footer } from './Components/footer/footer';
+import { LocalizationService } from '../../Services/localization.service';
 
 export type LandingLanguage = 'en' | 'ar';
 
@@ -26,9 +27,5 @@ export type LandingSection =
   styleUrl: './landing.css',
 })
 export class Landing {
-  language: LandingLanguage = 'en';
-
-  setLanguage(language: LandingLanguage) {
-    this.language = language;
-  }
+  readonly l10n = inject(LocalizationService);
 }

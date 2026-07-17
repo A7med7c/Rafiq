@@ -15,6 +15,20 @@
         <span>{{ t.brand }}</span>
       </button>
 
+      <div class="language-toggle" aria-label="Language switcher">
+        <button
+          type="button"
+          [class.active]="l10n.lang() === 'en'"
+          (click)="setLanguage('en')">
+          EN
+        </button>
+        <button
+          type="button"
+          [class.active]="l10n.lang() === 'ar'"
+          (click)="setLanguage('ar')">
+          AR
+        </button>
+      </div>
       <button
         type="button"
         class="menu-toggle"

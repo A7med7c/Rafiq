@@ -1,13 +1,13 @@
-<section class="login-container" dir="ltr">
+<section class="login-container" [dir]="l10n.dir()">
     <div class="login-card">
 
         <div class="card-header">
-            <h2>Verify Your Account</h2>
+            <h2>{{ t().verifyAccount.title }}</h2>
             @if (email) {
-                <p>Verification code sent to:</p>
+                <p>{{ t().verifyAccount.subtitleWithEmail }}</p>
                 <p class="verification-email">{{ email }}</p>
             } @else {
-                <p>Enter your email and the verification code sent to it.</p>
+                <p>{{ t().verifyAccount.subtitleNoEmail }}</p>
             }
         </div>
 
@@ -29,21 +29,21 @@
 
             @if (!email) {
                 <div class="field">
-                    <label for="email">Email</label>
+                    <label for="email">{{ t().verifyAccount.emailLabel }}</label>
                     <div class="input-shell">
                         <input
                             id="email"
                             type="email"
                             [value]="email"
                             (input)="email = $any($event.target).value"
-                            placeholder="Enter your email"
+                            [placeholder]="t().verifyAccount.emailPlaceholder"
                             autocomplete="email">
                     </div>
                 </div>
             }
 
             <div class="field">
-                <label for="verificationCode">Verification Code</label>
+                <label for="verificationCode">{{ t().verifyAccount.codeLabel }}</label>
                 <div class="input-shell">
                     <input
                         id="verificationCode"
@@ -51,7 +51,7 @@
                         inputmode="numeric"
                         [value]="verificationCode"
                         (input)="verificationCode = $any($event.target).value"
-                        placeholder="Enter verification code"
+                        [placeholder]="t().verifyAccount.codePlaceholder"
                         autocomplete="one-time-code">
                 </div>
             </div>
@@ -62,9 +62,9 @@
                 (click)="verify()"
                 [disabled]="isVerifying">
                 @if (isVerifying) {
-                    Verifying...
+                    {{ t().verifyAccount.verifying }}
                 } @else {
-                    Verify
+                    {{ t().verifyAccount.verify }}
                 }
             </button>
 
@@ -74,18 +74,18 @@
                 (click)="resend()"
                 [disabled]="isResending || resendCooldown > 0">
                 @if (isResending) {
-                    Sending...
+                    {{ t().verifyAccount.sending }}
                 } @else if (resendCooldown > 0) {
-                    Resend Code ({{ resendCooldown }}s)
+                    {{ t().verifyAccount.resendCooldown }} {{ resendCooldown }}{{ t().verifyAccount.seconds }}
                 } @else {
-                    Resend Code
+                    {{ t().verifyAccount.resendCode }}
                 }
             </button>
         </div>
 
         <p class="register">
-            Already verified?
-            <a routerLink="/login">Log In</a>
+            {{ t().verifyAccount.alreadyVerified }}
+            <a routerLink="/login">{{ t().verifyAccount.logIn }}</a>
         </p>
 
     </div>
