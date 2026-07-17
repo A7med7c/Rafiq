@@ -22,6 +22,7 @@ import { NotificationService } from '../../Services/notification.service';
 import { switchMap, catchError, of, map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
+import { LocalizationService } from '../../Services/localization.service';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -145,6 +146,9 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
   styleUrl: './medical-records.css',
 })
 export class MedicalRecords implements OnInit {
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
+
   private readonly authService = inject(AuthService);
   private readonly recordsService = inject(MedicalRecordsService);
   private readonly reminderSvc = inject(MedicationRemindersService);

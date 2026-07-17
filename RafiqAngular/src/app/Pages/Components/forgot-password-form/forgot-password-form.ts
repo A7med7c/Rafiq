@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../Services/auth-service';
+import { LocalizationService } from '../../../Services/localization.service';
 import { getApiErrorMessages } from '../../../Utils/api-error.util';
 
 const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
@@ -36,6 +37,8 @@ export class ForgotPasswordFormComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   step: Step = 'email';
   isSubmitting = false;

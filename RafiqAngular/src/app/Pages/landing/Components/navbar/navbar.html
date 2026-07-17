@@ -72,15 +72,15 @@
       <div class="language-toggle" aria-label="Language switcher">
         <button
           type="button"
-          [class.active]="language === 'en'"
+          [class.active]="l10n.lang() === 'en'"
           (click)="setLanguage('en')">
           EN
         </button>
         <button
           type="button"
-          [class.active]="language === 'ar'"
+          [class.active]="l10n.lang() === 'ar'"
           (click)="setLanguage('ar')">
-          عربي
+          AR
         </button>
       </div>
 

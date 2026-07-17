@@ -10,6 +10,7 @@ import { NotificationService } from '../../Services/notification.service';
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
 import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
 import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UpdateUserMedicinePayload, UserMedicine } from '../../Modles/dashboard.models';
+import { LocalizationService } from '../../Services/localization.service';
 
 type MedTab = 'schedule' | 'medications';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -120,6 +121,8 @@ export class Medications implements OnInit, OnDestroy {
   private readonly medSvc = inject(MedicationRemindersService);
   private readonly route = inject(ActivatedRoute);
   protected readonly router = inject(Router);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {

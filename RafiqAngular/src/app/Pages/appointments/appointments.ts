@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
 import { AppointmentsService } from '../../Services/appointments.service';
+import { LocalizationService } from '../../Services/localization.service';
 import { NotificationService } from '../../Services/notification.service';
 import {
   AppointmentDto, AppointmentStatus, AppointmentType,
@@ -56,6 +57,8 @@ export class Appointments implements OnInit, OnDestroy {
   protected readonly notifSvc  = inject(NotificationService);
   private readonly router     = inject(Router);
   private readonly route      = inject(ActivatedRoute);
+  protected readonly l10n     = inject(LocalizationService);
+  protected readonly t        = this.l10n.t;
 
   // ── Layout ──────────────────────────────────────────────────────────────
   readonly sidebarCollapsed  = signal(false);
@@ -349,7 +352,7 @@ nextPage() {
       },
       error: err => {
         this.loadError.set(
-          err?.error?.message ?? 'Could not load appointments. Please try again.'
+          err?.error?.message ?? this.t().appointments.couldNotLoad
         );
         this.loading.set(false);
       },
@@ -428,11 +431,11 @@ nextPage() {
 
   goStep2(): void {
     if (!this.fType()) {
-      this.formErrors.update(e => ({ ...e, appointmentType: 'Please select an appointment type.' }));
+      this.formErrors.update(e => ({ ...e, appointmentType: this.t().appointments.pleaseSelectType }));
       return;
     }
     if (this.fType() === AppointmentType.Other && !this.fCustomType().trim()) {
-      this.formErrors.update(e => ({ ...e, customType: 'Please describe the appointment type.' }));
+      this.formErrors.update(e => ({ ...e, customType: this.t().appointments.pleaseDescribeType }));
       return;
     }
     this.formErrors.set({});
@@ -518,27 +521,28 @@ nextPage() {
 
   private validate(): boolean {
     const errs: Record<string, string> = {};
-    if (!this.fType()) errs['appointmentType'] = 'Please select an appointment type.';
+    const a = this.t().appointments;
+    if (!this.fType()) errs['appointmentType'] = a.pleaseSelectType;
     if (this.fType() === AppointmentType.Other && !this.fCustomType().trim()) {
-      errs['customType'] = 'Please describe the appointment type.';
+      errs['customType'] = a.pleaseDescribeType;
     }
-    if (!this.fTitle().trim())    errs['title']    = 'Title is required.';
-    if (!this.fProvider().trim()) errs['provider'] = 'Provider name is required.';
-    if (!this.fDate())            errs['date']     = 'Date is required.';
-    if (!this.fTime())            errs['time']     = 'Time is required.';
+    if (!this.fTitle().trim())    errs['title']    = a.titleRequired;
+    if (!this.fProvider().trim()) errs['provider'] = a.providerRequired;
+    if (!this.fDate())            errs['date']     = a.dateRequired;
+    if (!this.fTime())            errs['time']     = a.timeRequired;
     if (this.fDate() && this.fTime()) {
       const sel = new Date(`${this.fDate()}T${this.fTime()}`);
-      if (sel <= new Date()) errs['date'] = 'Appointment must be scheduled in the future.';
+      if (sel <= new Date()) errs['date'] = a.appointmentFuture;
       if (this.hasUpcomingAppointmentAtSelectedTime()) {
-        errs['time'] = 'You already have an upcoming appointment at this time.';
+        errs['time'] = a.timeConflict;
       }
     }
     if (this.customReminderSelected()) {
       const customReminder = this.fCustomReminder();
       if (customReminder === null || customReminder < 1) {
-        errs['reminder'] = 'Custom reminder must be at least 1 minute.';
+        errs['reminder'] = a.customReminderMin;
       } else if (customReminder > 10080) {
-        errs['reminder'] = 'Custom reminder cannot be more than 7 days.';
+        errs['reminder'] = a.customReminderMax;
       }
     }
     this.formErrors.set(errs);
@@ -568,16 +572,16 @@ nextPage() {
       next: saved => {
         if (id) {
           this.appointments.update(list => list.map(a => a.id === id ? saved : a));
-          this.toast('Appointment updated successfully.', 'success');
+          this.toast(this.t().appointments.appointmentUpdated, 'success');
         } else {
           this.appointments.update(list => [...list, saved]);
-          this.toast('Appointment added successfully.', 'success');
+          this.toast(this.t().appointments.appointmentAdded, 'success');
         }
         this.submitting.set(false);
         this.closeAddModal();
       },
       error: err => {
-        this.toast(err?.error?.message ?? 'Failed to save appointment.', 'error');
+        this.toast(err?.error?.message ?? this.t().appointments.failedSave, 'error');
         this.submitting.set(false);
       },
     });
@@ -602,8 +606,8 @@ nextPage() {
     if (!id) return;
     this.deleting.set(true);
     this.apptSvc.delete(id).subscribe({
-      next:  ()  => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast('Appointment deleted.', 'success'); this.deleting.set(false); this.closeDelete(); },
-      error: err => { this.toast(err?.error?.message ?? 'Delete failed.', 'error'); this.deleting.set(false); this.closeDelete(); },
+      next:  ()  => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast(this.t().appointments.appointmentDeleted, 'success'); this.deleting.set(false); this.closeDelete(); },
+      error: err => { this.toast(err?.error?.message ?? this.t().appointments.deleteFailed, 'error'); this.deleting.set(false); this.closeDelete(); },
     });
   }
 
@@ -615,16 +619,16 @@ nextPage() {
     if (!id) return;
     this.cancelling.set(true);
     this.apptSvc.cancel(id).subscribe({
-      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Appointment cancelled.', 'success'); this.cancelling.set(false); this.closeCancel(); },
-      error: err   => { this.toast(err?.error?.message ?? 'Cancel failed.', 'error'); this.cancelling.set(false); this.closeCancel(); },
+      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.appointmentCancelled, 'success'); this.cancelling.set(false); this.closeCancel(); },
+      error: err   => { this.toast(err?.error?.message ?? this.t().appointments.cancelFailed, 'error'); this.cancelling.set(false); this.closeCancel(); },
     });
   }
 
   // ── Complete ──────────────────────────────────────────────────────────────
   markComplete(id: string): void {
     this.apptSvc.complete(id).subscribe({
-      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Marked as completed.', 'success'); },
-      error: err   => { this.toast(err?.error?.message ?? 'Failed.', 'error'); },
+      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.markedCompleted, 'success'); },
+      error: err   => { this.toast(err?.error?.message ?? this.t().appointments.failedSave, 'error'); },
     });
   }
 
@@ -683,8 +687,25 @@ nextPage() {
   }
 
   statusLabel(s: AppointmentStatus): string {
-    return { [AppointmentStatus.Upcoming]: 'Upcoming', [AppointmentStatus.Completed]: 'Completed',
-             [AppointmentStatus.Cancelled]: 'Cancelled', [AppointmentStatus.Missed]: 'Missed' }[s] ?? '';
+    const a = this.t().appointments;
+    return {
+      [AppointmentStatus.Upcoming]:  a.upcomingStatus,
+      [AppointmentStatus.Completed]: a.completedStatus,
+      [AppointmentStatus.Cancelled]: a.cancelledStatus,
+      [AppointmentStatus.Missed]:    a.missedStatus,
+    }[s] ?? '';
+  }
+
+  getReminderLabel(mins: number): string {
+    const before = this.t().appointments.minutesBefore;
+    const map: Record<number, string> = {
+      15:   `15 ${before}`,
+      30:   `30 ${before}`,
+      60:   `60 ${before}`,
+      120:  `120 ${before}`,
+      1440: `1440 ${before}`,
+    };
+    return map[mins] ?? `${mins} ${before}`;
   }
 
   statusClass(s: AppointmentStatus): string {

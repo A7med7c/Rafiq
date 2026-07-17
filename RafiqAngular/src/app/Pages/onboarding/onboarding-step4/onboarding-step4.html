@@ -6,9 +6,9 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"/>
       </svg>
-      Back
+      {{ t().onboarding.header.back }}
     </button>
-    <h1 class="header-title">Create Your Health Profile</h1>
+    <h1 class="header-title">{{ t().onboarding.header.createHealthProfile }}</h1>
     <div class="header-spacer"></div>
   </header>
 
@@ -41,16 +41,16 @@
 
   <!-- Review card -->
   <div class="review-card">
-    <p class="step-indicator">Step 5 of 5</p>
-    <h2 class="form-title">Review your information</h2>
+    <p class="step-indicator">{{ t().onboarding.step4.stepIndicator }}</p>
+    <h2 class="form-title">{{ t().onboarding.step4.title }}</h2>
 
     <div class="review-grid">
 
       <!-- Basic Information -->
       <div class="review-section">
         <div class="section-header">
-          <span class="section-title">Basic Information</span>
-          <button class="edit-btn" (click)="editStep(1)">Edit</button>
+          <span class="section-title">{{ t().onboarding.step4.basicInfo }}</span>
+          <button class="edit-btn" (click)="editStep(1)">{{ t().onboarding.step4.editBtn }}</button>
         </div>
 
         @if (step1) {
@@ -63,7 +63,7 @@
                   <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
               </span>
-              <span class="info-label">Date of Birth</span>
+              <span class="info-label">{{ t().onboarding.step4.dob }}</span>
               <span class="info-value">{{ formatDate(step1.dateOfBirth) }}</span>
             </div>
 
@@ -74,7 +74,7 @@
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                 </svg>
               </span>
-              <span class="info-label">Gender</span>
+              <span class="info-label">{{ t().onboarding.step4.gender }}</span>
               <span class="info-value">{{ getGenderLabel(step1.gender) }}</span>
             </div>
 
@@ -85,7 +85,7 @@
                   <line x1="12" y1="20" x2="12" y2="4"/><line x1="8" y1="8" x2="12" y2="4"/><line x1="16" y1="8" x2="12" y2="4"/>
                 </svg>
               </span>
-              <span class="info-label">Height</span>
+              <span class="info-label">{{ t().onboarding.step4.heightLabel }}</span>
               <span class="info-value">{{ step1.height }} cm</span>
             </div>
 
@@ -96,7 +96,7 @@
                   <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
               </span>
-              <span class="info-label">Weight</span>
+              <span class="info-label">{{ t().onboarding.step4.weightLabel }}</span>
               <span class="info-value">{{ step1.weight }} kg</span>
             </div>
 
@@ -107,21 +107,21 @@
                   <path d="M12 2C12 2 5 10.5 5 15a7 7 0 0 0 14 0C19 10.5 12 2 12 2Z"/>
                 </svg>
               </span>
-              <span class="info-label">Blood Type</span>
+              <span class="info-label">{{ t().onboarding.step4.bloodTypeLabel }}</span>
               <span class="info-value">{{ getBloodTypeLabel(step1.bloodType) }}</span>
             </div>
 
           </div>
         } @else {
-          <p class="empty-hint">No data entered. <button class="edit-btn inline" (click)="editStep(1)">Fill in</button></p>
+          <p class="empty-hint">{{ t().onboarding.step4.noData }}. <button class="edit-btn inline" (click)="editStep(1)">{{ t().onboarding.step4.fillIn }}</button></p>
         }
       </div>
 
       <!-- Emergency Contacts -->
       <div class="review-section">
         <div class="section-header">
-          <span class="section-title">Emergency Contacts</span>
-          <button class="edit-btn" (click)="editStep('emergency')">Edit</button>
+          <span class="section-title">{{ t().onboarding.step4.emergencyContacts }}</span>
+          <button class="edit-btn" (click)="editStep('emergency')">{{ t().onboarding.step4.editBtn }}</button>
         </div>
 
         @if (emergencyContacts && emergencyContacts.length) {
@@ -135,15 +135,15 @@
             }
           </div>
         } @else {
-          <p class="no-items">No emergency contacts added</p>
+          <p class="no-items">{{ t().onboarding.step4.noContacts }}</p>
         }
       </div>
 
       <!-- Allergies -->
       <div class="review-section">
         <div class="section-header">
-          <span class="section-title">Allergies</span>
-          <button class="edit-btn" (click)="editStep(2)">Edit</button>
+          <span class="section-title">{{ t().onboarding.step4.allergies }}</span>
+          <button class="edit-btn" (click)="editStep(2)">{{ t().onboarding.step4.editBtn }}</button>
         </div>
 
         @if (step2 && step2.hasAllergies === 'yes' && step2.allergies.length) {
@@ -157,15 +157,15 @@
             }
           </div>
         } @else {
-          <p class="no-items">No allergies recorded</p>
+          <p class="no-items">{{ t().onboarding.step4.noAllergies }}</p>
         }
       </div>
 
       <!-- Chronic Diseases -->
       <div class="review-section">
         <div class="section-header">
-          <span class="section-title">Chronic Diseases</span>
-          <button class="edit-btn" (click)="editStep(3)">Edit</button>
+          <span class="section-title">{{ t().onboarding.step4.chronicDiseases }}</span>
+          <button class="edit-btn" (click)="editStep(3)">{{ t().onboarding.step4.editBtn }}</button>
         </div>
 
         @if (step3 && step3.hasConditions === 'yes' && step3.conditions.length) {
@@ -179,7 +179,7 @@
             }
           </div>
         } @else {
-          <p class="no-items">No chronic diseases recorded</p>
+          <p class="no-items">{{ t().onboarding.step4.noChronicDiseases }}</p>
         }
       </div>
 
@@ -194,15 +194,15 @@
           </svg>
         </div>
         <div class="ai-text">
-          <p class="ai-title">Let AI enhance your profile <span class="ai-recommended">Recommended</span></p>
-          <p class="ai-desc">Upload your medical reports, prescriptions or lab results and let AI extract and fill more information for you.</p>
+          <p class="ai-title">{{ t().onboarding.step4.aiBanner }} <span class="ai-recommended">{{ t().onboarding.step4.recommended }}</span></p>
+          <p class="ai-desc">{{ t().onboarding.step4.aiDesc }}</p>
         </div>
       </div>
       <button class="ai-button" (click)="goToAiUpload()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
-        Use AI to Fill More Info
+        {{ t().onboarding.step4.aiBtn }}
       </button>
     </div>
 
@@ -213,12 +213,12 @@
     <button class="complete-btn" (click)="completeProfile()" [disabled]="isSubmitting">
       @if (isSubmitting) {
         <span class="btn-spinner"></span>
-        Saving...
+        {{ t().onboarding.step4.saving }}
       } @else {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        Complete My Profile
+        {{ t().onboarding.step4.completeProfile }}
       }
     </button>
 
@@ -246,7 +246,7 @@
     <div class="progress-track">
       <div class="progress-fill" style="width: 100%"></div>
     </div>
-    <span class="progress-label">Step 5 of 5</span>
+    <span class="progress-label">{{ t().onboarding.step4.stepIndicator }}</span>
   </div>
 
   </div> <!-- /onboarding-layout -->

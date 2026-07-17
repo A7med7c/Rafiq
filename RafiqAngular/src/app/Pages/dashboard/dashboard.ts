@@ -5,6 +5,7 @@ import { AuthService } from '../../Services/auth-service';
 import { DashboardService } from '../../Services/dashboard.service';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { NotificationService } from '../../Services/notification.service';
+import { LocalizationService } from '../../Services/localization.service';
 import { MedicalRecord, ReminderDisplayItem } from '../../Modles/dashboard.models';
 import { AppointmentDto, AppointmentStatus } from '../../Modles/appointment.models';
 import { catchError, of } from 'rxjs';
@@ -23,6 +24,8 @@ export class Dashboard implements OnInit {
   private readonly dashboardService = inject(DashboardService);
   private readonly apptService      = inject(AppointmentsService);
   protected readonly notifService     = inject(NotificationService);
+  protected readonly l10n           = inject(LocalizationService);
+  protected readonly t              = this.l10n.t;
   private readonly router           = inject(Router);
   private readonly elRef            = inject(ElementRef);
 
@@ -119,9 +122,9 @@ export class Dashboard implements OnInit {
 
   get greeting(): string {
     const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return this.t().dashboard.goodMorning;
+    if (h < 17) return this.t().dashboard.goodAfternoon;
+    return this.t().dashboard.goodEvening;
   }
 
   ngOnInit(): void {
@@ -229,17 +232,17 @@ export class Dashboard implements OnInit {
     const d    = new Date(dt);
     const now  = new Date();
     const diff = Math.ceil((d.getTime() - now.getTime()) / 86_400_000);
-    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    if (diff === 0) return `Today, ${time}`;
-    if (diff === 1) return `Tomorrow, ${time}`;
-    return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${time}`;
+    const time = d.toLocaleTimeString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    if (diff === 0) return `${this.t().aiAssistant.today}, ${time}`;
+    if (diff === 1) return `${this.t().appointments.nextAppointment}, ${time}`;
+    return `${d.toLocaleDateString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}, ${time}`;
   }
 
   formatApptRelative(dt: string): string {
     const diff = Math.ceil((new Date(dt).getTime() - Date.now()) / 86_400_000);
-    if (diff <= 0) return 'Today';
-    if (diff === 1) return 'In 1 day';
-    return `In ${diff} days`;
+    if (diff <= 0) return this.t().aiAssistant.today;
+    if (diff === 1) return this.l10n.lang() === 'ar' ? 'بكره' : 'Tomorrow';
+    return this.l10n.lang() === 'ar' ? `بعد ${diff} أيام` : `In ${diff} days`;
   }
 
   getRecordIcon(type: string): string {

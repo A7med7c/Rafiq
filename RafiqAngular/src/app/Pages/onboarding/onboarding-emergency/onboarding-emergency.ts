@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { EmergencyContactService, EmergencyContactResponse } from '../../../Services/emergency-contact.service';
 import { TokenStorageService } from '../../../Services/token-storage-service';
+import { LocalizationService } from '../../../Services/localization.service';
 
 @Component({
   selector: 'app-onboarding-emergency',
@@ -20,6 +21,8 @@ export class OnboardingEmergency implements OnInit {
   private readonly emergencyService = inject(EmergencyContactService);
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly cdr = inject(ChangeDetectorRef);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   readonly steps = [
     { label: 'Basic Info' },

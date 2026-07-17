@@ -1,9 +1,9 @@
-<section class="login-container" dir="ltr">
+<section class="login-container" [dir]="l10n.dir()">
     <div class="login-card">
 
         <div class="card-header">
-            <h2>Create your Rafiq account.</h2>
-            <p>Fill in the details below to get started.</p>
+            <h2>{{ t().register.subtitle }}</h2>
+            <p>{{ t().register.subtitle2 }}</p>
         </div>
 
         @if (successMessage) {
@@ -25,24 +25,24 @@
             <!-- Row 1: Personal Information -->
             <div class="field-group" style="display: flex; gap: 1rem;">
                 <div class="field" style="flex: 1;">
-                    <label for="firstName">First Name</label>
+                    <label for="firstName">{{ t().register.firstName }}</label>
                     <div class="input-shell" [class.invalid]="isInvalid('firstName')">
-                        <input id="firstName" type="text" formControlName="firstName" placeholder="Enter your first name"
+                        <input id="firstName" type="text" formControlName="firstName" [placeholder]="t().register.firstNamePlaceholder"
                             autocomplete="given-name">
                     </div>
                     @if (isInvalid('firstName')) {
-                    <p class="field-error">First name is required.</p>
+                    <p class="field-error">{{ t().register.firstNameRequired }}</p>
                     }
                 </div>
 
                 <div class="field" style="flex: 1;">
-                    <label for="lastName">Last Name</label>
+                    <label for="lastName">{{ t().register.lastName }}</label>
                     <div class="input-shell" [class.invalid]="isInvalid('lastName')">
-                        <input id="lastName" type="text" formControlName="lastName" placeholder="Enter your last name"
+                        <input id="lastName" type="text" formControlName="lastName" [placeholder]="t().register.lastNamePlaceholder"
                             autocomplete="family-name">
                     </div>
                     @if (isInvalid('lastName')) {
-                    <p class="field-error">Last name is required.</p>
+                    <p class="field-error">{{ t().register.lastNameRequired }}</p>
                     }
                 </div>
             </div>
@@ -50,24 +50,24 @@
             <!-- Row 2: Contact Information -->
             <div class="field-group" style="display: flex; gap: 1rem;">
                 <div class="field" style="flex: 1;">
-                    <label for="email">Email</label>
+                    <label for="email">{{ t().register.email }}</label>
                     <div class="input-shell" [class.invalid]="isInvalid('email')">
-                        <input id="email" type="email" formControlName="email" placeholder="Enter your email"
+                        <input id="email" type="email" formControlName="email" [placeholder]="t().register.emailPlaceholder"
                             autocomplete="email">
                     </div>
                     @if (isInvalid('email')) {
-                    <p class="field-error">Enter a valid email address.</p>
+                    <p class="field-error">{{ t().register.emailInvalid }}</p>
                     }
                 </div>
 
                 <div class="field" style="flex: 1;">
-                    <label for="phoneNumber">Phone Number</label>
+                    <label for="phoneNumber">{{ t().register.phoneNumber }}</label>
                     <div class="input-shell" [class.invalid]="isInvalid('phoneNumber')">
-                        <input id="phoneNumber" type="tel" formControlName="phoneNumber" placeholder="01XXXXXXXXX"
+                        <input id="phoneNumber" type="tel" formControlName="phoneNumber" [placeholder]="t().register.phonePlaceholder"
                             autocomplete="tel">
                     </div>
                     @if (isInvalid('phoneNumber')) {
-                    <p class="field-error">Enter a valid Egyptian mobile number.</p>
+                    <p class="field-error">{{ t().register.phoneInvalid }}</p>
                     }
                 </div>
             </div>
@@ -75,12 +75,12 @@
             <!-- Row 3: Account Security -->
             <div class="field-group" style="display: flex; gap: 1rem;">
                 <div class="field" style="flex: 1;">
-                    <label for="password">Password</label>
+                    <label for="password">{{ t().register.password }}</label>
                     <div class="input-shell" [class.invalid]="isInvalid('password')">
                         <input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
-                            placeholder="Enter your password" autocomplete="new-password">
+                            [placeholder]="t().register.passwordPlaceholder" autocomplete="new-password">
                         <button type="button" class="icon-button" (click)="togglePasswordVisibility('password')"
-                            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+                            [attr.aria-label]="showPassword ? t().register.hidePassword : t().register.showPassword">
                             @if (showPassword) {
                             <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
@@ -98,19 +98,19 @@
                     </div>
                     @if (isInvalid('password')) {
                     <p class="field-error">
-                        Use 8+ characters with uppercase, lowercase, number, and symbol.
+                        {{ t().register.passwordComplexity }}
                     </p>
                     }
                 </div>
 
                 <div class="field" style="flex: 1;">
-                    <label for="confirmPassword">Confirm Password</label>
+                    <label for="confirmPassword">{{ t().register.confirmPassword }}</label>
                     <div class="input-shell" [class.invalid]="isInvalid('confirmPassword') || hasPasswordMismatch()">
                         <input id="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'"
-                            formControlName="confirmPassword" placeholder="Confirm your password"
+                            formControlName="confirmPassword" [placeholder]="t().register.confirmPasswordPlaceholder"
                             autocomplete="new-password">
                         <button type="button" class="icon-button" (click)="togglePasswordVisibility('confirmPassword')"
-                            [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'">
+                            [attr.aria-label]="showConfirmPassword ? t().register.hidePassword : t().register.showPassword">
                             @if (showConfirmPassword) {
                             <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
@@ -127,18 +127,18 @@
                         </button>
                     </div>
                     @if (hasPasswordMismatch()) {
-                    <p class="field-error">Passwords do not match.</p>
+                    <p class="field-error">{{ t().register.passwordsNoMatch }}</p>
                     }
                 </div>
             </div>
 
             <!-- Row 4: Optional Profile Details (Standalone) -->
             <div class="field profile-image-field">
-                <label for="profileImage">Profile Photo (optional)</label>
+                <label for="profileImage">{{ t().register.profilePhotoOptional }}</label>
                 <div class="profile-image-picker">
                     <div class="profile-image-preview">
                         @if (profileImagePreview) {
-                        <img [src]="profileImagePreview" alt="Profile preview">
+                        <img [src]="profileImagePreview" [alt]="t().register.profilePreview">
                         } @else {
                         <div class="image-placeholder" style="display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; background-color: #f3f4f6; border-radius: 50%; color: #9ca3af;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="32" height="32">
@@ -154,7 +154,7 @@
                             (change)="onProfileImageSelected($event)">
                         @if (profileImage) {
                         <button type="button" class="icon-button" (click)="removeProfileImage(profileImageInput)">
-                            Remove
+                            {{ t().register.remove }}
                         </button>
                         }
                     </div>
@@ -163,16 +163,16 @@
 
             <button class="submit-button" type="submit" [disabled]="isSubmitting || registerForm.invalid">
                 @if (isSubmitting) {
-                Creating account...
+                {{ t().register.creatingAccount }}
                 } @else {
-                Sign Up
+                {{ t().register.signUp }}
                 }
             </button>
         </form>
 
         <p class="register">
-            Already have an account?
-            <a routerLink="/login">Log In</a>
+            {{ t().register.alreadyHaveAccount }}
+            <a routerLink="/login">{{ t().register.logIn }}</a>
         </p>
 
     </div>

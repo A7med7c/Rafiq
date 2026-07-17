@@ -15,7 +15,7 @@
       <span class="toast__message">{{ toast.body }}</span>
     </span>
     <button type="button" class="toast-close" (click)="$event.stopPropagation(); notificationService.dismissToast(toast.id)"
-      aria-label="Dismiss toast">
+      [attr.aria-label]="l10n.t().notifications.dismissToast">
       <i class="fa-solid fa-xmark"></i>
     </button>
   </div>
@@ -34,11 +34,11 @@
       @if (notificationService.confirmingAppointment()) {
       <i class="fa-solid fa-circle-notch fa-spin"></i>
       } @else {
-      Confirm Attendance
+      {{ l10n.t().notifications.confirmAttendance }}
       }
     </button>
     <button type="button" class="toast-close" (click)="notificationService.dismissToast(toast.id)"
-      aria-label="Dismiss toast">
+      [attr.aria-label]="l10n.t().notifications.dismissToast">
       <i class="fa-solid fa-xmark"></i>
     </button>
   </div>
@@ -53,7 +53,7 @@
       <span class="toast__message">{{ toast.body }}</span>
     </span>
     <button type="button" class="toast-close" (click)="notificationService.dismissToast(toast.id)"
-      aria-label="Dismiss toast">
+      [attr.aria-label]="l10n.t().notifications.dismissToast">
       <i class="fa-solid fa-xmark"></i>
     </button>
   </div>
@@ -72,13 +72,13 @@
         </div>
         <div class="notification-center__heading">
           <h2 class="notification-center__title" id="notification-center-title">
-            Notifications
+            {{ l10n.t().notifications.centerTitle }}
           </h2>
           <p class="notification-center__eyebrow">
             @if (notificationService.unreadCount() > 0) {
-            {{ notificationService.unreadCount() }} unread
+            {{ notificationService.unreadCount() }} {{ l10n.t().notifications.unreadCount }}
             } @else {
-            All caught up
+            {{ l10n.t().notifications.allCaughtUp }}
             }
           </p>
         </div>
@@ -87,45 +87,45 @@
       <div class="notification-center__actions">
         @if (notificationService.unreadCount() > 0) {
         <button type="button" class="notification-center__mark-read" (click)="notificationService.markAllRead()">
-          Mark all read
+          {{ l10n.t().notifications.markAllRead }}
         </button>
         }
         <button type="button" class="notification-center__close" (click)="notificationService.closeNotificationCenter()"
-          aria-label="Close notification center">
+          [attr.aria-label]="l10n.t().notifications.closeCenter">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
     </header>
 
-    <div class="notification-center__filters" role="tablist" aria-label="Notification filters">
+    <div class="notification-center__filters" role="tablist" [attr.aria-label]="l10n.t().notifications.filterAll">
       <button type="button" class="notification-filter"
         [class.notification-filter--active]="notificationService.centerFilter() === 'all'"
         (click)="notificationService.setCenterFilter('all')">
-        All
+        {{ l10n.t().notifications.filterAll }}
         <span class="notification-filter__count">{{ notificationService.notifications().length }}</span>
       </button>
       <button type="button" class="notification-filter"
         [class.notification-filter--active]="notificationService.centerFilter() === 'unread'"
         (click)="notificationService.setCenterFilter('unread')">
-        Unread
+        {{ l10n.t().notifications.filterUnread }}
         <span class="notification-filter__count">{{ notificationService.unreadNotifications().length }}</span>
       </button>
       <button type="button" class="notification-filter"
         [class.notification-filter--active]="notificationService.centerFilter() === 'read'"
         (click)="notificationService.setCenterFilter('read')">
-        Read
+        {{ l10n.t().notifications.filterRead }}
         <span class="notification-filter__count">{{ notificationService.readNotifications().length }}</span>
       </button>
       <button type="button" class="notification-filter"
         [class.notification-filter--active]="notificationService.centerFilter() === 'reminders'"
         (click)="notificationService.setCenterFilter('reminders')">
-        Reminders
+        {{ l10n.t().notifications.filterReminders }}
         <span class="notification-filter__count">{{ notificationService.reminderNotifications().length }}</span>
       </button>
       <button type="button" class="notification-filter"
         [class.notification-filter--active]="notificationService.centerFilter() === 'confirmations'"
         (click)="notificationService.setCenterFilter('confirmations')">
-        Confirmations
+        {{ l10n.t().notifications.filterConfirmations }}
         <span class="notification-filter__count">{{ notificationService.confirmationNotifications().length }}</span>
       </button>
     </div>
@@ -136,8 +136,8 @@
         <div class="notification-empty__icon" aria-hidden="true">
           <i class="fa-regular fa-bell"></i>
         </div>
-        <p class="notification-empty__title">No notifications in this view</p>
-        <p class="notification-empty__body">New reminders, confirmations, and system alerts will appear here.</p>
+        <p class="notification-empty__title">{{ l10n.t().notifications.emptyTitle }}</p>
+        <p class="notification-empty__body">{{ l10n.t().notifications.emptyBody }}</p>
       </div>
       } @else {
       <div class="notification-list">
@@ -165,7 +165,7 @@
             <div class="notification-item__meta">
               <span class="notification-pill">{{ notification.type }}</span>
               @if (!notification.read) {
-              <span class="notification-pill notification-pill--unread">Unread</span>
+              <span class="notification-pill notification-pill--unread">{{ l10n.t().notifications.unreadPill }}</span>
               }
             </div>
           </div>
@@ -187,13 +187,13 @@
         <i class="fa-solid fa-bell"></i>
       </div>
       <div class="reminder-modal__heading">
-        <p class="reminder-modal__eyebrow">Medication Reminder</p>
+        <p class="reminder-modal__eyebrow">{{ l10n.t().notifications.medicationReminder }}</p>
         <h2 class="reminder-modal__title" id="reminder-modal-title">
           {{ notificationService.activeReminder()!.medicineName }}
         </h2>
       </div>
       <button type="button" class="reminder-modal__close" (click)="notificationService.dismissReminder()"
-        aria-label="Dismiss reminder">
+        [attr.aria-label]="l10n.t().notifications.dismissReminder">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </header>
@@ -201,15 +201,15 @@
     <div class="reminder-modal__body">
       <dl class="reminder-details">
         <div class="reminder-details__row">
-          <dt>Medicine</dt>
+          <dt>{{ l10n.t().notifications.medicine }}</dt>
           <dd>{{ notificationService.activeReminder()!.medicineName }}</dd>
         </div>
         <div class="reminder-details__row">
-          <dt>Strength</dt>
-          <dd>{{ notificationService.activeReminder()!.strength || 'Not specified' }}</dd>
+          <dt>{{ l10n.t().notifications.strength }}</dt>
+          <dd>{{ notificationService.activeReminder()!.strength || l10n.t().notifications.notSpecified }}</dd>
         </div>
         <div class="reminder-details__row">
-          <dt>Reminder Time</dt>
+          <dt>{{ l10n.t().notifications.reminderTime }}</dt>
           <dd>{{ notificationService.activeReminder()!.reminderTime }}</dd>
         </div>
       </dl>
@@ -225,18 +225,18 @@
       <button type="button" class="reminder-btn reminder-btn--primary"
         (click)="notificationService.takeCurrentReminder()" [disabled]="notificationService.confirmingReminder()">
         @if (notificationService.confirmingReminder()) {
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Confirming...
+        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ l10n.t().notifications.confirming }}
         } @else {
-        I Took It
+        {{ l10n.t().notifications.iTookIt }}
         }
       </button>
       <button type="button" class="reminder-btn reminder-btn--secondary"
         (click)="notificationService.remindMeLater()" [disabled]="notificationService.confirmingReminder()">
-        Remind Me Later
+        {{ l10n.t().notifications.remindMeLater }}
       </button>
       <button type="button" class="reminder-btn reminder-btn--ghost"
         (click)="notificationService.dismissReminder()" [disabled]="notificationService.confirmingReminder()">
-        Dismiss
+        {{ l10n.t().notifications.dismiss }}
       </button>
     </footer>
   </section>

@@ -12,15 +12,16 @@
           <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
         <div class="sb-logo-text">
-          <span class="sb-logo-title">Rafiq AI</span>
-          <span class="sb-logo-sub">Family Health Assistant</span>
+          <span class="sb-logo-title">{{ t().sidebar.brandName }}</span>
+          <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
         </div>
       </div>
       <button type="button" class="sb-toggle"
-        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'" (click)="toggleSidebar()">
+        [attr.aria-label]="sidebarCollapsed() ? t().sidebar.expandSidebar : t().sidebar.collapseSidebar"
+        (click)="toggleSidebar()">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
-      <button type="button" class="sb-mobile-close" aria-label="Close sidebar" (click)="toggleMobileSidebar()">
+      <button type="button" class="sb-mobile-close" [attr.aria-label]="t().sidebar.closeSidebar" (click)="toggleMobileSidebar()">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -28,30 +29,30 @@
     <nav class="sb-nav">
       <a class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact:true}">
         <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
-        <span>Dashboard</span>
+        <span>{{ t().sidebar.dashboard }}</span>
       </a>
       <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
-        <span>Medical Records</span>
+        <span>{{ t().sidebar.medicalRecords }}</span>
       </a>
       <a class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
-        <span>Appointments</span>
+        <span>{{ t().sidebar.appointments }}</span>
       </a>
 
       <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
-        <span>AI Assistant</span>
+        <span>{{ t().sidebar.aiAssistant }}</span>
       </a>
 
       <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
-        <span>Medications &amp; Reminders</span>
+        <span>{{ t().sidebar.medications }}</span>
       </a>
 
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
-        <span>Analytics</span>
+        <span>{{ t().sidebar.analytics }}</span>
       </a>
       <!-- <a class="sb-link sb-sos" href="#">
         <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
@@ -59,23 +60,23 @@
       </a> -->
       <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
-        <span>Family Profiles</span>
+        <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
-        <span>Settings</span>
+        <span>{{ t().sidebar.settings }}</span>
       </a>
     </nav>
 
     <div class="sb-help">
       <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
       <div class="sb-help-copy">
-        <p class="sb-help-title">Ask Rafiq AI</p>
-        <p class="sb-help-sub">Get health insights and answers to your questions</p>
+        <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
+        <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
       </div>
       <button type="button" class="sb-help-btn" routerLink="/ai-assistant">
         <i class="fa-regular fa-comment-dots"></i>
-        Ask Now
+        {{ t().sidebar.askNow }}
       </button>
     </div>
   </aside>
@@ -85,17 +86,17 @@
 
     <!-- HEADER -->
     <header class="dsh-hdr">
-      <button type="button" class="sb-mobile-toggle" aria-label="Open sidebar" (click)="toggleMobileSidebar()">
+      <button type="button" class="sb-mobile-toggle" [attr.aria-label]="t().header.openSidebar" (click)="toggleMobileSidebar()">
         <i class="fa-solid fa-bars"></i>
       </button>
       <div class="hdr-search">
         <i class="fa-solid fa-magnifying-glass hdr-search-ico"></i>
-        <input type="text" class="hdr-search-inp" placeholder="Search records, symptoms, medications..." readonly>
+        <input type="text" class="hdr-search-inp" [attr.placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
         <button type="button" class="hdr-ask-btn" routerLink="/ai-assistant">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
-          Ask AI
+          {{ t().header.askAI }}
         </button>
         <button type="button" class="hdr-bell" (click)="notificationSvc.toggleNotificationCenter()"
           [class.hdr-bell--active]="notificationSvc.notificationCenterOpen()">
@@ -123,16 +124,16 @@
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item">
               <i class="fa-regular fa-user"></i>
-              My Profile
+              {{ t().header.myProfile }}
             </button>
             <button type="button" class="user-dropdown-item">
               <i class="fa-solid fa-gear"></i>
-              Settings
+              {{ t().header.settings }}
             </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
               <i class="fa-solid fa-arrow-right-from-bracket"></i>
-              Logout
+              {{ t().header.logout }}
             </button>
           </div>
           }
@@ -146,8 +147,8 @@
       <!-- TOP TITLE BAR -->
       <section class="records-title-bar">
         <div class="title-left">
-          <h1 class="records-h1">Medical Records</h1>
-          <p class="records-sub">Manage, upload and view all your family health reports and prescriptions.</p>
+          <h1 class="records-h1">{{ t().medicalRecordsPage.title }}</h1>
+          <p class="records-sub">{{ t().medicalRecordsPage.subtitle }}</p>
         </div>
       </section>
 
@@ -156,10 +157,10 @@
       <div class="records-context-banner">
         <span class="records-context-text">
           <i class="fa-solid fa-user-group"></i>
-          Viewing <strong>{{ contextProfileName() }}</strong>'s records
+          {{ t().medicalRecordsPage.viewing }} <strong>{{ contextProfileName() }}</strong>{{ t().medicalRecordsPage.records }}
         </span>
         <a class="records-context-back" routerLink="/family-profiles">
-          <i class="fa-solid fa-arrow-left"></i> Back to Family Profiles
+          <i class="fa-solid fa-arrow-left"></i> {{ t().medicalRecordsPage.backToFamilyProfiles }}
         </a>
       </div>
       }

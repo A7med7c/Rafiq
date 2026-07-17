@@ -1,22 +1,19 @@
-<main class="landing-page" [class.rtl]="language === 'ar'" [attr.dir]="language === 'ar' ? 'rtl' : 'ltr'">
-  <app-navbar
-    [language]="language"
-    (languageChange)="setLanguage($event)">
-  </app-navbar>
+<main class="landing-page" [class.rtl]="l10n.isRtl()" [attr.dir]="l10n.dir()">
+  <app-navbar></app-navbar>
 
-  <app-hero [language]="language"></app-hero>
+  <app-hero [language]="l10n.lang()"></app-hero>
 
-  <app-features [language]="language"></app-features>
+  <app-features [language]="l10n.lang()"></app-features>
 
-  <app-about [language]="language"></app-about>
+  <app-about [language]="l10n.lang()"></app-about>
 
-  <app-how-it-works [language]="language"></app-how-it-works>
+  <app-how-it-works [language]="l10n.lang()"></app-how-it-works>
 
-  <app-stats [language]="language"></app-stats>
+  <app-stats [language]="l10n.lang()"></app-stats>
 
-  <app-testimonials [language]="language"></app-testimonials>
+  <app-testimonials [language]="l10n.lang()"></app-testimonials>
 
-  <app-contact [language]="language"></app-contact>
+  <app-contact [language]="l10n.lang()"></app-contact>
 
-  <app-footer [language]="language"></app-footer>
+  <app-footer [language]="l10n.lang()"></app-footer>
 </main>

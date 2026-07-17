@@ -6,6 +6,7 @@ import { AuthService } from '../../Services/auth-service';
 import { NotificationService } from '../../Services/notification.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { AiChatService } from '../../Services/ai-chat.service';
+import { LocalizationService } from '../../Services/localization.service';
 import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-chat.models';
 import { catchError, of } from 'rxjs';
 
@@ -36,6 +37,8 @@ export class AiAssistant implements OnInit {
   private readonly healthProfileService = inject(HealthProfileService);
   private readonly aiChatService = inject(AiChatService);
   private readonly router = inject(Router);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   @ViewChild('messagesEnd') private messagesEnd?: ElementRef<HTMLDivElement>;
   @ViewChild('messageInput') private messageInputRef?: ElementRef<HTMLTextAreaElement>;
@@ -237,12 +240,12 @@ export class AiAssistant implements OnInit {
 
     const format = ACCEPTED_IMAGE_TYPES[file.type];
     if (!format) {
-      this.attachError.set('صيغة الصورة غير مدعومة. المسموح: JPG, JPEG, PNG, WebP فقط.');
+      this.attachError.set(this.t().aiAssistant.unsupportedFormat);
       return;
     }
 
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
-      this.attachError.set('حجم الصورة كبير جداً. الحد الأقصى 8 ميجابايت.');
+      this.attachError.set(this.t().aiAssistant.imageTooLarge);
       return;
     }
 
@@ -255,7 +258,7 @@ export class AiAssistant implements OnInit {
       this.attachedImagePreviewUrl.set(result);
     };
     reader.onerror = () => {
-      this.attachError.set('تعذر قراءة الصورة. حاول مرة أخرى.');
+      this.attachError.set(this.t().aiAssistant.couldNotReadImage);
     };
     reader.readAsDataURL(file);
   }
@@ -287,7 +290,7 @@ export class AiAssistant implements OnInit {
 
     const profileId = this.profileId();
     if (!profileId) {
-      this.sendError.set('No health profile found. Please set up your profile first.');
+      this.sendError.set(this.t().aiAssistant.noProfileError);
       return;
     }
 
@@ -307,7 +310,7 @@ export class AiAssistant implements OnInit {
     }
 
     // No conversation yet — create one titled from the first message, then send into it.
-    const titleSource = text || 'صورة مرفقة';
+    const titleSource = text || 'Attached image';
     const title = titleSource.length > 40 ? `${titleSource.slice(0, 40)}…` : titleSource;
     this.aiChatService.createConversation({ userHealthProfileId: profileId, title }).subscribe({
       next: res => {
@@ -428,22 +431,22 @@ export class AiAssistant implements OnInit {
     const isYesterday = date.toDateString() === yesterday.toDateString();
 
     if (isToday) {
-      return date.toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true });
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     }
     if (isYesterday) {
-      return 'أمس';
+      return this.t().aiAssistant.yesterday;
     }
 
     const daysDiff = Math.floor((now.getTime() - date.getTime()) / 86_400_000);
     if (daysDiff < 7) {
-      return date.toLocaleDateString('ar-EG', { weekday: 'long' });
+      return date.toLocaleDateString('en-US', { weekday: 'long' });
     }
 
     return date.toLocaleDateString('en-GB');
   }
 
   formatMessageTime(message: ConversationMessageDto): string {
-    return new Date(message.createdAt).toLocaleTimeString('ar-EG', {
+    return new Date(message.createdAt).toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -454,7 +457,7 @@ export class AiAssistant implements OnInit {
     const conv = this.selectedConversation();
     if (!conv) return '';
     const dateStr = conv.lastMessageAt ?? conv.createdAt;
-    return this.formatSidebarTime(conv) + (new Date(dateStr).toDateString() === new Date().toDateString() ? '، اليوم' : '');
+    return this.formatSidebarTime(conv) + (new Date(dateStr).toDateString() === new Date().toDateString() ? ', ' + this.t().aiAssistant.today : '');
   }
 
   isUserMessage(message: ConversationMessageDto): boolean {
