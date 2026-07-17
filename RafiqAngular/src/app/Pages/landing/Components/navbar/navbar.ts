@@ -70,6 +70,7 @@ export class Navbar implements AfterViewInit, OnDestroy {
       contact: 'تواصل معنا',
       login: 'تسجيل الدخول',
       cta: 'ابدأ دلوقتي',
+      dashboard: 'الداشبورد',
       account: 'الحساب',
       signOut: 'تسجيل خروج',
       signingOut: 'جاري الخروج...',

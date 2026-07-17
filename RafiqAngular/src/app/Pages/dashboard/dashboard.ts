@@ -27,8 +27,6 @@ export class Dashboard implements OnInit {
   protected readonly notifService     = inject(NotificationService);
   protected readonly l10n           = inject(LocalizationService);
   protected readonly t              = this.l10n.t;
-  private readonly router           = inject(Router);
-  private readonly elRef            = inject(ElementRef);
   private readonly router             = inject(Router);
   private readonly elRef              = inject(ElementRef);
   private readonly medicalReportSvc   = inject(MedicalReportService);
