@@ -325,12 +325,13 @@ export class AiPanel implements OnInit, OnDestroy {
       .sendMessage(conversationId, { text, base64Image, imageFormat })
       .subscribe({
         next: res => {
+          const id = res.data?.id ?? crypto.randomUUID();
           const content = res.data?.content ?? '';
           const nextSeq = (this.messages().at(-1)?.sequenceNumber ?? 0) + 1;
           this.messages.update(list => [
             ...list,
             {
-              id: `assistant-${nextSeq}`,
+              id,
               role: 'Assistant',
               content,
               sequenceNumber: nextSeq,

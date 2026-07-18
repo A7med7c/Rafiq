@@ -23,6 +23,7 @@ export interface ConversationHistoryDto {
 }
 
 export interface AiMessageResponseDto {
+  id: string;
   content: string;
 }
 

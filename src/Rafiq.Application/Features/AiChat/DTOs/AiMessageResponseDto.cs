@@ -1,3 +1,3 @@
 namespace Rafiq.Application.Features.AiChat.DTOs;
 
-public sealed record AiMessageResponseDto(string Content);
+public sealed record AiMessageResponseDto(Guid Id, string Content);
