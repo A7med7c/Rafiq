@@ -19,6 +19,7 @@ import { OnboardingEmergency } from './Pages/onboarding/onboarding-emergency/onb
 import { authGuard } from './Guards/auth.guard';
 import { guestGuard } from './Guards/guest.guard';
 import { FamilyProfiles } from './Pages/family-profiles/family-profiles';
+import { MyProfile } from './Pages/my-profile/my-profile';
 
 export const routes: Routes = [
   { path: '', component: Landing },
@@ -33,6 +34,7 @@ export const routes: Routes = [
   { path: 'forgot-password', component: ForgotPassword, canActivate: [guestGuard] },
   { path: 'verify-account', component: VerifyAccount, canActivate: [guestGuard] },
   { path: 'family-profiles', component: FamilyProfiles, canActivate: [authGuard] },
+  { path: 'my-profile', component: MyProfile, canActivate: [authGuard] },
   { path: 'onboarding/welcome', component: OnboardingWelcome, canActivate: [authGuard] },
   { path: 'onboarding/step1', component: OnboardingStep1, canActivate: [authGuard] },
   { path: 'onboarding/step2', component: OnboardingStep2, canActivate: [authGuard] },

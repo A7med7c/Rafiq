@@ -1,0 +1,640 @@
+<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
+
+  @if (mobileSidebarOpen()) {
+  <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
+  }
+
+  <!-- ════════════ SIDEBAR ════════════ -->
+  <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
+    <div class="sb-top">
+      <div class="sb-logo">
+        <div class="sb-logo-icon">
+          <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
+        </div>
+        <div class="sb-logo-text">
+          <span class="sb-logo-title">Rafiq AI</span>
+          <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
+        </div>
+      </div>
+      <button type="button" class="sb-toggle"
+        [attr.aria-label]="sidebarCollapsed() ? t().sidebar.expandSidebar : t().sidebar.collapseSidebar"
+        (click)="toggleSidebar()">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <button type="button" class="sb-mobile-close" [attr.aria-label]="t().sidebar.closeSidebar"
+        (click)="toggleMobileSidebar()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <nav class="sb-nav">
+      <a class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact:true}">
+        <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
+        <span>{{ t().sidebar.dashboard }}</span>
+      </a>
+      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
+        <span>{{ t().sidebar.medicalRecords }}</span>
+      </a>
+      <a class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
+        <span>{{ t().sidebar.appointments }}</span>
+      </a>
+      <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
+        <span>{{ t().sidebar.aiAssistant }}</span>
+      </a>
+      <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
+        <span>{{ t().sidebar.medications }}</span>
+      </a>
+      <a class="sb-link" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
+        <span>{{ t().sidebar.analytics }}</span>
+      </a>
+      <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
+        <span>{{ t().sidebar.familyProfiles }}</span>
+      </a>
+      <a class="sb-link" href="#">
+        <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
+        <span>{{ t().sidebar.settings }}</span>
+      </a>
+    </nav>
+
+    <div class="sb-help">
+      <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
+      <div class="sb-help-copy">
+        <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
+        <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
+      </div>
+      <button type="button" class="sb-help-btn" routerLink="/ai-assistant">
+        <i class="fa-regular fa-comment-dots"></i>
+        {{ t().sidebar.askNow }}
+      </button>
+    </div>
+  </aside>
+
+  <!-- ════════════ MAIN ════════════ -->
+  <div class="dsh-main">
+
+    <!-- HEADER -->
+    <header class="dsh-hdr">
+      <button type="button" class="sb-mobile-toggle" [attr.aria-label]="t().header.openSidebar"
+        (click)="toggleMobileSidebar()">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="hdr-search">
+        <i class="fa-solid fa-magnifying-glass hdr-search-ico"></i>
+        <input type="text" class="hdr-search-inp" [placeholder]="t().header.searchPlaceholder" readonly>
+      </div>
+      <div class="hdr-right">
+        <button type="button" class="hdr-ask-btn" routerLink="/ai-assistant">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> {{ t().header.askAI }}
+        </button>
+        <button type="button" class="hdr-bell">
+          <i class="fa-regular fa-bell"></i>
+          @if (unreadNotifCount() > 0) {
+          <span class="hdr-badge">{{ unreadNotifCount() }}</span>
+          }
+        </button>
+        <div class="hdr-user" (click)="toggleDropdown()">
+          <img [src]="avatarUrl" alt="user" class="hdr-avatar">
+          <span class="hdr-username">{{ displayName }}</span>
+          <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
+          @if (dropdownOpen()) {
+          <div class="user-dropdown" (click)="$event.stopPropagation()">
+            <div class="user-dropdown-hdr">
+              <div class="user-dropdown-av"><img [src]="avatarUrl" alt="avatar"></div>
+              <div class="user-dropdown-info">
+                <span class="user-dropdown-name">{{ displayName }}</span>
+                <span class="user-dropdown-email">{{ userEmail }}</span>
+              </div>
+            </div>
+            <div class="user-dropdown-divider"></div>
+            <button type="button" class="user-dropdown-item user-dropdown-item--active" (click)="goToMyProfile()">
+              <i class="fa-regular fa-user"></i> {{ t().header.myProfile }}
+            </button>
+            <button type="button" class="user-dropdown-item">
+              <i class="fa-solid fa-gear"></i> {{ t().header.settings }}
+            </button>
+            <div class="user-dropdown-divider"></div>
+            <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> {{ t().header.logout }}
+            </button>
+          </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <!-- BODY -->
+    <div class="dsh-body">
+
+      <!-- Page Title -->
+      <div class="mp-title-bar">
+        <div class="mp-title-left">
+          <div class="mp-title-ico">
+            <i class="fa-regular fa-user"></i>
+          </div>
+          <div>
+            <h1 class="mp-h1">My Profile</h1>
+            <p class="mp-h1-sub">View and manage your personal health information</p>
+          </div>
+        </div>
+      </div>
+
+      @if (profileLoading()) {
+      <div class="mp-loading">
+        <div class="mp-spinner"></div>
+        <p>Loading your profile...</p>
+      </div>
+      } @else {
+
+      <div class="mp-grid">
+
+        <!-- ══ Hero Card ══════════════════════════════════════════════════════ -->
+        <div class="mp-hero-card">
+          <div class="mp-hero-avatar">
+            <img [src]="avatarUrl" alt="avatar" class="mp-hero-img">
+            <div class="mp-hero-badge">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+          </div>
+          <div class="mp-hero-info">
+            <h2 class="mp-hero-name">{{ displayName }}</h2>
+            <p class="mp-hero-email">
+              <i class="fa-regular fa-envelope"></i> {{ userEmail }}
+            </p>
+            @if (profile()?.dateOfBirth) {
+            <p class="mp-hero-meta">
+              <span><i class="fa-regular fa-calendar"></i> {{ formatDob(profile()!.dateOfBirth) }}</span>
+              <span class="mp-hero-sep">•</span>
+              <span>{{ getAge(profile()!.dateOfBirth) }} years old</span>
+            </p>
+            }
+          </div>
+          <div class="mp-hero-stats">
+            <div class="mp-stat">
+              <span class="mp-stat-val">{{ profile()?.allergies?.length ?? 0 }}</span>
+              <span class="mp-stat-lbl">Allergies</span>
+            </div>
+            <div class="mp-stat">
+              <span class="mp-stat-val">{{ profile()?.chronicDiseases?.length ?? 0 }}</span>
+              <span class="mp-stat-lbl">Conditions</span>
+            </div>
+            <div class="mp-stat">
+              <span class="mp-stat-val">{{ contacts().length }}</span>
+              <span class="mp-stat-lbl">Contacts</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ Personal Information ═══════════════════════════════════════════ -->
+        <div class="mp-card">
+          <div class="mp-card-head">
+            <div class="mp-card-ico mp-ico-blue">
+              <i class="fa-regular fa-user"></i>
+            </div>
+            <div>
+              <h3 class="mp-card-title">Personal Information</h3>
+              <p class="mp-card-sub">Your basic personal details</p>
+            </div>
+            @if (!editingPersonal() && !verifyingEmail()) {
+            <button type="button" class="mp-edit-btn" (click)="openEditPersonal()">
+              <i class="fa-solid fa-pen"></i> Edit
+            </button>
+            }
+          </div>
+
+          @if (verifyingEmail()) {
+          <!-- Email OTP verification step -->
+          <div class="mp-verify-email">
+            <div class="mp-verify-email-icon"><i class="fa-regular fa-envelope"></i></div>
+            <h4 class="mp-verify-email-title">Verify your new email</h4>
+            <p class="mp-verify-email-sub">
+              A verification code was sent to <strong>{{ pendingEmail() }}</strong>. Enter it below to complete the change.
+            </p>
+            <div class="mp-form-field mp-verify-email-input">
+              <label>Verification Code</label>
+              <input type="text" [(ngModel)]="emailOtpCode" placeholder="Enter 6-digit code" maxlength="6" autocomplete="one-time-code">
+            </div>
+            <div class="mp-form-actions">
+              <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEmailVerification()" [disabled]="emailOtpSaving()">Cancel</button>
+              <button type="button" class="mp-btn mp-btn-ghost" (click)="resendEmailOtp()" [disabled]="emailOtpResending() || emailOtpSaving()">
+                @if (emailOtpResending()) { <span class="mp-btn-spinner"></span> Sending... } @else { Resend Code }
+              </button>
+              <button type="button" class="mp-btn mp-btn-primary" (click)="verifyEmailOtp()" [disabled]="emailOtpSaving() || !emailOtpCode.trim()">
+                @if (emailOtpSaving()) { <span class="mp-btn-spinner"></span> Verifying... } @else { Verify }
+              </button>
+            </div>
+          </div>
+          } @else if (!editingPersonal()) {
+          <div class="mp-fields">
+            <div class="mp-field">
+              <span class="mp-field-lbl">First Name</span>
+              <span class="mp-field-val">{{ authService.currentUser?.firstName || '—' }}</span>
+            </div>
+            <div class="mp-field">
+              <span class="mp-field-lbl">Last Name</span>
+              <span class="mp-field-val">{{ authService.currentUser?.lastName || '—' }}</span>
+            </div>
+            <div class="mp-field">
+              <span class="mp-field-lbl">Date of Birth</span>
+              <span class="mp-field-val">{{ formatDob(profile()?.dateOfBirth) }}</span>
+            </div>
+            <div class="mp-field">
+              <span class="mp-field-lbl">Gender</span>
+              <span class="mp-field-val">{{ genderLabel() }}</span>
+            </div>
+            <div class="mp-field">
+              <span class="mp-field-lbl">Email</span>
+              <span class="mp-field-val">
+                {{ userEmail }}
+                @if (authService.currentUser?.emailConfirmed === false) {
+                <span class="mp-badge mp-badge--warn"><i class="fa-solid fa-triangle-exclamation"></i> Unverified</span>
+                }
+              </span>
+            </div>
+            <div class="mp-field">
+              <span class="mp-field-lbl">Phone</span>
+              <span class="mp-field-val">{{ authService.currentUser?.phoneNumber || '—' }}</span>
+            </div>
+          </div>
+          } @else {
+          <!-- Edit form -->
+          <form class="mp-form" (ngSubmit)="savePersonal()">
+            <div class="mp-form-row">
+              <div class="mp-form-field">
+                <label>First Name</label>
+                <input type="text" [(ngModel)]="personalForm.firstName" name="firstName" placeholder="First name">
+              </div>
+              <div class="mp-form-field">
+                <label>Last Name</label>
+                <input type="text" [(ngModel)]="personalForm.lastName" name="lastName" placeholder="Last name">
+              </div>
+            </div>
+            <div class="mp-form-row">
+              <div class="mp-form-field">
+                <label>Date of Birth</label>
+                <input type="date" [(ngModel)]="personalForm.dateOfBirth" name="dateOfBirth">
+              </div>
+              <div class="mp-form-field">
+                <label>Gender</label>
+                <select [(ngModel)]="personalForm.gender" name="gender">
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+            </div>
+            <div class="mp-form-row">
+              <div class="mp-form-field">
+                <label>Phone Number</label>
+                <input type="tel" [(ngModel)]="personalForm.phoneNumber" name="phoneNumber" placeholder="01012345678" pattern="^01[0125][0-9]{8}$">
+                <span class="mp-field-hint">Egyptian mobile number (e.g. 01012345678)</span>
+              </div>
+              <div class="mp-form-field">
+                <label>Email Address</label>
+                <input type="email" [(ngModel)]="personalForm.email" name="email" placeholder="email@example.com">
+                <span class="mp-field-hint">Changing your email will require re-verification</span>
+              </div>
+            </div>
+            <div class="mp-form-actions">
+              <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEditPersonal()" [disabled]="personalSaving()">Cancel</button>
+              <button type="submit" class="mp-btn mp-btn-primary" [disabled]="personalSaving()">
+                @if (personalSaving()) { <span class="mp-btn-spinner"></span> Saving... } @else { Save Changes }
+              </button>
+            </div>
+          </form>
+          }
+        </div>
+
+        <!-- ══ Health Information ══════════════════════════════════════════════ -->
+        <div class="mp-card">
+          <div class="mp-card-head">
+            <div class="mp-card-ico mp-ico-green">
+              <i class="fa-solid fa-heartbeat"></i>
+            </div>
+            <div>
+              <h3 class="mp-card-title">Health Information</h3>
+              <p class="mp-card-sub">Your medical measurements</p>
+            </div>
+            @if (!editingHealth()) {
+            <button type="button" class="mp-edit-btn" (click)="openEditHealth()">
+              <i class="fa-solid fa-pen"></i> Edit
+            </button>
+            }
+          </div>
+
+          @if (!editingHealth()) {
+          <div class="mp-fields mp-fields--3">
+            <div class="mp-stat-card mp-stat-card--blue">
+              <i class="fa-solid fa-tint"></i>
+              <span class="mp-sc-val">{{ bloodTypeLabel() }}</span>
+              <span class="mp-sc-lbl">Blood Type</span>
+            </div>
+            <div class="mp-stat-card mp-stat-card--purple">
+              <i class="fa-solid fa-ruler-vertical"></i>
+              <span class="mp-sc-val">{{ profile()?.height ? profile()!.height + ' cm' : '—' }}</span>
+              <span class="mp-sc-lbl">Height</span>
+            </div>
+            <div class="mp-stat-card mp-stat-card--orange">
+              <i class="fa-solid fa-weight-scale"></i>
+              <span class="mp-sc-val">{{ profile()?.weight ? profile()!.weight + ' kg' : '—' }}</span>
+              <span class="mp-sc-lbl">Weight</span>
+            </div>
+          </div>
+          } @else {
+          <form class="mp-form" (ngSubmit)="saveHealth()">
+            <div class="mp-form-row mp-form-row--3">
+              <div class="mp-form-field">
+                <label>Blood Type</label>
+                <select [(ngModel)]="healthForm.bloodType" name="bloodType">
+                  <option value="">Select blood type</option>
+                  <option value="APositive">A+</option>
+                  <option value="ANegative">A-</option>
+                  <option value="BPositive">B+</option>
+                  <option value="BNegative">B-</option>
+                  <option value="ABPositive">AB+</option>
+                  <option value="ABNegative">AB-</option>
+                  <option value="OPositive">O+</option>
+                  <option value="ONegative">O-</option>
+                </select>
+              </div>
+              <div class="mp-form-field">
+                <label>Height (cm)</label>
+                <input type="number" [(ngModel)]="healthForm.height" name="height" min="1" max="300" placeholder="cm">
+              </div>
+              <div class="mp-form-field">
+                <label>Weight (kg)</label>
+                <input type="number" [(ngModel)]="healthForm.weight" name="weight" min="1" max="500" placeholder="kg">
+              </div>
+            </div>
+            <div class="mp-form-actions">
+              <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEditHealth()" [disabled]="healthSaving()">Cancel</button>
+              <button type="submit" class="mp-btn mp-btn-primary" [disabled]="healthSaving()">
+                @if (healthSaving()) { <span class="mp-btn-spinner"></span> Saving... } @else { Save Changes }
+              </button>
+            </div>
+          </form>
+          }
+        </div>
+
+        <!-- ══ Allergies ══════════════════════════════════════════════════════ -->
+        <div class="mp-card">
+          <div class="mp-card-head">
+            <div class="mp-card-ico mp-ico-red">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <h3 class="mp-card-title">Allergies</h3>
+              <p class="mp-card-sub">{{ profile()?.allergies?.length ?? 0 }} allerg{{ (profile()?.allergies?.length ?? 0) === 1 ? 'y' : 'ies' }} recorded</p>
+            </div>
+            <button type="button" class="mp-add-btn" (click)="openAddAllergy()">
+              <i class="fa-solid fa-plus"></i> Add
+            </button>
+          </div>
+
+          @if ((profile()?.allergies?.length ?? 0) === 0 && !addingAllergy()) {
+          <div class="mp-empty">
+            <i class="fa-solid fa-triangle-exclamation mp-empty-ico"></i>
+            <p>No allergies recorded</p>
+          </div>
+          } @else {
+          <div class="mp-tags-list">
+            @for (a of profile()?.allergies ?? []; track a.id) {
+            <div class="mp-tag-row">
+              <span class="mp-tag" [class]="severityClass(a.severity)">
+                {{ a.name }}
+                <span class="mp-tag-badge">{{ severityLabel(a.severity) }}</span>
+              </span>
+              <button type="button" class="mp-tag-del" (click)="deleteAllergy(a.id)" title="Remove">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            }
+          </div>
+          }
+
+          @if (addingAllergy()) {
+          <div class="mp-inline-form">
+            <div class="mp-form-row">
+              <div class="mp-form-field">
+                <label>Allergy Name</label>
+                <input type="text" [(ngModel)]="newAllergy.name" placeholder="e.g. Penicillin" autofocus>
+              </div>
+              <div class="mp-form-field">
+                <label>Severity</label>
+                <select [(ngModel)]="newAllergy.severity">
+                  <option value="Mild">Mild</option>
+                  <option value="Moderate">Moderate</option>
+                  <option value="Severe">Severe</option>
+                </select>
+              </div>
+            </div>
+            <div class="mp-form-actions">
+              <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelAddAllergy()" [disabled]="allergySaving()">Cancel</button>
+              <button type="button" class="mp-btn mp-btn-primary" (click)="saveAllergy()" [disabled]="allergySaving() || !newAllergy.name.trim()">
+                @if (allergySaving()) { <span class="mp-btn-spinner"></span> Adding... } @else { Add Allergy }
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- ══ Chronic Diseases ═══════════════════════════════════════════════ -->
+        <div class="mp-card">
+          <div class="mp-card-head">
+            <div class="mp-card-ico mp-ico-purple">
+              <i class="fa-solid fa-lungs-virus"></i>
+            </div>
+            <div>
+              <h3 class="mp-card-title">Chronic Diseases</h3>
+              <p class="mp-card-sub">{{ profile()?.chronicDiseases?.length ?? 0 }} condition{{ (profile()?.chronicDiseases?.length ?? 0) === 1 ? '' : 's' }} recorded</p>
+            </div>
+            <button type="button" class="mp-add-btn" (click)="openAddDisease()">
+              <i class="fa-solid fa-plus"></i> Add
+            </button>
+          </div>
+
+          @if ((profile()?.chronicDiseases?.length ?? 0) === 0 && !addingDisease()) {
+          <div class="mp-empty">
+            <i class="fa-solid fa-lungs-virus mp-empty-ico"></i>
+            <p>No chronic conditions recorded</p>
+          </div>
+          } @else {
+          <div class="mp-tags-list">
+            @for (d of profile()?.chronicDiseases ?? []; track d.id) {
+            <div class="mp-tag-row">
+              <span class="mp-tag" [class]="statusClass(d.status)">
+                {{ d.name }}
+                <span class="mp-tag-badge">{{ statusLabel(d.status) }}</span>
+              </span>
+              <button type="button" class="mp-tag-del" (click)="deleteDisease(d.id)" title="Remove">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            }
+          </div>
+          }
+
+          @if (addingDisease()) {
+          <div class="mp-inline-form">
+            <div class="mp-form-row">
+              <div class="mp-form-field">
+                <label>Condition Name</label>
+                <input type="text" [(ngModel)]="newDisease.name" placeholder="e.g. Diabetes Type 2" autofocus>
+              </div>
+              <div class="mp-form-field">
+                <label>Status</label>
+                <select [(ngModel)]="newDisease.status">
+                  <option value="Active">Active</option>
+                  <option value="Controlled">Controlled</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+              </div>
+            </div>
+            <div class="mp-form-row">
+              <div class="mp-form-field">
+                <label>Diagnosed At (optional)</label>
+                <input type="date" [(ngModel)]="newDisease.diagnosedAt">
+              </div>
+            </div>
+            <div class="mp-form-actions">
+              <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelAddDisease()" [disabled]="diseaseSaving()">Cancel</button>
+              <button type="button" class="mp-btn mp-btn-primary" (click)="saveDisease()" [disabled]="diseaseSaving() || !newDisease.name.trim()">
+                @if (diseaseSaving()) { <span class="mp-btn-spinner"></span> Adding... } @else { Add Condition }
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- ══ Emergency Contacts ═════════════════════════════════════════════ -->
+        <div class="mp-card">
+          <div class="mp-card-head">
+            <div class="mp-card-ico mp-ico-teal">
+              <i class="fa-solid fa-phone-volume"></i>
+            </div>
+            <div>
+              <h3 class="mp-card-title">Emergency Contacts</h3>
+              <p class="mp-card-sub">People to contact in an emergency</p>
+            </div>
+            <button type="button" class="mp-add-btn" (click)="openAddContact()">
+              <i class="fa-solid fa-plus"></i> Add
+            </button>
+          </div>
+
+          @if (contactsLoading()) {
+          <div class="mp-empty">
+            <div class="mp-spinner mp-spinner--sm"></div>
+          </div>
+          } @else if (contacts().length === 0 && !addingContact()) {
+          <div class="mp-empty">
+            <i class="fa-solid fa-phone-volume mp-empty-ico"></i>
+            <p>No emergency contacts added</p>
+          </div>
+          } @else {
+          <div class="mp-contacts-list">
+            @for (c of contacts(); track c.id) {
+            <div class="mp-contact-row">
+              <div class="mp-contact-av">
+                <i class="fa-solid fa-user"></i>
+              </div>
+              <div class="mp-contact-info">
+                <span class="mp-contact-name">{{ c.name }}</span>
+                <span class="mp-contact-rel">{{ c.relation }}</span>
+              </div>
+              <a [href]="'tel:' + c.phoneNumber" class="mp-contact-phone">
+                <i class="fa-solid fa-phone"></i> {{ c.phoneNumber }}
+              </a>
+              <button type="button" class="mp-tag-del" (click)="deleteContact(c.id)" title="Remove">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            }
+          </div>
+          }
+
+          @if (addingContact()) {
+          <div class="mp-inline-form">
+            <div class="mp-form-row mp-form-row--3">
+              <div class="mp-form-field">
+                <label>Full Name</label>
+                <input type="text" [(ngModel)]="newContact.name" placeholder="Contact name" autofocus>
+              </div>
+              <div class="mp-form-field">
+                <label>Phone Number</label>
+                <input type="tel" [(ngModel)]="newContact.phoneNumber" placeholder="+1 234 567 8900">
+              </div>
+              <div class="mp-form-field">
+                <label>Relationship</label>
+                <input type="text" [(ngModel)]="newContact.relation" placeholder="e.g. Mother, Brother">
+              </div>
+            </div>
+            <div class="mp-form-actions">
+              <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelAddContact()" [disabled]="contactSaving()">Cancel</button>
+              <button type="button" class="mp-btn mp-btn-primary" (click)="saveContact()"
+                [disabled]="contactSaving() || !newContact.name.trim() || !newContact.phoneNumber.trim()">
+                @if (contactSaving()) { <span class="mp-btn-spinner"></span> Adding... } @else { Add Contact }
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- ══ Danger Zone ════════════════════════════════════════════════════ -->
+        <div class="mp-card mp-card--danger">
+          <div class="mp-card-head">
+            <div class="mp-card-ico mp-ico-red">
+              <i class="fa-solid fa-skull-crossbones"></i>
+            </div>
+            <div>
+              <h3 class="mp-card-title">Danger Zone</h3>
+              <p class="mp-card-sub">Irreversible actions — proceed with caution</p>
+            </div>
+          </div>
+          <div class="mp-danger-content">
+            <div class="mp-danger-info">
+              <strong>Delete your account</strong>
+              <p>Once you delete your account, there is no going back. This will permanently delete your profile, medical records, and all associated data.</p>
+            </div>
+            <button type="button" class="mp-btn mp-btn-danger" (click)="openDeleteModal()">
+              <i class="fa-solid fa-trash"></i> Delete Account
+            </button>
+          </div>
+        </div>
+
+      </div><!-- end mp-grid -->
+
+      } <!-- end @else profileLoading -->
+
+    </div><!-- end dsh-body -->
+
+  </div><!-- end dsh-main -->
+
+</div><!-- end dsh -->
+
+<!-- ════════════ DELETE ACCOUNT MODAL ════════════ -->
+@if (deleteModalOpen()) {
+<div class="mp-modal-backdrop" (click)="closeDeleteModal()">
+  <div class="mp-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <div class="mp-modal-ico">
+      <i class="fa-solid fa-trash"></i>
+    </div>
+    <h2 class="mp-modal-title">Delete Account</h2>
+    <p class="mp-modal-body">
+      Are you sure you want to delete your account? This action is <strong>permanent</strong> and cannot be undone. All your data — including medical records, appointments, and family profiles — will be deleted forever.
+    </p>
+    <div class="mp-modal-actions">
+      <button type="button" class="mp-btn mp-btn-ghost" (click)="closeDeleteModal()" [disabled]="deleteLoading()">
+        Cancel
+      </button>
+      <button type="button" class="mp-btn mp-btn-danger" (click)="confirmDeleteAccount()" [disabled]="deleteLoading()">
+        @if (deleteLoading()) { <span class="mp-btn-spinner"></span> Deleting... } @else { Yes, Delete Account }
+      </button>
+    </div>
+  </div>
+</div>
+}

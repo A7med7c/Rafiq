@@ -113,7 +113,7 @@
               </div>
             </div>
             <div class="user-dropdown-divider"></div>
-            <button type="button" class="user-dropdown-item"><i class="fa-regular fa-user"></i> {{ t().header.myProfile }}</button>
+            <button type="button" class="user-dropdown-item" (click)="goToMyProfile()"><i class="fa-regular fa-user"></i> {{ t().header.myProfile }}</button>
             <button type="button" class="user-dropdown-item"><i class="fa-solid fa-gear"></i> {{ t().header.settings }}</button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">

@@ -42,4 +42,10 @@ public sealed class AiConversationRepository(RafiqDbContext context) : IAiConver
     {
         context.AiConversations.Remove(conversation);
     }
+
+    public Task HardDeleteAllByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+        => context.AiConversations
+            .IgnoreQueryFilters()
+            .Where(x => x.UserId == userId)
+            .ExecuteDeleteAsync(cancellationToken);
 }

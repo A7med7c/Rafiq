@@ -7,6 +7,7 @@ export interface Account {
   email: string;
   phoneNumber: string;
   phoneNumberConfirmed: boolean;
+  emailConfirmed: boolean;
   role: UserRole;
   profileImageUrl?: string | null;
 }

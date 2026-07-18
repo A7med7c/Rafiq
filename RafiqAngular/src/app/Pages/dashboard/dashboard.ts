@@ -238,6 +238,11 @@ export class Dashboard implements OnInit {
     this.authService.logout().subscribe();
   }
 
+  goToMyProfile(): void {
+    this.dropdownOpen.set(false);
+    this.router.navigate(['/my-profile']);
+  }
+
   goToAddAppointment(): void {
     this.router.navigate(['/appointments'], { queryParams: { openAdd: '1' } });
   }

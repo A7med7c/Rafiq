@@ -498,6 +498,11 @@ export class AiAssistant implements OnInit {
     this.dropdownOpen.update(v => !v);
   }
 
+  goToMyProfile(): void {
+    this.dropdownOpen.set(false);
+    this.router.navigate(['/my-profile']);
+  }
+
   logout(): void {
     this.dropdownOpen.set(false);
     this.authService.logout().subscribe();

@@ -380,10 +380,35 @@
 /* ===== Footer Actions ===== */
 .action-footer {
   margin-top: 32px;
+  display: flex;
+  gap: 12px;
+}
+
+.skip-btn {
+  flex: 1;
+  height: 52px;
+  border: 1.5px solid #d4e5f2;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .72);
+  color: #8baec8;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.skip-btn:hover {
+  background: #f0f7ff;
+  border-color: #4E89B8;
+  color: #08264a;
 }
 
 .finish-btn {
-  width: 100%;
+  flex: 1;
   height: 52px;
   background: linear-gradient(135deg, #49d7ff 0%, #10a8ff 100%);
   border: none;

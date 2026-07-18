@@ -13,6 +13,7 @@ public sealed class UpdatePatientProfileCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAccessRepository healthProfileAccessRepository,
     ICurrentUserService currentUserService,
+    IIdentityService identityService,
     IUnitOfWork unitOfWork,
     IMapper mapper)
     : IRequestHandler<UpdatePatientProfileCommand, ApiResponse<PatientProfileDto>>
@@ -49,6 +50,18 @@ public sealed class UpdatePatientProfileCommandHandler(
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Sync name changes to the identity user for self-owned profiles
+        if (profile.UserId.HasValue)
+        {
+            var account = await identityService.GetAccountAsync(profile.UserId.Value, cancellationToken);
+            await identityService.UpdateAccountAsync(
+                profile.UserId.Value,
+                request.FirstName,
+                request.LastName,
+                account.PhoneNumber,
+                cancellationToken);
+        }
 
         return ApiResponse<PatientProfileDto>.SuccessResponse(
             mapper.Map<PatientProfileDto>(profile),

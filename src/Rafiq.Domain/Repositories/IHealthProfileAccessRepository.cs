@@ -50,4 +50,8 @@ public interface IHealthProfileAccessRepository
     Task AddAsync(HealthProfileAccess healthProfileAccess, CancellationToken cancellationToken = default);
 
     void Update(HealthProfileAccess healthProfileAccess);
+
+    Task NullifyInvitedByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task HardDeleteByGranteeUserIdAsync(Guid granteeUserId, CancellationToken cancellationToken = default);
 }

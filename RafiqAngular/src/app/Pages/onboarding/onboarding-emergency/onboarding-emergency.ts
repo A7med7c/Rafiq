@@ -128,14 +128,11 @@ export class OnboardingEmergency implements OnInit {
     this.router.navigate(['/onboarding/step1']);
   }
 
-  continueToNextStep(): void {
-    if (this.contacts.length === 0) {
-      this.submitError = 'Please add at least one emergency contact before proceeding.';
-      this.cdr.detectChanges();
-      return;
-    }
+  skip(): void {
+    this.router.navigate(['/onboarding/step2']);
+  }
 
-    // this.tokenStorage.markEmergencyCompleted();
+  continueToNextStep(): void {
     this.router.navigate(['/onboarding/step2']);
   }
 }

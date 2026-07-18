@@ -608,6 +608,8 @@ export class Medications implements OnInit, OnDestroy {
   toggleDropdown(): void { this.dropdownOpen.update(v => !v); }
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
+  goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+
   // ── Tabs ──────────────────────────────────────────────────────────────────
   setTab(tab: MedTab): void {
     this.activeTab.set(tab);

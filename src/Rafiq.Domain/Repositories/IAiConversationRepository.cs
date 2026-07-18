@@ -10,4 +10,6 @@ public interface IAiConversationRepository
     Task AddAsync(AiConversation conversation, CancellationToken cancellationToken = default);
     Task AddMessageAsync(AiMessage message, CancellationToken cancellationToken = default);
     void Remove(AiConversation conversation);
+
+    Task HardDeleteAllByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
 }
