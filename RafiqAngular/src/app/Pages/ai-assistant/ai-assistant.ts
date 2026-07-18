@@ -96,6 +96,19 @@ export class AiAssistant implements OnInit {
   readonly renaming = signal(false);
   readonly renameDraft = signal('');
 
+  // ── Dislike reason dialog ──
+  readonly dislikeDialogOpen = signal(false);
+  readonly dislikeTargetMsg = signal<ChatMessage | null>(null);
+  readonly dislikeReason = signal('');
+  readonly dislikeReasons = [
+    'Incorrect information',
+    'Harmful or unsafe content',
+    'Not helpful',
+    'Off-topic',
+    'Other',
+  ];
+  readonly dislikeSubmitting = signal(false);
+
   get displayName(): string {
     const u = this.authService.currentUser;
     if (!u) return 'there';
@@ -464,23 +477,56 @@ export class AiAssistant implements OnInit {
   }
 
   toggleReaction(msg: ChatMessage, type: 'ThumbsUp' | 'ThumbsDown'): void {
+    // Don't allow reactions on optimistic user messages that have no real ID yet
+    if (msg.id.startsWith('pending-')) return;
+
+    if (type === 'ThumbsDown' && msg.userReaction !== 'ThumbsDown') {
+      // Open dislike reason dialog first
+      this.dislikeTargetMsg.set(msg);
+      this.dislikeReason.set('');
+      this.dislikeDialogOpen.set(true);
+      return;
+    }
+
+    this.applyReaction(msg, type);
+  }
+
+  applyReaction(msg: ChatMessage, type: 'ThumbsUp' | 'ThumbsDown'): void {
     const conversationId = this.selectedConversationId();
-    if (!conversationId || msg.id.startsWith('pending-') || msg.id.startsWith('assistant-')) return;
+    if (!conversationId) return;
 
     const remove = msg.userReaction === type;
     const previousReaction = msg.userReaction;
 
+    // Optimistically update UI
     this.messages.update(list =>
       list.map(m => m.id === msg.id ? { ...m, userReaction: remove ? null : type } : m)
     );
 
     this.aiChatService.reactToMessage(conversationId, msg.id, type, remove).subscribe({
       error: () => {
+        // Rollback on error
         this.messages.update(list =>
           list.map(m => m.id === msg.id ? { ...m, userReaction: previousReaction } : m)
         );
       }
     });
+  }
+
+  submitDislikeReason(): void {
+    const msg = this.dislikeTargetMsg();
+    if (!msg) return;
+
+    this.dislikeDialogOpen.set(false);
+    this.applyReaction(msg, 'ThumbsDown');
+    this.dislikeTargetMsg.set(null);
+    this.dislikeReason.set('');
+  }
+
+  cancelDislikeDialog(): void {
+    this.dislikeDialogOpen.set(false);
+    this.dislikeTargetMsg.set(null);
+    this.dislikeReason.set('');
   }
 
   // ── Shell chrome (mirrors dashboard.ts) ──

@@ -276,6 +276,180 @@
   transition: background 0.13s, color 0.13s;
   text-decoration: none;
 }
+.ai-error-retry:hover {
+  text-decoration: underline;
+}
+
+/* ══════════════════════════════════════════════════════
+   DISLIKE REASON DIALOG
+══════════════════════════════════════════════════════ */
+.dislike-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2000;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.dislike-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2001;
+  background: #ffffff;
+  border-radius: 18px;
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.06);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: dialogSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dialogSlide {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.dislike-dialog-hdr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dislike-dialog-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--red-lt, #FEE2E2);
+  color: var(--red, #DC2626);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.dislike-dialog-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text, #111827);
+  margin: 0 0 2px;
+}
+
+.dislike-dialog-sub {
+  font-size: 12px;
+  color: var(--text-3, #6B7280);
+  margin: 0;
+}
+
+.dislike-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-4, #9CA3AF);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.13s, color 0.13s;
+}
+.dislike-close:hover { background: var(--border-lt, #F3F4F6); color: var(--text, #111827); }
+
+.dislike-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dislike-reason-chip {
+  background: var(--bg, #ffffff);
+  border: 1.5px solid var(--border, #E5E7EB);
+  color: var(--text-2, #374151);
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.13s;
+  font-family: inherit;
+}
+
+.dislike-reason-chip:hover {
+  border-color: var(--red, #DC2626);
+  color: var(--red, #DC2626);
+  background: var(--red-lt, #FEE2E2);
+}
+
+.dislike-reason-chip--selected {
+  background: var(--red-lt, #FEE2E2);
+  border-color: var(--red, #DC2626);
+  color: var(--red, #DC2626);
+  font-weight: 600;
+}
+
+.dislike-textarea {
+  width: 100%;
+  border: 1.5px solid var(--border, #E5E7EB);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text, #111827);
+  background: var(--bg, #ffffff);
+  resize: none;
+  outline: none;
+  transition: border-color 0.13s;
+  box-sizing: border-box;
+}
+
+.dislike-textarea:focus { border-color: var(--red, #DC2626); }
+.dislike-textarea::placeholder { color: var(--text-4, #9CA3AF); }
+
+.dislike-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dislike-btn-cancel {
+  background: none;
+  border: 1.5px solid var(--border, #E5E7EB);
+  color: var(--text-2, #374151);
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.13s;
+}
+.dislike-btn-cancel:hover { background: var(--border-lt, #F3F4F6); }
+
+.dislike-btn-submit {
+  background: var(--red, #DC2626);
+  color: white;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: background 0.13s;
+}
+.dislike-btn-submit:hover { background: #B91C1C; }
 .ai-hdr-btn:hover { background: #F3F4F6; color: #374151; }
 
 /* Sidebar toggle button in header */
@@ -510,6 +684,8 @@
 }
 
 .ai-msg--ai:hover .ai-reactions { opacity: 1; }
+.ai-reactions:has(.ai-react-btn--active) { opacity: 1; }
+.ai-reactions:has(.ai-react-btn--active-down) { opacity: 1; }
 
 .ai-react-btn {
   background: none;
@@ -697,7 +873,7 @@
 }
 
 /* ── RTL: mirror panel to left side so it doesn't overlap the right-side nav ── */
-:host-context([dir="rtl"]) .ai-panel {
+.ai-panel[dir="rtl"] {
   right: auto;
   left: 20px;
 }

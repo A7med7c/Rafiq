@@ -1,7 +1,7 @@
 @if (isPanelOpen()) {
   <div class="ai-panel-overlay" (click)="closePanel()"></div>
 
-  <div class="ai-panel">
+  <div class="ai-panel" [attr.dir]="l10n.dir()">
 
     <!-- ══ CONVERSATIONS SIDEBAR ══ -->
     <aside class="ai-sidebar" [class.ai-sidebar--collapsed]="sidebarCollapsed()">
@@ -224,4 +224,56 @@
 
     </div><!-- /.ai-main -->
   </div><!-- /.ai-panel -->
+}
+
+<!-- ═══ DISLIKE REASON DIALOG ═══ -->
+@if (dislikeDialogOpen()) {
+<div class="dislike-overlay" (click)="cancelDislikeDialog()"></div>
+<div class="dislike-dialog" role="dialog" aria-modal="true" [attr.dir]="l10n.dir()">
+  <div class="dislike-dialog-hdr">
+    <div class="dislike-dialog-icon">
+      <i class="fa-regular fa-thumbs-down"></i>
+    </div>
+    <div>
+      <h3 class="dislike-dialog-title">{{ t().aiAssistant.feedbackTitle }}</h3>
+      <p class="dislike-dialog-sub">{{ t().aiAssistant.feedbackSub }}</p>
+    </div>
+    <button type="button" class="dislike-close" (click)="cancelDislikeDialog()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="dislike-reasons">
+    @for (reason of dislikeReasons(); track reason) {
+      <button
+        type="button"
+        class="dislike-reason-chip"
+        [class.dislike-reason-chip--selected]="dislikeReason() === reason"
+        (click)="dislikeReason.set(reason)"
+      >
+        {{ reason }}
+      </button>
+    }
+  </div>
+
+  <textarea
+    class="dislike-textarea"
+    [attr.placeholder]="t().aiAssistant.feedbackTextPlaceholder"
+    [value]="dislikeFreeText()"
+    (input)="dislikeFreeText.set($any($event.target).value)"
+    rows="3"
+  ></textarea>
+
+  <div class="dislike-dialog-footer">
+    <button type="button" class="dislike-btn-cancel" (click)="cancelDislikeDialog()">{{ t().aiAssistant.feedbackCancel }}</button>
+    <button
+      type="button"
+      class="dislike-btn-submit"
+      (click)="submitDislikeReason()"
+    >
+      <i class="fa-regular fa-thumbs-down"></i>
+      {{ t().aiAssistant.feedbackSubmit }}
+    </button>
+  </div>
+</div>
 }

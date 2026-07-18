@@ -123,7 +123,7 @@ public class AiChatController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new ReactToMessageCommand(conversationId, messageId, request.ReactionType, request.Remove),
+            new ReactToMessageCommand(conversationId, messageId, request.ReactionType, request.Remove, request.Feedback),
             cancellationToken);
         return Ok(result);
     }
@@ -151,4 +151,5 @@ public sealed class ReactToMessageRequest
 {
     public ReactionType ReactionType { get; set; }
     public bool Remove { get; set; }
+    public string? Feedback { get; set; }
 }

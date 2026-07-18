@@ -6,7 +6,7 @@ public sealed class MessageReaction
 {
     private MessageReaction() { }
 
-    public MessageReaction(Guid aiMessageId, Guid userId, ReactionType reactionType)
+    public MessageReaction(Guid aiMessageId, Guid userId, ReactionType reactionType, string? feedback = null)
     {
         if (aiMessageId == Guid.Empty)
             throw new ArgumentException("Message ID cannot be empty.", nameof(aiMessageId));
@@ -17,6 +17,7 @@ public sealed class MessageReaction
         AiMessageId  = aiMessageId;
         UserId       = userId;
         ReactionType = reactionType;
+        Feedback     = feedback;
         CreatedAt    = DateTime.UtcNow;
     }
 
@@ -25,5 +26,8 @@ public sealed class MessageReaction
     public AiMessage    AiMessage    { get; private set; } = null!;
     public Guid         UserId       { get; private set; }
     public ReactionType ReactionType { get; private set; }
+    public string?      Feedback     { get; private set; }
     public DateTime     CreatedAt    { get; private set; }
+
+    public void UpdateFeedback(string? feedback) => Feedback = feedback;
 }

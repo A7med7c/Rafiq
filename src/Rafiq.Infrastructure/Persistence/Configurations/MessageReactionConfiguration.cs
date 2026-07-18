@@ -18,6 +18,10 @@ public class MessageReactionConfiguration : IEntityTypeConfiguration<MessageReac
             .IsRequired()
             .HasConversion<int>();
 
+        builder.Property(r => r.Feedback)
+            .HasMaxLength(1000)
+            .IsRequired(false);
+
         builder.Property(r => r.CreatedAt)
             .IsRequired()
             .HasColumnType("datetime2(7)");

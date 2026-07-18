@@ -41,7 +41,7 @@ public sealed class ReactToMessageCommandHandler
         if (request.Remove)
             await _reactionRepository.RemoveAsync(request.MessageId, userId, request.ReactionType, cancellationToken);
         else
-            await _reactionRepository.UpsertAsync(request.MessageId, userId, request.ReactionType, cancellationToken);
+            await _reactionRepository.UpsertAsync(request.MessageId, userId, request.ReactionType, request.Feedback, cancellationToken);
 
         return ApiResponse<bool>.SuccessResponse(true);
     }

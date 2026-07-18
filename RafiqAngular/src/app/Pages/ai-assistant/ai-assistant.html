@@ -420,4 +420,57 @@
     </div>
     <!-- /chat-wrap -->
   </div><!-- /dsh-main -->
+
 </div><!-- /dsh -->
+
+<!-- ═══ DISLIKE REASON DIALOG ═══ -->
+@if (dislikeDialogOpen()) {
+<div class="dislike-overlay" (click)="cancelDislikeDialog()"></div>
+<div class="dislike-dialog" role="dialog" aria-modal="true">
+  <div class="dislike-dialog-hdr">
+    <div class="dislike-dialog-icon">
+      <i class="fa-regular fa-thumbs-down"></i>
+    </div>
+    <div>
+      <h3 class="dislike-dialog-title">What went wrong?</h3>
+      <p class="dislike-dialog-sub">Help us improve Rafiq AI</p>
+    </div>
+    <button type="button" class="dislike-close" (click)="cancelDislikeDialog()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="dislike-reasons">
+    @for (reason of dislikeReasons; track reason) {
+      <button
+        type="button"
+        class="dislike-reason-chip"
+        [class.dislike-reason-chip--selected]="dislikeReason() === reason"
+        (click)="dislikeReason.set(reason)"
+      >
+        {{ reason }}
+      </button>
+    }
+  </div>
+
+  <textarea
+    class="dislike-textarea"
+    placeholder="Tell us more (optional)..."
+    [value]="dislikeReason() === 'Other' ? dislikeReason() : ''"
+    (input)="dislikeReason.set($any($event.target).value)"
+    rows="3"
+  ></textarea>
+
+  <div class="dislike-dialog-footer">
+    <button type="button" class="dislike-btn-cancel" (click)="cancelDislikeDialog()">Cancel</button>
+    <button
+      type="button"
+      class="dislike-btn-submit"
+      (click)="submitDislikeReason()"
+    >
+      <i class="fa-regular fa-thumbs-down"></i>
+      Submit Feedback
+    </button>
+  </div>
+</div>
+}

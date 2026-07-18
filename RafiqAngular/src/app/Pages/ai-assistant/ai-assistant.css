@@ -594,7 +594,12 @@ a { text-decoration: none; }
   transition: opacity 0.15s;
 }
 
+/* Show on hover */
 .chat-msg--ai:hover .chat-reactions { opacity: 1; }
+
+/* Always show when a reaction is active (like or dislike is set) */
+.chat-reactions:has(.chat-react-btn--active) { opacity: 1; }
+.chat-reactions:has(.chat-react-btn--active-down) { opacity: 1; }
 
 .chat-react-btn {
   background: none;
@@ -746,3 +751,175 @@ a { text-decoration: none; }
   .chat-wrap.panel-collapsed { grid-template-columns: 1fr; }
   .chat-list-panel { display: none; }
 }
+
+/* ══════════════════════════════════════════════════════
+   DISLIKE REASON DIALOG
+══════════════════════════════════════════════════════ */
+.dislike-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2000;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.dislike-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2001;
+  background: #ffffff;
+  border-radius: 18px;
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.06);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: dialogSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dialogSlide {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.dislike-dialog-hdr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dislike-dialog-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--red-lt);
+  color: var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.dislike-dialog-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 2px;
+}
+
+.dislike-dialog-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  margin: 0;
+}
+
+.dislike-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-4);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.13s, color 0.13s;
+}
+.dislike-close:hover { background: var(--border-lt); color: var(--text); }
+
+.dislike-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dislike-reason-chip {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  color: var(--text-2);
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.13s;
+  font-family: inherit;
+}
+
+.dislike-reason-chip:hover {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-lt);
+}
+
+.dislike-reason-chip--selected {
+  background: var(--red-lt);
+  border-color: var(--red);
+  color: var(--red);
+  font-weight: 600;
+}
+
+.dislike-textarea {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  resize: none;
+  outline: none;
+  transition: border-color 0.13s;
+  box-sizing: border-box;
+}
+
+.dislike-textarea:focus { border-color: var(--red); }
+.dislike-textarea::placeholder { color: var(--text-4); }
+
+.dislike-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dislike-btn-cancel {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--text-2);
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.13s;
+}
+.dislike-btn-cancel:hover { background: var(--border-lt); }
+
+.dislike-btn-submit {
+  background: var(--red);
+  color: white;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: background 0.13s;
+}
+.dislike-btn-submit:hover { background: #b91c1c; }
+

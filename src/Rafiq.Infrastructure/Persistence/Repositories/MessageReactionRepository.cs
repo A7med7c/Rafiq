@@ -7,7 +7,7 @@ namespace Rafiq.Infrastructure.Persistence.Repositories;
 
 public sealed class MessageReactionRepository(RafiqDbContext context) : IMessageReactionRepository
 {
-    public async Task UpsertAsync(Guid messageId, Guid userId, ReactionType reactionType, CancellationToken cancellationToken = default)
+    public async Task UpsertAsync(Guid messageId, Guid userId, ReactionType reactionType, string? feedback = null, CancellationToken cancellationToken = default)
     {
         // Remove any existing reaction of a DIFFERENT type (one reaction at a time per user)
         var others = await context.MessageReactions
@@ -17,13 +17,15 @@ public sealed class MessageReactionRepository(RafiqDbContext context) : IMessage
         if (others.Count > 0)
             context.MessageReactions.RemoveRange(others);
 
-        // Only insert if not already present
-        var exists = await context.MessageReactions.AnyAsync(
+        // Update feedback if reaction already exists; otherwise insert
+        var existing = await context.MessageReactions.FirstOrDefaultAsync(
             r => r.AiMessageId == messageId && r.UserId == userId && r.ReactionType == reactionType,
             cancellationToken);
 
-        if (!exists)
-            await context.MessageReactions.AddAsync(new MessageReaction(messageId, userId, reactionType), cancellationToken);
+        if (existing is not null)
+            existing.UpdateFeedback(feedback);
+        else
+            await context.MessageReactions.AddAsync(new MessageReaction(messageId, userId, reactionType, feedback), cancellationToken);
 
         await context.SaveChangesAsync(cancellationToken);
     }

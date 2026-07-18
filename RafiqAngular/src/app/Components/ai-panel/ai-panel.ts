@@ -71,6 +71,14 @@ export class AiPanel implements OnInit, OnDestroy {
   readonly sending = signal(false);
   readonly sendError = signal<string | null>(null);
 
+  // ── Dislike reason dialog ──
+  readonly dislikeDialogOpen = signal(false);
+  readonly dislikeTargetMsg = signal<ChatMessage | null>(null);
+  readonly dislikeReason = signal('');
+  readonly dislikeFreeText = signal('');
+  readonly dislikeReasons = computed(() => this.t().aiAssistant.feedbackReasons);
+  readonly dislikeSubmitting = signal(false);
+
   // ── Image attachment ──
   readonly attachedImagePreviewUrl = signal<string | null>(null);
   readonly attachedImageBase64 = signal<string | null>(null);
@@ -401,8 +409,21 @@ export class AiPanel implements OnInit, OnDestroy {
   }
 
   toggleReaction(msg: ChatMessage, type: 'ThumbsUp' | 'ThumbsDown'): void {
+    if (msg.id.startsWith('pending-')) return;
+
+    if (type === 'ThumbsDown' && msg.userReaction !== 'ThumbsDown') {
+      this.dislikeTargetMsg.set(msg);
+      this.dislikeReason.set('');
+      this.dislikeDialogOpen.set(true);
+      return;
+    }
+
+    this.applyReaction(msg, type);
+  }
+
+  applyReaction(msg: ChatMessage, type: 'ThumbsUp' | 'ThumbsDown', feedback?: string): void {
     const conversationId = this.selectedConversationId();
-    if (!conversationId || msg.id.startsWith('pending-') || msg.id.startsWith('assistant-')) return;
+    if (!conversationId) return;
 
     const remove = msg.userReaction === type;
     const previousReaction = msg.userReaction;
@@ -412,7 +433,7 @@ export class AiPanel implements OnInit, OnDestroy {
       list.map(m => m.id === msg.id ? { ...m, userReaction: remove ? null : type } : m)
     );
 
-    this.aiChatService.reactToMessage(conversationId, msg.id, type, remove).subscribe({
+    this.aiChatService.reactToMessage(conversationId, msg.id, type, remove, feedback).subscribe({
       error: () => {
         // Revert on failure
         this.messages.update(list =>
@@ -420,5 +441,29 @@ export class AiPanel implements OnInit, OnDestroy {
         );
       }
     });
+  }
+
+  submitDislikeReason(): void {
+    const msg = this.dislikeTargetMsg();
+    if (!msg) return;
+
+    const selectedReason = this.dislikeReason();
+    const freeText = this.dislikeFreeText().trim();
+    const feedback = selectedReason
+      ? (freeText ? `${selectedReason} — ${freeText}` : selectedReason)
+      : (freeText || undefined);
+
+    this.dislikeDialogOpen.set(false);
+    this.applyReaction(msg, 'ThumbsDown', feedback);
+    this.dislikeTargetMsg.set(null);
+    this.dislikeReason.set('');
+    this.dislikeFreeText.set('');
+  }
+
+  cancelDislikeDialog(): void {
+    this.dislikeDialogOpen.set(false);
+    this.dislikeTargetMsg.set(null);
+    this.dislikeReason.set('');
+    this.dislikeFreeText.set('');
   }
 }

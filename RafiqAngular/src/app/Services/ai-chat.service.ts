@@ -69,11 +69,12 @@ export class AiChatService {
     conversationId: string,
     messageId: string,
     reactionType: 'ThumbsUp' | 'ThumbsDown',
-    remove: boolean
+    remove: boolean,
+    feedback?: string
   ): Observable<ApiResponse<boolean>> {
     return this.http.post<ApiResponse<boolean>>(
       `${this.base}/conversations/${conversationId}/messages/${messageId}/react`,
-      { reactionType, remove }
+      { reactionType, remove, feedback }
     );
   }
 }

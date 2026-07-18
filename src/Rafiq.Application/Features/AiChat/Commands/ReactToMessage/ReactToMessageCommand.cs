@@ -8,5 +8,6 @@ public sealed record ReactToMessageCommand(
     Guid ConversationId,
     Guid MessageId,
     ReactionType ReactionType,
-    bool Remove
+    bool Remove,
+    string? Feedback = null
 ) : IRequest<ApiResponse<bool>>;

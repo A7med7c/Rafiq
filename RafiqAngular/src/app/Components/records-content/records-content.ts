@@ -751,10 +751,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       general: `${this.base}/documents/general/upload`,
     };
     const labels: Record<'lab' | 'imaging' | 'prescription' | 'general', string> = {
-      lab: 'Analysing Lab Report...',
-      imaging: 'Analysing Imaging Report...',
-      prescription: 'Extracting Prescription...',
-      general: 'Analysing Medical Document...',
+      lab: this.t().records.analysingLab,
+      imaging: this.t().records.analysingImaging,
+      prescription: this.t().records.extractingPrescription,
+      general: this.t().records.analysingDocument,
     };
 
     this.uploadLoading.set(true);
