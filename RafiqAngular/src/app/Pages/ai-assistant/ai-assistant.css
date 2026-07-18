@@ -204,11 +204,43 @@ a { text-decoration: none; }
 .hdr-right { display: flex; align-items: center; gap: 12px; }
 
 .hdr-ask-btn {
-  display: flex; align-items: center; gap: 7px; background: #0EAFD7; color: var(--white); border: none;
-  border-radius: 999px; padding: 8px 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background .15s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: linear-gradient(135deg, #0EAFD7 0%, #7C3AED 100%);
+  background-size: 200% 200%;
+  color: var(--white);
+  border: none;
+  border-radius: 999px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: ask-btn-shimmer 4s ease infinite;
+  box-shadow: 0 2px 12px rgba(14, 175, 215, 0.35);
 }
 
-.hdr-ask-btn:hover { background: #0c97ba; }
+@keyframes ask-btn-shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hdr-ask-btn i {
+  transition: transform 0.4s;
+}
+
+.hdr-ask-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(14, 175, 215, 0.45);
+}
+
+.hdr-ask-btn:hover i {
+  transform: rotate(20deg) scale(1.1);
+}
 
 .hdr-bell {
   position: relative; background: none; border: 1px solid var(--border); border-radius: 50%;
@@ -514,7 +546,7 @@ a { text-decoration: none; }
 }
 
 .chat-bubble--user { background: var(--blue); color: var(--white); border-bottom-right-radius: 4px; }
-.chat-bubble--ai { background: var(--white); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.chat-bubble--ai { background: var(--white); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; border-inline-start: 3px solid var(--blue); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 
 /* Markdown output from ngx-markdown is injected outside view-encapsulation, so ::ng-deep is required to style it. */
 .chat-bubble--ai ::ng-deep markdown { display: block; }
@@ -544,6 +576,58 @@ a { text-decoration: none; }
 .chat-msg-time { font-size: 10px; color: var(--text-4); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
 .chat-read-tick { color: var(--blue); font-size: 10px; }
 .chat-msg-time--ai { margin-inline-start: 2px; }
+
+/* ── Message footer (time + reactions) ─────────── */
+.chat-msg-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  margin-inline-start: 2px;
+}
+
+.chat-reactions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.chat-msg--ai:hover .chat-reactions { opacity: 1; }
+
+.chat-react-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-4);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.13s;
+}
+
+.chat-react-btn:hover {
+  background: var(--border-lt);
+  border-color: var(--border);
+  color: var(--text-2);
+}
+
+.chat-react-btn--active {
+  color: var(--blue);
+  background: var(--blue-lt);
+  border-color: var(--blue);
+}
+
+.chat-react-btn--active-down {
+  color: var(--red);
+  background: var(--red-lt);
+  border-color: var(--red);
+}
 
 .chat-typing { display: flex; align-items: center; gap: 4px; padding: 14px 16px; }
 .chat-typing-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-4); animation: typing-bounce 1.2s ease-in-out infinite; }

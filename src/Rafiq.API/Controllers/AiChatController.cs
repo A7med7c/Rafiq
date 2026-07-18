@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rafiq.Application.Features.AiChat.Commands.ArchiveConversation;
 using Rafiq.Application.Features.AiChat.Commands.CreateConversation;
+using Rafiq.Application.Features.AiChat.Commands.ReactToMessage;
 using Rafiq.Application.Features.AiChat.Commands.RenameConversation;
 using Rafiq.Application.Features.AiChat.Commands.SendMessage;
 using Rafiq.Application.Features.AiChat.Queries.GenerateHealthSummary;
 using Rafiq.Application.Features.AiChat.Queries.GetConversationHistory;
 using Rafiq.Application.Features.AiChat.Queries.GetConversations;
+using Rafiq.Domain.Enums;
 
 namespace Rafiq.API.Controllers;
 
@@ -108,6 +110,23 @@ public class AiChatController : ControllerBase
             cancellationToken);
         return Ok(result);
     }
+
+    /// <summary>
+    /// Adds or removes a 👍/👎 reaction on an assistant message.
+    /// Set Remove=true to toggle the reaction off.
+    /// </summary>
+    [HttpPost("conversations/{conversationId:guid}/messages/{messageId:guid}/react")]
+    public async Task<IActionResult> ReactToMessage(
+        Guid conversationId,
+        Guid messageId,
+        [FromBody] ReactToMessageRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(
+            new ReactToMessageCommand(conversationId, messageId, request.ReactionType, request.Remove),
+            cancellationToken);
+        return Ok(result);
+    }
 }
 
 public sealed class CreateConversationRequest
@@ -126,4 +145,10 @@ public sealed class SendMessageRequest
     public string Text { get; set; } = string.Empty;
     public string? Base64Image { get; set; }
     public string? ImageFormat { get; set; }
+}
+
+public sealed class ReactToMessageRequest
+{
+    public ReactionType ReactionType { get; set; }
+    public bool Remove { get; set; }
 }

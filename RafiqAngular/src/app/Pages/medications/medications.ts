@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { forkJoin, Observable } from 'rxjs';
 import { AuthService } from '../../Services/auth-service';
+import { AiChatService } from '../../Services/ai-chat.service';
 import { NotificationService } from '../../Services/notification.service';
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
 import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
@@ -122,6 +123,7 @@ export class Medications implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   protected readonly router = inject(Router);
   protected readonly l10n = inject(LocalizationService);
+  protected readonly aiChatService = inject(AiChatService);
   protected readonly t = this.l10n.t;
 
   private readonly medicationRefreshEffect = effect(() => {

@@ -1431,6 +1431,28 @@
   40%            { transform: scale(1);   opacity: 1; }
 }
 
+.scan-cancel-btn {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1.5px solid #E5E7EB;
+  color: #6B7280;
+  border-radius: 8px;
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.scan-cancel-btn:hover {
+  border-color: #DC2626;
+  color: #DC2626;
+  background: #FEF2F2;
+}
+
 /* --------------------------------------------------
    SCAN REVIEW MODAL
 -------------------------------------------------- */

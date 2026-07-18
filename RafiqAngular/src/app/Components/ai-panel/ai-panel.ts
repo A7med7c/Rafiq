@@ -1,18 +1,14 @@
-import { Component, ElementRef, HostListener, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, computed, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, NavigationStart } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
 import { AuthService } from '../../Services/auth-service';
-import { NotificationService } from '../../Services/notification.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-chat.models';
-import { catchError, of } from 'rxjs';
+import { catchError, of, Subscription } from 'rxjs';
 
-/** Local-only chat message shape: adds an optional client-side image preview
- * for the current session (the backend does not persist/return image bytes on
- * reload, so this is only shown for messages sent during this session). */
 type ChatMessage = ConversationMessageDto & { imagePreviewUrl?: string };
 
 const ACCEPTED_IMAGE_TYPES: Record<string, string> = {
@@ -21,35 +17,38 @@ const ACCEPTED_IMAGE_TYPES: Record<string, string> = {
   'image/png': 'png',
   'image/webp': 'webp',
 };
-
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 
 @Component({
-  selector: 'app-ai-assistant',
+  selector: 'app-ai-panel',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, MarkdownComponent],
-  templateUrl: './ai-assistant.html',
-  styleUrl: './ai-assistant.css',
+  imports: [CommonModule, RouterLink, MarkdownComponent],
+  templateUrl: './ai-panel.html',
+  styleUrl: './ai-panel.css',
 })
-export class AiAssistant implements OnInit {
+export class AiPanel implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
-  protected readonly notifService = inject(NotificationService);
   private readonly healthProfileService = inject(HealthProfileService);
-  private readonly aiChatService = inject(AiChatService);
   private readonly router = inject(Router);
+  protected readonly aiChatService = inject(AiChatService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
+
+  private readonly _routerSub: Subscription;
 
   @ViewChild('messagesEnd') private messagesEnd?: ElementRef<HTMLDivElement>;
   @ViewChild('messageInput') private messageInputRef?: ElementRef<HTMLTextAreaElement>;
   @ViewChild('fileInput') private fileInputRef?: ElementRef<HTMLInputElement>;
 
-  // ── Sidebar / header (shared shell state, same as other pages) ──
-  readonly sidebarCollapsed = signal(false);
-  readonly mobileSidebarOpen = signal(false);
-  readonly dropdownOpen = signal(false);
-  readonly unreadNotifCount = this.notifService.unreadCount;
-  readonly rightPanelCollapsed = signal(true);
+  // ── Global State ──
+  readonly isPanelOpen = this.aiChatService.isPanelOpen;
+
+  // ── Sidebar collapse — hidden by default ──
+  readonly sidebarCollapsed = signal(true);
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed.update(v => !v);
+  }
 
   // ── Profile ──
   readonly profileId = signal<string | null>(null);
@@ -60,20 +59,6 @@ export class AiAssistant implements OnInit {
   readonly conversations = signal<ConversationSummaryDto[]>([]);
   readonly conversationsLoading = signal(true);
   readonly selectedConversationId = signal<string | null>(null);
-  readonly searchTerm = signal('');
-  readonly showAllConversations = signal(false);
-
-  readonly filteredConversations = computed(() => {
-    const term = this.searchTerm().trim().toLowerCase();
-    const list = this.conversations();
-    if (!term) return list;
-    return list.filter(c => c.title.toLowerCase().includes(term));
-  });
-
-  readonly visibleConversations = computed(() => {
-    const list = this.filteredConversations();
-    return this.showAllConversations() ? list : list.slice(0, 6);
-  });
 
   readonly selectedConversation = computed(() =>
     this.conversations().find(c => c.id === this.selectedConversationId()) ?? null
@@ -92,28 +77,47 @@ export class AiAssistant implements OnInit {
   readonly attachedImageFormat = signal<string | null>(null);
   readonly attachError = signal<string | null>(null);
 
-  // ── Rename ──
-  readonly renaming = signal(false);
-  readonly renameDraft = signal('');
-
-  get displayName(): string {
-    const u = this.authService.currentUser;
-    if (!u) return 'there';
-    return u.firstName?.trim() || u.email;
-  }
-
-  get userEmail(): string {
-    return this.authService.currentUser?.email ?? '';
-  }
-
   get avatarUrl(): string {
     return this.authService.avatarUrl;
   }
 
-  ngOnInit(): void {
-    this.applyResponsiveSidebar();
-    this.loadProfileThenConversations();
+  get displayName(): string {
+    const u = this.authService.currentUser;
+    return u?.firstName?.trim() || u?.email || 'there';
   }
+
+  readonly suggestedPrompts = computed(() => this.t().aiAssistant.suggestedPrompts);
+
+  private static readonly PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/verify-account'];
+
+  constructor() {
+    this._routerSub = this.router.events.subscribe(e => {
+      if (e instanceof NavigationStart && AiPanel.PUBLIC_ROUTES.some(r => e.url === r || e.url.startsWith(r + '?'))) {
+        this.aiChatService.closePanel();
+      }
+    });
+
+    effect(() => {
+      if (this.isPanelOpen()) {
+        if (!this.profileId() && !this.profileError()) {
+          this.loadProfileThenConversations();
+        } else {
+          this.scrollToBottom();
+        }
+      }
+    });
+  }
+
+  ngOnInit(): void {}
+
+  ngOnDestroy(): void {
+    this._routerSub.unsubscribe();
+  }
+
+  closePanel(): void {
+    this.aiChatService.closePanel();
+  }
+
 
   private loadProfileThenConversations(): void {
     this.healthProfileService
@@ -141,8 +145,6 @@ export class AiAssistant implements OnInit {
     });
   }
 
-  // ── Conversation list actions ──
-
   startNewConversation(): void {
     this.selectedConversationId.set(null);
     this.messages.set([]);
@@ -152,12 +154,19 @@ export class AiAssistant implements OnInit {
     this.focusInput();
   }
 
+  usePrompt(prompt: string): void {
+    this.startNewConversation();
+    this.messageText.set(prompt);
+    this.sendMessage();
+  }
+
   selectConversation(conversation: ConversationSummaryDto): void {
-    if (this.selectedConversationId() === conversation.id) return;
+    if (this.selectedConversationId() === conversation.id) {
+      return;
+    }
 
     this.selectedConversationId.set(conversation.id);
     this.sendError.set(null);
-    this.renaming.set(false);
     this.messagesLoading.set(true);
     this.messages.set([]);
     this.clearAttachedImage();
@@ -169,61 +178,6 @@ export class AiAssistant implements OnInit {
     });
   }
 
-  toggleShowAllConversations(): void {
-    this.showAllConversations.update(v => !v);
-  }
-
-  // ── Rename ──
-
-  startRename(): void {
-    const conv = this.selectedConversation();
-    if (!conv) return;
-    this.renameDraft.set(conv.title);
-    this.renaming.set(true);
-  }
-
-  cancelRename(): void {
-    this.renaming.set(false);
-  }
-
-  confirmRename(): void {
-    const conv = this.selectedConversation();
-    const title = this.renameDraft().trim();
-    if (!conv || !title) {
-      this.renaming.set(false);
-      return;
-    }
-
-    this.aiChatService.renameConversation(conv.id, title).subscribe({
-      next: res => {
-        const updated = res.data;
-        if (updated) {
-          this.conversations.update(list => list.map(c => (c.id === conv.id ? { ...c, title: updated.title } : c)));
-        }
-        this.renaming.set(false);
-      },
-      error: () => this.renaming.set(false),
-    });
-  }
-
-  // ── Archive ──
-
-  archiveConversation(): void {
-    const conv = this.selectedConversation();
-    if (!conv) return;
-    if (!confirm('Archive this conversation? It will be removed from your conversation list.')) return;
-
-    this.aiChatService.archiveConversation(conv.id).subscribe(() => {
-      this.conversations.update(list => list.filter(c => c.id !== conv.id));
-      if (this.selectedConversationId() === conv.id) {
-        this.selectedConversationId.set(null);
-        this.messages.set([]);
-      }
-    });
-  }
-
-  // ── Image attachment ──
-
   triggerFileSelect(): void {
     if (this.sending()) return;
     this.fileInputRef?.nativeElement.click();
@@ -232,18 +186,16 @@ export class AiAssistant implements OnInit {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
-    input.value = ''; // allow re-selecting the same file later
+    input.value = ''; 
 
     if (!file) return;
 
     this.attachError.set(null);
-
     const format = ACCEPTED_IMAGE_TYPES[file.type];
     if (!format) {
       this.attachError.set(this.t().aiAssistant.unsupportedFormat);
       return;
     }
-
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
       this.attachError.set(this.t().aiAssistant.imageTooLarge);
       return;
@@ -274,8 +226,6 @@ export class AiAssistant implements OnInit {
     this.attachError.set(null);
   }
 
-  // ── Sending ──
-
   onMessageInput(value: string): void {
     this.messageText.set(value);
   }
@@ -285,7 +235,6 @@ export class AiAssistant implements OnInit {
     const imageBase64 = this.attachedImageBase64();
     const imageFormat = this.attachedImageFormat();
 
-    // Allow sending an image with no caption, but require at least one of the two.
     if ((!text && !imageBase64) || this.sending()) return;
 
     const profileId = this.profileId();
@@ -309,7 +258,6 @@ export class AiAssistant implements OnInit {
       return;
     }
 
-    // No conversation yet — create one titled from the first message, then send into it.
     const titleSource = text || 'Attached image';
     const title = titleSource.length > 40 ? `${titleSource.slice(0, 40)}…` : titleSource;
     this.aiChatService.createConversation({ userHealthProfileId: profileId, title }).subscribe({
@@ -410,14 +358,20 @@ export class AiAssistant implements OnInit {
   }
 
   private focusInput(): void {
-    setTimeout(() => this.messageInputRef?.nativeElement.focus(), 0);
+    setTimeout(() => this.messageInputRef?.nativeElement.focus(), 50);
   }
 
   private scrollToBottom(): void {
-    setTimeout(() => this.messagesEnd?.nativeElement.scrollIntoView({ behavior: 'smooth' }), 0);
+    setTimeout(() => this.messagesEnd?.nativeElement.scrollIntoView({ behavior: 'smooth' }), 50);
   }
 
-  // ── Formatting helpers ──
+  formatMessageTime(message: ConversationMessageDto): string {
+    return new Date(message.createdAt).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
 
   formatSidebarTime(conv: ConversationSummaryDto): string {
     const dateStr = conv.lastMessageAt ?? conv.createdAt;
@@ -435,28 +389,11 @@ export class AiAssistant implements OnInit {
     if (isYesterday) {
       return this.t().aiAssistant.yesterday;
     }
-
     const daysDiff = Math.floor((now.getTime() - date.getTime()) / 86_400_000);
     if (daysDiff < 7) {
       return date.toLocaleDateString('en-US', { weekday: 'long' });
     }
-
     return date.toLocaleDateString('en-GB');
-  }
-
-  formatMessageTime(message: ConversationMessageDto): string {
-    return new Date(message.createdAt).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-  }
-
-  formatHeaderLastUpdated(): string {
-    const conv = this.selectedConversation();
-    if (!conv) return '';
-    const dateStr = conv.lastMessageAt ?? conv.createdAt;
-    return this.formatSidebarTime(conv) + (new Date(dateStr).toDateString() === new Date().toDateString() ? ', ' + this.t().aiAssistant.today : '');
   }
 
   isUserMessage(message: ConversationMessageDto): boolean {
@@ -470,55 +407,18 @@ export class AiAssistant implements OnInit {
     const remove = msg.userReaction === type;
     const previousReaction = msg.userReaction;
 
+    // Optimistic update
     this.messages.update(list =>
       list.map(m => m.id === msg.id ? { ...m, userReaction: remove ? null : type } : m)
     );
 
     this.aiChatService.reactToMessage(conversationId, msg.id, type, remove).subscribe({
       error: () => {
+        // Revert on failure
         this.messages.update(list =>
           list.map(m => m.id === msg.id ? { ...m, userReaction: previousReaction } : m)
         );
       }
     });
-  }
-
-  // ── Shell chrome (mirrors dashboard.ts) ──
-
-  @HostListener('window:resize')
-  onWindowResize(): void {
-    this.applyResponsiveSidebar();
-  }
-
-  private applyResponsiveSidebar(): void {
-    this.sidebarCollapsed.set(window.innerWidth <= 1024);
-    if (window.innerWidth > 768) {
-      this.mobileSidebarOpen.set(false);
-    }
-  }
-
-  toggleSidebar(): void {
-    this.sidebarCollapsed.update(v => !v);
-  }
-
-  toggleMobileSidebar(): void {
-    this.mobileSidebarOpen.update(v => !v);
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.hdr-user')) {
-      this.dropdownOpen.set(false);
-    }
-  }
-
-  toggleDropdown(): void {
-    this.dropdownOpen.update(v => !v);
-  }
-
-  logout(): void {
-    this.dropdownOpen.set(false);
-    this.authService.logout().subscribe();
   }
 }

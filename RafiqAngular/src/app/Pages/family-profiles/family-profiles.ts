@@ -8,6 +8,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { catchError, of, map, forkJoin } from 'rxjs';
 import { LocalizationService } from '../../Services/localization.service';
+import { AiChatService } from '../../Services/ai-chat.service';
 import { AuthService } from '../../Services/auth-service';
 import { NotificationService } from '../../Services/notification.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
@@ -50,6 +51,7 @@ export class FamilyProfiles implements OnInit {
   @ViewChild('carouselEl') carouselElRef?: ElementRef<HTMLDivElement>;
 
   protected readonly l10n = inject(LocalizationService);
+  protected readonly aiChatService = inject(AiChatService);
   protected readonly t = this.l10n.t;
   private readonly authSvc = inject(AuthService);
   private readonly fpSvc = inject(FamilyProfilesService);

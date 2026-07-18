@@ -13,7 +13,7 @@ import { ScanMedicineBoxResponse, AddUserMedicinePayload } from '../../Modles/da
 import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
-import { of, forkJoin } from 'rxjs';
+import { of, forkJoin, Subscription } from 'rxjs';
 import { LocalizationService } from '../../Services/localization.service';
 import { switchMap, map } from 'rxjs';
 
@@ -210,6 +210,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   readonly uploadLoading = signal(false);
   readonly uploadLoadingLabel = signal('');
+  private _uploadSub: Subscription | null = null;
+  private _pendingUploadType: 'lab' | 'imaging' | 'prescription' | 'general' | null = null;
   readonly reviewForm = signal<ReviewForm | null>(null);
   readonly reviewSaving = signal(false);
   readonly generalUploadFormOpen = signal(false);
@@ -758,13 +760,16 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.uploadLoading.set(true);
     this.uploadLoadingLabel.set(labels[type]);
     this.setUploading(type, true);
+    this._pendingUploadType = type;
 
     const form = new FormData();
     form.append('image', file);
     if (type === 'general') form.append('description', description.trim());
 
-    this.http.post<{ data: any }>(urls[type], form).subscribe({
+    this._uploadSub = this.http.post<{ data: any }>(urls[type], form).subscribe({
       next: res => {
+        this._uploadSub = null;
+        this._pendingUploadType = null;
         this.uploadLoading.set(false);
         this.setUploading(type, false);
         const data = res?.data ?? (res as any);
@@ -776,6 +781,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.openReviewModal(type, data);
       },
       error: _err => {
+        this._uploadSub = null;
+        this._pendingUploadType = null;
         this.uploadLoading.set(false);
         this.setUploading(type, false);
         this._failedFile = file;
@@ -784,6 +791,17 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.showAiFailDialog.set(true);
       },
     });
+  }
+
+  cancelUpload(): void {
+    this._uploadSub?.unsubscribe();
+    this._uploadSub = null;
+    if (this._pendingUploadType) {
+      this.setUploading(this._pendingUploadType, false);
+      this._pendingUploadType = null;
+    }
+    this.uploadLoading.set(false);
+    this.uploadLoadingLabel.set('');
   }
 
   private openReviewModal(

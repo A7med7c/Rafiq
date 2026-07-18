@@ -621,6 +621,9 @@
     <p class="scan-title">{{ uploadLoadingLabel() }}</p>
     <p class="scan-sub">{{ t().records.extractingInfo }}</p>
     <div class="scan-dots"><span></span><span></span><span></span></div>
+    <button type="button" class="scan-cancel-btn" (click)="cancelUpload()">
+      <i class="fa-solid fa-xmark"></i> {{ t().records.cancelBtn }}
+    </button>
   </div>
 </div>
 }

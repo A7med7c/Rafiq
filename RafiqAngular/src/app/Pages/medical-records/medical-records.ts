@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../Services/auth-service';
+import { AiChatService } from '../../Services/ai-chat.service';
 import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medical-records.service';
 import { ScanMedicineBoxResponse, AddUserMedicinePayload, CreateReminderPayload } from '../../Modles/dashboard.models';
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
@@ -147,6 +148,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 })
 export class MedicalRecords implements OnInit {
   protected readonly l10n = inject(LocalizationService);
+  protected readonly aiChatService = inject(AiChatService);
   protected readonly t = this.l10n.t;
 
   private readonly authService = inject(AuthService);

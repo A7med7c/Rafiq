@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
 import { DashboardService } from '../../Services/dashboard.service';
+import { AiChatService } from '../../Services/ai-chat.service';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { NotificationService } from '../../Services/notification.service';
 import { LocalizationService } from '../../Services/localization.service';
@@ -26,6 +27,7 @@ export class Dashboard implements OnInit {
   private readonly apptService        = inject(AppointmentsService);
   protected readonly notifService     = inject(NotificationService);
   protected readonly l10n           = inject(LocalizationService);
+  protected readonly aiChatService  = inject(AiChatService);
   protected readonly t              = this.l10n.t;
   private readonly router             = inject(Router);
   private readonly elRef              = inject(ElementRef);

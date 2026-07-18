@@ -8,6 +8,7 @@ import { AuthService } from '../../Services/auth-service';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { NotificationService } from '../../Services/notification.service';
+import { AiChatService } from '../../Services/ai-chat.service';
 import {
   AppointmentDto, AppointmentStatus, AppointmentType,
   CreateAppointmentRequest, UpdateAppointmentRequest,
@@ -58,6 +59,7 @@ export class Appointments implements OnInit, OnDestroy {
   private readonly router     = inject(Router);
   private readonly route      = inject(ActivatedRoute);
   protected readonly l10n     = inject(LocalizationService);
+  protected readonly aiChatService = inject(AiChatService);
   protected readonly t        = this.l10n.t;
 
   // ── Layout ──────────────────────────────────────────────────────────────

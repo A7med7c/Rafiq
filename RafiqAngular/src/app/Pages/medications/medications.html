@@ -39,10 +39,6 @@
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
         <span>{{ t().sidebar.appointments }}</span>
       </a>
-      <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
-        <span>{{ t().sidebar.aiAssistant }}</span>
-      </a>
       <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>{{ t().sidebar.medications }}</span>
@@ -67,7 +63,7 @@
         <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
         <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
       </div>
-      <button type="button" class="sb-help-btn" routerLink="/ai-assistant">
+      <button type="button" class="sb-help-btn" (click)="aiChatService.openPanel()">
         <i class="fa-regular fa-comment-dots"></i>
         {{ t().sidebar.askNow }}
       </button>
@@ -87,7 +83,7 @@
         <input type="text" class="hdr-search-inp" [placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
-        <button type="button" class="hdr-ask-btn" routerLink="/ai-assistant">
+        <button type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           {{ t().header.askAI }}
         </button>

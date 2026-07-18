@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, map, of } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse } from '../Modles/api-response';
@@ -15,6 +15,20 @@ import {
 export class AiChatService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/chat`;
+
+  readonly isPanelOpen = signal(false);
+
+  openPanel(): void {
+    this.isPanelOpen.set(true);
+  }
+
+  closePanel(): void {
+    this.isPanelOpen.set(false);
+  }
+
+  togglePanel(): void {
+    this.isPanelOpen.update(v => !v);
+  }
 
   getConversations(): Observable<ConversationSummaryDto[]> {
     return this.http.get<ApiResponse<ConversationSummaryDto[]>>(`${this.base}/conversations`).pipe(
@@ -49,5 +63,17 @@ export class AiChatService {
 
   archiveConversation(conversationId: string): Observable<ApiResponse<boolean>> {
     return this.http.delete<ApiResponse<boolean>>(`${this.base}/conversations/${conversationId}`);
+  }
+
+  reactToMessage(
+    conversationId: string,
+    messageId: string,
+    reactionType: 'ThumbsUp' | 'ThumbsDown',
+    remove: boolean
+  ): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(
+      `${this.base}/conversations/${conversationId}/messages/${messageId}/react`,
+      { reactionType, remove }
+    );
   }
 }

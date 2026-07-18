@@ -78,6 +78,8 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<AiMessage> AiMessages => Set<AiMessage>();
 
+    public DbSet<MessageReaction> MessageReactions => Set<MessageReaction>();
+
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

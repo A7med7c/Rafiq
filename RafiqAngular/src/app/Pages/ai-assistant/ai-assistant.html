@@ -38,10 +38,7 @@
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
         <span>{{ t().sidebar.appointments }}</span>
       </a>
-      <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
-        <span>{{ t().sidebar.aiAssistant }}</span>
-      </a>
+
       <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>{{ t().sidebar.medications }}</span>
@@ -314,7 +311,25 @@
               <div class="chat-bubble chat-bubble--ai">
                 <markdown [data]="msg.content"></markdown>
               </div>
-              <span class="chat-msg-time chat-msg-time--ai">{{ formatMessageTime(msg) }}</span>
+              <div class="chat-msg-footer">
+                <span class="chat-msg-time chat-msg-time--ai">{{ formatMessageTime(msg) }}</span>
+                <div class="chat-reactions">
+                  <button type="button"
+                    class="chat-react-btn"
+                    [class.chat-react-btn--active]="msg.userReaction === 'ThumbsUp'"
+                    [title]="t().aiAssistant.reactionHelpful"
+                    (click)="toggleReaction(msg, 'ThumbsUp')">
+                    <i class="fa-regular fa-thumbs-up"></i>
+                  </button>
+                  <button type="button"
+                    class="chat-react-btn"
+                    [class.chat-react-btn--active-down]="msg.userReaction === 'ThumbsDown'"
+                    [title]="t().aiAssistant.reactionNotHelpful"
+                    (click)="toggleReaction(msg, 'ThumbsDown')">
+                    <i class="fa-regular fa-thumbs-down"></i>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
           }
