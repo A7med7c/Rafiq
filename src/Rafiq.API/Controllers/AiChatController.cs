@@ -89,9 +89,9 @@ public class AiChatController : ControllerBase
     /// Returns HasData=false without calling the AI when there is insufficient data.
     /// </summary>
     [HttpGet("health-summary/{profileId:guid}")]
-    public async Task<IActionResult> GetHealthSummary(Guid profileId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetHealthSummary(Guid profileId, [FromQuery] string language = "en", CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GenerateHealthSummaryQuery(profileId), cancellationToken);
+        var result = await _mediator.Send(new GenerateHealthSummaryQuery(profileId, language), cancellationToken);
         return Ok(result);
     }
 
