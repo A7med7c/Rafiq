@@ -417,6 +417,7 @@ export const ar: Translations = {
     showSidebar: 'اظهر المحادثات',
     hideSidebar: 'اخفي المحادثات',
     expandFullscreen: 'افتح بالشاشة الكاملة',
+    restoreWindow: 'استعادة النافذة',
     onlineStatus: 'متصل',
     composerHintPanel: 'Enter للإرسال · Shift+Enter لسطر جديد',
     reactionHelpful: 'مفيد',

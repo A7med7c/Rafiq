@@ -415,6 +415,7 @@ export const en = {
     showSidebar: 'Show conversations',
     hideSidebar: 'Hide conversations',
     expandFullscreen: 'Open full screen',
+    restoreWindow: 'Restore window',
     onlineStatus: 'Online',
     composerHintPanel: 'Press Enter · Shift+Enter for new line',
     reactionHelpful: 'Helpful',

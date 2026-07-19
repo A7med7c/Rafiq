@@ -1,6 +1,6 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, computed, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, NavigationStart } from '@angular/router';
+import { Router, NavigationStart } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
 import { AuthService } from '../../Services/auth-service';
 import { HealthProfileService } from '../../Services/health-profile.service';
@@ -22,7 +22,7 @@ const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 @Component({
   selector: 'app-ai-panel',
   standalone: true,
-  imports: [CommonModule, RouterLink, MarkdownComponent],
+  imports: [CommonModule, MarkdownComponent],
   templateUrl: './ai-panel.html',
   styleUrl: './ai-panel.css',
 })
@@ -46,11 +46,23 @@ export class AiPanel implements OnInit, OnDestroy {
   // ── Sidebar collapse — hidden by default ──
   readonly sidebarCollapsed = signal(true);
 
-  // ── Minimize / drag ──
-  readonly minimized = signal(false);
-  readonly isDragging = signal(false);
-  readonly dragPos = signal<{ top: number; left: number } | null>(null);
-  private _drag = { active: false, startX: 0, startY: 0, startLeft: 0, startTop: 0 };
+  // ── Window state ──
+  readonly minimized          = signal(false);
+  readonly maximized          = signal(false);
+  readonly isDragging         = signal(false);
+  readonly dragPos            = signal<{ top: number; left: number } | null>(null);
+  // True after the first user interaction — prevents the open animation from
+  // re-running when minimize/maximize/drag resets other style bindings.
+  readonly _suppressAnimation = signal(false);
+
+  // Internal drag tracking
+  private _drag = {
+    pending: false,   // mousedown recorded but threshold not yet met
+    active:  false,   // actually dragging
+    startX: 0, startY: 0,
+    startLeft: 0, startTop: 0,
+    panelW: 0, panelH: 0,
+  };
 
   toggleSidebar(): void {
     this.sidebarCollapsed.update(v => !v);
@@ -130,42 +142,72 @@ export class AiPanel implements OnInit, OnDestroy {
 
   closePanel(): void {
     this.minimized.set(false);
+    this.maximized.set(false);
     this.dragPos.set(null);
     this._drag.active = false;
+    this._drag.pending = false;
+    this._suppressAnimation.set(false); // allow slide-in on next open
     this.aiChatService.closePanel();
   }
 
   toggleMinimize(): void {
+    this._suppressAnimation.set(true);
     if (this.minimized()) {
       this.dragPos.set(null);
       this._drag.active = false;
+      this._drag.pending = false;
     }
+    this.maximized.set(false);
     this.minimized.update(v => !v);
   }
 
-  // ── Drag handlers (minimized header acts as drag handle) ──
+  toggleMaximize(): void {
+    this._suppressAnimation.set(true);
+    this.minimized.set(false);
+    this.dragPos.set(null);
+    this._drag.active = false;
+    this._drag.pending = false;
+    this.maximized.update(v => !v);
+  }
+
+  // ── Drag handlers ──
+  // Buttons/anchors inside the header are excluded from drag.
+  // A 5px movement threshold distinguishes drag from a click.
   onHeaderPointerDown(event: MouseEvent | TouchEvent): void {
-    if (!this.minimized()) return;
-    const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX;
-    const clientY = event instanceof TouchEvent ? event.touches[0].clientY : event.clientY;
+    if ((event.target as Element).closest('button, a')) return;
+    const clientX = event instanceof TouchEvent ? event.touches[0].clientX : (event as MouseEvent).clientX;
+    const clientY = event instanceof TouchEvent ? event.touches[0].clientY : (event as MouseEvent).clientY;
     const panel = (event.currentTarget as Element).closest('.ai-panel') as HTMLElement;
     if (!panel) return;
     const rect = panel.getBoundingClientRect();
-    this._drag = { active: true, startX: clientX, startY: clientY, startLeft: rect.left, startTop: rect.top };
-    this.isDragging.set(true);
-    event.preventDefault();
+    this._drag = {
+      pending: true,
+      active: false,
+      startX: clientX, startY: clientY,
+      startLeft: rect.left, startTop: rect.top,
+      panelW: rect.width, panelH: rect.height,
+    };
   }
 
   @HostListener('document:mousemove', ['$event'])
   @HostListener('document:touchmove', ['$event'])
   onPointerMove(event: MouseEvent | TouchEvent): void {
+    if (!this._drag.pending && !this._drag.active) return;
+    const clientX = event instanceof TouchEvent ? event.touches[0].clientX : (event as MouseEvent).clientX;
+    const clientY = event instanceof TouchEvent ? event.touches[0].clientY : (event as MouseEvent).clientY;
+    const dx = clientX - this._drag.startX;
+    const dy = clientY - this._drag.startY;
+
+    if (this._drag.pending && Math.sqrt(dx * dx + dy * dy) >= 5) {
+      this._drag.pending = false;
+      this._drag.active = true;
+      this._suppressAnimation.set(true);
+      this.isDragging.set(true);
+    }
+
     if (!this._drag.active) return;
-    const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX;
-    const clientY = event instanceof TouchEvent ? event.touches[0].clientY : event.clientY;
-    const panelW = 260;
-    const panelH = 58;
-    const top = Math.max(0, Math.min(window.innerHeight - panelH, this._drag.startTop + clientY - this._drag.startY));
-    const left = Math.max(0, Math.min(window.innerWidth - panelW, this._drag.startLeft + clientX - this._drag.startX));
+    const top  = Math.max(0, Math.min(window.innerHeight - this._drag.panelH, this._drag.startTop  + dy));
+    const left = Math.max(0, Math.min(window.innerWidth  - this._drag.panelW, this._drag.startLeft + dx));
     this.dragPos.set({ top, left });
     event.preventDefault();
   }
@@ -173,6 +215,7 @@ export class AiPanel implements OnInit, OnDestroy {
   @HostListener('document:mouseup')
   @HostListener('document:touchend')
   onPointerUp(): void {
+    this._drag.pending = false;
     if (!this._drag.active) return;
     this._drag.active = false;
     this.isDragging.set(false);
