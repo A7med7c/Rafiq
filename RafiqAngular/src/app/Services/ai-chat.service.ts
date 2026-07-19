@@ -20,12 +20,34 @@ export class AiChatService {
 
   // ── Session-scoped image cache ───────────────────────────
   // Key: `${conversationId}:${sequenceNumber}` → data-URL
-  // The backend doesn't persist image bytes, so we hold them
-  // in memory for the lifetime of the app session.
+  // Backed by sessionStorage so images survive page reloads
+  // within the same browser tab. Falls back to an in-memory
+  // map when sessionStorage is unavailable or full.
+  private static readonly _SS_KEY = 'rafiq_img_cache';
   private readonly _imgCache = new Map<string, string>();
 
+  constructor() {
+    // Warm the in-memory map from sessionStorage on startup.
+    try {
+      const stored = sessionStorage.getItem(AiChatService._SS_KEY);
+      if (stored) {
+        const parsed: Record<string, string> = JSON.parse(stored);
+        for (const [k, v] of Object.entries(parsed)) {
+          this._imgCache.set(k, v);
+        }
+      }
+    } catch { /* sessionStorage unavailable */ }
+  }
+
   cacheImage(conversationId: string, seq: number, dataUrl: string): void {
-    this._imgCache.set(`${conversationId}:${seq}`, dataUrl);
+    const key = `${conversationId}:${seq}`;
+    this._imgCache.set(key, dataUrl);
+    try {
+      const stored = sessionStorage.getItem(AiChatService._SS_KEY);
+      const parsed: Record<string, string> = stored ? JSON.parse(stored) : {};
+      parsed[key] = dataUrl;
+      sessionStorage.setItem(AiChatService._SS_KEY, JSON.stringify(parsed));
+    } catch { /* quota exceeded or unavailable — in-memory only */ }
   }
 
   getCachedImage(conversationId: string, seq: number): string | undefined {

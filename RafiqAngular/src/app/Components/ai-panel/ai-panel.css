@@ -18,7 +18,7 @@
   right: 24px;
   bottom: auto;
   transform: translateY(-50%);
-  width: min(400px, calc(100vw - 48px));
+  width: min(420px, calc(100vw - 48px));
   height: calc(100vh - 120px);
   max-height: 550px;
   background: #ffffff;
@@ -90,8 +90,8 @@
    CONVERSATIONS SIDEBAR — fully hidden when collapsed
 ══════════════════════════════════════════════════════ */
 .ai-sidebar {
-  width: 220px;
-  min-width: 220px;
+  width: 170px;
+  min-width: 170px;
   background: #F4F7FB;
   border-right: 1px solid #E5E7EB;
   display: flex;
