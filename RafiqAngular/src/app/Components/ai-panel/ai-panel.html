@@ -1,7 +1,14 @@
 @if (isPanelOpen()) {
   <div class="ai-panel-overlay" (click)="closePanel()"></div>
 
-  <div class="ai-panel" [attr.dir]="l10n.dir()">
+  <div class="ai-panel"
+    [attr.dir]="l10n.dir()"
+    [class.ai-panel--minimized]="minimized()"
+    [class.ai-panel--dragging]="isDragging()"
+    [style.top.px]="minimized() && dragPos() ? dragPos()!.top : null"
+    [style.left.px]="minimized() && dragPos() ? dragPos()!.left : null"
+    [style.right]="minimized() && dragPos() ? 'auto' : null"
+    [style.transform]="minimized() && dragPos() ? 'none' : null">
 
     <!-- ══ CONVERSATIONS SIDEBAR ══ -->
     <aside class="ai-sidebar" [class.ai-sidebar--collapsed]="sidebarCollapsed()">
@@ -49,19 +56,15 @@
     <div class="ai-main">
 
       <!-- Header -->
-      <header class="ai-main-hdr">
+      <header class="ai-main-hdr"
+        (mousedown)="onHeaderPointerDown($event)"
+        (touchstart)="onHeaderPointerDown($event)">
         <div class="ai-main-hdr-left">
-          <!-- Sidebar toggle — always visible in header -->
-          <button type="button" class="ai-hdr-btn ai-hdr-btn--sidebar"
-            (click)="toggleSidebar()"
-            [title]="sidebarCollapsed() ? t().aiAssistant.showSidebar : t().aiAssistant.hideSidebar">
-            <i class="fa-solid fa-bars"></i>
-          </button>
           <div class="ai-avatar-badge">
             <img src="images/RafiqLogo.png" alt="Rafiq" class="ai-badge-logo">
             <span class="online-dot"></span>
           </div>
-          <div>
+          <div class="ai-hdr-info">
             <h3 class="ai-main-title">Rafiq AI</h3>
             @if (selectedConversation()) {
               <p class="ai-main-sub">{{ selectedConversation()!.title }}</p>
@@ -71,11 +74,23 @@
           </div>
         </div>
         <div class="ai-main-hdr-right">
-          <a class="ai-hdr-btn" routerLink="/ai-assistant" (click)="closePanel()"
-            [title]="t().aiAssistant.expandFullscreen">
-            <i class="fa-solid fa-expand"></i>
-          </a>
-          <button type="button" class="ai-hdr-btn" (click)="closePanel()"
+          @if (!minimized()) {
+            <button type="button" class="ai-hdr-btn ai-hdr-btn--sidebar"
+              (click)="toggleSidebar()"
+              [title]="sidebarCollapsed() ? t().aiAssistant.showSidebar : t().aiAssistant.hideSidebar">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <a class="ai-hdr-btn" routerLink="/ai-assistant" (click)="closePanel()"
+              [title]="t().aiAssistant.expandFullscreen">
+              <i class="fa-solid fa-expand"></i>
+            </a>
+          }
+          <button type="button" class="ai-hdr-btn ai-hdr-btn--minimize"
+            (click)="toggleMinimize()"
+            [title]="minimized() ? t().aiAssistant.onlineStatus : t().common.close">
+            <i class="fa-solid" [class.fa-chevron-down]="!minimized()" [class.fa-chevron-up]="minimized()"></i>
+          </button>
+          <button type="button" class="ai-hdr-btn ai-hdr-btn--close" (click)="closePanel()"
             [title]="t().common.close">
             <i class="fa-solid fa-xmark"></i>
           </button>

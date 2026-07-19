@@ -18,6 +18,20 @@ export class AiChatService {
 
   readonly isPanelOpen = signal(false);
 
+  // ── Session-scoped image cache ───────────────────────────
+  // Key: `${conversationId}:${sequenceNumber}` → data-URL
+  // The backend doesn't persist image bytes, so we hold them
+  // in memory for the lifetime of the app session.
+  private readonly _imgCache = new Map<string, string>();
+
+  cacheImage(conversationId: string, seq: number, dataUrl: string): void {
+    this._imgCache.set(`${conversationId}:${seq}`, dataUrl);
+  }
+
+  getCachedImage(conversationId: string, seq: number): string | undefined {
+    return this._imgCache.get(`${conversationId}:${seq}`);
+  }
+
   openPanel(): void {
     this.isPanelOpen.set(true);
   }

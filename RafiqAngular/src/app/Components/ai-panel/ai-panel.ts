@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, computed, inject, signal, effect } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, computed, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, NavigationStart } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
@@ -45,6 +45,12 @@ export class AiPanel implements OnInit, OnDestroy {
 
   // ── Sidebar collapse — hidden by default ──
   readonly sidebarCollapsed = signal(true);
+
+  // ── Minimize / drag ──
+  readonly minimized = signal(false);
+  readonly isDragging = signal(false);
+  readonly dragPos = signal<{ top: number; left: number } | null>(null);
+  private _drag = { active: false, startX: 0, startY: 0, startLeft: 0, startTop: 0 };
 
   toggleSidebar(): void {
     this.sidebarCollapsed.update(v => !v);
@@ -123,7 +129,53 @@ export class AiPanel implements OnInit, OnDestroy {
   }
 
   closePanel(): void {
+    this.minimized.set(false);
+    this.dragPos.set(null);
+    this._drag.active = false;
     this.aiChatService.closePanel();
+  }
+
+  toggleMinimize(): void {
+    if (this.minimized()) {
+      this.dragPos.set(null);
+      this._drag.active = false;
+    }
+    this.minimized.update(v => !v);
+  }
+
+  // ── Drag handlers (minimized header acts as drag handle) ──
+  onHeaderPointerDown(event: MouseEvent | TouchEvent): void {
+    if (!this.minimized()) return;
+    const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX;
+    const clientY = event instanceof TouchEvent ? event.touches[0].clientY : event.clientY;
+    const panel = (event.currentTarget as Element).closest('.ai-panel') as HTMLElement;
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    this._drag = { active: true, startX: clientX, startY: clientY, startLeft: rect.left, startTop: rect.top };
+    this.isDragging.set(true);
+    event.preventDefault();
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  @HostListener('document:touchmove', ['$event'])
+  onPointerMove(event: MouseEvent | TouchEvent): void {
+    if (!this._drag.active) return;
+    const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX;
+    const clientY = event instanceof TouchEvent ? event.touches[0].clientY : event.clientY;
+    const panelW = 260;
+    const panelH = 58;
+    const top = Math.max(0, Math.min(window.innerHeight - panelH, this._drag.startTop + clientY - this._drag.startY));
+    const left = Math.max(0, Math.min(window.innerWidth - panelW, this._drag.startLeft + clientX - this._drag.startX));
+    this.dragPos.set({ top, left });
+    event.preventDefault();
+  }
+
+  @HostListener('document:mouseup')
+  @HostListener('document:touchend')
+  onPointerUp(): void {
+    if (!this._drag.active) return;
+    this._drag.active = false;
+    this.isDragging.set(false);
   }
 
 
@@ -180,7 +232,15 @@ export class AiPanel implements OnInit, OnDestroy {
     this.clearAttachedImage();
 
     this.aiChatService.getConversationHistory(conversation.id).subscribe(history => {
-      this.messages.set(history?.messages ?? []);
+      const convId = conversation.id;
+      this.messages.set(
+        (history?.messages ?? []).map(m => ({
+          ...m,
+          imagePreviewUrl: m.role === 'User'
+            ? this.aiChatService.getCachedImage(convId, m.sequenceNumber)
+            : undefined,
+        }))
+      );
       this.messagesLoading.set(false);
       this.scrollToBottom();
     });
@@ -301,6 +361,10 @@ export class AiPanel implements OnInit, OnDestroy {
 
   private pushOptimisticUserMessage(text: string, imagePreviewUrl?: string): void {
     const nextSeq = (this.messages().at(-1)?.sequenceNumber ?? 0) + 1;
+    const convId = this.selectedConversationId();
+    if (imagePreviewUrl && convId) {
+      this.aiChatService.cacheImage(convId, nextSeq, imagePreviewUrl);
+    }
     this.messages.update(list => [
       ...list,
       {

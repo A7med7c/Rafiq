@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
 import { AuthService } from '../../Services/auth-service';
@@ -37,6 +37,7 @@ export class AiAssistant implements OnInit {
   private readonly healthProfileService = inject(HealthProfileService);
   private readonly aiChatService = inject(AiChatService);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
@@ -176,7 +177,15 @@ export class AiAssistant implements OnInit {
     this.clearAttachedImage();
 
     this.aiChatService.getConversationHistory(conversation.id).subscribe(history => {
-      this.messages.set(history?.messages ?? []);
+      const convId = conversation.id;
+      this.messages.set(
+        (history?.messages ?? []).map(m => ({
+          ...m,
+          imagePreviewUrl: m.role === 'User'
+            ? this.aiChatService.getCachedImage(convId, m.sequenceNumber)
+            : undefined,
+        }))
+      );
       this.messagesLoading.set(false);
       this.scrollToBottom();
     });
@@ -358,6 +367,10 @@ export class AiAssistant implements OnInit {
 
   private pushOptimisticUserMessage(text: string, imagePreviewUrl?: string): void {
     const nextSeq = (this.messages().at(-1)?.sequenceNumber ?? 0) + 1;
+    const convId = this.selectedConversationId();
+    if (imagePreviewUrl && convId) {
+      this.aiChatService.cacheImage(convId, nextSeq, imagePreviewUrl);
+    }
     this.messages.update(list => [
       ...list,
       {
@@ -567,6 +580,11 @@ export class AiAssistant implements OnInit {
   goToMyProfile(): void {
     this.dropdownOpen.set(false);
     this.router.navigate(['/my-profile']);
+  }
+
+  minimizeChat(): void {
+    this.aiChatService.openPanel();
+    this.location.back();
   }
 
   logout(): void {

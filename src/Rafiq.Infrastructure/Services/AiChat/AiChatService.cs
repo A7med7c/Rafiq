@@ -12,8 +12,24 @@ namespace Rafiq.Infrastructure.Services.AiChat;
 
 public sealed class AiChatService : IAiChatService
 {
-    private const string DefaultImageCaption = "اشرح محتوى الصورة بشكل مبسط.";
+    private const string DefaultImageCaption = "Please describe what you see in this image.";
     private static readonly string[] SupportedImageFormats = { "jpeg", "png", "webp" };
+
+    private const string MedicalImageGuardPrompt =
+        "SYSTEM INSTRUCTION (highest priority — follow exactly):\n" +
+        "You are Rafiq, an AI healthcare assistant. Your role is strictly limited to healthcare.\n\n" +
+        "Step 1 — Classify the image:\n" +
+        "Determine whether the image is medical or healthcare-related. Medical images include:\n" +
+        "prescriptions, lab reports, blood tests, X-rays, MRI, CT scans, ultrasounds, medication boxes,\n" +
+        "medical documents, skin conditions, wounds, injuries, rashes, or any other clinical content.\n\n" +
+        "Step 2 — Decide:\n" +
+        "• If the image IS medical: analyze it and respond helpfully in the user's language.\n" +
+        "• If the image is NOT medical (e.g. person, landscape, animal, car, food, etc.):\n" +
+        "  Do NOT describe or analyze it. Respond ONLY with this message (translated to the user's language if needed):\n" +
+        "  \"I'm Rafiq, your healthcare assistant. I can only analyze medical images such as prescriptions, " +
+        "lab reports, medical scans, medications, and other healthcare-related documents. " +
+        "Please upload a medical image if you need assistance.\"\n\n" +
+        "User message: ";
 
     private readonly HttpClient _httpClient;
     private readonly BedrockSettings _bedrockSettings;
@@ -57,9 +73,11 @@ public sealed class AiChatService : IAiChatService
                 });
             }
 
-            var imageText = string.IsNullOrWhiteSpace(request.CurrentUserMessage)
+            var userText = string.IsNullOrWhiteSpace(request.CurrentUserMessage)
                 ? DefaultImageCaption
                 : request.CurrentUserMessage;
+
+            var imageText = MedicalImageGuardPrompt + userText;
 
             messages.Add(new
             {

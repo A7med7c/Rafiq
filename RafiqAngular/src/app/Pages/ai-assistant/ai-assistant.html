@@ -228,7 +228,9 @@
 
         @if (!selectedConversationId()) {
         <div class="chat-empty-state">
-          <div class="chat-empty-avatar"><i class="fa-solid fa-robot"></i></div>
+          <div class="chat-empty-avatar">
+            <img src="images/RafiqLogo.png" alt="Rafiq" class="chat-empty-logo">
+          </div>
           <h2>{{ t().aiAssistant.askRafiqAI }}</h2>
           <p>{{ t().aiAssistant.aiEmptyText }}</p>
         </div>
@@ -236,7 +238,9 @@
 
         <div class="chat-main-hdr">
           <div class="chat-main-hdr-left">
-            <span class="chat-avatar-sm"><i class="fa-solid fa-robot"></i></span>
+            <span class="chat-avatar-sm">
+              <img src="images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo">
+            </span>
             <div class="chat-main-hdr-title">
               @if (!renaming()) {
               <div class="chat-title-row">
@@ -275,8 +279,8 @@
             <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.share">
               <i class="fa-solid fa-share-nodes"></i>
             </button>
-            <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.moreOptions">
-              <i class="fa-solid fa-ellipsis"></i>
+            <button type="button" class="chat-icon-btn chat-icon-btn--minimize" title="Minimize" (click)="minimizeChat()">
+              <i class="fa-solid fa-compress"></i>
             </button>
           </div>
         </div>
@@ -305,7 +309,7 @@
           </div>
           } @else {
           <div class="chat-msg chat-msg--ai">
-            <span class="chat-avatar-sm chat-avatar-sm--msg"><i class="fa-solid fa-robot"></i></span>
+            <span class="chat-avatar-sm chat-avatar-sm--msg"><img src="images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo"></span>
             <div class="chat-bubble-col">
               <div class="chat-bubble chat-bubble--ai">
                 <markdown [data]="msg.content"></markdown>
@@ -336,7 +340,7 @@
 
           @if (sending()) {
           <div class="chat-msg chat-msg--ai">
-            <span class="chat-avatar-sm chat-avatar-sm--msg"><i class="fa-solid fa-robot"></i></span>
+            <span class="chat-avatar-sm chat-avatar-sm--msg"><img src="images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo"></span>
             <div class="chat-bubble-col">
               <div class="chat-bubble chat-bubble--ai chat-typing">
                 <span class="chat-typing-dot"></span>
