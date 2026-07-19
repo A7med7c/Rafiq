@@ -134,14 +134,16 @@
       <!-- Page Title -->
       <div class="mp-title-bar">
         <div class="mp-title-left">
-          <div class="mp-title-ico">
-            <i class="fa-regular fa-user"></i>
-          </div>
           <div>
-            <h1 class="mp-h1">My Profile</h1>
+            <h1 class="mp-h1">My Health Profile</h1>
             <p class="mp-h1-sub">View and manage your personal health information</p>
           </div>
         </div>
+        @if (!profileLoading()) {
+        <button type="button" class="mp-edit-profile-btn" (click)="openEditPersonal()">
+          <i class="fa-solid fa-pen"></i> Edit Profile
+        </button>
+        }
       </div>
 
       @if (profileLoading()) {
@@ -155,37 +157,55 @@
 
         <!-- ══ Hero Card ══════════════════════════════════════════════════════ -->
         <div class="mp-hero-card">
-          <div class="mp-hero-avatar">
-            <img [src]="avatarUrl" alt="avatar" class="mp-hero-img">
-            <div class="mp-hero-badge">
-              <i class="fa-solid fa-shield-halved"></i>
+          <div class="mp-hero-main">
+            <div class="mp-hero-avatar">
+              <img [src]="heroAvatarUrl()" alt="avatar" class="mp-hero-img" [class.mp-hero-img--uploading]="photoUploading()">
+              @if (photoUploading()) {
+              <div class="mp-hero-img-spinner"><span class="mp-spinner mp-spinner--sm"></span></div>
+              }
+              <button type="button" class="mp-hero-cam" title="Change photo" (click)="triggerPhotoUpload()" [disabled]="photoUploading()">
+                <i class="fa-solid fa-camera"></i>
+              </button>
+              <input #photoInput type="file" accept="image/*" class="mp-hero-file-input" (change)="onPhotoSelected($event)">
+            </div>
+            <div class="mp-hero-info">
+              <h2 class="mp-hero-name">
+                {{ displayName }}
+                <span class="mp-self-badge"><i class="fa-solid fa-user"></i> Self Profile</span>
+              </h2>
+              <p class="mp-hero-email">
+                <i class="fa-regular fa-envelope"></i> {{ userEmail }}
+              </p>
+              <p class="mp-hero-meta">
+                @if (profile()?.dateOfBirth) {
+                <span><i class="fa-regular fa-calendar"></i> {{ formatDob(profile()!.dateOfBirth) }} ({{ getAge(profile()!.dateOfBirth) }} years old)</span>
+                }
+                <span><i class="fa-solid fa-venus-mars"></i> {{ genderLabel() }}</span>
+              </p>
             </div>
           </div>
-          <div class="mp-hero-info">
-            <h2 class="mp-hero-name">{{ displayName }}</h2>
-            <p class="mp-hero-email">
-              <i class="fa-regular fa-envelope"></i> {{ userEmail }}
-            </p>
-            @if (profile()?.dateOfBirth) {
-            <p class="mp-hero-meta">
-              <span><i class="fa-regular fa-calendar"></i> {{ formatDob(profile()!.dateOfBirth) }}</span>
-              <span class="mp-hero-sep">•</span>
-              <span>{{ getAge(profile()!.dateOfBirth) }} years old</span>
-            </p>
-            }
-          </div>
-          <div class="mp-hero-stats">
-            <div class="mp-stat">
-              <span class="mp-stat-val">{{ profile()?.allergies?.length ?? 0 }}</span>
-              <span class="mp-stat-lbl">Allergies</span>
+          <div class="mp-hero-divider"></div>
+          <div class="mp-hero-side">
+            <div class="mp-side-row">
+              <div class="mp-side-ico mp-ico-blue"><i class="fa-regular fa-id-card"></i></div>
+              <div class="mp-side-text">
+                <span class="mp-side-lbl">Profile Type</span>
+                <span class="mp-side-val">Self</span>
+              </div>
             </div>
-            <div class="mp-stat">
-              <span class="mp-stat-val">{{ profile()?.chronicDiseases?.length ?? 0 }}</span>
-              <span class="mp-stat-lbl">Conditions</span>
+            <div class="mp-side-row">
+              <div class="mp-side-ico mp-ico-green"><i class="fa-solid fa-shield-halved"></i></div>
+              <div class="mp-side-text">
+                <span class="mp-side-lbl">Access Role</span>
+                <span class="mp-side-val">Owner</span>
+              </div>
             </div>
-            <div class="mp-stat">
-              <span class="mp-stat-val">{{ contacts().length }}</span>
-              <span class="mp-stat-lbl">Contacts</span>
+            <div class="mp-side-row">
+              <div class="mp-side-ico mp-ico-orange"><i class="fa-regular fa-calendar-check"></i></div>
+              <div class="mp-side-text">
+                <span class="mp-side-lbl">Member Since</span>
+                <span class="mp-side-val">{{ formatDob(profile()?.createdAt) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -219,6 +239,12 @@
               <label>Verification Code</label>
               <input type="text" [(ngModel)]="emailOtpCode" placeholder="Enter 6-digit code" maxlength="6" autocomplete="one-time-code">
             </div>
+            @if (emailOtpError()) {
+            <div class="mp-error-alert">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>{{ emailOtpError() }}</span>
+            </div>
+            }
             <div class="mp-form-actions">
               <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEmailVerification()" [disabled]="emailOtpSaving()">Cancel</button>
               <button type="button" class="mp-btn mp-btn-ghost" (click)="resendEmailOtp()" [disabled]="emailOtpResending() || emailOtpSaving()">
@@ -230,35 +256,31 @@
             </div>
           </div>
           } @else if (!editingPersonal()) {
-          <div class="mp-fields">
-            <div class="mp-field">
-              <span class="mp-field-lbl">First Name</span>
-              <span class="mp-field-val">{{ authService.currentUser?.firstName || '—' }}</span>
+          <div class="mp-info-rows">
+            <div class="mp-info-row">
+              <span class="mp-info-lbl"><span class="mp-info-ico mp-ico-blue"><i class="fa-regular fa-user"></i></span> Full Name</span>
+              <span class="mp-info-val">{{ displayName }}</span>
             </div>
-            <div class="mp-field">
-              <span class="mp-field-lbl">Last Name</span>
-              <span class="mp-field-val">{{ authService.currentUser?.lastName || '—' }}</span>
+            <div class="mp-info-row">
+              <span class="mp-info-lbl"><span class="mp-info-ico mp-ico-blue"><i class="fa-regular fa-calendar"></i></span> Date of Birth</span>
+              <span class="mp-info-val">{{ formatDob(profile()?.dateOfBirth) }}</span>
             </div>
-            <div class="mp-field">
-              <span class="mp-field-lbl">Date of Birth</span>
-              <span class="mp-field-val">{{ formatDob(profile()?.dateOfBirth) }}</span>
+            <div class="mp-info-row">
+              <span class="mp-info-lbl"><span class="mp-info-ico mp-ico-blue"><i class="fa-solid fa-venus-mars"></i></span> Gender</span>
+              <span class="mp-info-val">{{ genderLabel() }}</span>
             </div>
-            <div class="mp-field">
-              <span class="mp-field-lbl">Gender</span>
-              <span class="mp-field-val">{{ genderLabel() }}</span>
-            </div>
-            <div class="mp-field">
-              <span class="mp-field-lbl">Email</span>
-              <span class="mp-field-val">
+            <div class="mp-info-row">
+              <span class="mp-info-lbl"><span class="mp-info-ico mp-ico-blue"><i class="fa-regular fa-envelope"></i></span> Email</span>
+              <span class="mp-info-val">
                 {{ userEmail }}
                 @if (authService.currentUser?.emailConfirmed === false) {
                 <span class="mp-badge mp-badge--warn"><i class="fa-solid fa-triangle-exclamation"></i> Unverified</span>
                 }
               </span>
             </div>
-            <div class="mp-field">
-              <span class="mp-field-lbl">Phone</span>
-              <span class="mp-field-val">{{ authService.currentUser?.phoneNumber || '—' }}</span>
+            <div class="mp-info-row">
+              <span class="mp-info-lbl"><span class="mp-info-ico mp-ico-blue"><i class="fa-solid fa-phone"></i></span> Phone</span>
+              <span class="mp-info-val">{{ authService.currentUser?.phoneNumber || '—' }}</span>
             </div>
           </div>
           } @else {
@@ -300,6 +322,12 @@
                 <span class="mp-field-hint">Changing your email will require re-verification</span>
               </div>
             </div>
+            @if (personalFormError()) {
+            <div class="mp-error-alert">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>{{ personalFormError() }}</span>
+            </div>
+            }
             <div class="mp-form-actions">
               <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEditPersonal()" [disabled]="personalSaving()">Cancel</button>
               <button type="submit" class="mp-btn mp-btn-primary" [disabled]="personalSaving()">
@@ -313,7 +341,7 @@
         <!-- ══ Health Information ══════════════════════════════════════════════ -->
         <div class="mp-card">
           <div class="mp-card-head">
-            <div class="mp-card-ico mp-ico-green">
+            <div class="mp-card-ico mp-ico-teal">
               <i class="fa-solid fa-heartbeat"></i>
             </div>
             <div>
@@ -328,21 +356,21 @@
           </div>
 
           @if (!editingHealth()) {
-          <div class="mp-fields mp-fields--3">
-            <div class="mp-stat-card mp-stat-card--blue">
-              <i class="fa-solid fa-tint"></i>
-              <span class="mp-sc-val">{{ bloodTypeLabel() }}</span>
-              <span class="mp-sc-lbl">Blood Type</span>
+          <div class="mp-info-rows mp-info-rows--grid">
+            <div class="mp-info-row mp-info-row--stack">
+              <span class="mp-info-ico mp-info-ico--lg mp-ico-teal"><i class="fa-solid fa-droplet"></i></span>
+              <span class="mp-info-lbl-stack">Blood Type</span>
+              <span class="mp-info-val mp-info-val--lg">{{ bloodTypeLabel() }}</span>
             </div>
-            <div class="mp-stat-card mp-stat-card--purple">
-              <i class="fa-solid fa-ruler-vertical"></i>
-              <span class="mp-sc-val">{{ profile()?.height ? profile()!.height + ' cm' : '—' }}</span>
-              <span class="mp-sc-lbl">Height</span>
+            <div class="mp-info-row mp-info-row--stack">
+              <span class="mp-info-ico mp-info-ico--lg mp-ico-teal"><i class="fa-solid fa-ruler-vertical"></i></span>
+              <span class="mp-info-lbl-stack">Height</span>
+              <span class="mp-info-val mp-info-val--lg">{{ profile()?.height ? profile()!.height + ' cm' : '—' }}</span>
             </div>
-            <div class="mp-stat-card mp-stat-card--orange">
-              <i class="fa-solid fa-weight-scale"></i>
-              <span class="mp-sc-val">{{ profile()?.weight ? profile()!.weight + ' kg' : '—' }}</span>
-              <span class="mp-sc-lbl">Weight</span>
+            <div class="mp-info-row mp-info-row--stack">
+              <span class="mp-info-ico mp-info-ico--lg mp-ico-teal"><i class="fa-solid fa-weight-scale"></i></span>
+              <span class="mp-info-lbl-stack">Weight</span>
+              <span class="mp-info-val mp-info-val--lg">{{ profile()?.weight ? profile()!.weight + ' kg' : '—' }}</span>
             </div>
           </div>
           } @else {
@@ -381,40 +409,45 @@
           }
         </div>
 
-        <!-- ══ Allergies ══════════════════════════════════════════════════════ -->
+        <!-- ══ Allergies + Chronic Diseases ═════════════════════════════════════ -->
+        <div class="mp-row">
         <div class="mp-card">
           <div class="mp-card-head">
-            <div class="mp-card-ico mp-ico-red">
-              <i class="fa-solid fa-triangle-exclamation"></i>
+            <div class="mp-card-ico mp-ico-purple">
+              <i class="fa-solid fa-hand-dots"></i>
             </div>
             <div>
               <h3 class="mp-card-title">Allergies</h3>
-              <p class="mp-card-sub">{{ profile()?.allergies?.length ?? 0 }} allerg{{ (profile()?.allergies?.length ?? 0) === 1 ? 'y' : 'ies' }} recorded</p>
             </div>
-            <button type="button" class="mp-add-btn" (click)="openAddAllergy()">
-              <i class="fa-solid fa-plus"></i> Add
-            </button>
+            <span class="mp-count-badge mp-count-badge--purple">{{ profile()?.allergies?.length ?? 0 }}</span>
           </div>
 
           @if ((profile()?.allergies?.length ?? 0) === 0 && !addingAllergy()) {
           <div class="mp-empty">
-            <i class="fa-solid fa-triangle-exclamation mp-empty-ico"></i>
+            <i class="fa-solid fa-hand-dots mp-empty-ico"></i>
             <p>No allergies recorded</p>
           </div>
           } @else {
-          <div class="mp-tags-list">
+          <div class="mp-dot-list">
             @for (a of profile()?.allergies ?? []; track a.id) {
-            <div class="mp-tag-row">
-              <span class="mp-tag" [class]="severityClass(a.severity)">
-                {{ a.name }}
-                <span class="mp-tag-badge">{{ severityLabel(a.severity) }}</span>
-              </span>
+            <div class="mp-dot-row">
+              <span class="mp-dot" [class]="severityDotClass(a.severity)"></span>
+              <div class="mp-dot-text">
+                <span class="mp-dot-name">{{ a.name }}</span>
+                <span class="mp-dot-sub" [class]="severityClass(a.severity)">{{ severityLabel(a.severity) }}</span>
+              </div>
               <button type="button" class="mp-tag-del" (click)="deleteAllergy(a.id)" title="Remove">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
             }
           </div>
+          }
+
+          @if (!addingAllergy()) {
+          <button type="button" class="mp-add-block-btn" (click)="openAddAllergy()">
+            <i class="fa-solid fa-plus"></i> Add Allergy
+          </button>
           }
 
           @if (addingAllergy()) {
@@ -446,37 +479,42 @@
         <!-- ══ Chronic Diseases ═══════════════════════════════════════════════ -->
         <div class="mp-card">
           <div class="mp-card-head">
-            <div class="mp-card-ico mp-ico-purple">
-              <i class="fa-solid fa-lungs-virus"></i>
+            <div class="mp-card-ico mp-ico-green">
+              <i class="fa-solid fa-heart-pulse"></i>
             </div>
             <div>
               <h3 class="mp-card-title">Chronic Diseases</h3>
-              <p class="mp-card-sub">{{ profile()?.chronicDiseases?.length ?? 0 }} condition{{ (profile()?.chronicDiseases?.length ?? 0) === 1 ? '' : 's' }} recorded</p>
             </div>
-            <button type="button" class="mp-add-btn" (click)="openAddDisease()">
-              <i class="fa-solid fa-plus"></i> Add
-            </button>
+            <span class="mp-count-badge mp-count-badge--green">{{ profile()?.chronicDiseases?.length ?? 0 }}</span>
           </div>
 
           @if ((profile()?.chronicDiseases?.length ?? 0) === 0 && !addingDisease()) {
-          <div class="mp-empty">
-            <i class="fa-solid fa-lungs-virus mp-empty-ico"></i>
-            <p>No chronic conditions recorded</p>
+          <div class="mp-empty-success">
+            <div class="mp-empty-success-ico"><i class="fa-solid fa-check"></i></div>
+            <p class="mp-empty-success-title">No chronic diseases</p>
+            <p class="mp-empty-success-sub">You have not added any chronic diseases.</p>
           </div>
           } @else {
-          <div class="mp-tags-list">
+          <div class="mp-dot-list">
             @for (d of profile()?.chronicDiseases ?? []; track d.id) {
-            <div class="mp-tag-row">
-              <span class="mp-tag" [class]="statusClass(d.status)">
-                {{ d.name }}
-                <span class="mp-tag-badge">{{ statusLabel(d.status) }}</span>
-              </span>
+            <div class="mp-dot-row">
+              <span class="mp-dot" [class]="statusDotClass(d.status)"></span>
+              <div class="mp-dot-text">
+                <span class="mp-dot-name">{{ d.name }}</span>
+                <span class="mp-dot-sub" [class]="statusClass(d.status)">{{ statusLabel(d.status) }}</span>
+              </div>
               <button type="button" class="mp-tag-del" (click)="deleteDisease(d.id)" title="Remove">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
             }
           </div>
+          }
+
+          @if (!addingDisease()) {
+          <button type="button" class="mp-add-block-btn" (click)="openAddDisease()">
+            <i class="fa-solid fa-plus"></i> Add Condition
+          </button>
           }
 
           @if (addingDisease()) {
@@ -510,6 +548,7 @@
           </div>
           }
         </div>
+        </div><!-- end mp-row -->
 
         <!-- ══ Emergency Contacts ═════════════════════════════════════════════ -->
         <div class="mp-card">
@@ -521,9 +560,7 @@
               <h3 class="mp-card-title">Emergency Contacts</h3>
               <p class="mp-card-sub">People to contact in an emergency</p>
             </div>
-            <button type="button" class="mp-add-btn" (click)="openAddContact()">
-              <i class="fa-solid fa-plus"></i> Add
-            </button>
+            <span class="mp-count-badge mp-count-badge--teal">{{ contacts().length }}</span>
           </div>
 
           @if (contactsLoading()) {
@@ -557,6 +594,12 @@
           </div>
           }
 
+          @if (!addingContact()) {
+          <button type="button" class="mp-add-block-btn" (click)="openAddContact()">
+            <i class="fa-solid fa-plus"></i> Add Contact
+          </button>
+          }
+
           @if (addingContact()) {
           <div class="mp-inline-form">
             <div class="mp-form-row mp-form-row--3">
@@ -573,6 +616,12 @@
                 <input type="text" [(ngModel)]="newContact.relation" placeholder="e.g. Mother, Brother">
               </div>
             </div>
+            @if (contactFormError()) {
+            <div class="mp-error-alert">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>{{ contactFormError() }}</span>
+            </div>
+            }
             <div class="mp-form-actions">
               <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelAddContact()" [disabled]="contactSaving()">Cancel</button>
               <button type="button" class="mp-btn mp-btn-primary" (click)="saveContact()"
@@ -604,6 +653,15 @@
               <i class="fa-solid fa-trash"></i> Delete Account
             </button>
           </div>
+        </div>
+
+        <!-- ══ Trust Footer ═══════════════════════════════════════════════════ -->
+        <div class="mp-trust-bar">
+          <div class="mp-trust-left">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Your health data is encrypted and securely stored. Only authorized members can access your information.</span>
+          </div>
+          <a href="#" class="mp-trust-link">Learn more <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
         </div>
 
       </div><!-- end mp-grid -->

@@ -1,6 +1,6 @@
 import {
   Component, OnInit, inject, signal, computed,
-  HostListener, ElementRef
+  HostListener, ElementRef, viewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -61,14 +61,16 @@ export class MyProfile implements OnInit {
   readonly contactsLoading = signal(true);
 
   // ── Edit: Personal Info ───────────────────────────────────────────────────
-  readonly editingPersonal  = signal(false);
-  readonly verifyingEmail   = signal(false);
-  readonly pendingEmail     = signal('');
-  readonly emailOtpSaving   = signal(false);
+  readonly editingPersonal   = signal(false);
+  readonly verifyingEmail    = signal(false);
+  readonly pendingEmail      = signal('');
+  readonly emailOtpSaving    = signal(false);
   readonly emailOtpResending = signal(false);
   personalForm = { firstName: '', lastName: '', dateOfBirth: '', gender: '', phoneNumber: '', email: '' };
   emailOtpCode = '';
   readonly personalSaving = signal(false);
+  readonly personalFormError = signal<string | null>(null);
+  readonly emailOtpError     = signal<string | null>(null);
 
   // ── Edit: Health Info ─────────────────────────────────────────────────────
   readonly editingHealth = signal(false);
@@ -89,10 +91,20 @@ export class MyProfile implements OnInit {
   readonly addingContact    = signal(false);
   newContact = { name: '', phoneNumber: '', relation: '' };
   readonly contactSaving    = signal(false);
+  readonly contactFormError = signal<string | null>(null);
 
   // ── Delete account modal ──────────────────────────────────────────────────
   readonly deleteModalOpen  = signal(false);
   readonly deleteLoading    = signal(false);
+
+  // ── Profile photo upload ──────────────────────────────────────────────────
+  readonly photoInput = viewChild<ElementRef<HTMLInputElement>>('photoInput');
+  readonly photoUploading = signal(false);
+
+  readonly heroAvatarUrl = computed(() => {
+    const profileImageUrl = this.profile()?.profileImageUrl;
+    return profileImageUrl ? this.authService.resolveAvatarUrl(profileImageUrl) : this.avatarUrl;
+  });
 
   // ── Computed helpers ──────────────────────────────────────────────────────
   get displayName(): string {
@@ -207,6 +219,7 @@ export class MyProfile implements OnInit {
 
   // ── Edit Personal Info ────────────────────────────────────────────────────
   openEditPersonal(): void {
+    this.personalFormError.set(null);
     const p = this.profile();
     const u = this.authService.currentUser;
     this.personalForm = {
@@ -220,12 +233,16 @@ export class MyProfile implements OnInit {
     this.editingPersonal.set(true);
   }
 
-  cancelEditPersonal(): void { this.editingPersonal.set(false); }
+  cancelEditPersonal(): void {
+    this.personalFormError.set(null);
+    this.editingPersonal.set(false);
+  }
 
   savePersonal(): void {
     const id = this.profileId();
     if (!id) return;
     this.personalSaving.set(true);
+    this.personalFormError.set(null);
 
     const u = this.authService.currentUser;
     const currentEmail = u?.email ?? '';
@@ -280,7 +297,7 @@ export class MyProfile implements OnInit {
             error: (err) => {
               this.personalSaving.set(false);
               const msg = err?.error?.message ?? 'Failed to request email change.';
-              this.notifService.showToast('Email Update', msg, 'error');
+              this.personalFormError.set(msg);
             }
           });
         } else {
@@ -292,7 +309,7 @@ export class MyProfile implements OnInit {
       error: (err) => {
         this.personalSaving.set(false);
         const msg = err?.error?.message ?? 'Failed to save changes.';
-        this.notifService.showToast('Error', msg, 'error');
+        this.personalFormError.set(msg);
       }
     });
   }
@@ -300,6 +317,7 @@ export class MyProfile implements OnInit {
   // ── Email OTP Verification ────────────────────────────────────────────────
   verifyEmailOtp(): void {
     this.emailOtpSaving.set(true);
+    this.emailOtpError.set(null);
     this.authService.verifyAccount(this.pendingEmail(), this.emailOtpCode).subscribe({
       next: () => {
         // Refresh the user object first, then update signals so change detection
@@ -319,13 +337,14 @@ export class MyProfile implements OnInit {
       error: (err) => {
         this.emailOtpSaving.set(false);
         const msg = err?.error?.message ?? 'Invalid or expired code.';
-        this.notifService.showToast('Verification Failed', msg, 'error');
+        this.emailOtpError.set(msg);
       }
     });
   }
 
   resendEmailOtp(): void {
     this.emailOtpResending.set(true);
+    this.emailOtpError.set(null);
     this.authService.resendOtp(this.pendingEmail()).subscribe({
       next: () => { this.emailOtpResending.set(false); },
       error: () => { this.emailOtpResending.set(false); }
@@ -335,6 +354,7 @@ export class MyProfile implements OnInit {
   cancelEmailVerification(): void {
     this.verifyingEmail.set(false);
     this.emailOtpCode = '';
+    this.emailOtpError.set(null);
     this.authService.getMe().subscribe();
   }
 
@@ -465,13 +485,27 @@ export class MyProfile implements OnInit {
 
   // ── Emergency Contacts ────────────────────────────────────────────────────
   openAddContact(): void {
+    this.contactFormError.set(null);
     this.newContact = { name: '', phoneNumber: '', relation: '' };
     this.addingContact.set(true);
   }
-  cancelAddContact(): void { this.addingContact.set(false); }
+  cancelAddContact(): void {
+    this.contactFormError.set(null);
+    this.addingContact.set(false);
+  }
 
   saveContact(): void {
     if (!this.newContact.name.trim() || !this.newContact.phoneNumber.trim()) return;
+    this.contactFormError.set(null);
+
+    const userPhone = this.authService.currentUser?.phoneNumber;
+    const cleanNum = (num: string) => num.replace(/\D/g, '').slice(-10);
+
+    if (userPhone && cleanNum(this.newContact.phoneNumber) === cleanNum(userPhone)) {
+      this.contactFormError.set("You cannot add your own phone number as an emergency contact.");
+      return;
+    }
+
     this.contactSaving.set(true);
 
     this.emergencySvc.createEmergencyContact(this.newContact).subscribe({
@@ -480,7 +514,11 @@ export class MyProfile implements OnInit {
         this.contactSaving.set(false);
         this.addingContact.set(false);
       },
-      error: () => { this.contactSaving.set(false); }
+      error: (err) => {
+        this.contactSaving.set(false);
+        const msg = err?.error?.message ?? 'Failed to add emergency contact.';
+        this.contactFormError.set(msg);
+      }
     });
   }
 
@@ -490,6 +528,44 @@ export class MyProfile implements OnInit {
         this.contacts.update(list => list.filter(c => c.id !== contactId));
       },
       error: () => {}
+    });
+  }
+
+  // ── Profile Photo ─────────────────────────────────────────────────────────
+  triggerPhotoUpload(): void {
+    this.photoInput()?.nativeElement.click();
+  }
+
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    const id = this.profileId();
+    if (!id) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.notifService.showToast('Invalid File', 'Please choose an image file.', 'error');
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      this.notifService.showToast('File Too Large', 'Please choose an image under 6 MB.', 'error');
+      return;
+    }
+
+    this.photoUploading.set(true);
+    this.healthSvc.uploadProfileImage(id, file).subscribe({
+      next: (res) => {
+        this.profile.set(res.data);
+        this.photoUploading.set(false);
+        this.notifService.showToast('Photo Updated', 'Your profile photo has been updated.', 'success');
+      },
+      error: (err) => {
+        this.photoUploading.set(false);
+        const msg = err?.error?.message ?? 'Failed to upload photo.';
+        this.notifService.showToast('Error', msg, 'error');
+      }
     });
   }
 
@@ -526,6 +602,13 @@ export class MyProfile implements OnInit {
     return 'tag-severe';
   }
 
+  severityDotClass(s: string): string {
+    const v = this.severityLabel(s).toLowerCase();
+    if (v === 'mild') return 'dot-mild';
+    if (v === 'moderate') return 'dot-moderate';
+    return 'dot-severe';
+  }
+
   statusLabel(s: string): string {
     const map: Record<string, string> = { '1': 'Active', '2': 'Controlled', '3': 'Resolved' };
     return map[s] ?? s;
@@ -536,5 +619,12 @@ export class MyProfile implements OnInit {
     if (v === 'active') return 'tag-active';
     if (v === 'controlled') return 'tag-controlled';
     return 'tag-resolved';
+  }
+
+  statusDotClass(s: string): string {
+    const v = this.statusLabel(s).toLowerCase();
+    if (v === 'active') return 'dot-active';
+    if (v === 'controlled') return 'dot-controlled';
+    return 'dot-resolved';
   }
 }

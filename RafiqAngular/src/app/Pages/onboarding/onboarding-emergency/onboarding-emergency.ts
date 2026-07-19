@@ -70,10 +70,17 @@ export class OnboardingEmergency implements OnInit {
       return;
     }
 
-    this.isAdding = true;
     this.submitError = null;
-
     const body = this.form.getRawValue();
+    const userPhone = this.tokenStorage.getUser()?.phoneNumber;
+    const cleanNum = (num: string) => num.replace(/\D/g, '').slice(-10);
+
+    if (userPhone && cleanNum(body.phoneNumber) === cleanNum(userPhone)) {
+      this.submitError = "You cannot add your own phone number as an emergency contact.";
+      return;
+    }
+
+    this.isAdding = true;
 
     this.emergencyService.createEmergencyContact(body).subscribe({
       next: (res) => {
