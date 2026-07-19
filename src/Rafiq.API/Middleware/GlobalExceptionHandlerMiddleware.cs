@@ -40,16 +40,17 @@ public sealed class GlobalExceptionHandlerMiddleware
             throw exception;
         }
 
-        var (statusCode, message, errors) = exception switch
+        var (statusCode, message, errors, errorCode) = exception switch
         {
-            ValidationException validationException => (HttpStatusCode.BadRequest, "Validation failed.", validationException.Errors),
-            BadRequestException badRequestException => (HttpStatusCode.BadRequest, badRequestException.Message, new[] { badRequestException.Message }),
-            Rafiq.Domain.Exceptions.AuthenticationException authenticationException => (HttpStatusCode.Unauthorized, authenticationException.Message, new[] { authenticationException.Message }),
-            UnauthorizedException unauthorizedException => (HttpStatusCode.Unauthorized, unauthorizedException.Message, new[] { unauthorizedException.Message }),
-            NotFoundException notFoundException => (HttpStatusCode.NotFound, notFoundException.Message, new[] { notFoundException.Message }),
-            ConflictException conflictException => (HttpStatusCode.Conflict, conflictException.Message, new[] { conflictException.Message }),
-            ExternalServiceException externalServiceException => (HttpStatusCode.BadGateway, "External service error.", new[] { externalServiceException.Message }),
-            _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.", new[] { "An unexpected error occurred." })
+            ValidationException validationException => (HttpStatusCode.BadRequest, "Validation failed.", validationException.Errors, (string?)null),
+            DocumentValidationException documentValidationException => (HttpStatusCode.BadRequest, documentValidationException.Message, new[] { documentValidationException.Message }, documentValidationException.ErrorCode),
+            BadRequestException badRequestException => (HttpStatusCode.BadRequest, badRequestException.Message, new[] { badRequestException.Message }, (string?)null),
+            Rafiq.Domain.Exceptions.AuthenticationException authenticationException => (HttpStatusCode.Unauthorized, authenticationException.Message, new[] { authenticationException.Message }, (string?)null),
+            UnauthorizedException unauthorizedException => (HttpStatusCode.Unauthorized, unauthorizedException.Message, new[] { unauthorizedException.Message }, (string?)null),
+            NotFoundException notFoundException => (HttpStatusCode.NotFound, notFoundException.Message, new[] { notFoundException.Message }, (string?)null),
+            ConflictException conflictException => (HttpStatusCode.Conflict, conflictException.Message, new[] { conflictException.Message }, (string?)null),
+            ExternalServiceException externalServiceException => (HttpStatusCode.BadGateway, "External service error.", new[] { externalServiceException.Message }, (string?)null),
+            _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.", new[] { "An unexpected error occurred." }, (string?)null)
         };
 
         if (statusCode == HttpStatusCode.InternalServerError)
@@ -73,7 +74,7 @@ public sealed class GlobalExceptionHandlerMiddleware
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
 
-        var response = ApiResponse<object>.FailureResponse(message, errors.ToArray());
+        var response = ApiResponse<object>.FailureResponse(message, errors.ToArray(), errorCode);
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase

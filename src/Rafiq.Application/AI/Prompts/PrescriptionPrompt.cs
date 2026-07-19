@@ -28,6 +28,7 @@ public static class PrescriptionPrompt
 
         {
           "isValidDocument": true,
+          "isUnreadable": false,
           "detectedDocumentType": "Prescription",
           "doctorName": "",
           "patientName": "",
@@ -47,10 +48,11 @@ public static class PrescriptionPrompt
 
         - Determine the type of the uploaded image before extracting any data.
         - Use ONLY these values for detectedDocumentType: "Prescription", "LabReport", "ImagingReport", "MedicineBox", "Unknown".
-        - If the image is a valid prescription, set "isValidDocument": true and "detectedDocumentType": "Prescription".
-        - If the image is NOT a prescription (e.g., it is a lab report, imaging report, medicine box, unrelated photo, blank page, or unclear image), set "isValidDocument": false.
+        - If the image IS a prescription AND is clearly readable, set "isValidDocument": true, "isUnreadable": false, "detectedDocumentType": "Prescription".
+        - If the image IS a prescription BUT is too blurry, too cropped, too dark, too low resolution, or otherwise unreadable so that data cannot be reliably extracted, set "isValidDocument": true, "isUnreadable": true, "detectedDocumentType": "Prescription".
+        - If the image is NOT a prescription (e.g., it is a lab report, imaging report, medicine box, or unrelated photo), set "isValidDocument": false, "isUnreadable": false.
+        - If the image is completely blank, empty, random noise, or cannot be classified at all, set "isValidDocument": false, "isUnreadable": false, "detectedDocumentType": "Unknown".
         - Set detectedDocumentType to the actual detected type when it can be identified with confidence, otherwise set it to "Unknown".
-        - If the image is unreadable, unclear, unrelated, or cannot be classified confidently, set "isValidDocument": false and "detectedDocumentType": "Unknown".
         - Do NOT guess or infer the document type. Only classify with confidence.
 
         Extraction Rules (apply ONLY when isValidDocument is true):
@@ -67,7 +69,7 @@ public static class PrescriptionPrompt
         - Extract any special notes or instructions for each medicine if present.
         - If any field is missing or unreadable, return null.
 
-        Rules when isValidDocument is false:
+        Rules when isValidDocument is false OR isUnreadable is true:
 
         - Return null for ALL extraction fields: doctorName, patientName, prescriptionDate.
         - Return an empty array for medicines.

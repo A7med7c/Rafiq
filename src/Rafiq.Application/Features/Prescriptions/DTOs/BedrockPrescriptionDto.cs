@@ -8,6 +8,8 @@ public sealed class BedrockPrescriptionDto
 {
     public bool IsValidDocument { get; set; }
 
+    public bool IsUnreadable { get; set; }
+
     public string? DetectedDocumentType { get; set; }
 
     public string? DoctorName { get; set; }

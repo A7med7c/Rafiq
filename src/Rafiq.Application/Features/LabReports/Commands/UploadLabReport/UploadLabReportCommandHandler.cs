@@ -53,9 +53,15 @@ public sealed class UploadLabReportCommandHandler(
                 ? "The uploaded image could not be identified as a valid document."
                 : $"Detected document type: {detected}.";
 
-            throw new BadRequestException(
+            throw new DocumentValidationException(
+                "WRONG_DOCUMENT_TYPE_LAB_REPORT",
                 $"The uploaded document is not a lab report. {detailMessage} Please upload a valid laboratory report image.");
         }
+
+        if (extracted.IsUnreadable)
+            throw new DocumentValidationException(
+                "UNREADABLE_DOCUMENT_LAB_REPORT",
+                "The lab report image is unreadable. Please upload a clearer image or enter the information manually.");
 
         if (extracted.Tests.Count == 0)
             throw new BadRequestException("No laboratory tests could be extracted from the uploaded image.");

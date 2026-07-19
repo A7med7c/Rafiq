@@ -29,6 +29,7 @@ public static class LabReportPrompt
 
         {
           "isValidDocument": true,
+          "isUnreadable": false,
           "detectedDocumentType": "LabReport",
           "labName": "",
           "doctorName": "",
@@ -50,10 +51,11 @@ public static class LabReportPrompt
 
         - Determine the type of the uploaded image before extracting any data.
         - Use ONLY these values for detectedDocumentType: "Prescription", "LabReport", "ImagingReport", "MedicineBox", "Unknown".
-        - If the image is a valid laboratory report, set "isValidDocument": true and "detectedDocumentType": "LabReport".
-        - If the image is NOT a laboratory report (e.g., it is a prescription, imaging report, medicine box, unrelated photo, blank page, or unclear image), set "isValidDocument": false.
+        - If the image IS a laboratory report AND is clearly readable, set "isValidDocument": true, "isUnreadable": false, "detectedDocumentType": "LabReport".
+        - If the image IS a laboratory report BUT is too blurry, too cropped, too dark, too low resolution, or otherwise unreadable so that test data cannot be reliably extracted, set "isValidDocument": true, "isUnreadable": true, "detectedDocumentType": "LabReport".
+        - If the image is NOT a laboratory report (e.g., it is a prescription, imaging report, medicine box, or unrelated photo), set "isValidDocument": false, "isUnreadable": false.
+        - If the image is completely blank, empty, random noise, or cannot be classified at all, set "isValidDocument": false, "isUnreadable": false, "detectedDocumentType": "Unknown".
         - Set detectedDocumentType to the actual detected type when it can be identified with confidence, otherwise set it to "Unknown".
-        - If the image is unreadable, unclear, unrelated, or cannot be classified confidently, set "isValidDocument": false and "detectedDocumentType": "Unknown".
         - Do NOT guess or infer the document type. Only classify with confidence.
 
         Extraction Rules (apply ONLY when isValidDocument is true):
@@ -72,7 +74,7 @@ public static class LabReportPrompt
         - If no status exists, compare the reference with the value and generate a flag of (H,L,...etc).
         - If any field is missing or unreadable, return null.
 
-        Rules when isValidDocument is false:
+        Rules when isValidDocument is false OR isUnreadable is true:
 
         - Return null for ALL extraction fields: labName, doctorName, reportDate, ocrText, summary.
         - Return an empty array for tests.

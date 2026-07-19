@@ -53,9 +53,15 @@ public sealed class UploadImagingReportCommandHandler(
                 ? "The uploaded image could not be identified as a valid document."
                 : $"Detected document type: {detected}.";
 
-            throw new BadRequestException(
+            throw new DocumentValidationException(
+                "WRONG_DOCUMENT_TYPE_IMAGING_REPORT",
                 $"The uploaded document is not an imaging report. {detailMessage} Please upload a valid imaging report image.");
         }
+
+        if (extracted.IsUnreadable)
+            throw new DocumentValidationException(
+                "UNREADABLE_DOCUMENT_IMAGING_REPORT",
+                "The imaging report image is unreadable. Please upload a clearer image or enter the information manually.");
 
         var fileExtension = Path.GetExtension(request.Image.FileName);
         var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";

@@ -836,7 +836,23 @@ export class MedicalRecords implements OnInit {
       error: err => {
         this.uploadLoading.set(false);
         this.setUploading(type, false);
-        this.showToast(err?.error?.message || 'Upload failed. Please try again.', 'error');
+        const errCode = err?.error?.errorCode as string | undefined;
+        const v = this.t().uploadValidation;
+        if (errCode === 'WRONG_DOCUMENT_TYPE_LAB_REPORT') {
+          this.showToast(v.lab, 'error');
+        } else if (errCode === 'UNREADABLE_DOCUMENT_LAB_REPORT') {
+          this.showToast(v.labUnreadable, 'error');
+        } else if (errCode === 'WRONG_DOCUMENT_TYPE_IMAGING_REPORT') {
+          this.showToast(v.imaging, 'error');
+        } else if (errCode === 'UNREADABLE_DOCUMENT_IMAGING_REPORT') {
+          this.showToast(v.imagingUnreadable, 'error');
+        } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
+          this.showToast(v.prescription, 'error');
+        } else if (errCode === 'UNREADABLE_DOCUMENT_PRESCRIPTION') {
+          this.showToast(v.prescriptionUnreadable, 'error');
+        } else {
+          this.showToast(err?.error?.message || 'Upload failed. Please try again.', 'error');
+        }
       },
     });
   }
@@ -1040,7 +1056,15 @@ export class MedicalRecords implements OnInit {
       error: err => {
         this.scanLoading.set(false);
         this.setUploading('medicine', false);
-        this.showToast(err?.error?.message || 'Scan failed. Please try again.', 'error');
+        const errCode = err?.error?.errorCode as string | undefined;
+        const v = this.t().uploadValidation;
+        if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
+          this.showToast(v.medicine, 'error');
+        } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
+          this.showToast(v.medicineUnreadable, 'error');
+        } else {
+          this.showToast(err?.error?.message || 'Scan failed. Please try again.', 'error');
+        }
       },
     });
   }

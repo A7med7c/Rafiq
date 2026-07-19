@@ -1152,9 +1152,11 @@
       <div class="ai-fail-ico-wrap">
         <i class="fa-solid fa-triangle-exclamation"></i>
       </div>
-      <h3 class="ai-fail-title" id="ai-fail-title">{{ t().records.aiAnalysisFailed }}</h3>
+      <h3 class="ai-fail-title" id="ai-fail-title">
+        {{ aiFailIsUnreadable() ? t().records.aiUnreadableTitle : t().records.aiAnalysisFailed }}
+      </h3>
       <p class="ai-fail-desc" id="ai-fail-desc">
-        {{ t().records.aiFailureText }}
+        {{ aiFailIsUnreadable() ? t().records.aiUnreadableText : t().records.aiFailureText }}
       </p>
     </div>
     <footer class="modal-ftr ai-fail-ftr">

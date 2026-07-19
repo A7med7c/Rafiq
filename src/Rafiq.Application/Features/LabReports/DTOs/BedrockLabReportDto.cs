@@ -8,6 +8,8 @@ public sealed class BedrockLabReportDto
 {
     public bool IsValidDocument { get; set; }
 
+    public bool IsUnreadable { get; set; }
+
     public string? DetectedDocumentType { get; set; }
 
     public string? LabName { get; set; }

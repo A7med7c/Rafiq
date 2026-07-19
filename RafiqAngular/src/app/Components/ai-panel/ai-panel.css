@@ -14,11 +14,12 @@
 /* ── PANEL ── */
 .ai-panel {
   position: fixed;
-  bottom: 20px;
+  top: 80px;
+  bottom: auto;
   right: 20px;
-  width: 740px;
-  height: calc(100vh - 80px);
-  max-height: 720px;
+  width: min(380px, calc(100vw - 40px));
+  height: calc(100vh - 100px);
+  max-height: 780px;
   background: #ffffff;
   border-radius: 18px;
   box-shadow:
@@ -222,6 +223,14 @@
   justify-content: center;
   font-size: 15px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.ai-badge-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: block;
 }
 
 .online-dot {
@@ -510,8 +519,8 @@
 }
 
 .ai-welcome-icon {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   background: linear-gradient(135deg, #0EAFD7, #0c97ba);
   color: white;
@@ -521,6 +530,14 @@
   font-size: 24px;
   margin-bottom: 4px;
   box-shadow: 0 4px 16px rgba(14, 175, 215, 0.3);
+  overflow: hidden;
+}
+
+.ai-welcome-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  display: block;
 }
 
 .ai-welcome-title {
@@ -597,7 +614,7 @@
   align-items: flex-start;
 }
 
-/* Robot avatar next to AI messages */
+/* Logo avatar next to AI messages */
 .ai-msg-avatar {
   width: 28px;
   height: 28px;
@@ -610,6 +627,14 @@
   font-size: 13px;
   flex-shrink: 0;
   margin-top: 2px;
+  overflow: hidden;
+}
+
+.ai-msg-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  display: block;
 }
 
 .ai-msg-col {
@@ -881,13 +906,14 @@
 /* ── Responsive ── */
 @media (max-width: 780px) {
   .ai-panel {
+    top: auto;
     right: 0;
     left: 0;
     bottom: 0;
     width: 100%;
-    height: 100%;
+    height: 90dvh;
     max-height: none;
-    border-radius: 0;
+    border-radius: 18px 18px 0 0;
   }
 }
 

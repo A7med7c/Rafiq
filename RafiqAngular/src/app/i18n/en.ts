@@ -397,6 +397,9 @@ export const en = {
     setReminderNow: 'Set Reminder Now',
     aiAnalysisFailed: 'AI Analysis Failed',
     aiFailureText: "We couldn't analyze your document right now. Try again or fill in the details yourself.",
+    aiWrongDocType: 'Wrong Document Type',
+    aiUnreadableTitle: 'Image Unclear or Unreadable',
+    aiUnreadableText: 'The image is too blurry, cropped, or low quality to read. Try uploading a clearer photo or enter the details manually.',
     enterManually: 'Enter Manually',
     tryAgain: 'Try Again',
     clearFilters: 'Clear Filters',
@@ -565,6 +568,17 @@ export const en = {
     couldNotLoad: 'Could not load appointments.',
     retry: 'Retry',
     viewDetails: 'View Details',
+  },
+
+  uploadValidation: {
+    lab: 'Please upload a valid Lab Report. The uploaded file does not match the selected document type.',
+    imaging: 'Please upload a valid Radiology Report. The uploaded file does not match the selected document type.',
+    prescription: 'Please upload a valid Prescription. The uploaded file does not match the selected document type.',
+    medicine: 'Please upload a valid Medication Box image. The uploaded file does not match the selected document type.',
+    labUnreadable: 'The lab report image is unclear or unreadable. Please upload a clearer image or enter the information manually.',
+    imagingUnreadable: 'The radiology report image is unclear or unreadable. Please upload a clearer image or enter the information manually.',
+    prescriptionUnreadable: 'The prescription image is unclear or unreadable. Please upload a clearer image or enter the information manually.',
+    medicineUnreadable: 'The medication box image is unclear or unreadable. Please upload a clearer image or enter the information manually.'
   },
 
   medications: {

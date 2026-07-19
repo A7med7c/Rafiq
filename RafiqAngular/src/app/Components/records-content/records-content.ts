@@ -226,6 +226,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   // Manual entry & AI failure recovery
   readonly showAiFailDialog = signal(false);
+  readonly aiFailIsUnreadable = signal(false);
   private _failedFile: File | null = null;
   private _failedType: 'lab' | 'imaging' | 'prescription' | 'general' | 'medicine' | null = null;
   private _failedDesc = '';
@@ -780,15 +781,32 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         }
         this.openReviewModal(type, data);
       },
-      error: _err => {
+      error: err => {
         this._uploadSub = null;
         this._pendingUploadType = null;
         this.uploadLoading.set(false);
         this.setUploading(type, false);
-        this._failedFile = file;
-        this._failedType = type;
-        this._failedDesc = description;
-        this.showAiFailDialog.set(true);
+        const errCode = err?.error?.errorCode as string | undefined;
+        const v = this.t().uploadValidation;
+        if (errCode === 'WRONG_DOCUMENT_TYPE_LAB_REPORT') {
+          this.showToast(v.lab, 'error');
+        } else if (errCode === 'WRONG_DOCUMENT_TYPE_IMAGING_REPORT') {
+          this.showToast(v.imaging, 'error');
+        } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
+          this.showToast(v.prescription, 'error');
+        } else if (errCode === 'UNREADABLE_DOCUMENT_LAB_REPORT' || errCode === 'UNREADABLE_DOCUMENT_IMAGING_REPORT' || errCode === 'UNREADABLE_DOCUMENT_PRESCRIPTION') {
+          this._failedFile = file;
+          this._failedType = type;
+          this._failedDesc = description;
+          this.aiFailIsUnreadable.set(true);
+          this.showAiFailDialog.set(true);
+        } else {
+          this._failedFile = file;
+          this._failedType = type;
+          this._failedDesc = description;
+          this.aiFailIsUnreadable.set(false);
+          this.showAiFailDialog.set(true);
+        }
       },
     });
   }
@@ -1003,10 +1021,22 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       error: err => {
         this.scanLoading.set(false);
         this.setUploading('medicine', false);
-        this._failedFile = file;
-        this._failedType = 'medicine';
-        this._failedDesc = '';
-        this.showAiFailDialog.set(true);
+        const errCode = err?.error?.errorCode as string | undefined;
+        if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
+          this.showToast(this.t().uploadValidation.medicine, 'error');
+        } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
+          this._failedFile = file;
+          this._failedType = 'medicine';
+          this._failedDesc = '';
+          this.aiFailIsUnreadable.set(true);
+          this.showAiFailDialog.set(true);
+        } else {
+          this._failedFile = file;
+          this._failedType = 'medicine';
+          this._failedDesc = '';
+          this.aiFailIsUnreadable.set(false);
+          this.showAiFailDialog.set(true);
+        }
       },
     });
   }
@@ -1316,6 +1346,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   closeAiFailDialog(): void {
     this.showAiFailDialog.set(false);
+    this.aiFailIsUnreadable.set(false);
     this._failedFile = null;
     this._failedType = null;
     this._failedDesc = '';

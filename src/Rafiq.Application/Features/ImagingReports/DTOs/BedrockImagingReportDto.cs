@@ -4,6 +4,8 @@ public sealed class BedrockImagingReportDto
 {
     public bool IsValidDocument { get; set; }
 
+    public bool IsUnreadable { get; set; }
+
     public string? DetectedDocumentType { get; set; }
 
     public string? ImagingType { get; set; }

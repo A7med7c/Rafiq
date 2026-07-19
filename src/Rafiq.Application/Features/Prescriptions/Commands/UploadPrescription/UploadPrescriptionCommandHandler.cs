@@ -53,9 +53,15 @@ public sealed class UploadPrescriptionCommandHandler(
                 ? "The uploaded image could not be identified as a valid document."
                 : $"Detected document type: {detected}.";
 
-            throw new BadRequestException(
+            throw new DocumentValidationException(
+                "WRONG_DOCUMENT_TYPE_PRESCRIPTION",
                 $"The uploaded document is not a prescription. {detailMessage} Please upload a valid prescription image.");
         }
+
+        if (extracted.IsUnreadable)
+            throw new DocumentValidationException(
+                "UNREADABLE_DOCUMENT_PRESCRIPTION",
+                "The prescription image is unreadable. Please upload a clearer image or enter the information manually.");
 
         if (extracted.Medicines.Count == 0)
             throw new BadRequestException("No medicines could be extracted from the uploaded prescription image.");

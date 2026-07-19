@@ -58,7 +58,7 @@
             <i class="fa-solid fa-bars"></i>
           </button>
           <div class="ai-avatar-badge">
-            <i class="fa-solid fa-robot"></i>
+            <img src="images/RafiqLogo.png" alt="Rafiq" class="ai-badge-logo">
             <span class="online-dot"></span>
           </div>
           <div>
@@ -98,7 +98,7 @@
           <!-- Welcome / Idle State -->
           <div class="ai-welcome">
             <div class="ai-welcome-icon">
-              <i class="fa-solid fa-robot"></i>
+              <img src="images/RafiqLogo.png" alt="Rafiq" class="ai-welcome-logo">
             </div>
             <h2 class="ai-welcome-title">{{ t().aiAssistant.askRafiqAI }}</h2>
             <p class="ai-welcome-sub">{{ t().aiAssistant.aiEmptyText }}</p>
@@ -129,7 +129,7 @@
                 </div>
               } @else {
                 <div class="ai-msg ai-msg--ai">
-                  <div class="ai-msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                  <div class="ai-msg-avatar"><img src="images/RafiqLogo.png" alt="Rafiq" class="ai-msg-logo"></div>
                   <div class="ai-msg-col">
                     <div class="ai-bubble ai-bubble--ai">
                       <markdown [data]="msg.content"></markdown>
@@ -159,7 +159,7 @@
             }
             @if (sending()) {
               <div class="ai-msg ai-msg--ai">
-                <div class="ai-msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="ai-msg-avatar"><img src="images/RafiqLogo.png" alt="Rafiq" class="ai-msg-logo"></div>
                 <div class="ai-msg-col">
                   <div class="ai-bubble ai-bubble--ai ai-typing">
                     <span class="ai-dot"></span>
