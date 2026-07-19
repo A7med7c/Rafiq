@@ -1239,7 +1239,7 @@
 .user-dropdown {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
+  inset-inline-end: 0;
   min-width: 230px;
   background: var(--white, #fff);
   border: 1px solid var(--border, #E5E7EB);
@@ -1249,6 +1249,10 @@
   padding: 8px;
   animation: dropdown-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: top right;
+}
+
+html[dir="rtl"] .user-dropdown {
+  transform-origin: top left;
 }
 
 @keyframes dropdown-in {
