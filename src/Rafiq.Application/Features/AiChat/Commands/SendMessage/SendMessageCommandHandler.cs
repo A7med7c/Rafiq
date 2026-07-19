@@ -111,7 +111,7 @@ public sealed class SendMessageCommandHandler : IRequestHandler<SendMessageComma
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<AiMessageResponseDto>.SuccessResponse(
-            new AiMessageResponseDto(aiResponse.Content), "Message sent successfully.");
+            new AiMessageResponseDto(aiMsg.Id, aiResponse.Content), "Message sent successfully.");
     }
 
     /// <summary>

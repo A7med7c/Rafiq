@@ -124,5 +124,5 @@ img {
 }
 
 .dsh-main {
-  animation: pageFadeInUp 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+  animation: pageFadeInUp 0.28s cubic-bezier(0.25, 0.8, 0.25, 1);
 }

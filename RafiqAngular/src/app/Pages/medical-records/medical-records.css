@@ -652,7 +652,7 @@
 .records-table {
   width: 100%;
   border-collapse: collapse;
-  text-align: left;
+  text-align: start;
 }
 
 .records-table th {
@@ -664,6 +664,7 @@
   color: var(--text-3);
   border-bottom: 1.5px solid var(--border);
   letter-spacing: 0.5px;
+  text-align: start;
 }
 
 .records-table td {
@@ -732,7 +733,12 @@
 }
 
 .text-right {
-  text-align: right;
+  text-align: end;
+}
+
+/* Actions column: header must beat .records-table th's own text-align (higher specificity) */
+.records-table th.text-right {
+  text-align: end;
 }
 
 .actions-cell {
