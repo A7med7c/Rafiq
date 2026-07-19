@@ -121,4 +121,18 @@ public sealed class HealthProfileAccessRepository : IHealthProfileAccessReposito
 
     public void Update(HealthProfileAccess healthProfileAccess)
         => _dbContext.HealthProfileAccesses.Update(healthProfileAccess);
+
+    public Task NullifyInvitedByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+        => _dbContext.HealthProfileAccesses
+            .IgnoreQueryFilters()
+            .Where(x => x.InvitedByUserId == userId)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(x => x.InvitedByUserId, (Guid?)null),
+                cancellationToken);
+
+    public Task HardDeleteByGranteeUserIdAsync(Guid granteeUserId, CancellationToken cancellationToken = default)
+        => _dbContext.HealthProfileAccesses
+            .IgnoreQueryFilters()
+            .Where(x => x.GranteeUserId == granteeUserId)
+            .ExecuteDeleteAsync(cancellationToken);
 }

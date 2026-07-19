@@ -332,6 +332,8 @@ nextPage() {
   toggleDropdown(): void      { this.dropdownOpen.update(v => !v); }
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
+  goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+
   toggleMenu(id: string, e: MouseEvent): void {
     e.stopPropagation();
     this.openMenuId.update(cur => cur === id ? null : id);

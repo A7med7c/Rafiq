@@ -35,7 +35,7 @@
     <div class="form-card">
       <p class="step-indicator">{{ t().onboarding.emergency.stepIndicator }}</p>
       <h2 class="form-title">{{ t().onboarding.emergency.title }}</h2>
-      <p class="form-subtitle">{{ t().onboarding.emergency.subtitle }} {{ t().onboarding.emergency.subtitle2 }}</p>
+      <p class="form-subtitle">{{ t().onboarding.emergency.subtitle }}</p>
 
       <form [formGroup]="form" (ngSubmit)="addContact()" novalidate autocomplete="off">
 
@@ -142,6 +142,12 @@
 
       <!-- Bottom actions -->
       <div class="action-footer">
+        <button
+          type="button"
+          class="skip-btn"
+          (click)="skip()">
+          {{ t().common.skip }}
+        </button>
         <button
           class="finish-btn"
           [disabled]="contacts.length === 0"

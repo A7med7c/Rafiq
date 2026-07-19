@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rafiq.Application.Features.Auth.Commands.Account;
+using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.Auth.Commands.ChangePassword;
 using Rafiq.Application.Features.Auth.Commands.ExternalLogin;
 using Rafiq.Application.Features.Auth.Commands.ForgetPassword;
@@ -130,6 +131,22 @@ public sealed class AuthController(IMediator _mediator) : ControllerBase
      CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command with { IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() }, cancellationToken);
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpPost("me/email")]
+    public async Task<IActionResult> RequestEmailUpdate([FromBody] RequestEmailUpdateCommand command, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpDelete("me")]
+    public async Task<IActionResult> DeleteMyAccount(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new DeleteMyAccountCommand(), cancellationToken);
         return Ok(result);
     }
 }

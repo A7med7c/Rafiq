@@ -896,6 +896,8 @@ export class FamilyProfiles implements OnInit {
 
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
+  goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
     if (!(e.target as HTMLElement).closest('.hdr-user')) this.dropdownOpen.set(false);

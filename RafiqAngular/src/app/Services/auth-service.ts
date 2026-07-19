@@ -286,6 +286,36 @@ export class AuthService {
     );
   }
 
+  updateAccount(firstName: string, lastName: string, phoneNumber: string): Observable<ApiResponse<Account>> {
+    return this.http.put<ApiResponse<Account>>(
+      `${environment.apiUrl}/auth/me`,
+      { firstName, lastName, phoneNumber }
+    ).pipe(
+      tap(res => {
+        this.tokenStorage.setUser(res.data);
+        this.currentUserSubject.next(res.data);
+      })
+    );
+  }
+
+  requestEmailChange(newEmail: string): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(
+      `${environment.apiUrl}/auth/me/email`,
+      { newEmail }
+    );
+  }
+
+  deleteAccount(): Observable<ApiResponse<string>> {
+    return this.http.delete<ApiResponse<string>>(
+      `${environment.apiUrl}/auth/me`
+    ).pipe(
+      tap(() => {
+        this.clearLocalSession();
+        this.router.navigate(['/login']);
+      })
+    );
+  }
+
   private handleAuthSuccess(response: AuthResponse, loadProfile = true): void {
     this.tokenStorage.setTokens(response.data);
 

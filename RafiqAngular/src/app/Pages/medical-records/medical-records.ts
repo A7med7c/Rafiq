@@ -416,6 +416,8 @@ export class MedicalRecords implements OnInit {
   toggleDropdown(): void { this.dropdownOpen.update(v => !v); }
   logout(): void { this.dropdownOpen.set(false); this.authService.logout().subscribe(); }
 
+  goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+
   toggleAddRecordMenu(event: MouseEvent): void {
     event.stopPropagation();
     this.filterMenuOpen.set(false);
