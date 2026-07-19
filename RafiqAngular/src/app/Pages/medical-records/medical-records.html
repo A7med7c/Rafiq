@@ -7,7 +7,7 @@
   <!-- ═══════════ SIDEBAR ═══════════ -->
   <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <div class="sb-top">
-      <div class="sb-logo">
+      <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
         <div class="sb-logo-icon">
           <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
@@ -15,7 +15,7 @@
           <span class="sb-logo-title">{{ t().sidebar.brandName }}</span>
           <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
         </div>
-      </div>
+      </button>
       <button type="button" class="sb-toggle"
         [attr.aria-label]="sidebarCollapsed() ? t().sidebar.expandSidebar : t().sidebar.collapseSidebar"
         (click)="toggleSidebar()">
@@ -39,7 +39,6 @@
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
         <span>{{ t().sidebar.appointments }}</span>
       </a>
-
       <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>{{ t().sidebar.medications }}</span>

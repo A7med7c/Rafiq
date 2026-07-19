@@ -41,6 +41,15 @@ export class Dashboard implements OnInit {
     this.loadReminderData();
   });
 
+  private readonly languageRefreshEffect = effect(() => {
+    this.l10n.lang();
+    this.summaryLoading.set(true);
+    this.dashboardService.getHealthSummary().subscribe({
+      next: d => { this.healthSummary.set(d); this.summaryLoading.set(false); },
+      error: () => { this.healthSummary.set(null); this.summaryLoading.set(false); },
+    });
+  });
+
   private readonly appointmentRefreshEffect = effect(() => {
     if (this.notifService.appointmentDataRefreshTick() === 0) {
       return;

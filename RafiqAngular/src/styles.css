@@ -126,3 +126,10 @@ img {
 .dsh-main {
   animation: pageFadeInUp 0.28s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
+
+/* ── RTL: profile dropdown anchors to left edge instead of right ── */
+[dir="rtl"] .user-dropdown {
+  right: auto;
+  left: 0;
+  transform-origin: top left;
+}
