@@ -8,6 +8,7 @@ import { AiChatService } from '../../Services/ai-chat.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-chat.models';
 import { catchError, of, Subscription } from 'rxjs';
+import { VoiceAgentPanel } from '../voice-agent-panel/voice-agent-panel';
 
 type ChatMessage = ConversationMessageDto & { imagePreviewUrl?: string };
 
@@ -22,7 +23,7 @@ const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 @Component({
   selector: 'app-ai-panel',
   standalone: true,
-  imports: [CommonModule, MarkdownComponent],
+  imports: [CommonModule, MarkdownComponent, VoiceAgentPanel],
   templateUrl: './ai-panel.html',
   styleUrl: './ai-panel.css',
 })
@@ -42,6 +43,13 @@ export class AiPanel implements OnInit, OnDestroy {
 
   // ── Global State ──
   readonly isPanelOpen = this.aiChatService.isPanelOpen;
+
+  // ── Mode: chat or voice ──
+  readonly activeMode = signal<'chat' | 'voice'>('chat');
+
+  toggleMode(): void {
+    this.activeMode.update(m => m === 'chat' ? 'voice' : 'chat');
+  }
 
   // ── Sidebar collapse — hidden by default ──
   readonly sidebarCollapsed = signal(true);

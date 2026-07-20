@@ -1,5 +1,6 @@
 using Rafiq.Domain.Common;
 using Rafiq.Domain.Entities.User;
+using Rafiq.Domain.Enums;
 
 namespace Rafiq.Domain.Entities.Chat;
 
@@ -7,7 +8,8 @@ public class AiConversation : BaseEntity
 {
     protected AiConversation() { } // Required for EF Core
 
-    public AiConversation(Guid userId, Guid userHealthProfileId, string title)
+    public AiConversation(Guid userId, Guid userHealthProfileId, string title,
+        AiConversationSource source = AiConversationSource.Chat)
     {
         if (userId == Guid.Empty)
             throw new ArgumentException("User ID cannot be empty.", nameof(userId));
@@ -21,6 +23,7 @@ public class AiConversation : BaseEntity
         UserId = userId;
         UserHealthProfileId = userHealthProfileId;
         Title = title;
+        Source = source;
     }
 
     public Guid UserId { get; private set; }
@@ -29,6 +32,8 @@ public class AiConversation : BaseEntity
     public UserHealthProfile UserHealthProfile { get; private set; } = null!;
 
     public string Title { get; private set; } = null!;
+
+    public AiConversationSource Source { get; private set; } = AiConversationSource.Chat;
 
     public DateTime? LastMessageAt { get; private set; }
 

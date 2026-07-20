@@ -4,13 +4,18 @@ using System.Security.Claims;
 
 namespace Rafiq.Infrastructure.Services.auth;
 
-public sealed class CurrentUserService(IHttpContextAccessor _httpContextAccessor) : ICurrentUserService
+public sealed class CurrentUserService(
+    IHttpContextAccessor _httpContextAccessor,
+    IBackgroundUserContext _backgroundUserContext) : ICurrentUserService
 {
-
     public Guid? UserId
     {
         get
         {
+            // Background tasks have no HttpContext — check the scoped context first.
+            if (_backgroundUserContext.UserId.HasValue)
+                return _backgroundUserContext.UserId;
+
             var value = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? _httpContextAccessor.HttpContext?.User.FindFirstValue("sub");
             return Guid.TryParse(value, out var id) ? id : null;

@@ -94,5 +94,59 @@ namespace Rafiq.Infrastructure.Services.Notifications
                 "AppointmentReminderDue sent to userId={UserId} over {Count} connection(s).",
                 userId, connectionList.Count);
         }
+
+        public async Task SendVoiceAgentThinkingAsync(
+            string userId,
+            VoiceAgentThinkingPayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var connectionList = GetConnectionList(userId);
+            if (connectionList.Count == 0) return;
+
+            await _hubContext.Clients.Clients(connectionList).SendAsync(
+                "VoiceAgentThinking",
+                payload,
+                cancellationToken);
+        }
+
+        public async Task SendVoiceAgentResponseAsync(
+            string userId,
+            VoiceAgentResponsePayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var connectionList = GetConnectionList(userId);
+            if (connectionList.Count == 0)
+            {
+                _logger.LogWarning(
+                    "No SignalR connections for userId={UserId}. VoiceAgentResponse NOT delivered.", userId);
+                return;
+            }
+
+            await _hubContext.Clients.Clients(connectionList).SendAsync(
+                "VoiceAgentResponse",
+                payload,
+                cancellationToken);
+        }
+
+        public async Task SendVoiceAgentErrorAsync(
+            string userId,
+            VoiceAgentErrorPayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var connectionList = GetConnectionList(userId);
+            if (connectionList.Count == 0) return;
+
+            await _hubContext.Clients.Clients(connectionList).SendAsync(
+                "VoiceAgentError",
+                payload,
+                cancellationToken);
+        }
+
+        private System.Collections.Generic.IReadOnlyList<string> GetConnectionList(string userId)
+        {
+            var connections = _connectionManager.GetConnections(userId);
+            return connections as System.Collections.Generic.IReadOnlyList<string>
+                   ?? new System.Collections.Generic.List<string>(connections);
+        }
     }
 }

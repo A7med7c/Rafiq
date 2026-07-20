@@ -1044,6 +1044,21 @@ export const ar: Translations = {
     dismissToast: 'إخفاء الإشعار',
   },
 
+  voiceAgent: {
+    switchToVoice:  'صوت',
+    switchToChat:   'نص',
+    tapToSpeak:     'اضغط الميكروفون للتحدث',
+    listening:      'جاري الاستماع…',
+    thinking:       'رفيق يفكر…',
+    callingTool:    'جاري التنفيذ…',
+    speaking:       'جاري الكلام…',
+    sessionError:   'تعذّر بدء جلسة صوتية. يرجى المحاولة مجدداً.',
+    micDenied:      'تم رفض الوصول إلى الميكروفون. يرجى السماح بالوصول من إعدادات المتصفح.',
+    notSupported:   'الصوت غير مدعوم في هذا المتصفح. يرجى استخدام Chrome أو Edge.',
+    retry:          'حاول مجدداً',
+    youSaid:        'قلت',
+  },
+
   landing: {
     navbar: {
       switchToArabic: 'AR',

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Rafiq.Domain.Entities.Chat;
+using Rafiq.Domain.Enums;
 
 namespace Rafiq.Infrastructure.Persistence.Configurations;
 
@@ -15,6 +16,11 @@ public class AiConversationConfiguration : IEntityTypeConfiguration<AiConversati
         builder.Property(c => c.Title)
             .IsRequired()
             .HasMaxLength(255);
+
+        builder.Property(c => c.Source)
+            .HasConversion<int>()
+            .HasDefaultValue(AiConversationSource.Chat)
+            .IsRequired();
 
         // A conversation is owned by exactly one UserHealthProfile
         builder.HasOne(c => c.UserHealthProfile)

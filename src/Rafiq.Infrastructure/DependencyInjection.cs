@@ -64,6 +64,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddHttpContextAccessor();
+        services.AddScoped<IBackgroundUserContext, BackgroundUserContext>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITokenHasher, Sha256TokenHasher>();
         services.AddScoped<IOtpHasher, BCryptOtpHasher>();

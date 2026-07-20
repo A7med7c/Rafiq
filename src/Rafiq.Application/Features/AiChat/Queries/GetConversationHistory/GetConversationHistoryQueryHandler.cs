@@ -3,6 +3,7 @@ using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.AiChat.DTOs;
 using Rafiq.Domain.Entities.Chat;
+using Rafiq.Domain.Enums;
 using Rafiq.Domain.Exceptions;
 using Rafiq.Domain.Repositories;
 
@@ -45,11 +46,14 @@ public sealed class GetConversationHistoryQueryHandler
         var userReactions = await _reactionRepository.GetUserReactionsForMessagesAsync(
             messageIds, userId, cancellationToken);
 
+        // ToolCall / ToolResult messages are internal agent bookkeeping — exclude them
+        // from the history that the UI renders so the chat shows only the conversation.
         var dto = new ConversationHistoryDto(
             conversation.Id,
             conversation.Title,
             conversation.LastMessageAt,
             conversation.Messages
+                .Where(m => m.Role == AiMessageRole.User || m.Role == AiMessageRole.Assistant)
                 .OrderBy(m => m.SequenceNumber)
                 .Select(m => new ConversationMessageDto(
                     m.Id,

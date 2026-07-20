@@ -12,7 +12,8 @@
     [style.right]="dragPos() ? 'auto' : null"
     [style.transform]="dragPos() ? 'none' : null">
 
-    <!-- ══ CONVERSATIONS SIDEBAR ══ -->
+    <!-- ══ CONVERSATIONS SIDEBAR (chat mode only) ══ -->
+    @if (activeMode() === 'chat') {
     <aside class="ai-sidebar" [class.ai-sidebar--collapsed]="sidebarCollapsed()">
       <div class="ai-sb-header">
         <button type="button" class="ai-sb-new" (click)="startNewConversation()"
@@ -53,6 +54,7 @@
         </div>
       }
     </aside>
+    }
 
     <!-- ══ MAIN CHAT AREA ══ -->
     <div class="ai-main">
@@ -77,11 +79,19 @@
         </div>
         <div class="ai-main-hdr-right">
           @if (!minimized()) {
-            <button type="button" class="ai-hdr-btn ai-hdr-btn--sidebar"
-              (click)="toggleSidebar()"
-              [title]="sidebarCollapsed() ? t().aiAssistant.showSidebar : t().aiAssistant.hideSidebar">
-              <i class="fa-solid fa-bars"></i>
+            <!-- Voice / Chat toggle -->
+            <button type="button" class="ai-hdr-btn ai-hdr-btn--mode"
+              (click)="toggleMode()"
+              [title]="activeMode() === 'chat' ? t().voiceAgent.switchToVoice : t().voiceAgent.switchToChat">
+              <i class="fa-solid" [class.fa-microphone]="activeMode() === 'chat'" [class.fa-comment-dots]="activeMode() === 'voice'"></i>
             </button>
+            @if (activeMode() === 'chat') {
+              <button type="button" class="ai-hdr-btn ai-hdr-btn--sidebar"
+                (click)="toggleSidebar()"
+                [title]="sidebarCollapsed() ? t().aiAssistant.showSidebar : t().aiAssistant.hideSidebar">
+                <i class="fa-solid fa-bars"></i>
+              </button>
+            }
             <button type="button" class="ai-hdr-btn ai-hdr-btn--maximize"
               (click)="toggleMaximize()"
               [title]="maximized() ? t().aiAssistant.restoreWindow : t().aiAssistant.expandFullscreen">
@@ -100,8 +110,15 @@
         </div>
       </header>
 
-      <!-- Messages Area -->
-      <div class="ai-messages-wrap">
+      <!-- Voice Mode -->
+      @if (activeMode() === 'voice') {
+        <div class="ai-messages-wrap">
+          <app-voice-agent-panel></app-voice-agent-panel>
+        </div>
+      }
+
+      <!-- Messages Area (Chat Mode) -->
+      <div class="ai-messages-wrap" [style.display]="activeMode() === 'voice' ? 'none' : null">
 
         @if (profileError()) {
           <div class="ai-state-empty">
@@ -194,7 +211,8 @@
 
       </div>
 
-      <!-- Composer Footer -->
+      <!-- Composer Footer (chat mode only) -->
+      @if (activeMode() === 'chat') {
       <div class="ai-composer-wrap">
         @if (sendError()) {
           <div class="ai-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ sendError() }}</div>
@@ -239,6 +257,7 @@
         </div>
         <p class="ai-composer-hint">{{ t().aiAssistant.composerHintPanel }}</p>
       </div>
+      }
 
     </div><!-- /.ai-main -->
   </div><!-- /.ai-panel -->

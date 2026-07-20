@@ -27,6 +27,30 @@ namespace Rafiq.Application.Common.Interfaces
         public string? CustomType { get; set; }
     }
 
+    // ── Voice Agent SignalR payloads ──────────────────────────────────────────
+
+    public class VoiceAgentThinkingPayload
+    {
+        /// <summary>Snake_case name of the tool being executed.</summary>
+        public string ToolName { get; set; } = string.Empty;
+    }
+
+    public class VoiceAgentResponsePayload
+    {
+        public Guid SessionId { get; set; }
+        /// <summary>Final answer text or follow-up question.</summary>
+        public string Text { get; set; } = string.Empty;
+        /// <summary>Optional deep-link route to navigate to.</summary>
+        public string? NavigateTo { get; set; }
+        /// <summary>True when the agent asked a follow-up question instead of completing.</summary>
+        public bool NeedsMoreInfo { get; set; }
+    }
+
+    public class VoiceAgentErrorPayload
+    {
+        public string Message { get; set; } = string.Empty;
+    }
+
     public interface INotificationService
     {
         Task SendNotificationToUserAsync(
@@ -43,6 +67,26 @@ namespace Rafiq.Application.Common.Interfaces
         Task SendAppointmentReminderAsync(
             string userId,
             AppointmentReminderNotificationPayload payload,
+            CancellationToken cancellationToken = default);
+
+        // ── Voice Agent events ────────────────────────────────────────────────
+
+        /// <summary>Emitted before each tool call so the UI can show a spinner.</summary>
+        Task SendVoiceAgentThinkingAsync(
+            string userId,
+            VoiceAgentThinkingPayload payload,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>Emitted when the agent produces a final answer or follow-up question.</summary>
+        Task SendVoiceAgentResponseAsync(
+            string userId,
+            VoiceAgentResponsePayload payload,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>Emitted when the agent fails with an unrecoverable error.</summary>
+        Task SendVoiceAgentErrorAsync(
+            string userId,
+            VoiceAgentErrorPayload payload,
             CancellationToken cancellationToken = default);
     }
 }

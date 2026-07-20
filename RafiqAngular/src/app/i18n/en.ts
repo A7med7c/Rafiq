@@ -1043,6 +1043,21 @@ export const en = {
     dismissToast: 'Dismiss toast',
   },
 
+  voiceAgent: {
+    switchToVoice:  'Voice',
+    switchToChat:   'Chat',
+    tapToSpeak:     'Tap the mic to speak',
+    listening:      'Listening…',
+    thinking:       'Rafiq is thinking…',
+    callingTool:    'Working on it…',
+    speaking:       'Speaking…',
+    sessionError:   'Could not start voice session. Please try again.',
+    micDenied:      'Microphone access was denied. Please allow microphone access in your browser settings.',
+    notSupported:   'Voice is not supported in this browser. Please use Chrome or Edge.',
+    retry:          'Try again',
+    youSaid:        'You said',
+  },
+
   landing: {
     navbar: {
       switchToArabic: 'AR',
