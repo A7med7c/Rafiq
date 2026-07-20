@@ -15,11 +15,16 @@ public sealed class MedicationReminderJob(
     IMedicationReminderLogRepository logRepository,
     IUnitOfWork unitOfWork,
     INotificationService notificationService,
+    IHealthProfileAccessRepository healthProfileAccessRepository,
     IWhatsAppService whatsAppService,
     UserManager<ApplicationUser> userManager,
     IOptions<WhatsAppSettings> whatsAppOptions,
     ILogger<MedicationReminderJob> logger)
 {
+    // Managed Profiles have no owning user, so reminders route to the members responsible for
+    // managing them. Viewer-only members are deliberately excluded from medication reminders.
+    private static readonly AccessRole[] ManagementRoles = [AccessRole.Owner, AccessRole.Manager];
+
     [AutomaticRetry(Attempts = 0)]
     public async Task ExecuteAsync(Guid logId)
     {
@@ -108,11 +113,27 @@ public sealed class MedicationReminderJob(
     {
         var profile = log.UserHealthProfile;
 
-        if (profile?.UserId is null)
+        if (profile is null)
         {
             logger.LogWarning(
-                "Profile {ProfileId} has no associated user. Skipping notification.",
-                log.UserHealthProfileId);
+                "ReminderLog {LogId} has no health profile loaded. Skipping notification.",
+                log.Id);
+            return;
+        }
+
+        // Case 1: Self Profile — deliver to the owning user. Case 2: Managed Profile (UserId == null)
+        // — deliver to every active Owner/Manager. Distinct ids from the repository guarantee each
+        // responsible user is notified exactly once, even with duplicate access records.
+        var recipientUserIds = profile.UserId is not null
+            ? [profile.UserId.Value]
+            : await healthProfileAccessRepository.GetActiveGranteeUserIdsByRolesAsync(
+                profile.Id, ManagementRoles, CancellationToken.None);
+
+        if (recipientUserIds.Count == 0)
+        {
+            logger.LogInformation(
+                "Profile {ProfileId} has no active Owner/Manager recipient. Skipping medication reminder.",
+                profile.Id);
             return;
         }
 
@@ -146,26 +167,29 @@ public sealed class MedicationReminderJob(
             NotificationText = message
         };
 
-        var targetUserId = profile.UserId.ToString()!;
-
-        logger.LogInformation(
-            "Before notificationService.SendMedicationReminderAsync: targetUserId='{UserId}', logId={LogId}",
-            targetUserId, log.Id);
-
-        await notificationService.SendMedicationReminderAsync(
-            targetUserId,
-            payload,
-            CancellationToken.None);
-
-        logger.LogInformation(
-            "After notificationService.SendMedicationReminderAsync: userId={UserId}, logId={LogId}",
-            targetUserId, log.Id);
-
-        // Stage 2 is the primary at-dose-time reminder — also deliver it via WhatsApp so
-        // patients receive it even when the app is backgrounded or offline.
-        if (log.ReminderNumber == 2)
+        foreach (var recipientUserId in recipientUserIds)
         {
-            await SendWhatsAppMedicineReminderAsync(log, profile.UserId.Value, medicineName);
+            var targetUserId = recipientUserId.ToString();
+
+            logger.LogInformation(
+                "Before notificationService.SendMedicationReminderAsync: targetUserId='{UserId}', logId={LogId}",
+                targetUserId, log.Id);
+
+            await notificationService.SendMedicationReminderAsync(
+                targetUserId,
+                payload,
+                CancellationToken.None);
+
+            logger.LogInformation(
+                "After notificationService.SendMedicationReminderAsync: userId={UserId}, logId={LogId}",
+                targetUserId, log.Id);
+
+            // Stage 2 is the primary at-dose-time reminder — also deliver it via WhatsApp so
+            // recipients receive it even when the app is backgrounded or offline.
+            if (log.ReminderNumber == 2)
+            {
+                await SendWhatsAppMedicineReminderAsync(log, recipientUserId, medicineName);
+            }
         }
     }
 

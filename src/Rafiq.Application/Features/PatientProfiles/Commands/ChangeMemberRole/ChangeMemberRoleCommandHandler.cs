@@ -12,6 +12,7 @@ public sealed class ChangeMemberRoleCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAccessRepository healthProfileAccessRepository,
     IHealthProfileAuthorizationService authorizationService,
+    IProfileNotificationService profileNotificationService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<ChangeMemberRoleCommand, ApiResponse<HealthProfileInvitationDto>>
 {
@@ -54,6 +55,10 @@ public sealed class ChangeMemberRoleCommandHandler(
         targetAccess.ChangeRole(request.Role);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Notify the affected member that their role changed (Role Changed).
+        await profileNotificationService.NotifyRoleChangedAsync(
+            targetAccess.GranteeUserId, cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(
             targetAccess.ToDto(),

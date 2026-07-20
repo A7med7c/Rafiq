@@ -61,6 +61,7 @@ public static class DependencyInjection
         services.AddSingleton<IConnectionManager, ConnectionManager>();
         services.AddSignalR();
         services.AddScoped<INotificationService, SignalRNotificationService>();
+        services.AddScoped<IProfileNotificationService, ProfileNotificationService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddHttpContextAccessor();
@@ -119,6 +120,10 @@ public static class DependencyInjection
         // ── Appointment Reminder Engine ────────────────────────────────────
         services.AddScoped<IAppointmentReminderScheduler, AppointmentReminderScheduler>();
         services.AddScoped<AppointmentReminderJob>();
+
+        // ── Background Services ────────────────────────────────────────────
+        services.AddHostedService<MissedMedicationBackgroundService>();
+        services.AddHostedService<MissedAppointmentsBackgroundService>();
 
         // ── Hangfire ──────────────────────────────────────────────────────
         var connectionString = configuration.GetConnectionString("DefaultConnection")!;

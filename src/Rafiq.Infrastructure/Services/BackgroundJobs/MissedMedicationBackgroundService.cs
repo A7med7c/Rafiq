@@ -4,9 +4,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Rafiq.Application.Common.Interfaces;
+using Rafiq.Domain.Enums;
 using Rafiq.Domain.Repositories;
 using Rafiq.Infrastructure.Persistence.Identity;
 using Rafiq.Infrastructure.Services.Notifications;
+using System.Collections.Generic;
 
 namespace Rafiq.Infrastructure.Services.BackgroundJobs;
 
@@ -18,7 +20,11 @@ public sealed class MissedMedicationBackgroundService(
     {
         logger.LogInformation("MissedMedicationBackgroundService starting.");
 
-        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(5));
+        // Poll cadence — this is what actually determines how soon after a missed stage-3 dose
+        // the escalation fires, together with the eligibility cutoff in ProcessMissedMedicationsAsync.
+        // Kept at 30s so escalation lands ~1 minute after stage 3 while testing.
+        // TODO: raise back to 5 minutes before production to reduce polling load.
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
 
         while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
         {
@@ -40,6 +46,7 @@ public sealed class MissedMedicationBackgroundService(
 
         var logRepository = sp.GetRequiredService<IMedicationReminderLogRepository>();
         var emergencyContactRepository = sp.GetRequiredService<IEmergencyContactRepository>();
+        var healthProfileAccessRepository = sp.GetRequiredService<IHealthProfileAccessRepository>();
         var unitOfWork = sp.GetRequiredService<IUnitOfWork>();
         var whatsAppService = sp.GetRequiredService<IWhatsAppService>();
         var userManager = sp.GetRequiredService<UserManager<ApplicationUser>>();
@@ -59,56 +66,77 @@ public sealed class MissedMedicationBackgroundService(
             try
             {
                 var profile = log.UserHealthProfile;
+                if (profile is null)
+                    continue;
 
-                if (profile?.UserId is null)
+                var medicineName = log.MedicineReminder?.UserMedicine?.MedicineName ?? "الدواء";
+                var patientName = $"{profile.FirstName} {profile.LastName}";
+
+                // Resolve recipient user IDs.
+                var recipientUserIds = new List<Guid>();
+                if (profile.UserId is not null)
                 {
-                    logger.LogWarning(
-                        "Log {LogId} belongs to a managed profile with no account. Skipping escalation.",
-                        log.Id);
-                    // Still mark as Missed so this log is not revisited on the next tick.
+                    recipientUserIds.Add(profile.UserId.Value);
+                }
+                else
+                {
+                    var managementRoles = new[] { AccessRole.Owner, AccessRole.Manager };
+                    var members = await healthProfileAccessRepository.GetActiveGranteeUserIdsByRolesAsync(
+                        profile.Id,
+                        managementRoles,
+                        cancellationToken);
+                    recipientUserIds.AddRange(members);
+                }
+
+                if (recipientUserIds.Count == 0)
+                {
+                    logger.LogWarning("No active Owners or Managers found for log {LogId}. Skipping escalation.", log.Id);
                     log.MarkAsMissed();
                     logRepository.Update(log);
                     continue;
                 }
 
-                var medicineName = log.MedicineReminder?.UserMedicine?.MedicineName ?? "الدواء";
-                var patientName = $"{profile.FirstName} {profile.LastName}";
+                // Fetch user details and emergency contacts, deduplicating destinations.
+                var phoneToName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-                var user = await userManager.FindByIdAsync(profile.UserId.Value.ToString());
-
-                // Notify the patient.
-                if (user?.PhoneNumber is not null)
+                foreach (var userId in recipientUserIds)
                 {
+                    var user = await userManager.FindByIdAsync(userId.ToString());
+                    if (user is null)
+                        continue;
+
+                    var userName = $"{user.FirstName} {user.LastName}".Trim();
+                    if (string.IsNullOrWhiteSpace(userName))
+                        userName = user.UserName ?? "User";
+
+                    if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
+                    {
+                        phoneToName[user.PhoneNumber] = userName;
+                    }
+
+                    var contacts = await emergencyContactRepository.GetAllByUserIdAsync(userId, cancellationToken);
+                    foreach (var contact in contacts)
+                    {
+                        if (!string.IsNullOrWhiteSpace(contact.PhoneNumber))
+                        {
+                            phoneToName[contact.PhoneNumber] = contact.Name;
+                        }
+                    }
+                }
+
+                // Send WhatsApp notifications.
+                foreach (var kvp in phoneToName)
+                {
+                    var phoneNumber = kvp.Key;
+                    var recipientName = kvp.Value;
+
                     await SendSafeAsync(
                         whatsAppService,
-                        user.PhoneNumber,
+                        phoneNumber,
                         escalationTemplate,
-                        [patientName, patientName, medicineName],
+                        [recipientName, patientName, medicineName],
                         log.Id,
-                        "patient",
-                        logger,
-                        cancellationToken);
-                }
-                else
-                {
-                    logger.LogWarning(
-                        "No phone number for user {UserId}. Patient WhatsApp skipped for log {LogId}.",
-                        profile.UserId.Value, log.Id);
-                }
-
-                // Notify each emergency contact.
-                var emergencyContacts = await emergencyContactRepository
-                    .GetAllByUserIdAsync(profile.UserId.Value, cancellationToken);
-
-                foreach (var contact in emergencyContacts)
-                {
-                    await SendSafeAsync(
-                        whatsAppService,
-                        contact.PhoneNumber,
-                        escalationTemplate,
-                        [contact.Name, patientName, medicineName],
-                        log.Id,
-                        $"emergency contact '{contact.Name}'",
+                        $"recipient '{recipientName}' ({phoneNumber})",
                         logger,
                         cancellationToken);
                 }

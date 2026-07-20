@@ -12,6 +12,7 @@ public sealed class RevokeMemberAccessCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAccessRepository healthProfileAccessRepository,
     IHealthProfileAuthorizationService authorizationService,
+    IProfileNotificationService profileNotificationService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<RevokeMemberAccessCommand, ApiResponse<HealthProfileInvitationDto>>
 {
@@ -48,6 +49,10 @@ public sealed class RevokeMemberAccessCommandHandler(
         targetAccess.Revoke();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Notify the affected member that their access was revoked (Access Removed).
+        await profileNotificationService.NotifyAccessRemovedAsync(
+            targetAccess.GranteeUserId, cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(
             targetAccess.ToDto(),

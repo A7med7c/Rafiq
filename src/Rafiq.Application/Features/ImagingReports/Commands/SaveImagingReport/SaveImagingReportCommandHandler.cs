@@ -14,6 +14,7 @@ public sealed class SaveImagingReportCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IImagingReportRepository imagingReportRepository,
+    IProfileNotificationService profileNotificationService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<SaveImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
 {
@@ -58,6 +59,13 @@ public sealed class SaveImagingReportCommandHandler(
 
         await imagingReportRepository.AddAsync(imagingReport, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Notify everyone who may view this profile that a new imaging report was added.
+        await profileNotificationService.NotifyMedicalRecordAddedAsync(
+            profileId,
+            currentUserService.UserId ?? Guid.Empty,
+            MedicalRecordKind.ImagingReport,
+            cancellationToken);
 
         var dto = new ImagingReportResponseDto
         {

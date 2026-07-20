@@ -56,7 +56,7 @@ export class FamilyProfiles implements OnInit {
   private readonly authSvc = inject(AuthService);
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
-  private readonly notifSvc = inject(NotificationService);
+  protected readonly notifSvc = inject(NotificationService);
   private readonly http = inject(HttpClient);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly base = environment.apiUrl;

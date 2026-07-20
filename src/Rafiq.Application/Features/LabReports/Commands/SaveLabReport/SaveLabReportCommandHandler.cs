@@ -14,6 +14,7 @@ public sealed class SaveLabReportCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     ILabReportRepository labReportRepository,
+    IProfileNotificationService profileNotificationService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<SaveLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
@@ -67,6 +68,13 @@ public sealed class SaveLabReportCommandHandler(
 
         await labReportRepository.AddAsync(labReport, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Notify everyone who may view this profile that a new lab report was added.
+        await profileNotificationService.NotifyMedicalRecordAddedAsync(
+            profileId,
+            currentUserService.UserId ?? Guid.Empty,
+            MedicalRecordKind.LabReport,
+            cancellationToken);
 
         var dto = new LabReportResponseDto
         {

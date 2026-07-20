@@ -11,6 +11,7 @@ namespace Rafiq.Application.Features.PatientProfiles.Commands.RejectHealthProfil
 public sealed class RejectHealthProfileInvitationCommandHandler(
     ICurrentUserService currentUserService,
     IHealthProfileAccessRepository healthProfileAccessRepository,
+    IProfileNotificationService profileNotificationService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<RejectHealthProfileInvitationCommand, ApiResponse<HealthProfileInvitationDto>>
 {
@@ -33,6 +34,10 @@ public sealed class RejectHealthProfileInvitationCommandHandler(
         invitation.Reject();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Notify the user who originally sent the invitation (Invitation Rejected).
+        await profileNotificationService.NotifyInvitationRejectedAsync(
+            currentUserId, invitation.InvitedByUserId, cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(
             invitation.ToDto(),

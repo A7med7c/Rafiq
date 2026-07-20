@@ -14,6 +14,7 @@ public sealed class SendHealthProfileInvitationCommandHandler(
     IIdentityService identityService,
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAccessRepository healthProfileAccessRepository,
+    IProfileNotificationService profileNotificationService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<SendHealthProfileInvitationCommand, ApiResponse<HealthProfileInvitationDto>>
 {
@@ -65,6 +66,10 @@ public sealed class SendHealthProfileInvitationCommandHandler(
         await healthProfileAccessRepository.AddAsync(invitation, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Notify the invited user (Invitation Sent).
+        await profileNotificationService.NotifyInvitationSentAsync(
+            profile.Id, invitedUser.UserId, cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(
             invitation.ToDto(),

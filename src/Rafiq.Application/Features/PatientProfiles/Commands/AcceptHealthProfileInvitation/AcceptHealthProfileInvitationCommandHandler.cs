@@ -11,6 +11,7 @@ namespace Rafiq.Application.Features.PatientProfiles.Commands.AcceptHealthProfil
 public sealed class AcceptHealthProfileInvitationCommandHandler(
     ICurrentUserService currentUserService,
     IHealthProfileAccessRepository healthProfileAccessRepository,
+    IProfileNotificationService profileNotificationService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<AcceptHealthProfileInvitationCommand, ApiResponse<HealthProfileInvitationDto>>
 {
@@ -33,6 +34,10 @@ public sealed class AcceptHealthProfileInvitationCommandHandler(
         invitation.Accept();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Notify the user who originally sent the invitation (Invitation Accepted).
+        await profileNotificationService.NotifyInvitationAcceptedAsync(
+            currentUserId, invitation.InvitedByUserId, cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(
             invitation.ToDto(),

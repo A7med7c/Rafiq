@@ -14,6 +14,7 @@ public sealed class RequestHealthProfileAccessCommandHandler(
     IIdentityService identityService,
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAccessRepository healthProfileAccessRepository,
+    IProfileNotificationService profileNotificationService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<RequestHealthProfileAccessCommand, ApiResponse<HealthProfileInvitationDto>>
 {
@@ -53,6 +54,10 @@ public sealed class RequestHealthProfileAccessCommandHandler(
         await healthProfileAccessRepository.AddAsync(accessRequest, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Notify the profile owner(s) that access was requested (Access Request Sent).
+        await profileNotificationService.NotifyAccessRequestSentAsync(
+            targetProfile.Id, currentUserId, cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(
             accessRequest.ToDto(),

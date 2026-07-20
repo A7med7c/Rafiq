@@ -13,11 +13,16 @@ namespace Rafiq.Infrastructure.Services.AppointmentReminders;
 public sealed class AppointmentReminderJob(
     IAppointmentRepository appointmentRepository,
     INotificationService notificationService,
+    IHealthProfileAccessRepository healthProfileAccessRepository,
     IWhatsAppService whatsAppService,
     UserManager<ApplicationUser> userManager,
     IOptions<WhatsAppSettings> whatsAppOptions,
     ILogger<AppointmentReminderJob> logger)
 {
+    // Managed Profiles have no owning user, so reminders route to the members responsible for
+    // managing them. Viewer-only members are deliberately excluded from appointment reminders.
+    private static readonly AccessRole[] ManagementRoles = [AccessRole.Owner, AccessRole.Manager];
+
     [AutomaticRetry(Attempts = 0)]
     public async Task ExecuteAsync(Guid appointmentId)
     {
@@ -46,11 +51,26 @@ public sealed class AppointmentReminderJob(
         }
 
         var profile = appointment.UserHealthProfile;
-        if (profile?.UserId is null)
+        if (profile is null)
         {
             logger.LogWarning(
-                "Profile {ProfileId} has no associated user. Skipping appointment reminder notification.",
-                appointment.UserHealthProfileId);
+                "Appointment {AppointmentId} has no health profile loaded. Skipping reminder notification.",
+                appointmentId);
+            return;
+        }
+
+        // Case 1: Self Profile — deliver to the owning user. Case 2: Managed Profile (UserId == null)
+        // — deliver to every active Owner/Manager. Distinct ids guarantee one notification per user.
+        var recipientUserIds = profile.UserId is not null
+            ? [profile.UserId.Value]
+            : await healthProfileAccessRepository.GetActiveGranteeUserIdsByRolesAsync(
+                profile.Id, ManagementRoles, CancellationToken.None);
+
+        if (recipientUserIds.Count == 0)
+        {
+            logger.LogInformation(
+                "Profile {ProfileId} has no active Owner/Manager recipient. Skipping appointment reminder.",
+                profile.Id);
             return;
         }
 
@@ -68,16 +88,19 @@ public sealed class AppointmentReminderJob(
             CustomType = appointment.CustomType,
         };
 
-        await notificationService.SendAppointmentReminderAsync(
-            profile.UserId.ToString()!,
-            payload,
-            CancellationToken.None);
+        foreach (var recipientUserId in recipientUserIds)
+        {
+            await notificationService.SendAppointmentReminderAsync(
+                recipientUserId.ToString(),
+                payload,
+                CancellationToken.None);
 
-        logger.LogInformation(
-            "Sent appointment reminder for {AppointmentId} to user {UserId}.",
-            appointmentId, profile.UserId);
+            logger.LogInformation(
+                "Sent appointment reminder for {AppointmentId} to user {UserId}.",
+                appointmentId, recipientUserId);
 
-        await SendWhatsAppAppointmentReminderAsync(appointmentId, profile.UserId.Value, profile.FirstName, profile.LastName, appointment.Provider, appointment.AppointmentDateTime);
+            await SendWhatsAppAppointmentReminderAsync(appointmentId, recipientUserId, profile.FirstName, profile.LastName, appointment.Provider, appointment.AppointmentDateTime);
+        }
     }
 
     private async Task SendWhatsAppAppointmentReminderAsync(

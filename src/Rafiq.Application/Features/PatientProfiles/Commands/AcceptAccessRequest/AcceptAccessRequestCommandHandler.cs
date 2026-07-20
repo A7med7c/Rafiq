@@ -12,6 +12,7 @@ public sealed class AcceptAccessRequestCommandHandler(
     ICurrentUserService currentUserService,
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAccessRepository healthProfileAccessRepository,
+    IProfileNotificationService profileNotificationService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<AcceptAccessRequestCommand, ApiResponse<HealthProfileInvitationDto>>
 {
@@ -37,6 +38,10 @@ public sealed class AcceptAccessRequestCommandHandler(
         accessRequest.Accept();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Notify the requester that their request was approved (Access Request Approved).
+        await profileNotificationService.NotifyAccessRequestApprovedAsync(
+            accessRequest.GranteeUserId, cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(
             accessRequest.ToDto(),

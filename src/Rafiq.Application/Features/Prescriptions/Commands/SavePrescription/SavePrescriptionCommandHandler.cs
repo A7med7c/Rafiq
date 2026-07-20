@@ -14,6 +14,7 @@ public sealed class SavePrescriptionCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IPrescriptionRepository prescriptionRepository,
+    IProfileNotificationService profileNotificationService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<SavePrescriptionCommand, ApiResponse<PrescriptionResponseDto>>
 {
@@ -70,6 +71,13 @@ public sealed class SavePrescriptionCommandHandler(
 
         await prescriptionRepository.AddAsync(prescription, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Notify everyone who may view this profile that a new prescription was added.
+        await profileNotificationService.NotifyMedicalRecordAddedAsync(
+            profileId,
+            currentUserService.UserId ?? Guid.Empty,
+            MedicalRecordKind.Prescription,
+            cancellationToken);
 
         var dto = new PrescriptionResponseDto
         {

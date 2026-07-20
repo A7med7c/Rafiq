@@ -12,6 +12,7 @@ public sealed class RejectAccessRequestCommandHandler(
     ICurrentUserService currentUserService,
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAccessRepository healthProfileAccessRepository,
+    IProfileNotificationService profileNotificationService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<RejectAccessRequestCommand, ApiResponse<HealthProfileInvitationDto>>
 {
@@ -37,6 +38,10 @@ public sealed class RejectAccessRequestCommandHandler(
         accessRequest.Reject();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Notify the requester that their request was rejected (Access Request Rejected).
+        await profileNotificationService.NotifyAccessRequestRejectedAsync(
+            accessRequest.GranteeUserId, cancellationToken);
 
         return ApiResponse<HealthProfileInvitationDto>.SuccessResponse(
             accessRequest.ToDto(),

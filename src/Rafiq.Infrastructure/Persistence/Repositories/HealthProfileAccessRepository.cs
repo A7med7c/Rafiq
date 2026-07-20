@@ -86,6 +86,18 @@ public sealed class HealthProfileAccessRepository : IHealthProfileAccessReposito
                     && x.Status == AccessStatus.Active,
                 cancellationToken);
 
+    public async Task<IReadOnlyList<Guid>> GetActiveGranteeUserIdsByRolesAsync(
+        Guid userHealthProfileId,
+        IReadOnlyCollection<AccessRole> roles,
+        CancellationToken cancellationToken = default)
+        => await _dbContext.HealthProfileAccesses
+            .Where(x => x.UserHealthProfileId == userHealthProfileId
+                && x.Status == AccessStatus.Active
+                && roles.Contains(x.Role))
+            .Select(x => x.GranteeUserId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<HealthProfileAccess>> GetActiveMembersAsync(
         Guid userHealthProfileId,
         CancellationToken cancellationToken = default)

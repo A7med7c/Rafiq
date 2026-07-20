@@ -1,9 +1,22 @@
 using Rafiq.Domain.Entities.User;
+using Rafiq.Domain.Enums;
 
 namespace Rafiq.Domain.Repositories;
 
 public interface IHealthProfileAccessRepository
 {
+    /// <summary>
+    /// Returns the distinct ApplicationUser ids that currently hold <see cref="AccessStatus.Active"/>
+    /// access to the profile in one of the supplied roles. Soft-deleted access records are excluded
+    /// by the global query filter, and <c>Distinct</c> collapses duplicate access records so each
+    /// user is returned only once. Used to route reminders and activity notifications to the right
+    /// managers/members of a Managed Profile without sending duplicates.
+    /// </summary>
+    Task<IReadOnlyList<Guid>> GetActiveGranteeUserIdsByRolesAsync(
+        Guid userHealthProfileId,
+        IReadOnlyCollection<AccessRole> roles,
+        CancellationToken cancellationToken = default);
+
     Task<HealthProfileAccess?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default);
