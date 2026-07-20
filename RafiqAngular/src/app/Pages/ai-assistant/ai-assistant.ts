@@ -3,6 +3,7 @@ import { CommonModule, Location } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { NotificationService } from '../../Services/notification.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { AiChatService } from '../../Services/ai-chat.service';
@@ -32,7 +33,8 @@ const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
   styleUrl: './ai-assistant.css',
 })
 export class AiAssistant implements OnInit {
-  private readonly authService = inject(AuthService);
+  private readonly authService    = inject(AuthService);
+  protected readonly profileCache = inject(ProfileCacheService);
   protected readonly notifService = inject(NotificationService);
   private readonly healthProfileService = inject(HealthProfileService);
   private readonly aiChatService = inject(AiChatService);
@@ -124,7 +126,26 @@ export class AiAssistant implements OnInit {
     return this.authService.avatarUrl;
   }
 
+  get hasProfileImage(): boolean { return !!this.authService.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authService.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadProfileThenConversations();
   }

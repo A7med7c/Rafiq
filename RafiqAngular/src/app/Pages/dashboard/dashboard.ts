@@ -2,6 +2,7 @@ import { Component, effect, inject, OnInit, OnDestroy, signal, computed, HostLis
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { DashboardService } from '../../Services/dashboard.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { AppointmentsService } from '../../Services/appointments.service';
@@ -23,6 +24,7 @@ import { MedicalReportService, ReportType } from '../../Services/medical-report.
 })
 export class Dashboard implements OnInit, OnDestroy {
   private readonly authService        = inject(AuthService);
+  protected readonly profileCache     = inject(ProfileCacheService);
   private readonly dashboardService   = inject(DashboardService);
   private readonly apptService        = inject(AppointmentsService);
   protected readonly notifService     = inject(NotificationService);
@@ -152,6 +154,24 @@ export class Dashboard implements OnInit, OnDestroy {
     return this.authService.avatarUrl;
   }
 
+  get hasProfileImage(): boolean { return !!this.authService.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authService.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
   get greeting(): string {
     const h = new Date().getHours();
     if (h < 12) return this.t().dashboard.goodMorning;
@@ -160,6 +180,7 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadDashboardData();
     // Show greeting bubble 1.5 s after load, then repeat after long inactivity.

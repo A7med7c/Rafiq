@@ -10,6 +10,7 @@ import { catchError, of, map, forkJoin } from 'rxjs';
 import { LocalizationService } from '../../Services/localization.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { NotificationService } from '../../Services/notification.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { environment } from '../../Environments/Environment';
@@ -53,7 +54,8 @@ export class FamilyProfiles implements OnInit {
   protected readonly l10n = inject(LocalizationService);
   protected readonly aiChatService = inject(AiChatService);
   protected readonly t = this.l10n.t;
-  private readonly authSvc = inject(AuthService);
+  private readonly authSvc        = inject(AuthService);
+  protected readonly profileCache = inject(ProfileCacheService);
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly notifSvc = inject(NotificationService);
@@ -295,6 +297,7 @@ export class FamilyProfiles implements OnInit {
 
   // ─── Lifecycle ──────────────────────────────────────────────
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadProfiles();
     this.loadReceivedInvitations();
@@ -917,6 +920,24 @@ export class FamilyProfiles implements OnInit {
   get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
 
   get avatarUrl(): string { return this.authSvc.avatarUrl; }
+
+  get hasProfileImage(): boolean { return !!this.authSvc.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authSvc.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
 
   getAvatarColor(i: number): string { return this.avatarColors[i % this.avatarColors.length]; }
 

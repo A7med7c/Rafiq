@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { forkJoin, Observable } from 'rxjs';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { NotificationService } from '../../Services/notification.service';
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
@@ -117,7 +118,8 @@ export class Medications implements OnInit, OnDestroy {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-  private readonly authSvc = inject(AuthService);
+  private readonly authSvc        = inject(AuthService);
+  protected readonly profileCache = inject(ProfileCacheService);
   protected readonly notifSvc = inject(NotificationService);
   private readonly medSvc = inject(MedicationRemindersService);
   private readonly route = inject(ActivatedRoute);
@@ -456,6 +458,24 @@ export class Medications implements OnInit, OnDestroy {
   get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
   get avatarUrl(): string { return this.authSvc.avatarUrl; }
 
+  get hasProfileImage(): boolean { return !!this.authSvc.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authSvc.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
   // ── Reminder form validation ──────────────────────────────────────────────
 
   /** Per-time-index inline errors: past-time or duplicate. */
@@ -540,6 +560,7 @@ export class Medications implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
 
     this.clockId = setInterval(() => this.nowMinutes.set(Medications.minutesNow()), 30_000);

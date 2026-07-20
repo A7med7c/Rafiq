@@ -59,4 +59,14 @@ export class HealthProfileService {
       formData
     );
   }
+
+  /** Removes the profile picture by posting RemoveImage=true (no file). */
+  deleteProfileImage(profileId: string): Observable<ApiResponse<PatientProfileResponse>> {
+    const formData = new FormData();
+    formData.append('removeImage', 'true');
+    return this.http.post<ApiResponse<PatientProfileResponse>>(
+      `${this.baseUrl}/${profileId}/image`,
+      formData
+    );
+  }
 }

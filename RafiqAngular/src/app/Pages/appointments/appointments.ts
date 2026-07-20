@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { NotificationService } from '../../Services/notification.service';
@@ -53,7 +54,8 @@ const blankForm = (): ApptForm => ({
   styleUrl: './appointments.css',
 })
 export class Appointments implements OnInit, OnDestroy {
-  private readonly authSvc   = inject(AuthService);
+  private readonly authSvc        = inject(AuthService);
+  protected readonly profileCache = inject(ProfileCacheService);
   private readonly apptSvc   = inject(AppointmentsService);
   protected readonly notifSvc  = inject(NotificationService);
   private readonly router     = inject(Router);
@@ -293,8 +295,27 @@ nextPage() {
   get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
   get avatarUrl(): string { return this.authSvc.avatarUrl; }
 
+  get hasProfileImage(): boolean { return !!this.authSvc.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authSvc.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadAppointments();
     this.notifTimer = setInterval(() => this.checkDueNotifications(), 60_000);

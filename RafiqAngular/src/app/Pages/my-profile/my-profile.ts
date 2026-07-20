@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { HealthProfileService, PatientProfileResponse } from '../../Services/health-profile.service';
 import { EmergencyContactService, EmergencyContactResponse } from '../../Services/emergency-contact.service';
 import { NotificationService } from '../../Services/notification.service';
@@ -36,6 +37,7 @@ interface UpdateProfileBody {
 })
 export class MyProfile implements OnInit {
   protected readonly authService      = inject(AuthService);
+  protected readonly profileCache     = inject(ProfileCacheService);
   private readonly healthSvc          = inject(HealthProfileService);
   private readonly emergencySvc       = inject(EmergencyContactService);
   protected readonly notifService     = inject(NotificationService);
@@ -99,12 +101,34 @@ export class MyProfile implements OnInit {
 
   // ── Profile photo upload ──────────────────────────────────────────────────
   readonly photoInput = viewChild<ElementRef<HTMLInputElement>>('photoInput');
-  readonly photoUploading = signal(false);
+  readonly photoUploading  = signal(false);
+  readonly photoModalOpen  = signal(false);
+  readonly deletingPhoto   = signal(false);
 
   readonly heroAvatarUrl = computed(() => {
     const profileImageUrl = this.profile()?.profileImageUrl;
     return profileImageUrl ? this.authService.resolveAvatarUrl(profileImageUrl) : this.avatarUrl;
   });
+
+  readonly hasProfileImage = computed(() =>
+    !!(this.profile()?.profileImageUrl || this.authService.currentUser?.profileImageUrl)
+  );
+
+  get userInitials(): string {
+    const u = this.authService.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
 
   // ── Computed helpers ──────────────────────────────────────────────────────
   get displayName(): string {
@@ -124,7 +148,8 @@ export class MyProfile implements OnInit {
   readonly genderLabel = computed(() => {
     const p = this.profile();
     if (!p) return '-';
-    return p.gender === '1' || p.gender?.toLowerCase() === 'male' ? 'Male' : 'Female';
+    const isMale = p.gender === '1' || p.gender?.toLowerCase() === 'male';
+    return isMale ? this.t().myProfile.male : this.t().myProfile.female;
   });
 
   readonly bloodTypeLabel = computed(() => {
@@ -158,6 +183,7 @@ export class MyProfile implements OnInit {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadProfile();
     this.loadContacts();
@@ -303,7 +329,7 @@ export class MyProfile implements OnInit {
         } else {
           this.personalSaving.set(false);
           this.editingPersonal.set(false);
-          this.notifService.showToast('Saved', 'Personal info updated.', 'success');
+          this.notifService.showToast(this.t().myProfile.toastSavedTitle, this.t().myProfile.toastSavedBody, 'success');
         }
       },
       error: (err) => {
@@ -326,7 +352,7 @@ export class MyProfile implements OnInit {
           next: () => {
             this.emailOtpSaving.set(false);
             this.verifyingEmail.set(false);
-            this.notifService.showToast('Email Updated', 'Your email has been verified and updated.', 'success');
+            this.notifService.showToast(this.t().myProfile.toastEmailUpdatedTitle, this.t().myProfile.toastEmailUpdatedBody, 'success');
           },
           error: () => {
             this.emailOtpSaving.set(false);
@@ -502,7 +528,7 @@ export class MyProfile implements OnInit {
     const cleanNum = (num: string) => num.replace(/\D/g, '').slice(-10);
 
     if (userPhone && cleanNum(this.newContact.phoneNumber) === cleanNum(userPhone)) {
-      this.contactFormError.set("You cannot add your own phone number as an emergency contact.");
+      this.contactFormError.set(this.t().myProfile.toastOwnPhoneError);
       return;
     }
 
@@ -532,8 +558,38 @@ export class MyProfile implements OnInit {
   }
 
   // ── Profile Photo ─────────────────────────────────────────────────────────
+  openPhotoModal(): void {
+    if (this.photoUploading() || this.deletingPhoto()) return;
+    this.photoModalOpen.set(true);
+  }
+
+  closePhotoModal(): void {
+    if (this.photoUploading() || this.deletingPhoto()) return;
+    this.photoModalOpen.set(false);
+  }
+
   triggerPhotoUpload(): void {
     this.photoInput()?.nativeElement.click();
+  }
+
+  deleteProfilePhoto(): void {
+    const id = this.profileId();
+    if (!id) return;
+    this.deletingPhoto.set(true);
+    this.healthSvc.deleteProfileImage(id).subscribe({
+      next: (res) => {
+        this.profile.set(res.data);
+        this.profileCache.setImageUrl(null);
+        this.deletingPhoto.set(false);
+        this.photoModalOpen.set(false);
+        this.notifService.showToast(this.t().myProfile.toastPhotoRemovedTitle, this.t().myProfile.toastPhotoRemovedBody, 'success');
+      },
+      error: (err) => {
+        this.deletingPhoto.set(false);
+        const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
+        this.notifService.showToast(this.t().myProfile.toastErrorTitle, msg, 'error');
+      }
+    });
   }
 
   onPhotoSelected(event: Event): void {
@@ -546,11 +602,11 @@ export class MyProfile implements OnInit {
     if (!id) return;
 
     if (!file.type.startsWith('image/')) {
-      this.notifService.showToast('Invalid File', 'Please choose an image file.', 'error');
+      this.notifService.showToast(this.t().myProfile.toastInvalidFileTitle, this.t().myProfile.toastInvalidFileBody, 'error');
       return;
     }
     if (file.size > 6 * 1024 * 1024) {
-      this.notifService.showToast('File Too Large', 'Please choose an image under 6 MB.', 'error');
+      this.notifService.showToast(this.t().myProfile.toastFileTooLargeTitle, this.t().myProfile.toastFileTooLargeBody, 'error');
       return;
     }
 
@@ -558,13 +614,15 @@ export class MyProfile implements OnInit {
     this.healthSvc.uploadProfileImage(id, file).subscribe({
       next: (res) => {
         this.profile.set(res.data);
+        this.profileCache.setImageUrl(res.data?.profileImageUrl ?? null);
         this.photoUploading.set(false);
-        this.notifService.showToast('Photo Updated', 'Your profile photo has been updated.', 'success');
+        this.photoModalOpen.set(false);
+        this.notifService.showToast(this.t().myProfile.toastPhotoUpdatedTitle, this.t().myProfile.toastPhotoUpdatedBody, 'success');
       },
       error: (err) => {
         this.photoUploading.set(false);
-        const msg = err?.error?.message ?? 'Failed to upload photo.';
-        this.notifService.showToast('Error', msg, 'error');
+        const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
+        this.notifService.showToast(this.t().myProfile.toastErrorTitle, msg, 'error');
       }
     });
   }
@@ -584,47 +642,53 @@ export class MyProfile implements OnInit {
       error: () => {
         this.deleteLoading.set(false);
         this.closeDeleteModal();
-        this.notifService.showToast('Error', 'Failed to delete account. Please try again.', 'error');
+        this.notifService.showToast(this.t().myProfile.toastErrorTitle, this.t().myProfile.toastDeleteErrorBody, 'error');
       }
     });
   }
 
   // ── Severity / Status labels ──────────────────────────────────────────────
   severityLabel(s: string): string {
-    const map: Record<string, string> = { '1': 'Mild', '2': 'Moderate', '3': 'Severe' };
-    return map[s] ?? s;
+    const normalized = s?.toLowerCase();
+    if (normalized === 'mild'   || s === '1') return this.t().myProfile.mild;
+    if (normalized === 'moderate' || s === '2') return this.t().myProfile.moderate;
+    if (normalized === 'severe' || s === '3') return this.t().myProfile.severe;
+    return s;
   }
 
   severityClass(s: string): string {
-    const v = this.severityLabel(s).toLowerCase();
-    if (v === 'mild') return 'tag-mild';
-    if (v === 'moderate') return 'tag-moderate';
+    const n = s?.toLowerCase();
+    if (n === 'mild'     || s === '1') return 'tag-mild';
+    if (n === 'moderate' || s === '2') return 'tag-moderate';
     return 'tag-severe';
   }
 
   severityDotClass(s: string): string {
-    const v = this.severityLabel(s).toLowerCase();
-    if (v === 'mild') return 'dot-mild';
-    if (v === 'moderate') return 'dot-moderate';
+    const n = s?.toLowerCase();
+    if (n === 'mild'     || s === '1') return 'dot-mild';
+    if (n === 'moderate' || s === '2') return 'dot-moderate';
     return 'dot-severe';
   }
 
   statusLabel(s: string): string {
-    const map: Record<string, string> = { '1': 'Active', '2': 'Controlled', '3': 'Resolved' };
-    return map[s] ?? s;
+    const normalized = s?.toLowerCase();
+    if (normalized === 'active'     || s === '1') return this.t().myProfile.active;
+    if (normalized === 'controlled' || s === '2') return this.t().myProfile.controlled;
+    if (normalized === 'resolved'   || s === '3') return this.t().myProfile.resolved;
+    return s;
   }
 
   statusClass(s: string): string {
-    const v = this.statusLabel(s).toLowerCase();
-    if (v === 'active') return 'tag-active';
-    if (v === 'controlled') return 'tag-controlled';
+    const n = s?.toLowerCase();
+    if (n === 'active'     || s === '1') return 'tag-active';
+    if (n === 'controlled' || s === '2') return 'tag-controlled';
     return 'tag-resolved';
   }
 
   statusDotClass(s: string): string {
-    const v = this.statusLabel(s).toLowerCase();
-    if (v === 'active') return 'dot-active';
-    if (v === 'controlled') return 'dot-controlled';
+    const n = s?.toLowerCase();
+    if (n === 'active'     || s === '1') return 'dot-active';
+    if (n === 'controlled' || s === '2') return 'dot-controlled';
     return 'dot-resolved';
   }
 }

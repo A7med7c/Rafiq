@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medical-records.service';
 import { ScanMedicineBoxResponse, AddUserMedicinePayload, CreateReminderPayload } from '../../Modles/dashboard.models';
@@ -151,7 +152,8 @@ export class MedicalRecords implements OnInit {
   protected readonly aiChatService = inject(AiChatService);
   protected readonly t = this.l10n.t;
 
-  private readonly authService = inject(AuthService);
+  private readonly authService    = inject(AuthService);
+  protected readonly profileCache = inject(ProfileCacheService);
   private readonly recordsService = inject(MedicalRecordsService);
   private readonly reminderSvc = inject(MedicationRemindersService);
   private readonly healthProfileSvc = inject(HealthProfileService);
@@ -323,6 +325,24 @@ export class MedicalRecords implements OnInit {
 
   get avatarUrl(): string { return this.authService.avatarUrl; }
 
+  get hasProfileImage(): boolean { return !!this.authService.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authService.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
   @HostListener('window:resize')
   onWindowResize(): void { this.applyResponsiveSidebar(); }
   readonly countedRecords = computed(() =>
@@ -378,6 +398,7 @@ export class MedicalRecords implements OnInit {
   });
 
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadData();
   }
