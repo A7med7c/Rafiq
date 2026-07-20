@@ -16,8 +16,8 @@
   <input #manualMedImageInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
     (change)="onManualMedImageSelected($event)">
 
-  <!-- UPLOAD CARDS GRID (hidden in compact mode) -->
-  @if (!compact) {
+  <!-- UPLOAD CARDS GRID (hidden in compact mode and for read-only profiles) -->
+  @if (!compact && !readOnly) {
   <section class="upload-grid">
     <div class="up-card">
       <div class="up-ico bg-blue"><i class="fa-solid fa-flask"></i></div>

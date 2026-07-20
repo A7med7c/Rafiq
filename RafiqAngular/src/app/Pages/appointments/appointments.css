@@ -1,5 +1,19 @@
 @import "../dashboard/dashboard.css";
 
+/* ── Read-only (Viewer) badge ─────────────────── */
+.fp-readonly-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #FEF9C3;
+  color: #92400E;
+  flex-shrink: 0;
+}
+
 /* ── Page title bar ──────────────────────────── */
 .appts-title-bar {
   display: flex;

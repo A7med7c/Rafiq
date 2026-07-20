@@ -4,7 +4,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { forkJoin, Observable } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { forkJoin, Observable, of, map, switchMap } from 'rxjs';
 import { AuthService } from '../../Services/auth-service';
 import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { AiChatService } from '../../Services/ai-chat.service';
@@ -13,6 +14,8 @@ import { MedicationRemindersService } from '../../Services/medication-reminders.
 import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
 import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UpdateUserMedicinePayload, UserMedicine } from '../../Modles/dashboard.models';
 import { LocalizationService } from '../../Services/localization.service';
+import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
+import { ProfileSelectionService } from '../../Services/profile-selection.service';
 
 type MedTab = 'schedule' | 'medications';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -127,6 +130,8 @@ export class Medications implements OnInit, OnDestroy {
   protected readonly l10n = inject(LocalizationService);
   protected readonly aiChatService = inject(AiChatService);
   protected readonly t = this.l10n.t;
+  private readonly fpSvc = inject(FamilyProfilesService);
+  private readonly profileSelectSvc = inject(ProfileSelectionService);
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {
@@ -139,8 +144,25 @@ export class Medications implements OnInit, OnDestroy {
 
   // ── Family profile override (set from query params) ──────────────────────
   readonly fpProfileId = signal<string | null>(null);
-  readonly fpReadOnly = signal(false);
   readonly fpProfileName = signal<string | null>(null);
+
+  // Derive readOnly from the accessible-profiles endpoint so it is always
+  // authoritative — even when the user navigates here via the sidebar without
+  // query params but with a Viewer-access profile selected in localStorage.
+  private readonly _viewingMedProfile = toSignal<AccessibleProfileDto | null>(
+    this.route.queryParamMap.pipe(
+      map(params => params.get('profileId') ?? this.profileSelectSvc.selectedProfileId),
+      switchMap(profileId => {
+        if (!profileId) return of(null);
+        return this.fpSvc.getAccessible().pipe(
+          map(profiles => profiles.find(p => p.userHealthProfileId === profileId) ?? null)
+        );
+      })
+    ),
+    { initialValue: null }
+  );
+
+  readonly fpReadOnly = computed(() => this._viewingMedProfile()?.accessRole === 'Viewer');
 
   // ── Layout ──────────────────────────────────────────────────────────────
   readonly sidebarCollapsed = signal(false);
@@ -569,7 +591,6 @@ export class Medications implements OnInit, OnDestroy {
       const fpId = params['profileId'] ?? null;
       if (fpId !== this.fpProfileId()) {
         this.fpProfileId.set(fpId);
-        this.fpReadOnly.set(params['readOnly'] === 'true');
         this.fpProfileName.set(params['name'] ?? null);
       }
 
@@ -787,10 +808,12 @@ export class Medications implements OnInit, OnDestroy {
   // ── Confirm medication ────────────────────────────────────────────────────
   /** Confirms the newest unanswered log for a dose; the API cancels its follow-ups. */
   confirmDose(dose: Dose): void {
+    if (this.fpReadOnly()) return;
     if (dose.actionable) this.openConfirm(dose.actionable);
   }
 
   openConfirm(log: MedicationReminderLogDto): void {
+    if (this.fpReadOnly()) return;
     this.confirmingLog.set(log);
     this.showConfirmModal.set(true);
   }

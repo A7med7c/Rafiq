@@ -192,10 +192,12 @@
               }
             </div>
 
+            @if (!fpReadOnly()) {
             <button type="button" class="med-confirm-btn rail-cta" (click)="confirmDose(dose)">
               <i class="fa-solid fa-check"></i>
               {{ t().medications.iTookIt }}
             </button>
+            }
           </div>
           } @else {
           <div class="rail-next rail-next--done">
@@ -237,7 +239,7 @@
             [style.left.%]="railPos(dose.minutes)"
             [attr.aria-label]="dose.medicineName + ' at ' + formatTime(dose.scheduledTime) + ' — ' + countdownLabel(dose)"
             (click)="confirmDose(dose)"
-            [disabled]="!dose.actionable">
+            [disabled]="!dose.actionable || fpReadOnly()">
             <span class="rail-pip-tip">
               {{ formatTime(dose.scheduledTime) }} · {{ dose.medicineName }}
             </span>
@@ -396,7 +398,7 @@
                   }
                 </div>
 
-                @if (dose.actionable) {
+                @if (dose.actionable && !fpReadOnly()) {
                 <button type="button" class="med-confirm-btn dose-card__cta"
                   (click)="confirmDose(dose)"
                   [attr.aria-label]="'Confirm I took ' + dose.medicineName">

@@ -620,6 +620,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   openDeleteModal(record: UnifiedMedicalRecord): void {
+    if (this.readOnly) return;
     this.actionMenuOpen.set(null);
     this.deleteTarget.set(record);
   }
@@ -648,6 +649,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   editRecord(record: UnifiedMedicalRecord): void {
+    if (this.readOnly) return;
     if (record.type === 'medicine') {
       this.actionMenuOpen.set(null);
       this.scanForm = {
@@ -698,6 +700,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   closeLightbox(): void { this.lightboxUrl.set(null); }
 
   triggerUpload(type: string): void {
+    if (this.readOnly) return;
     if (type === 'General Medical Document') { this.openGeneralUploadForm(); return; }
     const map: Record<string, ElementRef<HTMLInputElement> | undefined> = {
       'Lab Analysis': this.labInput,
@@ -1095,6 +1098,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   openManualEntry(type: UploadCardKey): void {
+    if (this.readOnly) return;
     if (type === 'medicine') {
       this.scanForm = this.emptyScanForm();
       this.scanImageFailed.set(false);
