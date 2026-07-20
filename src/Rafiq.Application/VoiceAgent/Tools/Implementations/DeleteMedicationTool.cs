@@ -21,14 +21,30 @@ public sealed class DeleteMedicationTool(ISender mediator) : IVoiceTool
     public string[] RelatedToolNames => [];
 
     public string DomainContext =>
-        "DESTRUCTIVE ACTION — always confirm with ask_user before calling:\n" +
-        "  'Are you sure you want to delete [medicineName]? This will also delete all its reminders.'\n\n" +
-        "BEFORE CALLING — you need the medication id. Call list_medications first if you don't have it.\n\n" +
+        "WORKFLOW — follow these steps in order:\n\n" +
+
+        "  STEP 1 — FIND the medication.\n" +
+        "    Call list_medications.\n" +
+        "    Filter by medicineName or keywords the user mentioned.\n" +
+        "    ▸ No match → tell user: 'I couldn\\'t find a matching medication to delete.'\n" +
+        "      Do not call delete_medication.\n" +
+        "    ▸ Multiple matches → list them and ask which one:\n" +
+        "      '1. Panadol 500 mg\\n" +
+        "       2. Panadol 1000 mg\\n" +
+        "       Which one would you like to delete?'\n" +
+        "    ▸ Exactly one match → go to STEP 2.\n\n" +
+
+        "  STEP 2 — CONFIRM (always, before deleting).\n" +
+        "    'Are you sure you want to delete [name] ([dosage])? This will also permanently delete all its reminders.'\n" +
+        "    Only call delete_medication after explicit yes.\n\n" +
+
+        "  STEP 3 — CALL delete_medication.\n\n" +
+
         "REQUIRED:\n" +
-        "  id: UUID of the medication to delete.\n\n" +
+        "  id: UUID from list_medications result.\n\n" +
+
         "SIDE EFFECTS:\n" +
-        "  All reminders for this medication are also deleted and their scheduled notifications cancelled.\n" +
-        "  This action cannot be undone.";
+        "  All reminders for this medication are permanently deleted. This cannot be undone.";
 
     public async Task<ToolResult> ExecuteAsync(
         ToolCallRequest request, AgentContext context, CancellationToken cancellationToken)

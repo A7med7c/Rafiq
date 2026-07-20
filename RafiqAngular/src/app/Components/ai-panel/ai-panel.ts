@@ -140,6 +140,14 @@ export class AiPanel implements OnInit, OnDestroy {
         }
       }
     });
+
+    // When the robot is clicked from the sidebar, switch to voice mode.
+    effect(() => {
+      const req = this.aiChatService.voiceModeRequest();
+      if (req > 0) {
+        this.activeMode.set('voice');
+      }
+    });
   }
 
   ngOnInit(): void {}

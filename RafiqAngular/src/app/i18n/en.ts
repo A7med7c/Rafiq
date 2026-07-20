@@ -59,6 +59,8 @@ export const en = {
     askAIHint: 'Get health insights, check your records, or ask about your medications.',
     askNow: 'Ask Now',
     navigateTo: 'Navigate to',
+    robotGreeting: "Hi! I'm here to help you. Let me know if you need anything.",
+    openVoice: 'Talk to Rafiq AI by voice',
   },
 
   header: {

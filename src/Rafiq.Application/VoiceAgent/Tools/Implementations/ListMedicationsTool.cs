@@ -13,10 +13,15 @@ public sealed class ListMedicationsTool(ISender mediator) : IVoiceTool
 
     public string DomainContext =>
         "USE THIS TOOL when the user asks about their medications, drug list, or medicines.\n" +
-        "Also call this BEFORE update_medication or delete_medication to find the correct medication id.\n" +
-        "Result fields per medication: id (use this for update/delete), medicineName, dosage, " +
-        "frequency, duration, notes, source (Manual/Prescription/MedicineBox), createdAt.\n" +
-        "If the user says 'update Paracetamol' — list first, find the id, then call update_medication.";
+        "Also call this BEFORE update_medication, delete_medication, or any reminder tool\n" +
+        "to find the correct medication id.\n\n" +
+        "Result fields per medication: id, medicineName, dosage, frequency, duration, notes,\n" +
+        "source (Manual/Prescription/MedicineBox), createdAt.\n\n" +
+        "Common patterns:\n" +
+        "  'Update Paracetamol' → list first, find id → call update_medication\n" +
+        "  'Delete my Aspirin'  → list first, find id → confirm → call delete_medication\n" +
+        "  'Show reminders for Aspirin' → list_medications to get id → call list_medication_reminders\n" +
+        "  'Turn off Aspirin reminder' → list_medications → list_medication_reminders → toggle_medication_reminder";
 
     public async Task<ToolResult> ExecuteAsync(
         ToolCallRequest request, AgentContext context, CancellationToken cancellationToken)

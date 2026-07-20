@@ -17,6 +17,10 @@ export class AiChatService {
   private readonly base = `${environment.apiUrl}/chat`;
 
   readonly isPanelOpen = signal(false);
+  // Incremented each time the robot is clicked — AiPanel watches this and
+  // switches to voice mode. Using a counter (not boolean) ensures the effect
+  // fires even when the panel is already open.
+  readonly voiceModeRequest = signal(0);
 
   // ── Session-scoped image cache ───────────────────────────
   // Key: `${conversationId}:${sequenceNumber}` → data-URL
@@ -56,6 +60,11 @@ export class AiChatService {
 
   openPanel(): void {
     this.isPanelOpen.set(true);
+  }
+
+  openPanelInVoiceMode(): void {
+    this.isPanelOpen.set(true);
+    this.voiceModeRequest.update(v => v + 1);
   }
 
   closePanel(): void {

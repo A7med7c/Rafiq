@@ -32,6 +32,10 @@ public static class VoiceAgentServiceExtensions
 
         // ── Medication reminder tools ─────────────────────────────────────────
         services.AddScoped<IVoiceTool, AddMedicationReminderTool>();
+        services.AddScoped<IVoiceTool, ListMedicationRemindersTool>();
+        services.AddScoped<IVoiceTool, UpdateMedicationReminderTool>();
+        services.AddScoped<IVoiceTool, DeleteMedicationReminderTool>();
+        services.AddScoped<IVoiceTool, ToggleMedicationReminderTool>();
 
         // ── Appointment write tools ───────────────────────────────────────────
         services.AddScoped<IVoiceTool, BookAppointmentTool>();

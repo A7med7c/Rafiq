@@ -26,23 +26,38 @@ public sealed class UpdateMedicationTool(ISender mediator) : IVoiceTool
     public string[] RelatedToolNames => [];
 
     public string DomainContext =>
-        "BEFORE CALLING — you need the medication id. If you don't have it yet:\n" +
-        "  1. Call list_medications to get the list.\n" +
-        "  2. Identify which medication the user means.\n" +
-        "  3. Use its id here.\n\n" +
-        "REQUIRED:\n" +
-        "  id:           UUID of the medication to update (from list_medications result).\n" +
-        "  medicineName: Updated name (max 300 chars).\n" +
-        "  dosage:       Updated dosage (max 200 chars).\n" +
-        "  frequency:    Updated frequency (max 200 chars).\n" +
-        "  duration:     Updated duration (max 200 chars).\n\n" +
-        "OPTIONAL:\n" +
-        "  notes: Updated special instructions.\n\n" +
-        "VALIDATION RULES:\n" +
-        "  - Updated name+dosage combination must not duplicate another existing medication.\n" +
-        "  - ImagePath and Source cannot be changed via this tool.\n\n" +
-        "CONVERSATION HINT:\n" +
-        "  Ask the user which fields they want to change. For unchanged fields, use the current values from list_medications.";
+        "WORKFLOW — follow these steps in order:\n\n" +
+
+        "  STEP 1 — IDENTIFY the medication.\n" +
+        "    Call list_medications.\n" +
+        "    Filter by medicineName or keywords the user mentioned.\n" +
+        "    ▸ No match → tell user: 'I couldn\\'t find a matching medication.'\n" +
+        "    ▸ Multiple matches → list them and ask which one:\n" +
+        "      '1. Panadol 500 mg\\n" +
+        "       2. Panadol 1000 mg\\n" +
+        "       Which one would you like to update?'\n" +
+        "    ▸ Exactly one match → confirm once: 'Found [name] [dosage]. Is that the one?'\n\n" +
+
+        "  STEP 2 — ASK what to change.\n" +
+        "    Example: 'What would you like to change — the dosage, frequency, duration, or notes?'\n\n" +
+
+        "  STEP 3 — COLLECT new values; keep current values for unchanged fields.\n\n" +
+
+        "  STEP 4 — CALL update_medication.\n\n" +
+
+        "REQUIRED (pass current value for any field the user did not change):\n" +
+        "  id:           UUID of the medication (from list_medications).\n" +
+        "  medicineName: Name. Max 300 chars.\n" +
+        "  dosage:       Dosage. Max 200 chars.\n" +
+        "  frequency:    Frequency. Max 200 chars.\n" +
+        "  duration:     Duration. Max 200 chars.\n\n" +
+
+        "OPTIONAL (keep existing if not mentioned):\n" +
+        "  notes: Special instructions.\n\n" +
+
+        "BACKEND ENFORCES (relay any error returned):\n" +
+        "  - Updated name+dosage must not duplicate another existing medication.\n" +
+        "  - ImagePath and Source cannot be changed via this tool.";
 
     public async Task<ToolResult> ExecuteAsync(
         ToolCallRequest request, AgentContext context, CancellationToken cancellationToken)

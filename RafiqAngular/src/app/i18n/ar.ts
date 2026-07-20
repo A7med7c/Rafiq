@@ -61,6 +61,8 @@ export const ar: Translations = {
     askAIHint: 'احصل على معلومات عن صحتك، شوف سجلاتك، أو اسأل عن أدويتك.',
     askNow: 'اسأل دلوقتي',
     navigateTo: 'روح لـ',
+    robotGreeting: 'مرحبًا! أنا هنا لمساعدتك، إذا احتجت أي شيء فأنا معك.',
+    openVoice: 'تحدث مع رفيق بالصوت',
   },
 
   header: {

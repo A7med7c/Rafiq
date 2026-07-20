@@ -63,11 +63,27 @@
 
     <!-- Help Card -->
     <div class="sb-help">
-      <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
-      <div class="sb-help-copy">
-        <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
-        <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
+      <!-- Greeting bubble — appears on load and after inactivity -->
+      @if (robotBubbleVisible()) {
+      <div class="sb-robot-bubble" role="status">
+        <i class="fa-solid fa-comment-dots sb-robot-bubble-ico"></i>
+        <span>{{ t().sidebar.robotGreeting }}</span>
       </div>
+      }
+      <!-- Robot + copy row -->
+      <div class="sb-help-main">
+        <button type="button" class="sb-robot-btn"
+          (click)="openVoiceMode()"
+          [attr.aria-label]="t().sidebar.openVoice"
+          title="{{ t().sidebar.openVoice }}">
+          <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
+        </button>
+        <div class="sb-help-copy">
+          <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
+          <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
+        </div>
+      </div>
+      <!-- Text chat button -->
       <button type="button" class="sb-help-btn" (click)="aiChatService.openPanel()">
         <i class="fa-regular fa-comment-dots"></i>
         {{ t().sidebar.askNow }}

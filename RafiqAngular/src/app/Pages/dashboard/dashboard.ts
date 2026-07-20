@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit, signal, computed, HostListener, ElementRef } from '@angular/core';
+import { Component, effect, inject, OnInit, OnDestroy, signal, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
@@ -21,7 +21,7 @@ import { MedicalReportService, ReportType } from '../../Services/medical-report.
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   private readonly authService        = inject(AuthService);
   private readonly dashboardService   = inject(DashboardService);
   private readonly apptService        = inject(AppointmentsService);
@@ -82,6 +82,13 @@ export class Dashboard implements OnInit {
   readonly selectedReportType    = signal<ReportType>('DoctorSummary');
   readonly reportGenerating      = signal(false);
   readonly reportTargetProfileId = signal<string | null>(null);
+
+  // ── Robot speech bubble ───────────────────────────────────────────────────
+  readonly robotBubbleVisible = signal(false);
+  private _bubbleHideTimer:      ReturnType<typeof setTimeout> | null = null;
+  private _inactivityTimer:      ReturnType<typeof setTimeout> | null = null;
+  private static readonly BUBBLE_DURATION_MS  = 5_000;   // visible for 5 s
+  private static readonly INACTIVITY_DELAY_MS = 3 * 60 * 1000; // 3 min
 
   // ── Family member AI summary modal ────────────────────────────────────────
   readonly familySummaryOpen      = signal(false);
@@ -155,6 +162,39 @@ export class Dashboard implements OnInit {
   ngOnInit(): void {
     this.applyResponsiveSidebar();
     this.loadDashboardData();
+    // Show greeting bubble 1.5 s after load, then repeat after long inactivity.
+    setTimeout(() => this.showRobotBubble(), 1_500);
+  }
+
+  ngOnDestroy(): void {
+    if (this._bubbleHideTimer)  clearTimeout(this._bubbleHideTimer);
+    if (this._inactivityTimer)  clearTimeout(this._inactivityTimer);
+  }
+
+  private showRobotBubble(): void {
+    if (this._bubbleHideTimer) clearTimeout(this._bubbleHideTimer);
+    this.robotBubbleVisible.set(true);
+    this._bubbleHideTimer = setTimeout(() => {
+      this.robotBubbleVisible.set(false);
+      this.scheduleInactivityBubble();
+    }, Dashboard.BUBBLE_DURATION_MS);
+  }
+
+  private scheduleInactivityBubble(): void {
+    if (this._inactivityTimer) clearTimeout(this._inactivityTimer);
+    this._inactivityTimer = setTimeout(
+      () => this.showRobotBubble(),
+      Dashboard.INACTIVITY_DELAY_MS
+    );
+  }
+
+  private resetInactivityTimer(): void {
+    if (!this._inactivityTimer) return;
+    this.scheduleInactivityBubble();
+  }
+
+  openVoiceMode(): void {
+    this.aiChatService.openPanelInVoiceMode();
   }
 
   @HostListener('window:resize')
@@ -238,6 +278,13 @@ export class Dashboard implements OnInit {
     if (!target.closest('.hdr-user')) {
       this.dropdownOpen.set(false);
     }
+    this.resetInactivityTimer();
+  }
+
+  @HostListener('document:keydown')
+  @HostListener('document:touchstart')
+  onUserActivity(): void {
+    this.resetInactivityTimer();
   }
 
   toggleDropdown(): void {
