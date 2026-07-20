@@ -23,6 +23,7 @@ import { NotificationService } from '../../Services/notification.service';
 import { switchMap, catchError, of, map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
+import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { LocalizationService } from '../../Services/localization.service';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
@@ -160,11 +161,12 @@ export class MedicalRecords implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly fpSvc = inject(FamilyProfilesService);
+  private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly base = environment.apiUrl;
 
   readonly viewingProfile = toSignal<AccessibleProfileDto | null>(
     this.route.queryParamMap.pipe(
-      map(params => params.get('profileId')),
+      map(params => params.get('profileId') ?? this.profileSelectSvc.selectedProfileId),
       switchMap(profileId => {
         if (!profileId) return of(null);
         return this.fpSvc.getAccessible().pipe(

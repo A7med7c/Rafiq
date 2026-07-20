@@ -573,6 +573,7 @@ export const ar: Translations = {
     couldNotLoad: 'معرفناش نحمل المواعيد.',
     retry: 'حاول تاني',
     viewDetails: 'شوف التفاصيل',
+    viewOnly: 'مشاهدة فقط',
   },
 
   uploadValidation: {

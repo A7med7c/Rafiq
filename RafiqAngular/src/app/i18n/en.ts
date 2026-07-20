@@ -571,6 +571,7 @@ export const en = {
     couldNotLoad: 'Could not load appointments.',
     retry: 'Retry',
     viewDetails: 'View Details',
+    viewOnly: 'View Only',
   },
 
   uploadValidation: {

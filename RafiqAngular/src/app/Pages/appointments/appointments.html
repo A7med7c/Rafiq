@@ -142,10 +142,16 @@
           <h1 class="appts-title">{{ t().appointments.title }}</h1>
           <p class="appts-subtitle">{{ t().appointments.subtitle }}</p>
         </div>
+        @if (fpReadOnly()) {
+        <span class="fp-readonly-badge">
+          <i class="fa-regular fa-eye"></i> {{ t().appointments.viewOnly }}
+        </span>
+        } @else {
         <button type="button" class="add-appt-btn" (click)="openAdd()">
           <i class="fa-solid fa-plus"></i>
           {{ t().appointments.addAppointment }}
         </button>
+        }
       </div>
 
       <!-- ── Stat Cards ── -->
@@ -247,13 +253,12 @@
                   {{ t().appointments.noUpcomingText }}
                 </p>
 
+                @if (!fpReadOnly()) {
                 <button class="next-btn" (click)="openAdd()">
-
                   <i class="fa-solid fa-plus"></i>
-
                   {{ t().appointments.addAppointment }}
-
                 </button>
+                }
 
               </div>
 
@@ -564,12 +569,13 @@
                       (click)="openView(a)">
                       <i class="fa-regular fa-eye"></i>
                     </button>
-                    @if (a.status === AppointmentStatus.Upcoming) {
+                    @if (!fpReadOnly() && a.status === AppointmentStatus.Upcoming) {
                     <button type="button" class="rec-action-btn" [title]="t().appointments.editAction"
                       (click)="openEdit(a)">
                       <i class="fa-regular fa-pen-to-square"></i>
                     </button>
                     }
+                    @if (!fpReadOnly()) {
                     <button type="button" class="rec-action-btn rec-action-more" title="More options"
                       (click)="toggleMenu(a.id, $event)">
                       <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -589,6 +595,7 @@
                         <i class="fa-solid fa-trash"></i> {{ t().appointments.deleteAction }}
                       </button>
                     </div>
+                    }
                     }
                   </div>
                 </td>
@@ -901,7 +908,7 @@
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeView()">
         {{ t().appointments.closeBtn }}
       </button>
-      @if (a.status === AppointmentStatus.Upcoming) {
+      @if (!fpReadOnly() && a.status === AppointmentStatus.Upcoming) {
       <button type="button" class="modal-btn modal-btn-primary" (click)="closeView(); openEdit(a)">
         <i class="fa-regular fa-pen-to-square"></i> {{ t().appointments.editBtn }}
       </button>

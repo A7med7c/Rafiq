@@ -4,11 +4,15 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { of, map, switchMap } from 'rxjs';
 import { AuthService } from '../../Services/auth-service';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { NotificationService } from '../../Services/notification.service';
 import { AiChatService } from '../../Services/ai-chat.service';
+import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
+import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import {
   AppointmentDto, AppointmentStatus, AppointmentType,
   CreateAppointmentRequest, UpdateAppointmentRequest,
@@ -61,6 +65,31 @@ export class Appointments implements OnInit, OnDestroy {
   protected readonly l10n     = inject(LocalizationService);
   protected readonly aiChatService = inject(AiChatService);
   protected readonly t        = this.l10n.t;
+  private readonly fpSvc      = inject(FamilyProfilesService);
+  private readonly profileSelectSvc = inject(ProfileSelectionService);
+
+  // ── Family-profile read-only gate ────────────────────────────────────────
+  // Uses profileId from query param when present (direct link from family-profiles),
+  // otherwise falls back to the profile stored in localStorage by the
+  // family-profiles page.  If the resolved profile's access role is 'Viewer'
+  // all write actions are hidden.
+  readonly viewingProfile = toSignal<AccessibleProfileDto | null>(
+    this.route.queryParamMap.pipe(
+      map(params => params.get('profileId') ?? this.profileSelectSvc.selectedProfileId),
+      switchMap(profileId => {
+        if (!profileId) return of(null);
+        return this.fpSvc.getAccessible().pipe(
+          map(profiles => profiles.find(p => p.userHealthProfileId === profileId) ?? null)
+        );
+      })
+    ),
+    { initialValue: null }
+  );
+
+  readonly fpReadOnly = computed(() => this.viewingProfile()?.accessRole === 'Viewer');
+
+  // profileId override for data loading (populated from query param)
+  private readonly fpProfileId = signal<string | null>(null);
 
   // ── Layout ──────────────────────────────────────────────────────────────
   readonly sidebarCollapsed  = signal(false);
@@ -296,12 +325,16 @@ nextPage() {
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.applyResponsiveSidebar();
-    this.loadAppointments();
     this.notifTimer = setInterval(() => this.checkDueNotifications(), 60_000);
 
-    // Auto-open add modal if navigated from dashboard with ?openAdd=1
     this.route.queryParams.subscribe(params => {
-      if (params['openAdd']) {
+      const profileId = params['profileId'] ?? null;
+      this.fpProfileId.set(profileId);
+      this.loadAppointments();
+
+      // Auto-open add modal only when navigated from dashboard with ?openAdd=1
+      // and the current profile is not read-only.
+      if (params['openAdd'] && !this.fpReadOnly()) {
         this.openAdd();
         this.router.navigate([], { replaceUrl: true, queryParams: {} });
       }
@@ -343,7 +376,7 @@ nextPage() {
   loadAppointments(): void {
     this.loading.set(true);
     this.loadError.set(null);
-    this.apptSvc.getAll().subscribe({
+    this.apptSvc.getAll(this.fpProfileId() ?? undefined).subscribe({
       next: data => {
         this.appointments.set(data);
         this.loading.set(false);
@@ -396,6 +429,7 @@ nextPage() {
 
   // ── Add / Edit ────────────────────────────────────────────────────────────
   openAdd(): void {
+    if (this.fpReadOnly()) return;
     this.editingId.set(null);
     this.resetForm();
     this.formStep.set(1);
@@ -403,6 +437,7 @@ nextPage() {
   }
 
   openEdit(a: AppointmentDto): void {
+    if (this.fpReadOnly()) return;
     this.editingId.set(a.id);
     const dt = new Date(a.appointmentDateTime);
     this.fType.set(a.appointmentType);
@@ -603,7 +638,10 @@ nextPage() {
   closeView(): void { this.showViewModal.set(false); }
 
   // ── Delete ────────────────────────────────────────────────────────────────
-  confirmDelete(id: string): void { this.deletingId.set(id); this.showDeleteModal.set(true); }
+  confirmDelete(id: string): void {
+    if (this.fpReadOnly()) return;
+    this.deletingId.set(id); this.showDeleteModal.set(true);
+  }
   closeDelete(): void { this.showDeleteModal.set(false); this.deletingId.set(null); }
   executeDelete(): void {
     const id = this.deletingId();
@@ -616,7 +654,10 @@ nextPage() {
   }
 
   // ── Cancel ────────────────────────────────────────────────────────────────
-  confirmCancel(id: string): void { this.cancellingId.set(id); this.showCancelModal.set(true); }
+  confirmCancel(id: string): void {
+    if (this.fpReadOnly()) return;
+    this.cancellingId.set(id); this.showCancelModal.set(true);
+  }
   closeCancel(): void { this.showCancelModal.set(false); this.cancellingId.set(null); }
   executeCancel(): void {
     const id = this.cancellingId();
@@ -630,6 +671,7 @@ nextPage() {
 
   // ── Complete ──────────────────────────────────────────────────────────────
   markComplete(id: string): void {
+    if (this.fpReadOnly()) return;
     this.apptSvc.complete(id).subscribe({
       next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.markedCompleted, 'success'); },
       error: err   => { this.toast(err?.error?.message ?? this.t().appointments.failedSave, 'error'); },
