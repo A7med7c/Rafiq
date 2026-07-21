@@ -852,6 +852,11 @@ export class FamilyProfiles implements OnInit {
   }
 
   // ─── Three-dot menu ─────────────────────────────────────────
+  canShowProfileMenu(p: AccessibleProfileDto | null): boolean {
+    if (!p) return false;
+    return p.profileType === 'Managed' && p.userId === null && p.accessRole === 'Owner';
+  }
+
   toggleProfileMenu(): void { this.showProfileMenu.update(v => !v); }
   closeProfileMenu(): void { this.showProfileMenu.set(false); }
 

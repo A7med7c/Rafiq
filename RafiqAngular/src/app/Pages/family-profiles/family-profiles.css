@@ -295,7 +295,7 @@
   flex-direction: column;
   gap: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .fp-detail-hdr {
@@ -412,6 +412,18 @@
   animation: fp-modal-in 140ms ease both;
 }
 
+/* RTL: anchor dropdown to the left edge of the button so it opens inward
+   (the button sits on the far-left in RTL, so right:0 would shoot off-screen).
+   :host-context is required because <html dir="rtl"> is outside this component
+   and Angular's Emulated encapsulation would otherwise scope [dir="rtl"] with
+   _ngcontent-xxx, which never matches the <html> element. */
+:host-context([dir="rtl"]) .fp-menu-dropdown,
+[dir="rtl"] .fp-menu-dropdown {
+  right: auto;
+  left: 0;
+  transform-origin: top left;
+}
+
 .fp-menu-dropdown-item {
   display: flex;
   align-items: center;
@@ -425,7 +437,7 @@
   color: var(--text-2);
   cursor: pointer;
   text-align: left;
-  transition: background .12s;
+  transition: background .12s;  
 }
 .fp-menu-dropdown-item:hover { background: var(--bg); }
 .fp-menu-dropdown-item--danger { color: var(--red); }

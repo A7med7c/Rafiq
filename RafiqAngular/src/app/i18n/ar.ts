@@ -280,7 +280,7 @@ export const ar: Translations = {
     filter: 'فلترة',
     recordType: 'نوع السجل',
     aiStatus: 'حالة الذكاء الاصطناعي',
-    uploadedBy: 'الرافع',
+    uploadedBy: 'بواسطة',
     dateRange: 'الفترة الزمنية',
     fromDate: 'من',
     toDate: 'لحد',

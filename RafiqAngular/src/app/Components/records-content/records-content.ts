@@ -576,6 +576,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     if (this.currentPage() < this.totalPages()) { this.animateTable('left'); this.currentPage.update(p => p + 1); }
   }
 
+  isLastRow(index: number): boolean {
+    return index >= this.pagedRecords().length - 2;
+  }
+
   setTab(tab: RecordTab): void {
     if (tab === this.activeTab()) return;
     const order: RecordTab[] = ['all', 'lab', 'prescription', 'imaging', 'medicine', 'general'];
