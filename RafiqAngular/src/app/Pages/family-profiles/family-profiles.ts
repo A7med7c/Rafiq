@@ -563,7 +563,7 @@ export class FamilyProfiles implements OnInit {
       chronicDiseases: (d.chronicDiseases ?? []).map((c: any) => ({ id: c.id, name: c.name, status: c.status, diagnosedAt: c.diagnosedAt?.split('T')[0] ?? '' })),
       profileImage: null,
       profileImagePreview: null,
-      existingImageUrl: this.resolveProfileImageUrl(p.profileImageUrl ?? null),
+      existingImageUrl: p.profileImageUrl ?? null,
       removeImage: false,
     };
     this.showEditModal.set(true);
@@ -660,12 +660,46 @@ export class FamilyProfiles implements OnInit {
       }
 
       const finish = () => {
-        this.editSubmitting.set(false);
-        this.closeEditModal();
-        this.fpSvc.getById(profileId).pipe(catchError(() => of(null))).subscribe(d => {
-          this.selectedDetail.set(d);
-        });
-        this.loadProfiles();
+        const profileImage = this.editForm.profileImage;
+        const removeImage = this.editForm.removeImage;
+
+        // Helper: patch the image URL across every in-memory signal so no reload is needed
+        const patchImageUrl = (newUrl: string | null) => {
+          this.selectedDetail.update(d => d ? { ...d, profileImageUrl: newUrl } : d);
+          this.selectedProfile.update(p => p ? { ...p, profileImageUrl: newUrl } : p);
+          this.profiles.update(list =>
+            list.map(p => p.userHealthProfileId === profileId ? { ...p, profileImageUrl: newUrl } : p)
+          );
+        };
+
+        // Helper: patch text fields (name etc.) that were also edited
+        const patchTextFields = () => {
+          const firstName = this.editForm.firstName.trim();
+          const lastName  = this.editForm.lastName.trim();
+          this.selectedProfile.update(p => p ? { ...p, firstName, lastName } : p);
+          this.profiles.update(list =>
+            list.map(p => p.userHealthProfileId === profileId ? { ...p, firstName, lastName } : p)
+          );
+        };
+
+        if (profileImage || removeImage) {
+          this.fpSvc.updateProfileImage(profileId, profileImage, removeImage).pipe(
+            catchError(() => of(null))
+          ).subscribe(updated => {
+            if (updated) { patchImageUrl(updated.profileImageUrl); }
+            patchTextFields();
+            this.editSubmitting.set(false);
+            this.closeEditModal();
+          });
+        } else {
+          patchTextFields();
+          this.editSubmitting.set(false);
+          this.closeEditModal();
+          // Refresh detail text fields from server without a full list reload
+          this.fpSvc.getById(profileId).pipe(catchError(() => of(null))).subscribe(d => {
+            if (d) { this.selectedDetail.set(d); }
+          });
+        }
       };
 
       if (ops.length === 0) { finish(); return; }
@@ -852,6 +886,11 @@ export class FamilyProfiles implements OnInit {
   }
 
   // ─── Three-dot menu ─────────────────────────────────────────
+  canShowProfileMenu(p: AccessibleProfileDto | null): boolean {
+    if (!p) return false;
+    return p.profileType === 'Managed' && p.userId === null && p.accessRole === 'Owner';
+  }
+
   toggleProfileMenu(): void { this.showProfileMenu.update(v => !v); }
   closeProfileMenu(): void { this.showProfileMenu.set(false); }
 

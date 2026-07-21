@@ -274,6 +274,7 @@
               <i class="fa-solid fa-pen"></i> {{ t().family.editProfile }}
             </button>
             }
+            @if (canShowProfileMenu(selectedProfile())) {
             <div class="fp-menu-wrap">
               <button type="button" class="fp-menu-btn" (click)="$event.stopPropagation(); toggleProfileMenu()">
                 <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -290,6 +291,7 @@
               </div>
               }
             </div>
+            }
           </div>
         </div>
 

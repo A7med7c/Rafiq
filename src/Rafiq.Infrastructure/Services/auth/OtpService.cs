@@ -116,5 +116,8 @@ namespace Rafiq.Infrastructure.Services.auth
 
             return true;
         }
+
+        public Task InvalidateOtpAsync(Guid userId, OtpPurpose purpose, CancellationToken cancellationToken)
+            => otpRepository.DeleteByUserIdAsync(userId, purpose, cancellationToken);
     }
 }

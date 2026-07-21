@@ -155,56 +155,56 @@
         </button>
         @if (filterMenuOpen()) {
         <div class="filter-popover">
-          <div class="filter-section">
-            <p class="filter-section-title">{{ t().records.recordType }}</p>
-            @for (item of recordTypeOptions; track item.value) {
-            <label class="filter-option">
-              <input type="radio" name="rcRecordTypeFilter" [checked]="draftFilters().type === item.value"
-                (change)="updateDraftFilter('type', item.value)">
-              <span>{{ item.label }}</span>
-            </label>
-            }
-          </div>
-          <div class="filter-section">
-            <p class="filter-section-title">{{ t().records.aiStatus }}</p>
-            @for (item of aiStatusOptions; track item.value) {
-            <label class="filter-option">
-              <input type="radio" name="rcAiStatusFilter" [checked]="draftFilters().aiStatus === item.value"
-                (change)="updateDraftFilter('aiStatus', item.value)">
-              <span>{{ item.label }}</span>
-            </label>
-            }
-          </div>
-          <div class="filter-section">
-            <p class="filter-section-title">{{ t().records.uploadedBy }}</p>
-            @for (item of uploadedByOptions; track item.value) {
-            <label class="filter-option">
-              <input type="radio" name="rcUploadedByFilter" [checked]="draftFilters().uploadedBy === item.value"
-                (change)="updateDraftFilter('uploadedBy', item.value)">
-              <span>{{ item.label }}</span>
-            </label>
-            }
-          </div>
-          <div class="filter-section">
-            <p class="filter-section-title">{{ t().records.dateRange }}</p>
-            <div class="date-filter-grid">
-              <label class="date-filter-field">
-                <span>{{ t().records.fromDate }}</span>
-                <input type="date" [ngModel]="draftFilters().fromDate" (ngModelChange)="updateDraftFilter('fromDate', $event)">
-              </label>
-              <label class="date-filter-field">
-                <span>{{ t().records.toDate }}</span>
-                <input type="date" [ngModel]="draftFilters().toDate" (ngModelChange)="updateDraftFilter('toDate', $event)">
-              </label>
+          <div class="filter-grid">
+            <div class="filter-col">
+              <div class="filter-section">
+                <p class="filter-section-title">{{ t().records.aiStatus }}</p>
+                <div class="filter-options-group">
+                  @for (item of aiStatusOptions; track item.value) {
+                  <label class="filter-option">
+                    <input type="radio" name="rcAiStatusFilter" [checked]="draftFilters().aiStatus === item.value"
+                      (change)="updateDraftFilter('aiStatus', item.value)">
+                    <span>{{ item.label }}</span>
+                  </label>
+                  }
+                </div>
+              </div>
+              <div class="filter-section">
+                <p class="filter-section-title">{{ t().records.uploadedBy }}</p>
+                <div class="filter-options-group">
+                  @for (item of uploadedByOptions; track item.value) {
+                  <label class="filter-option">
+                    <input type="radio" name="rcUploadedByFilter" [checked]="draftFilters().uploadedBy === item.value"
+                      (change)="updateDraftFilter('uploadedBy', item.value)">
+                    <span>{{ item.label }}</span>
+                  </label>
+                  }
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="filter-section">
-            <p class="filter-section-title">Sort By</p>
-            <select class="sort-select" [ngModel]="draftFilters().sortBy" (ngModelChange)="updateDraftFilter('sortBy', $event)">
-              @for (item of sortOptions; track item.value) {
-              <option [value]="item.value">{{ item.label }}</option>
-              }
-            </select>
+            <div class="filter-col">
+              <div class="filter-section">
+                <p class="filter-section-title">{{ t().records.dateRange }}</p>
+                <div class="date-filter-grid">
+                  <label class="date-filter-field">
+                    <span>{{ t().records.fromDate }}</span>
+                    <input type="date" [ngModel]="draftFilters().fromDate" (ngModelChange)="updateDraftFilter('fromDate', $event)">
+                  </label>
+                  <label class="date-filter-field">
+                    <span>{{ t().records.toDate }}</span>
+                    <input type="date" [ngModel]="draftFilters().toDate" (ngModelChange)="updateDraftFilter('toDate', $event)">
+                  </label>
+                </div>
+              </div>
+              <div class="filter-section">
+                <p class="filter-section-title">Sort By</p>
+                <select class="sort-select" [ngModel]="draftFilters().sortBy" (ngModelChange)="updateDraftFilter('sortBy', $event)">
+                  @for (item of sortOptions; track item.value) {
+                  <option [value]="item.value">{{ item.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
           </div>
           <div class="filter-actions">
             <button type="button" class="filter-action-btn filter-action-btn--ghost" (click)="resetFilters()">{{ t().records.resetFilters }}</button>
@@ -290,7 +290,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (rec of pagedRecords(); track rec.id) {
+          @for (rec of pagedRecords(); track rec.id; let i = $index) {
           <tr>
             <td>
               <div class="table-name-wrap">
@@ -325,14 +325,14 @@
                   <i class="fa-solid fa-download"></i>
                 </button>
                 @if (!readOnly) {
-                <div class="record-actions">
+                <div class="record-actions" [style.z-index]="actionMenuOpen() === rec.id ? 50 : 1">
                   <button type="button" class="action-btn" [attr.title]="t().records.menu"
                     [disabled]="loading() || deleting() || reviewSaving()"
                     (click)="toggleActionMenu(rec.id, $event)">
                     <i class="fa-solid fa-ellipsis-vertical"></i>
                   </button>
                   @if (actionMenuOpen() === rec.id) {
-                  <div class="record-menu" (click)="$event.stopPropagation()">
+                  <div class="record-menu" [class.record-menu-up]="isLastRow(i)" (click)="$event.stopPropagation()">
                     <button type="button" class="record-menu-item" (click)="editRecord(rec)">
                       <i class="fa-solid fa-pen-to-square"></i> {{ t().records.editAction }}
                     </button>

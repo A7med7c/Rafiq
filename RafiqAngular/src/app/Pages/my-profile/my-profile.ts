@@ -378,10 +378,31 @@ export class MyProfile implements OnInit {
   }
 
   cancelEmailVerification(): void {
-    this.verifyingEmail.set(false);
-    this.emailOtpCode = '';
-    this.emailOtpError.set(null);
-    this.authService.getMe().subscribe();
+    this.emailOtpSaving.set(true);
+    this.authService.cancelEmailChange().subscribe({
+      next: () => {
+        this.authService.getMe().subscribe({
+          next: () => {
+            this.emailOtpSaving.set(false);
+            this.verifyingEmail.set(false);
+            this.emailOtpCode = '';
+            this.emailOtpError.set(null);
+            this.pendingEmail.set('');
+          },
+          error: () => {
+            this.emailOtpSaving.set(false);
+            this.verifyingEmail.set(false);
+          }
+        });
+      },
+      error: () => {
+        this.emailOtpSaving.set(false);
+        this.verifyingEmail.set(false);
+        this.emailOtpCode = '';
+        this.emailOtpError.set(null);
+        this.pendingEmail.set('');
+      }
+    });
   }
 
   // ── Edit Health Info ──────────────────────────────────────────────────────

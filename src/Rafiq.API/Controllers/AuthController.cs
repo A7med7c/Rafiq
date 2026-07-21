@@ -143,6 +143,14 @@ public sealed class AuthController(IMediator _mediator) : ControllerBase
     }
 
     [Authorize]
+    [HttpPost("me/email/cancel")]
+    public async Task<IActionResult> CancelEmailUpdate(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new CancelEmailUpdateCommand(), cancellationToken);
+        return Ok(result);
+    }
+
+    [Authorize]
     [HttpDelete("me")]
     public async Task<IActionResult> DeleteMyAccount(CancellationToken cancellationToken)
     {
