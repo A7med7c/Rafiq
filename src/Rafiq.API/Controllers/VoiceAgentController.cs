@@ -39,7 +39,8 @@ public class VoiceAgentController(IMediator mediator) : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new ProcessVoiceMessageCommand(sessionId, request.Text, request.Language ?? "en"),
+            new ProcessVoiceMessageCommand(sessionId, request.Text, request.Language ?? "en",
+                UtcOffsetMinutes: request.UtcOffsetMinutes),
             cancellationToken);
         return Ok(result);
     }
@@ -67,6 +68,7 @@ public class VoiceAgentController(IMediator mediator) : ControllerBase
         var userIdValue  = userId.Value;
         var userIdString = userIdValue.ToString();
         var language     = request.Language ?? "en";
+        var utcOffset    = request.UtcOffsetMinutes;
 
         _ = Task.Run(async () =>
         {
@@ -77,7 +79,7 @@ public class VoiceAgentController(IMediator mediator) : ControllerBase
                 // Pass BackgroundUserId so the handler doesn't rely on ICurrentUserService /
                 // HttpContext, which is unavailable once the HTTP response has been sent.
                 await sender.Send(new ProcessVoiceMessageCommand(
-                    sessionId, request.Text, language, userIdValue));
+                    sessionId, request.Text, language, userIdValue, utcOffset));
             }
             catch (OperationCanceledException)
             {
@@ -108,4 +110,4 @@ public class VoiceAgentController(IMediator mediator) : ControllerBase
 
 public sealed record CreateSessionRequest(Guid ProfileId, string? Language);
 
-public sealed record SendVoiceMessageRequest(string Text, string? Language);
+public sealed record SendVoiceMessageRequest(string Text, string? Language, int UtcOffsetMinutes = 0);

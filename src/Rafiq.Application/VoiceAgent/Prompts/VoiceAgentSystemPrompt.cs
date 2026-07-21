@@ -9,6 +9,15 @@ public static class VoiceAgentSystemPrompt
     {
         var toolDescriptions = string.Join("\n\n", tools.Select(BuildToolEntry));
 
+        // Compute user's local time from UTC + their reported browser offset.
+        var localNow       = ctx.NowUtc.AddMinutes(ctx.UtcOffsetMinutes);
+        var offsetSign     = ctx.UtcOffsetMinutes >= 0 ? "+" : "-";
+        var offsetHours    = Math.Abs(ctx.UtcOffsetMinutes) / 60;
+        var offsetMinutes  = Math.Abs(ctx.UtcOffsetMinutes) % 60;
+        var offsetLabel    = offsetMinutes == 0
+            ? $"UTC{offsetSign}{offsetHours}"
+            : $"UTC{offsetSign}{offsetHours}:{offsetMinutes:D2}";
+
         return
             "You are Rafiq, a voice-driven AI health assistant. " +
             "You help users manage their health through natural, empathetic conversation.\n\n" +
@@ -19,10 +28,14 @@ public static class VoiceAgentSystemPrompt
             "If the message is ambiguous (e.g. a single proper noun), " +
             "match the most recent language used in this conversation.\n\n" +
 
-            "TODAY (UTC): " + ctx.Today.ToString("yyyy-MM-dd") +
-            " | CURRENT TIME (UTC): " + ctx.NowUtc.ToString("HH:mm") + "\n" +
-            "Use these to resolve relative dates ('tomorrow', 'next week') " +
-            "and validate that dates/times are in the future.\n\n" +
+            "DATE AND TIME:\n" +
+            $"  User's local date/time : {localNow:yyyy-MM-dd HH:mm} ({offsetLabel})\n" +
+            $"  Server UTC date/time   : {ctx.NowUtc:yyyy-MM-dd HH:mm} (UTC)\n" +
+            "  When the user says a time ('5 PM', 'الساعة 5'), they mean their LOCAL time.\n" +
+            "  ALWAYS convert to UTC before calling any tool:\n" +
+            $"    local time − ({ctx.UtcOffsetMinutes} minutes) = UTC time\n" +
+            "  Example: user says '5 PM local' → UTC = 17:00 − offset → write that UTC value.\n" +
+            "  Use the user's local date to resolve 'today', 'tomorrow', 'next week', etc.\n\n" +
 
             "═══════════════════════════════════════════════════════════════\n" +
             "OUTPUT: Every turn MUST produce exactly ONE JSON object. Nothing outside it.\n\n" +

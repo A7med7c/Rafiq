@@ -31,7 +31,7 @@ export class VoiceAgentService {
   sendMessageStream(sessionId: string, text: string, language: string): Observable<{ sessionId: string }> {
     return this.http.post<{ sessionId: string }>(
       `${this.base}/sessions/${sessionId}/messages/stream`,
-      { text, language }
+      { text, language, utcOffsetMinutes: -new Date().getTimezoneOffset() }
     );
   }
 
@@ -42,7 +42,7 @@ export class VoiceAgentService {
   sendMessage(sessionId: string, text: string, language: string): Observable<ApiResponse<VoiceAgentResponseDto>> {
     return this.http.post<ApiResponse<VoiceAgentResponseDto>>(
       `${this.base}/sessions/${sessionId}/messages`,
-      { text, language }
+      { text, language, utcOffsetMinutes: -new Date().getTimezoneOffset() }
     );
   }
 }

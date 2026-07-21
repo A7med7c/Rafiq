@@ -52,7 +52,8 @@ public sealed class ProcessVoiceMessageCommandHandler(
             SessionId: session.Id,
             Language: request.Language,
             Today: DateOnly.FromDateTime(nowUtc),
-            NowUtc: nowUtc);
+            NowUtc: nowUtc,
+            UtcOffsetMinutes: request.UtcOffsetMinutes);
 
         var userSeq = (session.Messages.Any()
             ? session.Messages.Max(m => m.SequenceNumber)

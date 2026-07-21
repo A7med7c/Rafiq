@@ -91,8 +91,16 @@ public sealed class BookAppointmentTool(ISender mediator) : IVoiceTool
         if (!Enum.TryParse<AppointmentType>(p.GetString("appointmentType"), ignoreCase: true, out var apptType))
             return new ToolResult(false, "Invalid appointmentType. Valid values: DoctorVisit, LabTest, Imaging, Vaccination, Dentist, Therapy, FollowUp, Other.");
 
-        if (!DateTime.TryParse(p.GetString("appointmentDateTime"), out var apptDateTime))
-            return new ToolResult(false, "Invalid appointmentDateTime. Use ISO-8601 format (e.g. 2026-07-25T14:00:00Z).");
+        // Parse with RoundtripKind so the 'Z' suffix is honoured and the resulting
+        // DateTime always has Kind=Utc, avoiding local-timezone contamination.
+        if (!DateTimeOffset.TryParse(
+                p.GetString("appointmentDateTime"),
+                null,
+                System.Globalization.DateTimeStyles.RoundtripKind,
+                out var apptDateTimeOffset))
+            return new ToolResult(false, "Invalid appointmentDateTime. Use ISO-8601 UTC format (e.g. 2026-07-25T14:00:00Z).");
+
+        var apptDateTime = apptDateTimeOffset.UtcDateTime; // Kind = Utc
 
         var customType = p.TryGetProperty("customType", out var ct) ? ct.GetString() : null;
         if (apptType == AppointmentType.Other && string.IsNullOrWhiteSpace(customType))

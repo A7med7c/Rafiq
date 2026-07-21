@@ -14,5 +14,7 @@ public sealed record ProcessVoiceMessageCommand(
     /// which is unavailable after the HTTP response is sent.
     /// Leave as default (Guid.Empty) for synchronous calls — the handler reads from ICurrentUserService.
     /// </summary>
-    Guid BackgroundUserId = default)
+    Guid BackgroundUserId = default,
+    /// <summary>Client's UTC offset in minutes (e.g. +180 for Egypt UTC+3).</summary>
+    int UtcOffsetMinutes = 0)
     : IRequest<ApiResponse<VoiceAgentResponseDto>>;

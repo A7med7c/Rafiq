@@ -1,8 +1,10 @@
 import { Component, OnInit, OnDestroy, inject, signal, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { LocalizationService } from '../../Services/localization.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
+import { NotificationService } from '../../Services/notification.service';
 import { VoiceAgentService, VoiceAgentResponseDto } from '../../Services/voice-agent.service';
 import { VoiceCaptureService } from '../../Services/voice-capture.service';
 import { VoiceSynthesisService } from '../../Services/voice-synthesis.service';
@@ -23,6 +25,8 @@ export class VoiceAgentPanel implements OnInit, OnDestroy {
   private readonly voiceSynthesis = inject(VoiceSynthesisService);
   private readonly signalr        = inject(SignalRService);
   private readonly healthProfile  = inject(HealthProfileService);
+  private readonly notifSvc       = inject(NotificationService);
+  private readonly router         = inject(Router);
   protected readonly l10n         = inject(LocalizationService);
   protected readonly t            = this.l10n.t;
 
@@ -176,6 +180,15 @@ export class VoiceAgentPanel implements OnInit, OnDestroy {
     this.response.set(payload.text);
     this.toolHint.set(null);
     this.state.set('speaking');
+
+    // Refresh data pages so any changes (appointments, medications) are immediately visible.
+    this.notifSvc.notifyAppointmentChanged();
+    this.notifSvc.notifyReminderChanged();
+
+    if (payload.navigateTo) {
+      void this.router.navigateByUrl(payload.navigateTo);
+    }
+
     // TTS locale is inferred from the response text itself — no lang param needed.
     await this.voiceSynthesis.speak(payload.text);
     this.state.set('idle');
