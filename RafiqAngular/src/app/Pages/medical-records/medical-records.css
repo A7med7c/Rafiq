@@ -306,9 +306,16 @@
   border: 1px solid var(--border);
   border-radius: var(--r-xs);
   box-shadow: var(--shadow-md);
-  z-index: 40;
-  transform-origin: top;
+  z-index: 100;
+  transform-origin: top right;
   animation: menu-scale-in 200ms ease both;
+}
+
+:host-context([dir="rtl"]) .add-record-menu,
+[dir="rtl"] .add-record-menu {
+  right: auto;
+  left: 0;
+  transform-origin: top left;
 }
 
 @keyframes menu-scale-in {
@@ -2151,16 +2158,38 @@ html[dir="rtl"] .user-dropdown {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  width: 260px;
-  max-height: min(620px, calc(100vh - 160px));
-  overflow-y: auto;
-  padding: 12px;
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  padding: 16px;
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--r-xs);
   box-shadow: var(--shadow-md);
-  z-index: 45;
+  z-index: 100;
   animation: filter-popover-in 200ms ease both;
+  transform-origin: top right;
+}
+
+[dir="rtl"] .filter-popover {
+  right: auto;
+  left: 0;
+  transform-origin: top left;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 520px) {
+  .filter-popover {
+    width: min(320px, calc(100vw - 32px));
+  }
+  .filter-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 @keyframes filter-popover-in {
@@ -2175,8 +2204,8 @@ html[dir="rtl"] .user-dropdown {
 }
 
 .filter-section {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border-lt);
+  padding: 6px 0;
+  border-bottom: none;
 }
 
 .filter-section:first-child {
@@ -2184,7 +2213,7 @@ html[dir="rtl"] .user-dropdown {
 }
 
 .filter-section-title {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   font-size: 11px;
   font-weight: 800;
   color: var(--text-3);
@@ -2192,15 +2221,21 @@ html[dir="rtl"] .user-dropdown {
   letter-spacing: .04em;
 }
 
+.filter-options-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .filter-option {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 30px;
-  padding: 5px 7px;
+  min-height: 26px;
+  padding: 3px 6px;
   border-radius: 6px;
   color: var(--text-2);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: background 150ms ease, color 150ms ease;
@@ -2218,13 +2253,13 @@ html[dir="rtl"] .user-dropdown {
 
 .date-filter-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 
 .date-filter-field {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   color: var(--text-3);
   font-size: 11px;
   font-weight: 700;
@@ -2243,11 +2278,11 @@ html[dir="rtl"] .user-dropdown {
 }
 
 .date-filter-field input {
-  padding: 0 9px;
+  padding: 0 8px;
 }
 
 .sort-select {
-  padding: 0 10px;
+  padding: 0 8px;
   cursor: pointer;
 }
 
@@ -2260,7 +2295,9 @@ html[dir="rtl"] .user-dropdown {
 .filter-actions {
   display: flex;
   gap: 8px;
-  padding-top: 12px;
+  padding-top: 14px;
+  margin-top: 10px;
+  border-top: 1px solid var(--border-lt);
 }
 
 .filter-action-btn {
@@ -2353,9 +2390,25 @@ html[dir="rtl"] .user-dropdown {
   border: 1px solid var(--border);
   border-radius: var(--r-xs);
   box-shadow: 0 12px 32px rgba(0,0,0,.12);
-  z-index: 30;
+  z-index: 100;
   animation: dropdown-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: top right;
+}
+
+[dir="rtl"] .record-menu {
+  right: auto;
+  left: 0;
+  transform-origin: top left;
+}
+
+.record-menu-up {
+  top: auto;
+  bottom: calc(100% + 8px);
+  transform-origin: bottom right;
+}
+
+[dir="rtl"] .record-menu-up {
+  transform-origin: bottom left;
 }
 
 .record-menu-item {

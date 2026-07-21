@@ -133,3 +133,11 @@ img {
   left: 0;
   transform-origin: top left;
 }
+
+/* Prevent table wrappers from clipping dropdowns or producing horizontal scrollbars on desktop */
+@media (min-width: 1025px) {
+  .table-responsive,
+  .records-table-wrap {
+    overflow: visible !important;
+  }
+}
