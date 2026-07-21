@@ -305,6 +305,13 @@ export class AuthService {
     );
   }
 
+  cancelEmailChange(): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(
+      `${environment.apiUrl}/auth/me/email/cancel`,
+      {}
+    );
+  }
+
   deleteAccount(): Observable<ApiResponse<string>> {
     return this.http.delete<ApiResponse<string>>(
       `${environment.apiUrl}/auth/me`

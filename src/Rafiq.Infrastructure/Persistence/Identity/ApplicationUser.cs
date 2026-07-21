@@ -21,6 +21,10 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     public string? ProfileImageUrl { get; set; }
 
+    // The last confirmed email, kept while a new email is pending verification so it can be
+    // restored if the user cancels. Null when there is no pending email change.
+    public string? PreviousConfirmedEmail { get; set; }
+
     // Navigation Properties
     public UserHealthProfile? HealthProfile { get; set; }
 

@@ -20,6 +20,7 @@ public interface IIdentityService
     Task<AccountDto> GetAccountAsync(Guid userId, CancellationToken cancellationToken);
     Task<AccountDto> UpdateAccountAsync(Guid userId, string firstName, string lastName, string phoneNumber, CancellationToken cancellationToken = default);
     Task<AccountDto> UpdateEmailAsync(Guid userId, string newEmail, CancellationToken cancellationToken = default);
+    Task<AccountDto> CancelEmailUpdateAsync(Guid userId, CancellationToken cancellationToken = default);
     Task ResetPasswordAsync(Guid userId, string newPassword, CancellationToken cancellationToken);
     Task DeleteUserAsync(Guid userId, CancellationToken cancellationToken = default);
 }
