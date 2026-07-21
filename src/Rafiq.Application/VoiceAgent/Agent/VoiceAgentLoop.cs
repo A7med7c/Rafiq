@@ -116,6 +116,19 @@ public sealed class VoiceAgentLoop(
                         logger.LogWarning(ex, "VoiceAgentThinking notification failed (non-fatal)");
                     }
 
+                    // Family profile context switching: if the AI includes "targetProfileId"
+                    // in any tool's parameters, route that call to the specified profile.
+                    // This lets all existing tools (add_medication, book_appointment, etc.)
+                    // operate on a family member's profile without any change to those tools.
+                    var effectiveCtx = ctx;
+                    if (tc.Parameters.TryGetProperty("targetProfileId", out var tpidProp)
+                        && Guid.TryParse(tpidProp.GetString(), out var familyProfileId))
+                    {
+                        effectiveCtx = ctx with { ProfileId = familyProfileId };
+                        logger.LogDebug("targetProfileId override → routing tool '{Tool}' to profile {ProfileId}",
+                            tc.ToolName, familyProfileId);
+                    }
+
                     string toolResultContent;
                     var tool = toolRegistry.Get(tc.ToolName);
 
@@ -134,7 +147,7 @@ public sealed class VoiceAgentLoop(
                             var result = await toolRegistry.ExecuteAsync(
                                 tool,
                                 new ToolCallRequest(tc.ToolName, tc.Parameters),
-                                ctx,
+                                effectiveCtx,
                                 ct);
 
                             toolResultContent = JsonSerializer.Serialize(result, _jsonOpts);

@@ -43,6 +43,13 @@ public static class VoiceAgentServiceExtensions
         services.AddScoped<IVoiceTool, CancelAppointmentTool>();
         services.AddScoped<IVoiceTool, CompleteAppointmentTool>();
 
+        // ── Family profile tools ──────────────────────────────────────────────
+        services.AddScoped<IVoiceTool, ListFamilyProfilesTool>();
+        services.AddScoped<IVoiceTool, GetFamilyMemberDetailsTool>();
+        services.AddScoped<IVoiceTool, AddFamilyMemberTool>();
+        services.AddScoped<IVoiceTool, UpdateFamilyMemberTool>();
+        services.AddScoped<IVoiceTool, DeleteFamilyMemberTool>();
+
         return services;
     }
 }

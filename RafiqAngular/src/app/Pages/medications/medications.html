@@ -383,6 +383,9 @@
                 <div class="dose-card__title-col">
                   <p class="dose-card__name">{{ dose.medicineName }}</p>
                   <p class="dose-card__dosage">{{ dose.dosage }}</p>
+                  <p class="dose-card__owner">
+                    <i class="fa-solid fa-user-circle"></i> For: {{ doseOwnerLabel() }}
+                  </p>
                 </div>
 
                 <div class="dose-card__status-col">

@@ -1894,6 +1894,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   margin: 0;
 }
 
+.dose-card__owner {
+  font-size: 11px;
+  color: var(--blue, #0eafd7);
+  margin: 3px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .dose-card__status-col {
   display: flex;
   flex-direction: column;

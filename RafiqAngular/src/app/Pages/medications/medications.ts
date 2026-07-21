@@ -162,6 +162,14 @@ export class Medications implements OnInit, OnDestroy {
 
   readonly fpReadOnly = computed(() => this._viewingMedProfile()?.accessRole === 'Viewer');
 
+  /** Display label for the owner of every dose card on this page. */
+  readonly doseOwnerLabel = computed<string>(() => {
+    const profile = this._viewingMedProfile();
+    if (!profile || profile.isSelf) return 'You';
+    const rel = profile.relationship ? ` (${profile.relationship})` : '';
+    return `${profile.firstName}${rel}`;
+  });
+
   // ── Layout ──────────────────────────────────────────────────────────────
   readonly sidebarCollapsed = signal(false);
   readonly mobileSidebarOpen = signal(false);

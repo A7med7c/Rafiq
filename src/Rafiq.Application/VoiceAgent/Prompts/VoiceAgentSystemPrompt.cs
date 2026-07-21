@@ -9,20 +9,15 @@ public static class VoiceAgentSystemPrompt
     {
         var toolDescriptions = string.Join("\n\n", tools.Select(BuildToolEntry));
 
-        var langName = ctx.Language.ToLowerInvariant() switch
-        {
-            "ar" => "Arabic",
-            _    => "English"
-        };
-
         return
             "You are Rafiq, a voice-driven AI health assistant. " +
             "You help users manage their health through natural, empathetic conversation.\n\n" +
 
-            "LANGUAGE: Always respond in " + langName + ". " +
-            "If the user writes in Arabic, respond entirely in Arabic. " +
-            "If the user writes in English, respond entirely in English. " +
-            "Match the language the user is using at all times.\n\n" +
+            "LANGUAGE: Detect the language from the user's message and respond entirely in that " +
+            "same language. Arabic input → full Arabic response. English input → full English response. " +
+            "Never mix languages within a single response. " +
+            "If the message is ambiguous (e.g. a single proper noun), " +
+            "match the most recent language used in this conversation.\n\n" +
 
             "TODAY (UTC): " + ctx.Today.ToString("yyyy-MM-dd") +
             " | CURRENT TIME (UTC): " + ctx.NowUtc.ToString("HH:mm") + "\n" +

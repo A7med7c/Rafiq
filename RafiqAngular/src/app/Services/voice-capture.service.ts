@@ -26,6 +26,10 @@ export class VoiceCaptureService {
    * Starts continuous listening and resolves with the full transcript once the
    * user has been silent for SILENCE_MS milliseconds.
    *
+   * `lang` is used as the STT locale hint ('ar' → 'ar-EG', anything else → 'en-US').
+   * Language detection for the AI response is handled by the backend prompt, which
+   * reads the message text and responds in the user's language automatically.
+   *
    * Rejects with an Error whose `.message` is the SpeechRecognitionErrorCode:
    *   'not-allowed' — mic permission denied
    *   'no-speech'   — browser timed out without any speech
@@ -67,7 +71,6 @@ export class VoiceCaptureService {
       const resetSilenceTimer = () => {
         this.clearSilenceTimer();
         this.silenceTimer = setTimeout(() => {
-          // Combine whatever we have — prefer finalized text
           finish(finalText || interimText);
         }, this.SILENCE_MS);
       };
@@ -88,17 +91,14 @@ export class VoiceCaptureService {
           console.debug('[VoiceCapture] interim:', interimText, '| final:', finalText);
         }
 
-        // Reset the silence countdown whenever speech is detected.
         resetSilenceTimer();
       };
 
       rec.onspeechstart = () => {
-        // Cancel any early-timeout that may have been set before speech began.
         this.clearSilenceTimer();
       };
 
       rec.onspeechend = () => {
-        // Speech paused — start counting down to finalize.
         resetSilenceTimer();
       };
 

@@ -176,7 +176,8 @@ export class VoiceAgentPanel implements OnInit, OnDestroy {
     this.response.set(payload.text);
     this.toolHint.set(null);
     this.state.set('speaking');
-    await this.voiceSynthesis.speak(payload.text, this.l10n.lang());
+    // TTS locale is inferred from the response text itself — no lang param needed.
+    await this.voiceSynthesis.speak(payload.text);
     this.state.set('idle');
   }
 }
