@@ -350,7 +350,7 @@
           <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'overview'" (click)="switchTab('overview')">
             <i class="fa-solid fa-house"></i> {{ t().family.overviewTab }}
           </button>
-          <button class="fp-tab" (click)="navigateToRecords()">
+          <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'records'" (click)="switchTab('records')">
             <i class="fa-regular fa-folder-open"></i> {{ t().family.medicalRecordsTab }}
           </button>
           <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'appointments'"
@@ -413,11 +413,72 @@
           }
           }
 
+          <!-- MEDICAL RECORDS -->
+          @else if (activeTab() === 'records') {
+          <div class="fp-manage-meds-cta">
+            <div class="fp-manage-meds-ico" style="background:rgba(79,70,229,.1);color:#4f46e5">
+              <i class="fa-regular fa-folder-open"></i>
+            </div>
+            <div class="fp-manage-meds-info">
+              <p class="fp-manage-meds-title">{{ t().family.medicalRecordsTab }}</p>
+              <p class="fp-manage-meds-sub">
+                @if (selectedProfile()!.accessRole === 'Viewer') {
+                  {{ t().family.viewMedicalRecords }} — {{ selectedProfile()!.firstName }}
+                } @else {
+                  {{ t().family.manageMedicalRecords }} — {{ selectedProfile()!.firstName }}
+                }
+              </p>
+            </div>
+            <a class="fp-manage-meds-btn"
+              [routerLink]="['/medical-records']"
+              [queryParams]="{ profileId: selectedProfile()!.userHealthProfileId }">
+              @if (selectedProfile()!.accessRole === 'Viewer') {
+                <i class="fa-regular fa-eye"></i> {{ t().family.viewMedicalRecords }}
+              } @else {
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ t().family.manageMedicalRecords }}
+              }
+            </a>
+          </div>
+          }
+
           <!-- APPOINTMENTS -->
           @else if (activeTab() === 'appointments') {
-          <app-appointments-content [profileId]="selectedProfile()?.userHealthProfileId" [compact]="true"
-            [readOnly]="selectedProfile()?.accessRole === 'Viewer'">
-          </app-appointments-content>
+          <div class="fp-manage-meds-cta">
+            <div class="fp-manage-meds-ico" style="background:rgba(14,175,215,.1);color:var(--blue)">
+              <i class="fa-regular fa-calendar-check"></i>
+            </div>
+            <div class="fp-manage-meds-info">
+              <p class="fp-manage-meds-title">{{ t().family.appointmentsTab }}</p>
+              <p class="fp-manage-meds-sub">
+                @if (selectedProfile()!.accessRole === 'Viewer') {
+                  {{ t().family.viewAppointments }} — {{ selectedProfile()!.firstName }}
+                } @else {
+                  {{ t().family.manageAppointments }} — {{ selectedProfile()!.firstName }}
+                }
+              </p>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0">
+              @if (selectedProfile()!.accessRole !== 'Viewer') {
+              <a class="fp-manage-meds-btn" style="background:var(--blue);color:#fff;border-color:var(--blue)"
+                [routerLink]="['/appointments']"
+                [queryParams]="{
+                  profileId: selectedProfile()!.userHealthProfileId,
+                  openAdd: '1'
+                }">
+                <i class="fa-solid fa-plus"></i> {{ t().appointments.addAppointment }}
+              </a>
+              }
+              <a class="fp-manage-meds-btn"
+                [routerLink]="['/appointments']"
+                [queryParams]="{ profileId: selectedProfile()!.userHealthProfileId }">
+                @if (selectedProfile()!.accessRole === 'Viewer') {
+                  <i class="fa-regular fa-eye"></i> {{ t().family.viewAppointments }}
+                } @else {
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ t().family.manageAppointments }}
+                }
+              </a>
+            </div>
+          </div>
           }
 
           <!-- MEDICATIONS -->

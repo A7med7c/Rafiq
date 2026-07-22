@@ -40,6 +40,7 @@ export const ar: Translations = {
     female: 'أنثى',
     page: 'صفحة',
     dismiss: 'إخفاء',
+    backToFamilyProfiles: 'الرجوع لملفات العائلة',
   },
 
   sidebar: {
@@ -574,6 +575,7 @@ export const ar: Translations = {
     retry: 'حاول تاني',
     viewDetails: 'شوف التفاصيل',
     viewOnly: 'مشاهدة فقط',
+    viewingFor: 'عم تشوف مواعيد:',
   },
 
   uploadValidation: {
@@ -774,6 +776,10 @@ export const ar: Translations = {
     manageMedications: 'اتحكم في الأدوية',
     viewReminders: 'شوف التذكيرات',
     manageReminders: 'اتحكم في التذكيرات',
+    viewAppointments: 'شوف المواعيد',
+    manageAppointments: 'اتحكم في المواعيد',
+    viewMedicalRecords: 'شوف السجلات الطبية',
+    manageMedicalRecords: 'اتحكم في السجلات الطبية',
     generatingAiSummary: 'بيولد ملخص الذكاء الاصطناعي...',
     notEnoughInfo: 'مفيش معلومات صحية كافية لتوليد ملخص.',
     addFamilyMemberTitle: 'أضف فرد للعيلة',

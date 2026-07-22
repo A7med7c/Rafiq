@@ -388,6 +388,8 @@ nextPage() {
 
   goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
 
+  goToFamilyProfiles(): void { this.router.navigate(['/family-profiles']); }
+
   toggleMenu(id: string, e: MouseEvent): void {
     e.stopPropagation();
     this.openMenuId.update(cur => cur === id ? null : id);

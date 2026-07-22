@@ -38,6 +38,7 @@ export const en = {
     female: 'Female',
     page: 'Page',
     dismiss: 'Dismiss',
+    backToFamilyProfiles: 'Back to Family Profiles',
   },
 
   sidebar: {
@@ -572,6 +573,7 @@ export const en = {
     retry: 'Retry',
     viewDetails: 'View Details',
     viewOnly: 'View Only',
+    viewingFor: 'Viewing appointments for:',
   },
 
   uploadValidation: {
@@ -772,6 +774,10 @@ export const en = {
     manageMedications: 'Manage Medications',
     viewReminders: 'View Reminders',
     manageReminders: 'Manage Reminders',
+    viewAppointments: 'View Appointments',
+    manageAppointments: 'Manage Appointments',
+    viewMedicalRecords: 'View Medical Records',
+    manageMedicalRecords: 'Manage Medical Records',
     generatingAiSummary: 'Generating AI Summary...',
     notEnoughInfo: 'Not enough health information to generate a summary.',
     addFamilyMemberTitle: 'Add Family Member',

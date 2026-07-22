@@ -22,7 +22,6 @@ import {
   ProfileMemberDto,
   SentInvitationDto,
 } from '../../Services/family-profiles.service';
-import { AppointmentsContentComponent } from '../../Components/appointments-content/appointments-content';
 import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.service';
 
 type AddStep = 'choose' | 'create' | 'invite' | 'invited';
@@ -44,7 +43,7 @@ interface SupervisionMemberEntry {
 @Component({
   selector: 'app-family-profiles',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AppointmentsContentComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
   templateUrl: './family-profiles.html',
   styleUrl: './family-profiles.css',
 })
@@ -309,7 +308,9 @@ export class FamilyProfiles implements OnInit {
       this.profiles.set(list);
       this.profilesLoading.set(false);
       if (list.length > 0 && !this.selectedProfile()) {
-        this.selectProfile(list[0]);
+        const storedId = this.profileSelectSvc.selectedProfileId;
+        const restored = storedId ? list.find(p => p.userHealthProfileId === storedId) : null;
+        this.selectProfile(restored ?? list[0]);
       }
     });
   }
