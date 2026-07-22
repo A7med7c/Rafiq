@@ -9,7 +9,7 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { filter, take, switchMap } from 'rxjs';
+import { filter, take } from 'rxjs';
 import { GoogleService } from '../../../Services/google-service';
 import { AuthService } from '../../../Services/auth-service';
 import { HealthProfileService } from '../../../Services/health-profile.service';
@@ -125,17 +125,29 @@ export class LoginFormComponent implements OnInit {
   private navigateAfterLogin(): void {
     this.authService.currentUser$.pipe(
       filter(user => !!user),
-      take(1),
-      switchMap(() => this.healthProfileSvc.getMyProfile()),
+      take(1)
     ).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: user => {
+        if (user.role === 'Admin') {
+          void this.router.navigate(['/admin']);
+          return;
+        }
+
+        this.navigatePatientAfterLogin();
+      }
+    });
+  }
+
+  private navigatePatientAfterLogin(): void {
+    this.healthProfileSvc.getMyProfile().subscribe({
+      next: () => void this.router.navigate(['/dashboard']),
       error: (err: HttpErrorResponse) => {
         if (err.status === 404) {
-          this.router.navigate(['/onboarding/welcome']);
+          void this.router.navigate(['/onboarding/welcome']);
         } else {
-          this.router.navigate(['/dashboard']);
+          void this.router.navigate(['/dashboard']);
         }
-      },
+      }
     });
   }
 }

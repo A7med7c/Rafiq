@@ -64,7 +64,7 @@ public class Program
             });
         }
 
-        app.UseHttpsRedirection();
+        // app.UseHttpsRedirection();
         app.UseCors("Angular");
         app.UseAuthentication();
         app.UseAuthorization();

@@ -1,5 +1,4 @@
-const apiUrl = 'https://localhost:7082/api';
-
+const apiUrl ='https://10.175.240.116:7082/api';
 export const environment = {
 
     apiUrl,
@@ -8,4 +7,3 @@ export const environment = {
 
     googleClientId: '379411509806-qgfo9s8qiuuq058hu668snbupnfdiskq.apps.googleusercontent.com'
 }
-
