@@ -266,6 +266,8 @@ export const en = {
     xrayDesc: 'Keep MRI, CT scans, X-rays and radiology reports',
     medicineBox: 'Medicine Box',
     medicineBoxDesc: 'Scan box packages to extract medication information',
+    generalDocument: 'Other Document',
+    generalDocumentDesc: 'Upload any medical document for AI analysis and OCR',
     recordsSuffix: 'Record(s)',
     scanWithAI: 'Scan with AI',
     addManually: 'Add Manually',
@@ -315,6 +317,7 @@ export const en = {
     bodyPart: 'Body Part',
     findings: 'Findings',
     impression: 'Impression',
+    documentTitle: 'Document Title',
     documentType: 'Document Type',
     hospitalClinic: 'Hospital / Clinic',
     documentDate: 'Document Date',
@@ -584,7 +587,12 @@ export const en = {
     labUnreadable: 'The lab report image is unclear or unreadable. Please upload a clearer image or enter the information manually.',
     imagingUnreadable: 'The radiology report image is unclear or unreadable. Please upload a clearer image or enter the information manually.',
     prescriptionUnreadable: 'The prescription image is unclear or unreadable. Please upload a clearer image or enter the information manually.',
-    medicineUnreadable: 'The medication box image is unclear or unreadable. Please upload a clearer image or enter the information manually.'
+    medicineUnreadable: 'The medication box image is unclear or unreadable. Please upload a clearer image or enter the information manually.',
+    generalShouldBeLab: 'This is a lab report — upload it in the Lab Analysis section.',
+    generalShouldBeImaging: 'This is a radiology report — upload it in the X-Ray & Imaging section.',
+    generalShouldBePrescription: 'This is a prescription — upload it in the Prescriptions section.',
+    generalShouldBeMedicine: 'This is a medicine box — scan it in the Medicine Box section.',
+    generalNotMedical: 'This does not appear to be a medical document.'
   },
 
   medications: {

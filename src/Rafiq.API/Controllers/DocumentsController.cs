@@ -234,18 +234,33 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("general")]
-    public async Task<IActionResult> GetMyGeneralDocuments(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetMyGeneralDocuments(
+        [FromQuery] Guid profileId,
+        CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetMyGeneralDocumentsQuery(), cancellationToken);
+        var result = await mediator.Send(new GetMyGeneralDocumentsQuery(profileId), cancellationToken);
         return Ok(result);
     }
 
     [HttpPost("general")]
     public async Task<IActionResult> SaveGeneralDocument(
-        [FromBody] SaveGeneralDocumentCommand command,
+        [FromQuery] Guid profileId,
+        [FromBody] SaveGeneralDocumentRequest body,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await mediator.Send(
+            new SaveGeneralDocumentCommand(
+                profileId,
+                body.Title,
+                body.Description,
+                body.AiSummary,
+                body.ImagePath,
+                body.DocumentType,
+                body.DoctorName,
+                body.HospitalOrClinic,
+                body.DocumentDate,
+                body.OcrText),
+            cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
     }
 
@@ -261,7 +276,12 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
                 body.Title,
                 body.Description,
                 body.AiSummary,
-                body.ImagePath),
+                body.ImagePath,
+                body.DocumentType,
+                body.DoctorName,
+                body.HospitalOrClinic,
+                body.DocumentDate,
+                body.OcrText),
             cancellationToken);
 
         return Ok(result);
@@ -343,11 +363,27 @@ public sealed record UpdateImagingReportRequest(
     string? OcrText,
     string? ImageUrl);
 
+public sealed record SaveGeneralDocumentRequest(
+    string Title,
+    string Description,
+    string? AiSummary,
+    string ImagePath,
+    string? DocumentType,
+    string? DoctorName,
+    string? HospitalOrClinic,
+    string? DocumentDate,
+    string? OcrText);
+
 public sealed record UpdateGeneralDocumentRequest(
     string Title,
     string Description,
     string? AiSummary,
-    string? ImagePath);
+    string? ImagePath,
+    string? DocumentType,
+    string? DoctorName,
+    string? HospitalOrClinic,
+    string? DocumentDate,
+    string? OcrText);
 
 public sealed record UploadRecordImageResponse(string Path);
 

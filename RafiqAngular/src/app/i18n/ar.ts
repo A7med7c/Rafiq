@@ -268,6 +268,8 @@ export const ar: Translations = {
     xrayDesc: 'حفظ الرنين والأشعة وتقارير الراديولوجي',
     medicineBox: 'علبة الدوا',
     medicineBoxDesc: 'مسح ضوئي علب الدوا لاستخراج المعلومات',
+    generalDocument: 'وثيقة أخرى',
+    generalDocumentDesc: 'ارفع أي وثيقة طبية للتحليل الذكي واستخراج النص',
     recordsSuffix: 'سجل',
     scanWithAI: 'مسح ضوئي بالذكاء الاصطناعي',
     addManually: 'اكتب بنفسك',
@@ -317,6 +319,7 @@ export const ar: Translations = {
     bodyPart: 'الجزء المصور',
     findings: 'النتائج',
     impression: 'الانطباع',
+    documentTitle: 'عنوان الوثيقة',
     documentType: 'نوع الوثيقة',
     hospitalClinic: 'المستشفى / العيادة',
     documentDate: 'تاريخ الوثيقة',
@@ -586,7 +589,12 @@ export const ar: Translations = {
     labUnreadable: 'صورة تقرير التحليل غير واضحة أو لا يمكن قراءتها. يرجى رفع صورة أوضح أو إدخال البيانات يدويًا.',
     imagingUnreadable: 'صورة تقرير الأشعة غير واضحة أو لا يمكن قراءتها. يرجى رفع صورة أوضح أو إدخال البيانات يدويًا.',
     prescriptionUnreadable: 'صورة الوصفة الطبية غير واضحة أو لا يمكن قراءتها. يرجى رفع صورة أوضح أو إدخال البيانات يدويًا.',
-    medicineUnreadable: 'صورة علبة الدواء غير واضحة أو لا يمكن قراءتها. يرجى رفع صورة أوضح أو إدخال البيانات يدويًا.'
+    medicineUnreadable: 'صورة علبة الدواء غير واضحة أو لا يمكن قراءتها. يرجى رفع صورة أوضح أو إدخال البيانات يدويًا.',
+    generalShouldBeLab: 'هذا تحليل مختبر — ارفعه في قسم التحاليل.',
+    generalShouldBeImaging: 'هذه أشعة — ارفعها في قسم الأشعات.',
+    generalShouldBePrescription: 'هذه روشتة — ارفعها في قسم الروشتات.',
+    generalShouldBeMedicine: 'هذه علبة دواء — امسحها في قسم علبة الدوا.',
+    generalNotMedical: 'الصورة دي مش وثيقة طبية.'
   },
 
   medications: {

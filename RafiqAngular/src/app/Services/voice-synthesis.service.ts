@@ -3,6 +3,28 @@ import { Injectable, isDevMode } from '@angular/core';
 /** Arabic Unicode blocks: Arabic, Arabic Supplement, Arabic Presentation Forms-A and -B */
 const ARABIC_RE = /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/;
 
+/** Strip markdown and emoji so TTS doesn't read symbol names aloud. */
+function cleanForSpeech(raw: string): string {
+  return raw
+    // Emoji (Extended_Pictographic covers ⭐, 🌟, ✨, all faces, etc.)
+    .replace(/\p{Extended_Pictographic}/gu, '')
+    // Markdown bold/italic: ***x*** / **x** / *x* → x
+    .replace(/\*{1,3}([^*\n]+)\*{1,3}/g, '$1')
+    // Remaining lone asterisks used as bullets
+    .replace(/\*/g, '')
+    // Markdown headers: ## Title → Title
+    .replace(/^#{1,6}\s*/gm, '')
+    // List dashes/bullets at line start
+    .replace(/^\s*[-•]\s*/gm, '')
+    // Backticks (inline code)
+    .replace(/`+/g, '')
+    // Collapse line breaks into a pause
+    .replace(/\n+/g, ' ')
+    // Collapse extra spaces
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 /** Wraps the Web Speech Synthesis API (TTS). */
 @Injectable({ providedIn: 'root' })
 export class VoiceSynthesisService {
@@ -16,9 +38,10 @@ export class VoiceSynthesisService {
    *
    * Never rejects — synthesis errors resolve silently so the caller can continue.
    */
-  speak(text: string): Promise<void> {
+  speak(raw: string): Promise<void> {
     return new Promise<void>(resolve => {
-      if (!this.isSupported || !text.trim()) { resolve(); return; }
+      const text = cleanForSpeech(raw);
+      if (!this.isSupported || !text) { resolve(); return; }
 
       window.speechSynthesis.cancel();
 

@@ -705,12 +705,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   triggerUpload(type: string): void {
     if (this.readOnly) return;
-    if (type === 'General Medical Document') { this.openGeneralUploadForm(); return; }
     const map: Record<string, ElementRef<HTMLInputElement> | undefined> = {
       'Lab Analysis': this.labInput,
       'Prescription': this.prescriptionInput,
       'X-Ray & Imaging': this.imagingInput,
       'Medicine Box': this.medicineInput,
+      'General Medical Document': this.generalInput,
     };
     (map[type] ?? this.labInput)?.nativeElement.click();
   }
@@ -721,9 +721,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   onMedicineFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.startMedicineScan(f); }
   onGeneralFileSelected(e: Event): void {
     const f = this.extractFile(e);
-    if (!f) return;
-    this.generalUploadForm.file = f;
-    this.generalUploadForm.fileName = f.name;
+    if (f) this.uploadAndReview('general', f);
   }
 
   openGeneralUploadForm(): void {
@@ -801,6 +799,16 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
           this.showToast(v.imaging, 'error');
         } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
           this.showToast(v.prescription, 'error');
+        } else if (errCode === 'SHOULD_BE_LAB_REPORT') {
+          this.showToast(v.generalShouldBeLab, 'error');
+        } else if (errCode === 'SHOULD_BE_IMAGING_REPORT') {
+          this.showToast(v.generalShouldBeImaging, 'error');
+        } else if (errCode === 'SHOULD_BE_PRESCRIPTION') {
+          this.showToast(v.generalShouldBePrescription, 'error');
+        } else if (errCode === 'SHOULD_BE_MEDICINE_BOX') {
+          this.showToast(v.generalShouldBeMedicine, 'error');
+        } else if (errCode === 'NOT_MEDICAL_DOCUMENT') {
+          this.showToast(v.generalNotMedical, 'error');
         } else if (errCode === 'UNREADABLE_DOCUMENT_LAB_REPORT' || errCode === 'UNREADABLE_DOCUMENT_IMAGING_REPORT' || errCode === 'UNREADABLE_DOCUMENT_PRESCRIPTION') {
           this._failedFile = file;
           this._failedType = type;
@@ -969,10 +977,14 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         ? this.http.put(`${this.base}/prescriptions/${rf.recordId}`, payload)
         : this.http.post(`${this.base}/prescriptions${pid}`, payload);
     } else {
-      const payload = { title: rf.title, description: rf.description, aiSummary: rf.summary, imagePath: rf.imagePath };
+      const payload = {
+        title: rf.title, description: rf.description, aiSummary: rf.summary, imagePath: rf.imagePath,
+        documentType: rf.documentType, doctorName: rf.doctorName, hospitalOrClinic: rf.hospitalOrClinic,
+        documentDate: rf.documentDate, ocrText: rf.ocrText,
+      };
       request$ = rf.mode === 'edit' && rf.recordId
         ? this.http.put(`${this.base}/documents/general/${rf.recordId}`, payload)
-        : this.http.post(`${this.base}/documents/general`, payload);
+        : this.http.post(`${this.base}/documents/general${pid}`, payload);
     }
 
     request$.subscribe({
@@ -1114,8 +1126,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       this.scanResult.set({ medicineName: '', strength: '', dosageForm: '', manufacturer: '', imagePath: '' });
       return;
     }
-    const typeMap: Record<string, 'lab' | 'imaging' | 'prescription'> = {
-      lab: 'lab', imaging: 'imaging', prescription: 'prescription',
+    const typeMap: Record<string, 'lab' | 'imaging' | 'prescription' | 'general'> = {
+      lab: 'lab', imaging: 'imaging', prescription: 'prescription', general: 'general',
     };
     const reviewType = typeMap[type];
     if (!reviewType) return;
@@ -1123,6 +1135,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       lab: { results: [{ testName: '', value: '', unit: '', normalRange: '', status: 'Normal' }] },
       prescription: { medicines: [{ medicineName: '', dosage: '', frequency: '', duration: '', instructions: '' }] },
       imaging: {},
+      general: {},
     };
     this.manualReviewMode.set(true);
     this.openReviewModal(reviewType, seedData[reviewType], 'create');
@@ -1236,7 +1249,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         })),
       });
     }
-    return JSON.stringify({ title: rf.title, description: rf.description, summary: rf.summary });
+    return JSON.stringify({ title: rf.title, description: rf.description, summary: rf.summary, documentType: rf.documentType, doctorName: rf.doctorName, hospitalOrClinic: rf.hospitalOrClinic, documentDate: rf.documentDate, ocrText: rf.ocrText });
   }
 
   private snapshotScanForm(sf: ScanForm): string {

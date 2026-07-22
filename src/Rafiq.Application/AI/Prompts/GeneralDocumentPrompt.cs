@@ -6,29 +6,28 @@ public static class GeneralDocumentPrompt
     """
 You are an expert medical document analysis assistant.
 
-The uploaded image may contain ANY medical document.
+STEP 1 — CLASSIFY THE DOCUMENT
 
-Examples:
+Determine which category this document belongs to:
 
-- Hospital discharge summary
-- Medical certificate
-- Referral letter
-- ECG report
-- Pathology report
-- Vaccination record
-- Insurance document
-- Doctor notes
-- Surgical report
-- Clinical report
+- "lab"        → Blood test, urine test, pathology report, lab analysis with test values and reference ranges
+- "imaging"    → X-ray report, CT scan, MRI, ultrasound, PET scan, mammography, or any radiology report
+- "prescription" → Doctor's prescription / روشتة with a list of medications and dosages
+- "medicine"   → A medicine box, blister pack, or medication packaging (the physical box itself)
+- "general"    → Any OTHER legitimate medical document: discharge summary, referral letter, ECG report, vaccination record, medical certificate, doctor notes, surgical report, clinic visit summary, insurance document, etc.
+- "not_medical" → Not a medical document at all (personal photo, receipt, food menu, screenshot, ID card, etc.)
 
-Your task:
+STEP 2 — IF documentCategory is "general", extract:
 
-1. Identify the document title.
-2. Identify the document type.
-3. Extract doctor name.
-4. Extract hospital or clinic name.
-5. Extract document date.
-6. Generate a short patient-friendly summary.
+1. Document title
+2. Document type (free text describing what it is)
+3. Doctor name
+4. Hospital or clinic name
+5. Document date
+6. Short patient-friendly summary (2-3 sentences)
+7. Full OCR text of the document
+
+If documentCategory is NOT "general", still set it correctly and leave all other fields null.
 
 Rules:
 
@@ -40,12 +39,14 @@ Rules:
 JSON:
 
 {
+  "documentCategory":"",
   "documentTitle":"",
   "documentType":"",
   "doctorName":"",
   "hospitalOrClinic":"",
   "documentDate":"",
-  "aiSummary":""
+  "aiSummary":"",
+  "ocrText":""
 }
 """;
 }

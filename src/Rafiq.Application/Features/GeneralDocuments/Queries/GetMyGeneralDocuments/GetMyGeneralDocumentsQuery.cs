@@ -4,5 +4,5 @@ using Rafiq.Application.Features.GeneralDocuments.DTOs;
 
 namespace Rafiq.Application.Features.GeneralDocuments.Queries.GetMyGeneralDocuments;
 
-public sealed record GetMyGeneralDocumentsQuery
+public sealed record GetMyGeneralDocumentsQuery(Guid ProfileId)
     : IRequest<ApiResponse<List<GeneralDocumentResponseDto>>>;

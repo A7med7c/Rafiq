@@ -12,5 +12,7 @@
 
     public string? AiSummary { get; init; }
 
+    public string? OcrText { get; init; }
+
     public string ImagePath { get; init; } = null!;
 }

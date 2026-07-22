@@ -360,8 +360,8 @@
 /* ── Upload Grid ───────────────────────────── */
 .upload-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
 }
 
 .up-card {
@@ -369,7 +369,7 @@
   border: 1px solid var(--border);
   border-radius: var(--r);
   box-shadow: var(--shadow);
-  padding: 20px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -382,14 +382,14 @@
 }
 
 .up-ico {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  margin-bottom: 14px;
+  font-size: 16px;
+  margin-bottom: 10px;
 }
 
 .bg-blue   { background: var(--blue-lt);   color: var(--blue); }
@@ -399,25 +399,25 @@
 .bg-gray   { background: #F3F4F6; color: #4B5563; }
 
 .up-title {
-  margin: 0 0 6px;
-  font-size: 15px;
+  margin: 0 0 4px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text);
 }
 
 .up-desc {
-  margin: 0 0 16px;
-  font-size: 12px;
+  margin: 0 0 10px;
+  font-size: 11px;
   color: var(--text-3);
-  line-height: 1.5;
+  line-height: 1.4;
   flex: 1;
 }
 
 .up-count {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-2);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .up-btn {
@@ -1058,6 +1058,12 @@
 }
 
 /* ── Responsive adjustments ────────────────── */
+@media (max-width: 1280px) {
+  .upload-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 1024px) {
   .upload-grid {
     grid-template-columns: repeat(2, 1fr);

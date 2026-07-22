@@ -31,7 +31,12 @@ public sealed class UpdateGeneralDocumentCommandHandler(
             request.Title,
             request.Description,
             request.AiSummary,
-            request.ImagePath);
+            request.ImagePath,
+            request.DocumentType,
+            request.DoctorName,
+            request.HospitalOrClinic,
+            request.DocumentDate,
+            request.OcrText);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -42,6 +47,11 @@ public sealed class UpdateGeneralDocumentCommandHandler(
             Description = document.Description,
             AiSummary = document.AiSummary,
             ImagePath = document.ImagePath,
+            DocumentType = document.DocumentType,
+            DoctorName = document.DoctorName,
+            HospitalOrClinic = document.HospitalOrClinic,
+            DocumentDate = document.DocumentDate,
+            OcrText = document.OcrText,
             CreatedAt = document.CreatedAt
         };
 

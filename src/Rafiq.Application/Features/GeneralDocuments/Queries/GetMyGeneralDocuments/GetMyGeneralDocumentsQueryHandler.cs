@@ -9,7 +9,6 @@ namespace Rafiq.Application.Features.GeneralDocuments.Queries.GetMyGeneralDocume
 
 public sealed class GetMyGeneralDocumentsQueryHandler(
     ICurrentUserService currentUserService,
-    IPatientProfileRepository patientProfileRepository,
     IGeneralDocumentRepository repository)
     : IRequestHandler<GetMyGeneralDocumentsQuery, ApiResponse<List<GeneralDocumentResponseDto>>>
 {
@@ -17,13 +16,10 @@ public sealed class GetMyGeneralDocumentsQueryHandler(
         GetMyGeneralDocumentsQuery request,
         CancellationToken cancellationToken)
     {
-        var currentUserId = currentUserService.UserId
+        _ = currentUserService.UserId
             ?? throw new UnauthorizedException("Authentication is required.");
 
-        var profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
-            ?? throw new NotFoundException("PatientProfile", currentUserId);
-
-        var documents = await repository.GetAllByUserIdAsync(profileId, cancellationToken);
+        var documents = await repository.GetAllByUserIdAsync(request.ProfileId, cancellationToken);
 
         var dtos = documents.Select(document => new GeneralDocumentResponseDto
         {
@@ -32,6 +28,11 @@ public sealed class GetMyGeneralDocumentsQueryHandler(
             Description = document.Description,
             AiSummary = document.AiSummary,
             ImagePath = document.ImagePath,
+            DocumentType = document.DocumentType,
+            DoctorName = document.DoctorName,
+            HospitalOrClinic = document.HospitalOrClinic,
+            DocumentDate = document.DocumentDate,
+            OcrText = document.OcrText,
             CreatedAt = document.CreatedAt
         }).ToList();
 

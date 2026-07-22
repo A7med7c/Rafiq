@@ -130,6 +130,34 @@
         </button>
       </div>
     </div>
+
+    <div class="up-card">
+      <div class="up-ico bg-gray"><i class="fa-solid fa-file-medical"></i></div>
+      <h2 class="up-title">{{ t().records.generalDocument }}</h2>
+      <p class="up-desc">{{ t().records.generalDocumentDesc }}</p>
+      <span class="up-count">{{ generalCount() }} {{ t().records.recordsSuffix }}</span>
+      <div class="up-btn-group">
+        <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('general').uploading"
+          [class.up-btn--loading]="getUploadState('general').uploading" (click)="triggerUpload('General Medical Document')">
+          @if (getUploadState('general').uploading) {
+          <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('general').indeterminate">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+            <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+              [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
+              [attr.stroke-dashoffset]="progressOffset(getUploadState('general').progress)" stroke-linecap="round"
+              transform="rotate(-90 18 18)" />
+          </svg>
+          @if (!getUploadState('general').indeterminate) { <span>{{ getUploadState('general').progress }}%</span> }
+          } @else {
+          <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().records.scanWithAI }}
+          }
+        </button>
+        <button type="button" class="up-btn up-btn--manual"
+          [disabled]="getUploadState('general').uploading" (click)="openManualEntry('general')">
+          <i class="fa-solid fa-pen-to-square"></i> {{ t().records.addManually }}
+        </button>
+      </div>
+    </div>
   </section>
   }
 
@@ -749,32 +777,34 @@
         </div>
         }
         @if (rf.type === 'general') {
-        <div class="scan-field">
-          <label class="scan-label">Document Title</label>
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">{{ t().records.documentTitle }}</label>
           <input type="text" class="scan-input" [(ngModel)]="rf.title">
         </div>
+        @if (!manualReviewMode()) {
         <div class="scan-field">
           <label class="scan-label">{{ t().records.documentType }}</label>
-          <input type="text" class="scan-input" [ngModel]="rf.documentType" readonly>
+          <input type="text" class="scan-input" [(ngModel)]="rf.documentType">
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.doctorName }}</label>
-          <input type="text" class="scan-input" [ngModel]="rf.doctorName" readonly>
+          <input type="text" class="scan-input" [(ngModel)]="rf.doctorName">
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.hospitalClinic }}</label>
-          <input type="text" class="scan-input" [ngModel]="rf.hospitalOrClinic" readonly>
+          <input type="text" class="scan-input" [(ngModel)]="rf.hospitalOrClinic">
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.documentDate }}</label>
-          <input type="text" class="scan-input" [ngModel]="rf.documentDate" readonly>
-        </div>
-        <div class="scan-field scan-field--full">
-          <label class="scan-label">{{ t().records.description }}</label>
-          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.description" rows="3"></textarea>
+          <input type="text" class="scan-input" [(ngModel)]="rf.documentDate">
         </div>
         }
-        @if (!manualReviewMode()) {
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">{{ t().records.aiSummary }}</label>
+          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
+        </div>
+        }
+        @if (!manualReviewMode() && rf.type !== 'general') {
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.aiSummary }}</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>

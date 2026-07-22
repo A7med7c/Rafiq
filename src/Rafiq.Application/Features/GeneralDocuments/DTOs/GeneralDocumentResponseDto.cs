@@ -12,5 +12,15 @@ public sealed class GeneralDocumentResponseDto
 
     public string? ImagePath { get; init; }
 
+    public string? DocumentType { get; init; }
+
+    public string? DoctorName { get; init; }
+
+    public string? HospitalOrClinic { get; init; }
+
+    public string? DocumentDate { get; init; }
+
+    public string? OcrText { get; init; }
+
     public DateTime CreatedAt { get; init; }
 }

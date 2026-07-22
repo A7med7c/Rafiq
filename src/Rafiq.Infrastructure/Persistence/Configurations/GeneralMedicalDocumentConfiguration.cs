@@ -23,6 +23,21 @@ public sealed class GeneralDocumentConfiguration
         builder.Property(x => x.ImagePath)
             .IsRequired();
 
+        builder.Property(x => x.DocumentType)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.DoctorName)
+            .HasMaxLength(200);
+
+        builder.Property(x => x.HospitalOrClinic)
+            .HasMaxLength(200);
+
+        builder.Property(x => x.DocumentDate)
+            .HasMaxLength(50);
+
+        builder.Property(x => x.OcrText)
+            .HasMaxLength(10000);
+
         builder.HasOne(x => x.UserHealthProfile)
             .WithMany()
             .HasForeignKey(x => x.UserHealthProfileId)
