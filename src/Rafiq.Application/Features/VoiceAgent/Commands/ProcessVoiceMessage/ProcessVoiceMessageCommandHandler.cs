@@ -37,21 +37,19 @@ public sealed class ProcessVoiceMessageCommandHandler(
             request.SessionId, userId, cancellationToken)
             ?? throw new NotFoundException("Voice session", request.SessionId);
 
-        if (session.Source != AiConversationSource.Voice)
-            throw new BadRequestException("The specified session is not a voice session.");
-
         var existingHistory = session.Messages
             .OrderBy(m => m.SequenceNumber)
             .Select(m => (m.Role, m.Content))
             .ToList();
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc   = DateTime.UtcNow;
+        var localNow = nowUtc.AddMinutes(request.UtcOffsetMinutes);
         var ctx = new AgentContext(
             UserId: userId,
             ProfileId: session.UserHealthProfileId,
             SessionId: session.Id,
             Language: request.Language,
-            Today: DateOnly.FromDateTime(nowUtc),
+            Today: DateOnly.FromDateTime(localNow),   // local date, not UTC
             NowUtc: nowUtc,
             UtcOffsetMinutes: request.UtcOffsetMinutes);
 

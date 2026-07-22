@@ -305,6 +305,40 @@ export class AiPanel implements OnInit, OnDestroy {
     });
   }
 
+  // ── Voice panel event handlers ──────────────────────────────────────────────
+
+  onVoiceConversationCreated(summary: ConversationSummaryDto): void {
+    this.conversations.update(list => [summary, ...list]);
+    this.selectedConversationId.set(summary.id);
+  }
+
+  // Called when the voice panel captures speech — mirrors pushOptimisticUserMessage
+  // + sending indicator so the shared message list shows the same experience as typing.
+  onVoiceMessageStarted(text: string): void {
+    this.pushOptimisticUserMessage(text);
+    this.sending.set(true);
+  }
+
+  onVoiceResponseReceived(conversationId: string): void {
+    this.aiChatService.getConversationHistory(conversationId).subscribe(history => {
+      this.messages.set(
+        (history?.messages ?? []).map(m => ({
+          ...m,
+          imagePreviewUrl: m.role === 'User'
+            ? this.aiChatService.getCachedImage(conversationId, m.sequenceNumber)
+            : undefined,
+        }))
+      );
+      this.conversations.update(list =>
+        list
+          .map(c => c.id === conversationId ? { ...c, lastMessageAt: new Date().toISOString() } : c)
+          .sort((a, b) => this.sortKey(b) - this.sortKey(a))
+      );
+      this.sending.set(false);
+      this.scrollToBottom();
+    });
+  }
+
   triggerFileSelect(): void {
     if (this.sending()) return;
     this.fileInputRef?.nativeElement.click();

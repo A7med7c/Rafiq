@@ -1,16 +1,24 @@
-import { Component, OnInit, OnDestroy, inject, signal, effect, untracked } from '@angular/core';
+import {
+  Component, OnDestroy, inject, signal, effect, untracked,
+  input, output,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { catchError, of } from 'rxjs';
 import { LocalizationService } from '../../Services/localization.service';
-import { HealthProfileService } from '../../Services/health-profile.service';
+import { AiChatService } from '../../Services/ai-chat.service';
 import { NotificationService } from '../../Services/notification.service';
-import { VoiceAgentService, VoiceAgentResponseDto } from '../../Services/voice-agent.service';
+import { VoiceAgentService } from '../../Services/voice-agent.service';
 import { VoiceCaptureService } from '../../Services/voice-capture.service';
 import { VoiceSynthesisService } from '../../Services/voice-synthesis.service';
 import { SignalRService, VoiceAgentResponsePayload } from '../../Services/signalr.service';
+import { ConversationSummaryDto } from '../../Modles/ai-chat.models';
 
-type VoiceState = 'init' | 'idle' | 'listening' | 'processing' | 'speaking' | 'error';
+type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking' | 'error';
+
+// After the first exchange, 90 s of cumulative silence ends the session.
+// Short enough to avoid leaving the mic open indefinitely; long enough that
+// users checking their calendar or recalling a medication name are not cut off.
+const INACTIVITY_MS = 8_000;
 
 @Component({
   selector: 'app-voice-agent-panel',
@@ -19,169 +27,267 @@ type VoiceState = 'init' | 'idle' | 'listening' | 'processing' | 'speaking' | 'e
   templateUrl: './voice-agent-panel.html',
   styleUrl: './voice-agent-panel.css',
 })
-export class VoiceAgentPanel implements OnInit, OnDestroy {
+export class VoiceAgentPanel implements OnDestroy {
   private readonly voiceAgentSvc  = inject(VoiceAgentService);
   private readonly voiceCapture   = inject(VoiceCaptureService);
   private readonly voiceSynthesis = inject(VoiceSynthesisService);
   private readonly signalr        = inject(SignalRService);
-  private readonly healthProfile  = inject(HealthProfileService);
+  private readonly aiChatSvc      = inject(AiChatService);
   private readonly notifSvc       = inject(NotificationService);
   private readonly router         = inject(Router);
   protected readonly l10n         = inject(LocalizationService);
   protected readonly t            = this.l10n.t;
 
-  readonly state        = signal<VoiceState>('init');
-  readonly sessionId    = signal<string | null>(null);
-  readonly transcript   = signal<string>('');
-  readonly response     = signal<string>('');
-  readonly toolHint     = signal<string | null>(null);
-  readonly errorMessage = signal<string | null>(null);
+  // ── Inputs from parent ──────────────────────────────────────────────────────
+  readonly conversationId = input<string | null>(null);
+  readonly profileId      = input<string | null>(null);
 
-  readonly captureSupported  = this.voiceCapture.isSupported;
+  // ── Outputs to parent ───────────────────────────────────────────────────────
+  readonly conversationCreated = output<ConversationSummaryDto>();
+  readonly messageStarted      = output<string>();   // spoken text → parent adds optimistic msg
+  readonly responseReceived    = output<string>();   // conversationId → parent reloads history
+
+  // ── Internal state ──────────────────────────────────────────────────────────
+  readonly state           = signal<VoiceState>('idle');
+  readonly toolHint        = signal<string | null>(null);
+  readonly errorMessage    = signal<string | null>(null);
+  readonly isSessionActive = signal(false);
+
+  readonly captureSupported   = this.voiceCapture.isSupported;
   readonly synthesisSupported = this.voiceSynthesis.isSupported;
 
+  private _activeConversationId: string | null = null;
+
+  // Inactivity tracking — timer only activates after the first completed exchange
+  // so the initial "waiting for the user to speak" phase has no timeout.
+  private _hasHadExchange   = false;
+  private _inactivityTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
-    // Thinking event → update tool hint label
+    // Keep local conversation id in sync with parent selection.
+    effect(() => {
+      const id = this.conversationId();
+      if (id) this._activeConversationId = id;
+    });
+
+    // Thinking event → update tool-call hint label
     effect(() => {
       const events = this.signalr.voiceThinkingEvents();
       if (!events.length) return;
       const drained = this.signalr.drainVoiceThinkingEvents();
-      const currentState = untracked(() => this.state());
-      if (currentState === 'processing') {
+      if (untracked(() => this.state()) === 'processing') {
         const latest = drained.at(-1);
         if (latest) this.toolHint.set(latest.toolName);
       }
     });
 
-    // Response event → speak and transition to idle
+    // Response event → speak then decide whether to restart the loop
     effect(() => {
       const events = this.signalr.voiceResponseEvents();
       if (!events.length) return;
       const drained = this.signalr.drainVoiceResponseEvents();
-      const currentState = untracked(() => this.state());
-      if (currentState === 'processing') {
+      if (untracked(() => this.state()) === 'processing') {
         const latest = drained.at(-1);
         if (latest) void this.onAgentResponse(latest);
       }
     });
 
-    // Error event → show error state
+    // Error event → surface error and end session
     effect(() => {
       const events = this.signalr.voiceErrorEvents();
       if (!events.length) return;
       const drained = this.signalr.drainVoiceErrorEvents();
-      const currentState = untracked(() => this.state());
-      if (currentState === 'processing') {
+      if (untracked(() => this.state()) === 'processing') {
         const msg = drained.at(-1)?.message ?? untracked(() => this.t().voiceAgent.sessionError);
+        this.clearInactivityTimer();
+        this._hasHadExchange = false;
         this.errorMessage.set(msg);
+        this.isSessionActive.set(false);
         this.state.set('error');
       }
     });
   }
 
-  ngOnInit(): void {
-    this.initSession();
-  }
-
   ngOnDestroy(): void {
+    this.clearInactivityTimer();
+    this.isSessionActive.set(false);
     this.voiceCapture.stop();
     this.voiceSynthesis.stop();
   }
 
-  private initSession(): void {
-    this.state.set('init');
+  // ── Session control ─────────────────────────────────────────────────────────
 
-    this.healthProfile.getMyProfile().pipe(catchError(() => of(null))).subscribe(res => {
-      const profileId = res?.data?.id ?? null;
-      if (!profileId) {
-        this.errorMessage.set(this.t().voiceAgent.sessionError);
-        this.state.set('error');
-        return;
-      }
-
-      this.voiceAgentSvc.createSession(profileId, this.l10n.lang()).subscribe({
-        next: r => {
-          if (r.data) {
-            this.sessionId.set(r.data);
-            this.state.set('idle');
-          } else {
-            this.errorMessage.set(this.t().voiceAgent.sessionError);
-            this.state.set('error');
-          }
-        },
-        error: () => {
-          this.errorMessage.set(this.t().voiceAgent.sessionError);
-          this.state.set('error');
-        },
-      });
-    });
+  startSession(): void {
+    if (!this.captureSupported) return;
+    this._hasHadExchange = false;
+    this.isSessionActive.set(true);
+    void this.startListening();
   }
 
+  stopSession(): void {
+    this._hasHadExchange = false;
+    this.clearInactivityTimer();
+    this.isSessionActive.set(false);
+    this.voiceCapture.stop();
+    this.voiceSynthesis.stop();
+    this.state.set('idle');
+  }
+
+  // ── Listening loop ──────────────────────────────────────────────────────────
+
   async startListening(): Promise<void> {
-    const sid = this.sessionId();
-    if (!sid || !this.captureSupported) return;
+    if (!this.captureSupported || !this.isSessionActive()) return;
 
     this.state.set('listening');
-    this.transcript.set('');
-    this.response.set('');
     this.toolHint.set(null);
     this.errorMessage.set(null);
+
+    // Begin counting inactivity only after the first exchange has completed.
+    // The timer is NOT reset on consecutive no-speech retries — only when a
+    // new exchange succeeds (see onAgentResponse). This means 90 s of cumulative
+    // silence ends the session, regardless of how many silent cycles occur.
+    this.armInactivityTimer();
 
     let text: string;
     try {
       text = await this.voiceCapture.captureOnce(this.l10n.lang());
     } catch (err: any) {
       if (err.message === 'not-allowed') {
+        this.clearInactivityTimer();
+        this._hasHadExchange = false;
         this.errorMessage.set(this.t().voiceAgent.micDenied);
+        this.isSessionActive.set(false);
+        this.state.set('error');
       } else if (err.message === 'aborted') {
-        // stopListening() was called by user — stay idle
-        return;
+        // Triggered by stopSession() → voiceCapture.stop(). isSessionActive is
+        // already false, so just land in idle.
+        if (!this.isSessionActive()) {
+          this.state.set('idle');
+        }
       } else {
-        // 'no-speech', network, etc. — just go back to idle
-        this.state.set('idle');
-        return;
+        // 'no-speech' or any transient error — keep the inactivity timer running
+        // and retry after a brief pause. If the timer fires during retries, it
+        // will call stopSession() on the next tick.
+        if (this.isSessionActive()) {
+          await new Promise<void>(r => setTimeout(r, 300));
+          void this.startListening();
+        } else {
+          this.state.set('idle');
+        }
       }
+      return;
+    }
+
+    // Speech was captured — the user is active. Cancel the inactivity timer so
+    // it does not fire while the AI is processing or speaking the response.
+    this.clearInactivityTimer();
+
+    if (!text) {
+      // Empty transcript (browser quirk) — restart if session is still running.
+      if (this.isSessionActive()) {
+        void this.startListening();
+      } else {
+        this.state.set('idle');
+      }
+      return;
+    }
+
+    this.state.set('processing');
+    this.messageStarted.emit(text);
+
+    const convId = await this.ensureConversation(text);
+    if (!convId) {
+      this.errorMessage.set(this.t().voiceAgent.sessionError);
+      this._hasHadExchange = false;
+      this.isSessionActive.set(false);
       this.state.set('error');
       return;
     }
 
-    if (!text) {
-      this.state.set('idle');
-      return;
-    }
-
-    this.transcript.set(text);
-    this.state.set('processing');
-
-    // Fire the streaming call — result arrives via SignalR
-    this.voiceAgentSvc.sendMessageStream(sid, text, this.l10n.lang()).subscribe({
+    this.voiceAgentSvc.sendMessageStream(convId, text, this.l10n.lang()).subscribe({
       error: () => {
+        this.clearInactivityTimer();
+        this._hasHadExchange = false;
         this.errorMessage.set(this.t().voiceAgent.sessionError);
+        this.isSessionActive.set(false);
         this.state.set('error');
       },
     });
   }
 
-  stopListening(): void {
-    this.voiceCapture.stop();
+  retrySession(): void {
+    this._hasHadExchange = false;
+    this.clearInactivityTimer();
+    this.toolHint.set(null);
+    this.errorMessage.set(null);
+    this.isSessionActive.set(false);
     this.state.set('idle');
   }
 
-  retrySession(): void {
-    this.sessionId.set(null);
-    this.transcript.set('');
-    this.response.set('');
-    this.toolHint.set(null);
-    this.errorMessage.set(null);
-    this.initSession();
+  // ── Private helpers ─────────────────────────────────────────────────────────
+
+  // Start the inactivity timer only if an exchange has already occurred and no
+  // timer is already running. Calling this on every startListening() retry is
+  // intentionally a no-op so the timer accumulates across silent cycles.
+  private armInactivityTimer(): void {
+    if (!this._hasHadExchange || this._inactivityTimer != null) return;
+    this._inactivityTimer = setTimeout(() => {
+      this._inactivityTimer = null;
+      if (this.isSessionActive()) {
+        this.stopSession();
+      }
+    }, INACTIVITY_MS);
+  }
+
+  private clearInactivityTimer(): void {
+    if (this._inactivityTimer != null) {
+      clearTimeout(this._inactivityTimer);
+      this._inactivityTimer = null;
+    }
+  }
+
+  private async ensureConversation(firstMessage: string): Promise<string | null> {
+    const parentId = this.conversationId();
+    if (parentId) {
+      this._activeConversationId = parentId;
+      return parentId;
+    }
+
+    if (this._activeConversationId) {
+      return this._activeConversationId;
+    }
+
+    const profileId = this.profileId();
+    if (!profileId) return null;
+
+    const raw   = firstMessage.trim();
+    const title = raw.length > 40 ? `${raw.slice(0, 40)}…` : raw;
+
+    return new Promise<string | null>(resolve => {
+      this.aiChatSvc.createConversation({ userHealthProfileId: profileId, title }).subscribe({
+        next: res => {
+          const newId = res.data;
+          if (!newId) { resolve(null); return; }
+
+          this._activeConversationId = newId;
+          this.conversationCreated.emit({
+            id: newId,
+            userHealthProfileId: profileId,
+            title,
+            lastMessageAt: null,
+            createdAt: new Date().toISOString(),
+          });
+          resolve(newId);
+        },
+        error: () => resolve(null),
+      });
+    });
   }
 
   private async onAgentResponse(payload: VoiceAgentResponsePayload): Promise<void> {
-    this.response.set(payload.text);
     this.toolHint.set(null);
     this.state.set('speaking');
 
-    // Refresh data pages so any changes (appointments, medications) are immediately visible.
     this.notifSvc.notifyAppointmentChanged();
     this.notifSvc.notifyReminderChanged();
 
@@ -189,8 +295,24 @@ export class VoiceAgentPanel implements OnInit, OnDestroy {
       void this.router.navigateByUrl(payload.navigateTo);
     }
 
-    // TTS locale is inferred from the response text itself — no lang param needed.
+    const convId = this._activeConversationId ?? this.conversationId();
+    if (convId) {
+      this.responseReceived.emit(convId);
+    }
+
     await this.voiceSynthesis.speak(payload.text);
-    this.state.set('idle');
+
+    // Mark that at least one exchange has now completed. The inactivity timer
+    // will arm itself on the next startListening() call.
+    this._hasHadExchange = true;
+    // Clear any leftover timer so the fresh 90 s window starts cleanly from
+    // the moment listening resumes — not from mid-TTS.
+    this.clearInactivityTimer();
+
+    if (this.isSessionActive()) {
+      void this.startListening();
+    } else {
+      this.state.set('idle');
+    }
   }
 }

@@ -110,15 +110,8 @@
         </div>
       </header>
 
-      <!-- Voice Mode -->
-      @if (activeMode() === 'voice') {
-        <div class="ai-messages-wrap">
-          <app-voice-agent-panel></app-voice-agent-panel>
-        </div>
-      }
-
-      <!-- Messages Area (Chat Mode) -->
-      <div class="ai-messages-wrap" [style.display]="activeMode() === 'voice' ? 'none' : null">
+      <!-- Messages Area — always visible in both chat and voice modes -->
+      <div class="ai-messages-wrap">
 
         @if (profileError()) {
           <div class="ai-state-empty">
@@ -211,7 +204,18 @@
 
       </div>
 
-      <!-- Composer Footer (chat mode only) -->
+      <!-- Voice controls footer — shown in voice mode instead of the composer -->
+      @if (activeMode() === 'voice') {
+        <app-voice-agent-panel
+          [profileId]="profileId()"
+          [conversationId]="selectedConversationId()"
+          (conversationCreated)="onVoiceConversationCreated($event)"
+          (messageStarted)="onVoiceMessageStarted($event)"
+          (responseReceived)="onVoiceResponseReceived($event)"
+        ></app-voice-agent-panel>
+      }
+
+      <!-- Composer Footer — shown in chat mode -->
       @if (activeMode() === 'chat') {
       <div class="ai-composer-wrap">
         @if (sendError()) {

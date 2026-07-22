@@ -1,88 +1,84 @@
-.vap-root {
+/* ── Footer wrapper — matches the composer footer sizing and border ── */
+.vap-footer {
+  background: #ffffff;
+  border-top: 1px solid #E5E7EB;
+  padding: 0 12px;
+  flex-shrink: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 24px 16px;
-  box-sizing: border-box;
+  min-height: 72px;
 }
 
-/* ── State overlays (init / error / not-supported) ── */
-.vap-state {
+/* ── Status / error bars ── */
+.vap-bar {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  text-align: center;
-}
-
-.vap-state-icon {
-  font-size: 2.5rem;
-  color: #0EAFD7;
-}
-
-.vap-state-icon--muted {
-  color: #9ca3af;
-}
-
-.vap-state--error .vap-state-icon {
-  color: #ef4444;
-}
-
-.vap-state-msg {
-  font-size: 0.875rem;
-  color: #6b7280;
-  max-width: 260px;
-  line-height: 1.5;
-}
-
-.vap-retry-btn {
-  margin-top: 4px;
-  padding: 8px 20px;
-  border-radius: 8px;
-  border: none;
-  background: #0EAFD7;
-  color: #fff;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.vap-retry-btn:hover {
-  opacity: 0.85;
-}
-
-/* ── Main body ── */
-.vap-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
+  gap: 8px;
+  font-size: 13px;
   width: 100%;
 }
 
-/* ── Status label ── */
-.vap-status-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
+.vap-bar--unsupported {
   color: #6b7280;
-  text-align: center;
-  min-height: 1.25em;
-  transition: color 0.2s;
 }
 
-/* ── Mic button + rings ── */
+.vap-bar--unsupported i {
+  color: #ef4444;
+  font-size: 15px;
+}
+
+.vap-bar--error {
+  color: #dc2626;
+}
+
+.vap-bar--error i {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.vap-bar--error span {
+  flex: 1;
+  font-size: 13px;
+}
+
+.vap-retry-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  background: #fff;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.vap-retry-btn:hover {
+  background: #f3f4f6;
+}
+
+/* ── Controls: mic button + status text side by side ── */
+.vap-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 10px 0;
+}
+
+/* ── Mic button container (sized for the rings to animate around it) ── */
 .vap-mic-wrap {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 96px;
-  height: 96px;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
 }
 
+/* ── Pulse rings ── */
 .vap-ring {
   position: absolute;
   border-radius: 50%;
@@ -110,41 +106,45 @@
   100% { opacity: 0; }
 }
 
+/* ── Mic button (44 px — compact for the footer) ── */
 .vap-mic-btn {
   position: relative;
   z-index: 1;
-  width: 72px;
-  height: 72px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: none;
   background: #0EAFD7;
   color: #fff;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 10px rgba(14, 175, 215, 0.35);
 }
 
 .vap-mic-btn:hover:not(:disabled) {
-  transform: scale(1.06);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  transform: scale(1.07);
+  box-shadow: 0 5px 14px rgba(14, 175, 215, 0.45);
 }
 
 .vap-mic-btn:active:not(:disabled) {
-  transform: scale(0.96);
+  transform: scale(0.95);
 }
 
-.vap-mic-btn--listening {
-  background: var(--danger, #ef4444);
+/* Red "stop" button — shown whenever the session is active (listening or speaking) */
+.vap-mic-btn--stop {
+  background: #ef4444;
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35);
 }
 
-.vap-mic-btn--processing,
-.vap-mic-btn--speaking {
+/* Processing overrides stop-red back to teal and dims the button */
+.vap-mic-btn--processing {
   background: #0EAFD7;
-  opacity: 0.75;
+  box-shadow: 0 3px 10px rgba(14, 175, 215, 0.35);
+  opacity: 0.7;
   cursor: default;
 }
 
@@ -152,57 +152,10 @@
   cursor: not-allowed;
 }
 
-/* ── Transcript & response bubbles ── */
-.vap-bubbles {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  max-width: 340px;
-}
-
-.vap-bubble {
-  padding: 10px 14px;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.vap-bubble p {
+/* ── Status text ── */
+.vap-status-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
   margin: 0;
-}
-
-.vap-bubble--user {
-  background: #0EAFD7;
-  color: #fff;
-  align-self: flex-end;
-  border-bottom-right-radius: 4px;
-}
-
-.vap-bubble-label {
-  display: block;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.75;
-  margin-bottom: 4px;
-}
-
-.vap-bubble--ai {
-  background: #f3f4f6;
-  color: #111827;
-  align-self: flex-start;
-  border-bottom-left-radius: 4px;
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-
-.vap-bubble-logo {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 2px;
 }
