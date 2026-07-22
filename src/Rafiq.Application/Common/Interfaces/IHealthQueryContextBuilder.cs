@@ -12,6 +12,6 @@ public interface IHealthQueryContextBuilder
 {
     Task<string> BuildAsync(
         ParsedHealthQueryIntent intent,
-        Guid userHealthProfileId,
+        QueryScope scope,
         CancellationToken cancellationToken = default);
 }

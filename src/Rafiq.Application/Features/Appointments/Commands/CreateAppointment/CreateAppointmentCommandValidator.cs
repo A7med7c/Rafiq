@@ -12,7 +12,8 @@ internal sealed class CreateAppointmentCommandValidator : AbstractValidator<Crea
 
         RuleFor(x => x.AppointmentDateTime)
             .NotEmpty().WithMessage("AppointmentDateTime is required.")
-            .Must(x => x > DateTime.UtcNow).WithMessage("AppointmentDateTime cannot be in the past.");
+            // Normalise to UTC before comparing so Local/Utc/Unspecified kinds are all handled correctly.
+            .Must(x => x.ToUniversalTime() > DateTime.UtcNow).WithMessage("AppointmentDateTime cannot be in the past.");
 
         RuleFor(x => x.AppointmentType)
             .IsInEnum().WithMessage("AppointmentType must be a valid value.");

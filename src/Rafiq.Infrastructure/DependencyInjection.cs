@@ -19,6 +19,7 @@ using Rafiq.Infrastructure.Services.MedicationReminders;
 using Rafiq.Infrastructure.Services.AppointmentReminders;
 using Rafiq.Infrastructure.Services.AiChat;
 using Rafiq.Infrastructure.Services.Common;
+using Rafiq.Infrastructure.Services.MedicalReport;
 
 
 namespace Rafiq.Infrastructure;
@@ -49,6 +50,8 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<RafiqDbContext>());
         services.AddScoped<IPatientProfileRepository, UserHealthProfileRepository>();
+        services.AddScoped<IAllergyRepository, AllergyRepository>();
+        services.AddScoped<IChronicDiseaseRepository, ChronicDiseaseRepository>();
         services.AddScoped<IHealthProfileAccessRepository, HealthProfileAccessRepository>();
         services.AddScoped<IHealthProfileAuthorizationService, HealthProfileAuthorizationService>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
@@ -62,6 +65,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddHttpContextAccessor();
+        services.AddScoped<IBackgroundUserContext, BackgroundUserContext>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITokenHasher, Sha256TokenHasher>();
         services.AddScoped<IOtpHasher, BCryptOtpHasher>();
@@ -81,6 +85,9 @@ public static class DependencyInjection
         services.Configure<AiChatSettings>(configuration.GetSection("AiChat"));
         services.AddHttpClient<IAiChatService, AiChatService>();
 
+        // ── Medical Report ────────────────────────────────────────────────
+        services.AddScoped<IMedicalReportPdfGenerator, MedicalReportPdfGenerator>();
+
         // ── Documents ─────────────────────────────────────────────────────
         services.AddScoped<ILabReportRepository, LabReportRepository>();
         services.AddScoped<IImagingReportRepository, ImagingReportRepository>();
@@ -91,6 +98,7 @@ public static class DependencyInjection
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddScoped<IEmergencyContactRepository, EmergencyContactRepository>();
         services.AddScoped<IAiConversationRepository, AiConversationRepository>();
+        services.AddScoped<IMessageReactionRepository, MessageReactionRepository>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));

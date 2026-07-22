@@ -7,7 +7,10 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { catchError, of, map, forkJoin } from 'rxjs';
+import { LocalizationService } from '../../Services/localization.service';
+import { AiChatService } from '../../Services/ai-chat.service';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { NotificationService } from '../../Services/notification.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { environment } from '../../Environments/Environment';
@@ -19,14 +22,13 @@ import {
   ProfileMemberDto,
   SentInvitationDto,
 } from '../../Services/family-profiles.service';
-import { RecordsContentComponent } from '../../Components/records-content/records-content';
 import { AppointmentsContentComponent } from '../../Components/appointments-content/appointments-content';
 import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.service';
 
 type AddStep = 'choose' | 'create' | 'invite' | 'invited';
 
-interface AllergyEntry { name: string; severity: string; }
-interface DiseaseEntry { name: string; status: string; diagnosedAt: string; }
+interface AllergyEntry { id?: string; name: string; severity: string; }
+interface DiseaseEntry { id?: string; name: string; status: string; diagnosedAt: string; }
 
 interface SupervisionMemberEntry {
   accessId: string;
@@ -42,14 +44,18 @@ interface SupervisionMemberEntry {
 @Component({
   selector: 'app-family-profiles',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RecordsContentComponent, AppointmentsContentComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AppointmentsContentComponent],
   templateUrl: './family-profiles.html',
   styleUrl: './family-profiles.css',
 })
 export class FamilyProfiles implements OnInit {
   @ViewChild('carouselEl') carouselElRef?: ElementRef<HTMLDivElement>;
 
-  private readonly authSvc = inject(AuthService);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly aiChatService = inject(AiChatService);
+  protected readonly t = this.l10n.t;
+  private readonly authSvc        = inject(AuthService);
+  protected readonly profileCache = inject(ProfileCacheService);
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly notifSvc = inject(NotificationService);
@@ -291,6 +297,7 @@ export class FamilyProfiles implements OnInit {
 
   // ─── Lifecycle ──────────────────────────────────────────────
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadProfiles();
     this.loadReceivedInvitations();
@@ -328,6 +335,12 @@ export class FamilyProfiles implements OnInit {
     });
   }
 
+  navigateToRecords(): void {
+    const p = this.selectedProfile();
+    if (!p) return;
+    this.router.navigate(['/medical-records'], { queryParams: { profileId: p.userHealthProfileId } });
+  }
+
   switchTab(tab: string): void {
     if (tab === this.activeTab()) return;
     const order = ['overview', 'records', 'appointments', 'medications', 'reminders', 'summary'];
@@ -336,9 +349,6 @@ export class FamilyProfiles implements OnInit {
     this.animateTabContent(nextIndex >= currentIndex ? 'left' : 'right');
 
     this.activeTab.set(tab);
-    if ((tab === 'medications' || tab === 'reminders') && this.fpMedicines().length === 0) {
-      this.loadFpMedicines();
-    }
     if (tab === 'summary') {
       this.loadHealthSummary();
     }
@@ -549,10 +559,11 @@ export class FamilyProfiles implements OnInit {
       height: d.height,
       weight: d.weight,
       relationship: p.relationship ?? '',
-      allergies: (d.allergies ?? []).map((a: any) => ({ name: a.name, severity: a.severity })),
-      chronicDiseases: (d.chronicDiseases ?? []).map((c: any) => ({ name: c.name, status: c.status, diagnosedAt: c.diagnosedAt?.split('T')[0] ?? '' })),
-      profileImage: null, profileImagePreview: null,
-      existingImageUrl: d.profileImageUrl ?? null,
+      allergies: (d.allergies ?? []).map((a: any) => ({ id: a.id, name: a.name, severity: a.severity })),
+      chronicDiseases: (d.chronicDiseases ?? []).map((c: any) => ({ id: c.id, name: c.name, status: c.status, diagnosedAt: c.diagnosedAt?.split('T')[0] ?? '' })),
+      profileImage: null,
+      profileImagePreview: null,
+      existingImageUrl: p.profileImageUrl ?? null,
       removeImage: false,
     };
     this.showEditModal.set(true);
@@ -581,12 +592,6 @@ export class FamilyProfiles implements OnInit {
       height: f.height,
       weight: f.weight,
       relationship: isSelf ? null : (f.relationship || null),
-      allergies: f.allergies
-        .filter(a => a.name.trim())
-        .map(a => ({ name: a.name.trim(), severity: a.severity, notes: null })),
-      chronicDiseases: f.chronicDiseases
-        .filter(d => d.name.trim())
-        .map(d => ({ name: d.name.trim(), diagnosedAt: d.diagnosedAt || null, status: d.status, notes: null })),
     }).pipe(
       catchError(err => {
         const apiErrors: string[] = err?.error?.errors ?? [];
@@ -595,24 +600,118 @@ export class FamilyProfiles implements OnInit {
         return of(null);
       })
     ).subscribe(result => {
-      if (result === null) {
-        this.editSubmitting.set(false);
-        return;
+      if (result === null) return;
+
+      const detail = this.selectedDetail();
+      const origAllergies = detail?.allergies ?? [];
+      const origDiseases = detail?.chronicDiseases ?? [];
+      const origAllergyMap = new Map(origAllergies.map(a => [a.id, a]));
+      const origDiseaseMap = new Map(origDiseases.map(d => [d.id, d]));
+
+      const finalAllergies = f.allergies.filter(a => a.name.trim());
+      const finalDiseases = f.chronicDiseases.filter(d => d.name.trim());
+      const finalAllergyIds = new Set(finalAllergies.filter(a => a.id).map(a => a.id!));
+      const finalDiseaseIds = new Set(finalDiseases.filter(d => d.id).map(d => d.id!));
+
+      const ops: any[] = [];
+
+      // Allergies: delete removed
+      for (const orig of origAllergies) {
+        if (!finalAllergyIds.has(orig.id)) {
+          ops.push(this.http.delete(`${this.base}/patient-profiles/${profileId}/allergies/${orig.id}`));
+        }
+      }
+      // Allergies: create new / update changed
+      for (const a of finalAllergies) {
+        if (!a.id) {
+          ops.push(this.http.post(`${this.base}/patient-profiles/${profileId}/allergies`, {
+            patientProfileId: profileId, name: a.name.trim(), severity: a.severity,
+          }));
+        } else {
+          const orig = origAllergyMap.get(a.id);
+          if (!orig || orig.name !== a.name.trim() || orig.severity !== a.severity) {
+            ops.push(this.http.put(`${this.base}/patient-profiles/${profileId}/allergies/${a.id}`, {
+              patientProfileId: profileId, allergyId: a.id, name: a.name.trim(), severity: a.severity,
+            }));
+          }
+        }
       }
 
-      const imageChanged = !!f.profileImage || f.removeImage;
-      const imageUpdate$ = imageChanged
-        ? this.fpSvc.updateProfileImage(profileId, f.profileImage, f.removeImage).pipe(catchError(() => of(null)))
-        : of(null);
+      // Diseases: delete removed
+      for (const orig of origDiseases) {
+        if (!finalDiseaseIds.has(orig.id)) {
+          ops.push(this.http.delete(`${this.base}/patient-profiles/${profileId}/chronic-diseases/${orig.id}`));
+        }
+      }
+      // Diseases: create new / update changed
+      for (const d of finalDiseases) {
+        if (!d.id) {
+          ops.push(this.http.post(`${this.base}/patient-profiles/${profileId}/chronic-diseases`, {
+            patientProfileId: profileId, name: d.name.trim(), diagnosedAt: d.diagnosedAt || null, status: d.status,
+          }));
+        } else {
+          const orig = origDiseaseMap.get(d.id);
+          if (!orig || orig.name !== d.name.trim() || orig.status !== d.status || (orig.diagnosedAt?.split('T')[0] ?? '') !== d.diagnosedAt) {
+            ops.push(this.http.put(`${this.base}/patient-profiles/${profileId}/chronic-diseases/${d.id}`, {
+              patientProfileId: profileId, diseaseId: d.id, name: d.name.trim(), diagnosedAt: d.diagnosedAt || null, status: d.status,
+            }));
+          }
+        }
+      }
 
-      imageUpdate$.subscribe(() => {
-        this.editSubmitting.set(false);
-        this.closeEditModal();
-        this.fpSvc.getById(profileId).pipe(catchError(() => of(null))).subscribe(d => {
-          this.selectedDetail.set(d);
-        });
-        this.loadProfiles();
-      });
+      const finish = () => {
+        const profileImage = this.editForm.profileImage;
+        const removeImage = this.editForm.removeImage;
+
+        // Helper: patch the image URL across every in-memory signal so no reload is needed
+        const patchImageUrl = (newUrl: string | null) => {
+          this.selectedDetail.update(d => d ? { ...d, profileImageUrl: newUrl } : d);
+          this.selectedProfile.update(p => p ? { ...p, profileImageUrl: newUrl } : p);
+          this.profiles.update(list =>
+            list.map(p => p.userHealthProfileId === profileId ? { ...p, profileImageUrl: newUrl } : p)
+          );
+        };
+
+        // Helper: patch text fields (name etc.) that were also edited
+        const patchTextFields = () => {
+          const firstName = this.editForm.firstName.trim();
+          const lastName  = this.editForm.lastName.trim();
+          this.selectedProfile.update(p => p ? { ...p, firstName, lastName } : p);
+          this.profiles.update(list =>
+            list.map(p => p.userHealthProfileId === profileId ? { ...p, firstName, lastName } : p)
+          );
+        };
+
+        if (profileImage || removeImage) {
+          this.fpSvc.updateProfileImage(profileId, profileImage, removeImage).pipe(
+            catchError(() => of(null))
+          ).subscribe(updated => {
+            if (updated) { patchImageUrl(updated.profileImageUrl); }
+            patchTextFields();
+            this.editSubmitting.set(false);
+            this.closeEditModal();
+          });
+        } else {
+          patchTextFields();
+          this.editSubmitting.set(false);
+          this.closeEditModal();
+          // Refresh detail text fields from server without a full list reload
+          this.fpSvc.getById(profileId).pipe(catchError(() => of(null))).subscribe(d => {
+            if (d) { this.selectedDetail.set(d); }
+          });
+        }
+      };
+
+      if (ops.length === 0) { finish(); return; }
+
+      forkJoin(ops).pipe(
+        catchError(err => {
+          const apiErrors: string[] = err?.error?.errors ?? [];
+          this.editError = apiErrors.length ? apiErrors.join(' ') : (err?.error?.message || 'Failed to update allergies or diseases.');
+          this.editSubmitting.set(false);
+          return of(null);
+        })
+      ).subscribe(res => { if (res !== null) finish(); });
     });
   }
 
@@ -787,6 +886,11 @@ export class FamilyProfiles implements OnInit {
   }
 
   // ─── Three-dot menu ─────────────────────────────────────────
+  canShowProfileMenu(p: AccessibleProfileDto | null): boolean {
+    if (!p) return false;
+    return p.profileType === 'Managed' && p.userId === null && p.accessRole === 'Owner';
+  }
+
   toggleProfileMenu(): void { this.showProfileMenu.update(v => !v); }
   closeProfileMenu(): void { this.showProfileMenu.set(false); }
 
@@ -834,6 +938,8 @@ export class FamilyProfiles implements OnInit {
 
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
+  goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
     if (!(e.target as HTMLElement).closest('.hdr-user')) this.dropdownOpen.set(false);
@@ -854,11 +960,35 @@ export class FamilyProfiles implements OnInit {
 
   get avatarUrl(): string { return this.authSvc.avatarUrl; }
 
+  get hasProfileImage(): boolean { return !!this.authSvc.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authSvc.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
   getAvatarColor(i: number): string { return this.avatarColors[i % this.avatarColors.length]; }
 
-  getRelLabel(p: AccessibleProfileDto): string {
-    return p.isSelf ? 'You' : (p.relationship ?? 'Member');
+getRelLabel(p: AccessibleProfileDto): string {
+  if (p.isSelf) {
+    return this.t().family.self;
   }
+
+  const key = (p.relationship ?? 'member').toLowerCase();
+
+  return (this.t().family as any)[key] ?? this.t().family.member;
+}
 
   getRelBadgeClass(p: AccessibleProfileDto): string {
     if (p.isSelf) return 'fp-badge fp-badge--blue';
@@ -872,7 +1002,8 @@ export class FamilyProfiles implements OnInit {
     return ['Husband', 'Wife'].includes(r) ? 'fa-solid fa-heart' : 'fa-solid fa-person';
   }
 
-  getStatusLabel(p: AccessibleProfileDto): string { return p.isSelf ? 'Self' : 'Active'; }
+  getStatusLabel(p: AccessibleProfileDto): string {   const key = (p.relationship ?? 'member').toLowerCase();
+return p.isSelf ? (this.t().family as any)[key] ?? this.t().family.member : 'Active'; }
 
   getStatusBadgeClass(p: AccessibleProfileDto): string {
     return p.isSelf ? 'fp-badge fp-badge--green' : 'fp-badge fp-badge--blue';
@@ -929,4 +1060,14 @@ export class FamilyProfiles implements OnInit {
     const p = this.profiles().find(x => x.userHealthProfileId === profileId);
     return p ? `${p.firstName} ${p.lastName}` : 'Unknown Profile';
   }
+
+  getGenderLabel(gender: string | null | undefined): string {
+  if (!gender) {
+    return '-';
+  }
+
+  const key = gender.toLowerCase();
+
+  return (this.t().common as any)[key] ?? gender;
+}
 }

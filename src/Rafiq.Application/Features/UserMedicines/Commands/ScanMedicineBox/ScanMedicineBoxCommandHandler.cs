@@ -39,9 +39,15 @@ public sealed class ScanMedicineBoxCommandHandler(
                 ? "The uploaded image could not be identified as a valid document."
                 : $"Detected document type: {detected}.";
 
-            throw new BadRequestException(
+            throw new DocumentValidationException(
+                "WRONG_DOCUMENT_TYPE_MEDICINE_BOX",
                 $"The uploaded image is not a medicine box or blister pack. {detailMessage} Please upload a valid medicine box image.");
         }
+
+        if (extracted.IsUnreadable)
+            throw new DocumentValidationException(
+                "UNREADABLE_DOCUMENT_MEDICINE_BOX",
+                "The medicine box image is unreadable. Please upload a clearer image or enter the information manually.");
 
         var fileExtension = Path.GetExtension(request.Image.FileName);
         var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";

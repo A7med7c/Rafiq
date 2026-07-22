@@ -1,0 +1,87 @@
+<div class="vap-root">
+
+  <!-- NOT SUPPORTED -->
+  @if (!captureSupported) {
+    <div class="vap-state vap-state--error">
+      <i class="fa-solid fa-microphone-slash vap-state-icon"></i>
+      <p class="vap-state-msg">{{ t().voiceAgent.notSupported }}</p>
+    </div>
+
+  } @else if (state() === 'init') {
+    <!-- INITIALIZING -->
+    <div class="vap-state">
+      <i class="fa-solid fa-spinner fa-spin vap-state-icon vap-state-icon--muted"></i>
+    </div>
+
+  } @else if (state() === 'error') {
+    <!-- ERROR -->
+    <div class="vap-state vap-state--error">
+      <i class="fa-solid fa-triangle-exclamation vap-state-icon"></i>
+      <p class="vap-state-msg">{{ errorMessage() }}</p>
+      <button type="button" class="vap-retry-btn" (click)="retrySession()">
+        {{ t().voiceAgent.retry }}
+      </button>
+    </div>
+
+  } @else {
+    <!-- MAIN VOICE UI -->
+    <div class="vap-body">
+
+      <!-- Status label -->
+      <p class="vap-status-label">
+        @if (state() === 'listening') {
+          {{ t().voiceAgent.listening }}
+        } @else if (state() === 'processing') {
+          {{ toolHint() ? t().voiceAgent.callingTool : t().voiceAgent.thinking }}
+        } @else if (state() === 'speaking') {
+          {{ t().voiceAgent.speaking }}
+        } @else {
+          {{ t().voiceAgent.tapToSpeak }}
+        }
+      </p>
+
+      <!-- Mic button with animated rings -->
+      <div class="vap-mic-wrap" [class.vap-mic-wrap--listening]="state() === 'listening'">
+        <div class="vap-ring vap-ring--1"></div>
+        <div class="vap-ring vap-ring--2"></div>
+        <button
+          type="button"
+          class="vap-mic-btn"
+          [class.vap-mic-btn--listening]="state() === 'listening'"
+          [class.vap-mic-btn--processing]="state() === 'processing'"
+          [class.vap-mic-btn--speaking]="state() === 'speaking'"
+          [disabled]="state() === 'processing' || state() === 'speaking'"
+          (click)="state() === 'listening' ? stopListening() : startListening()"
+        >
+          @if (state() === 'processing') {
+            <i class="fa-solid fa-spinner fa-spin"></i>
+          } @else if (state() === 'speaking') {
+            <i class="fa-solid fa-volume-high"></i>
+          } @else if (state() === 'listening') {
+            <i class="fa-solid fa-stop"></i>
+          } @else {
+            <i class="fa-solid fa-microphone"></i>
+          }
+        </button>
+      </div>
+
+      <!-- Transcript and response bubbles -->
+      <div class="vap-bubbles">
+        @if (transcript()) {
+          <div class="vap-bubble vap-bubble--user">
+            <span class="vap-bubble-label">{{ t().voiceAgent.youSaid }}</span>
+            <p>{{ transcript() }}</p>
+          </div>
+        }
+        @if (response()) {
+          <div class="vap-bubble vap-bubble--ai">
+            <img src="images/RafiqLogo.png" alt="Rafiq" class="vap-bubble-logo">
+            <p>{{ response() }}</p>
+          </div>
+        }
+      </div>
+
+    </div>
+  }
+
+</div>

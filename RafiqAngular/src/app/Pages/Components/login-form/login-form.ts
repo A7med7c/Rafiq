@@ -13,6 +13,7 @@ import { filter, take } from 'rxjs';
 import { GoogleService } from '../../../Services/google-service';
 import { AuthService } from '../../../Services/auth-service';
 import { HealthProfileService } from '../../../Services/health-profile.service';
+import { LocalizationService } from '../../../Services/localization.service';
 import { environment } from '../../../Environments/Environment';
 import { getApiErrorMessages } from '../../../Utils/api-error.util';
 
@@ -44,6 +45,8 @@ export class LoginFormComponent implements OnInit {
   private readonly healthProfileSvc = inject(HealthProfileService);
   private readonly router = inject(Router);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   isSubmitting = false;
   showPassword = false;

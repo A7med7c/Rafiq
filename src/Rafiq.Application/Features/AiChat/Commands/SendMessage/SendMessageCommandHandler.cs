@@ -2,6 +2,7 @@ using MediatR;
 using Rafiq.Application.AI.HealthQuery;
 using Rafiq.Application.AI.Models;
 using Rafiq.Application.AI.Prompts;
+using Rafiq.Application.AI.Resolution;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.AiChat.DTOs;
@@ -18,30 +19,39 @@ public sealed class SendMessageCommandHandler : IRequestHandler<SendMessageComma
     // much smaller token budget than the conversational response.
     private const int IntentClassificationMaxTokens = 200;
 
-    // A little recent history helps the classifier resolve follow-up questions
-    // ("and my sugar test?") without needing the caller to repeat context.
-    private const int IntentClassificationHistoryTurns = 4;
+    // Enough history for the classifier to resolve follow-ups like "and her last lab?"
+    // while staying well within the cheap classification call's context window.
+    private const int IntentClassificationHistoryTurns = 8;
 
     private readonly ICurrentUserService _currentUserService;
     private readonly IAiConversationRepository _aiConversationRepository;
+    private readonly IHealthProfileAccessRepository _healthProfileAccessRepository;
     private readonly IHealthProfileAuthorizationService _healthProfileAuthService;
     private readonly IAiChatService _aiChatService;
     private readonly IHealthQueryContextBuilder _healthQueryContextBuilder;
+    private readonly IFamilyProfileResolver _familyProfileResolver;
+    private readonly IConversationStateCache _conversationStateCache;
     private readonly IUnitOfWork _unitOfWork;
 
     public SendMessageCommandHandler(
         ICurrentUserService currentUserService,
         IAiConversationRepository aiConversationRepository,
+        IHealthProfileAccessRepository healthProfileAccessRepository,
         IHealthProfileAuthorizationService healthProfileAuthService,
         IAiChatService aiChatService,
         IHealthQueryContextBuilder healthQueryContextBuilder,
+        IFamilyProfileResolver familyProfileResolver,
+        IConversationStateCache conversationStateCache,
         IUnitOfWork unitOfWork)
     {
         _currentUserService = currentUserService;
         _aiConversationRepository = aiConversationRepository;
+        _healthProfileAccessRepository = healthProfileAccessRepository;
         _healthProfileAuthService = healthProfileAuthService;
         _aiChatService = aiChatService;
         _healthQueryContextBuilder = healthQueryContextBuilder;
+        _familyProfileResolver = familyProfileResolver;
+        _conversationStateCache = conversationStateCache;
         _unitOfWork = unitOfWork;
     }
 
@@ -50,29 +60,33 @@ public sealed class SendMessageCommandHandler : IRequestHandler<SendMessageComma
         var userId = _currentUserService.UserId
             ?? throw new UnauthorizedException("Authentication required.");
 
-        // Load as tracked entity (no AsNoTracking) so AiConversation → Modified on save.
+        // Load as tracked entity so AiConversation → Modified on save.
         var conversation = await _aiConversationRepository.GetWithMessagesAsync(request.ConversationId, userId, cancellationToken)
             ?? throw new NotFoundException(nameof(AiConversation), request.ConversationId);
 
-        // Ensure user has access to the health profile. Re-checked on every message,
-        // not just at conversation creation, in case access was revoked meanwhile.
+        // Re-checked on every message in case access was revoked since the conversation started.
         await _healthProfileAuthService.EnsureCanReadAsync(conversation.UserHealthProfileId, cancellationToken);
 
-        // Build history from existing DB-loaded messages BEFORE adding the new user message.
-        // This prevents the current user message from appearing twice in the AI context.
+        // Build history from DB-loaded messages BEFORE adding the new user message.
         var historyDtos = conversation.Messages
             .OrderBy(m => m.SequenceNumber)
             .Select(m => new AiChatMessageDto { Role = m.Role, Content = m.Content })
             .ToList();
 
-        // Determine the next sequence number.
         var nextSeq = conversation.Messages.Count > 0
             ? conversation.Messages.Max(m => m.SequenceNumber) + 1
             : 1;
 
-        // Understand what the user is actually asking for, then retrieve only the
-        // minimum authorized health data needed to answer it.
-        var healthContext = await BuildHealthContextAsync(request.Text, historyDtos, conversation.UserHealthProfileId, cancellationToken);
+        // Load accessible family profiles once — one DB call shared across all pipeline stages.
+        var accessEntries = await LoadAccessibleProfileEntriesAsync(userId, cancellationToken);
+
+        var healthContext = await BuildHealthContextAsync(
+            request.Text,
+            historyDtos,
+            conversation.UserHealthProfileId,
+            conversation.Id,
+            accessEntries,
+            cancellationToken);
 
         var aiRequest = new AiChatRequest
         {
@@ -84,71 +98,156 @@ public sealed class SendMessageCommandHandler : IRequestHandler<SendMessageComma
             ImageFormat = request.ImageFormat
         };
 
-        // Call the AI provider.
         var aiResponse = await _aiChatService.GenerateResponseAsync(aiRequest, cancellationToken);
 
-        // Add user message explicitly through the DbSet (not the private-set nav collection).
         var userMsg = new AiMessage(conversation.Id, AiMessageRole.User, request.Text, nextSeq);
         await _aiConversationRepository.AddMessageAsync(userMsg, cancellationToken);
 
-        // Add assistant message explicitly through the DbSet.
         var aiMsg = new AiMessage(conversation.Id, AiMessageRole.Assistant, aiResponse.Content, nextSeq + 1);
         await _aiConversationRepository.AddMessageAsync(aiMsg, cancellationToken);
 
-        // Update LastMessageAt on the tracked conversation entity → EF state: Modified.
         conversation.MarkMessageActivity(DateTime.UtcNow);
 
-        // Single SaveChangesAsync call.
-        // Expected EF states before save:
-        //   AiConversation  → Modified
-        //   userMsg         → Added
-        //   aiMsg           → Added
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<AiMessageResponseDto>.SuccessResponse(new AiMessageResponseDto(aiResponse.Content), "Message sent successfully.");
+        return ApiResponse<AiMessageResponseDto>.SuccessResponse(
+            new AiMessageResponseDto(aiMsg.Id, aiResponse.Content), "Message sent successfully.");
     }
 
     /// <summary>
-    /// Classifies the user's message into a validated, allowlist-safe intent, then
-    /// retrieves only the minimum authorized health data it names. The AI model never
-    /// touches a repository, a database, or any credential - it only ever produces a
-    /// small JSON suggestion that is re-validated here before it can influence anything.
-    /// Degrades to no health context (rather than failing the whole message) if
-    /// classification fails for any reason - the same safe fallback as an off-topic
-    /// question that matches no category.
+    /// Loads all active accessible profiles for the current user (one DB call) and maps
+    /// them into resolver-friendly entries. Self-access records are excluded — the user's
+    /// own profile is always available via conversation.UserHealthProfileId.
+    /// </summary>
+    private async Task<IReadOnlyList<AccessibleProfileEntry>> LoadAccessibleProfileEntriesAsync(
+        Guid userId, CancellationToken ct)
+    {
+        var accesses = await _healthProfileAccessRepository.GetActiveAccessibleProfilesAsync(userId, ct);
+
+        return accesses
+            .Where(a => a.Relationship != RelationshipType.Self)
+            .Select(a => new AccessibleProfileEntry(
+                a.UserHealthProfileId,
+                a.UserHealthProfile.FirstName,
+                a.UserHealthProfile.LastName,
+                a.Relationship))
+            .ToList();
+    }
+
+    /// <summary>
+    /// 4-stage deterministic-first resolution pipeline followed by AI intent classification.
+    /// The AI is called once per message for categories/operations regardless of resolution
+    /// stage reached. The <c>targetProfile</c> field is only added to the AI prompt when
+    /// deterministic resolution has failed (saves tokens in the common case).
     /// </summary>
     private async Task<string> BuildHealthContextAsync(
         string text,
         IReadOnlyList<AiChatMessageDto> history,
-        Guid userHealthProfileId,
-        CancellationToken cancellationToken)
+        Guid ownProfileId,
+        Guid conversationId,
+        IReadOnlyList<AccessibleProfileEntry> accessEntries,
+        CancellationToken ct)
     {
-        ParsedHealthQueryIntent intent;
+        // ── Stage 1: Deterministic relationship detection ────────────────────
+        ProfileResolution resolution = new ProfileResolution.Unresolved();
 
+        var detection = RelationshipTermDetector.TryDetect(text);
+        if (detection.IsConfident)
+        {
+            resolution = _familyProfileResolver.MatchByRelationship(detection.Relationship!.Value, accessEntries);
+        }
+
+        // ── Stage 1.5: Self-reference detection ──────────────────────────────
+        if (resolution is ProfileResolution.Unresolved && SelfReferenceDetector.IsConfident(text))
+        {
+            resolution = new ProfileResolution.Self(ownProfileId);
+            _conversationStateCache.ClearState(conversationId);
+        }
+
+        // ── Stage 2: Name scan ───────────────────────────────────────────────
+        if (resolution is ProfileResolution.Unresolved)
+        {
+            resolution = _familyProfileResolver.MatchByNameInMessage(text, accessEntries);
+        }
+
+        // ── Stage 3: In-memory conversation state ────────────────────────────
+        if (resolution is ProfileResolution.Unresolved)
+        {
+            var cached = _conversationStateCache.GetState(conversationId);
+            if (cached is not null)
+                resolution = new ProfileResolution.FamilyMember(cached.ProfileId, cached.DisplayName);
+        }
+
+        // ── Stage 4: AI intent classification ────────────────────────────────
+        // Always call AI for categories/operations.
+        // Only include targetProfile in schema when deterministic resolution has failed.
+        bool profileAlreadyResolved = resolution is ProfileResolution.Self or ProfileResolution.FamilyMember;
+
+        ParsedHealthQueryIntent intent;
         try
         {
             var intentRequest = new AiChatRequest
             {
-                SystemPrompt = HealthQueryIntentPrompt.Build(),
+                SystemPrompt = HealthQueryIntentPrompt.Build(includeTargetProfile: !profileAlreadyResolved),
                 PreviousMessages = history.TakeLast(IntentClassificationHistoryTurns),
                 CurrentUserMessage = text,
                 MaxOutputTokens = IntentClassificationMaxTokens
             };
 
-            var intentResponse = await _aiChatService.GenerateResponseAsync(intentRequest, cancellationToken);
+            var intentResponse = await _aiChatService.GenerateResponseAsync(intentRequest, ct);
             intent = HealthQueryIntentParser.Parse(intentResponse.Content);
         }
         catch (ExternalServiceException)
         {
-            // Classification is a best-effort understanding step, not a hard dependency -
-            // if the AI provider fails here, fall back to no health context rather than
+            // Classification is best-effort — degrade to no health context rather than
             // failing the user's message entirely.
             intent = ParsedHealthQueryIntent.Empty;
         }
 
+        // If still unresolved and AI provided a name hint, try to resolve from it.
+        if (resolution is ProfileResolution.Unresolved && intent.TargetProfileHint is not null)
+        {
+            resolution = _familyProfileResolver.MatchByHint(intent.TargetProfileHint, accessEntries);
+        }
+
+        // Final fallback: unresolved with no hint → treat as self.
+        if (resolution is ProfileResolution.Unresolved)
+            resolution = new ProfileResolution.Self(ownProfileId);
+
+        // ── Update conversation state ─────────────────────────────────────────
+        if (resolution is ProfileResolution.FamilyMember fm)
+            _conversationStateCache.SetState(conversationId, fm.ProfileId, fm.DisplayName);
+        else
+            _conversationStateCache.ClearState(conversationId);
+
         if (intent.HasNoCategories)
             return string.Empty;
 
-        return await _healthQueryContextBuilder.BuildAsync(intent, userHealthProfileId, cancellationToken);
+        // ── Build scope and load context ──────────────────────────────────────
+        switch (resolution)
+        {
+            case ProfileResolution.NotFound notFound:
+                // Person was named but not found in accessible profiles.
+                // Return a directive context — the AI will inform the user without loading data.
+                return $"[RESOLUTION: The user asked about '{notFound.HintUsed}' but no accessible " +
+                       "family member matches that reference. Do not load or invent any health data. " +
+                       "Politely inform the user in their language that this person could not be found " +
+                       "in their accessible family profiles, and suggest they check Family Profiles in Rafiq.]";
+
+            case ProfileResolution.FamilyMember familyMember:
+                // Re-verify access in case it was revoked since the initial check.
+                await _healthProfileAuthService.EnsureCanReadAsync(familyMember.ProfileId, ct);
+                var familyScope = intent.Categories.Contains(HealthQueryCategory.FamilyOverview)
+                    ? (QueryScope)new FamilyWideScope(accessEntries)
+                    : new SingleProfileScope(familyMember.ProfileId, familyMember.DisplayName);
+                return await _healthQueryContextBuilder.BuildAsync(intent, familyScope, ct);
+
+            default: // Self
+                var selfProfileId = ((ProfileResolution.Self)resolution).ProfileId;
+                var selfScope = intent.Categories.Contains(HealthQueryCategory.FamilyOverview)
+                    ? (QueryScope)new FamilyWideScope(accessEntries)
+                    : new SingleProfileScope(selfProfileId);
+                return await _healthQueryContextBuilder.BuildAsync(intent, selfScope, ct);
+        }
     }
 }

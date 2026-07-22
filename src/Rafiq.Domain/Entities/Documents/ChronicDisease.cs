@@ -24,4 +24,11 @@ public class ChronicDisease : BaseEntity
     public DiseaseStatus Status { get; set; }
 
     public UserHealthProfile UserHealthProfile { get; set; } = null!;
+
+    public void Update(string name, DateOnly? diagnosedAt, DiseaseStatus status)
+    {
+        Name = name;
+        DiagnosedAt = diagnosedAt;
+        Status = status;
+    }
 }

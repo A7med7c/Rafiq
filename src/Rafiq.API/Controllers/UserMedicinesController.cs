@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Rafiq.Application.Common.Interfaces;
+using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.UserMedicines.Commands.AddFromPrescription;
 using Rafiq.Application.Features.UserMedicines.Commands.AddUserMedicine;
 using Rafiq.Application.Features.UserMedicines.Commands.DeleteUserMedicine;
@@ -15,8 +17,33 @@ namespace Rafiq.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/user-medicines")]
-public sealed class UserMedicinesController(IMediator mediator) : ControllerBase
+public sealed class UserMedicinesController(
+    IMediator mediator,
+    IFileStorageService fileStorageService) : ControllerBase
 {
+    /// <summary>
+    /// Upload a medicine box image without AI processing.
+    /// Stores the image and returns its path for use when adding a medicine manually.
+    /// Does NOT save to the database.
+    /// </summary>
+    [HttpPost("upload-image")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadMedicineImage(
+        IFormFile image,
+        CancellationToken cancellationToken)
+    {
+        var extension = Path.GetExtension(image.FileName);
+        var fileName = $"{Guid.NewGuid()}{extension}";
+
+        using var stream = image.OpenReadStream();
+        var imagePath = await fileStorageService.UploadFileAsync(
+            stream, fileName, "medicine-boxes", cancellationToken);
+
+        return Ok(ApiResponse<object>.SuccessResponse(
+            new { imagePath },
+            "Image uploaded successfully."));
+    }
+
     /// <summary>
     /// Upload a medicine box image and extract details via AI.
     /// Does NOT save to the database. The client should present the data for review.

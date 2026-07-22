@@ -14,6 +14,7 @@ import {
 import { HealthProfileService } from './health-profile.service';
 import { ProfileSelectionService } from './profile-selection.service';
 import { FamilyProfilesService, AccessibleProfileDto } from './family-profiles.service';
+import { LocalizationService } from './localization.service';
 
 export interface HealthSummaryDto {
   summary: string;
@@ -26,15 +27,21 @@ export class DashboardService {
   private readonly healthProfileSvc = inject(HealthProfileService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly familyProfilesSvc = inject(FamilyProfilesService);
+  private readonly l10n = inject(LocalizationService);
   private readonly base = environment.apiUrl;
 
   private _cachedSummary: HealthSummaryDto | null = null;
   private _summaryProfileId: string | null = null;
+  private _summaryLanguage: string | null = null;
 
   private getCurrentProfileId(): Observable<string> {
     const stored = this.profileSelectSvc.selectedProfileId;
     if (stored) return of(stored);
     return this.healthProfileSvc.getMyProfile().pipe(map(r => r.data.id));
+  }
+
+  getActiveProfileId(): Observable<string> {
+    return this.getCurrentProfileId();
   }
 
   // ─── Medical Records ──────────────────────────────────────────────────────
@@ -122,16 +129,19 @@ export class DashboardService {
   getHealthSummary(): Observable<HealthSummaryDto | null> {
     return this.getCurrentProfileId().pipe(
       switchMap(profileId => {
-        if (this._cachedSummary !== null && this._summaryProfileId === profileId) {
+        const lang = this.l10n.lang();
+        if (this._cachedSummary !== null && this._summaryProfileId === profileId && this._summaryLanguage === lang) {
           return of(this._cachedSummary);
         }
         return this.http
-          .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}`)
+          .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}?language=${lang}`)
           .pipe(
             map(r => {
-              const data = r.data ?? null;
+              const raw = r.data ?? null;
+              const data = raw ? { ...raw, summary: this.stripMarkdown(raw.summary) } : null;
               this._cachedSummary = data;
               this._summaryProfileId = profileId;
+              this._summaryLanguage = lang;
               return data;
             })
           );
@@ -141,11 +151,24 @@ export class DashboardService {
   }
 
   getHealthSummaryForProfile(profileId: string): Observable<HealthSummaryDto | null> {
+    const lang = this.l10n.lang();
     return this.http
-      .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}`)
+      .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}?language=${lang}`)
       .pipe(
-        map(r => r.data ?? null),
+        map(r => {
+          const raw = r.data ?? null;
+          return raw ? { ...raw, summary: this.stripMarkdown(raw.summary) } : null;
+        }),
         catchError(() => of(null))
       );
+  }
+
+  private stripMarkdown(text: string): string {
+    return text
+      .replace(/\*{1,3}([^*]+?)\*{1,3}/g, '$1')   // **bold** / *italic*
+      .replace(/^#{1,6}\s+/gm, '')                  // ## headings
+      .replace(/^\s*[-*]\s+/gm, '')                 // - bullet points
+      .replace(/\n{3,}/g, '\n\n')                   // collapse blank lines
+      .trim();
   }
 }

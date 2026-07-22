@@ -11,4 +11,5 @@ public sealed record ConversationMessageDto(
     string Role,
     string Content,
     int SequenceNumber,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? UserReaction = null);

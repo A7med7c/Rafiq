@@ -9,7 +9,8 @@ public sealed record ParsedHealthQueryIntent(
     IReadOnlyList<HealthQueryCategory> Categories,
     HealthQueryOperation Operation,
     string? SearchTerm,
-    HealthQueryTimeframe Timeframe)
+    HealthQueryTimeframe Timeframe,
+    string? TargetProfileHint = null)
 {
     public static ParsedHealthQueryIntent Empty { get; } = new(
         Array.Empty<HealthQueryCategory>(),

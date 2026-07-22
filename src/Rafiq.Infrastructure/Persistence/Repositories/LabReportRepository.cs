@@ -34,9 +34,23 @@ public sealed class LabReportRepository : ILabReportRepository
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
     
+    public Task<bool> ExistsDuplicateAsync(
+        Guid userHealthProfileId,
+        DateOnly reportDate,
+        string labName,
+        string doctorName,
+        CancellationToken cancellationToken = default)
+        => _context.LabReports.AnyAsync(
+            r => r.UserHealthProfileId == userHealthProfileId
+                 && !r.IsDeleted
+                 && r.ReportDate == reportDate
+                 && r.LabName.ToLower() == labName.ToLower()
+                 && r.DoctorName.ToLower() == doctorName.ToLower(),
+            cancellationToken);
+
     public void Update(LabReport labReport)
         => _context.LabReports.Update(labReport);
-    
+
     public void Remove(LabReport labReport)
         => _context.LabReports.Remove(labReport);
 }

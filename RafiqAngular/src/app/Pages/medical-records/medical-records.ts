@@ -9,9 +9,11 @@ import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { RecordsContentComponent } from '../../Components/records-content/records-content';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
+import { AiChatService } from '../../Services/ai-chat.service';
 import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medical-records.service';
 import { ScanMedicineBoxResponse, AddUserMedicinePayload, CreateReminderPayload } from '../../Modles/dashboard.models';
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
@@ -19,7 +21,11 @@ import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { NotificationService } from '../../Services/notification.service';
-import { switchMap } from 'rxjs';
+import { switchMap, catchError, of, map } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
+import { ProfileSelectionService } from '../../Services/profile-selection.service';
+import { LocalizationService } from '../../Services/localization.service';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -143,14 +149,43 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
   styleUrl: './medical-records.css',
 })
 export class MedicalRecords implements OnInit {
-  private readonly authService = inject(AuthService);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly aiChatService = inject(AiChatService);
+  protected readonly t = this.l10n.t;
+
+  private readonly authService    = inject(AuthService);
+  protected readonly profileCache = inject(ProfileCacheService);
   private readonly recordsService = inject(MedicalRecordsService);
   private readonly reminderSvc = inject(MedicationRemindersService);
   private readonly healthProfileSvc = inject(HealthProfileService);
   readonly notificationSvc = inject(NotificationService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fpSvc = inject(FamilyProfilesService);
+  private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly base = environment.apiUrl;
+
+  readonly viewingProfile = toSignal<AccessibleProfileDto | null>(
+    this.route.queryParamMap.pipe(
+      map(params => params.get('profileId') ?? this.profileSelectSvc.selectedProfileId),
+      switchMap(profileId => {
+        if (!profileId) return of(null);
+        return this.fpSvc.getAccessible().pipe(
+          map(profiles => profiles.find(p => p.userHealthProfileId === profileId) ?? null),
+          catchError(() => of(null))
+        );
+      })
+    ),
+    { initialValue: null }
+  );
+
+  readonly contextProfileId = computed(() => this.viewingProfile()?.userHealthProfileId ?? undefined);
+  readonly contextProfileName = computed(() => {
+    const p = this.viewingProfile();
+    return p ? `${p.firstName} ${p.lastName}` : null;
+  });
+  readonly contextReadOnly = computed(() => this.viewingProfile()?.accessRole === 'Viewer');
 
   @ViewChild('labInput') labInput?: ElementRef<HTMLInputElement>;
   @ViewChild('prescriptionInput') prescriptionInput?: ElementRef<HTMLInputElement>;
@@ -292,6 +327,24 @@ export class MedicalRecords implements OnInit {
 
   get avatarUrl(): string { return this.authService.avatarUrl; }
 
+  get hasProfileImage(): boolean { return !!this.authService.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authService.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
   @HostListener('window:resize')
   onWindowResize(): void { this.applyResponsiveSidebar(); }
   readonly countedRecords = computed(() =>
@@ -347,6 +400,7 @@ export class MedicalRecords implements OnInit {
   });
 
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadData();
   }
@@ -384,6 +438,8 @@ export class MedicalRecords implements OnInit {
   toggleMobileSidebar(): void { this.mobileSidebarOpen.update(v => !v); }
   toggleDropdown(): void { this.dropdownOpen.update(v => !v); }
   logout(): void { this.dropdownOpen.set(false); this.authService.logout().subscribe(); }
+
+  goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
 
   toggleAddRecordMenu(event: MouseEvent): void {
     event.stopPropagation();
@@ -803,7 +859,23 @@ export class MedicalRecords implements OnInit {
       error: err => {
         this.uploadLoading.set(false);
         this.setUploading(type, false);
-        this.showToast(err?.error?.message || 'Upload failed. Please try again.', 'error');
+        const errCode = err?.error?.errorCode as string | undefined;
+        const v = this.t().uploadValidation;
+        if (errCode === 'WRONG_DOCUMENT_TYPE_LAB_REPORT') {
+          this.showToast(v.lab, 'error');
+        } else if (errCode === 'UNREADABLE_DOCUMENT_LAB_REPORT') {
+          this.showToast(v.labUnreadable, 'error');
+        } else if (errCode === 'WRONG_DOCUMENT_TYPE_IMAGING_REPORT') {
+          this.showToast(v.imaging, 'error');
+        } else if (errCode === 'UNREADABLE_DOCUMENT_IMAGING_REPORT') {
+          this.showToast(v.imagingUnreadable, 'error');
+        } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
+          this.showToast(v.prescription, 'error');
+        } else if (errCode === 'UNREADABLE_DOCUMENT_PRESCRIPTION') {
+          this.showToast(v.prescriptionUnreadable, 'error');
+        } else {
+          this.showToast(err?.error?.message || 'Upload failed. Please try again.', 'error');
+        }
       },
     });
   }
@@ -1007,7 +1079,15 @@ export class MedicalRecords implements OnInit {
       error: err => {
         this.scanLoading.set(false);
         this.setUploading('medicine', false);
-        this.showToast(err?.error?.message || 'Scan failed. Please try again.', 'error');
+        const errCode = err?.error?.errorCode as string | undefined;
+        const v = this.t().uploadValidation;
+        if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
+          this.showToast(v.medicine, 'error');
+        } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
+          this.showToast(v.medicineUnreadable, 'error');
+        } else {
+          this.showToast(err?.error?.message || 'Scan failed. Please try again.', 'error');
+        }
       },
     });
   }

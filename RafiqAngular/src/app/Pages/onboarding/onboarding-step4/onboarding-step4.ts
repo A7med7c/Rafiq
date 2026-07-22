@@ -2,6 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HealthProfileService } from '../../../Services/health-profile.service';
+import { LocalizationService } from '../../../Services/localization.service';
 import { Gender, BloodType, AllergySeverity, DiseaseStatus } from '../../../Modles/health-profile-enums';
 import { CreatePatientProfileRequest } from '../../../Modles/health-profile-request';
 import { EmergencyContactService, EmergencyContactResponse } from '../../../Services/emergency-contact.service';
@@ -48,6 +49,8 @@ export class OnboardingStep4 implements OnInit {
   private readonly healthProfile = inject(HealthProfileService);
   private readonly emergencyService = inject(EmergencyContactService);
   private readonly cdr = inject(ChangeDetectorRef);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   readonly steps = [
     { label: 'Basic Info' },

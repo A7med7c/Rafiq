@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DiseaseStatus } from '../../../Modles/health-profile-enums';
+import { LocalizationService } from '../../../Services/localization.service';
 
 @Component({
   selector: 'app-onboarding-step3',
@@ -15,6 +16,8 @@ export class OnboardingStep3 implements OnInit {
 
   private readonly router = inject(Router);
   private readonly fb     = inject(FormBuilder);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   readonly steps = [
     { label: 'Basic Info' },

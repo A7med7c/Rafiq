@@ -4,6 +4,7 @@ import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validatio
 import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { Gender, BloodType } from '../../../Modles/health-profile-enums';
+import { LocalizationService } from '../../../Services/localization.service';
 
 @Component({
   selector: 'app-onboarding-step1',
@@ -16,6 +17,8 @@ export class OnboardingStep1 implements OnInit {
 
   private readonly router = inject(Router);
   private readonly fb     = inject(FormBuilder);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   readonly today = new Date().toISOString().slice(0, 10);
 

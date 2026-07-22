@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { EmergencyContactService, EmergencyContactResponse } from '../../../Services/emergency-contact.service';
 import { TokenStorageService } from '../../../Services/token-storage-service';
+import { LocalizationService } from '../../../Services/localization.service';
 
 @Component({
   selector: 'app-onboarding-emergency',
@@ -20,6 +21,8 @@ export class OnboardingEmergency implements OnInit {
   private readonly emergencyService = inject(EmergencyContactService);
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly cdr = inject(ChangeDetectorRef);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   readonly steps = [
     { label: 'Basic Info' },
@@ -67,10 +70,17 @@ export class OnboardingEmergency implements OnInit {
       return;
     }
 
-    this.isAdding = true;
     this.submitError = null;
-
     const body = this.form.getRawValue();
+    const userPhone = this.tokenStorage.getUser()?.phoneNumber;
+    const cleanNum = (num: string) => num.replace(/\D/g, '').slice(-10);
+
+    if (userPhone && cleanNum(body.phoneNumber) === cleanNum(userPhone)) {
+      this.submitError = "You cannot add your own phone number as an emergency contact.";
+      return;
+    }
+
+    this.isAdding = true;
 
     this.emergencyService.createEmergencyContact(body).subscribe({
       next: (res) => {
@@ -125,14 +135,11 @@ export class OnboardingEmergency implements OnInit {
     this.router.navigate(['/onboarding/step1']);
   }
 
-  continueToNextStep(): void {
-    if (this.contacts.length === 0) {
-      this.submitError = 'Please add at least one emergency contact before proceeding.';
-      this.cdr.detectChanges();
-      return;
-    }
+  skip(): void {
+    this.router.navigate(['/onboarding/step2']);
+  }
 
-    // this.tokenStorage.markEmergencyCompleted();
+  continueToNextStep(): void {
     this.router.navigate(['/onboarding/step2']);
   }
 }

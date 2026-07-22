@@ -170,6 +170,7 @@ public sealed class IdentityService(
             ?? throw new NotFoundException("User", userId);
 
         user.EmailConfirmed = true;
+        user.PreviousConfirmedEmail = null;
 
         var result = await _userManager.UpdateAsync(user);
 
@@ -234,7 +235,7 @@ public sealed class IdentityService(
                             ?? throw new NotFoundException("User", userId);
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
-        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, role!, user.ProfileImageUrl);
+        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, user.EmailConfirmed, role!, user.ProfileImageUrl);
     }
 
     public async Task<AccountDto> UpdateAccountAsync(Guid userId, string firstName, string lastName, string phoneNumber, CancellationToken cancellationToken = default)
@@ -254,7 +255,60 @@ public sealed class IdentityService(
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
 
-        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, role!, user.ProfileImageUrl);
+        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, user.EmailConfirmed, role!, user.ProfileImageUrl);
+    }
+
+    public async Task<AccountDto> UpdateEmailAsync(Guid userId, string newEmail, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+            ?? throw new NotFoundException("User", userId);
+
+        var emailTaken = await _userManager.Users.AnyAsync(
+            x => x.NormalizedEmail == newEmail.ToUpperInvariant() && x.Id != userId, cancellationToken);
+        if (emailTaken)
+            throw new ConflictException("An account with this email already exists.");
+
+        // Remember the last confirmed email so a cancelled verification can restore it.
+        // Only overwrite it on the first request in a chain (i.e. while the account is still
+        // confirmed) so repeated "change email" attempts don't lose the original address.
+        if (user.EmailConfirmed)
+            user.PreviousConfirmedEmail = user.Email;
+
+        user.Email = newEmail;
+        user.NormalizedEmail = _userManager.NormalizeEmail(newEmail);
+        user.UserName = newEmail;
+        user.NormalizedUserName = _userManager.NormalizeName(newEmail);
+        user.EmailConfirmed = false;
+
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+            throw new ValidationException(result.Errors.Select(x => x.Description));
+
+        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, user.EmailConfirmed, role!, user.ProfileImageUrl);
+    }
+
+    public async Task<AccountDto> CancelEmailUpdateAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+            ?? throw new NotFoundException("User", userId);
+
+        if (user.PreviousConfirmedEmail is null)
+            throw new ValidationException("There is no pending email change to cancel.");
+
+        user.Email = user.PreviousConfirmedEmail;
+        user.NormalizedEmail = _userManager.NormalizeEmail(user.PreviousConfirmedEmail);
+        user.UserName = user.PreviousConfirmedEmail;
+        user.NormalizedUserName = _userManager.NormalizeName(user.PreviousConfirmedEmail);
+        user.EmailConfirmed = true;
+        user.PreviousConfirmedEmail = null;
+
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+            throw new ValidationException(result.Errors.Select(x => x.Description));
+
+        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+        return new AccountDto(userId, user.FirstName, user.LastName, user.Email!, user.PhoneNumber!, user.PhoneNumberConfirmed, user.EmailConfirmed, role!, user.ProfileImageUrl);
     }
 
     public async Task ResetPasswordAsync(Guid userId, string newPassword, CancellationToken cancellationToken)
@@ -268,6 +322,15 @@ public sealed class IdentityService(
         if (!result.Succeeded)
             throw new ValidationException(result.Errors.Select(x => x.Description));
 
+    }
+    public async Task DeleteUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+             ?? throw new NotFoundException("User", userId);
+
+        var result = await _userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+            throw new ValidationException(result.Errors.Select(x => x.Description));
     }
     private async Task EnsureRoleExistsAsync(string role, CancellationToken cancellationToken)
     {

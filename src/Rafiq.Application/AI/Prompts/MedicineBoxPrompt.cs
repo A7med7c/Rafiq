@@ -23,6 +23,7 @@ public static class MedicineBoxPrompt
 
         {
           "isValidDocument": true,
+          "isUnreadable": false,
           "detectedDocumentType": "MedicineBox",
           "medicineName": "",
           "strength": "",
@@ -34,10 +35,11 @@ public static class MedicineBoxPrompt
 
         - Determine the type of the uploaded image before extracting any data.
         - Use ONLY these values for detectedDocumentType: "Prescription", "LabReport", "ImagingReport", "MedicineBox", "Unknown".
-        - If the image is a valid medicine box or blister pack, set "isValidDocument": true and "detectedDocumentType": "MedicineBox".
-        - If the image is NOT a medicine box or blister pack (e.g., it is a prescription, lab report, imaging report, unrelated photo, blank page, or unclear image), set "isValidDocument": false.
+        - If the image IS a medicine box or blister pack AND is clearly readable, set "isValidDocument": true, "isUnreadable": false, "detectedDocumentType": "MedicineBox".
+        - If the image IS a medicine box or blister pack BUT is too blurry, too cropped, too dark, too low resolution, or otherwise unreadable so that the medicine name and details cannot be reliably extracted, set "isValidDocument": true, "isUnreadable": true, "detectedDocumentType": "MedicineBox".
+        - If the image is NOT a medicine box or blister pack (e.g., it is a prescription, lab report, imaging report, or unrelated photo), set "isValidDocument": false, "isUnreadable": false.
+        - If the image is completely blank, empty, random noise, or cannot be classified at all, set "isValidDocument": false, "isUnreadable": false, "detectedDocumentType": "Unknown".
         - Set detectedDocumentType to the actual detected type when it can be identified with confidence, otherwise set it to "Unknown".
-        - If the image is unreadable, unclear, unrelated, or cannot be classified confidently, set "isValidDocument": false and "detectedDocumentType": "Unknown".
         - Do NOT guess or infer the document type. Only classify with confidence.
 
         Extraction Rules (apply ONLY when isValidDocument is true):
@@ -48,7 +50,7 @@ public static class MedicineBoxPrompt
         - Extract the manufacturer or company name into manufacturer.
         - If any field is missing, not visible, or unreadable, return null for that field.
 
-        Rules when isValidDocument is false:
+        Rules when isValidDocument is false OR isUnreadable is true:
 
         - Return null for ALL extraction fields: medicineName, strength, dosageForm, manufacturer.
         - Do NOT extract, infer, generate, complete, or guess any pharmaceutical information.

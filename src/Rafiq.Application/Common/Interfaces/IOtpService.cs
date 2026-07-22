@@ -7,5 +7,7 @@ namespace Rafiq.Application.Common.Interfaces
         Task SendOtpAsync(Guid userId, string email, OtpPurpose purpose, CancellationToken cancellationToken);
 
         Task<bool> VerifyOtpAsync(Guid userId, string otp, OtpPurpose purpose, CancellationToken cancellationToken);
+
+        Task InvalidateOtpAsync(Guid userId, OtpPurpose purpose, CancellationToken cancellationToken);
     }
 }

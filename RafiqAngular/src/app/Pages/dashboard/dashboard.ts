@@ -1,15 +1,19 @@
-import { Component, effect, inject, OnInit, signal, computed, HostListener, ElementRef } from '@angular/core';
+import { Component, effect, inject, OnInit, OnDestroy, signal, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { DashboardService } from '../../Services/dashboard.service';
+import { AiChatService } from '../../Services/ai-chat.service';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { NotificationService } from '../../Services/notification.service';
+import { LocalizationService } from '../../Services/localization.service';
 import { MedicalRecord, ReminderDisplayItem } from '../../Modles/dashboard.models';
 import { AppointmentDto, AppointmentStatus } from '../../Modles/appointment.models';
 import { catchError, of } from 'rxjs';
 import { AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { HealthSummaryDto } from '../../Services/dashboard.service';
+import { MedicalReportService, ReportType } from '../../Services/medical-report.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,13 +22,18 @@ import { HealthSummaryDto } from '../../Services/dashboard.service';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard implements OnInit {
-  private readonly authService      = inject(AuthService);
-  private readonly dashboardService = inject(DashboardService);
-  private readonly apptService      = inject(AppointmentsService);
+export class Dashboard implements OnInit, OnDestroy {
+  private readonly authService        = inject(AuthService);
+  protected readonly profileCache     = inject(ProfileCacheService);
+  private readonly dashboardService   = inject(DashboardService);
+  private readonly apptService        = inject(AppointmentsService);
   protected readonly notifService     = inject(NotificationService);
-  private readonly router           = inject(Router);
-  private readonly elRef            = inject(ElementRef);
+  protected readonly l10n           = inject(LocalizationService);
+  protected readonly aiChatService  = inject(AiChatService);
+  protected readonly t              = this.l10n.t;
+  private readonly router             = inject(Router);
+  private readonly elRef              = inject(ElementRef);
+  private readonly medicalReportSvc   = inject(MedicalReportService);
 
   private readonly dashboardRefreshEffect = effect(() => {
     if (this.notifService.reminderDataRefreshTick() === 0) {
@@ -32,6 +41,15 @@ export class Dashboard implements OnInit {
     }
 
     this.loadReminderData();
+  });
+
+  private readonly languageRefreshEffect = effect(() => {
+    this.l10n.lang();
+    this.summaryLoading.set(true);
+    this.dashboardService.getHealthSummary().subscribe({
+      next: d => { this.healthSummary.set(d); this.summaryLoading.set(false); },
+      error: () => { this.healthSummary.set(null); this.summaryLoading.set(false); },
+    });
   });
 
   private readonly appointmentRefreshEffect = effect(() => {
@@ -61,6 +79,25 @@ export class Dashboard implements OnInit {
 
   readonly SUMMARY_CHAR_LIMIT = 260;
 
+  // ── Medical Report dialog ─────────────────────────────────────────────────
+  readonly reportDialogOpen      = signal(false);
+  readonly selectedReportType    = signal<ReportType>('DoctorSummary');
+  readonly reportGenerating      = signal(false);
+  readonly reportTargetProfileId = signal<string | null>(null);
+
+  // ── Robot speech bubble ───────────────────────────────────────────────────
+  readonly robotBubbleVisible = signal(false);
+  private _bubbleHideTimer:      ReturnType<typeof setTimeout> | null = null;
+  private _inactivityTimer:      ReturnType<typeof setTimeout> | null = null;
+  private static readonly BUBBLE_DURATION_MS  = 5_000;   // visible for 5 s
+  private static readonly INACTIVITY_DELAY_MS = 3 * 60 * 1000; // 3 min
+
+  // ── Family member AI summary modal ────────────────────────────────────────
+  readonly familySummaryOpen      = signal(false);
+  readonly familySummaryProfile   = signal<AccessibleProfileDto | null>(null);
+  readonly familySummaryLoading   = signal(false);
+  readonly familySummaryData      = signal<HealthSummaryDto | null>(null);
+
   getTruncatedSummary(full: string): string {
     if (this.summaryExpanded() || full.length <= this.SUMMARY_CHAR_LIMIT) return full;
     return full.slice(0, this.SUMMARY_CHAR_LIMIT).trimEnd() + '…';
@@ -74,11 +111,21 @@ export class Dashboard implements OnInit {
 
   readonly familySlots = computed(() => {
     const profiles = this.familyProfiles().slice(0, 4);
-    const placeholderCount = Math.max(0, 4 - profiles.length);
-    return [
-      ...profiles.map(p => ({ type: 'profile' as const, data: p })),
-      ...Array.from({ length: placeholderCount }, () => ({ type: 'add' as const, data: null as AccessibleProfileDto | null })),
-    ];
+    const slots: { type: 'profile' | 'add' | 'empty'; data: AccessibleProfileDto | null }[] = [];
+    
+    profiles.forEach(p => {
+      slots.push({ type: 'profile', data: p });
+    });
+
+    if (slots.length < 4) {
+      slots.push({ type: 'add', data: null });
+    }
+
+    while (slots.length < 4) {
+      slots.push({ type: 'empty', data: null });
+    }
+
+    return slots;
   });
 
   readonly nextAppointment = computed(() => {
@@ -107,16 +154,68 @@ export class Dashboard implements OnInit {
     return this.authService.avatarUrl;
   }
 
+  get hasProfileImage(): boolean { return !!this.authService.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authService.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
   get greeting(): string {
     const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return this.t().dashboard.goodMorning;
+    if (h < 17) return this.t().dashboard.goodAfternoon;
+    return this.t().dashboard.goodEvening;
   }
 
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadDashboardData();
+    // Show greeting bubble 1.5 s after load, then repeat after long inactivity.
+    setTimeout(() => this.showRobotBubble(), 1_500);
+  }
+
+  ngOnDestroy(): void {
+    if (this._bubbleHideTimer)  clearTimeout(this._bubbleHideTimer);
+    if (this._inactivityTimer)  clearTimeout(this._inactivityTimer);
+  }
+
+  private showRobotBubble(): void {
+    if (this._bubbleHideTimer) clearTimeout(this._bubbleHideTimer);
+    this.robotBubbleVisible.set(true);
+    this._bubbleHideTimer = setTimeout(() => {
+      this.robotBubbleVisible.set(false);
+      this.scheduleInactivityBubble();
+    }, Dashboard.BUBBLE_DURATION_MS);
+  }
+
+  private scheduleInactivityBubble(): void {
+    if (this._inactivityTimer) clearTimeout(this._inactivityTimer);
+    this._inactivityTimer = setTimeout(
+      () => this.showRobotBubble(),
+      Dashboard.INACTIVITY_DELAY_MS
+    );
+  }
+
+  private resetInactivityTimer(): void {
+    if (!this._inactivityTimer) return;
+    this.scheduleInactivityBubble();
+  }
+
+  openVoiceMode(): void {
+    this.aiChatService.openPanelInVoiceMode();
   }
 
   @HostListener('window:resize')
@@ -200,6 +299,13 @@ export class Dashboard implements OnInit {
     if (!target.closest('.hdr-user')) {
       this.dropdownOpen.set(false);
     }
+    this.resetInactivityTimer();
+  }
+
+  @HostListener('document:keydown')
+  @HostListener('document:touchstart')
+  onUserActivity(): void {
+    this.resetInactivityTimer();
   }
 
   toggleDropdown(): void {
@@ -211,6 +317,11 @@ export class Dashboard implements OnInit {
     this.authService.logout().subscribe();
   }
 
+  goToMyProfile(): void {
+    this.dropdownOpen.set(false);
+    this.router.navigate(['/my-profile']);
+  }
+
   goToAddAppointment(): void {
     this.router.navigate(['/appointments'], { queryParams: { openAdd: '1' } });
   }
@@ -219,17 +330,17 @@ export class Dashboard implements OnInit {
     const d    = new Date(dt);
     const now  = new Date();
     const diff = Math.ceil((d.getTime() - now.getTime()) / 86_400_000);
-    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    if (diff === 0) return `Today, ${time}`;
-    if (diff === 1) return `Tomorrow, ${time}`;
-    return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${time}`;
+    const time = d.toLocaleTimeString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    if (diff === 0) return `${this.t().aiAssistant.today}, ${time}`;
+    if (diff === 1) return `${this.t().appointments.nextAppointment}, ${time}`;
+    return `${d.toLocaleDateString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}, ${time}`;
   }
 
   formatApptRelative(dt: string): string {
     const diff = Math.ceil((new Date(dt).getTime() - Date.now()) / 86_400_000);
-    if (diff <= 0) return 'Today';
-    if (diff === 1) return 'In 1 day';
-    return `In ${diff} days`;
+    if (diff <= 0) return this.t().aiAssistant.today;
+    if (diff === 1) return this.l10n.lang() === 'ar' ? 'بكره' : 'Tomorrow';
+    return this.l10n.lang() === 'ar' ? `بعد ${diff} أيام` : `In ${diff} days`;
   }
 
   getRecordIcon(type: string): string {
@@ -267,4 +378,75 @@ export class Dashboard implements OnInit {
     if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
     return age;
   }
+
+  // ── Medical Report methods ────────────────────────────────────────────────
+  openReportDialog(profileId?: string): void {
+    if (profileId) {
+      this.reportTargetProfileId.set(profileId);
+      this.reportDialogOpen.set(true);
+    } else {
+      this.dashboardService.getActiveProfileId().subscribe(id => {
+        this.reportTargetProfileId.set(id);
+        this.reportDialogOpen.set(true);
+      });
+    }
+  }
+
+  closeReportDialog(): void { if (!this.reportGenerating()) this.reportDialogOpen.set(false); }
+
+  generateReport(): void {
+    const profileId = this.reportTargetProfileId();
+    if (!profileId) return;
+
+    this.reportGenerating.set(true);
+    this.medicalReportSvc.generateReport(profileId, this.selectedReportType()).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href    = url;
+        a.download = `RafiqMedicalReport_${this.selectedReportType()}_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.reportGenerating.set(false);
+        this.reportDialogOpen.set(false);
+      },
+      error: () => { this.reportGenerating.set(false); }
+    });
+  }
+
+  // ── Family summary methods ────────────────────────────────────────────────
+  openFamilySummary(profile: AccessibleProfileDto): void {
+    this.familySummaryProfile.set(profile);
+    this.familySummaryData.set(null);
+    this.familySummaryOpen.set(true);
+    this.familySummaryLoading.set(true);
+
+    this.dashboardService.getHealthSummaryForProfile(profile.userHealthProfileId).subscribe({
+      next: (d) => { this.familySummaryData.set(d); this.familySummaryLoading.set(false); },
+      error: ()  => { this.familySummaryData.set(null); this.familySummaryLoading.set(false); }
+    });
+  }
+
+  closeFamilySummary(): void { this.familySummaryOpen.set(false); }
+
+ getRelationshipLabel(relationship: string | null | undefined): string {
+  if (!relationship) {
+    return this.t().family.self;
+  }
+
+  const key = relationship.toLowerCase();
+
+  return (this.t().family as any)[key] ?? relationship;
 }
+
+getGenderLabel(gender: string | null | undefined): string {
+  if (!gender) {
+    return '-';
+  }
+
+  const key = gender.toLowerCase();
+
+  return (this.t().common as any)[key] ?? gender;
+}
+}
+

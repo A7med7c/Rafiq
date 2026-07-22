@@ -13,4 +13,7 @@ public sealed class WhatsAppSettings
 
     /// <summary>Template sent to the patient and emergency contacts after a missed dose.</summary>
     public string EscalationTemplate { get; set; } = "emergency_reminder";
+
+    /// <summary>Template sent to the patient when an appointment reminder fires.</summary>
+    public string AppointmentReminderTemplate { get; set; } = "appointments";
 }

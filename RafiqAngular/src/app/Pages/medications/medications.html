@@ -7,21 +7,21 @@
   <!-- ═══════════ SIDEBAR ═══════════ -->
   <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <div class="sb-top">
-      <div class="sb-logo">
+      <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
         <div class="sb-logo-icon">
           <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
         <div class="sb-logo-text">
           <span class="sb-logo-title">Rafiq AI</span>
-          <span class="sb-logo-sub">Family Health Assistant</span>
+          <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
         </div>
-      </div>
+      </button>
       <button type="button" class="sb-toggle"
-        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+        [attr.aria-label]="sidebarCollapsed() ? t().sidebar.expandSidebar : t().sidebar.collapseSidebar"
         (click)="toggleSidebar()">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
-      <button type="button" class="sb-mobile-close" aria-label="Close sidebar" (click)="toggleMobileSidebar()">
+      <button type="button" class="sb-mobile-close" [attr.aria-label]="t().sidebar.closeSidebar" (click)="toggleMobileSidebar()">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -29,51 +29,43 @@
     <nav class="sb-nav">
       <a class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact:true}">
         <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
-        <span>Dashboard</span>
+        <span>{{ t().sidebar.dashboard }}</span>
       </a>
       <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
-        <span>Medical Records</span>
+        <span>{{ t().sidebar.medicalRecords }}</span>
       </a>
       <a class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
-        <span>Appointments</span>
-      </a>
-      <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
-        <span>AI Assistant</span>
+        <span>{{ t().sidebar.appointments }}</span>
       </a>
       <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
-        <span>Medications &amp; Reminders</span>
+        <span>{{ t().sidebar.medications }}</span>
       </a>
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
-        <span>Analytics</span>
-      </a>
-      <a class="sb-link sb-sos" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
-        <span>SOS &amp; Emergency</span>
+        <span>{{ t().sidebar.analytics }}</span>
       </a>
       <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
-        <span>Family Profiles</span>
+        <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
-        <span>Settings</span>
+        <span>{{ t().sidebar.settings }}</span>
       </a>
     </nav>
 
     <div class="sb-help">
       <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
       <div class="sb-help-copy">
-        <p class="sb-help-title">Ask Rafiq AI</p>
-        <p class="sb-help-sub">Get health insights and answers to your questions</p>
+        <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
+        <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
       </div>
-      <button type="button" class="sb-help-btn">
+      <button type="button" class="sb-help-btn" (click)="aiChatService.openPanel()">
         <i class="fa-regular fa-comment-dots"></i>
-        Ask Now
+        {{ t().sidebar.askNow }}
       </button>
     </div>
   </aside>
@@ -83,17 +75,17 @@
 
     <!-- HEADER -->
     <header class="dsh-hdr">
-      <button type="button" class="sb-mobile-toggle" aria-label="Open sidebar" (click)="toggleMobileSidebar()">
+      <button type="button" class="sb-mobile-toggle" [attr.aria-label]="t().header.openSidebar" (click)="toggleMobileSidebar()">
         <i class="fa-solid fa-bars"></i>
       </button>
       <div class="hdr-search">
         <i class="fa-solid fa-magnifying-glass hdr-search-ico"></i>
-        <input type="text" class="hdr-search-inp" placeholder="Search records, symptoms, medications..." readonly>
+        <input type="text" class="hdr-search-inp" [placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
-        <button type="button" class="hdr-ask-btn" routerLink="/ai-assistant">
+        <button type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
-          Ask AI
+          {{ t().header.askAI }}
         </button>
         <button type="button" class="hdr-bell" (click)="notifSvc.toggleNotificationCenter()"
           [class.hdr-bell--active]="notifSvc.notificationCenterOpen()">
@@ -103,14 +95,14 @@
           }
         </button>
         <div class="hdr-user" (click)="toggleDropdown()">
-          <img [src]="avatarUrl" alt="user" class="hdr-avatar">
+          <img [src]="profileCache.resolveNavbarAvatar()" alt="user" class="hdr-avatar">
           <span class="hdr-username">{{ displayName }}</span>
           <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
           @if (dropdownOpen()) {
           <div class="user-dropdown" (click)="$event.stopPropagation()">
             <div class="user-dropdown-hdr">
               <div class="user-dropdown-av">
-                <img [src]="avatarUrl" alt="avatar">
+                <img [src]="profileCache.resolveNavbarAvatar()" alt="avatar">
               </div>
               <div class="user-dropdown-info">
                 <span class="user-dropdown-name">{{ displayName }}</span>
@@ -118,15 +110,15 @@
               </div>
             </div>
             <div class="user-dropdown-divider"></div>
-            <button type="button" class="user-dropdown-item">
-              <i class="fa-regular fa-user"></i> My Profile
+            <button type="button" class="user-dropdown-item" (click)="goToMyProfile()">
+              <i class="fa-regular fa-user"></i> {{ t().header.myProfile }}
             </button>
             <button type="button" class="user-dropdown-item">
-              <i class="fa-solid fa-gear"></i> Settings
+              <i class="fa-solid fa-gear"></i> {{ t().header.settings }}
             </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> {{ t().header.logout }}
             </button>
           </div>
           }
@@ -137,15 +129,36 @@
     <!-- BODY -->
     <div class="dsh-body">
 
+      <!-- ── Family profile banner ── -->
+      @if (fpProfileId()) {
+      <div class="fp-context-banner">
+        <span class="fp-context-icon"><i class="fa-solid fa-people-group"></i></span>
+        <div class="fp-context-info">
+          <span class="fp-context-label">{{ t().medications.viewingFor }}</span>
+          <strong class="fp-context-name">{{ fpProfileName() ?? 'Family Member' }}</strong>
+        </div>
+        @if (fpReadOnly()) {
+        <span class="fp-context-badge fp-context-badge--viewer">
+          <i class="fa-solid fa-eye"></i> {{ t().medications.viewOnly }}
+        </span>
+        }
+        <button type="button" class="fp-context-back" (click)="router.navigate(['/family-profiles'])">
+          <i class="fa-solid fa-arrow-right"></i> {{ t().common.back }}
+        </button>
+      </div>
+      }
+
       <!-- ── Title Bar ── -->
       <div class="med-title-bar">
         <div>
-          <h1 class="med-title">Medications &amp; Reminders</h1>
+          <h1 class="med-title">{{ t().medications.title }}</h1>
           <p class="med-subtitle">{{ todayLabel() }}</p>
         </div>
+        @if (!fpReadOnly()) {
         <button type="button" class="add-med-btn" (click)="openAddMed()">
-          <i class="fa-solid fa-plus"></i> Add Medication
+          <i class="fa-solid fa-plus"></i> {{ t().medications.addMedication }}
         </button>
+        }
       </div>
 
       <!-- ── Day Rail: the next dose, and the shape of the day ── -->
@@ -157,7 +170,7 @@
           @if (nextDose(); as dose) {
           <div class="rail-next">
             <span class="rail-eyebrow">
-              {{ isOverdue(dose) ? 'Overdue' : 'Next dose' }}
+              {{ isOverdue(dose) ? t().medications.overdue : t().medications.nextDose }}
             </span>
             <p class="rail-med">
               {{ dose.medicineName }}
@@ -179,16 +192,18 @@
               }
             </div>
 
+            @if (!fpReadOnly()) {
             <button type="button" class="med-confirm-btn rail-cta" (click)="confirmDose(dose)">
               <i class="fa-solid fa-check"></i>
-              I took it
+              {{ t().medications.iTookIt }}
             </button>
+            }
           </div>
           } @else {
           <div class="rail-next rail-next--done">
-            <span class="rail-eyebrow">All clear</span>
-            <p class="rail-med">Every dose today is taken</p>
-            <p class="rail-when">Nothing left on your schedule.</p>
+            <span class="rail-eyebrow">{{ t().medications.allClear }}</span>
+            <p class="rail-med">{{ t().medications.allClearSub }}</p>
+            <p class="rail-when">{{ t().medications.nothingLeft }}</p>
           </div>
           }
 
@@ -196,9 +211,9 @@
             <span class="rail-adh-num">
               {{ takenCount() }}<span class="rail-adh-den">/{{ doses().length }}</span>
             </span>
-            <span class="rail-adh-lbl">doses taken today</span>
+            <span class="rail-adh-lbl">{{ t().medications.dosesTakenToday }}</span>
             @if (adherencePct() !== null) {
-            <span class="rail-adh-pct">{{ adherencePct() }}% on time so far</span>
+            <span class="rail-adh-pct">{{ adherencePct() }}% {{ t().medications.adherence }}</span>
             }
           </div>
         </div>
@@ -224,7 +239,7 @@
             [style.left.%]="railPos(dose.minutes)"
             [attr.aria-label]="dose.medicineName + ' at ' + formatTime(dose.scheduledTime) + ' — ' + countdownLabel(dose)"
             (click)="confirmDose(dose)"
-            [disabled]="!dose.actionable">
+            [disabled]="!dose.actionable || fpReadOnly()">
             <span class="rail-pip-tip">
               {{ formatTime(dose.scheduledTime) }} · {{ dose.medicineName }}
             </span>
@@ -242,7 +257,7 @@
           </div>
           <div class="med-stat-body">
             <span class="med-stat-num">{{ takenCount() }}</span>
-            <span class="med-stat-lbl">Taken</span>
+            <span class="med-stat-lbl">{{ t().medications.taken }}</span>
           </div>
         </div>
         <div class="med-stat-card med-stat-blue">
@@ -251,7 +266,7 @@
           </div>
           <div class="med-stat-body">
             <span class="med-stat-num">{{ dueCount() }}</span>
-            <span class="med-stat-lbl">Still due</span>
+            <span class="med-stat-lbl">{{ t().medications.stillDue }}</span>
           </div>
         </div>
         <div class="med-stat-card med-stat-red">
@@ -260,7 +275,7 @@
           </div>
           <div class="med-stat-body">
             <span class="med-stat-num">{{ overdueCount() }}</span>
-            <span class="med-stat-lbl">Overdue</span>
+            <span class="med-stat-lbl">{{ t().medications.overdue }}</span>
           </div>
         </div>
         <div class="med-stat-card med-stat-orange">
@@ -271,7 +286,7 @@
             <span class="med-stat-num">
               @if (adherencePct() !== null) { {{ adherencePct() }}% } @else { — }
             </span>
-            <span class="med-stat-lbl">On time</span>
+            <span class="med-stat-lbl">{{ t().medications.adherence }}</span>
           </div>
         </div>
       </div>
@@ -281,7 +296,7 @@
         <button type="button" class="med-tab" [class.med-tab--active]="activeTab() === 'schedule'"
           (click)="setTab('schedule')">
           <i class="fa-regular fa-calendar-check"></i>
-          Today's Schedule
+          {{ t().medications.todayScheduleTab }}
           @if (doses().length > 0) {
           <span class="med-tab-badge">{{ doses().length }}</span>
           }
@@ -289,7 +304,7 @@
         <button type="button" class="med-tab" [class.med-tab--active]="activeTab() === 'medications'"
           (click)="setTab('medications')">
           <i class="fa-solid fa-pills"></i>
-          My Medications
+          {{ t().medications.myMedicationsTab }}
           @if (medicines().length > 0) {
           <span class="med-tab-badge">{{ medicines().length }}</span>
           }
@@ -325,9 +340,9 @@
           <div class="card med-card">
             <div class="empty-state">
               <i class="fa-solid fa-triangle-exclamation empty-icon" style="color:var(--red)"></i>
-              <p class="empty-title">Could not load schedule</p>
+              <p class="empty-title">{{ t().medications.couldNotLoadSchedule }}</p>
               <p class="empty-sub">{{ scheduleError() }}</p>
-              <button type="button" class="med-retry-btn" (click)="loadSchedule()">Try Again</button>
+              <button type="button" class="med-retry-btn" (click)="loadSchedule()">{{ t().medications.tryAgain }}</button>
             </div>
           </div>
 
@@ -336,15 +351,15 @@
             <div class="empty-state">
               @if (medicines().length > 0 && !hasAnyReminders()) {
               <i class="fa-solid fa-bell-slash empty-icon"></i>
-              <p class="empty-title">No reminders scheduled yet</p>
-              <p class="empty-sub">Create reminders for your medicines to receive notifications.</p>
+              <p class="empty-title">{{ t().medications.noRemindersYet }}</p>
+              <p class="empty-sub">{{ t().medications.noRemindersSub }}</p>
               <button type="button" class="med-add-reminder-btn" style="margin-top: 12px;" (click)="goToMedsAndHighlight()">
-                <i class="fa-solid fa-plus"></i> Create Reminder
+                <i class="fa-solid fa-plus"></i> {{ t().medications.createReminder }}
               </button>
               } @else {
               <i class="fa-solid fa-calendar-check empty-icon" style="color:var(--blue)"></i>
-              <p class="empty-title">No medications scheduled for today</p>
-              <p class="empty-sub">Your medication reminders for today will appear here once scheduled.</p>
+              <p class="empty-title">{{ t().medications.noMedsToday }}</p>
+              <p class="empty-sub">{{ t().medications.noMedsTodaySub }}</p>
               }
             </div>
           </div>
@@ -368,12 +383,15 @@
                 <div class="dose-card__title-col">
                   <p class="dose-card__name">{{ dose.medicineName }}</p>
                   <p class="dose-card__dosage">{{ dose.dosage }}</p>
+                  <p class="dose-card__owner">
+                    <i class="fa-solid fa-user-circle"></i> For: {{ doseOwnerLabel() }}
+                  </p>
                 </div>
 
                 <div class="dose-card__status-col">
                   @if (isOverdue(dose)) {
                   <span class="pill pill-red-sm">
-                    <i class="fa-solid fa-triangle-exclamation"></i>&nbsp;Overdue
+                    <i class="fa-solid fa-triangle-exclamation"></i>&nbsp;{{ t().medications.overdue }}
                   </span>
                   } @else {
                   <span [class]="statusClass(dose.status)">{{ statusLabel(dose.status) }}</span>
@@ -383,15 +401,15 @@
                   }
                 </div>
 
-                @if (dose.actionable) {
+                @if (dose.actionable && !fpReadOnly()) {
                 <button type="button" class="med-confirm-btn dose-card__cta"
                   (click)="confirmDose(dose)"
                   [attr.aria-label]="'Confirm I took ' + dose.medicineName">
-                  <i class="fa-solid fa-check"></i> I Took It
+                  <i class="fa-solid fa-check"></i> {{ t().medications.iTookIt }}
                 </button>
                 } @else if (dose.status === 'Confirmed') {
                 <span class="dose-card__taken-chip">
-                  <i class="fa-solid fa-circle-check"></i> Taken
+                  <i class="fa-solid fa-circle-check"></i> {{ t().medications.taken }}
                 </span>
                 }
               </div>
@@ -401,10 +419,10 @@
                 <div class="dose-card__detail-box">
                   <i class="fa-regular fa-calendar dose-card__detail-ico"></i>
                   <div class="dose-card__detail-content">
-                    <span class="dose-card__detail-lbl">Dose time</span>
+                    <span class="dose-card__detail-lbl">{{ t().medications.doseTime }}</span>
                     <strong class="dose-card__detail-val">{{ formatTime(dose.scheduledTime) }}</strong>
                     <span class="dose-card__detail-sub">
-                      {{ dose.status === 'Confirmed' ? 'Confirmed' : 'Scheduled' }}
+                      {{ dose.status === 'Confirmed' ? t().medications.confirmedLabel : t().medications.sentLabel }}
                     </span>
                   </div>
                 </div>
@@ -412,11 +430,11 @@
                 <div class="dose-card__detail-box">
                   <i class="fa-regular fa-bell dose-card__detail-ico"></i>
                   <div class="dose-card__detail-content">
-                    <span class="dose-card__detail-lbl">Reminder attempts</span>
-                    <strong class="dose-card__detail-val">Up to {{ dose.attemptStates.length }} reminders</strong>
+                    <span class="dose-card__detail-lbl">{{ t().medications.reminderAttempts }}</span>
+                    <strong class="dose-card__detail-val">{{ t().medications.upToReminders }} {{ dose.attemptStates.length }} {{ t().medications.reminders }}</strong>
                     <span class="dose-card__detail-sub">
                       @if (doseInterval(dose); as interval) {
-                        {{ interval }} min between attempts
+                        {{ interval }} {{ t().medications.minBetween }}
                       }
                     </span>
                   </div>
@@ -425,12 +443,12 @@
                 @if (dose.confirmedAt) {
                 <div class="dose-card__info-chip dose-card__info-chip--success">
                   <i class="fa-solid fa-circle-check"></i>
-                  Taken at {{ formatConfirmedTime(dose.confirmedAt) }}
+                  {{ t().medications.takenAt }} {{ formatConfirmedTime(dose.confirmedAt) }}
                 </div>
                 } @else if (dose.actionable) {
                 <div class="dose-card__info-chip">
                   <i class="fa-solid fa-bell"></i>
-                  Tap "I Took It" once you've taken this dose.
+                  {{ t().medications.tapToConfirm }}
                 </div>
                 }
               </div>
@@ -438,7 +456,7 @@
               <!-- ③ Reminder timeline: visual journey of each attempt -->
               @if (dose.attemptStates.length > 0) {
               <div class="dose-card__timeline-section">
-                <span class="dose-card__timeline-lbl">Reminder times</span>
+                <span class="dose-card__timeline-lbl">{{ t().medications.reminderTimes }}</span>
                 <div class="dose-timeline" role="list" aria-label="Reminder schedule">
                   @for (attempt of dose.attemptStates; track attempt.reminderNumber; let last = $last) {
                   <div class="dose-timeline__entry"
@@ -474,7 +492,7 @@
         <aside class="sched-overview" aria-label="Today's overview">
 
           <div class="overview-card">
-            <h3 class="overview-title">Today's Overview</h3>
+            <h3 class="overview-title">{{ t().medications.todayOverview }}</h3>
 
             <!-- Progress ring -->
             <div class="overview-ring-wrap">
@@ -487,7 +505,7 @@
               </svg>
               <div class="overview-ring-label">
                 <span class="overview-ring-pct">{{ adherencePct() ?? 0 }}%</span>
-                <span class="overview-ring-sub">of doses taken</span>
+                <span class="overview-ring-sub">{{ t().medications.ofDosesTaken }}</span>
               </div>
             </div>
 
@@ -495,22 +513,22 @@
             <div class="overview-legend">
               <div class="overview-legend-item">
                 <span class="overview-legend-dot overview-dot--green"></span>
-                <span class="overview-legend-name">Taken</span>
+                <span class="overview-legend-name">{{ t().medications.taken }}</span>
                 <span class="overview-legend-count">{{ takenCount() }}</span>
               </div>
               <div class="overview-legend-item">
                 <span class="overview-legend-dot overview-dot--orange"></span>
-                <span class="overview-legend-name">Upcoming</span>
+                <span class="overview-legend-name">{{ t().medications.upcomingCount }}</span>
                 <span class="overview-legend-count">{{ upcomingCount() }}</span>
               </div>
               <div class="overview-legend-item">
                 <span class="overview-legend-dot overview-dot--red"></span>
-                <span class="overview-legend-name">Overdue</span>
+                <span class="overview-legend-name">{{ t().medications.overdue }}</span>
                 <span class="overview-legend-count">{{ overdueCount() }}</span>
               </div>
               <div class="overview-legend-item">
                 <span class="overview-legend-dot overview-dot--gray"></span>
-                <span class="overview-legend-name">Cancelled</span>
+                <span class="overview-legend-name">{{ t().common.none }}</span>
                 <span class="overview-legend-count">{{ cancelledCount() }}</span>
               </div>
             </div>
@@ -520,30 +538,30 @@
           <div class="overview-card overview-tips-card">
             <div class="overview-tips-head">
               <i class="fa-solid fa-lightbulb" style="color:var(--yellow)"></i>
-              <span class="overview-tips-title">Tips</span>
+              <span class="overview-tips-title">{{ t().medications.tips }}</span>
             </div>
             <ul class="overview-tips-list">
               <li>
                 <i class="fa-solid fa-arrow-trend-up"></i>
-                Take your medication consistently for the best results.
+                {{ t().medications.tip1 }}
               </li>
               <li>
                 <i class="fa-regular fa-clock"></i>
-                You can confirm early if you take it before the scheduled time.
+                {{ t().medications.tip2 }}
               </li>
               <li>
                 <i class="fa-regular fa-bell-slash"></i>
-                We'll stop reminding you once you confirm.
+                {{ t().medications.tip3 }}
               </li>
             </ul>
           </div><!-- /tips -->
 
           <!-- Reschedule -->
           <div class="overview-card overview-reschedule-card">
-            <p class="overview-reschedule-title">Need to reschedule?</p>
-            <p class="overview-reschedule-sub">Manage your medications or update reminder times.</p>
+            <p class="overview-reschedule-title">{{ t().medications.needToReschedule }}</p>
+            <p class="overview-reschedule-sub">{{ t().medications.manageAndUpdate }}</p>
             <button type="button" class="overview-reschedule-btn" (click)="setTab('medications')">
-              Manage Medications <i class="fa-solid fa-chevron-right"></i>
+              {{ t().medications.manageMedications }} <i class="fa-solid fa-chevron-right"></i>
             </button>
           </div>
 
@@ -564,9 +582,9 @@
             <i class="fa-solid fa-pills"></i>
           </div>
           <div class="stat-body">
-            <p class="stat-lbl">Total Medicines</p>
+            <p class="stat-lbl">{{ t().medications.totalMedicines }}</p>
             <p class="stat-num">{{ medicines().length }}</p>
-            <p class="stat-sub">All registered</p>
+            <p class="stat-sub">{{ t().medications.allRegistered }}</p>
           </div>
         </div>
         <div class="stat-card" style="cursor:pointer" (click)="setMedSubTab('with-reminder')">
@@ -574,9 +592,9 @@
             <i class="fa-solid fa-bell"></i>
           </div>
           <div class="stat-body">
-            <p class="stat-lbl">Active Reminders</p>
+            <p class="stat-lbl">{{ t().medications.activeReminders }}</p>
             <p class="stat-num">{{ activeMedCount() }}</p>
-            <p class="stat-sub">With active reminders</p>
+            <p class="stat-sub">{{ t().medications.withActiveReminders }}</p>
           </div>
         </div>
         <div class="stat-card" style="cursor:pointer" (click)="setMedSubTab('no-reminder')">
@@ -584,9 +602,9 @@
             <i class="fa-solid fa-bell-slash"></i>
           </div>
           <div class="stat-body">
-            <p class="stat-lbl">No Reminder</p>
+            <p class="stat-lbl">{{ t().medications.noReminderSet }}</p>
             <p class="stat-num">{{ noReminderCount() }}</p>
-            <p class="stat-sub">No reminder set</p>
+            <p class="stat-sub">{{ t().medications.noReminderSetSub }}</p>
           </div>
         </div>
         <div class="stat-card" style="cursor:pointer" (click)="setMedSubTab('paused')">
@@ -594,9 +612,9 @@
             <i class="fa-solid fa-pause"></i>
           </div>
           <div class="stat-body">
-            <p class="stat-lbl">Paused</p>
+            <p class="stat-lbl">{{ t().medications.paused }}</p>
             <p class="stat-num">{{ pausedMedCount() }}</p>
-            <p class="stat-sub">Reminders paused</p>
+            <p class="stat-sub">{{ t().medications.pausedSub }}</p>
           </div>
         </div>
       </div>
@@ -609,41 +627,41 @@
           <div class="appts-tab-bar">
             <button type="button" class="tab-btn" [class.tab-btn--active]="medSubTab() === 'all'"
               (click)="setMedSubTab('all')">
-              All
+              {{ t().medications.allTab }}
               <span class="tab-count" [class.tab-count-blue]="medSubTab() === 'all'">{{ medicines().length }}</span>
             </button>
             <button type="button" class="tab-btn" [class.tab-btn--active]="medSubTab() === 'with-reminder'"
               (click)="setMedSubTab('with-reminder')">
-              With Reminder
+              {{ t().medications.withReminderTab }}
               <span class="tab-count" [class.tab-count-green]="medSubTab() === 'with-reminder'">{{ withReminderCount() }}</span>
             </button>
             <button type="button" class="tab-btn" [class.tab-btn--active]="medSubTab() === 'no-reminder'"
               (click)="setMedSubTab('no-reminder')">
-              No Reminder
+              {{ t().medications.noReminderTab }}
               <span class="tab-count">{{ noReminderCount() }}</span>
             </button>
             <button type="button" class="tab-btn" [class.tab-btn--active]="medSubTab() === 'paused'"
               (click)="setMedSubTab('paused')">
-              Paused
+              {{ t().medications.pausedTab }}
               <span class="tab-count">{{ pausedMedCount() }}</span>
             </button>
           </div>
           <div class="appts-controls-row">
             <div class="appts-search-wrap">
               <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
-              <input type="text" class="appts-search-inp" placeholder="Search medicines…"
+              <input type="text" class="appts-search-inp" [placeholder]="t().medications.searchMedicinesPlaceholder"
                 [value]="medSearch()" (input)="onMedSearch($any($event.target).value)">
             </div>
             <select class="meds-filter-select"
               [value]="medSourceFilter()" (change)="onMedSourceFilter($any($event.target).value)">
-              <option value="">All Sources</option>
-              <option value="Manual">Manual</option>
-              <option value="Prescription">Prescription</option>
-              <option value="MedicineBox">Box Scan</option>
+              <option value="">{{ t().medications.allSources }}</option>
+              <option value="Manual">{{ t().medications.manual }}</option>
+              <option value="Prescription">{{ t().medications.prescriptionSource }}</option>
+              <option value="MedicineBox">{{ t().medications.boxScan }}</option>
             </select>
             @if (medSearch() || medSourceFilter()) {
             <button type="button" class="clear-filters-btn" (click)="clearMedFilters()">
-              <i class="fa-solid fa-xmark"></i> Clear
+              <i class="fa-solid fa-xmark"></i> {{ t().medications.clearFilter }}
             </button>
             }
           </div>
@@ -666,43 +684,43 @@
         } @else if (medsError()) {
         <div class="empty-state">
           <i class="fa-solid fa-triangle-exclamation empty-icon" style="color:var(--red)"></i>
-          <p class="empty-title">Could not load medications</p>
+          <p class="empty-title">{{ t().medications.couldNotLoadMeds }}</p>
           <p class="empty-sub">{{ medsError() }}</p>
-          <button type="button" class="med-retry-btn" (click)="loadMedicines()">Try Again</button>
+          <button type="button" class="med-retry-btn" (click)="loadMedicines()">{{ t().medications.tryAgain }}</button>
         </div>
 
         } @else if (filteredMedicines().length === 0) {
         <div class="empty-state">
           @if (medicines().length === 0) {
           <i class="fa-solid fa-pills empty-icon"></i>
-          <p class="empty-title">No Medications Found</p>
-          <p class="empty-sub">Your medications will appear here once added.</p>
+          <p class="empty-title">{{ t().medications.noMedicationsFound }}</p>
+          <p class="empty-sub">{{ t().medications.noMedsSub }}</p>
           } @else {
           <i class="fa-solid fa-filter empty-icon"></i>
-          <p class="empty-title">No Results</p>
-          <p class="empty-sub">No medicines match your current filters.</p>
+          <p class="empty-title">{{ t().medications.noResultsLabel }}</p>
+          <p class="empty-sub">{{ t().medications.noResultsSub }}</p>
           <button type="button" class="clear-filters-btn" style="margin-top:12px" (click)="clearMedFilters()">
-            <i class="fa-solid fa-xmark"></i> Clear Filters
+            <i class="fa-solid fa-xmark"></i> {{ t().medications.clearFilters }}
           </button>
           }
         </div>
 
         } @else {
         <div class="meds-results-bar">
-          <span>{{ filteredMedicines().length }} medication{{ filteredMedicines().length !== 1 ? 's' : '' }}</span>
+          <span>{{ filteredMedicines().length }} {{ t().medications.medicationLabel }}</span>
           @if (medSearch() || medSourceFilter() || medSubTab() !== 'all') {
-          <span class="meds-results-filter-note"><i class="fa-solid fa-filter"></i> Filtered</span>
+          <span class="meds-results-filter-note"><i class="fa-solid fa-filter"></i> {{ t().medications.filteredLabel }}</span>
           }
         </div>
         <div class="records-table-wrap">
           <table class="meds-table">
             <thead>
               <tr>
-                <th>Medication</th>
-                <th>Schedule</th>
-                <th>Reminder</th>
-                <th>Source</th>
-                <th style="text-align:right">Actions</th>
+                <th>{{ t().medications.medicationCol }}</th>
+                <th>{{ t().medications.schedule }}</th>
+                <th>{{ t().medications.reminderHeader }}</th>
+                <th>{{ t().medications.source }}</th>
+                <th>{{ t().medications.actions }}</th>
               </tr>
             </thead>
             <tbody>
@@ -734,16 +752,16 @@
                     <span class="med-time-chip">{{ t }}</span>
                     }
                   </div>
-                  <span class="pill pill-green-sm meds-rem-status-pill"><i class="fa-solid fa-bell"></i>&nbsp;Active</span>
+                  <span class="pill pill-green-sm meds-rem-status-pill"><i class="fa-solid fa-bell"></i>&nbsp;{{ t().medications.activePill }}</span>
                   } @else if (isPaused(med.id)) {
-                  <span class="pill pill-orange-sm"><i class="fa-solid fa-pause"></i>&nbsp;Paused</span>
+                  <span class="pill pill-orange-sm"><i class="fa-solid fa-pause"></i>&nbsp;{{ t().medications.pausedPill }}</span>
                   <div class="meds-rem-times" style="margin-top:4px">
                     @for (t of getSortedReminderTimes(med.id); track t) {
                     <span class="med-time-chip med-time-chip--paused">{{ t }}</span>
                     }
                   </div>
                   } @else {
-                  <span class="pill pill-gray-sm"><i class="fa-solid fa-bell-slash"></i>&nbsp;Not set</span>
+                  <span class="pill pill-gray-sm"><i class="fa-solid fa-bell-slash"></i>&nbsp;{{ t().medications.notSetPill }}</span>
                   }
                 </td>
                 <!-- Source -->
@@ -753,16 +771,18 @@
                 <!-- Actions -->
                 <td class="actions-cell">
                   <div class="record-actions" (click)="$event.stopPropagation()">
+                    @if (!fpReadOnly()) {
                     @if (hasReminders(med.id)) {
-                    <button type="button" class="rec-action-btn" title="Edit reminder"
+                    <button type="button" class="rec-action-btn" [title]="t().medications.editReminder"
                       (click)="openEditReminder(med)">
                       <i class="fa-regular fa-bell"></i>
                     </button>
                     } @else {
-                    <button type="button" class="rec-action-btn" title="Add reminder"
+                    <button type="button" class="rec-action-btn" [title]="t().medications.addReminderAction"
                       (click)="openAddReminder(med)">
                       <i class="fa-solid fa-bell"></i>
                     </button>
+                    }
                     }
                     <button type="button" class="rec-action-btn" title="More options"
                       (click)="toggleMedMenu(med.id)">
@@ -772,37 +792,39 @@
                     <div class="record-menu" [class.record-menu-up]="isLastMedRow(i)">
                       <button type="button" class="rec-menu-item"
                         (click)="openMedView(med)">
-                        <i class="fa-regular fa-eye"></i> View Details
+                        <i class="fa-regular fa-eye"></i> {{ t().medications.viewDetails }}
                       </button>
+                      @if (!fpReadOnly()) {
                       <button type="button" class="rec-menu-item"
                         (click)="openEditMed(med)">
-                        <i class="fa-regular fa-pen-to-square"></i> Edit Medication
+                        <i class="fa-regular fa-pen-to-square"></i> {{ t().medications.editMedication }}
                       </button>
                       @if (hasReminders(med.id)) {
                       <button type="button" class="rec-menu-item"
                         (click)="openEditReminder(med); openMedMenuId.set(null)">
-                        <i class="fa-regular fa-bell"></i> Edit Reminder
+                        <i class="fa-regular fa-bell"></i> {{ t().medications.editReminder }}
                       </button>
                       <button type="button" class="rec-menu-item"
                         (click)="toggleAllReminders(med.id); openMedMenuId.set(null)">
                         <i class="fa-solid" [class]="isPaused(med.id) ? 'fa-play' : 'fa-pause'"></i>
-                        {{ isPaused(med.id) ? 'Resume Reminder' : 'Pause Reminder' }}
+                        {{ isPaused(med.id) ? t().medications.resumeReminder : t().medications.pauseReminder }}
                       </button>
                       <button type="button" class="rec-menu-item rec-menu-item--danger"
                         (click)="openDeleteReminder(med.id, med.medicineName); openMedMenuId.set(null)">
-                        <i class="fa-solid fa-bell-slash"></i> Delete Reminder
+                        <i class="fa-solid fa-bell-slash"></i> {{ t().medications.deleteReminder }}
                       </button>
                       } @else {
                       <button type="button" class="rec-menu-item"
                         (click)="openAddReminder(med); openMedMenuId.set(null)">
-                        <i class="fa-solid fa-bell"></i> Add Reminder
+                        <i class="fa-solid fa-bell"></i> {{ t().medications.addReminderAction }}
                       </button>
                       }
                       <div class="rec-menu-divider"></div>
                       <button type="button" class="rec-menu-item rec-menu-item--danger"
                         (click)="openDeleteMed(med.id, med.medicineName)">
-                        <i class="fa-solid fa-trash-can"></i> Delete Medication
+                        <i class="fa-solid fa-trash-can"></i> {{ t().medications.deleteMedication }}
                       </button>
+                      }
                     </div>
                     }
                   </div>
@@ -850,27 +872,27 @@
         <i class="fa-solid fa-pills"></i>
       </div>
       <div>
-        <h2 class="modal-title" id="confirm-modal-title">Confirm Medication</h2>
-        <p class="modal-subtitle">Please confirm you've taken this medication</p>
+        <h2 class="modal-title" id="confirm-modal-title">{{ t().medications.confirmMedicationTitle }}</h2>
+        <p class="modal-subtitle">{{ t().medications.confirmMedicationSub }}</p>
       </div>
     </div>
 
     @if (confirmingLog()) {
     <div class="confirm-med-detail">
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Medication</span>
+        <span class="confirm-detail-lbl">{{ t().medications.medicationCol }}</span>
         <span class="confirm-detail-val">{{ confirmingLog()!.medicineName }}</span>
       </div>
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Strength</span>
+        <span class="confirm-detail-lbl">{{ t().medications.strength }}</span>
         <span class="confirm-detail-val">{{ confirmingLog()!.dosage }}</span>
       </div>
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Dose Time</span>
+        <span class="confirm-detail-lbl">{{ t().medications.doseTimeLabel }}</span>
         <span class="confirm-detail-val">{{ formatTime(confirmingLog()!.reminderTime) }}</span>
       </div>
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Attempt</span>
+        <span class="confirm-detail-lbl">{{ t().medications.attempt }}</span>
         <span class="confirm-detail-val">{{ reminderAttemptLabel(confirmingLog()!.reminderNumber) }}</span>
       </div>
     </div>
@@ -879,14 +901,14 @@
     <div class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeConfirm()"
         [disabled]="confirming()">
-        Cancel
+        {{ t().common.cancel }}
       </button>
       <button type="button" class="modal-btn modal-btn-primary med-confirm-primary"
         (click)="submitConfirm()" [disabled]="confirming()" aria-label="Confirm I took this medication">
         @if (confirming()) {
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Confirming…
+        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.confirmingBtn }}
         } @else {
-        <i class="fa-solid fa-check"></i> I Took My Medication
+        <i class="fa-solid fa-check"></i> {{ t().medications.iTookMyMedication }}
         }
       </button>
     </div>
@@ -906,11 +928,11 @@
       </div>
       <div>
         <h2 class="modal-title" id="add-reminder-title">
-          {{ editMode() ? 'Edit Reminder' : 'Add Reminder' }}
+          {{ editMode() ? t().medications.editReminderTitle : t().medications.addReminderTitle }}
         </h2>
         <p class="modal-subtitle">{{ addReminderMedicineName() }}</p>
       </div>
-      <button type="button" class="rm-close-btn" (click)="closeAddReminder()" aria-label="Close">
+      <button type="button" class="rm-close-btn" (click)="closeAddReminder()" [attr.aria-label]="t().common.close">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -921,7 +943,7 @@
       <div class="rm-section">
         <div class="rm-section-hdr">
           <span class="rm-section-title">
-            <i class="fa-regular fa-clock"></i> Reminder Times
+            <i class="fa-regular fa-clock"></i> {{ t().medications.reminderTimesSection }}
             @if (reminderForm.reminderTimes.filter(t => !!t.trim()).length > 0) {
             <span class="rm-count-badge">{{ reminderForm.reminderTimes.filter(t => !!t.trim()).length }}</span>
             }
@@ -929,7 +951,7 @@
           <button type="button" class="rm-add-btn" (click)="addReminderTime()"
             [disabled]="reminderForm.reminderTimes.length >= 6"
             aria-label="Add another reminder time">
-            <i class="fa-solid fa-plus"></i> Add Time
+            <i class="fa-solid fa-plus"></i> {{ t().medications.addTime }}
           </button>
         </div>
 
@@ -970,7 +992,7 @@
 
       <!-- ── Repeat ── -->
       <div class="rm-section">
-        <p class="rm-section-title"><i class="fa-solid fa-repeat"></i> Repeat</p>
+        <p class="rm-section-title"><i class="fa-solid fa-repeat"></i> {{ t().medications.repeatLabel }}</p>
         <div class="rm-repeat-group">
           @for (opt of repeatOptions; track opt.value) {
           <button type="button"
@@ -985,7 +1007,7 @@
       <div class="rm-section rm-dates-grid">
         <div class="rm-date-field">
           <label class="rm-section-title" for="rm-start-date">
-            <i class="fa-regular fa-calendar"></i> Start Date
+            <i class="fa-regular fa-calendar"></i> {{ t().medications.startDate }}
           </label>
           <input id="rm-start-date" type="date"
             class="rm-time-input"
@@ -993,17 +1015,17 @@
             [class.rm-field--valid]="reminderForm.startDate >= todayDate"
             [(ngModel)]="reminderForm.startDate"
             [min]="todayDate"
-            aria-label="Reminder start date"
+            [attr.aria-label]="t().medications.startDate"
             (ngModelChange)="onReminderStartDateChange()" />
           @if (reminderForm.startDate && reminderForm.startDate < todayDate) {
           <p class="rm-field-error" role="alert">
-            <i class="fa-solid fa-circle-exclamation"></i> Start date cannot be in the past.
+            <i class="fa-solid fa-circle-exclamation"></i> {{ t().medications.startDateError }}
           </p>
           }
         </div>
         <div class="rm-date-field">
           <label class="rm-section-title" for="rm-end-date">
-            <i class="fa-regular fa-calendar-check"></i> End Date
+            <i class="fa-regular fa-calendar-check"></i> {{ t().medications.endDate }}
           </label>
           <input id="rm-end-date" type="date"
             class="rm-time-input"
@@ -1013,10 +1035,10 @@
             [(ngModel)]="reminderForm.endDate"
             [min]="minEndDate"
             [disabled]="reminderForm.repeatType === 'Once'"
-            aria-label="Reminder end date" />
+            [attr.aria-label]="t().medications.endDate" />
           @if (reminderForm.repeatType !== 'Once' && reminderForm.endDate && reminderForm.endDate < reminderForm.startDate) {
           <p class="rm-field-error" role="alert">
-            <i class="fa-solid fa-circle-exclamation"></i> End date must be after start date.
+            <i class="fa-solid fa-circle-exclamation"></i> {{ t().medications.endDateError }}
           </p>
           }
         </div>
@@ -1024,14 +1046,14 @@
 
       <!-- ── Push Notifications toggle ── -->
       <div class="rm-section rm-toggle-row">
-        <span class="rm-section-title"><i class="fa-solid fa-bell"></i> Push Notifications</span>
+        <span class="rm-section-title"><i class="fa-solid fa-bell"></i> {{ t().medications.pushNotifications }}</span>
         <button type="button"
           class="rm-toggle"
           [class.rm-toggle--on]="reminderForm.notificationsEnabled"
           (click)="reminderForm.notificationsEnabled = !reminderForm.notificationsEnabled"
           [attr.aria-checked]="reminderForm.notificationsEnabled"
           role="switch"
-          aria-label="Enable push notifications">
+          [attr.aria-label]="t().medications.pushNotifications">
           <span class="rm-toggle-thumb"></span>
         </button>
       </div>
@@ -1039,13 +1061,13 @@
       <!-- ── Notes ── -->
       <div class="rm-section">
         <label class="rm-section-title" for="rm-notes">
-          <i class="fa-regular fa-note-sticky"></i> Notes (optional)
+          <i class="fa-regular fa-note-sticky"></i> {{ t().medications.notesOptional }}
         </label>
         <textarea id="rm-notes" class="rm-notes-area"
           [(ngModel)]="reminderForm.notes"
-          placeholder="e.g. Take with food, avoid on empty stomach"
+          [placeholder]="t().medications.notesPlaceholder"
           rows="2"
-          aria-label="Additional notes"></textarea>
+          [attr.aria-label]="t().medications.notesOptional"></textarea>
       </div>
 
       <!-- ── Global summary errors ── -->
@@ -1061,13 +1083,13 @@
 
     <div class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddReminder()"
-        [disabled]="addReminderSaving()">Cancel</button>
+        [disabled]="addReminderSaving()">{{ t().common.cancel }}</button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="saveNewReminder()"
         [disabled]="addReminderSaving() || !reminderFormValid">
         @if (addReminderSaving()) {
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Saving…
+        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.savingBtn }}
         } @else {
-        <i class="fa-solid fa-bell"></i> {{ editMode() ? 'Update Reminder' : 'Set Reminder' }}
+        <i class="fa-solid fa-bell"></i> {{ editMode() ? t().medications.updateReminder : t().medications.setReminder }}
         }
       </button>
     </div>
@@ -1087,28 +1109,28 @@
         <i class="fa-solid fa-trash-can"></i>
       </div>
       <div>
-        <h2 class="modal-title" id="delete-reminder-title">Delete Reminder</h2>
-        <p class="modal-subtitle">This will remove all reminders for this medicine.</p>
+        <h2 class="modal-title" id="delete-reminder-title">{{ t().medications.deleteReminderTitle }}</h2>
+        <p class="modal-subtitle">{{ t().medications.deleteReminderConfirm }}</p>
       </div>
     </div>
 
     <div class="confirm-med-detail">
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Medicine</span>
+        <span class="confirm-detail-lbl">{{ t().medications.medicineLabel }}</span>
         <span class="confirm-detail-val">{{ deleteReminderMedName() }}</span>
       </div>
     </div>
 
     <div class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDeleteReminder()"
-        [disabled]="deletingReminder()">Cancel</button>
+        [disabled]="deletingReminder()">{{ t().common.cancel }}</button>
       <button type="button" class="modal-btn modal-btn-primary"
         style="background:var(--red)" (click)="confirmDeleteReminder()"
         [disabled]="deletingReminder()">
         @if (deletingReminder()) {
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Deleting…
+        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.deletingBtn }}
         } @else {
-        <i class="fa-solid fa-trash-can"></i> Delete Reminder
+        <i class="fa-solid fa-trash-can"></i> {{ t().medications.deleteReminderBtn }}
         }
       </button>
     </div>
@@ -1131,7 +1153,7 @@
         <h2 class="modal-title" id="view-med-title">{{ viewingMed()!.medicineName }}</h2>
         <p class="modal-subtitle">{{ viewingMed()!.dosage }}</p>
       </div>
-      <button type="button" class="rm-close-btn" (click)="closeMedView()" aria-label="Close">
+      <button type="button" class="rm-close-btn" (click)="closeMedView()" [attr.aria-label]="t().common.close">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -1139,62 +1161,64 @@
     <div class="view-med-body">
       <div class="view-detail-grid">
         <div class="view-detail-item">
-          <span class="view-detail-lbl"><i class="fa-regular fa-clock"></i> Frequency</span>
+          <span class="view-detail-lbl"><i class="fa-regular fa-clock"></i> {{ t().medications.frequencyLabel }}</span>
           <span class="view-detail-val">{{ viewingMed()!.frequency }}</span>
         </div>
         <div class="view-detail-item">
-          <span class="view-detail-lbl"><i class="fa-solid fa-calendar-days"></i> Duration</span>
+          <span class="view-detail-lbl"><i class="fa-solid fa-calendar-days"></i> {{ t().medications.durationLabel }}</span>
           <span class="view-detail-val">{{ viewingMed()!.duration }}</span>
         </div>
         <div class="view-detail-item">
-          <span class="view-detail-lbl"><i class="fa-solid fa-tag"></i> Source</span>
+          <span class="view-detail-lbl"><i class="fa-solid fa-tag"></i> {{ t().medications.sourceLabel }}</span>
           <span class="view-detail-val">{{ sourceLabel(viewingMed()!.source) }}</span>
         </div>
         <div class="view-detail-item">
-          <span class="view-detail-lbl"><i class="fa-regular fa-bell"></i> Reminder</span>
+          <span class="view-detail-lbl"><i class="fa-regular fa-bell"></i> {{ t().medications.reminderHeader }}</span>
           <span class="view-detail-val">
             @if (hasActiveReminders(viewingMed()!.id)) {
-            Active · {{ getSortedReminderTimes(viewingMed()!.id).join(', ') }}
+            {{ t().medications.activePill }} · {{ getSortedReminderTimes(viewingMed()!.id).join(', ') }}
             } @else if (isPaused(viewingMed()!.id)) {
-            Paused
+            {{ t().medications.pausedPill }}
             } @else {
-            Not set
+            {{ t().medications.notSetPill }}
             }
           </span>
         </div>
         <div class="view-detail-item">
-          <span class="view-detail-lbl"><i class="fa-regular fa-calendar"></i> Added</span>
+          <span class="view-detail-lbl"><i class="fa-regular fa-calendar"></i> {{ t().medications.addedLabel }}</span>
           <span class="view-detail-val">{{ formatDate(viewingMed()!.createdAt) }}</span>
         </div>
       </div>
       @if (viewingMed()!.notes) {
       <div class="view-notes-block">
-        <span class="view-detail-lbl"><i class="fa-regular fa-note-sticky"></i> Notes</span>
+        <span class="view-detail-lbl"><i class="fa-regular fa-note-sticky"></i> {{ t().medications.notesLabel }}</span>
         <p class="view-notes-text">{{ viewingMed()!.notes }}</p>
       </div>
       }
     </div>
 
     <div class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeMedView()">Close</button>
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeMedView()">{{ t().medications.closeBtn }}</button>
+      @if (!fpReadOnly()) {
       <button type="button" class="modal-btn modal-btn-danger"
         (click)="openDeleteMed(viewingMed()!.id, viewingMed()!.medicineName)">
-        <i class="fa-solid fa-trash-can"></i> Delete
+        <i class="fa-solid fa-trash-can"></i> {{ t().medications.deleteBtn }}
       </button>
       <button type="button" class="modal-btn modal-btn-secondary"
         (click)="openEditMed(viewingMed()!)">
-        <i class="fa-regular fa-pen-to-square"></i> Edit
+        <i class="fa-regular fa-pen-to-square"></i> {{ t().medications.editBtn }}
       </button>
       @if (hasReminders(viewingMed()!.id)) {
       <button type="button" class="modal-btn modal-btn-primary"
         (click)="openEditReminder(viewingMed()!); closeMedView()">
-        <i class="fa-regular fa-bell"></i> Edit Reminder
+        <i class="fa-regular fa-bell"></i> {{ t().medications.editReminderBtn }}
       </button>
       } @else {
       <button type="button" class="modal-btn modal-btn-primary"
         (click)="openAddReminder(viewingMed()!); closeMedView()">
-        <i class="fa-solid fa-plus"></i> Add Reminder
+        <i class="fa-solid fa-plus"></i> {{ t().medications.addReminderBtn }}
       </button>
+      }
       }
     </div>
 
@@ -1213,10 +1237,10 @@
         <i class="fa-solid fa-pills"></i>
       </div>
       <div>
-        <h2 class="modal-title" id="add-med-title">Add Medication</h2>
-        <p class="modal-subtitle">Enter the details for the new medication</p>
+        <h2 class="modal-title" id="add-med-title">{{ t().medications.addMedicationTitle }}</h2>
+        <p class="modal-subtitle">{{ t().medications.addMedicationSub }}</p>
       </div>
-      <button type="button" class="rm-close-btn" (click)="closeAddMed()" aria-label="Close">
+      <button type="button" class="rm-close-btn" (click)="closeAddMed()" [attr.aria-label]="t().common.close">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -1226,20 +1250,20 @@
       <div class="rm-section rm-dates-grid">
         <div>
           <label class="rm-section-title" for="add-med-name">
-            <i class="fa-solid fa-pills"></i> Medicine Name <span style="color:var(--red)">*</span>
+            <i class="fa-solid fa-pills"></i> {{ t().medications.medicineNameLabel }} <span style="color:var(--red)">*</span>
           </label>
           <input id="add-med-name" type="text" class="rm-time-input"
             [(ngModel)]="addMedForm.medicineName"
-            placeholder="e.g. Paracetamol"
+            [placeholder]="t().medications.medicineNamePlaceholder"
             [class.rm-input-error]="addMedTouched() && !addMedForm.medicineName.trim()" />
         </div>
         <div>
           <label class="rm-section-title" for="add-med-dosage">
-            <i class="fa-solid fa-flask"></i> Dosage <span style="color:var(--red)">*</span>
+            <i class="fa-solid fa-flask"></i> {{ t().medications.dosageLabel }} <span style="color:var(--red)">*</span>
           </label>
           <input id="add-med-dosage" type="text" class="rm-time-input"
             [(ngModel)]="addMedForm.dosage"
-            placeholder="e.g. 500mg"
+            [placeholder]="t().medications.dosagePlaceholder"
             [class.rm-input-error]="addMedTouched() && !addMedForm.dosage.trim()" />
         </div>
       </div>
@@ -1247,31 +1271,31 @@
       <div class="rm-section rm-dates-grid">
         <div>
           <label class="rm-section-title" for="add-med-frequency">
-            <i class="fa-regular fa-clock"></i> Frequency <span style="color:var(--red)">*</span>
+            <i class="fa-regular fa-clock"></i> {{ t().medications.frequencyLabelField }} <span style="color:var(--red)">*</span>
           </label>
           <input id="add-med-frequency" type="text" class="rm-time-input"
             [(ngModel)]="addMedForm.frequency"
-            placeholder="e.g. Twice daily"
+            [placeholder]="t().medications.frequencyPlaceholder"
             [class.rm-input-error]="addMedTouched() && !addMedForm.frequency.trim()" />
         </div>
         <div>
           <label class="rm-section-title" for="add-med-duration">
-            <i class="fa-solid fa-calendar-days"></i> Duration <span style="color:var(--red)">*</span>
+            <i class="fa-solid fa-calendar-days"></i> {{ t().medications.durationLabelField }} <span style="color:var(--red)">*</span>
           </label>
           <input id="add-med-duration" type="text" class="rm-time-input"
             [(ngModel)]="addMedForm.duration"
-            placeholder="e.g. 7 days"
+            [placeholder]="t().medications.durationPlaceholder"
             [class.rm-input-error]="addMedTouched() && !addMedForm.duration.trim()" />
         </div>
       </div>
 
       <div class="rm-section">
         <label class="rm-section-title" for="add-med-notes">
-          <i class="fa-regular fa-note-sticky"></i> Notes (optional)
+          <i class="fa-regular fa-note-sticky"></i> {{ t().medications.notesOptionalLabel }}
         </label>
         <textarea id="add-med-notes" class="rm-notes-area"
           [(ngModel)]="addMedForm.notes"
-          placeholder="e.g. Take with food, avoid on empty stomach"
+          [placeholder]="t().medications.notesMedPlaceholder"
           rows="2"></textarea>
       </div>
 
@@ -1287,13 +1311,13 @@
 
     <div class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddMed()"
-        [disabled]="addMedSaving()">Cancel</button>
+        [disabled]="addMedSaving()">{{ t().common.cancel }}</button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="saveAddMed()"
         [disabled]="addMedSaving()">
         @if (addMedSaving()) {
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Saving…
+        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.savingBtn }}
         } @else {
-        <i class="fa-solid fa-plus"></i> Add Medication
+        <i class="fa-solid fa-plus"></i> {{ t().medications.addMedicationBtn }}
         }
       </button>
     </div>
@@ -1313,10 +1337,10 @@
         <i class="fa-regular fa-pen-to-square"></i>
       </div>
       <div>
-        <h2 class="modal-title" id="edit-med-title">Edit Medication</h2>
+        <h2 class="modal-title" id="edit-med-title">{{ t().medications.editMedicationTitle }}</h2>
         <p class="modal-subtitle">{{ editingMed()?.medicineName }}</p>
       </div>
-      <button type="button" class="rm-close-btn" (click)="closeEditMed()" aria-label="Close">
+      <button type="button" class="rm-close-btn" (click)="closeEditMed()" [attr.aria-label]="t().common.close">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -1326,20 +1350,20 @@
       <div class="rm-section rm-dates-grid">
         <div>
           <label class="rm-section-title" for="edit-med-name">
-            <i class="fa-solid fa-pills"></i> Medicine Name <span style="color:var(--red)">*</span>
+            <i class="fa-solid fa-pills"></i> {{ t().medications.medicineNameLabel }} <span style="color:var(--red)">*</span>
           </label>
           <input id="edit-med-name" type="text" class="rm-time-input"
             [(ngModel)]="editMedForm.medicineName"
-            placeholder="e.g. Paracetamol"
+            [placeholder]="t().medications.medicineNamePlaceholder"
             [class.rm-input-error]="editMedTouched() && !editMedForm.medicineName.trim()" />
         </div>
         <div>
           <label class="rm-section-title" for="edit-med-dosage">
-            <i class="fa-solid fa-flask"></i> Dosage <span style="color:var(--red)">*</span>
+            <i class="fa-solid fa-flask"></i> {{ t().medications.dosageLabel }} <span style="color:var(--red)">*</span>
           </label>
           <input id="edit-med-dosage" type="text" class="rm-time-input"
             [(ngModel)]="editMedForm.dosage"
-            placeholder="e.g. 500mg"
+            [placeholder]="t().medications.dosagePlaceholder"
             [class.rm-input-error]="editMedTouched() && !editMedForm.dosage.trim()" />
         </div>
       </div>
@@ -1347,31 +1371,31 @@
       <div class="rm-section rm-dates-grid">
         <div>
           <label class="rm-section-title" for="edit-med-frequency">
-            <i class="fa-regular fa-clock"></i> Frequency <span style="color:var(--red)">*</span>
+            <i class="fa-regular fa-clock"></i> {{ t().medications.frequencyLabelField }} <span style="color:var(--red)">*</span>
           </label>
           <input id="edit-med-frequency" type="text" class="rm-time-input"
             [(ngModel)]="editMedForm.frequency"
-            placeholder="e.g. Twice daily"
+            [placeholder]="t().medications.frequencyPlaceholder"
             [class.rm-input-error]="editMedTouched() && !editMedForm.frequency.trim()" />
         </div>
         <div>
           <label class="rm-section-title" for="edit-med-duration">
-            <i class="fa-solid fa-calendar-days"></i> Duration <span style="color:var(--red)">*</span>
+            <i class="fa-solid fa-calendar-days"></i> {{ t().medications.durationLabelField }} <span style="color:var(--red)">*</span>
           </label>
           <input id="edit-med-duration" type="text" class="rm-time-input"
             [(ngModel)]="editMedForm.duration"
-            placeholder="e.g. 7 days"
+            [placeholder]="t().medications.durationPlaceholder"
             [class.rm-input-error]="editMedTouched() && !editMedForm.duration.trim()" />
         </div>
       </div>
 
       <div class="rm-section">
         <label class="rm-section-title" for="edit-med-notes">
-          <i class="fa-regular fa-note-sticky"></i> Notes (optional)
+          <i class="fa-regular fa-note-sticky"></i> {{ t().medications.notesOptionalLabel }}
         </label>
         <textarea id="edit-med-notes" class="rm-notes-area"
           [(ngModel)]="editMedForm.notes"
-          placeholder="e.g. Take with food, avoid on empty stomach"
+          [placeholder]="t().medications.notesMedPlaceholder"
           rows="2"></textarea>
       </div>
 
@@ -1387,13 +1411,13 @@
 
     <div class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeEditMed()"
-        [disabled]="editMedSaving()">Cancel</button>
+        [disabled]="editMedSaving()">{{ t().common.cancel }}</button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="saveEditMed()"
         [disabled]="editMedSaving()">
         @if (editMedSaving()) {
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Saving…
+        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.savingBtn }}
         } @else {
-        <i class="fa-regular fa-pen-to-square"></i> Save Changes
+        <i class="fa-regular fa-pen-to-square"></i> {{ t().medications.saveChangesBtn }}
         }
       </button>
     </div>
@@ -1413,34 +1437,34 @@
         <i class="fa-solid fa-trash-can"></i>
       </div>
       <div>
-        <h2 class="modal-title" id="delete-med-title">Delete Medication</h2>
-        <p class="modal-subtitle">This will remove the medication and cancel all its active reminders.</p>
+        <h2 class="modal-title" id="delete-med-title">{{ t().medications.deleteMedicationTitle }}</h2>
+        <p class="modal-subtitle">{{ t().medications.deleteMedConfirm }}</p>
       </div>
     </div>
 
     <div class="confirm-med-detail">
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">Medication</span>
+        <span class="confirm-detail-lbl">{{ t().medications.medicationCol }}</span>
         <span class="confirm-detail-val">{{ deleteMedName() }}</span>
       </div>
       <div class="confirm-detail-row">
-        <span class="confirm-detail-lbl">What happens</span>
+        <span class="confirm-detail-lbl">{{ t().medications.whatHappens }}</span>
         <span class="confirm-detail-val" style="color:var(--text-muted);font-size:0.85rem">
-          Active reminders are cancelled. Past history is kept.
+          {{ t().medications.remindersNote }}
         </span>
       </div>
     </div>
 
     <div class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDeleteMed()"
-        [disabled]="deletingMed()">Cancel</button>
+        [disabled]="deletingMed()">{{ t().common.cancel }}</button>
       <button type="button" class="modal-btn modal-btn-primary"
         style="background:var(--red)" (click)="confirmDeleteMed()"
         [disabled]="deletingMed()">
         @if (deletingMed()) {
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Deleting…
+        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.deletingBtn }}
         } @else {
-        <i class="fa-solid fa-trash-can"></i> Delete Medication
+        <i class="fa-solid fa-trash-can"></i> {{ t().medications.deleteMedicationBtn }}
         }
       </button>
     </div>
@@ -1451,12 +1475,12 @@
 
 <!-- ═══════════ TOASTS ═══════════ -->
 <div class="toast-container" aria-live="polite">
-  @for (t of toasts(); track t.id) {
-  <div class="toast" [class.toast-success]="t.type === 'success'" [class.toast-error]="t.type === 'error'">
-    <i class="fa-solid" [class.fa-circle-check]="t.type === 'success'"
-       [class.fa-circle-xmark]="t.type === 'error'"></i>
-    <span>{{ t.message }}</span>
-    <button type="button" class="toast-close" (click)="dismissToast(t.id)" aria-label="Dismiss">
+  @for (toast of toasts(); track toast.id) {
+  <div class="toast" [class.toast-success]="toast.type === 'success'" [class.toast-error]="toast.type === 'error'">
+    <i class="fa-solid" [class.fa-circle-check]="toast.type === 'success'"
+       [class.fa-circle-xmark]="toast.type === 'error'"></i>
+    <span>{{ toast.message }}</span>
+    <button type="button" class="toast-close" (click)="dismissToast(toast.id)" [attr.aria-label]="t().medications.dismiss">
       <i class="fa-solid fa-xmark"></i>
     </button>
   </div>

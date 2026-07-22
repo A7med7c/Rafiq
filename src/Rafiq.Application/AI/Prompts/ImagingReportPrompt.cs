@@ -22,6 +22,7 @@ public static class ImagingReportPrompt
 
         {
           "isValidDocument": true,
+          "isUnreadable": false,
           "detectedDocumentType": "ImagingReport",
           "imagingType": "",
           "bodyPart": "",
@@ -37,10 +38,11 @@ public static class ImagingReportPrompt
 
         - Determine the type of the uploaded image before extracting any data.
         - Use ONLY these values for detectedDocumentType: "Prescription", "LabReport", "ImagingReport", "MedicineBox", "Unknown".
-        - If the image is a valid imaging report, set "isValidDocument": true and "detectedDocumentType": "ImagingReport".
-        - If the image is NOT an imaging report (e.g., it is a prescription, lab report, medicine box, unrelated photo, blank page, or unclear image), set "isValidDocument": false.
+        - If the image IS an imaging report AND is clearly readable, set "isValidDocument": true, "isUnreadable": false, "detectedDocumentType": "ImagingReport".
+        - If the image IS an imaging report BUT is too blurry, too cropped, too dark, too low resolution, or otherwise unreadable so that findings cannot be reliably extracted, set "isValidDocument": true, "isUnreadable": true, "detectedDocumentType": "ImagingReport".
+        - If the image is NOT an imaging report (e.g., it is a prescription, lab report, medicine box, or unrelated photo), set "isValidDocument": false, "isUnreadable": false.
+        - If the image is completely blank, empty, random noise, or cannot be classified at all, set "isValidDocument": false, "isUnreadable": false, "detectedDocumentType": "Unknown".
         - Set detectedDocumentType to the actual detected type when it can be identified with confidence, otherwise set it to "Unknown".
-        - If the image is unreadable, unclear, unrelated, or cannot be classified confidently, set "isValidDocument": false and "detectedDocumentType": "Unknown".
         - Do NOT guess or infer the document type. Only classify with confidence.
 
         Extraction Rules (apply ONLY when isValidDocument is true):
@@ -54,7 +56,7 @@ public static class ImagingReportPrompt
         - If any field is missing or unreadable, return null except aiSummary.
         - reportDate must use yyyy-MM-dd when a date is visible.
 
-        Rules when isValidDocument is false:
+        Rules when isValidDocument is false OR isUnreadable is true:
 
         - Return null for ALL extraction fields: imagingType, bodyPart, findings, impression, doctorName, reportDate, ocrText, aiSummary.
         - Do NOT extract, infer, generate, complete, or guess any medical information.

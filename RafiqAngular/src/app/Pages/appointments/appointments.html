@@ -7,20 +7,22 @@
   <!-- ═══════════ SIDEBAR ═══════════ -->
   <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <div class="sb-top">
-      <div class="sb-logo">
+      <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
         <div class="sb-logo-icon">
           <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
         <div class="sb-logo-text">
-          <span class="sb-logo-title">Rafiq AI</span>
-          <span class="sb-logo-sub">Family Health Assistant</span>
+          <span class="sb-logo-title">{{ t().sidebar.brandName }} AI</span>
+          <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
         </div>
-      </div>
+      </button>
       <button type="button" class="sb-toggle"
-        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'" (click)="toggleSidebar()">
+        [attr.aria-label]="sidebarCollapsed() ? t().sidebar.expandSidebar : t().sidebar.collapseSidebar"
+        (click)="toggleSidebar()">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
-      <button type="button" class="sb-mobile-close" aria-label="Close sidebar" (click)="toggleMobileSidebar()">
+      <button type="button" class="sb-mobile-close" [attr.aria-label]="t().sidebar.closeSidebar"
+        (click)="toggleMobileSidebar()">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -28,51 +30,47 @@
     <nav class="sb-nav">
       <a class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact:true}">
         <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
-        <span>Dashboard</span>
+        <span>{{ t().sidebar.dashboard }}</span>
       </a>
       <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
-        <span>Medical Records</span>
+        <span>{{ t().sidebar.medicalRecords }}</span>
       </a>
       <a class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
-        <span>Appointments</span>
-      </a>
-      <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
-        <span>AI Assistant</span>
+        <span>{{ t().sidebar.appointments }}</span>
       </a>
       <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
-        <span>Medications &amp; Reminders</span>
+        <span>{{ t().sidebar.medications }}</span>
       </a>
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
-        <span>Analytics</span>
+        <span>{{ t().sidebar.analytics }}</span>
       </a>
-      <a class="sb-link sb-sos" href="#">
+      <!-- <a class="sb-link sb-sos" href="#">
         <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
         <span>SOS &amp; Emergency</span>
-      </a>
+      </a> -->
       <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
-        <span>Family Profiles</span>
+        <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
-        <span>Settings</span>
+        <span>{{ t().sidebar.settings }}</span>
       </a>
     </nav>
 
     <div class="sb-help">
       <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
       <div class="sb-help-copy">
-        <p class="sb-help-title">Ask Rafiq AI</p>
-        <p class="sb-help-sub">Get health insights and answers to your questions</p>
+        <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
+        <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
       </div>
-      <button type="button" class="sb-help-btn">
+      <button type="button" class="sb-help-btn" (click)="aiChatService.openPanel()">
         <i class="fa-regular fa-comment-dots"></i>
-        Ask Now
+        {{ t().sidebar.askNow }}
       </button>
     </div>
   </aside>
@@ -82,17 +80,18 @@
 
     <!-- HEADER -->
     <header class="dsh-hdr">
-      <button type="button" class="sb-mobile-toggle" aria-label="Open sidebar" (click)="toggleMobileSidebar()">
+      <button type="button" class="sb-mobile-toggle" [attr.aria-label]="t().header.openSidebar"
+        (click)="toggleMobileSidebar()">
         <i class="fa-solid fa-bars"></i>
       </button>
       <div class="hdr-search">
         <i class="fa-solid fa-magnifying-glass hdr-search-ico"></i>
-        <input type="text" class="hdr-search-inp" placeholder="Search records, symptoms, medications..." readonly>
+        <input type="text" class="hdr-search-inp" [placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
-        <button type="button" class="hdr-ask-btn" routerLink="/ai-assistant">
+        <button type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
-          Ask AI
+          {{ t().header.askAI }}
         </button>
         <button type="button" class="hdr-bell" (click)="notifSvc.toggleNotificationCenter()"
           [class.hdr-bell--active]="notifSvc.notificationCenterOpen()">
@@ -102,7 +101,7 @@
           }
         </button>
         <div class="hdr-user" (click)="toggleDropdown()">
-          <img [src]="avatarUrl" alt="user" class="hdr-avatar">
+          <img [src]="profileCache.resolveNavbarAvatar()" alt="user" class="hdr-avatar">
           <span class="hdr-username">{{ displayName }}</span>
           <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
 
@@ -110,7 +109,7 @@
           <div class="user-dropdown" (click)="$event.stopPropagation()">
             <div class="user-dropdown-hdr">
               <div class="user-dropdown-av">
-                <img [src]="avatarUrl" alt="avatar">
+                <img [src]="profileCache.resolveNavbarAvatar()" alt="avatar">
               </div>
               <div class="user-dropdown-info">
                 <span class="user-dropdown-name">{{ displayName }}</span>
@@ -118,15 +117,15 @@
               </div>
             </div>
             <div class="user-dropdown-divider"></div>
-            <button type="button" class="user-dropdown-item">
-              <i class="fa-regular fa-user"></i> My Profile
+            <button type="button" class="user-dropdown-item" (click)="goToMyProfile()">
+              <i class="fa-regular fa-user"></i> {{ t().header.myProfile }}
             </button>
             <button type="button" class="user-dropdown-item">
-              <i class="fa-solid fa-gear"></i> Settings
+              <i class="fa-solid fa-gear"></i> {{ t().header.settings }}
             </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> {{ t().header.logout }}
             </button>
           </div>
           }
@@ -140,13 +139,19 @@
       <!-- ── Title Bar ── -->
       <div class="appts-title-bar">
         <div>
-          <h1 class="appts-title">Appointments</h1>
-          <p class="appts-subtitle">Manage and track all your medical appointments</p>
+          <h1 class="appts-title">{{ t().appointments.title }}</h1>
+          <p class="appts-subtitle">{{ t().appointments.subtitle }}</p>
         </div>
+        @if (fpReadOnly()) {
+        <span class="fp-readonly-badge">
+          <i class="fa-regular fa-eye"></i> {{ t().appointments.viewOnly }}
+        </span>
+        } @else {
         <button type="button" class="add-appt-btn" (click)="openAdd()">
           <i class="fa-solid fa-plus"></i>
-          Add Appointment
+          {{ t().appointments.addAppointment }}
         </button>
+        }
       </div>
 
       <!-- ── Stat Cards ── -->
@@ -167,7 +172,7 @@
               </div>
 
               <div>
-                <p class="next-small-title">Next Appointment</p>
+                <p class="next-small-title">{{ t().appointments.nextAppointment }}</p>
                 <h2 class="next-title">{{ next.title }}</h2>
 
                 <p class="next-provider">
@@ -195,7 +200,7 @@
 
                   <i class="fa-regular fa-bell"></i>
 
-                  Reminder {{ reminderLabel(next.reminderOffsetMinutes) }}
+                  {{ t().appointments.reminder }} {{ reminderLabel(next.reminderOffsetMinutes) }}
 
                 </p>
 
@@ -207,13 +212,13 @@
 
             <button class="next-btn" (click)="openView(next)">
 
-              View Details
+              {{ t().appointments.viewDetails }}
 
             </button>
 
           </div>
 
-          <!-- الصورة -->
+          <!-- Image -->
 
           <div class="next-image">
 
@@ -237,25 +242,23 @@
 
               <div>
                 <div class="next-small-title" style="font-size: 20px;">
-                  Next Appointment
+                  {{ t().appointments.nextAppointment }}
                 </div>
 
                 <h2 class="next-title empty-title" style="margin:20px 0px;">
-                  No Upcoming Appointment
+                  {{ t().appointments.noUpcomingAppointment }}
                 </h2>
 
                 <p class="empty-text">
-                  You don't have any upcoming appointments.
-                  Schedule one to receive reminders.
+                  {{ t().appointments.noUpcomingText }}
                 </p>
 
+                @if (!fpReadOnly()) {
                 <button class="next-btn" (click)="openAdd()">
-
                   <i class="fa-solid fa-plus"></i>
-
-                  Add Appointment
-
+                  {{ t().appointments.addAppointment }}
                 </button>
+                }
 
               </div>
 
@@ -284,15 +287,15 @@
             </div>
 
             <div class="stat-body">
-              <span class="stat-lbl">Upcoming</span>
+              <span class="stat-lbl">{{ t().appointments.upcoming }}</span>
 
               <span class="stat-num">{{ upcomingCount() }}</span>
-              <span class="stat-sub">appointments</span>
+              <span class="stat-sub">{{ t().appointments.appointmentsLabel }}</span>
             </div>
 
             <button type="button" class="stat-link" (click)="$event.stopPropagation(); setTab('upcoming')">
 
-              View all
+              {{ t().common.viewAll }}
 
               <i class="fa-solid fa-arrow-right"></i>
 
@@ -309,15 +312,15 @@
             </div>
 
             <div class="stat-body">
-              <span class="stat-lbl">Completed</span>
+              <span class="stat-lbl">{{ t().appointments.completed }}</span>
 
               <span class="stat-num">{{ completedCount() }}</span>
-              <span class="stat-sub">appointments</span>
+              <span class="stat-sub">{{ t().appointments.appointmentsLabel }}</span>
             </div>
 
             <button type="button" class="stat-link" (click)="$event.stopPropagation(); setTab('completed')">
 
-              View all
+              {{ t().common.viewAll }}
 
               <i class="fa-solid fa-arrow-right"></i>
 
@@ -334,15 +337,15 @@
             </div>
 
             <div class="stat-body">
-              <span class="stat-lbl">Cancelled / Missed</span>
+              <span class="stat-lbl">{{ t().appointments.cancelledMissed }}</span>
 
               <span class="stat-num">{{ cancelledCount() }}</span>
-              <span class="stat-sub">appointments</span>
+              <span class="stat-sub">{{ t().appointments.appointmentsLabel }}</span>
             </div>
 
             <button type="button" class="stat-link" (click)="$event.stopPropagation(); setTab('cancelled')">
 
-              View all
+              {{ t().common.viewAll }}
 
               <i class="fa-solid fa-arrow-right"></i>
 
@@ -359,15 +362,15 @@
             </div>
 
             <div class="stat-body">
-              <span class="stat-lbl">All</span>
+              <span class="stat-lbl">{{ t().appointments.all }}</span>
 
               <span class="stat-num">{{ totalCount() }}</span>
-              <span class="stat-sub">appointments</span>
+              <span class="stat-sub">{{ t().appointments.appointmentsLabel }}</span>
             </div>
 
             <button type="button" class="stat-link" (click)="$event.stopPropagation(); setTab('all')">
 
-              View all
+              {{ t().common.viewAll }}
 
               <i class="fa-solid fa-arrow-right"></i>
 
@@ -388,27 +391,27 @@
         <div class="appts-tab-bar">
 
           <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'all'" (click)="setTab('all')">
-            All
+            {{ t().appointments.all }}
             <!-- <span class="tab-count">{{ totalCount() }}</span> -->
           </button>
 
           <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'upcoming'"
             (click)="setTab('upcoming')">
-            Upcoming
+            {{ t().appointments.upcoming }}
             <!-- <span class="tab-count tab-count-blue">{{ upcomingCount() }}</span> -->
           </button>
 
           <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'completed'"
             (click)="setTab('completed')">
-            Completed
+            {{ t().appointments.completed }}
             <!-- <span class="tab-count tab-count-green">{{ completedCount() }}</span> -->
           </button>
 
           <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'cancelled'"
             (click)="setTab('cancelled')">
-            Cancelled &amp; Missed
+            {{ t().appointments.cancelledMissed }}
             <!-- <span class="tab-count tab-count-red">{{ cancelledCount() }}</span> -->
-          </button>         
+          </button>
 
         </div>
 
@@ -419,8 +422,8 @@
 
             <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
 
-            <input type="text" class="appts-search-inp" placeholder="Search appointments..." [ngModel]="searchQuery()"
-              (ngModelChange)="searchQuery.set($event); onFilterChange()">
+            <input type="text" class="appts-search-inp" [placeholder]="t().appointments.searchPlaceholder"
+              [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); onFilterChange()">
 
           </div>
 
@@ -444,11 +447,22 @@
 
             <i class="fa-solid fa-sliders"></i>
 
-            Clear
+            {{ t().common.clear }}
 
           </button>
 
           }
+
+          <!-- Sort dropdown -->
+          <div class="appts-sort-wrap">
+            <i class="fa-solid fa-arrow-down-wide-short appts-sort-ico"></i>
+            <select class="appts-sort-sel" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event); currentPage.set(1)">
+              <option value="recent">{{ t().appointments.newestFirst }}</option>
+              <option value="oldest">{{ t().appointments.oldestFirst }}</option>
+              <option value="az">{{ t().appointments.aToZ }}</option>
+              <option value="za">{{ t().appointments.zToA }}</option>
+            </select>
+          </div>
 
         </div>
 
@@ -478,10 +492,10 @@
         @else if (loadError()) {
         <div class="empty-state">
           <i class="fa-solid fa-triangle-exclamation empty-icon" style="color:var(--red)"></i>
-          <p class="empty-title">Could not load appointments</p>
+          <p class="empty-title">{{ t().appointments.couldNotLoad }}</p>
           <p class="empty-sub">{{ loadError() }}</p>
           <button type="button" class="add-appt-btn" style="margin-top:14px" (click)="loadAppointments()">
-            <i class="fa-solid fa-rotate-right"></i> Retry
+            <i class="fa-solid fa-rotate-right"></i> {{ t().appointments.retry }}
           </button>
         </div>
         }
@@ -489,12 +503,12 @@
         @else if (filtered().length === 0) {
         <div class="empty-state">
           <i class="fa-regular fa-calendar-xmark empty-icon"></i>
-          <p class="empty-title">No appointments found</p>
+          <p class="empty-title">{{ t().appointments.noAppointmentsFound }}</p>
           <p class="empty-sub">
             @if (searchQuery() || dateFrom() || dateTo()) {
-            Try adjusting your search or filters.
+            {{ t().appointments.tryAdjusting }}
             } @else {
-            Click "Add Appointment" to schedule your first one.
+            {{ t().appointments.clickToAdd }}
             }
           </p>
           <!-- @if (!searchQuery() && !dateFrom() && !dateTo()) {
@@ -510,12 +524,12 @@
           <table class="records-table appts-table">
             <thead>
               <tr>
-                <th>Appointment</th>
-                <th>Date &amp; Time</th>
-                <th>Provider</th>
-                <th>Status</th>
-                <th>Reminder</th>
-                <th>Actions</th>
+                <th>{{ t().appointments.appointmentCol }}</th>
+                <th>{{ t().appointments.dateTime }}</th>
+                <th>{{ t().appointments.provider }}</th>
+                <th>{{ t().appointments.status }}</th>
+                <th>{{ t().appointments.reminder }}</th>
+                <th>{{ t().appointments.actions }}</th>
               </tr>
             </thead>
             <tbody>
@@ -551,33 +565,37 @@
                 <!-- Actions -->
                 <td class="actions-cell">
                   <div class="record-actions">
-                    <button type="button" class="rec-action-btn" title="View details" (click)="openView(a)">
+                    <button type="button" class="rec-action-btn" [title]="t().appointments.viewDetailsAction"
+                      (click)="openView(a)">
                       <i class="fa-regular fa-eye"></i>
                     </button>
-                    @if (a.status === AppointmentStatus.Upcoming) {
-                    <button type="button" class="rec-action-btn" title="Edit" (click)="openEdit(a)">
+                    @if (!fpReadOnly() && a.status === AppointmentStatus.Upcoming) {
+                    <button type="button" class="rec-action-btn" [title]="t().appointments.editAction"
+                      (click)="openEdit(a)">
                       <i class="fa-regular fa-pen-to-square"></i>
                     </button>
                     }
+                    @if (!fpReadOnly()) {
                     <button type="button" class="rec-action-btn rec-action-more" title="More options"
                       (click)="toggleMenu(a.id, $event)">
                       <i class="fa-solid fa-ellipsis-vertical"></i>
                     </button>
                     @if (openMenuId() === a.id) {
-                    <div class="record-menu"  [class.record-menu-up]="isLastRow(i)">
+                    <div class="record-menu" [class.record-menu-up]="isLastRow(i)">
                       @if (a.status === AppointmentStatus.Upcoming) {
                       <button type="button" class="rec-menu-item" (click)="markComplete(a.id); openMenuId.set(null)">
-                        <i class="fa-solid fa-check"></i> Mark Complete
+                        <i class="fa-solid fa-check"></i> {{ t().appointments.markComplete }}
                       </button>
                       <button type="button" class="rec-menu-item" (click)="confirmCancel(a.id); openMenuId.set(null)">
-                        <i class="fa-solid fa-ban"></i> Cancel
+                        <i class="fa-solid fa-ban"></i> {{ t().appointments.cancelAction }}
                       </button>
                       }
                       <button type="button" class="rec-menu-item rec-menu-item--danger"
                         (click)="confirmDelete(a.id); openMenuId.set(null)">
-                        <i class="fa-solid fa-trash"></i> Delete
+                        <i class="fa-solid fa-trash"></i> {{ t().appointments.deleteAction }}
                       </button>
                     </div>
+                    }
                     }
                   </div>
                 </td>
@@ -645,10 +663,10 @@
     <div class="modal-hdr">
       <div>
         <h2 class="modal-hdr-title">
-          @if (editingId()) { Edit Appointment } @else { Add New Appointment }
+          @if (editingId()) { {{ t().appointments.editAppointmentTitle }} } @else { {{ t().appointments.addAppointmentTitle }} }
         </h2>
         @if (!editingId()) {
-        <p class="modal-hdr-sub">Step {{ formStep() }} of 2</p>
+        <p class="modal-hdr-sub">{{ t().appointments.step }} {{ formStep() }} of 2</p>
         }
       </div>
       <button type="button" class="close-modal-btn" (click)="closeAddModal()">
@@ -670,7 +688,7 @@
     <!-- ── STEP 1: Type Selection ── -->
     @if (formStep() === 1) {
     <div class="modal-body">
-      <p class="type-select-hint">Select the type of appointment:</p>
+      <p class="type-select-hint">{{ t().appointments.selectType }}</p>
       @if (formErrors()['appointmentType']) {
       <p class="field-err" style="margin-bottom:12px">{{ formErrors()['appointmentType'] }}</p>
       }
@@ -690,9 +708,9 @@
 
       @if (fType() === AppointmentType.Other) {
       <div class="field-group" style="margin-top:16px">
-        <label class="field-lbl">Custom Appointment Type *</label>
+        <label class="field-lbl">{{ this.t().appointments.customType }} *</label>
         <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['customType']"
-          placeholder="e.g. Nutrition Consultation" [ngModel]="fCustomType()"
+          [placeholder]="this.t().appointments.customTypePlaceholder" [ngModel]="fCustomType()"
           (ngModelChange)="onCustomTypeChange($event)">
         @if (formErrors()['customType']) {
         <p class="field-err">{{ formErrors()['customType'] }}</p>
@@ -701,9 +719,11 @@
       }
     </div>
     <div class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">
+        {{ this.t().appointments.cancelBtn }}
+      </button>
       <button type="button" class="modal-btn modal-btn-primary" [disabled]="!canContinueType()" (click)="goStep2()">
-        Next <i class="fa-solid fa-arrow-right"></i>
+        {{ this.t().appointments.nextBtn }} <i class="fa-solid fa-arrow-right"></i>
       </button>
     </div>
     }
@@ -714,9 +734,9 @@
 
       @if (fType() === AppointmentType.Other) {
       <div class="field-group">
-        <label class="field-lbl">Custom Appointment Type *</label>
+        <label class="field-lbl">{{ this.t().appointments.customType }} *</label>
         <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['customType']"
-          placeholder="e.g. Nutrition Consultation" [ngModel]="fCustomType()"
+          [placeholder]="this.t().appointments.customTypePlaceholder" [ngModel]="fCustomType()"
           (ngModelChange)="onCustomTypeChange($event)">
         @if (formErrors()['customType']) {
         <p class="field-err">{{ formErrors()['customType'] }}</p>
@@ -725,18 +745,20 @@
       }
 
       <div class="field-group">
-        <label class="field-lbl">Appointment Title *</label>
+        <label class="field-lbl">{{ this.t().appointments.appointmentTitle }} *</label>
         <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['title']"
-          placeholder="e.g. Annual Cardiology Checkup" [ngModel]="fTitle()" (ngModelChange)="fTitle.set($event)">
+          [placeholder]="this.t().appointments.appointmentTitlePlaceholder" [ngModel]="fTitle()"
+          (ngModelChange)="fTitle.set($event)">
         @if (formErrors()['title']) {
         <p class="field-err">{{ formErrors()['title'] }}</p>
         }
       </div>
 
       <div class="field-group">
-        <label class="field-lbl">Provider / Doctor *</label>
+        <label class="field-lbl">{{ this.t().appointments.providerDoctor }} *</label>
         <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['provider']"
-          placeholder="e.g. Dr. Mohamed Ali" [ngModel]="fProvider()" (ngModelChange)="fProvider.set($event)">
+          [placeholder]="this.t().appointments.providerPlaceholder" [ngModel]="fProvider()"
+          (ngModelChange)="fProvider.set($event)">
         @if (formErrors()['provider']) {
         <p class="field-err">{{ formErrors()['provider'] }}</p>
         }
@@ -744,7 +766,7 @@
 
       <div class="field-row-2">
         <div class="field-group">
-          <label class="field-lbl">Date *</label>
+          <label class="field-lbl">{{ this.t().appointments.dateLbl }} *</label>
           <input type="date" class="field-inp" [class.field-inp--err]="formErrors()['date']" [min]="minDate"
             [ngModel]="fDate()" (ngModelChange)="fDate.set($event)">
           @if (formErrors()['date']) {
@@ -752,7 +774,7 @@
           }
         </div>
         <div class="field-group">
-          <label class="field-lbl">Time *</label>
+          <label class="field-lbl">{{ this.t().appointments.timeLbl }} *</label>
           <input type="time" class="field-inp" [class.field-inp--err]="formErrors()['time']" [min]="minTime"
             [ngModel]="fTime()" (ngModelChange)="fTime.set($event)">
           @if (formErrors()['time']) {
@@ -762,23 +784,23 @@
       </div>
 
       <div class="field-group">
-        <label class="field-lbl">Reminder</label>
+        <label class="field-lbl">{{ this.t().appointments.reminderLabel }}</label>
         <div class="reminder-opts">
           <button type="button" class="reminder-chip"
             [class.reminder-chip--active]="!customReminderSelected() && fReminder() === null"
             (click)="setPresetReminder(null)">
-            None
+            {{ this.t().appointments.noneReminder }}
           </button>
           @for (opt of REMINDER_OPTIONS; track opt.value) {
           <button type="button" class="reminder-chip"
             [class.reminder-chip--active]="!customReminderSelected() && fReminder() === opt.value"
             (click)="setPresetReminder(opt.value)">
-            {{ opt.label }}
+            {{ getReminderLabel(opt.value) }}
           </button>
           }
           <button type="button" class="reminder-chip" [class.reminder-chip--active]="customReminderSelected()"
             (click)="selectCustomReminder()">
-            Custom
+            {{ this.t().appointments.customReminder }}
           </button>
         </div>
         @if (customReminderSelected()) {
@@ -786,7 +808,7 @@
           <input type="number" class="field-inp custom-reminder-input"
             [class.field-inp--err]="formErrors()['reminder']" min="1" max="10080" step="1"
             [ngModel]="fCustomReminder()" (ngModelChange)="setCustomReminder($event)">
-          <span class="custom-reminder-unit">minutes before</span>
+          <span class="custom-reminder-unit">{{ this.t().appointments.minutesBefore }}</span>
         </div>
         }
         @if (formErrors()['reminder']) {
@@ -795,8 +817,8 @@
       </div>
 
       <div class="field-group">
-        <label class="field-lbl">Notes <span style="color:var(--text-4)">(optional)</span></label>
-        <textarea class="field-inp field-textarea" placeholder="Any additional notes or preparation instructions..."
+        <label class="field-lbl">{{ this.t().appointments.notesLabel }} <span style="color:var(--text-4)">({{ this.t().common.optional }})</span></label>
+        <textarea class="field-inp field-textarea" [placeholder]="this.t().appointments.notesPlaceholder"
           rows="3" [ngModel]="fNotes()" (ngModelChange)="fNotes.set($event)"></textarea>
       </div>
 
@@ -804,20 +826,22 @@
     <div class="modal-ftr">
       @if (!editingId()) {
       <button type="button" class="modal-btn modal-btn-secondary" (click)="goStep1()">
-        <i class="fa-solid fa-arrow-left"></i> Back
+        <i class="fa-solid fa-arrow-left"></i> {{ this.t().appointments.backBtn }}
       </button>
       } @else {
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">
+        {{ this.t().appointments.cancelBtn }}
+      </button>
       }
       <button type="button" class="modal-btn modal-btn-primary"
         [disabled]="submitting() || (fType() === AppointmentType.Other && !fCustomType().trim())"
         (click)="submitForm()">
         @if (submitting()) {
-        <span class="btn-spinner"></span> Saving...
+        <span class="btn-spinner"></span> {{ this.t().appointments.savingBtn }}
         } @else if (editingId()) {
-        <i class="fa-regular fa-floppy-disk"></i> Save Changes
+        <i class="fa-regular fa-floppy-disk"></i> {{ this.t().appointments.saveChanges }}
         } @else {
-        <i class="fa-solid fa-calendar-plus"></i> Add Appointment
+        <i class="fa-solid fa-calendar-plus"></i> {{ this.t().appointments.addAppointmentBtn }}
         }
       </button>
     </div>
@@ -832,7 +856,7 @@
 <div class="modal-overlay" (click)="closeView()">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-hdr">
-      <h2 class="modal-hdr-title">Appointment Details</h2>
+      <h2 class="modal-hdr-title">{{ t().appointments.appointmentDetails }}</h2>
       <button type="button" class="close-modal-btn" (click)="closeView()">
         <i class="fa-solid fa-xmark"></i>
       </button>
@@ -849,42 +873,44 @@
       </div>
       <div class="view-detail-grid">
         <div class="view-detail-item">
-          <span class="view-detail-lbl"><i class="fa-solid fa-tag"></i> Type</span>
+          <span class="view-detail-lbl"><i class="fa-solid fa-tag"></i> {{ t().appointments.typeLabel }}</span>
           <span class="view-detail-val">{{ typeLabel(a) }}</span>
         </div>
         <div class="view-detail-item">
-          <span class="view-detail-lbl"><i class="fa-solid fa-user-doctor"></i> Provider</span>
+          <span class="view-detail-lbl"><i class="fa-solid fa-user-doctor"></i> {{ t().appointments.provider }}</span>
           <span class="view-detail-val">{{ a.provider }}</span>
         </div>
         <div class="view-detail-item">
-          <span class="view-detail-lbl"><i class="fa-regular fa-calendar"></i> Date</span>
+          <span class="view-detail-lbl"><i class="fa-regular fa-calendar"></i> {{ t().appointments.dateLabel }}</span>
           <span class="view-detail-val">{{ formatDate(a.appointmentDateTime) }}</span>
         </div>
         <div class="view-detail-item">
-          <span class="view-detail-lbl"><i class="fa-regular fa-clock"></i> Time</span>
+          <span class="view-detail-lbl"><i class="fa-regular fa-clock"></i> {{ t().appointments.timeLabel }}</span>
           <span class="view-detail-val">{{ formatTime(a.appointmentDateTime) }}</span>
         </div>
         <div class="view-detail-item">
-          <span class="view-detail-lbl"><i class="fa-regular fa-bell"></i> Reminder</span>
+          <span class="view-detail-lbl"><i class="fa-regular fa-bell"></i> {{ t().appointments.reminder }}</span>
           <span class="view-detail-val">{{ reminderLabel(a.reminderOffsetMinutes) }}</span>
         </div>
         <div class="view-detail-item">
-          <span class="view-detail-lbl"><i class="fa-solid fa-calendar-day"></i> When</span>
+          <span class="view-detail-lbl"><i class="fa-solid fa-calendar-day"></i> {{ t().appointments.whenLabel }}</span>
           <span class="view-detail-val">{{ relativeDate(a.appointmentDateTime) }}</span>
         </div>
       </div>
       @if (a.notes) {
       <div class="view-notes-block">
-        <span class="view-detail-lbl"><i class="fa-regular fa-note-sticky"></i> Notes</span>
+        <span class="view-detail-lbl"><i class="fa-regular fa-note-sticky"></i> {{ t().appointments.notesLabel }}</span>
         <p class="view-notes-text">{{ a.notes }}</p>
       </div>
       }
     </div>
     <div class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeView()">Close</button>
-      @if (a.status === AppointmentStatus.Upcoming) {
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeView()">
+        {{ t().appointments.closeBtn }}
+      </button>
+      @if (!fpReadOnly() && a.status === AppointmentStatus.Upcoming) {
       <button type="button" class="modal-btn modal-btn-primary" (click)="closeView(); openEdit(a)">
-        <i class="fa-regular fa-pen-to-square"></i> Edit
+        <i class="fa-regular fa-pen-to-square"></i> {{ t().appointments.editBtn }}
       </button>
       }
     </div>
@@ -897,7 +923,7 @@
 <div class="modal-overlay" (click)="closeDelete()">
   <div class="modal-card modal-card-sm" (click)="$event.stopPropagation()">
     <div class="modal-hdr">
-      <h2 class="modal-hdr-title">Delete Appointment</h2>
+      <h2 class="modal-hdr-title">{{ t().appointments.deleteAppointment }}</h2>
       <button type="button" class="close-modal-btn" (click)="closeDelete()">
         <i class="fa-solid fa-xmark"></i>
       </button>
@@ -906,14 +932,15 @@
       <div class="confirm-icon confirm-icon--danger">
         <i class="fa-solid fa-trash"></i>
       </div>
-      <p class="confirm-text">Are you sure you want to permanently delete this appointment? This action cannot be
-        undone.</p>
+      <p class="confirm-text">{{ t().appointments.deleteConfirmText }}</p>
     </div>
     <div class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDelete()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDelete()">
+        {{ t().appointments.cancelBtn }}
+      </button>
       <button type="button" class="modal-btn modal-btn-danger" [disabled]="deleting()" (click)="executeDelete()">
-        @if (deleting()) { <span class="btn-spinner btn-spinner--light"></span> Deleting... }
-        @else { <i class="fa-solid fa-trash"></i> Delete }
+        @if (deleting()) { <span class="btn-spinner btn-spinner--light"></span> {{ t().appointments.deletingBtn }} }
+        @else { <i class="fa-solid fa-trash"></i> {{ t().appointments.deleteAction }} }
       </button>
     </div>
   </div>
@@ -925,7 +952,7 @@
 <div class="modal-overlay" (click)="closeCancel()">
   <div class="modal-card modal-card-sm" (click)="$event.stopPropagation()">
     <div class="modal-hdr">
-      <h2 class="modal-hdr-title">Cancel Appointment</h2>
+      <h2 class="modal-hdr-title">{{ t().appointments.cancelAppointmentTitle }}</h2>
       <button type="button" class="close-modal-btn" (click)="closeCancel()">
         <i class="fa-solid fa-xmark"></i>
       </button>
@@ -934,14 +961,15 @@
       <div class="confirm-icon confirm-icon--warn">
         <i class="fa-solid fa-ban"></i>
       </div>
-      <p class="confirm-text">Cancel this appointment? The appointment will be marked as cancelled and cannot be
-        rescheduled from here.</p>
+      <p class="confirm-text">{{ t().appointments.cancelConfirmText }}</p>
     </div>
     <div class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeCancel()">Keep it</button>
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeCancel()">
+        {{ t().appointments.keepIt }}
+      </button>
       <button type="button" class="modal-btn modal-btn-danger" [disabled]="cancelling()" (click)="executeCancel()">
-        @if (cancelling()) { <span class="btn-spinner btn-spinner--light"></span> Cancelling... }
-        @else { <i class="fa-solid fa-ban"></i> Cancel Appointment }
+        @if (cancelling()) { <span class="btn-spinner btn-spinner--light"></span> {{ t().appointments.cancellingBtn }} }
+        @else { <i class="fa-solid fa-ban"></i> {{ t().appointments.cancelAppointmentBtn }} }
       </button>
     </div>
   </div>

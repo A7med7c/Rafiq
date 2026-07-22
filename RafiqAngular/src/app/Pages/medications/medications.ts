@@ -4,12 +4,18 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { forkJoin, Observable } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { forkJoin, Observable, of, map, switchMap } from 'rxjs';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
+import { AiChatService } from '../../Services/ai-chat.service';
 import { NotificationService } from '../../Services/notification.service';
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
 import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
 import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UpdateUserMedicinePayload, UserMedicine } from '../../Modles/dashboard.models';
+import { LocalizationService } from '../../Services/localization.service';
+import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
+import { ProfileSelectionService } from '../../Services/profile-selection.service';
 
 type MedTab = 'schedule' | 'medications';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -115,11 +121,17 @@ export class Medications implements OnInit, OnDestroy {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-  private readonly authSvc = inject(AuthService);
+  private readonly authSvc        = inject(AuthService);
+  protected readonly profileCache = inject(ProfileCacheService);
   protected readonly notifSvc = inject(NotificationService);
   private readonly medSvc = inject(MedicationRemindersService);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
+  protected readonly router = inject(Router);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly aiChatService = inject(AiChatService);
+  protected readonly t = this.l10n.t;
+  private readonly fpSvc = inject(FamilyProfilesService);
+  private readonly profileSelectSvc = inject(ProfileSelectionService);
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {
@@ -128,6 +140,36 @@ export class Medications implements OnInit, OnDestroy {
 
     this.loadSchedule();
     this.loadAllMedicineReminders();
+  });
+
+  // ── Family profile override (set from query params) ──────────────────────
+  readonly fpProfileId = signal<string | null>(null);
+  readonly fpProfileName = signal<string | null>(null);
+
+  // Derive readOnly from the accessible-profiles endpoint so it is always
+  // authoritative — even when the user navigates here via the sidebar without
+  // query params but with a Viewer-access profile selected in localStorage.
+  private readonly _viewingMedProfile = toSignal<AccessibleProfileDto | null>(
+    this.route.queryParamMap.pipe(
+      map(params => params.get('profileId') ?? this.profileSelectSvc.selectedProfileId),
+      switchMap(profileId => {
+        if (!profileId) return of(null);
+        return this.fpSvc.getAccessible().pipe(
+          map(profiles => profiles.find(p => p.userHealthProfileId === profileId) ?? null)
+        );
+      })
+    ),
+    { initialValue: null }
+  );
+
+  readonly fpReadOnly = computed(() => this._viewingMedProfile()?.accessRole === 'Viewer');
+
+  /** Display label for the owner of every dose card on this page. */
+  readonly doseOwnerLabel = computed<string>(() => {
+    const profile = this._viewingMedProfile();
+    if (!profile || profile.isSelf) return 'You';
+    const rel = profile.relationship ? ` (${profile.relationship})` : '';
+    return `${profile.firstName}${rel}`;
   });
 
   // ── Layout ──────────────────────────────────────────────────────────────
@@ -446,6 +488,24 @@ export class Medications implements OnInit, OnDestroy {
   get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
   get avatarUrl(): string { return this.authSvc.avatarUrl; }
 
+  get hasProfileImage(): boolean { return !!this.authSvc.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authSvc.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
   // ── Reminder form validation ──────────────────────────────────────────────
 
   /** Per-time-index inline errors: past-time or duplicate. */
@@ -530,13 +590,21 @@ export class Medications implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
-    this.loadSchedule();
-    this.loadMedicines();
 
     this.clockId = setInterval(() => this.nowMinutes.set(Medications.minutesNow()), 30_000);
 
     this.route.queryParams.subscribe(params => {
+      const fpId = params['profileId'] ?? null;
+      if (fpId !== this.fpProfileId()) {
+        this.fpProfileId.set(fpId);
+        this.fpProfileName.set(params['name'] ?? null);
+      }
+
+      this.loadSchedule();
+      this.loadMedicines();
+
       if (params['tab'] === 'medications' || params['tab'] === 'schedule') {
         this.setTab(params['tab']);
       }
@@ -592,6 +660,8 @@ export class Medications implements OnInit, OnDestroy {
   toggleDropdown(): void { this.dropdownOpen.update(v => !v); }
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
+  goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+
   // ── Tabs ──────────────────────────────────────────────────────────────────
   setTab(tab: MedTab): void {
     this.activeTab.set(tab);
@@ -610,7 +680,7 @@ export class Medications implements OnInit, OnDestroy {
   loadSchedule(): void {
     this.scheduleLoading.set(true);
     this.scheduleError.set(null);
-    this.medSvc.getToday().subscribe({
+    this.medSvc.getToday(this.fpProfileId() ?? undefined).subscribe({
       next: data => {
         this.todayLogs.set(data);
         this.scheduleLoading.set(false);
@@ -626,7 +696,7 @@ export class Medications implements OnInit, OnDestroy {
   loadMedicines(): void {
     this.medsLoading.set(true);
     this.medsError.set(null);
-    this.medSvc.getUserMedicines().subscribe({
+    this.medSvc.getUserMedicines(this.fpProfileId() ?? undefined).subscribe({
       next: data => {
         this.medicines.set(data);
         this.medsLoading.set(false);
@@ -746,10 +816,12 @@ export class Medications implements OnInit, OnDestroy {
   // ── Confirm medication ────────────────────────────────────────────────────
   /** Confirms the newest unanswered log for a dose; the API cancels its follow-ups. */
   confirmDose(dose: Dose): void {
+    if (this.fpReadOnly()) return;
     if (dose.actionable) this.openConfirm(dose.actionable);
   }
 
   openConfirm(log: MedicationReminderLogDto): void {
+    if (this.fpReadOnly()) return;
     this.confirmingLog.set(log);
     this.showConfirmModal.set(true);
   }
@@ -1333,7 +1405,7 @@ export class Medications implements OnInit, OnDestroy {
     };
 
     this.addMedSaving.set(true);
-    this.medSvc.createMedicine(payload).subscribe({
+    this.medSvc.createMedicine(payload, this.fpProfileId() ?? undefined).subscribe({
       next: res => {
         this.addMedSaving.set(false);
         this.showAddMedModal.set(false);

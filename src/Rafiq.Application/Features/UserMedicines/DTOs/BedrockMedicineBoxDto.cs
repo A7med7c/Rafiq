@@ -4,6 +4,8 @@ public sealed class BedrockMedicineBoxDto
 {
     public bool IsValidDocument { get; set; }
 
+    public bool IsUnreadable { get; set; }
+
     public string? DetectedDocumentType { get; set; }
 
     public string? MedicineName { get; set; }

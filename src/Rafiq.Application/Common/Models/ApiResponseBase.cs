@@ -8,6 +8,8 @@ public class ApiResponseBase
 
     public IReadOnlyList<string>? Errors { get; init; }
 
+    public string? ErrorCode { get; init; }
+
     public static ApiResponseBase SuccessResponse(string message = "OK")
         => new()
         {
@@ -17,11 +19,13 @@ public class ApiResponseBase
 
     public static ApiResponseBase FailureResponse(
         string message,
-        IReadOnlyList<string>? errors = null)
+        IReadOnlyList<string>? errors = null,
+        string? errorCode = null)
         => new()
         {
             Success = false,
             Message = message,
-            Errors = errors ?? Array.Empty<string>()
+            Errors = errors ?? Array.Empty<string>(),
+            ErrorCode = errorCode
         };
 }

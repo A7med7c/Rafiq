@@ -34,6 +34,20 @@ public sealed class PrescriptionRepository : IPrescriptionRepository
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync(cancellationToken);
 
+    public Task<bool> ExistsDuplicateAsync(
+        Guid userHealthProfileId,
+        DateOnly prescriptionDate,
+        string doctorName,
+        string patientName,
+        CancellationToken cancellationToken = default)
+        => _context.Prescriptions.AnyAsync(
+            p => p.UserHealthProfileId == userHealthProfileId
+                 && !p.IsDeleted
+                 && p.PrescriptionDate == prescriptionDate
+                 && p.DoctorName.ToLower() == doctorName.ToLower()
+                 && p.PatientName.ToLower() == patientName.ToLower(),
+            cancellationToken);
+
     public void Update(Prescription prescription)
     {
         _context.Prescriptions.Update(prescription);

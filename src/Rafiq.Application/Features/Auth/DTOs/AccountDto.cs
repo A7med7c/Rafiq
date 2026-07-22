@@ -7,6 +7,7 @@
         string Email,
         string PhoneNumber,
         bool PhoneNumberConfirmed,
+        bool EmailConfirmed,
         string Role,
         string? ProfileImageUrl);
 }

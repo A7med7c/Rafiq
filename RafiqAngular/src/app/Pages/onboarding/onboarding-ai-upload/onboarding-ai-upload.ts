@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HealthProfileService } from '../../../Services/health-profile.service';
+import { LocalizationService } from '../../../Services/localization.service';
 import { Gender, BloodType, AllergySeverity, DiseaseStatus } from '../../../Modles/health-profile-enums';
 import { CreatePatientProfileRequest } from '../../../Modles/health-profile-request';
 
@@ -44,6 +45,8 @@ interface Step3Data {
 export class OnboardingAiUpload implements OnInit {
   private readonly router        = inject(Router);
   private readonly healthProfile = inject(HealthProfileService);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   readonly docTypes = [
     { id: 'lab',          label: 'Lab Report'    },

@@ -1,9 +1,9 @@
-<section class="login-container" dir="ltr">
+<section class="login-container" [dir]="l10n.dir()">
     <div class="login-card">
 
         <div class="card-header">
-            <h2>Login</h2>
-            <p>Log in to your account.</p>
+            <h2>{{ t().login.title }}</h2>
+            <p>{{ t().login.subtitle }}</p>
         </div>
 
         @if (successMessage) {
@@ -23,19 +23,19 @@
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
 
             <div class="field">
-                <label for="loginIdentifier">Email or Phone</label>
+                <label for="loginIdentifier">{{ t().login.emailOrPhone }}</label>
 
                 <div class="input-shell" [class.invalid]="isInvalid('loginIdentifier')">
                     <input id="loginIdentifier" type="text" formControlName="loginIdentifier"
-                        placeholder="Enter your email or phone number" autocomplete="username">
+                        [placeholder]="t().login.emailPlaceholder" autocomplete="username">
                 </div>
 
                 @if (isInvalid('loginIdentifier')) {
                 <p class="field-error">
                     @if (loginForm.controls.loginIdentifier.errors?.['required']) {
-                    Email or phone number is required.
+                    {{ t().login.emailRequired }}
                     } @else {
-                    Enter a valid email or Egyptian phone number.
+                    {{ t().login.emailInvalid }}
                     }
                 </p>
                 }
@@ -44,15 +44,15 @@
 
             <div class="field">
 
-                <label for="password">Password</label>
+                <label for="password">{{ t().login.password }}</label>
 
                 <div class="input-shell" [class.invalid]="isInvalid('password')">
 
                     <input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
-                        placeholder="Enter your password" autocomplete="current-password">
+                        [placeholder]="t().login.passwordPlaceholder" autocomplete="current-password">
 
                     <button type="button" class="icon-button" (click)="togglePasswordVisibility()"
-                        [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+                        [attr.aria-label]="showPassword ? t().login.hidePassword : t().login.showPassword">
 
                         @if (showPassword) {
                         <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -75,9 +75,9 @@
                 @if (isInvalid('password')) {
                 <p class="field-error">
                     @if (loginForm.controls.password.errors?.['required']) {
-                    Password is required.
+                    {{ t().login.passwordRequired }}
                     } @else {
-                    Password must be at least 8 characters.
+                    {{ t().login.passwordMinLength }}
                     }
                 </p>
                 }
@@ -86,7 +86,7 @@
 
 
             <a class="forgot" routerLink="/forgot-password">
-                Forgot Password?
+                {{ t().login.forgotPassword }}
             </a>
 
 
@@ -97,9 +97,9 @@
                     }
 
                     @if (isSubmitting) {
-                    Logging in...
+                    {{ t().login.loggingIn }}
                     } @else {
-                    Log In
+                    {{ t().login.logIn }}
                     }
                 </span>
             </button>
@@ -111,9 +111,9 @@
 
         <p class="register">
 
-            Don't have an account?
+            {{ t().login.noAccount }}
 
-            <a routerLink="/register">Sign Up</a>
+            <a routerLink="/register">{{ t().login.signUp }}</a>
 
         </p>
 

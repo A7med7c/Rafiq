@@ -14,6 +14,7 @@ export interface PatientProfileResponse {
   bloodType: string;
   height: number;
   weight: number;
+  profileImageUrl: string | null;
   allergies: { id: string; name: string; severity: string }[];
   chronicDiseases: { id: string; name: string; diagnosedAt: string | null; status: string }[];
   createdAt: string;
@@ -46,6 +47,26 @@ export class HealthProfileService {
   getMyProfile(): Observable<ApiResponse<PatientProfileResponse>> {
     return this.http.get<ApiResponse<PatientProfileResponse>>(
       `${this.baseUrl}/me`
+    );
+  }
+
+  /** Uploads (or replaces) the profile picture for the given patient profile. */
+  uploadProfileImage(profileId: string, file: File): Observable<ApiResponse<PatientProfileResponse>> {
+    const formData = new FormData();
+    formData.append('profileImage', file, file.name);
+    return this.http.post<ApiResponse<PatientProfileResponse>>(
+      `${this.baseUrl}/${profileId}/image`,
+      formData
+    );
+  }
+
+  /** Removes the profile picture by posting RemoveImage=true (no file). */
+  deleteProfileImage(profileId: string): Observable<ApiResponse<PatientProfileResponse>> {
+    const formData = new FormData();
+    formData.append('removeImage', 'true');
+    return this.http.post<ApiResponse<PatientProfileResponse>>(
+      `${this.baseUrl}/${profileId}/image`,
+      formData
     );
   }
 }

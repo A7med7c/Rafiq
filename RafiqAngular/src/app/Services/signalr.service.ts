@@ -32,6 +32,23 @@ export interface AppointmentReminderNotificationPayload {
 
 export type ConnectionState = 'Disconnected' | 'Connecting' | 'Connected' | 'Reconnecting';
 
+// ── Voice Agent SignalR payloads ──────────────────────────────────────────────
+
+export interface VoiceAgentThinkingPayload {
+  toolName: string;
+}
+
+export interface VoiceAgentResponsePayload {
+  sessionId: string;
+  text: string;
+  navigateTo: string | null;
+  needsMoreInfo: boolean;
+}
+
+export interface VoiceAgentErrorPayload {
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -41,10 +58,15 @@ export class SignalRService {
   private connection: signalR.HubConnection | null = null;
   private starting = false;
 
-  readonly connectionState = signal<ConnectionState>('Disconnected');
-  readonly reminderEvents = signal<MedicationReminderNotificationPayload[]>([]);
-  readonly notificationEvents = signal<NotificationEventPayload[]>([]);
-  readonly appointmentReminderEvents = signal<AppointmentReminderNotificationPayload[]>([]);
+  readonly connectionState            = signal<ConnectionState>('Disconnected');
+  readonly reminderEvents             = signal<MedicationReminderNotificationPayload[]>([]);
+  readonly notificationEvents         = signal<NotificationEventPayload[]>([]);
+  readonly appointmentReminderEvents  = signal<AppointmentReminderNotificationPayload[]>([]);
+
+  // Voice Agent events
+  readonly voiceThinkingEvents  = signal<VoiceAgentThinkingPayload[]>([]);
+  readonly voiceResponseEvents  = signal<VoiceAgentResponsePayload[]>([]);
+  readonly voiceErrorEvents     = signal<VoiceAgentErrorPayload[]>([]);
 
   constructor() {
     // Connect only while a user is signed in; never negotiate anonymously.
@@ -101,6 +123,18 @@ export class SignalRService {
 
     this.connection.on('AppointmentReminderDue', (payload: AppointmentReminderNotificationPayload) => {
       this.appointmentReminderEvents.update((currentQueue) => [...currentQueue, payload]);
+    });
+
+    this.connection.on('VoiceAgentThinking', (payload: VoiceAgentThinkingPayload) => {
+      this.voiceThinkingEvents.update(q => [...q, payload]);
+    });
+
+    this.connection.on('VoiceAgentResponse', (payload: VoiceAgentResponsePayload) => {
+      this.voiceResponseEvents.update(q => [...q, payload]);
+    });
+
+    this.connection.on('VoiceAgentError', (payload: VoiceAgentErrorPayload) => {
+      this.voiceErrorEvents.update(q => [...q, payload]);
     });
 
     this.connection.onclose(() => {
@@ -181,11 +215,29 @@ export class SignalRService {
 
   drainAppointmentReminderEvents(): AppointmentReminderNotificationPayload[] {
     const events = this.appointmentReminderEvents();
-    if (!events.length) {
-      return [];
-    }
-
+    if (!events.length) return [];
     this.appointmentReminderEvents.set([]);
+    return events;
+  }
+
+  drainVoiceThinkingEvents(): VoiceAgentThinkingPayload[] {
+    const events = this.voiceThinkingEvents();
+    if (!events.length) return [];
+    this.voiceThinkingEvents.set([]);
+    return events;
+  }
+
+  drainVoiceResponseEvents(): VoiceAgentResponsePayload[] {
+    const events = this.voiceResponseEvents();
+    if (!events.length) return [];
+    this.voiceResponseEvents.set([]);
+    return events;
+  }
+
+  drainVoiceErrorEvents(): VoiceAgentErrorPayload[] {
+    const events = this.voiceErrorEvents();
+    if (!events.length) return [];
+    this.voiceErrorEvents.set([]);
     return events;
   }
 

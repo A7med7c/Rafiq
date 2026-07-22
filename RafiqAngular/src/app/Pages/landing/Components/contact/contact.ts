@@ -1,14 +1,15 @@
-import { Component, Input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, Input, inject } from '@angular/core';
+import { AuthService } from '../../../../Services/auth-service';
 import { LandingLanguage } from '../../landing';
 
 @Component({
   selector: 'app-contact',
-  imports: [RouterLink],
   templateUrl: './contact.html',
   styleUrl: './contact.css',
 })
 export class Contact {
+  private readonly authService = inject(AuthService);
+
   @Input() language: LandingLanguage = 'en';
 
   text = {
@@ -19,14 +20,18 @@ export class Contact {
       note: "It's free and easy to start.",
     },
     ar: {
-      title: 'هل أنت مستعد للتحكم في صحتك؟',
-      subtitle: 'انضم إلى رفيق اليوم واختبر مستقبل الرعاية الصحية.',
-      cta: 'ابدأ الآن ←',
-      note: 'البدء مجاني وسهل.',
+      title: 'مستعد تتحكم في صحتك؟',
+      subtitle: 'انضم لرفيق النهارده وعيش مستقبل الرعاية الصحية.',
+      cta: 'ابدأ دلوقتي ←',
+      note: 'مجاني وسهل تبدأ.',
     },
   };
 
   get t() {
     return this.text[this.language];
+  }
+
+  onGetStarted(): void {
+    this.authService.navigateToAppEntry();
   }
 }

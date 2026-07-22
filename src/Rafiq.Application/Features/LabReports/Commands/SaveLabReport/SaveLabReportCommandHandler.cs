@@ -38,10 +38,16 @@ public sealed class SaveLabReportCommandHandler(
             ? parsed
             : DateOnly.FromDateTime(DateTime.UtcNow);
 
+        var labName = request.LabName ?? string.Empty;
+        var doctorName = request.DoctorName ?? string.Empty;
+
+        if (await labReportRepository.ExistsDuplicateAsync(profileId, reportDate, labName, doctorName, cancellationToken))
+            throw new ConflictException("This document already exists in your medical records.");
+
         var labReport = new LabReport(
             profileId,
-            request.DoctorName ?? string.Empty,
-            request.LabName ?? string.Empty,
+            doctorName,
+            labName,
             reportDate,
             request.ImageUrl ?? string.Empty,
             request.OcrText,

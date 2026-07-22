@@ -1,14 +1,15 @@
-import { Component, Input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, Input, inject } from '@angular/core';
+import { AuthService } from '../../../../Services/auth-service';
 import { LandingLanguage } from '../../landing';
 
 @Component({
   selector: 'app-hero',
-  imports: [RouterLink],
   templateUrl: './hero.html',
   styleUrl: './hero.css',
 })
 export class Hero {
+  private readonly authService = inject(AuthService);
+
   @Input() language: LandingLanguage = 'en';
 
   text = {
@@ -24,19 +25,23 @@ export class Hero {
       watchDemo: 'Watch Demo',
     },
     ar: {
-      subtitle: 'رعاية صحية مدعومة بالذكاء الاصطناعي',
-      line1: 'رفيقك الذكي',
-      line2: 'للمتابعة الصحية',
-      line3: 'على مدار الساعة',
+      subtitle: 'رعاية صحية بالذكاء الاصطناعي',
+      line1: 'مساعدك',
+      line2: 'الصحي',
+      line3: 'الذكي',
       highlight: '| 24/7.',
       description:
-        'منصة ذكية وبسيطة لإدارة سجلك الطبي وتحليل تقاريرك بسهولة. احصل على إجابات، تابع صحتك، وأدر أدويتك ومواعيدك في مكان واحد.',
-      cta: 'ابدأ الآن',
-      watchDemo: 'شاهد العرض',
+        'دعم ذكي لصحتك. احصل على إجابات، تابع صحتك، اتحكم في أدويتك، واحجز مواعيدك — كل ده في مكان واحد.',
+      cta: 'ابدأ دلوقتي',
+      watchDemo: 'شوف الفيديو',
     },
   };
 
   get t() {
     return this.text[this.language];
+  }
+
+  onGetStarted(): void {
+    this.authService.navigateToAppEntry();
   }
 }

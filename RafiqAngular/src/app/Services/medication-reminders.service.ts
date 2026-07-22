@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, shareReplay, switchMap } from 'rxjs';
+import { Observable, map, of, shareReplay, switchMap } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse, ApiResponseBase } from '../Modles/api-response';
 import { MedicationReminderLogDto } from '../Modles/medication-reminder.models';
@@ -21,8 +21,9 @@ export class MedicationRemindersService {
       shareReplay(1),
     );
 
-  getToday(): Observable<MedicationReminderLogDto[]> {
-    return this.profileId$.pipe(
+  getToday(profileId?: string): Observable<MedicationReminderLogDto[]> {
+    const pid$ = profileId ? of(profileId) : this.profileId$;
+    return pid$.pipe(
       switchMap(pid =>
         this.http.get<ApiResponse<MedicationReminderLogDto[]>>(
           `${this.base}/today?profileId=${pid}`
@@ -42,8 +43,9 @@ export class MedicationRemindersService {
     return this.http.post<ApiResponseBase>(`${this.base}/${id}/confirm`, {});
   }
 
-  getUserMedicines(): Observable<UserMedicine[]> {
-    return this.profileId$.pipe(
+  getUserMedicines(profileId?: string): Observable<UserMedicine[]> {
+    const pid$ = profileId ? of(profileId) : this.profileId$;
+    return pid$.pipe(
       switchMap(pid =>
         this.http.get<ApiResponse<UserMedicine[]>>(`${this.medBase}?profileId=${pid}`)
       ),
@@ -73,8 +75,9 @@ export class MedicationRemindersService {
     return this.http.put<ApiResponseBase>(`${this.remBase}/${id}`, payload);
   }
 
-  createMedicine(payload: AddUserMedicinePayload): Observable<ApiResponse<UserMedicine>> {
-    return this.profileId$.pipe(
+  createMedicine(payload: AddUserMedicinePayload, profileId?: string): Observable<ApiResponse<UserMedicine>> {
+    const pid$ = profileId ? of(profileId) : this.profileId$;
+    return pid$.pipe(
       switchMap(pid =>
         this.http.post<ApiResponse<UserMedicine>>(`${this.medBase}?profileId=${pid}`, payload)
       ),

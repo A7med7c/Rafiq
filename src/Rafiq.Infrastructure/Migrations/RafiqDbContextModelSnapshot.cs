@@ -217,6 +217,11 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<DateTime?>("LastMessageAt")
                         .HasColumnType("datetime2(7)");
 
+                    b.Property<int>("Source")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -277,6 +282,36 @@ namespace Rafiq.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("AiMessages", (string)null);
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Chat.MessageReaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AiMessageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<string>("Feedback")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("ReactionType")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AiMessageId", "UserId", "ReactionType")
+                        .IsUnique();
+
+                    b.ToTable("MessageReactions", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Appointment", b =>
@@ -1258,6 +1293,9 @@ namespace Rafiq.Infrastructure.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("PreviousConfirmedEmail")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ProfileImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -1376,6 +1414,17 @@ namespace Rafiq.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("AiConversation");
+                });
+
+            modelBuilder.Entity("Rafiq.Domain.Entities.Chat.MessageReaction", b =>
+                {
+                    b.HasOne("Rafiq.Domain.Entities.Chat.AiMessage", "AiMessage")
+                        .WithMany()
+                        .HasForeignKey("AiMessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AiMessage");
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Documents.Appointment", b =>

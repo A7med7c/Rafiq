@@ -1,11 +1,13 @@
 import { Component, ElementRef, HostListener, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { NotificationService } from '../../Services/notification.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { AiChatService } from '../../Services/ai-chat.service';
+import { LocalizationService } from '../../Services/localization.service';
 import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-chat.models';
 import { catchError, of } from 'rxjs';
 
@@ -31,11 +33,15 @@ const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
   styleUrl: './ai-assistant.css',
 })
 export class AiAssistant implements OnInit {
-  private readonly authService = inject(AuthService);
+  private readonly authService    = inject(AuthService);
+  protected readonly profileCache = inject(ProfileCacheService);
   protected readonly notifService = inject(NotificationService);
   private readonly healthProfileService = inject(HealthProfileService);
   private readonly aiChatService = inject(AiChatService);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
+  protected readonly l10n = inject(LocalizationService);
+  protected readonly t = this.l10n.t;
 
   @ViewChild('messagesEnd') private messagesEnd?: ElementRef<HTMLDivElement>;
   @ViewChild('messageInput') private messageInputRef?: ElementRef<HTMLTextAreaElement>;
@@ -46,6 +52,7 @@ export class AiAssistant implements OnInit {
   readonly mobileSidebarOpen = signal(false);
   readonly dropdownOpen = signal(false);
   readonly unreadNotifCount = this.notifService.unreadCount;
+  readonly rightPanelCollapsed = signal(true);
 
   // ── Profile ──
   readonly profileId = signal<string | null>(null);
@@ -92,6 +99,19 @@ export class AiAssistant implements OnInit {
   readonly renaming = signal(false);
   readonly renameDraft = signal('');
 
+  // ── Dislike reason dialog ──
+  readonly dislikeDialogOpen = signal(false);
+  readonly dislikeTargetMsg = signal<ChatMessage | null>(null);
+  readonly dislikeReason = signal('');
+  readonly dislikeReasons = [
+    'Incorrect information',
+    'Harmful or unsafe content',
+    'Not helpful',
+    'Off-topic',
+    'Other',
+  ];
+  readonly dislikeSubmitting = signal(false);
+
   get displayName(): string {
     const u = this.authService.currentUser;
     if (!u) return 'there';
@@ -106,7 +126,26 @@ export class AiAssistant implements OnInit {
     return this.authService.avatarUrl;
   }
 
+  get hasProfileImage(): boolean { return !!this.authService.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authService.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadProfileThenConversations();
   }
@@ -159,7 +198,15 @@ export class AiAssistant implements OnInit {
     this.clearAttachedImage();
 
     this.aiChatService.getConversationHistory(conversation.id).subscribe(history => {
-      this.messages.set(history?.messages ?? []);
+      const convId = conversation.id;
+      this.messages.set(
+        (history?.messages ?? []).map(m => ({
+          ...m,
+          imagePreviewUrl: m.role === 'User'
+            ? this.aiChatService.getCachedImage(convId, m.sequenceNumber)
+            : undefined,
+        }))
+      );
       this.messagesLoading.set(false);
       this.scrollToBottom();
     });
@@ -236,12 +283,12 @@ export class AiAssistant implements OnInit {
 
     const format = ACCEPTED_IMAGE_TYPES[file.type];
     if (!format) {
-      this.attachError.set('صيغة الصورة غير مدعومة. المسموح: JPG, JPEG, PNG, WebP فقط.');
+      this.attachError.set(this.t().aiAssistant.unsupportedFormat);
       return;
     }
 
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
-      this.attachError.set('حجم الصورة كبير جداً. الحد الأقصى 8 ميجابايت.');
+      this.attachError.set(this.t().aiAssistant.imageTooLarge);
       return;
     }
 
@@ -254,7 +301,7 @@ export class AiAssistant implements OnInit {
       this.attachedImagePreviewUrl.set(result);
     };
     reader.onerror = () => {
-      this.attachError.set('تعذر قراءة الصورة. حاول مرة أخرى.');
+      this.attachError.set(this.t().aiAssistant.couldNotReadImage);
     };
     reader.readAsDataURL(file);
   }
@@ -286,7 +333,7 @@ export class AiAssistant implements OnInit {
 
     const profileId = this.profileId();
     if (!profileId) {
-      this.sendError.set('No health profile found. Please set up your profile first.');
+      this.sendError.set(this.t().aiAssistant.noProfileError);
       return;
     }
 
@@ -306,14 +353,14 @@ export class AiAssistant implements OnInit {
     }
 
     // No conversation yet — create one titled from the first message, then send into it.
-    const titleSource = text || 'صورة مرفقة';
+    const titleSource = text || 'Attached image';
     const title = titleSource.length > 40 ? `${titleSource.slice(0, 40)}…` : titleSource;
     this.aiChatService.createConversation({ userHealthProfileId: profileId, title }).subscribe({
       next: res => {
         const newId = res.data;
         if (!newId) {
           this.sending.set(false);
-          this.sendError.set('Could not start a new conversation.');
+          this.sendError.set(this.t().aiAssistant.conversationFailed);
           this.messageText.set(text);
           return;
         }
@@ -333,7 +380,7 @@ export class AiAssistant implements OnInit {
       },
       error: () => {
         this.sending.set(false);
-        this.sendError.set('Could not start a new conversation. Please try again.');
+        this.sendError.set(this.t().aiAssistant.conversationFailed);
         this.messageText.set(text);
       },
     });
@@ -341,6 +388,10 @@ export class AiAssistant implements OnInit {
 
   private pushOptimisticUserMessage(text: string, imagePreviewUrl?: string): void {
     const nextSeq = (this.messages().at(-1)?.sequenceNumber ?? 0) + 1;
+    const convId = this.selectedConversationId();
+    if (imagePreviewUrl && convId) {
+      this.aiChatService.cacheImage(convId, nextSeq, imagePreviewUrl);
+    }
     this.messages.update(list => [
       ...list,
       {
@@ -365,12 +416,13 @@ export class AiAssistant implements OnInit {
       .sendMessage(conversationId, { text, base64Image, imageFormat })
       .subscribe({
         next: res => {
+          const id = res.data?.id ?? crypto.randomUUID();
           const content = res.data?.content ?? '';
           const nextSeq = (this.messages().at(-1)?.sequenceNumber ?? 0) + 1;
           this.messages.update(list => [
             ...list,
             {
-              id: `assistant-${nextSeq}`,
+              id,
               role: 'Assistant',
               content,
               sequenceNumber: nextSeq,
@@ -387,8 +439,7 @@ export class AiAssistant implements OnInit {
         },
         error: () => {
           this.sending.set(false);
-          this.sendError.set('Could not send this message. Please try again.');
-          // Remove the optimistic bubble and restore the text so nothing is lost.
+          this.sendError.set(this.t().aiAssistant.sendFailed);
           this.messages.update(list => list.filter(m => !m.id.startsWith('pending-')));
           this.messageText.set(text);
         },
@@ -427,22 +478,22 @@ export class AiAssistant implements OnInit {
     const isYesterday = date.toDateString() === yesterday.toDateString();
 
     if (isToday) {
-      return date.toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true });
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     }
     if (isYesterday) {
-      return 'أمس';
+      return this.t().aiAssistant.yesterday;
     }
 
     const daysDiff = Math.floor((now.getTime() - date.getTime()) / 86_400_000);
     if (daysDiff < 7) {
-      return date.toLocaleDateString('ar-EG', { weekday: 'long' });
+      return date.toLocaleDateString('en-US', { weekday: 'long' });
     }
 
     return date.toLocaleDateString('en-GB');
   }
 
   formatMessageTime(message: ConversationMessageDto): string {
-    return new Date(message.createdAt).toLocaleTimeString('ar-EG', {
+    return new Date(message.createdAt).toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -453,11 +504,64 @@ export class AiAssistant implements OnInit {
     const conv = this.selectedConversation();
     if (!conv) return '';
     const dateStr = conv.lastMessageAt ?? conv.createdAt;
-    return this.formatSidebarTime(conv) + (new Date(dateStr).toDateString() === new Date().toDateString() ? '، اليوم' : '');
+    return this.formatSidebarTime(conv) + (new Date(dateStr).toDateString() === new Date().toDateString() ? ', ' + this.t().aiAssistant.today : '');
   }
 
   isUserMessage(message: ConversationMessageDto): boolean {
     return message.role === 'User';
+  }
+
+  toggleReaction(msg: ChatMessage, type: 'ThumbsUp' | 'ThumbsDown'): void {
+    // Don't allow reactions on optimistic user messages that have no real ID yet
+    if (msg.id.startsWith('pending-')) return;
+
+    if (type === 'ThumbsDown' && msg.userReaction !== 'ThumbsDown') {
+      // Open dislike reason dialog first
+      this.dislikeTargetMsg.set(msg);
+      this.dislikeReason.set('');
+      this.dislikeDialogOpen.set(true);
+      return;
+    }
+
+    this.applyReaction(msg, type);
+  }
+
+  applyReaction(msg: ChatMessage, type: 'ThumbsUp' | 'ThumbsDown'): void {
+    const conversationId = this.selectedConversationId();
+    if (!conversationId) return;
+
+    const remove = msg.userReaction === type;
+    const previousReaction = msg.userReaction;
+
+    // Optimistically update UI
+    this.messages.update(list =>
+      list.map(m => m.id === msg.id ? { ...m, userReaction: remove ? null : type } : m)
+    );
+
+    this.aiChatService.reactToMessage(conversationId, msg.id, type, remove).subscribe({
+      error: () => {
+        // Rollback on error
+        this.messages.update(list =>
+          list.map(m => m.id === msg.id ? { ...m, userReaction: previousReaction } : m)
+        );
+      }
+    });
+  }
+
+  submitDislikeReason(): void {
+    const msg = this.dislikeTargetMsg();
+    if (!msg) return;
+
+    this.dislikeDialogOpen.set(false);
+    this.applyReaction(msg, 'ThumbsDown');
+    this.dislikeTargetMsg.set(null);
+    this.dislikeReason.set('');
+  }
+
+  cancelDislikeDialog(): void {
+    this.dislikeDialogOpen.set(false);
+    this.dislikeTargetMsg.set(null);
+    this.dislikeReason.set('');
   }
 
   // ── Shell chrome (mirrors dashboard.ts) ──
@@ -492,6 +596,16 @@ export class AiAssistant implements OnInit {
 
   toggleDropdown(): void {
     this.dropdownOpen.update(v => !v);
+  }
+
+  goToMyProfile(): void {
+    this.dropdownOpen.set(false);
+    this.router.navigate(['/my-profile']);
+  }
+
+  minimizeChat(): void {
+    this.aiChatService.openPanel();
+    this.location.back();
   }
 
   logout(): void {

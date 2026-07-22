@@ -1,5 +1,65 @@
 @import "../dashboard/dashboard.css";
 
+/* ── Family profile context banner ───────────── */
+.fp-context-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #EFF9FF 0%, #E8F4FD 100%);
+  border: 1px solid rgba(14, 175, 215, 0.25);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+.fp-context-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(14, 175, 215, 0.12);
+  color: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.fp-context-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.fp-context-label { font-size: 11px; color: var(--text-3); font-weight: 600; }
+.fp-context-name  { font-size: 14px; color: var(--text); font-weight: 700; }
+.fp-context-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.fp-context-badge--viewer { background: #FEF9C3; color: #92400E; }
+.fp-context-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  background: var(--white);
+  color: var(--text-3);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.fp-context-back:hover { background: var(--border-lt); color: var(--text); }
+
 /* ── Page title bar ──────────────────────────── */
 .med-title-bar {
   display: flex;
@@ -1834,6 +1894,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   margin: 0;
 }
 
+.dose-card__owner {
+  font-size: 11px;
+  color: var(--blue, #0eafd7);
+  margin: 3px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .dose-card__status-col {
   display: flex;
   flex-direction: column;
@@ -2583,7 +2652,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background: #F8FAFC;
   height: var(--table-head-h);
   padding: 12px 16px;
-  text-align: left;
+  text-align: start;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -2591,6 +2660,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: var(--text-3);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
+}
+
+/* Actions column: header must align with the flex-end action-icon group in the body */
+.meds-table thead th:last-child {
+  text-align: end;
 }
 
 .meds-table tbody tr {
@@ -2657,7 +2731,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* Action menu */
-.actions-cell { white-space: nowrap; text-align: right; }
+.actions-cell { white-space: nowrap; text-align: end; }
 
 .record-actions {
   position: relative;
@@ -2701,9 +2775,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   overflow: hidden;
 }
 
+:host-context([dir="rtl"]) .record-menu,
+[dir="rtl"] .record-menu {
+  right: auto;
+  left: 0;
+  transform-origin: top left;
+}
+
 .record-menu-up {
   top: auto;
   bottom: calc(100% + 6px);
+  transform-origin: bottom right;
+}
+
+:host-context([dir="rtl"]) .record-menu-up,
+[dir="rtl"] .record-menu-up {
+  transform-origin: bottom left;
 }
 
 .rec-menu-item {

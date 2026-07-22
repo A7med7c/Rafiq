@@ -4,9 +4,16 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { of, map, switchMap } from 'rxjs';
 import { AuthService } from '../../Services/auth-service';
+import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { AppointmentsService } from '../../Services/appointments.service';
+import { LocalizationService } from '../../Services/localization.service';
 import { NotificationService } from '../../Services/notification.service';
+import { AiChatService } from '../../Services/ai-chat.service';
+import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
+import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import {
   AppointmentDto, AppointmentStatus, AppointmentType,
   CreateAppointmentRequest, UpdateAppointmentRequest,
@@ -51,11 +58,40 @@ const blankForm = (): ApptForm => ({
   styleUrl: './appointments.css',
 })
 export class Appointments implements OnInit, OnDestroy {
-  private readonly authSvc   = inject(AuthService);
+  private readonly authSvc        = inject(AuthService);
+  protected readonly profileCache = inject(ProfileCacheService);
   private readonly apptSvc   = inject(AppointmentsService);
   protected readonly notifSvc  = inject(NotificationService);
   private readonly router     = inject(Router);
   private readonly route      = inject(ActivatedRoute);
+  protected readonly l10n     = inject(LocalizationService);
+  protected readonly aiChatService = inject(AiChatService);
+  protected readonly t        = this.l10n.t;
+  private readonly fpSvc      = inject(FamilyProfilesService);
+  private readonly profileSelectSvc = inject(ProfileSelectionService);
+
+  // ── Family-profile read-only gate ────────────────────────────────────────
+  // Uses profileId from query param when present (direct link from family-profiles),
+  // otherwise falls back to the profile stored in localStorage by the
+  // family-profiles page.  If the resolved profile's access role is 'Viewer'
+  // all write actions are hidden.
+  readonly viewingProfile = toSignal<AccessibleProfileDto | null>(
+    this.route.queryParamMap.pipe(
+      map(params => params.get('profileId') ?? this.profileSelectSvc.selectedProfileId),
+      switchMap(profileId => {
+        if (!profileId) return of(null);
+        return this.fpSvc.getAccessible().pipe(
+          map(profiles => profiles.find(p => p.userHealthProfileId === profileId) ?? null)
+        );
+      })
+    ),
+    { initialValue: null }
+  );
+
+  readonly fpReadOnly = computed(() => this.viewingProfile()?.accessRole === 'Viewer');
+
+  // profileId override for data loading (populated from query param)
+  private readonly fpProfileId = signal<string | null>(null);
 
   // ── Layout ──────────────────────────────────────────────────────────────
   readonly sidebarCollapsed  = signal(false);
@@ -72,6 +108,7 @@ export class Appointments implements OnInit, OnDestroy {
   readonly searchQuery = signal('');
   readonly dateFrom    = signal('');
   readonly dateTo      = signal('');
+  readonly sortBy      = signal<'recent' | 'oldest' | 'az' | 'za'>('recent');
   readonly currentPage = signal(1);
   readonly PAGE_SIZE    = 5;
   readonly tabDirection = signal<'left' | 'right'>('left');
@@ -195,9 +232,13 @@ export class Appointments implements OnInit, OnDestroy {
     if (from) list = list.filter(a => new Date(a.appointmentDateTime) >= new Date(from));
     if (to)   list = list.filter(a => new Date(a.appointmentDateTime) <= new Date(`${to}T23:59:59`));
 
-    return list.sort(
-      (a, b) => new Date(a.appointmentDateTime).getTime() - new Date(b.appointmentDateTime).getTime()
-    );
+    const sort = this.sortBy();
+    if (sort === 'recent')  list = [...list].sort((a, b) => new Date(b.appointmentDateTime).getTime() - new Date(a.appointmentDateTime).getTime());
+    if (sort === 'oldest')  list = [...list].sort((a, b) => new Date(a.appointmentDateTime).getTime() - new Date(b.appointmentDateTime).getTime());
+    if (sort === 'az')      list = [...list].sort((a, b) => a.title.localeCompare(b.title));
+    if (sort === 'za')      list = [...list].sort((a, b) => b.title.localeCompare(a.title));
+
+    return list;
   });
 
   readonly paginated = computed(() => {
@@ -283,15 +324,38 @@ nextPage() {
   get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
   get avatarUrl(): string { return this.authSvc.avatarUrl; }
 
+  get hasProfileImage(): boolean { return !!this.authSvc.currentUser?.profileImageUrl; }
+
+  get userInitials(): string {
+    const u = this.authSvc.currentUser;
+    if (!u) return '?';
+    const f = (u.firstName ?? '')[0] ?? '';
+    const l = (u.lastName ?? '')[0] ?? '';
+    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+  }
+
+  get avatarBgColor(): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    const seed = this.displayName || this.userEmail || 'U';
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
+    this.profileCache.ensure();
     this.applyResponsiveSidebar();
-    this.loadAppointments();
     this.notifTimer = setInterval(() => this.checkDueNotifications(), 60_000);
 
-    // Auto-open add modal if navigated from dashboard with ?openAdd=1
     this.route.queryParams.subscribe(params => {
-      if (params['openAdd']) {
+      const profileId = params['profileId'] ?? null;
+      this.fpProfileId.set(profileId);
+      this.loadAppointments();
+
+      // Auto-open add modal only when navigated from dashboard with ?openAdd=1
+      // and the current profile is not read-only.
+      if (params['openAdd'] && !this.fpReadOnly()) {
         this.openAdd();
         this.router.navigate([], { replaceUrl: true, queryParams: {} });
       }
@@ -322,6 +386,8 @@ nextPage() {
   toggleDropdown(): void      { this.dropdownOpen.update(v => !v); }
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
+  goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+
   toggleMenu(id: string, e: MouseEvent): void {
     e.stopPropagation();
     this.openMenuId.update(cur => cur === id ? null : id);
@@ -331,7 +397,7 @@ nextPage() {
   loadAppointments(): void {
     this.loading.set(true);
     this.loadError.set(null);
-    this.apptSvc.getAll().subscribe({
+    this.apptSvc.getAll(this.fpProfileId() ?? undefined).subscribe({
       next: data => {
         this.appointments.set(data);
         this.loading.set(false);
@@ -344,7 +410,7 @@ nextPage() {
       },
       error: err => {
         this.loadError.set(
-          err?.error?.message ?? 'Could not load appointments. Please try again.'
+          err?.error?.message ?? this.t().appointments.couldNotLoad
         );
         this.loading.set(false);
       },
@@ -384,6 +450,7 @@ nextPage() {
 
   // ── Add / Edit ────────────────────────────────────────────────────────────
   openAdd(): void {
+    if (this.fpReadOnly()) return;
     this.editingId.set(null);
     this.resetForm();
     this.formStep.set(1);
@@ -391,6 +458,7 @@ nextPage() {
   }
 
   openEdit(a: AppointmentDto): void {
+    if (this.fpReadOnly()) return;
     this.editingId.set(a.id);
     const dt = new Date(a.appointmentDateTime);
     this.fType.set(a.appointmentType);
@@ -423,11 +491,11 @@ nextPage() {
 
   goStep2(): void {
     if (!this.fType()) {
-      this.formErrors.update(e => ({ ...e, appointmentType: 'Please select an appointment type.' }));
+      this.formErrors.update(e => ({ ...e, appointmentType: this.t().appointments.pleaseSelectType }));
       return;
     }
     if (this.fType() === AppointmentType.Other && !this.fCustomType().trim()) {
-      this.formErrors.update(e => ({ ...e, customType: 'Please describe the appointment type.' }));
+      this.formErrors.update(e => ({ ...e, customType: this.t().appointments.pleaseDescribeType }));
       return;
     }
     this.formErrors.set({});
@@ -513,27 +581,28 @@ nextPage() {
 
   private validate(): boolean {
     const errs: Record<string, string> = {};
-    if (!this.fType()) errs['appointmentType'] = 'Please select an appointment type.';
+    const a = this.t().appointments;
+    if (!this.fType()) errs['appointmentType'] = a.pleaseSelectType;
     if (this.fType() === AppointmentType.Other && !this.fCustomType().trim()) {
-      errs['customType'] = 'Please describe the appointment type.';
+      errs['customType'] = a.pleaseDescribeType;
     }
-    if (!this.fTitle().trim())    errs['title']    = 'Title is required.';
-    if (!this.fProvider().trim()) errs['provider'] = 'Provider name is required.';
-    if (!this.fDate())            errs['date']     = 'Date is required.';
-    if (!this.fTime())            errs['time']     = 'Time is required.';
+    if (!this.fTitle().trim())    errs['title']    = a.titleRequired;
+    if (!this.fProvider().trim()) errs['provider'] = a.providerRequired;
+    if (!this.fDate())            errs['date']     = a.dateRequired;
+    if (!this.fTime())            errs['time']     = a.timeRequired;
     if (this.fDate() && this.fTime()) {
       const sel = new Date(`${this.fDate()}T${this.fTime()}`);
-      if (sel <= new Date()) errs['date'] = 'Appointment must be scheduled in the future.';
+      if (sel <= new Date()) errs['date'] = a.appointmentFuture;
       if (this.hasUpcomingAppointmentAtSelectedTime()) {
-        errs['time'] = 'You already have an upcoming appointment at this time.';
+        errs['time'] = a.timeConflict;
       }
     }
     if (this.customReminderSelected()) {
       const customReminder = this.fCustomReminder();
       if (customReminder === null || customReminder < 1) {
-        errs['reminder'] = 'Custom reminder must be at least 1 minute.';
+        errs['reminder'] = a.customReminderMin;
       } else if (customReminder > 10080) {
-        errs['reminder'] = 'Custom reminder cannot be more than 7 days.';
+        errs['reminder'] = a.customReminderMax;
       }
     }
     this.formErrors.set(errs);
@@ -563,16 +632,16 @@ nextPage() {
       next: saved => {
         if (id) {
           this.appointments.update(list => list.map(a => a.id === id ? saved : a));
-          this.toast('Appointment updated successfully.', 'success');
+          this.toast(this.t().appointments.appointmentUpdated, 'success');
         } else {
           this.appointments.update(list => [...list, saved]);
-          this.toast('Appointment added successfully.', 'success');
+          this.toast(this.t().appointments.appointmentAdded, 'success');
         }
         this.submitting.set(false);
         this.closeAddModal();
       },
       error: err => {
-        this.toast(err?.error?.message ?? 'Failed to save appointment.', 'error');
+        this.toast(err?.error?.message ?? this.t().appointments.failedSave, 'error');
         this.submitting.set(false);
       },
     });
@@ -590,36 +659,43 @@ nextPage() {
   closeView(): void { this.showViewModal.set(false); }
 
   // ── Delete ────────────────────────────────────────────────────────────────
-  confirmDelete(id: string): void { this.deletingId.set(id); this.showDeleteModal.set(true); }
+  confirmDelete(id: string): void {
+    if (this.fpReadOnly()) return;
+    this.deletingId.set(id); this.showDeleteModal.set(true);
+  }
   closeDelete(): void { this.showDeleteModal.set(false); this.deletingId.set(null); }
   executeDelete(): void {
     const id = this.deletingId();
     if (!id) return;
     this.deleting.set(true);
     this.apptSvc.delete(id).subscribe({
-      next:  ()  => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast('Appointment deleted.', 'success'); this.deleting.set(false); this.closeDelete(); },
-      error: err => { this.toast(err?.error?.message ?? 'Delete failed.', 'error'); this.deleting.set(false); this.closeDelete(); },
+      next:  ()  => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast(this.t().appointments.appointmentDeleted, 'success'); this.deleting.set(false); this.closeDelete(); },
+      error: err => { this.toast(err?.error?.message ?? this.t().appointments.deleteFailed, 'error'); this.deleting.set(false); this.closeDelete(); },
     });
   }
 
   // ── Cancel ────────────────────────────────────────────────────────────────
-  confirmCancel(id: string): void { this.cancellingId.set(id); this.showCancelModal.set(true); }
+  confirmCancel(id: string): void {
+    if (this.fpReadOnly()) return;
+    this.cancellingId.set(id); this.showCancelModal.set(true);
+  }
   closeCancel(): void { this.showCancelModal.set(false); this.cancellingId.set(null); }
   executeCancel(): void {
     const id = this.cancellingId();
     if (!id) return;
     this.cancelling.set(true);
     this.apptSvc.cancel(id).subscribe({
-      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Appointment cancelled.', 'success'); this.cancelling.set(false); this.closeCancel(); },
-      error: err   => { this.toast(err?.error?.message ?? 'Cancel failed.', 'error'); this.cancelling.set(false); this.closeCancel(); },
+      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.appointmentCancelled, 'success'); this.cancelling.set(false); this.closeCancel(); },
+      error: err   => { this.toast(err?.error?.message ?? this.t().appointments.cancelFailed, 'error'); this.cancelling.set(false); this.closeCancel(); },
     });
   }
 
   // ── Complete ──────────────────────────────────────────────────────────────
   markComplete(id: string): void {
+    if (this.fpReadOnly()) return;
     this.apptSvc.complete(id).subscribe({
-      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Marked as completed.', 'success'); },
-      error: err   => { this.toast(err?.error?.message ?? 'Failed.', 'error'); },
+      next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.markedCompleted, 'success'); },
+      error: err   => { this.toast(err?.error?.message ?? this.t().appointments.failedSave, 'error'); },
     });
   }
 
@@ -678,8 +754,25 @@ nextPage() {
   }
 
   statusLabel(s: AppointmentStatus): string {
-    return { [AppointmentStatus.Upcoming]: 'Upcoming', [AppointmentStatus.Completed]: 'Completed',
-             [AppointmentStatus.Cancelled]: 'Cancelled', [AppointmentStatus.Missed]: 'Missed' }[s] ?? '';
+    const a = this.t().appointments;
+    return {
+      [AppointmentStatus.Upcoming]:  a.upcomingStatus,
+      [AppointmentStatus.Completed]: a.completedStatus,
+      [AppointmentStatus.Cancelled]: a.cancelledStatus,
+      [AppointmentStatus.Missed]:    a.missedStatus,
+    }[s] ?? '';
+  }
+
+  getReminderLabel(mins: number): string {
+    const before = this.t().appointments.minutesBefore;
+    const map: Record<number, string> = {
+      15:   `15 ${before}`,
+      30:   `30 ${before}`,
+      60:   `60 ${before}`,
+      120:  `120 ${before}`,
+      1440: `1440 ${before}`,
+    };
+    return map[mins] ?? `${mins} ${before}`;
   }
 
   statusClass(s: AppointmentStatus): string {

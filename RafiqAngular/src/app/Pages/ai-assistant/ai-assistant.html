@@ -7,20 +7,20 @@
   <!-- ═══════════ SIDEBAR ═══════════ -->
   <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <div class="sb-top">
-      <div class="sb-logo">
+      <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
         <div class="sb-logo-icon">
           <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
         <div class="sb-logo-text">
-          <span class="sb-logo-title">Rafiq AI</span>
-          <span class="sb-logo-sub">Family Health Assistant</span>
+          <span class="sb-logo-title">{{ t().sidebar.aiAssistant }}</span>
+          <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
         </div>
-      </div>
+      </button>
       <button type="button" class="sb-toggle"
-        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'" (click)="toggleSidebar()">
+        [attr.aria-label]="sidebarCollapsed() ? t().sidebar.expandSidebar : t().sidebar.collapseSidebar" (click)="toggleSidebar()">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
-      <button type="button" class="sb-mobile-close" aria-label="Close sidebar" (click)="toggleMobileSidebar()">
+      <button type="button" class="sb-mobile-close" [attr.aria-label]="t().sidebar.closeSidebar" (click)="toggleMobileSidebar()">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -28,51 +28,47 @@
     <nav class="sb-nav">
       <a class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact: true}">
         <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
-        <span>Dashboard</span>
+        <span>{{ t().sidebar.dashboard }}</span>
       </a>
       <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
-        <span>Medical Records</span>
+        <span>{{ t().sidebar.medicalRecords }}</span>
       </a>
       <a class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
-        <span>Appointments</span>
-      </a>
-      <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
-        <span>AI Assistant</span>
+        <span>{{ t().sidebar.appointments }}</span>
       </a>
       <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
-        <span>Medications &amp; Reminders</span>
+        <span>{{ t().sidebar.medications }}</span>
       </a>
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
-        <span>Analytics</span>
+        <span>{{ t().sidebar.analytics }}</span>
       </a>
-      <a class="sb-link sb-sos" href="#">
+      <!-- <a class="sb-link sb-sos" href="#">
         <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
         <span>SOS &amp; Emergency</span>
-      </a>
+      </a> -->
       <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
-        <span>Family Profiles</span>
+        <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
       <a class="sb-link" href="#">
         <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
-        <span>Settings</span>
+        <span>{{ t().sidebar.settings }}</span>
       </a>
     </nav>
 
     <div class="sb-help">
       <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
       <div class="sb-help-copy">
-        <p class="sb-help-title">Ask Rafiq AI</p>
-        <p class="sb-help-sub">Get health insights and answers to your questions</p>
+        <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
+        <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
       </div>
       <button type="button" class="sb-help-btn" (click)="startNewConversation()">
         <i class="fa-regular fa-comment-dots"></i>
-        Ask Now
+        {{ t().sidebar.askNow }}
       </button>
     </div>
   </aside>
@@ -82,19 +78,20 @@
 
     <!-- HEADER -->
     <header class="dsh-hdr">
-      <button type="button" class="sb-mobile-toggle" aria-label="Open sidebar" (click)="toggleMobileSidebar()">
+      <button type="button" class="sb-mobile-toggle" [attr.aria-label]="t().header.openSidebar" (click)="toggleMobileSidebar()">
         <i class="fa-solid fa-bars"></i>
       </button>
       <div class="hdr-search">
         <i class="fa-solid fa-magnifying-glass hdr-search-ico"></i>
-        <input type="text" class="hdr-search-inp" placeholder="Search records, symptoms, medications..." readonly>
+        <input type="text" class="hdr-search-inp" [attr.placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
         <button type="button" class="hdr-ask-btn" (click)="startNewConversation()">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
-          Ask AI
+          {{ t().header.askAI }}
         </button>
         <button type="button" class="hdr-bell" (click)="notifService.toggleNotificationCenter()"
+          [attr.aria-label]="t().header.notifications"
           [class.hdr-bell--active]="notifService.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
           @if (unreadNotifCount() > 0) {
@@ -102,7 +99,7 @@
           }
         </button>
         <div class="hdr-user" (click)="toggleDropdown()">
-          <img [src]="avatarUrl" alt="user" class="hdr-avatar">
+          <img [src]="profileCache.resolveNavbarAvatar()" alt="user" class="hdr-avatar">
           <span class="hdr-username">{{ displayName }}</span>
           <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
 
@@ -110,7 +107,7 @@
           <div class="user-dropdown" (click)="$event.stopPropagation()">
             <div class="user-dropdown-hdr">
               <div class="user-dropdown-av">
-                <img [src]="avatarUrl" alt="avatar">
+                <img [src]="profileCache.resolveNavbarAvatar()" alt="avatar">
               </div>
               <div class="user-dropdown-info">
                 <span class="user-dropdown-name">{{ displayName }}</span>
@@ -118,18 +115,18 @@
               </div>
             </div>
             <div class="user-dropdown-divider"></div>
-            <button type="button" class="user-dropdown-item">
+            <button type="button" class="user-dropdown-item" (click)="goToMyProfile()">
               <i class="fa-regular fa-user"></i>
-              My Profile
+              {{ t().header.myProfile }}
             </button>
             <button type="button" class="user-dropdown-item">
               <i class="fa-solid fa-gear"></i>
-              Settings
+              {{ t().header.settings }}
             </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
               <i class="fa-solid fa-arrow-right-from-bracket"></i>
-              Logout
+              {{ t().header.logout }}
             </button>
           </div>
           }
@@ -137,81 +134,93 @@
       </div>
     </header>
 
-    <!-- ═══════════ CHAT BODY (RTL) ═══════════ -->
-    <div class="chat-wrap" dir="rtl">
+    <!-- ═══════════ CHAT BODY ═══════════ -->
+    <div class="chat-wrap" [class.panel-collapsed]="rightPanelCollapsed()">
 
       @if (profileError()) {
       <div class="chat-empty-page">
         <i class="fa-solid fa-triangle-exclamation"></i>
-        <p>لم يتم العثور على ملف صحي. من فضلك أكمل إعداد ملفك الصحي أولاً.</p>
+        <p>{{ t().aiAssistant.noProfileError }}</p>
       </div>
       } @else {
 
       <!-- LEFT: conversation list -->
       <aside class="chat-list-panel">
-        <button type="button" class="chat-new-btn" (click)="startNewConversation()">
-          <i class="fa-solid fa-plus"></i>
-          محادثة جديدة
+        <!-- Toggle button — always visible at the top-left corner of the sidebar -->
+        <button type="button" class="chat-panel-toggle"
+          (click)="rightPanelCollapsed.set(!rightPanelCollapsed())"
+          [attr.aria-label]="rightPanelCollapsed() ? t().aiAssistant.openConversations : t().aiAssistant.closeConversations">
+          <i class="fa-solid"
+             [class.fa-chevron-left]="!rightPanelCollapsed()"
+             [class.fa-chevron-right]="rightPanelCollapsed()"></i>
         </button>
 
-        <div class="chat-search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input
-            type="text"
-            placeholder="ابحث في المحادثات..."
-            [value]="searchTerm()"
-            (input)="searchTerm.set($any($event.target).value)"
-          >
-          <button type="button" class="chat-search-filter" aria-label="فلترة">
-            <i class="fa-solid fa-sliders"></i>
+        <!-- Scrollable content — fades out on collapse -->
+        <div class="chat-list-inner">
+          <button type="button" class="chat-new-btn" (click)="startNewConversation()">
+            <i class="fa-solid fa-plus"></i>
+            {{ t().aiAssistant.newConversation }}
           </button>
-        </div>
 
-        <p class="chat-list-label">المحادثات الحديثة</p>
-
-        @if (conversationsLoading()) {
-        <div class="chat-list-skel">
-          @for (s of [1,2,3,4]; track s) {
-          <div class="chat-skel-row">
-            <div class="chat-skel-ico"></div>
-            <div class="chat-skel-lines">
-              <div class="chat-skel-line chat-skel-70"></div>
-              <div class="chat-skel-line chat-skel-45"></div>
-            </div>
+          <div class="chat-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+              type="text"
+              [attr.placeholder]="t().aiAssistant.searchConversations"
+              [value]="searchTerm()"
+              (input)="searchTerm.set($any($event.target).value)"
+            >
+            <button type="button" class="chat-search-filter" [attr.aria-label]="t().aiAssistant.filter">
+              <i class="fa-solid fa-sliders"></i>
+            </button>
           </div>
-          }
-        </div>
-        } @else if (filteredConversations().length === 0) {
-        <div class="chat-list-empty">
-          <i class="fa-regular fa-comments"></i>
-          <p>لا توجد محادثات بعد</p>
-        </div>
-        } @else {
-        <ul class="chat-conv-list">
-          @for (conv of visibleConversations(); track conv.id) {
-          <li
-            class="chat-conv-item"
-            [class.chat-conv-item--active]="conv.id === selectedConversationId()"
-            (click)="selectConversation(conv)"
-          >
-            <span class="chat-conv-ico"><i class="fa-regular fa-comment-dots"></i></span>
-            <div class="chat-conv-info">
-              <div class="chat-conv-top">
-                <span class="chat-conv-title">{{ conv.title }}</span>
-                <span class="chat-conv-time">{{ formatSidebarTime(conv) }}</span>
+
+          <p class="chat-list-label">{{ t().aiAssistant.recentConversations }}</p>
+
+          @if (conversationsLoading()) {
+          <div class="chat-list-skel">
+            @for (s of [1,2,3,4]; track s) {
+            <div class="chat-skel-row">
+              <div class="chat-skel-ico"></div>
+              <div class="chat-skel-lines">
+                <div class="chat-skel-line chat-skel-70"></div>
+                <div class="chat-skel-line chat-skel-45"></div>
               </div>
             </div>
-          </li>
-          }
-        </ul>
+            }
+          </div>
+          } @else if (filteredConversations().length === 0) {
+          <div class="chat-list-empty">
+            <i class="fa-regular fa-comments"></i>
+            <p>{{ t().aiAssistant.noConversations }}</p>
+          </div>
+          } @else {
+          <ul class="chat-conv-list">
+            @for (conv of visibleConversations(); track conv.id) {
+            <li
+              class="chat-conv-item"
+              [class.chat-conv-item--active]="conv.id === selectedConversationId()"
+              (click)="selectConversation(conv)"
+            >
+              <span class="chat-conv-ico"><i class="fa-regular fa-comment-dots"></i></span>
+              <div class="chat-conv-info">
+                <div class="chat-conv-top">
+                  <span class="chat-conv-title">{{ conv.title }}</span>
+                  <span class="chat-conv-time">{{ formatSidebarTime(conv) }}</span>
+                </div>
+              </div>
+            </li>
+            }
+          </ul>
 
-        @if (filteredConversations().length > 6) {
-        <button type="button" class="chat-show-more" (click)="toggleShowAllConversations()">
-          {{ showAllConversations() ? 'عرض أقل' : 'عرض المزيد' }}
-          <i class="fa-solid" [class.fa-chevron-down]="!showAllConversations()" [class.fa-chevron-up]="showAllConversations()"></i>
-        </button>
-        }
-        }
+          @if (filteredConversations().length > 6) {
+          <button type="button" class="chat-show-more" (click)="toggleShowAllConversations()">
+            {{ showAllConversations() ? t().aiAssistant.showLess : t().aiAssistant.showMore }}
+            <i class="fa-solid" [class.fa-chevron-down]="!showAllConversations()" [class.fa-chevron-up]="showAllConversations()"></i>
+          </button>
+          }
+          }
+        </div>
       </aside>
 
       <!-- RIGHT: active chat -->
@@ -219,20 +228,24 @@
 
         @if (!selectedConversationId()) {
         <div class="chat-empty-state">
-          <div class="chat-empty-avatar"><i class="fa-solid fa-robot"></i></div>
-          <h2>اسأل رفيقك الذكي</h2>
-          <p>اسأل عن التحاليل، الأدوية، الحساسية، أو المواعيد المسجلة عندك في رفيق.</p>
+          <div class="chat-empty-avatar">
+            <img src="images/RafiqLogo.png" alt="Rafiq" class="chat-empty-logo">
+          </div>
+          <h2>{{ t().aiAssistant.askRafiqAI }}</h2>
+          <p>{{ t().aiAssistant.aiEmptyText }}</p>
         </div>
         } @else {
 
         <div class="chat-main-hdr">
           <div class="chat-main-hdr-left">
-            <span class="chat-avatar-sm"><i class="fa-solid fa-robot"></i></span>
+            <span class="chat-avatar-sm">
+              <img src="images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo">
+            </span>
             <div class="chat-main-hdr-title">
               @if (!renaming()) {
               <div class="chat-title-row">
                 <h2>{{ selectedConversation()?.title }}</h2>
-                <button type="button" class="chat-icon-btn" aria-label="إعادة تسمية" (click)="startRename()">
+                <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.rename" (click)="startRename()">
                   <i class="fa-solid fa-pen"></i>
                 </button>
               </div>
@@ -248,26 +261,26 @@
                   maxlength="255"
                   autofocus
                 >
-                <button type="button" class="chat-icon-btn" aria-label="حفظ" (click)="confirmRename()">
+                <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.saveRename" (click)="confirmRename()">
                   <i class="fa-solid fa-check"></i>
                 </button>
-                <button type="button" class="chat-icon-btn" aria-label="إلغاء" (click)="cancelRename()">
+                <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.cancelRename" (click)="cancelRename()">
                   <i class="fa-solid fa-xmark"></i>
                 </button>
               </div>
               }
-              <span class="chat-main-hdr-sub">آخر تحديث: {{ formatHeaderLastUpdated() }}</span>
+              <span class="chat-main-hdr-sub">{{ t().aiAssistant.lastUpdated }} {{ formatHeaderLastUpdated() }}</span>
             </div>
           </div>
           <div class="chat-main-hdr-actions">
-            <button type="button" class="chat-icon-btn" aria-label="أرشفة المحادثة" (click)="archiveConversation()">
+            <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.archiveConversation" (click)="archiveConversation()">
               <i class="fa-regular fa-trash-can"></i>
             </button>
-            <button type="button" class="chat-icon-btn" aria-label="مشاركة">
+            <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.share">
               <i class="fa-solid fa-share-nodes"></i>
             </button>
-            <button type="button" class="chat-icon-btn" aria-label="المزيد">
-              <i class="fa-solid fa-ellipsis"></i>
+            <button type="button" class="chat-icon-btn chat-icon-btn--minimize" title="Minimize" (click)="minimizeChat()">
+              <i class="fa-solid fa-compress"></i>
             </button>
           </div>
         </div>
@@ -296,12 +309,30 @@
           </div>
           } @else {
           <div class="chat-msg chat-msg--ai">
-            <span class="chat-avatar-sm chat-avatar-sm--msg"><i class="fa-solid fa-robot"></i></span>
+            <span class="chat-avatar-sm chat-avatar-sm--msg"><img src="images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo"></span>
             <div class="chat-bubble-col">
               <div class="chat-bubble chat-bubble--ai">
                 <markdown [data]="msg.content"></markdown>
               </div>
-              <span class="chat-msg-time chat-msg-time--ai">{{ formatMessageTime(msg) }}</span>
+              <div class="chat-msg-footer">
+                <span class="chat-msg-time chat-msg-time--ai">{{ formatMessageTime(msg) }}</span>
+                <div class="chat-reactions">
+                  <button type="button"
+                    class="chat-react-btn"
+                    [class.chat-react-btn--active]="msg.userReaction === 'ThumbsUp'"
+                    [title]="t().aiAssistant.reactionHelpful"
+                    (click)="toggleReaction(msg, 'ThumbsUp')">
+                    <i class="fa-regular fa-thumbs-up"></i>
+                  </button>
+                  <button type="button"
+                    class="chat-react-btn"
+                    [class.chat-react-btn--active-down]="msg.userReaction === 'ThumbsDown'"
+                    [title]="t().aiAssistant.reactionNotHelpful"
+                    (click)="toggleReaction(msg, 'ThumbsDown')">
+                    <i class="fa-regular fa-thumbs-down"></i>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
           }
@@ -309,14 +340,14 @@
 
           @if (sending()) {
           <div class="chat-msg chat-msg--ai">
-            <span class="chat-avatar-sm chat-avatar-sm--msg"><i class="fa-solid fa-robot"></i></span>
+            <span class="chat-avatar-sm chat-avatar-sm--msg"><img src="images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo"></span>
             <div class="chat-bubble-col">
               <div class="chat-bubble chat-bubble--ai chat-typing">
                 <span class="chat-typing-dot"></span>
                 <span class="chat-typing-dot"></span>
                 <span class="chat-typing-dot"></span>
               </div>
-              <span class="chat-typing-label">رفيق بيكتب...</span>
+              <span class="chat-typing-label">{{ t().aiAssistant.rafiqTyping }}</span>
             </div>
           </div>
           }
@@ -342,7 +373,7 @@
         @if (attachedImagePreviewUrl()) {
         <div class="chat-attach-preview">
           <img [src]="attachedImagePreviewUrl()" alt="" class="chat-attach-preview-img">
-          <button type="button" class="chat-attach-remove" aria-label="إزالة الصورة" (click)="removeAttachedImage()">
+          <button type="button" class="chat-attach-remove" [attr.aria-label]="t().aiAssistant.removeImage" (click)="removeAttachedImage()">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
@@ -359,7 +390,7 @@
           <button
             type="button"
             class="chat-icon-btn chat-attach-btn"
-            aria-label="إرفاق صورة"
+            [attr.aria-label]="t().aiAssistant.attachImage"
             [disabled]="sending()"
             (click)="triggerFileSelect()"
           >
@@ -369,7 +400,7 @@
             #messageInput
             class="chat-composer-input"
             rows="1"
-            placeholder="اكتب رسالتك هنا..."
+            [attr.placeholder]="t().aiAssistant.typePlaceholder"
             [value]="messageText()"
             (input)="onMessageInput($any($event.target).value)"
             (keydown)="onComposerKeydown($event)"
@@ -385,11 +416,64 @@
         </div>
         <p class="chat-composer-hint">
           <i class="fa-regular fa-image"></i>
-          يمكنك أيضاً رفع صورة تحليل أو تقرير (JPG, PNG, WebP)
+          {{ t().aiAssistant.composerHint }}
         </p>
       </section>
       }
     </div>
     <!-- /chat-wrap -->
   </div><!-- /dsh-main -->
+
 </div><!-- /dsh -->
+
+<!-- ═══ DISLIKE REASON DIALOG ═══ -->
+@if (dislikeDialogOpen()) {
+<div class="dislike-overlay" (click)="cancelDislikeDialog()"></div>
+<div class="dislike-dialog" role="dialog" aria-modal="true">
+  <div class="dislike-dialog-hdr">
+    <div class="dislike-dialog-icon">
+      <i class="fa-regular fa-thumbs-down"></i>
+    </div>
+    <div>
+      <h3 class="dislike-dialog-title">What went wrong?</h3>
+      <p class="dislike-dialog-sub">Help us improve Rafiq AI</p>
+    </div>
+    <button type="button" class="dislike-close" (click)="cancelDislikeDialog()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="dislike-reasons">
+    @for (reason of dislikeReasons; track reason) {
+      <button
+        type="button"
+        class="dislike-reason-chip"
+        [class.dislike-reason-chip--selected]="dislikeReason() === reason"
+        (click)="dislikeReason.set(reason)"
+      >
+        {{ reason }}
+      </button>
+    }
+  </div>
+
+  <textarea
+    class="dislike-textarea"
+    placeholder="Tell us more (optional)..."
+    [value]="dislikeReason() === 'Other' ? dislikeReason() : ''"
+    (input)="dislikeReason.set($any($event.target).value)"
+    rows="3"
+  ></textarea>
+
+  <div class="dislike-dialog-footer">
+    <button type="button" class="dislike-btn-cancel" (click)="cancelDislikeDialog()">Cancel</button>
+    <button
+      type="button"
+      class="dislike-btn-submit"
+      (click)="submitDislikeReason()"
+    >
+      <i class="fa-regular fa-thumbs-down"></i>
+      Submit Feedback
+    </button>
+  </div>
+</div>
+}

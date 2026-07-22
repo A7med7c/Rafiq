@@ -16,20 +16,27 @@ public static class HealthQueryIntentParser
     // no separate repository of its own - it's always rendered as part of LabReports).
     private static readonly Dictionary<string, HealthQueryCategory> CategoryAliases = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["LabResults"] = HealthQueryCategory.LabReports,
-        ["LabResult"] = HealthQueryCategory.LabReports,
-        ["Labs"] = HealthQueryCategory.LabReports,
-        ["Tests"] = HealthQueryCategory.LabReports,
-        ["Medications"] = HealthQueryCategory.Medicines,
-        ["Medication"] = HealthQueryCategory.Medicines,
-        ["Drugs"] = HealthQueryCategory.Medicines,
-        ["Diseases"] = HealthQueryCategory.ChronicDiseases,
-        ["Conditions"] = HealthQueryCategory.ChronicDiseases,
-        ["Condition"] = HealthQueryCategory.ChronicDiseases,
-        ["Imaging"] = HealthQueryCategory.ImagingReports,
-        ["Radiology"] = HealthQueryCategory.ImagingReports,
-        ["Vitals"] = HealthQueryCategory.Profile,
-        ["Summary"] = HealthQueryCategory.Profile
+        ["LabResults"]           = HealthQueryCategory.LabReports,
+        ["LabResult"]            = HealthQueryCategory.LabReports,
+        ["Labs"]                 = HealthQueryCategory.LabReports,
+        ["Tests"]                = HealthQueryCategory.LabReports,
+        ["Medications"]          = HealthQueryCategory.Medicines,
+        ["Medication"]           = HealthQueryCategory.Medicines,
+        ["Drugs"]                = HealthQueryCategory.Medicines,
+        ["Diseases"]             = HealthQueryCategory.ChronicDiseases,
+        ["Conditions"]           = HealthQueryCategory.ChronicDiseases,
+        ["Condition"]            = HealthQueryCategory.ChronicDiseases,
+        ["Imaging"]              = HealthQueryCategory.ImagingReports,
+        ["Radiology"]            = HealthQueryCategory.ImagingReports,
+        ["Vitals"]               = HealthQueryCategory.Profile,
+        ["Summary"]              = HealthQueryCategory.Profile,
+        ["Reminders"]            = HealthQueryCategory.MedicationReminders,
+        ["MedicineReminders"]    = HealthQueryCategory.MedicationReminders,
+        ["MedicationSchedule"]   = HealthQueryCategory.MedicationReminders,
+        ["Schedule"]             = HealthQueryCategory.MedicationReminders,
+        ["Family"]               = HealthQueryCategory.FamilyOverview,
+        ["FamilyMembers"]        = HealthQueryCategory.FamilyOverview,
+        ["FamilySummary"]        = HealthQueryCategory.FamilyOverview,
     };
 
     public static ParsedHealthQueryIntent Parse(string? rawModelOutput)
@@ -69,7 +76,12 @@ public static class HealthQueryIntentParser
         if (categories.Count == 0 && operation == HealthQueryOperation.Summary)
             categories.Add(HealthQueryCategory.Profile);
 
-        return new ParsedHealthQueryIntent(categories, operation, searchTerm, timeframe);
+        // Sanitize the AI-provided target hint: trim, cap length, reject empty strings.
+        var targetProfileHint = string.IsNullOrWhiteSpace(raw.TargetProfile)
+            ? null
+            : raw.TargetProfile.Trim()[..Math.Min(raw.TargetProfile.Trim().Length, 100)];
+
+        return new ParsedHealthQueryIntent(categories, operation, searchTerm, timeframe, targetProfileHint);
     }
 
     private static HealthQueryIntent? TryDeserialize(string? rawModelOutput)

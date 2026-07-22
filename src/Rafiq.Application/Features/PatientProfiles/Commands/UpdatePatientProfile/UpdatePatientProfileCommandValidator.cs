@@ -40,11 +40,5 @@ internal sealed class UpdatePatientProfileCommandValidator
         RuleFor(x => x.Relationship)
             .IsInEnum()
             .When(x => x.Relationship.HasValue);
-
-        RuleForEach(x => x.Allergies)
-            .SetValidator(new UpdateAllergyDtoValidator());
-
-        RuleForEach(x => x.ChronicDiseases)
-            .SetValidator(new UpdateChronicDiseaseDtoValidator());
     }
 }

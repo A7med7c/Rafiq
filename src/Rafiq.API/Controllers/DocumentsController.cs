@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Rafiq.Application.Common.Interfaces;
+using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.GeneralDocuments.Commands.UploadGeneralDocument;
 using Rafiq.Application.Features.GeneralDocuments.Commands.DeleteGeneralDocument;
 using Rafiq.Application.Features.GeneralDocuments.Commands.SaveGeneralDocument;
@@ -273,6 +275,25 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(new DeleteGeneralDocumentCommand(id), cancellationToken);
         return Ok(result);
     }
+
+    // ── Manual image upload (no AI) ───────────────────────────────────────────
+
+    [HttpPost("upload-image")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadRecordImage(
+        IFormFile image,
+        [FromServices] IFileStorageService fileStorageService,
+        CancellationToken cancellationToken)
+    {
+        if (image == null || image.Length == 0)
+            return BadRequest(ApiResponse<object>.FailureResponse("No image provided."));
+
+        var ext = Path.GetExtension(image.FileName);
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        using var stream = image.OpenReadStream();
+        var path = await fileStorageService.UploadFileAsync(stream, fileName, "manual", cancellationToken);
+        return Ok(ApiResponse<UploadRecordImageResponse>.SuccessResponse(new UploadRecordImageResponse(path)));
+    }
 }
 
 public sealed record SaveLabReportRequest(
@@ -327,4 +348,6 @@ public sealed record UpdateGeneralDocumentRequest(
     string Description,
     string? AiSummary,
     string? ImagePath);
+
+public sealed record UploadRecordImageResponse(string Path);
 

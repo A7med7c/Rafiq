@@ -295,7 +295,7 @@
   flex-direction: column;
   gap: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .fp-detail-hdr {
@@ -412,6 +412,18 @@
   animation: fp-modal-in 140ms ease both;
 }
 
+/* RTL: anchor dropdown to the left edge of the button so it opens inward
+   (the button sits on the far-left in RTL, so right:0 would shoot off-screen).
+   :host-context is required because <html dir="rtl"> is outside this component
+   and Angular's Emulated encapsulation would otherwise scope [dir="rtl"] with
+   _ngcontent-xxx, which never matches the <html> element. */
+:host-context([dir="rtl"]) .fp-menu-dropdown,
+[dir="rtl"] .fp-menu-dropdown {
+  right: auto;
+  left: 0;
+  transform-origin: top left;
+}
+
 .fp-menu-dropdown-item {
   display: flex;
   align-items: center;
@@ -425,7 +437,7 @@
   color: var(--text-2);
   cursor: pointer;
   text-align: left;
-  transition: background .12s;
+  transition: background .12s;  
 }
 .fp-menu-dropdown-item:hover { background: var(--bg); }
 .fp-menu-dropdown-item--danger { color: var(--red); }
@@ -1805,6 +1817,51 @@
 ═══════════════════════════════════════════════════ */
 
 .fp-med-list { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── Manage medications CTA ───────────────────── */
+.fp-manage-meds-cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, #F0FBFF 0%, #E8F6FD 100%);
+  border: 1px solid rgba(14, 175, 215, 0.2);
+  border-radius: 14px;
+  padding: 20px;
+  margin: 8px 0;
+}
+.fp-manage-meds-ico {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(14, 175, 215, 0.12);
+  color: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.fp-manage-meds-info {
+  flex: 1;
+  min-width: 0;
+}
+.fp-manage-meds-title { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 3px; }
+.fp-manage-meds-sub   { font-size: 13px; color: var(--text-3); margin: 0; }
+.fp-manage-meds-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  background: var(--blue);
+  color: #fff;
+  border-radius: var(--r-xs);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.fp-manage-meds-btn:hover { background: #0c97ba; }
 
 .fp-med-card {
   display: flex;

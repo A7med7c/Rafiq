@@ -23,7 +23,7 @@ export class Stats {
       items: [
         { value: '50K+', label: 'مستخدم سعيد' },
         { value: '120K+', label: 'موعد محجوز' },
-        { value: '98%', label: 'نسبة الرضا' },
+        { value: '98%', label: 'معدل الرضا' },
         { value: '24/7', label: 'دعم ذكي' },
       ],
     },

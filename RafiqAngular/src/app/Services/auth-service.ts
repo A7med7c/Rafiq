@@ -53,6 +53,10 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  navigateToAppEntry(): void {
+    void this.router.navigate([this.isLoggedIn ? '/dashboard' : '/login']);
+  }
+
   /** Resolves the current user's avatar to an absolute URL, falling back to the default avatar. */
   get avatarUrl(): string {
     return this.resolveAvatarUrl(this.currentUser?.profileImageUrl);
@@ -276,6 +280,43 @@ export class AuthService {
     return request$.pipe(
       catchError(() => of(undefined)),
       finalize(() => {
+        this.clearLocalSession();
+        this.router.navigate(['/login']);
+      })
+    );
+  }
+
+  updateAccount(firstName: string, lastName: string, phoneNumber: string): Observable<ApiResponse<Account>> {
+    return this.http.put<ApiResponse<Account>>(
+      `${environment.apiUrl}/auth/me`,
+      { firstName, lastName, phoneNumber }
+    ).pipe(
+      tap(res => {
+        this.tokenStorage.setUser(res.data);
+        this.currentUserSubject.next(res.data);
+      })
+    );
+  }
+
+  requestEmailChange(newEmail: string): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(
+      `${environment.apiUrl}/auth/me/email`,
+      { newEmail }
+    );
+  }
+
+  cancelEmailChange(): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(
+      `${environment.apiUrl}/auth/me/email/cancel`,
+      {}
+    );
+  }
+
+  deleteAccount(): Observable<ApiResponse<string>> {
+    return this.http.delete<ApiResponse<string>>(
+      `${environment.apiUrl}/auth/me`
+    ).pipe(
+      tap(() => {
         this.clearLocalSession();
         this.router.navigate(['/login']);
       })

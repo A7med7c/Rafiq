@@ -12,6 +12,7 @@ export interface ConversationMessageDto {
   content: string;
   sequenceNumber: number;
   createdAt: string;
+  userReaction?: 'ThumbsUp' | 'ThumbsDown' | null;
 }
 
 export interface ConversationHistoryDto {
@@ -22,6 +23,7 @@ export interface ConversationHistoryDto {
 }
 
 export interface AiMessageResponseDto {
+  id: string;
   content: string;
 }
 

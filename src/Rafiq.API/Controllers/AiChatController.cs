@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rafiq.Application.Features.AiChat.Commands.ArchiveConversation;
 using Rafiq.Application.Features.AiChat.Commands.CreateConversation;
+using Rafiq.Application.Features.AiChat.Commands.ReactToMessage;
 using Rafiq.Application.Features.AiChat.Commands.RenameConversation;
 using Rafiq.Application.Features.AiChat.Commands.SendMessage;
 using Rafiq.Application.Features.AiChat.Queries.GenerateHealthSummary;
 using Rafiq.Application.Features.AiChat.Queries.GetConversationHistory;
 using Rafiq.Application.Features.AiChat.Queries.GetConversations;
+using Rafiq.Domain.Enums;
 
 namespace Rafiq.API.Controllers;
 
@@ -87,9 +89,9 @@ public class AiChatController : ControllerBase
     /// Returns HasData=false without calling the AI when there is insufficient data.
     /// </summary>
     [HttpGet("health-summary/{profileId:guid}")]
-    public async Task<IActionResult> GetHealthSummary(Guid profileId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetHealthSummary(Guid profileId, [FromQuery] string language = "en", CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GenerateHealthSummaryQuery(profileId), cancellationToken);
+        var result = await _mediator.Send(new GenerateHealthSummaryQuery(profileId, language), cancellationToken);
         return Ok(result);
     }
 
@@ -105,6 +107,23 @@ public class AiChatController : ControllerBase
     {
         var result = await _mediator.Send(
             new SendMessageCommand(conversationId, request.Text, request.Base64Image, request.ImageFormat),
+            cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Adds or removes a 👍/👎 reaction on an assistant message.
+    /// Set Remove=true to toggle the reaction off.
+    /// </summary>
+    [HttpPost("conversations/{conversationId:guid}/messages/{messageId:guid}/react")]
+    public async Task<IActionResult> ReactToMessage(
+        Guid conversationId,
+        Guid messageId,
+        [FromBody] ReactToMessageRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(
+            new ReactToMessageCommand(conversationId, messageId, request.ReactionType, request.Remove, request.Feedback),
             cancellationToken);
         return Ok(result);
     }
@@ -126,4 +145,11 @@ public sealed class SendMessageRequest
     public string Text { get; set; } = string.Empty;
     public string? Base64Image { get; set; }
     public string? ImageFormat { get; set; }
+}
+
+public sealed class ReactToMessageRequest
+{
+    public ReactionType ReactionType { get; set; }
+    public bool Remove { get; set; }
+    public string? Feedback { get; set; }
 }
