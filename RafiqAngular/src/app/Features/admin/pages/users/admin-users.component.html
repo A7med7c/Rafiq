@@ -1,0 +1,152 @@
+<section class="users-page">
+  <header class="page-heading">
+    <div>
+      <h1>{{ copy().title }}</h1>
+      <p>{{ copy().subtitle }}</p>
+    </div>
+    @if (result(); as data) {
+      <span class="user-total">{{ data.totalCount | number }} {{ copy().total }}</span>
+    }
+  </header>
+
+  <div class="filters">
+    <label class="search-field">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input
+        type="search"
+        [ngModel]="search"
+        (ngModelChange)="onSearch($event)"
+        [placeholder]="copy().search">
+    </label>
+    <select [(ngModel)]="status" (ngModelChange)="applyFilters()" [attr.aria-label]="copy().allStatuses">
+      <option value="">{{ copy().allStatuses }}</option>
+      <option value="active">{{ copy().active }}</option>
+      <option value="inactive">{{ copy().inactive }}</option>
+    </select>
+    <select [(ngModel)]="role" (ngModelChange)="applyFilters()" [attr.aria-label]="copy().allRoles">
+      <option value="">{{ copy().allRoles }}</option>
+      <option value="User">User</option>
+      <option value="Admin">Admin</option>
+    </select>
+    <select [(ngModel)]="sort" (ngModelChange)="applyFilters()" [attr.aria-label]="copy().newest">
+      <option value="createdAt-desc">{{ copy().newest }}</option>
+      <option value="createdAt-asc">{{ copy().oldest }}</option>
+      <option value="name-asc">{{ copy().name }} A-Z</option>
+      <option value="name-desc">{{ copy().name }} Z-A</option>
+    </select>
+  </div>
+
+  @if (error()) {
+    <div class="inline-error">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ copy().loadError }}</span>
+      <button type="button" (click)="loadUsers(result()?.page ?? 1)">Retry</button>
+    </div>
+  }
+
+  <div class="table-panel">
+    @if (loading()) {
+      <div class="table-skeleton" aria-busy="true">
+        @for (row of [1, 2, 3, 4, 5, 6]; track row) {
+          <div></div>
+        }
+      </div>
+    } @else if (result(); as data) {
+      @if (data.items.length === 0) {
+        <div class="empty-state">
+          <span><i class="fa-solid fa-user-magnifying-glass"></i></span>
+          <h2>{{ copy().emptyTitle }}</h2>
+          <p>{{ copy().emptyBody }}</p>
+        </div>
+      } @else {
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>{{ copy().account }}</th>
+                <th>{{ copy().role }}</th>
+                <th>{{ copy().joined }}</th>
+                <th>{{ copy().profile }}</th>
+                <th>{{ copy().account }}</th>
+                <th class="actions-heading">{{ copy().actions }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of data.items; track user.id) {
+                <tr>
+                  <td>
+                    <div class="user-cell">
+                      <img [src]="avatarUrl(user.profileImageUrl)" alt="">
+                      <div>
+                        <strong>{{ fullName(user) }}</strong>
+                        <span>{{ user.email }}</span>
+                        @if (user.phoneNumber) {
+                          <small>{{ user.phoneNumber }}</small>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="role-badge" [class.role-badge--admin]="user.role === 'Admin'">{{ user.role }}</span></td>
+                  <td><time>{{ formatDate(user.createdAt) }}</time></td>
+                  <td>
+                    <span class="profile-state" [class.profile-state--missing]="!user.hasHealthProfile">
+                      <i class="fa-solid" [class.fa-circle-check]="user.hasHealthProfile" [class.fa-circle-minus]="!user.hasHealthProfile"></i>
+                      {{ user.hasHealthProfile ? copy().available : copy().missing }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="status-badge" [class.status-badge--inactive]="!user.isActive">
+                      <i></i>{{ user.isActive ? copy().active : copy().inactive }}
+                    </span>
+                  </td>
+                  <td class="actions-cell">
+                    <button
+                      type="button"
+                      class="status-action"
+                      [class.status-action--activate]="!user.isActive"
+                      [disabled]="updatingUserId() === user.id || isCurrentAdmin(user)"
+                      (click)="requestStatusChange(user)">
+                      @if (updatingUserId() === user.id) {
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        {{ user.isActive ? copy().deactivating : copy().activating }}
+                      } @else {
+                        <i class="fa-solid" [class.fa-user-lock]="user.isActive" [class.fa-user-check]="!user.isActive"></i>
+                        {{ user.isActive ? copy().deactivate : copy().activate }}
+                      }
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="pagination">
+          <span>{{ copy().page }} {{ data.page }} {{ copy().of }} {{ data.totalPages || 1 }}</span>
+          <div>
+            <button type="button" [disabled]="data.page <= 1" (click)="loadUsers(data.page - 1)">
+              <i class="fa-solid fa-chevron-left"></i>{{ copy().previous }}
+            </button>
+            <button type="button" [disabled]="data.page >= data.totalPages" (click)="loadUsers(data.page + 1)">
+              {{ copy().next }}<i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </footer>
+      }
+    }
+  </div>
+</section>
+
+@if (confirmUser(); as user) {
+  <div class="dialog-backdrop" (click)="confirmUser.set(null)">
+    <section class="confirm-dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <span class="confirm-dialog__icon"><i class="fa-solid fa-user-lock"></i></span>
+      <h2>{{ copy().deactivate }} {{ fullName(user) }}</h2>
+      <p>{{ copy().confirmDeactivate }}</p>
+      <div>
+        <button type="button" class="dialog-cancel" (click)="confirmUser.set(null)">{{ copy().cancel }}</button>
+        <button type="button" class="dialog-confirm" (click)="confirmDeactivation()">{{ copy().confirm }}</button>
+      </div>
+    </section>
+  </div>
+}

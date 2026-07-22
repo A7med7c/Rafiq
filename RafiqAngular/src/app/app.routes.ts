@@ -19,9 +19,16 @@ import { OnboardingEmergency } from './Pages/onboarding/onboarding-emergency/onb
 import { authGuard } from './Guards/auth.guard';
 import { guestGuard } from './Guards/guest.guard';
 import { FamilyProfiles } from './Pages/family-profiles/family-profiles';
+import { adminGuard } from './Guards/admin.guard';
 
 export const routes: Routes = [
   { path: '', component: Landing },
+  {
+    path: 'admin',
+    canActivate: [adminGuard],
+    loadChildren: () =>
+      import('./Features/admin/admin.routes').then(module => module.ADMIN_ROUTES)
+  },
   { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
   { path: 'medical-records', component: MedicalRecords, canActivate: [authGuard] },
   { path: 'appointments', component: Appointments, canActivate: [authGuard] },

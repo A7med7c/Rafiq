@@ -59,6 +59,7 @@ public static class DependencyInjection
         services.AddSignalR();
         services.AddScoped<INotificationService, SignalRNotificationService>();
         services.AddScoped<IIdentityService, IdentityService>();
+        services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
