@@ -86,12 +86,19 @@ public sealed class AdminService(RafiqDbContext dbContext) : IAdminService
             monthStart,
             appointmentRows.ToDictionary(row => (row.Year, row.Month), row => row.Count));
 
-        var genderDistribution = await dbContext.UserHealthProfiles
+        // EF Core cannot translate enum.ToString() inside a SQL GroupBy projection.
+        // Pull the grouped counts into memory first, then convert enum keys to strings.
+        var genderGroups = await dbContext.UserHealthProfiles
             .AsNoTracking()
+            .Where(profile => !profile.IsDeleted)
             .GroupBy(profile => profile.Gender)
-            .Select(group => new AdminDistributionItemDto(group.Key.ToString(), group.Count()))
-            .OrderByDescending(item => item.Value)
+            .Select(group => new { Key = group.Key, Count = group.Count() })
             .ToListAsync(cancellationToken);
+
+        var genderDistribution = genderGroups
+            .Select(g => new AdminDistributionItemDto(g.Key.ToString(), g.Count))
+            .OrderByDescending(item => item.Value)
+            .ToList<AdminDistributionItemDto>();
 
         var recentUsers = await dbContext.Users
             .AsNoTracking()
@@ -107,18 +114,32 @@ public sealed class AdminService(RafiqDbContext dbContext) : IAdminService
                 user.ProfileImageUrl))
             .ToListAsync(cancellationToken);
 
-        var recentAppointments = await dbContext.Appointments
+        // EF Core cannot translate enum.ToString() inside a SQL Select projection.
+        // Fetch the raw rows first, then project to the DTO in memory.
+        var recentAppointmentRows = await dbContext.Appointments
             .AsNoTracking()
             .OrderByDescending(appointment => appointment.CreatedAt)
             .Take(6)
-            .Select(appointment => new AdminRecentAppointmentDto(
+            .Select(appointment => new
+            {
                 appointment.Id,
                 appointment.Title,
                 appointment.Provider,
-                appointment.UserHealthProfile.FirstName + " " + appointment.UserHealthProfile.LastName,
+                PatientName = appointment.UserHealthProfile.FirstName + " " + appointment.UserHealthProfile.LastName,
                 appointment.AppointmentDateTime,
-                appointment.Status.ToString()))
+                appointment.Status
+            })
             .ToListAsync(cancellationToken);
+
+        var recentAppointments = recentAppointmentRows
+            .Select(a => new AdminRecentAppointmentDto(
+                a.Id,
+                a.Title,
+                a.Provider,
+                a.PatientName,
+                a.AppointmentDateTime,
+                a.Status.ToString()))
+            .ToList<AdminRecentAppointmentDto>();
 
         var monthlyGrowth = previousRegistrations == 0
             ? currentRegistrations > 0 ? 100m : 0m
