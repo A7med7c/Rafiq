@@ -42,7 +42,7 @@ export const en = {
   },
 
   sidebar: {
-    brandName: 'Rafiq',
+    brandName: 'Rafiq AI',
     tagline: 'AI Healthcare Companion',
     openSidebar: 'Open Sidebar',
     closeSidebar: 'Close Sidebar',
@@ -55,6 +55,7 @@ export const en = {
     medications: 'Medications & Reminders',
     analytics: 'Analytics',
     familyProfiles: 'Family Profiles',
+    myProfile: 'My Profile',
     settings: 'Settings',
     askRafiqAI: 'Ask Rafiq AI',
     askAIHint: 'Get health insights, check your records, or ask about your medications.',

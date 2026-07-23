@@ -44,10 +44,7 @@
         <span>{{ t().sidebar.medications }}</span>
       </a>
 
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
-        <span>{{ t().sidebar.analytics }}</span>
-      </a>
+
       <!-- <a class="sb-link sb-sos" href="#">
         <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
         <span>SOS &amp; Emergency</span>
@@ -56,9 +53,9 @@
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
-        <span>{{ t().sidebar.settings }}</span>
+      <a class="sb-link" routerLink="/my-profile" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-user"></i></span>
+        <span>{{ t().sidebar.myProfile }}</span>
       </a>
     </nav>
 

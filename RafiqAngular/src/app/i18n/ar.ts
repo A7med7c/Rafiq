@@ -44,7 +44,7 @@ export const ar: Translations = {
   },
 
   sidebar: {
-    brandName: 'رفيق',
+    brandName: 'رفيق AI',
     tagline: 'مساعدك الصحي الذكي',
     openSidebar: 'افتح القائمة',
     closeSidebar: 'قفل القائمة',
@@ -57,6 +57,7 @@ export const ar: Translations = {
     medications: 'الدوا والتذكيرات',
     analytics: 'التحليلات',
     familyProfiles: 'أفراد العيلة',
+    myProfile: 'ملفي الشخصي',
     settings: 'الإعدادات',
     askRafiqAI: 'اسأل رفيق',
     askAIHint: 'احصل على معلومات عن صحتك، شوف سجلاتك، أو اسأل عن أدويتك.',
