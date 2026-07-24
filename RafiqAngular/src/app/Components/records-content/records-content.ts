@@ -108,7 +108,7 @@ export interface Toast {
   type: 'success' | 'error';
 }
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 2;
 const FILTER_SORT_STORAGE_KEY = 'rafiq-medical-records-sort';
 
 const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
@@ -165,6 +165,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly deleting = signal(false);
   readonly tabDirection = signal<'left' | 'right'>('left');
   readonly tabAnimating = signal(false);
+  readonly mobileTabMenuOpen = signal(false);
 
   readonly lightboxUrl = signal<string | null>(null);
   readonly detailImageFailed = signal(false);
@@ -588,7 +589,33 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.animateTable(nextIndex >= currentIndex ? 'left' : 'right');
     this.activeTab.set(tab);
     this.currentPage.set(1);
+    this.mobileTabMenuOpen.set(false);
   }
+
+  toggleMobileTabMenu(): void { this.mobileTabMenuOpen.update(v => !v); }
+  closeMobileTabMenu(): void  { this.mobileTabMenuOpen.set(false); }
+
+  activeTabLabel(): string {
+    const t = this.t().records;
+    const map: Record<string, string> = {
+      all:          t.allRecords,
+      lab:          t.labAnalysisTab,
+      prescription: t.prescriptionsTab,
+      imaging:      t.xraysImagingTab,
+      medicine:     t.medicineBoxesTab,
+      general:      t.otherDocumentsTab,
+    };
+    return map[this.activeTab()] ?? t.allRecords;
+  }
+
+  activeTabIcon(): string {
+    const map: Record<string, string> = {
+      all: 'fa-layer-group', lab: 'fa-flask', prescription: 'fa-prescription-bottle-medical',
+      imaging: 'fa-x-ray', medicine: 'fa-pills', general: 'fa-file-medical',
+    };
+    return map[this.activeTab()] ?? 'fa-layer-group';
+  }
+
 
   private animateTable(direction: 'left' | 'right'): void {
     this.tabDirection.set(direction);

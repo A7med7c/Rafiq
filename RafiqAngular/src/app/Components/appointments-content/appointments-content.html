@@ -280,16 +280,16 @@
                   </div>
                 </td>
                 <!-- Date & Time -->
-                <td>
-                  <p style="margin:0 0 2px;font-weight:600;color:var(--text)">{{ formatDate(a.appointmentDateTime) }}</p>
-                  <p style="margin:0;font-size:12px;color:var(--text-3)">{{ formatTime(a.appointmentDateTime) }}</p>
-                </td>
-                <!-- Provider -->
-                <td style="font-weight:500;color:var(--text-2)">{{ a.provider }}</td>
-                <!-- Status -->
-                <td><span [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></td>
-                <!-- Reminder -->
-                <td style="color:var(--text-3);font-size:12px">
+                 <td data-label="Date & Time">
+                   <p style="margin:0 0 2px;font-weight:600;color:var(--text)">{{ formatDate(a.appointmentDateTime) }}</p>
+                   <p style="margin:0;font-size:12px;color:var(--text-3)">{{ formatTime(a.appointmentDateTime) }}</p>
+                 </td>
+                 <!-- Provider -->
+                 <td style="font-weight:500;color:var(--text-2)" data-label="Provider">{{ a.provider }}</td>
+                 <!-- Status -->
+                 <td data-label="Status"><span [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></td>
+                 <!-- Reminder -->
+                 <td style="color:var(--text-3);font-size:12px" data-label="Reminder">
                   <i class="fa-regular fa-bell" style="margin-right:4px;color:var(--blue)"></i>
                   {{ reminderLabel(a.reminderOffsetMinutes) }}
                 </td>

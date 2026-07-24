@@ -436,6 +436,33 @@
 
         </div>
 
+        <!-- Mobile-only: collapsible tab selector -->
+        <div class="mobile-tab-select">
+          <button type="button" class="mobile-tab-trigger" [class.is-open]="mobileTabMenuOpen()" (click)="toggleMobileTabMenu()">
+            <i [class]="'fa-solid ' + activeTabIcon() + ' mtt-icon'"></i>
+            <span class="mtt-label">{{ activeTabLabel() }}</span>
+            <i class="fa-solid fa-chevron-down mtt-chevron"></i>
+          </button>
+          @if (mobileTabMenuOpen()) {
+            <div class="mobile-tab-backdrop" (click)="closeMobileTabMenu()"></div>
+            <div class="mobile-tab-dropdown">
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'all'" (click)="setTab('all')">
+                <i class="fa-solid fa-layer-group"></i> {{ t().appointments.all }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'upcoming'" (click)="setTab('upcoming')">
+                <i class="fa-solid fa-calendar"></i> {{ t().appointments.upcoming }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'completed'" (click)="setTab('completed')">
+                <i class="fa-solid fa-circle-check"></i> {{ t().appointments.completed }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'cancelled'" (click)="setTab('cancelled')">
+                <i class="fa-solid fa-circle-xmark"></i> {{ t().appointments.cancelledMissed }}
+              </button>
+            </div>
+          }
+        </div>
+
+
         <!-- Search + Filters -->
         <div class="appts-controls-row">
 
@@ -569,17 +596,17 @@
                   </div>
                 </td>
                 <!-- Date & Time -->
-                <td>
+                <td [attr.data-label]="t().appointments.dateTime">
                   <p style="margin:0 0 2px;font-weight:600;color:var(--text)">{{ formatDate(a.appointmentDateTime) }}
                   </p>
                   <p style="margin:0;font-size:12px;color:var(--text-3)">{{ formatTime(a.appointmentDateTime) }}</p>
                 </td>
                 <!-- Provider -->
-                <td style="font-weight:500;color:var(--text-2)">{{ a.provider }}</td>
+                <td style="font-weight:500;color:var(--text-2)" [attr.data-label]="t().appointments.provider">{{ a.provider }}</td>
                 <!-- Status -->
-                <td><span [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></td>
+                <td [attr.data-label]="t().appointments.status"><span [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></td>
                 <!-- Reminder -->
-                <td style="color:var(--text-3);font-size:12px">
+                <td style="color:var(--text-3);font-size:12px" [attr.data-label]="t().appointments.reminder">
                   <i class="fa-regular fa-bell" style="margin-right:4px;color:var(--blue)"></i>
                   {{ reminderLabel(a.reminderOffsetMinutes) }}
                 </td>
