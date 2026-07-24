@@ -110,6 +110,10 @@ export class AiChatService {
     return this.http.delete<ApiResponse<boolean>>(`${this.base}/conversations/${conversationId}`);
   }
 
+  generateConversationTitle(conversationId: string): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(`${this.base}/conversations/${conversationId}/generate-title`, {});
+  }
+
   reactToMessage(
     conversationId: string,
     messageId: string,

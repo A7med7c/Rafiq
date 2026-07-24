@@ -90,6 +90,72 @@ export class AiPanel implements OnInit, OnDestroy {
     this.conversations().find(c => c.id === this.selectedConversationId()) ?? null
   );
 
+  // ── Pin (persisted to localStorage) ──
+  private readonly PINS_KEY = 'rafiq_pinned_convs';
+  readonly pinnedIds = signal<Set<string>>(this.loadPins());
+
+  readonly sortedConversations = computed(() => {
+    const pinned = this.pinnedIds();
+    return [...this.conversations()].sort((a, b) => {
+      const aPin = pinned.has(a.id) ? 1 : 0;
+      const bPin = pinned.has(b.id) ? 1 : 0;
+      if (bPin !== aPin) return bPin - aPin;
+      return this.sortKey(b) - this.sortKey(a);
+    });
+  });
+
+  private loadPins(): Set<string> {
+    try { return new Set(JSON.parse(localStorage.getItem(this.PINS_KEY) ?? '[]')); }
+    catch { return new Set(); }
+  }
+  private savePins(): void {
+    localStorage.setItem(this.PINS_KEY, JSON.stringify([...this.pinnedIds()]));
+  }
+
+  togglePin(event: Event, id: string): void {
+    event.stopPropagation();
+    this.pinnedIds.update(s => {
+      const next = new Set(s);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+    this.savePins();
+  }
+
+  // ── Inline rename ──
+  readonly renamingId   = signal<string | null>(null);
+  readonly renameValue  = signal('');
+
+  startRename(convId: string, title: string): void {
+    this.openMenuId.set(null);
+    this.renamingId.set(convId);
+    this.renameValue.set(title);
+  }
+
+  commitRename(convId: string): void {
+    const title = this.renameValue().trim();
+    this.renamingId.set(null);
+    if (!title) return;
+    this.conversations.update(list =>
+      list.map(c => c.id === convId ? { ...c, title } : c)
+    );
+    this.aiChatService.renameConversation(convId, title).subscribe({
+      error: () => this.loadConversations()
+    });
+  }
+
+  cancelRename(): void { this.renamingId.set(null); }
+
+  // ── Context menu (⋮) ──
+  readonly openMenuId = signal<string | null>(null);
+
+  toggleMenu(event: Event, id: string): void {
+    event.stopPropagation();
+    this.openMenuId.update(cur => cur === id ? null : id);
+  }
+
+  closeMenu(): void { this.openMenuId.set(null); }
+
   // ── Messages ──
   readonly messages = signal<ChatMessage[]>([]);
   readonly messagesLoading = signal(false);
@@ -237,6 +303,11 @@ export class AiPanel implements OnInit, OnDestroy {
     this.isDragging.set(false);
   }
 
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    if (this.openMenuId()) this.openMenuId.set(null);
+  }
+
 
   private loadProfileThenConversations(): void {
     this.healthProfileService
@@ -256,7 +327,7 @@ export class AiPanel implements OnInit, OnDestroy {
       });
   }
 
-  private loadConversations(): void {
+  loadConversations(): void {
     this.conversationsLoading.set(true);
     this.aiChatService.getConversations().subscribe(list => {
       this.conversations.set(list);
@@ -277,6 +348,21 @@ export class AiPanel implements OnInit, OnDestroy {
     this.startNewConversation();
     this.messageText.set(prompt);
     this.sendMessage();
+  }
+
+  deleteConversation(event: Event, conversationId: string): void {
+    event.stopPropagation();
+    // Optimistic removal
+    this.conversations.update(list => list.filter(c => c.id !== conversationId));
+    if (this.selectedConversationId() === conversationId) {
+      this.startNewConversation();
+    }
+    this.aiChatService.archiveConversation(conversationId).subscribe({
+      error: () => {
+        // Restore on failure
+        this.loadConversations();
+      }
+    });
   }
 
   selectConversation(conversation: ConversationSummaryDto): void {
@@ -495,11 +581,23 @@ export class AiPanel implements OnInit, OnDestroy {
               createdAt: new Date().toISOString(),
             },
           ]);
+          const isFirstExchange = this.messages().filter(m => m.role === 'Assistant').length === 1;
           this.conversations.update(list =>
             list
               .map(c => (c.id === conversationId ? { ...c, lastMessageAt: new Date().toISOString() } : c))
               .sort((a, b) => this.sortKey(b) - this.sortKey(a))
           );
+          if (isFirstExchange) {
+            this.aiChatService.generateConversationTitle(conversationId).subscribe({
+              next: res => {
+                if (res.data) {
+                  this.conversations.update(list =>
+                    list.map(c => c.id === conversationId ? { ...c, title: res.data! } : c)
+                  );
+                }
+              },
+            });
+          }
           this.sending.set(false);
           this.scrollToBottom();
         },

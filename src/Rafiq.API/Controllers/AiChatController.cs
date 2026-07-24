@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rafiq.Application.Features.AiChat.Commands.ArchiveConversation;
 using Rafiq.Application.Features.AiChat.Commands.CreateConversation;
+using Rafiq.Application.Features.AiChat.Commands.GenerateConversationTitle;
 using Rafiq.Application.Features.AiChat.Commands.ReactToMessage;
 using Rafiq.Application.Features.AiChat.Commands.RenameConversation;
 using Rafiq.Application.Features.AiChat.Commands.SendMessage;
@@ -74,6 +75,14 @@ public class AiChatController : ControllerBase
     }
 
     /// <summary>
+    /// Uses AI to generate a short contextual title from the first exchange.
+    [HttpPost("conversations/{conversationId:guid}/generate-title")]
+    public async Task<IActionResult> GenerateConversationTitle(Guid conversationId, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GenerateConversationTitleCommand(conversationId), cancellationToken);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     /// Archives (soft-deletes) a conversation. It stops appearing in the conversation
     /// list/history and can no longer receive new messages.
     /// </summary>

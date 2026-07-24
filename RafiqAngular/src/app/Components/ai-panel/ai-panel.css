@@ -207,6 +207,105 @@
   font-weight: 600;
 }
 
+/* ── Pinned item accent ─────────────────────────────────────────── */
+.ai-sb-item--pinned {
+  background: #f0fafe;
+}
+.ai-sb-item--pinned:hover { background: #e3f6fd; }
+.ai-sb-item--pinned.ai-sb-item--active { background: #DFF4FA; }
+
+.ai-sb-ico--pin {
+  color: #0EAFD7;
+  font-size: 11px;
+  transform: rotate(45deg);
+}
+
+/* ── ⋮ menu trigger ─────────────────────────────────────────────── */
+.ai-sb-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #9CA3AF;
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s, background .13s, color .13s;
+}
+.ai-sb-item:hover .ai-sb-more,
+.ai-sb-item--active .ai-sb-more { opacity: 1; }
+.ai-sb-more:hover { background: #E9EDF2; color: #374151; }
+
+/* ── Dropdown menu ──────────────────────────────────────────────── */
+.ai-sb-item { position: relative; overflow: visible; }
+
+.ai-sb-menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 4px;
+  z-index: 999;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  padding: 4px;
+  min-width: 150px;
+  animation: menuIn .12s ease;
+}
+@keyframes menuIn {
+  from { opacity: 0; transform: scale(.95) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1)  translateY(0); }
+}
+
+.ai-sb-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #374151;
+  font: 13px inherit;
+  cursor: pointer;
+  text-align: start;
+  transition: background .1s;
+}
+.ai-sb-menu-item i { width: 14px; text-align: center; color: #9CA3AF; font-size: 12px; }
+.ai-sb-menu-item:hover { background: #f3f4f6; }
+.ai-sb-menu-item:hover i { color: #374151; }
+
+.ai-sb-menu-item--danger { color: #ef4444; }
+.ai-sb-menu-item--danger i { color: #ef4444; }
+.ai-sb-menu-item--danger:hover { background: #fee2e2; }
+
+.ai-sb-menu-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 3px 4px;
+}
+
+/* ── Inline rename input ────────────────────────────────────────── */
+.ai-sb-rename-input {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 6px;
+  border: 1px solid #0EAFD7;
+  border-radius: 5px;
+  background: #fff;
+  color: #111;
+  font-size: 12.5px;
+  font-family: inherit;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(14,175,215,.15);
+}
+
 /* Skeleton */
 .ai-sb-skel {
   padding: 8px;

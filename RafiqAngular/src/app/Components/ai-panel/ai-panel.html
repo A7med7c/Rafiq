@@ -39,14 +39,61 @@
             <p class="ai-sb-empty">{{ t().aiAssistant.noConversations }}</p>
           } @else {
             <ul class="ai-sb-list">
-              @for (conv of conversations(); track conv.id) {
+              @for (conv of sortedConversations(); track conv.id) {
                 <li
                   class="ai-sb-item"
                   [class.ai-sb-item--active]="conv.id === selectedConversationId()"
+                  [class.ai-sb-item--pinned]="pinnedIds().has(conv.id)"
                   (click)="selectConversation(conv)"
                 >
-                  <i class="fa-regular fa-comment-dots ai-sb-ico"></i>
-                  <span class="ai-sb-title">{{ conv.title }}</span>
+                  @if (pinnedIds().has(conv.id)) {
+                    <i class="fa-solid fa-thumbtack ai-sb-ico ai-sb-ico--pin"></i>
+                  } @else {
+                    <i class="fa-regular fa-comment-dots ai-sb-ico"></i>
+                  }
+
+                  @if (renamingId() === conv.id) {
+                    <input
+                      class="ai-sb-rename-input"
+                      [value]="renameValue()"
+                      (input)="renameValue.set($any($event.target).value)"
+                      (keydown.enter)="commitRename(conv.id)"
+                      (keydown.escape)="cancelRename()"
+                      (blur)="commitRename(conv.id)"
+                      (click)="$event.stopPropagation()"
+                      autofocus />
+                  } @else {
+                    <span class="ai-sb-title">{{ conv.title }}</span>
+                  }
+
+                  <!-- ⋮ menu trigger -->
+                  <button type="button" class="ai-sb-more"
+                    (click)="toggleMenu($event, conv.id)"
+                    title="More options">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                  </button>
+
+                  <!-- Dropdown -->
+                  @if (openMenuId() === conv.id) {
+                    <div class="ai-sb-menu" (click)="$event.stopPropagation()">
+                      <button type="button" class="ai-sb-menu-item"
+                        (click)="togglePin($event, conv.id); closeMenu()">
+                        <i class="fa-solid fa-thumbtack"></i>
+                        {{ pinnedIds().has(conv.id) ? 'Unpin' : 'Pin' }}
+                      </button>
+                      <button type="button" class="ai-sb-menu-item"
+                        (click)="startRename(conv.id, conv.title)">
+                        <i class="fa-solid fa-pencil"></i>
+                        Rename
+                      </button>
+                      <div class="ai-sb-menu-divider"></div>
+                      <button type="button" class="ai-sb-menu-item ai-sb-menu-item--danger"
+                        (click)="deleteConversation($event, conv.id); closeMenu()">
+                        <i class="fa-solid fa-trash-can"></i>
+                        Delete
+                      </button>
+                    </div>
+                  }
                 </li>
               }
             </ul>
