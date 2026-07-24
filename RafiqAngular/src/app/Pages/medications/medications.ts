@@ -197,7 +197,8 @@ export class Medications implements OnInit, OnDestroy {
   readonly openMedMenuId = signal<string | null>(null);
   readonly viewingMed = signal<UserMedicine | null>(null);
   readonly medPage = signal(1);
-  private readonly MED_PAGE_SIZE = 8;
+  private readonly MED_PAGE_SIZE = 2;
+  readonly mobileTabMenuOpen = signal(false);
 
   // ── Medicine Reminders ────────────────────────────────────────────────────
   readonly medicineReminders = signal<Record<string, MedicineReminder[]>>({});
@@ -1330,6 +1331,31 @@ export class Medications implements OnInit, OnDestroy {
   setMedSubTab(tab: MedSubTab): void {
     this.medSubTab.set(tab);
     this.medPage.set(1);
+    this.mobileTabMenuOpen.set(false);
+  }
+
+  toggleMobileTabMenu(): void { this.mobileTabMenuOpen.update(v => !v); }
+  closeMobileTabMenu(): void  { this.mobileTabMenuOpen.set(false); }
+
+  activeTabLabel(): string {
+    const t = this.t().medications;
+    const map: Record<string, string> = {
+      all:              t.allTab || 'All',
+      'with-reminder':  t.withReminderTab || 'With Reminder',
+      'no-reminder':    t.noReminderTab || 'No Reminder',
+      paused:           t.pausedTab || 'Paused',
+    };
+    return map[this.medSubTab()] ?? (t.allTab || 'All');
+  }
+
+  activeTabIcon(): string {
+    const map: Record<string, string> = {
+      all: 'fa-layer-group',
+      'with-reminder': 'fa-bell',
+      'no-reminder': 'fa-bell-slash',
+      paused: 'fa-pause',
+    };
+    return map[this.medSubTab()] ?? 'fa-layer-group';
   }
 
   onMedSearch(q: string): void {

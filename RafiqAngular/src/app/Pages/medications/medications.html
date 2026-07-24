@@ -643,6 +643,37 @@
               <span class="tab-count">{{ pausedMedCount() }}</span>
             </button>
           </div>
+
+          <!-- Mobile-only: collapsible tab selector -->
+          <div class="mobile-tab-select">
+            <button type="button" class="mobile-tab-trigger" [class.is-open]="mobileTabMenuOpen()" (click)="toggleMobileTabMenu()">
+              <i [class]="'fa-solid ' + activeTabIcon() + ' mtt-icon'"></i>
+              <span class="mtt-label">{{ activeTabLabel() }}</span>
+              <i class="fa-solid fa-chevron-down mtt-chevron"></i>
+            </button>
+            @if (mobileTabMenuOpen()) {
+              <div class="mobile-tab-backdrop" (click)="closeMobileTabMenu()"></div>
+              <div class="mobile-tab-dropdown">
+                <button type="button" class="mobile-tab-item" [class.is-active]="medSubTab() === 'all'" (click)="setMedSubTab('all')">
+                  <i class="fa-solid fa-layer-group"></i> {{ t().medications.allTab }}
+                  <span class="mti-count">{{ medicines().length }}</span>
+                </button>
+                <button type="button" class="mobile-tab-item" [class.is-active]="medSubTab() === 'with-reminder'" (click)="setMedSubTab('with-reminder')">
+                  <i class="fa-solid fa-bell"></i> {{ t().medications.withReminderTab }}
+                  <span class="mti-count">{{ withReminderCount() }}</span>
+                </button>
+                <button type="button" class="mobile-tab-item" [class.is-active]="medSubTab() === 'no-reminder'" (click)="setMedSubTab('no-reminder')">
+                  <i class="fa-solid fa-bell-slash"></i> {{ t().medications.noReminderTab }}
+                  <span class="mti-count">{{ noReminderCount() }}</span>
+                </button>
+                <button type="button" class="mobile-tab-item" [class.is-active]="medSubTab() === 'paused'" (click)="setMedSubTab('paused')">
+                  <i class="fa-solid fa-pause"></i> {{ t().medications.pausedTab }}
+                  <span class="mti-count">{{ pausedMedCount() }}</span>
+                </button>
+              </div>
+            }
+          </div>
+
           <div class="appts-controls-row">
             <div class="appts-search-wrap">
               <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
@@ -737,12 +768,12 @@
                   </div>
                 </td>
                 <!-- Schedule -->
-                <td>
+                <td [attr.data-label]="t().medications.schedule">
                   <p class="meds-freq">{{ med.frequency }}</p>
                   <p class="meds-dur">{{ med.duration }}</p>
                 </td>
                 <!-- Reminder -->
-                <td>
+                <td [attr.data-label]="t().medications.reminderHeader">
                   @if (hasActiveReminders(med.id)) {
                   <div class="meds-rem-times">
                     @for (t of getSortedReminderTimes(med.id); track t) {
@@ -762,7 +793,7 @@
                   }
                 </td>
                 <!-- Source -->
-                <td>
+                <td [attr.data-label]="t().medications.source">
                   <span [class]="sourceClass(med.source)">{{ sourceLabel(med.source) }}</span>
                 </td>
                 <!-- Actions -->

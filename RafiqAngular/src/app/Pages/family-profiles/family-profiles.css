@@ -1863,6 +1863,12 @@
 }
 .fp-manage-meds-btn:hover { background: #0c97ba; }
 
+.fp-cta-btn-group {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .fp-med-card {
   display: flex;
   align-items: flex-start;
@@ -2199,3 +2205,150 @@
 }
 .fp-summary-skl--70 { width: 70%; }
 .fp-summary-skl--50 { width: 50%; }
+
+/* Mobile dropdown positioning overrides to prevent horizontal scrolling */
+@media (max-width: 600px) {
+  /* Mobile LTR: button is on the left, so open the menu to the right */
+  .fp-menu-dropdown {
+    right: auto !important;
+    left: 0 !important;
+    transform-origin: top left !important;
+  }
+
+  /* Mobile RTL: button is on the right, so open the menu to the left */
+  :host-context([dir="rtl"]) .fp-menu-dropdown,
+  [dir="rtl"] .fp-menu-dropdown {
+    right: 0 !important;
+    left: auto !important;
+    transform-origin: top right !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE OVERRIDES: Family Profiles (≤ 768 px)
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Prevent horizontal scroll on main container */
+  .fp-container,
+  .fp-split-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    gap: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Left sidebar panel (profile list) and right detail panel */
+  .fp-sidebar-panel,
+  .fp-detail-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Supervised & Supervising carousels / lists */
+  .fp-carousel-track {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    overflow-x: visible !important;
+    width: 100% !important;
+  }
+
+  /* Member card sizing to fit container */
+  .fp-member-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Header controls stacking */
+  .fp-hdr-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .fp-search-box {
+    width: 100% !important;
+  }
+  .fp-add-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Details header padding and avatar alignment */
+  .fp-detail-hdr {
+    padding: 16px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 12px !important;
+  }
+  .fp-detail-info {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  .fp-detail-name-row {
+    justify-content: center !important;
+  }
+  .fp-detail-meta-row {
+    justify-content: center !important;
+  }
+  .fp-detail-actions {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Stats row wrapping into a clean 2x2 grid */
+  .fp-stats-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 12px !important;
+    border-bottom: 1px solid var(--border-lt) !important;
+  }
+  .fp-stat-tile {
+    border-right: none !important;
+    border-left: none !important;
+    padding: 8px !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-lt) !important;
+    border-radius: 8px !important;
+  }
+
+  /* Overview grid layout */
+  .fp-overview-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 12px !important;
+  }
+
+  /* CTA Banner stack vertically */
+  .fp-manage-meds-cta {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    text-align: center !important;
+    padding: 16px !important;
+    gap: 12px !important;
+  }
+  .fp-manage-meds-ico {
+    margin: 0 auto !important;
+  }
+  /* The button group container inside the CTA */
+  .fp-cta-btn-group {
+    flex-direction: column !important;
+    width: 100% !important;
+    flex-shrink: unset !important;
+  }
+  .fp-manage-meds-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+

@@ -3003,3 +3003,200 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   border-color: var(--red) !important;
   background: var(--red-lt);
 }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE: Table → Card layout (≤ 640 px)
+   ══════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* Remove horizontal scroll from the wrapper */
+  .records-table-wrap {
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+  }
+
+  /* Stack search / filter controls vertically */
+  .appts-controls-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  .appts-search-wrap {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+  }
+  .meds-filter-select,
+  .clear-filters-btn {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Hide the table header */
+  .meds-table thead {
+    display: none !important;
+  }
+
+  /* Make table / tbody block so rows stack */
+  .meds-table,
+  .meds-table tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  /* Each row becomes a card */
+  .meds-table tbody tr {
+    display: block !important;
+    position: relative !important;
+    background: var(--white, #fff) !important;
+    border: 1px solid var(--border-lt, #e8edf2) !important;
+    border-radius: 12px !important;
+    padding: 54px 14px 10px !important;
+    margin-bottom: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    cursor: default !important;
+  }
+  .meds-table tbody tr:hover {
+    background: var(--white, #fff) !important;
+  }
+
+  /* ── First cell (icon + name) → pinned top-left ── */
+  .meds-table tbody td:first-child {
+    display: block !important;
+    position: absolute !important;
+    top: 10px !important;
+    left: 14px !important;
+    right: 56px !important;
+    padding: 0 !important;
+    height: auto !important;
+    background: transparent !important;
+  }
+  :host-context([dir="rtl"]) .meds-table tbody td:first-child {
+    left: 56px !important;
+    right: 14px !important;
+  }
+  .meds-table tbody td:first-child::before {
+    display: none !important;
+  }
+
+  /* ── Last cell (actions) → pinned top-right ── */
+  .meds-table tbody td:last-child {
+    display: block !important;
+    position: absolute !important;
+    top: 12px !important;
+    right: 10px !important;
+    left: auto !important;
+    padding: 0 !important;
+    height: auto !important;
+    background: transparent !important;
+  }
+  :host-context([dir="rtl"]) .meds-table tbody td:last-child {
+    right: auto !important;
+    left: 10px !important;
+  }
+  .meds-table tbody td:last-child::before {
+    display: none !important;
+  }
+
+  /* ── Middle cells → labeled data rows ── */
+  .meds-table tbody td:not(:first-child):not(:last-child) {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding: 8px 0 !important;
+    height: auto !important;
+    border-bottom: 1px solid var(--border-lt, #e8edf2) !important;
+    font-size: 13px !important;
+    background: transparent !important;
+  }
+
+  /* Label from data-label attribute */
+  .meds-table tbody td:not(:first-child):not(:last-child)::before {
+    content: attr(data-label) !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--text-3, #8899aa) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    padding-top: 2px !important;
+  }
+
+  /* Last labeled cell has no bottom border */
+  .meds-table tbody td:nth-last-child(2) {
+    border-bottom: none !important;
+  }
+
+  /* Compact name + icon */
+  .meds-table tbody td:first-child .table-name-wrap {
+    gap: 8px !important;
+  }
+  .meds-table tbody td:first-child .appt-type-ico {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 13px !important;
+    flex-shrink: 0 !important;
+  }
+  .meds-table tbody td:first-child .meds-name {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 160px !important;
+  }
+  .meds-table tbody td:first-child .meds-dosage {
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 160px !important;
+  }
+
+  /* Actions cell: keep buttons in a row */
+  .meds-table tbody td:last-child .record-actions {
+    flex-direction: row !important;
+    gap: 4px !important;
+    justify-content: flex-end !important;
+  }
+
+  /* Reminder time chips: wrap nicely */
+  .meds-rem-times {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+
+  /* Drop-down menus: absolute relative to .record-actions, never clips */
+  .meds-table tbody .record-menu {
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    right: 0 !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 500 !important;
+    min-width: 200px !important;
+  }
+  :host-context([dir="rtl"]) .meds-table tbody .record-menu,
+  [dir="rtl"] .meds-table tbody .record-menu {
+    right: auto !important;
+    left: 0 !important;
+  }
+
+
+  /* Compact pagination */
+  .pagination-bar {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    padding-top: 10px !important;
+  }
+  .page-btn {
+    min-width: 28px !important;
+    height: 28px !important;
+    font-size: 11px !important;
+  }
+}

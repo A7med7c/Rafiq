@@ -116,11 +116,12 @@ export class FamilyProfiles implements OnInit {
   readonly sentInvitationsLoading = signal(false);
 
   // ─── Supervision pagination ───────────────────────────────────
-  readonly PAGE_SIZE = 5;
+  readonly PAGE_SIZE = 2;
   readonly supervisedPage = signal(0);
   readonly supervisingPage = signal(0);
   readonly supervisedVisible = signal(true);
   readonly supervisingVisible = signal(true);
+  readonly mobileTabMenuOpen = signal(false);
 
   // ─── Medications / Reminders tab ────────────────────────────
   readonly fpMedicines = signal<any[]>([]);
@@ -353,6 +354,35 @@ export class FamilyProfiles implements OnInit {
     if (tab === 'summary') {
       this.loadHealthSummary();
     }
+    this.mobileTabMenuOpen.set(false);
+  }
+
+  toggleMobileTabMenu(): void { this.mobileTabMenuOpen.update(v => !v); }
+  closeMobileTabMenu(): void  { this.mobileTabMenuOpen.set(false); }
+
+  activeTabLabel(): string {
+    const t = this.t().family;
+    const map: Record<string, string> = {
+      overview:     t.overviewTab || 'Overview',
+      records:      t.medicalRecordsTab || 'Medical Records',
+      appointments: t.appointmentsTab || 'Appointments',
+      medications:  t.medicationsTab || 'Medications',
+      reminders:    t.remindersTab || 'Reminders',
+      summary:      t.healthSummaryTab || 'Health Summary',
+    };
+    return map[this.activeTab()] ?? (t.overviewTab || 'Overview');
+  }
+
+  activeTabIcon(): string {
+    const map: Record<string, string> = {
+      overview: 'fa-house',
+      records: 'fa-folder-open',
+      appointments: 'fa-calendar-check',
+      medications: 'fa-pills',
+      reminders: 'fa-bell',
+      summary: 'fa-chart-simple',
+    };
+    return map[this.activeTab()] ?? 'fa-house';
   }
 
   private animateTabContent(direction: 'left' | 'right'): void {
