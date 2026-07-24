@@ -8,7 +8,8 @@ using Rafiq.Domain.Exceptions;
 public sealed class UploadGeneralDocumentCommandHandler(
     ICurrentUserService currentUserService,
     IBedrockService bedrockService,
-    IFileStorageService fileStorageService)
+    IFileStorageService fileStorageService,
+    IAiTelemetryContext telemetryContext)
     : IRequestHandler<
         UploadGeneralDocumentCommand,
         ApiResponse<GeneralDocumentPreviewDto>>
@@ -17,8 +18,11 @@ public sealed class UploadGeneralDocumentCommandHandler(
         UploadGeneralDocumentCommand request,
         CancellationToken cancellationToken)
     {
-        _ = currentUserService.UserId
+        var userId = currentUserService.UserId
             ?? throw new UnauthorizedException("Authentication is required.");
+
+        telemetryContext.Feature = Rafiq.Domain.Enums.AiFeature.GeneralDocOcr;
+        telemetryContext.UserId  = userId;
 
         using var memory = new MemoryStream();
         using (var sourceStream = request.Image.OpenReadStream())

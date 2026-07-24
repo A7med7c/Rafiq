@@ -38,19 +38,17 @@ export class AdminLayoutComponent {
   readonly copy = computed(() => adminCopy[this.l10n.lang()]);
 
   readonly navigation: AdminNavItem[] = [
-    { path: '/admin/dashboard', icon: 'fa-chart-pie', label: 'dashboard' },
-    { path: '/admin/users', icon: 'fa-users', label: 'users' },
-    { path: '/admin/doctors', icon: 'fa-user-doctor', label: 'doctors' },
-    { path: '/admin/families', icon: 'fa-people-roof', label: 'families' },
-    { path: '/admin/medical-records', icon: 'fa-notes-medical', label: 'medicalRecords' },
-    { path: '/admin/appointments', icon: 'fa-calendar-check', label: 'appointments' },
-    { path: '/admin/medications', icon: 'fa-capsules', label: 'medications' },
-    { path: '/admin/notifications', icon: 'fa-bell', label: 'notifications' },
-    { path: '/admin/documents', icon: 'fa-file-shield', label: 'documents' },
-    { path: '/admin/ai-analysis', icon: 'fa-wand-magic-sparkles', label: 'aiAnalysis' },
-    { path: '/admin/statistics', icon: 'fa-chart-line', label: 'statistics' },
-    { path: '/admin/settings', icon: 'fa-sliders', label: 'settings' },
-    { path: '/admin/audit-logs', icon: 'fa-clock-rotate-left', label: 'auditLogs' }
+    { path: '/admin/dashboard',      icon: 'fa-chart-pie',           label: 'dashboard' },
+    { path: '/admin/users',          icon: 'fa-users',               label: 'users' },
+    { path: '/admin/families',       icon: 'fa-people-roof',         label: 'families' },
+    { path: '/admin/ai-operations',  icon: 'fa-robot',               label: 'aiOperations' },
+    { path: '/admin/medical-records',icon: 'fa-notes-medical',       label: 'medicalRecords' },
+    { path: '/admin/medications',    icon: 'fa-capsules',            label: 'medications' },
+    { path: '/admin/appointments',   icon: 'fa-calendar-check',      label: 'appointments' },
+    { path: '/admin/documents',      icon: 'fa-file-shield',         label: 'documents' },
+    { path: '/admin/analytics',      icon: 'fa-chart-line',          label: 'analytics' },
+    { path: '/admin/settings',       icon: 'fa-sliders',             label: 'settings' },
+    { path: '/admin/audit-logs',     icon: 'fa-clock-rotate-left',   label: 'auditLogs' }
   ];
 
   get adminName(): string {

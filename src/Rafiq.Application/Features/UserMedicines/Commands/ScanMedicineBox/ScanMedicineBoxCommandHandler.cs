@@ -10,7 +10,8 @@ namespace Rafiq.Application.Features.UserMedicines.Commands.ScanMedicineBox;
 public sealed class ScanMedicineBoxCommandHandler(
     ICurrentUserService currentUserService,
     IBedrockService bedrockService,
-    IFileStorageService fileStorageService)
+    IFileStorageService fileStorageService,
+    IAiTelemetryContext telemetryContext)
     : IRequestHandler<ScanMedicineBoxCommand, ApiResponse<ScanMedicineBoxResponseDto>>
 {
     public async Task<ApiResponse<ScanMedicineBoxResponseDto>> Handle(
@@ -19,6 +20,9 @@ public sealed class ScanMedicineBoxCommandHandler(
     {
         var userId = currentUserService.UserId
             ?? throw new UnauthorizedException("Authentication is required.");
+
+        telemetryContext.Feature = Rafiq.Domain.Enums.AiFeature.MedicineScan;
+        telemetryContext.UserId  = userId;
 
         using var imageStream = request.Image.OpenReadStream();
         using var memoryStream = new MemoryStream();

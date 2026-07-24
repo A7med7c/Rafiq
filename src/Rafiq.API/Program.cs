@@ -25,8 +25,9 @@ public class Program
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
             {
-                options.JsonSerializerOptions.Converters.Add(
-                    new JsonStringEnumConverter());
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                options.JsonSerializerOptions.Converters.Add(new Rafiq.API.Converters.UtcDateTimeJsonConverter());
+                options.JsonSerializerOptions.Converters.Add(new Rafiq.API.Converters.UtcNullableDateTimeJsonConverter());
             });
         builder.Services.AddSwaggerDocumentation();
         builder.Services.AddApplication();

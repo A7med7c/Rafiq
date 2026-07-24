@@ -14,7 +14,8 @@ public sealed class UploadLabReportCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IBedrockService bedrockService,
-    IFileStorageService fileStorageService)
+    IFileStorageService fileStorageService,
+    IAiTelemetryContext telemetryContext)
     : IRequestHandler<UploadLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
     public async Task<ApiResponse<LabReportResponseDto>> Handle(
@@ -33,6 +34,9 @@ public sealed class UploadLabReportCommandHandler(
         }
 
         await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
+
+        telemetryContext.Feature = Rafiq.Domain.Enums.AiFeature.LabOcr;
+        telemetryContext.UserId  = currentUserService.UserId;
 
         using var imageStream = request.Image.OpenReadStream();
         using var memoryStream = new MemoryStream();

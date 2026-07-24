@@ -23,19 +23,21 @@ export const ADMIN_ROUTES: Routes = [
           import('./pages/users/admin-users.component')
             .then(module => module.AdminUsersComponent)
       },
+      {
+        path: 'ai-operations',
+        loadComponent: () =>
+          import('./pages/ai-operations/admin-ai-operations.component')
+            .then(m => m.AdminAiOperationsComponent)
+      },
       ...[
-        'doctors',
         'families',
         'medical-records',
         'appointments',
         'medications',
-        'notifications',
         'documents',
-        'ai-analysis',
-        'statistics',
+        'analytics',
         'settings',
-        'audit-logs',
-        'profile'
+        'audit-logs'
       ].map(path => ({
         path,
         loadComponent: () =>

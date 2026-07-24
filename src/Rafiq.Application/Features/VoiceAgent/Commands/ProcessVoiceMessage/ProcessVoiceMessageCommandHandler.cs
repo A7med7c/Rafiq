@@ -16,7 +16,8 @@ public sealed class ProcessVoiceMessageCommandHandler(
     IAiConversationRepository conversationRepository,
     VoiceAgentLoop agentLoop,
     INotificationService notificationService,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAiTelemetryContext telemetryContext)
     : IRequestHandler<ProcessVoiceMessageCommand, ApiResponse<VoiceAgentResponseDto>>
 {
     public async Task<ApiResponse<VoiceAgentResponseDto>> Handle(
@@ -30,6 +31,10 @@ public sealed class ProcessVoiceMessageCommandHandler(
 
         var userId = currentUserService.UserId
             ?? throw new UnauthorizedException("Authentication required.");
+
+        telemetryContext.Feature        = Rafiq.Domain.Enums.AiFeature.Voice;
+        telemetryContext.UserId         = userId;
+        telemetryContext.ConversationId = request.SessionId;
 
         var userIdString = userId.ToString();
 

@@ -14,7 +14,8 @@ public sealed class UploadPrescriptionCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IBedrockService bedrockService,
-    IFileStorageService fileStorageService)
+    IFileStorageService fileStorageService,
+    IAiTelemetryContext telemetryContext)
     : IRequestHandler<UploadPrescriptionCommand, ApiResponse<PrescriptionResponseDto>>
 {
     public async Task<ApiResponse<PrescriptionResponseDto>> Handle(
@@ -33,6 +34,9 @@ public sealed class UploadPrescriptionCommandHandler(
         }
 
         await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
+
+        telemetryContext.Feature = Rafiq.Domain.Enums.AiFeature.PrescriptionOcr;
+        telemetryContext.UserId  = currentUserService.UserId;
 
         using var imageStream = request.Image.OpenReadStream();
         using var memoryStream = new MemoryStream();

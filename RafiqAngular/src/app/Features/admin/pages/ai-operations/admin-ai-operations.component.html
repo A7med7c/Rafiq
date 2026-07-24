@@ -1,0 +1,789 @@
+<section class="aio">
+
+  <!-- ── Page header ──────────────────────────────────────────────────── -->
+  <header class="aio__head">
+    <div>
+      <h1>{{ copy().title }}</h1>
+      <p>{{ copy().subtitle }}</p>
+    </div>
+  </header>
+
+  <!-- ── Tabs ─────────────────────────────────────────────────────────── -->
+  <nav class="aio__tabs" role="tablist">
+    <button type="button" role="tab" class="aio__tab"
+      [class.aio__tab--active]="activeTab() === 'overview'"
+      (click)="switchTab('overview')">
+      <i class="fa-solid fa-gauge-high"></i> {{ copy().tabOverview }}
+    </button>
+    <button type="button" role="tab" class="aio__tab"
+      [class.aio__tab--active]="activeTab() === 'conversations'"
+      (click)="switchTab('conversations')">
+      <i class="fa-solid fa-list-ul"></i> {{ copy().tabConversations }}
+    </button>
+    <button type="button" role="tab" class="aio__tab"
+      [class.aio__tab--active]="activeTab() === 'feedback'"
+      (click)="switchTab('feedback')">
+      <i class="fa-solid fa-star-half-stroke"></i> {{ copy().tabFeedback }}
+    </button>
+    <button type="button" role="tab" class="aio__tab"
+      [class.aio__tab--active]="activeTab() === 'performance'"
+      (click)="switchTab('performance')">
+      <i class="fa-solid fa-chart-line"></i> {{ copy().tabPerformance }}
+    </button>
+  </nav>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       TAB: OVERVIEW
+  ════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'overview') {
+
+    @if (overviewLoading()) {
+      <div class="kpi-grid-health">
+        <div class="kpi-skeleton kpi-skeleton--health"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          @for (i of [1,2,3,4]; track i) { <div class="kpi-skeleton"></div> }
+        </div>
+      </div>
+      <div class="kpi-grid-4" style="margin-top:14px">
+        @for (i of [1,2,3]; track i) { <div class="kpi-skeleton"></div> }
+      </div>
+    } @else if (overviewError()) {
+      <div class="aio__empty">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>{{ copy().loadError }}</p>
+        <button type="button" class="btn-retry" (click)="loadOverview()">{{ copy().retry }}</button>
+      </div>
+    } @else if (overview(); as o) {
+
+      <!-- ── HERO: Health Score + KPI tiles ── -->
+      <article class="ov-hero">
+        <div class="ov-hero__ring">
+          <svg viewBox="0 0 120 120" class="health-ring-svg">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="var(--admin-border)" stroke-width="8"/>
+            <circle cx="60" cy="60" r="52" fill="none"
+              [attr.stroke]="healthColor()"
+              stroke-width="8"
+              stroke-linecap="round"
+              stroke-dasharray="326.7"
+              [attr.stroke-dashoffset]="326.7 - (326.7 * o.aiHealthScore / 100)"
+              transform="rotate(-90 60 60)" />
+            <text x="60" y="56" text-anchor="middle" class="ring-value" [attr.fill]="healthColor()">{{ o.aiHealthScore }}</text>
+            <text x="60" y="72" text-anchor="middle" class="ring-label">/ 100</text>
+          </svg>
+        </div>
+
+        <div class="ov-hero__body">
+          <div class="health-status" [style.color]="healthColor()" [style.background]="healthBg()">
+            <i class="fa-solid" [class.fa-circle-check]="o.aiHealthScore >= 85"
+               [class.fa-circle-exclamation]="o.aiHealthScore >= 70 && o.aiHealthScore < 85"
+               [class.fa-circle-xmark]="o.aiHealthScore < 70"></i>
+            {{ healthLabel() }}
+          </div>
+          <p class="ov-hero__title">{{ copy().healthScore }}</p>
+          <p class="health-card__desc">{{ copy().healthScoreDesc }}</p>
+        </div>
+
+        <div class="ov-hero__divider"></div>
+
+        <div class="ov-kpi-row">
+          @for (card of kpiCards(); track card.label) {
+            <div class="ov-kpi-tile">
+              <div class="ov-kpi-tile__icon">
+                <i class="fa-solid {{ card.icon }}"></i>
+              </div>
+              <div class="ov-kpi-tile__val">
+                {{ card.value | number }}
+                @if (card.suffix) { <span class="kpi-suffix">{{ card.suffix }}</span> }
+              </div>
+              <div class="ov-kpi-tile__lbl">{{ card.label }}</div>
+            </div>
+          }
+        </div>
+      </article>
+
+      <!-- ── MID: Trend chart + Active Incidents ── -->
+      <div class="ov-mid">
+
+        <!-- Trend chart -->
+        @if (o.qualityTrend.length > 1) {
+          <div class="chart-card ov-mid__chart">
+            <h3>{{ copy().qualityTrend }} <span class="chart-sub">{{ copy().last7Days }}</span></h3>
+            <div class="trend-chart-wrap">
+              <div class="trend-bars">
+                @for (day of o.qualityTrend; track day.date) {
+                  <div class="trend-day">
+                    <div class="trend-bar-wrap">
+                      <div class="trend-bar trend-bar--req"
+                        [style.height.%]="barHeight(day.requests, o.qualityTrend.map(d => ({value:d.requests})))">
+                      </div>
+                      @if (day.failed > 0) {
+                        <div class="trend-bar-failed"
+                          [style.height.%]="barHeight(day.failed, o.qualityTrend.map(d => ({value:d.requests})))">
+                        </div>
+                      }
+                    </div>
+                    <div class="trend-reactions">
+                      @if (day.thumbsUp > 0)   { <span class="trend-up">{{ copy().thumbsUpShort }}{{ day.thumbsUp }}</span> }
+                      @if (day.thumbsDown > 0) { <span class="trend-down">{{ copy().thumbsDownShort }}{{ day.thumbsDown }}</span> }
+                    </div>
+                    <span class="trend-label">{{ day.date }}</span>
+                  </div>
+                }
+              </div>
+              <div class="trend-legend">
+                <span class="trend-legend-item"><span class="trend-dot trend-dot--req"></span>{{ copy().requests }}</span>
+                <span class="trend-legend-item"><span class="trend-dot trend-dot--fail"></span>{{ copy().failures }}</span>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Active Incidents -->
+        <div class="section-panel ov-mid__incidents">
+          <div class="section-panel__head">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> {{ copy().incidents }}</h3>
+            @if (incidents().length > 0) {
+              <span class="ov-incident-count ov-incident-count--{{ incidents()[0].severity }}">{{ incidents().length }}</span>
+            }
+            <span class="section-panel__sub" style="margin-inline-start:auto">{{ copy().incidentsSub }}</span>
+          </div>
+          @if (incidents().length === 0) {
+            <div class="incident-ok">
+              <i class="fa-solid fa-circle-check"></i>
+              <span>{{ copy().noIncidents }}</span>
+            </div>
+          } @else {
+            <div class="incident-list">
+              @for (inc of incidents(); track inc.title) {
+                <div class="incident-item" [class.incident-item--critical]="inc.severity === 'critical'"
+                     [class.incident-item--warning]="inc.severity === 'warning'">
+                  <i class="fa-solid {{ inc.icon }} incident-item__icon"></i>
+                  <div class="incident-item__body">
+                    <span class="incident-item__title">{{ inc.title }}</span>
+                    <span class="incident-item__desc">{{ inc.desc }}</span>
+                  </div>
+                  <span class="incident-badge" [class.incident-badge--critical]="inc.severity === 'critical'"
+                        [class.incident-badge--warning]="inc.severity === 'warning'">
+                    {{ inc.severity === 'critical' ? copy().severityCritical : copy().severityWarning }}
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- ── AI Insights ── -->
+      <div class="section-panel">
+        <div class="section-panel__head">
+          <h3><i class="fa-solid fa-lightbulb"></i> {{ copy().insights }}</h3>
+          <span class="section-panel__sub">{{ copy().insightsSub }}</span>
+        </div>
+        @if (insightsLoading()) {
+          <div class="ov-insight-grid">
+            @for (i of [1,2,3,4,5]; track i) { <div class="kpi-skeleton" style="height:88px"></div> }
+          </div>
+        } @else if (insights(); as ins) {
+          <div class="ov-insight-grid">
+            @if (ins.mostUsedFeature) {
+              <div class="ov-insight-card ov-insight-card--blue">
+                <div class="ov-insight-card__icon"><i class="fa-solid fa-fire"></i></div>
+                <div class="ov-insight-card__body">
+                  <span class="ov-insight-card__label">{{ copy().mostUsedFeature }}</span>
+                  <span class="ov-insight-card__value">{{ featureLabel(ins.mostUsedFeature) }}</span>
+                  <span class="ov-insight-card__sub">{{ ins.mostUsedFeatureCount | number }} {{ copy().insightRequests }}</span>
+                </div>
+              </div>
+            }
+            @if (ins.mostReportedCategory) {
+              <div class="ov-insight-card ov-insight-card--amber">
+                <div class="ov-insight-card__icon"><i class="fa-solid fa-flag"></i></div>
+                <div class="ov-insight-card__body">
+                  <span class="ov-insight-card__label">{{ copy().mostReportedCategory }}</span>
+                  <span class="ov-insight-card__value">{{ categoryLabel(ins.mostReportedCategory) }}</span>
+                  <span class="ov-insight-card__sub">{{ ins.mostReportedCategoryCount | number }} {{ copy().insightOccurrences }}</span>
+                </div>
+              </div>
+            }
+            @if (ins.highestErrorFeature) {
+              <div class="ov-insight-card ov-insight-card--red">
+                <div class="ov-insight-card__icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                <div class="ov-insight-card__body">
+                  <span class="ov-insight-card__label">{{ copy().highestErrorFeature }}</span>
+                  <span class="ov-insight-card__value">{{ featureLabel(ins.highestErrorFeature) }}</span>
+                  <span class="ov-insight-card__sub">{{ ins.highestErrorCount | number }} {{ copy().insightErrors }}</span>
+                </div>
+              </div>
+            }
+            @if (ins.slowestFeature) {
+              <div class="ov-insight-card ov-insight-card--purple">
+                <div class="ov-insight-card__icon"><i class="fa-solid fa-gauge-simple-low"></i></div>
+                <div class="ov-insight-card__body">
+                  <span class="ov-insight-card__label">{{ copy().slowestFeature }}</span>
+                  <span class="ov-insight-card__value">{{ featureLabel(ins.slowestFeature) }}</span>
+                  <span class="ov-insight-card__sub">{{ ins.slowestFeatureAvgMs | number }} ms {{ copy().insightAvgMs }}</span>
+                </div>
+              </div>
+            }
+            @if (ins.fastestFeature) {
+              <div class="ov-insight-card ov-insight-card--green">
+                <div class="ov-insight-card__icon"><i class="fa-solid fa-gauge-simple-high"></i></div>
+                <div class="ov-insight-card__body">
+                  <span class="ov-insight-card__label">{{ copy().fastestFeature }}</span>
+                  <span class="ov-insight-card__value">{{ featureLabel(ins.fastestFeature) }}</span>
+                  <span class="ov-insight-card__sub">{{ ins.fastestFeatureAvgMs | number }} ms {{ copy().insightAvgMs }}</span>
+                </div>
+              </div>
+            }
+            @if (!ins.mostUsedFeature && !ins.mostReportedCategory) {
+              <p class="insight-empty">{{ copy().noInsights }}</p>
+            }
+          </div>
+        }
+      </div>
+
+    }
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════
+       TAB: CONVERSATIONS
+  ════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'conversations') {
+
+    <div class="aio__filters">
+      <input class="aio__search" type="search" [placeholder]="copy().searchPlaceholder"
+        [value]="requestsQuery().search ?? ''"
+        (input)="onRequestSearch($any($event.target).value)" />
+      <select class="aio__select" [value]="requestsQuery().feature ?? ''"
+        (change)="onRequestFeatureChange($any($event.target).value)">
+        <option value="">{{ copy().allFeatures }}</option>
+        <option value="Chat">Chat</option>
+        <option value="Voice">Voice</option>
+        <option value="LabOcr">Lab OCR</option>
+        <option value="ImagingOcr">Imaging OCR</option>
+        <option value="PrescriptionOcr">Prescription OCR</option>
+        <option value="GeneralDocOcr">General Doc OCR</option>
+        <option value="MedicineScan">Medicine Scan</option>
+      </select>
+      <select class="aio__select" [value]="requestsQuery().status ?? ''"
+        (change)="onRequestStatusChange($any($event.target).value)">
+        <option value="">{{ copy().allStatuses }}</option>
+        <option value="success">{{ copy().success }}</option>
+        <option value="failed">{{ copy().failed }}</option>
+      </select>
+    </div>
+
+    @if (requestsLoading()) {
+      <div class="table-skeleton">
+        @for (i of [1,2,3,4,5,6]; track i) { <div class="row-skeleton"></div> }
+      </div>
+    } @else if (requestsError()) {
+      <div class="aio__empty">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>{{ copy().loadError }}</p>
+        <button type="button" class="btn-retry" (click)="loadRequests()">{{ copy().retry }}</button>
+      </div>
+    } @else if (requests().length === 0) {
+      <div class="aio__empty">
+        <i class="fa-solid fa-robot"></i>
+        <p>{{ copy().noRequests }}</p>
+        <span class="aio__empty-sub">{{ copy().noRequestsSub }}</span>
+      </div>
+    } @else {
+      <p class="table-hint"><i class="fa-solid fa-arrow-pointer"></i> {{ copy().clickRowHint }}</p>
+      <div class="table-wrap">
+        <table class="aio__table">
+          <thead>
+            <tr>
+              <th>{{ copy().user }}</th>
+              <th>{{ copy().feature }}</th>
+              <th>{{ copy().model }}</th>
+              <th>{{ copy().duration }}</th>
+              <th>{{ copy().status }}</th>
+              <th>{{ copy().date }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of requests(); track row.id) {
+              <tr class="req-row" (click)="openDrawer(row)">
+                <td>
+                  <div class="cell-user">
+                    <span class="cell-name">{{ row.userName ?? '—' }}</span>
+                    <span class="cell-email">{{ row.userEmail ?? '' }}</span>
+                  </div>
+                </td>
+                <td><span class="feature-tag">{{ featureLabel(row.feature) }}</span></td>
+                <td class="cell-model">{{ row.modelName }}</td>
+                <td class="cell-mono">{{ row.durationMs | number }} <span class="cell-unit">ms</span></td>
+                <td>
+                  <span class="pill" [class.pill--green]="row.success" [class.pill--red]="!row.success">
+                    {{ row.success ? copy().success : copy().failed }}
+                  </span>
+                </td>
+                <td class="cell-date">{{ formatDate(row.createdAt) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="aio__pagination">
+        <button type="button" class="page-btn" [disabled]="requestsPage() <= 1"
+          (click)="prevRequestsPage()">{{ copy().previous }}</button>
+        <span class="page-info">{{ copy().page }} {{ requestsPage() }} {{ copy().of }} {{ requestsTotalPages() }}</span>
+        <button type="button" class="page-btn" [disabled]="requestsPage() >= requestsTotalPages()"
+          (click)="nextRequestsPage()">{{ copy().next }}</button>
+      </div>
+    }
+
+    <!-- ── Request detail drawer ── -->
+    @if (drawerOpen()) {
+      <div class="drawer-backdrop" (click)="closeDrawer()"></div>
+      <aside class="drawer">
+        <div class="drawer__header">
+          <h2>{{ copy().requestDetail }}</h2>
+          <button type="button" class="drawer__close" (click)="closeDrawer()" [attr.aria-label]="copy().close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        @if (drawerLoading()) {
+          <div class="drawer__body">
+            @for (i of [1,2,3]; track i) { <div class="row-skeleton" style="height:60px;margin-bottom:12px;border-radius:10px;"></div> }
+          </div>
+        } @else if (drawerError()) {
+          <div class="drawer__body">
+            <div class="aio__empty" style="padding:40px 0">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <p>{{ copy().loadError }}</p>
+            </div>
+          </div>
+        } @else if (requestDetail(); as d) {
+          <div class="drawer__body">
+
+            <!-- Meta strip -->
+            <div class="drawer-meta">
+              <div class="drawer-meta-row">
+                <span class="drawer-meta-label">{{ copy().feature }}</span>
+                <span class="feature-tag">{{ featureLabel(d.feature) }}</span>
+              </div>
+              <div class="drawer-meta-row">
+                <span class="drawer-meta-label">{{ copy().model }}</span>
+                <span class="drawer-meta-value cell-model">{{ d.modelName }}</span>
+              </div>
+              <div class="drawer-meta-row">
+                <span class="drawer-meta-label">{{ copy().duration }}</span>
+                <span class="drawer-meta-value">{{ d.durationMs | number }} ms</span>
+              </div>
+              <div class="drawer-meta-row">
+                <span class="drawer-meta-label">{{ copy().status }}</span>
+                <span class="pill" [class.pill--green]="d.success" [class.pill--red]="!d.success">
+                  {{ d.success ? copy().success : copy().failed }}
+                </span>
+              </div>
+              <div class="drawer-meta-row">
+                <span class="drawer-meta-label">{{ copy().user }}</span>
+                <span class="drawer-meta-value">{{ d.userName ?? '—' }}<br><small class="cell-email">{{ d.userEmail ?? '' }}</small></span>
+              </div>
+              <div class="drawer-meta-row">
+                <span class="drawer-meta-label">{{ copy().date }}</span>
+                <span class="drawer-meta-value">{{ formatDate(d.createdAt) }}</span>
+              </div>
+            </div>
+
+            @if (!d.success && d.errorType) {
+              <div class="drawer-section">
+                <h4 class="drawer-section__title drawer-section__title--error">
+                  <i class="fa-solid fa-circle-xmark"></i> {{ copy().errorInfo }}
+                </h4>
+                <code class="drawer-error">{{ d.errorType }}</code>
+              </div>
+            }
+
+            @if (d.userPrompt) {
+              <div class="drawer-section">
+                <h4 class="drawer-section__title">
+                  <i class="fa-regular fa-user"></i> {{ copy().userPrompt }}
+                </h4>
+                <div class="drawer-bubble drawer-bubble--user">{{ d.userPrompt }}</div>
+              </div>
+            }
+
+            @if (d.aiResponse) {
+              <div class="drawer-section">
+                <h4 class="drawer-section__title">
+                  <i class="fa-solid fa-robot"></i> {{ copy().aiResponse }}
+                </h4>
+                <div class="drawer-bubble drawer-bubble--ai">{{ d.aiResponse }}</div>
+              </div>
+            }
+
+            @if (!d.userPrompt && !d.aiResponse) {
+              <div class="drawer-section">
+                <p class="drawer-no-conv"><i class="fa-solid fa-link-slash"></i> {{ copy().noConversation }}</p>
+              </div>
+            }
+
+          </div>
+        }
+      </aside>
+    }
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════
+       TAB: FEEDBACK
+  ════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'feedback') {
+
+    <!-- Filters -->
+    <div class="aio__filters aio__filters--wrap">
+      <input class="aio__search" type="search" [placeholder]="copy().searchPlaceholder"
+        [value]="feedbackQuery().search ?? ''"
+        (input)="onFeedbackSearch($any($event.target).value)" />
+
+      <select class="aio__select" [value]="feedbackQuery().reaction ?? ''"
+        (change)="onFeedbackReactionChange($any($event.target).value)">
+        <option value="">{{ copy().allReactions }}</option>
+        <option value="ThumbsUp">😊 {{ copy().positive }}</option>
+        <option value="ThumbsDown">😞 {{ copy().negative }}</option>
+      </select>
+
+      <select class="aio__select" [value]="feedbackQuery().status ?? ''"
+        (change)="onFeedbackStatusChange($any($event.target).value)">
+        <option value="">{{ copy().allTriageStatuses }}</option>
+        <option value="New">{{ copy().statusNew }}</option>
+        <option value="Investigating">{{ copy().statusInvestigating }}</option>
+        <option value="Resolved">{{ copy().statusResolved }}</option>
+        <option value="Ignored">{{ copy().statusIgnored }}</option>
+      </select>
+
+      <select class="aio__select" [value]="feedbackQuery().category ?? ''"
+        (change)="onFeedbackCategoryChange($any($event.target).value)">
+        <option value="">{{ copy().allCategories }}</option>
+        <option value="Hallucination">{{ copy().catHallucination }}</option>
+        <option value="WrongMedicalAdvice">{{ copy().catWrongMedical }}</option>
+        <option value="OcrIssue">{{ copy().catOcrIssue }}</option>
+        <option value="VoiceRecognition">{{ copy().catVoice }}</option>
+        <option value="Performance">{{ copy().catPerformance }}</option>
+        <option value="Bug">{{ copy().catBug }}</option>
+        <option value="FeatureRequest">{{ copy().catFeatureRequest }}</option>
+        <option value="Other">{{ copy().catOther }}</option>
+      </select>
+
+      <div class="date-range">
+        <label class="date-range__label">{{ copy().dateFrom }}</label>
+        <input type="date" class="aio__input"
+          [ngModel]="feedbackDateFrom()"
+          (ngModelChange)="feedbackDateFrom.set($event)"
+          (change)="onDateFilterChange()" />
+        <label class="date-range__label">{{ copy().dateTo }}</label>
+        <input type="date" class="aio__input"
+          [ngModel]="feedbackDateTo()"
+          (ngModelChange)="feedbackDateTo.set($event)"
+          (change)="onDateFilterChange()" />
+      </div>
+    </div>
+
+    @if (feedbackLoading()) {
+      <div class="fb-list">
+        @for (i of [1,2,3,4,5]; track i) { <div class="row-skeleton" style="height:56px;border-radius:12px;"></div> }
+      </div>
+    } @else if (feedbackError()) {
+      <div class="aio__empty">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>{{ copy().loadError }}</p>
+        <button type="button" class="btn-retry" (click)="loadFeedback()">{{ copy().retry }}</button>
+      </div>
+    } @else if (feedback().length === 0) {
+      <div class="aio__empty">
+        <i class="fa-solid fa-star-half-stroke"></i>
+        <p>{{ copy().noFeedback }}</p>
+        <span class="aio__empty-sub">{{ copy().noFeedbackSub }}</span>
+      </div>
+    } @else {
+      <div class="fb-list">
+        @for (item of feedback(); track item.id) {
+          <article class="fb-row"
+            [class.fb-row--negative]="item.reaction === 'ThumbsDown'"
+            [class.fb-row--positive]="item.reaction === 'ThumbsUp'"
+            (click)="openFeedbackModal(item)"
+            role="button" tabindex="0"
+            (keydown.enter)="openFeedbackModal(item)">
+
+            <span class="fb-reaction-button" [class.fb-reaction-button--positive]="item.reaction === 'ThumbsUp'" [class.fb-reaction-button--negative]="item.reaction === 'ThumbsDown'">
+              <i class="fa-solid" [class.fa-thumbs-up]="item.reaction === 'ThumbsUp'" [class.fa-thumbs-down]="item.reaction === 'ThumbsDown'"></i>
+            </span>
+
+            <div class="fb-user-col">
+              <span class="fb-user">{{ item.userName }}</span>
+              <span class="fb-email">{{ item.userEmail }}</span>
+            </div>
+
+            @if (item.category) {
+              <span class="cat-badge">{{ categoryLabel(item.category) }}</span>
+            } @else {
+              <span class="cat-badge cat-badge--empty">{{ copy().uncategorized }}</span>
+            }
+
+            <span class="fb-excerpt">{{ item.messageExcerpt }}</span>
+
+            <span class="pill {{ statusClass(item.triageStatus) }}">{{ statusLabel(item.triageStatus) }}</span>
+
+            <span class="fb-date">{{ formatDateShort(item.createdAt) }}</span>
+
+            <i class="fa-solid fa-arrow-up-right-from-square fb-open-icon"></i>
+          </article>
+        }
+      </div>
+
+      <div class="aio__pagination">
+        <button type="button" class="page-btn" [disabled]="feedbackPage() <= 1"
+          (click)="prevFeedbackPage()">{{ copy().previous }}</button>
+        <span class="page-info">{{ copy().page }} {{ feedbackPage() }} {{ copy().of }} {{ feedbackTotalPages() }}</span>
+        <button type="button" class="page-btn" [disabled]="feedbackPage() >= feedbackTotalPages()"
+          (click)="nextFeedbackPage()">{{ copy().next }}</button>
+      </div>
+    }
+
+    <!-- ── Feedback Modal ──────────────────────────────────────────── -->
+    @if (feedbackModalOpen()) {
+      <div class="fb-modal-backdrop" (click)="closeFeedbackModal()"></div>
+
+      @if (feedbackModalItem(); as item) {
+        <div class="fb-modal" role="dialog" [attr.aria-modal]="true">
+
+          <!-- Modal header -->
+          <div class="fb-modal__header">
+            <div class="fb-modal__title-row">
+              <span class="fb-reaction-button fb-reaction-button--sm"
+                [class.fb-reaction-button--positive]="item.reaction === 'ThumbsUp'"
+                [class.fb-reaction-button--negative]="item.reaction === 'ThumbsDown'">
+                <i class="fa-solid" [class.fa-thumbs-up]="item.reaction === 'ThumbsUp'" [class.fa-thumbs-down]="item.reaction === 'ThumbsDown'"></i>
+              </span>
+              <div>
+                <h2 class="fb-modal__title">{{ item.userName }}</h2>
+                <span class="fb-modal__sub">{{ item.userEmail }} · {{ formatDate(item.createdAt) }}</span>
+              </div>
+              <div class="fb-modal__badges">
+                @if (item.category) {
+                  <span class="cat-badge">{{ categoryLabel(item.category) }}</span>
+                }
+                <span class="pill {{ statusClass(item.triageStatus) }}">{{ statusLabel(item.triageStatus) }}</span>
+              </div>
+            </div>
+            <button type="button" class="fb-modal__close" (click)="closeFeedbackModal()" [attr.aria-label]="copy().close">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <!-- Modal body — 2 columns -->
+          <div class="fb-modal__body">
+
+            <!-- Left: conversation thread -->
+            <div class="fb-thread">
+              <div class="fb-context-header">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>{{ copy().feedbackContextHeader }}</span>
+              </div>
+
+              <div class="fb-detail-section">
+                <h4 class="fb-detail-title fb-detail-title--user">
+                  <i class="fa-regular fa-user"></i> {{ copy().userQuestion }}
+                </h4>
+                @if (item.userPrompt) {
+                  <div class="fb-message-bubble fb-message-bubble--user">{{ item.userPrompt }}</div>
+                } @else {
+                  <p class="fb-comment-empty"><i class="fa-solid fa-link-slash"></i> {{ copy().noUserQuestion }}</p>
+                }
+              </div>
+
+              <div class="fb-detail-section">
+                <h4 class="fb-detail-title fb-detail-title--ai">
+                  <i class="fa-solid fa-robot"></i> {{ copy().aiMessage }}
+                </h4>
+                <div class="fb-message-bubble fb-message-bubble--ai">{{ item.messageContent || item.messageExcerpt }}</div>
+              </div>
+
+              <div class="fb-detail-section">
+                <h4 class="fb-detail-title fb-detail-title--comment">
+                  <i class="fa-regular fa-comment"></i> {{ copy().userComment }}
+                  <span class="fb-reaction-inline-button"
+                    [class.fb-reaction-inline-button--positive]="item.reaction === 'ThumbsUp'"
+                    [class.fb-reaction-inline-button--negative]="item.reaction === 'ThumbsDown'">
+                    <i class="fa-solid" [class.fa-thumbs-up]="item.reaction === 'ThumbsUp'" [class.fa-thumbs-down]="item.reaction === 'ThumbsDown'"></i>
+                  </span>
+                </h4>
+                @if (item.userComment) {
+                  <p class="fb-comment-text">{{ item.userComment }}</p>
+                } @else {
+                  <p class="fb-comment-empty">{{ copy().noComment }}</p>
+                }
+              </div>
+            </div>
+
+            <!-- Right: admin review -->
+            <div class="fb-review-sidebar">
+              <h4 class="fb-detail-title fb-detail-title--review">
+                <i class="fa-solid fa-pen-to-square"></i> {{ copy().adminReview }}
+              </h4>
+
+              <div class="fb-control">
+                <label class="fb-control__label">{{ copy().category }}</label>
+                <select class="aio__select aio__select--sm"
+                  [value]="triageEdit(item.id).category"
+                  (change)="updateTriageEdit(item.id, 'category', $any($event.target).value)">
+                  <option value="">— {{ copy().allCategories }}</option>
+                  <option value="Hallucination">{{ copy().catHallucination }}</option>
+                  <option value="WrongMedicalAdvice">{{ copy().catWrongMedical }}</option>
+                  <option value="OcrIssue">{{ copy().catOcrIssue }}</option>
+                  <option value="VoiceRecognition">{{ copy().catVoice }}</option>
+                  <option value="Performance">{{ copy().catPerformance }}</option>
+                  <option value="Bug">{{ copy().catBug }}</option>
+                  <option value="FeatureRequest">{{ copy().catFeatureRequest }}</option>
+                  <option value="Other">{{ copy().catOther }}</option>
+                </select>
+              </div>
+
+              <div class="fb-control">
+                <label class="fb-control__label">{{ copy().triageStatus }}</label>
+                <select class="aio__select aio__select--sm"
+                  [value]="triageEdit(item.id).status"
+                  (change)="updateTriageEdit(item.id, 'status', $any($event.target).value)">
+                  <option value="New">{{ copy().statusNew }}</option>
+                  <option value="Investigating">{{ copy().statusInvestigating }}</option>
+                  <option value="Resolved">{{ copy().statusResolved }}</option>
+                  <option value="Ignored">{{ copy().statusIgnored }}</option>
+                </select>
+              </div>
+
+              <div class="fb-control fb-control--grow">
+                <label class="fb-control__label">{{ copy().adminNotes }}</label>
+                <textarea class="fb-notes" rows="6"
+                  [placeholder]="copy().adminNotesPlaceholder"
+                  [value]="triageEdit(item.id).notes"
+                  (input)="updateTriageEdit(item.id, 'notes', $any($event.target).value)">
+                </textarea>
+              </div>
+
+              <button type="button" class="btn-save btn-save--full"
+                [disabled]="savingFeedback()[item.id]"
+                (click)="saveReview(item)">
+                <i class="fa-solid" [class.fa-floppy-disk]="!savingFeedback()[item.id]"
+                   [class.fa-spinner]="savingFeedback()[item.id]"
+                   [class.fa-spin]="savingFeedback()[item.id]"></i>
+                {{ savingFeedback()[item.id] ? copy().saving : copy().saveReview }}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      }
+    }
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════
+       TAB: PERFORMANCE
+  ════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'performance') {
+
+    @if (performanceLoading()) {
+      <div class="kpi-grid-4">
+        @for (i of [1,2,3,4]; track i) { <div class="kpi-skeleton"></div> }
+      </div>
+      <div class="chart-skeleton" style="height:200px;margin-top:16px;border-radius:14px;"></div>
+    } @else if (performanceError()) {
+      <div class="aio__empty">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>{{ copy().loadError }}</p>
+        <button type="button" class="btn-retry" (click)="loadPerformance()">{{ copy().retry }}</button>
+      </div>
+    } @else if (performance(); as perf) {
+
+      <div class="kpi-grid-4">
+        <article class="kpi-card">
+          <div class="kpi-card__icon" style="background:#eff6ff;color:#3b82f6"><i class="fa-solid fa-gauge"></i></div>
+          <div class="kpi-card__value">{{ perf.avgLatencyMs | number }}<span class="kpi-suffix"> ms</span></div>
+          <div class="kpi-card__label">{{ copy().avgLatency }}</div>
+          <div class="kpi-card__hint">{{ copy().avgLatencyDesc }}</div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-card__icon" style="background:#f5f3ff;color:#8b5cf6"><i class="fa-solid fa-stopwatch"></i></div>
+          <div class="kpi-card__value">{{ perf.p95LatencyMs | number }}<span class="kpi-suffix"> ms</span></div>
+          <div class="kpi-card__label">{{ copy().p95Latency }}</div>
+          <div class="kpi-card__hint">{{ copy().p95LatencyDesc }}</div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-card__icon" style="background:#fef2f2;color:#ef4444"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div class="kpi-card__value">{{ perf.errorRatePercent }}<span class="kpi-suffix">%</span></div>
+          <div class="kpi-card__label">{{ copy().errorRate }}</div>
+          <div class="kpi-card__hint">{{ copy().errorRateDesc }}</div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-card__icon" style="background:#fffbeb;color:#f59e0b"><i class="fa-solid fa-hourglass-half"></i></div>
+          <div class="kpi-card__value">{{ perf.slowRequests | number }}</div>
+          <div class="kpi-card__label">{{ copy().slowRequests }}</div>
+          <div class="kpi-card__hint">{{ copy().slowRequestsDesc }}</div>
+        </article>
+      </div>
+
+      @if (perf.daily.length > 1) {
+        <div class="chart-card">
+          <h3>{{ copy().dailyRequests }} <span class="chart-sub">{{ copy().last30Days }}</span></h3>
+          <div class="chart-wrap">
+            <svg class="line-chart" viewBox="0 0 560 100" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#3b82f6" stop-opacity=".2"/>
+                  <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path [attr.d]="lineChartArea(perf.daily.map(d => ({value: d.requests})))" fill="url(#perfGrad)"/>
+              <path [attr.d]="lineChartPath(perf.daily.map(d => ({value: d.requests})))"
+                fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+              <path [attr.d]="lineChartPath(perf.daily.map(d => ({value: d.failed})))"
+                fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="4 2"/>
+            </svg>
+            <div class="chart-labels">
+              @for (d of perf.daily; track d.date; let i = $index) {
+                @if (i % Math.ceil(perf.daily.length / 6) === 0 || i === perf.daily.length - 1) {
+                  <span>{{ d.date }}</span>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (perf.requestsByFeature.length > 0) {
+        <div class="chart-card">
+          <h3>{{ copy().requestsByFeature }}</h3>
+          <div class="dist-row">
+            <svg class="donut-svg" viewBox="0 0 100 100">
+              @for (seg of donutSegments(perf.requestsByFeature); track seg.label) {
+                <path [attr.d]="seg.path" [attr.fill]="seg.color"/>
+              }
+              <circle cx="50" cy="50" r="24" fill="var(--admin-surface)"/>
+            </svg>
+            <div class="dist-legend">
+              @for (seg of donutSegments(perf.requestsByFeature); track seg.label) {
+                <div class="legend-item">
+                  <span class="legend-dot" [style.background]="seg.color"></span>
+                  <span class="legend-label">{{ featureLabel(seg.label) }}</span>
+                  <span class="legend-pct">{{ seg.pct }}%</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (perf.daily.length === 0) {
+        <div class="aio__empty">
+          <i class="fa-solid fa-chart-line"></i>
+          <p>{{ copy().noPerformanceData }}</p>
+        </div>
+      }
+    }
+  }
+
+</section>

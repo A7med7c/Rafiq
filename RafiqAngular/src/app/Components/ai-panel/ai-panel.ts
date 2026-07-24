@@ -531,8 +531,16 @@ export class AiPanel implements OnInit, OnDestroy {
     setTimeout(() => this.messagesEnd?.nativeElement.scrollIntoView({ behavior: 'smooth' }), 50);
   }
 
+  private asUtc(dateStr: string): Date {
+    // EF Core returns DateTime without timezone suffix; treat bare ISO strings as UTC.
+    if (dateStr && !dateStr.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(dateStr)) {
+      return new Date(dateStr + 'Z');
+    }
+    return new Date(dateStr);
+  }
+
   formatMessageTime(message: ConversationMessageDto): string {
-    return new Date(message.createdAt).toLocaleTimeString('en-US', {
+    return this.asUtc(message.createdAt).toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -541,7 +549,7 @@ export class AiPanel implements OnInit, OnDestroy {
 
   formatSidebarTime(conv: ConversationSummaryDto): string {
     const dateStr = conv.lastMessageAt ?? conv.createdAt;
-    const date = new Date(dateStr);
+    const date = this.asUtc(dateStr);
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
 

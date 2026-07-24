@@ -9,6 +9,7 @@ using Rafiq.Application.Features.AiChat.DTOs;
 using Rafiq.Domain.Entities.Chat;
 using Rafiq.Domain.Enums;
 using Rafiq.Domain.Exceptions;
+using AiFeature = Rafiq.Domain.Enums.AiFeature;
 using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Application.Features.AiChat.Commands.SendMessage;
@@ -32,6 +33,7 @@ public sealed class SendMessageCommandHandler : IRequestHandler<SendMessageComma
     private readonly IFamilyProfileResolver _familyProfileResolver;
     private readonly IConversationStateCache _conversationStateCache;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAiTelemetryContext _telemetryContext;
 
     public SendMessageCommandHandler(
         ICurrentUserService currentUserService,
@@ -42,7 +44,8 @@ public sealed class SendMessageCommandHandler : IRequestHandler<SendMessageComma
         IHealthQueryContextBuilder healthQueryContextBuilder,
         IFamilyProfileResolver familyProfileResolver,
         IConversationStateCache conversationStateCache,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IAiTelemetryContext telemetryContext)
     {
         _currentUserService = currentUserService;
         _aiConversationRepository = aiConversationRepository;
@@ -53,12 +56,17 @@ public sealed class SendMessageCommandHandler : IRequestHandler<SendMessageComma
         _familyProfileResolver = familyProfileResolver;
         _conversationStateCache = conversationStateCache;
         _unitOfWork = unitOfWork;
+        _telemetryContext = telemetryContext;
     }
 
     public async Task<ApiResponse<AiMessageResponseDto>> Handle(SendMessageCommand request, CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId
             ?? throw new UnauthorizedException("Authentication required.");
+
+        _telemetryContext.Feature        = AiFeature.Chat;
+        _telemetryContext.UserId         = userId;
+        _telemetryContext.ConversationId = request.ConversationId;
 
         // Load as tracked entity so AiConversation → Modified on save.
         var conversation = await _aiConversationRepository.GetWithMessagesAsync(request.ConversationId, userId, cancellationToken)

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Rafiq.Domain.Entities.Chat;
+using Rafiq.Domain.Enums;
 
 namespace Rafiq.Infrastructure.Persistence.Configurations;
 
@@ -20,6 +21,20 @@ public class MessageReactionConfiguration : IEntityTypeConfiguration<MessageReac
 
         builder.Property(r => r.Feedback)
             .HasMaxLength(1000)
+            .IsRequired(false);
+
+        builder.Property(r => r.TriageStatus)
+            .IsRequired()
+            .HasConversion<int>()
+            .HasDefaultValue(FeedbackStatus.New)
+            .HasSentinel(FeedbackStatus.New);
+
+        builder.Property(r => r.Category)
+            .HasMaxLength(100)
+            .IsRequired(false);
+
+        builder.Property(r => r.AdminNotes)
+            .HasMaxLength(2000)
             .IsRequired(false);
 
         builder.Property(r => r.CreatedAt)

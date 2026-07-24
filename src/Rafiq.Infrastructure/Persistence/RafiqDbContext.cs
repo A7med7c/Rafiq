@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities.Ai;
 using Rafiq.Domain.Entities.Chat;
 using Rafiq.Domain.Entities.Documents;
 using Rafiq.Domain.Entities.User;
@@ -79,6 +80,8 @@ public sealed class RafiqDbContext : IdentityDbContext<
     public DbSet<AiMessage> AiMessages => Set<AiMessage>();
 
     public DbSet<MessageReaction> MessageReactions => Set<MessageReaction>();
+
+    public DbSet<AiRequestLog> AiRequestLogs => Set<AiRequestLog>();
 
     #endregion
 

@@ -219,6 +219,50 @@ namespace Rafiq.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Rafiq.Domain.Entities.Ai.AiRequestLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ConversationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(7)");
+
+                    b.Property<int>("DurationMs")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ErrorType")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Feature")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ModelName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("Success")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Feature", "CreatedAt");
+
+                    b.ToTable("AiRequestLogs", (string)null);
+                });
+
             modelBuilder.Entity("Rafiq.Domain.Entities.Chat.AiConversation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -310,8 +354,16 @@ namespace Rafiq.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AdminNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<Guid>("AiMessageId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2(7)");
@@ -321,6 +373,10 @@ namespace Rafiq.Infrastructure.Migrations
                         .HasColumnType("nvarchar(1000)");
 
                     b.Property<int>("ReactionType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TriageStatus")
+                        .HasDefaultValue(1)
                         .HasColumnType("int");
 
                     b.Property<Guid>("UserId")
