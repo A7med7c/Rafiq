@@ -279,6 +279,60 @@
 
     </div>
 
+    <!-- ── Review stats card ─────────────────────────────────────────────── -->
+    @if (reviewStats(); as rs) {
+      <div class="review-stats-card">
+        <div class="review-stats-header">
+          <div>
+            <h2>{{ copy().reviewStatsTitle }}</h2>
+          </div>
+          <a routerLink="/admin/reviews" class="view-all-link">
+            {{ copy().reviewStatsViewAll }} <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+        <div class="review-stats-body">
+          <div class="rs-avg">
+            <span class="rs-avg-val">{{ rs.averageStars.toFixed(1) }}</span>
+            <div class="rs-stars">
+              @for (i of [1,2,3,4,5]; track i) {
+                <i class="fas fa-star" [class.rs-star-filled]="i <= rs.averageStars" [class.rs-star-half]="i - 0.5 <= rs.averageStars && i > rs.averageStars"></i>
+              }
+            </div>
+            <span class="rs-total">{{ rs.total }} {{ copy().reviewStatsTotal }}</span>
+          </div>
+          <div class="rs-mini-bars">
+            @for (entry of [
+              { stars: 5, count: rs.fiveStars },
+              { stars: 4, count: rs.fourStars },
+              { stars: 3, count: rs.threeStars },
+              { stars: 2, count: rs.twoStars },
+              { stars: 1, count: rs.oneStar }
+            ]; track entry.stars) {
+              <div class="rs-bar-row">
+                <span class="rs-bar-label">{{ entry.stars }}<i class="fas fa-star rs-bar-star"></i></span>
+                <div class="rs-bar-track">
+                  <div class="rs-bar-fill" [style.width.%]="rs.total > 0 ? (entry.count / rs.total * 100) : 0"></div>
+                </div>
+                <span class="rs-bar-count">{{ entry.count }}</span>
+              </div>
+            }
+          </div>
+          <div class="rs-pills">
+            <div class="rs-pill rs-pill-visible">
+              <i class="fas fa-eye"></i>
+              <span>{{ rs.visible }}</span>
+              <small>{{ copy().reviewStatsVisible }}</small>
+            </div>
+            <div class="rs-pill rs-pill-hidden">
+              <i class="fas fa-eye-slash"></i>
+              <span>{{ rs.hidden }}</span>
+              <small>{{ copy().reviewStatsHidden }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
   }
 
 </section>

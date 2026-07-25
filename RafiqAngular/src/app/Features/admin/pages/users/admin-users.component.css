@@ -567,3 +567,79 @@ time {
 @media (prefers-reduced-motion: reduce) {
   .table-skeleton div { animation: none; }
 }
+
+@media (max-width: 900px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .page-heading h1 {
+    font-size: 20px;
+  }
+
+  .page-heading p {
+    font-size: 12px;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .metric {
+    padding: 12px;
+    min-height: 90px;
+    gap: 10px;
+  }
+
+  .metric strong {
+    font-size: 20px;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .search-field {
+    min-width: 0;
+  }
+
+  .filters select {
+    width: 100%;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+    padding: 12px;
+  }
+
+  .pagination div {
+    justify-content: center;
+  }
+
+  .confirm-dialog {
+    padding: 16px;
+  }
+
+  .confirm-dialog h2 {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-action {
+    min-width: 80px;
+    font-size: 9px;
+  }
+}

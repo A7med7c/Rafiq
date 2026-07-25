@@ -1360,3 +1360,32 @@
   .ov-kpi-row         { grid-template-columns: 1fr 1fr; width: 100%; }
   .ov-insight-grid    { grid-template-columns: 1fr 1fr; }
 }
+
+@media (max-width: 480px) {
+  /* tabs overflow */
+  .aio__tabs { gap: 0; padding: 0 8px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .aio__tab  { flex-shrink: 0; font-size: 11px; padding: 10px 12px; }
+
+  /* header */
+  .aio__head h1 { font-size: 18px; }
+  .aio__head p  { font-size: 11px; }
+
+  /* KPI tiles */
+  .ov-kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi-grid-2x2, .kpi-grid-4 { grid-template-columns: 1fr; }
+
+  /* insights */
+  .ov-insight-grid { grid-template-columns: 1fr; }
+  .ov-insight-card { border-inline-end: none; border-bottom: 1px solid var(--admin-border); }
+
+  /* feedback table — hide less-important columns */
+  .fb-col-excerpt { display: none; }
+  .fb-row__compact { gap: 6px; }
+
+  /* perf bars */
+  .dist-row { gap: 8px; }
+
+  /* modal full-screen on tiny phones */
+  .fb-modal { border-radius: 0; max-height: 100vh; height: 100dvh; }
+  .fb-modal__body { height: calc(100dvh - 58px); }
+}

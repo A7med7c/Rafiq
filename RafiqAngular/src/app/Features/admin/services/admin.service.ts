@@ -5,6 +5,8 @@ import { environment } from '../../../Environments/Environment';
 import { ApiResponse, ApiResponseBase } from '../../../Modles/api-response';
 import {
   AdminDashboard,
+  AdminReview,
+  AdminReviewsPage,
   AdminUser,
   AdminUserQuery,
   AiFeedbackItem,
@@ -16,6 +18,7 @@ import {
   AiRequestItem,
   AiRequestQuery,
   PagedResult,
+  ReviewStats,
   UpdateAiFeedbackRequest
 } from '../models/admin.models';
 
@@ -105,5 +108,30 @@ export class AdminService {
     return this.http
       .get<ApiResponse<AiInsights>>(`${this.baseUrl}/ai/insights`)
       .pipe(map(r => r.data));
+  }
+
+  // ── Reviews ──────────────────────────────────────────────────────────────
+
+  private readonly reviewsBase = `${environment.apiUrl}/reviews`;
+
+  getAdminReviews(page = 1, pageSize = 20): Observable<AdminReviewsPage> {
+    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    return this.http
+      .get<ApiResponse<AdminReviewsPage>>(`${this.reviewsBase}/admin`, { params })
+      .pipe(map(r => r.data));
+  }
+
+  getReviewStats(): Observable<ReviewStats> {
+    return this.http
+      .get<ApiResponse<ReviewStats>>(`${this.reviewsBase}/stats`)
+      .pipe(map(r => r.data));
+  }
+
+  deleteReview(id: string): Observable<ApiResponseBase> {
+    return this.http.delete<ApiResponseBase>(`${this.reviewsBase}/${id}`);
+  }
+
+  toggleReviewVisibility(id: string, isVisible: boolean): Observable<ApiResponseBase> {
+    return this.http.patch<ApiResponseBase>(`${this.reviewsBase}/${id}/visibility`, { isVisible });
   }
 }

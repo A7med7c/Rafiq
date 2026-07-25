@@ -29,6 +29,12 @@ export const ADMIN_ROUTES: Routes = [
           import('./pages/ai-operations/admin-ai-operations.component')
             .then(m => m.AdminAiOperationsComponent)
       },
+      {
+        path: 'reviews',
+        loadComponent: () =>
+          import('./pages/reviews/admin-reviews.component')
+            .then(m => m.AdminReviewsComponent)
+      },
       ...[
         'families',
         'medical-records',

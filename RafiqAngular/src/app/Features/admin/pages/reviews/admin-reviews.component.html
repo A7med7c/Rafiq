@@ -1,0 +1,187 @@
+<div class="ar-page" [class.rtl]="l10n.lang() === 'ar'">
+
+  <!-- Page header -->
+  <div class="ar-header">
+    <div>
+      <h1 class="ar-title">{{ copy().title }}</h1>
+      <p class="ar-subtitle">{{ copy().subtitle }}</p>
+    </div>
+  </div>
+
+  <!-- Stats cards -->
+  @if (stats(); as s) {
+    <div class="ar-dashboard-top">
+      <div class="ar-stats-grid">
+        <div class="ar-stat-card ar-stat-avg">
+          <div class="ar-stat-icon"><i class="fas fa-star"></i></div>
+          <div class="ar-stat-body">
+            <span class="ar-stat-value">{{ s.averageStars.toFixed(1) }}</span>
+            <span class="ar-stat-label">{{ copy().avgStars }}</span>
+          </div>
+        </div>
+        <div class="ar-stat-card ar-stat-total">
+          <div class="ar-stat-icon"><i class="fas fa-comments"></i></div>
+          <div class="ar-stat-body">
+            <span class="ar-stat-value">{{ s.total }}</span>
+            <span class="ar-stat-label">{{ copy().totalReviews }}</span>
+          </div>
+        </div>
+        <div class="ar-stat-card ar-stat-visible">
+          <div class="ar-stat-icon"><i class="fas fa-eye"></i></div>
+          <div class="ar-stat-body">
+            <span class="ar-stat-value">{{ s.visible }}</span>
+            <span class="ar-stat-label">{{ copy().visibleReviews }}</span>
+          </div>
+        </div>
+        <div class="ar-stat-card ar-stat-hidden">
+          <div class="ar-stat-icon"><i class="fas fa-eye-slash"></i></div>
+          <div class="ar-stat-body">
+            <span class="ar-stat-value">{{ s.hidden }}</span>
+            <span class="ar-stat-label">{{ copy().hiddenReviews }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Star distribution -->
+      <div class="ar-dist-card">
+        <div class="ar-dist-header">{{ copy().statsCard }}</div>
+        <div class="ar-dist-bars">
+          @for (entry of [
+            { stars: 5, count: s.fiveStars },
+            { stars: 4, count: s.fourStars },
+            { stars: 3, count: s.threeStars },
+            { stars: 2, count: s.twoStars },
+            { stars: 1, count: s.oneStar }
+          ]; track entry.stars) {
+            <div class="ar-dist-row">
+              <span class="ar-dist-label">{{ entry.stars }} <i class="fas fa-star ar-dist-star"></i></span>
+              <div class="ar-dist-track">
+                <div class="ar-dist-fill"
+                     [style.width.%]="s.total > 0 ? (entry.count / s.total * 100) : 0">
+                </div>
+              </div>
+              <span class="ar-dist-count">{{ entry.count }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Reviews table -->
+  <div class="ar-table-card">
+    <div class="ar-table-header">
+      <h2 class="ar-table-title">{{ copy().tableTitle }}</h2>
+    </div>
+
+    @if (loading()) {
+      <div class="ar-loading">
+        <div class="ar-spinner"></div>
+      </div>
+    } @else if (error()) {
+      <div class="ar-error">
+        <p>{{ copy().loadError }}</p>
+        <button class="ar-btn ar-btn-secondary" (click)="goToPage(page())">{{ copy().retry }}</button>
+      </div>
+    } @else if (!result()?.items?.length) {
+      <div class="ar-empty">
+        <i class="fas fa-star ar-empty-icon"></i>
+        <p>{{ copy().empty }}</p>
+      </div>
+    } @else {
+      <div class="ar-table-wrap">
+        <table class="ar-table">
+          <thead>
+            <tr>
+              <th>{{ copy().colUser }}</th>
+              <th>{{ copy().colStars }}</th>
+              <th>{{ copy().colComment }}</th>
+              <th>{{ copy().colStatus }}</th>
+              <th>{{ copy().colDate }}</th>
+              <th>{{ copy().colActions }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (review of result()!.items; track review.id) {
+              <tr [class.ar-row-hidden]="!review.isVisible">
+                <td class="ar-cell-name">
+                  <div class="ar-avatar">{{ review.displayName[0] | uppercase }}</div>
+                  <span>{{ review.displayName }}</span>
+                </td>
+                <td class="ar-cell-stars">
+                  @for (s of starsArray(review.stars); track $index) {
+                    <i class="fas fa-star ar-star"></i>
+                  }
+                </td>
+                <td class="ar-cell-comment">
+                  {{ review.comment || copy().noComment }}
+                </td>
+                <td>
+                  @if (review.isVisible) {
+                    <span class="ar-badge ar-badge-visible">{{ copy().visible }}</span>
+                  } @else {
+                    <span class="ar-badge ar-badge-hidden">{{ copy().hidden }}</span>
+                  }
+                </td>
+                <td class="ar-cell-date">{{ review.createdAt | date:'mediumDate' }}</td>
+                <td class="ar-cell-actions">
+                  <button class="ar-action-btn ar-action-toggle"
+                          [disabled]="togglingId() === review.id || deletingId() === review.id"
+                          (click)="toggleVisibility(review)"
+                          [title]="review.isVisible ? copy().hide : copy().show">
+                    @if (togglingId() === review.id) {
+                      <i class="fas fa-spinner fa-spin"></i>
+                    } @else if (review.isVisible) {
+                      <i class="fas fa-eye-slash"></i>
+                    } @else {
+                      <i class="fas fa-eye"></i>
+                    }
+                  </button>
+                  <button class="ar-action-btn ar-action-delete"
+                          [disabled]="deletingId() === review.id || togglingId() === review.id"
+                          (click)="confirmDelete(review)"
+                          [title]="copy().delete">
+                    @if (deletingId() === review.id) {
+                      <i class="fas fa-spinner fa-spin"></i>
+                    } @else {
+                      <i class="fas fa-trash"></i>
+                    }
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="ar-pagination">
+          <button class="ar-page-btn" [disabled]="page() === 1" (click)="goToPage(page() - 1)">
+            <i class="fas fa-chevron-left"></i> {{ copy().previous }}
+          </button>
+          <span class="ar-page-info">{{ copy().page }} {{ page() }} {{ copy().of }} {{ totalPages() }}</span>
+          <button class="ar-page-btn" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">
+            {{ copy().next }} <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      }
+    }
+  </div>
+
+</div>
+
+<!-- Delete confirmation modal -->
+@if (deleteTarget(); as target) {
+  <div class="ar-modal-backdrop" (click)="cancelDelete()">
+    <div class="ar-modal" (click)="$event.stopPropagation()">
+      <div class="ar-modal-icon"><i class="fas fa-trash-alt"></i></div>
+      <p class="ar-modal-msg">{{ copy().deleteConfirm }}</p>
+      <div class="ar-modal-name">"{{ target.displayName }}"</div>
+      <div class="ar-modal-actions">
+        <button class="ar-btn ar-btn-secondary" (click)="cancelDelete()">{{ copy().cancel }}</button>
+        <button class="ar-btn ar-btn-danger" (click)="doDelete()">{{ copy().confirm }}</button>
+      </div>
+    </div>
+  </div>
+}

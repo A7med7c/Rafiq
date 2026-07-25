@@ -22,4 +22,6 @@ public class AppReview : BaseEntity
     public int Stars { get; private set; }
     public string? Comment { get; private set; }
     public bool IsVisible { get; private set; } = true;
+
+    public void SetVisible(bool visible) => IsVisible = visible;
 }

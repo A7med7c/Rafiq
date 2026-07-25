@@ -5,7 +5,8 @@ import {
   HostListener,
   computed,
   inject,
-  signal
+  signal,
+  ChangeDetectorRef
 } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../Services/auth-service';
@@ -31,6 +32,7 @@ export class AdminLayoutComponent {
   private readonly authService = inject(AuthService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly notifications = inject(NotificationService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly sidebarOpen = signal(false);
   readonly profileOpen = signal(false);
@@ -40,15 +42,8 @@ export class AdminLayoutComponent {
   readonly navigation: AdminNavItem[] = [
     { path: '/admin/dashboard',      icon: 'fa-chart-pie',           label: 'dashboard' },
     { path: '/admin/users',          icon: 'fa-users',               label: 'users' },
-    { path: '/admin/families',       icon: 'fa-people-roof',         label: 'families' },
     { path: '/admin/ai-operations',  icon: 'fa-robot',               label: 'aiOperations' },
-    { path: '/admin/medical-records',icon: 'fa-notes-medical',       label: 'medicalRecords' },
-    { path: '/admin/medications',    icon: 'fa-capsules',            label: 'medications' },
-    { path: '/admin/appointments',   icon: 'fa-calendar-check',      label: 'appointments' },
-    { path: '/admin/documents',      icon: 'fa-file-shield',         label: 'documents' },
-    { path: '/admin/analytics',      icon: 'fa-chart-line',          label: 'analytics' },
-    { path: '/admin/settings',       icon: 'fa-sliders',             label: 'settings' },
-    { path: '/admin/audit-logs',     icon: 'fa-clock-rotate-left',   label: 'auditLogs' }
+    { path: '/admin/reviews',        icon: 'fa-star',                label: 'reviews' }
   ];
 
   get adminName(): string {
@@ -73,8 +68,13 @@ export class AdminLayoutComponent {
     this.l10n.toggle();
   }
 
-  closeSidebar(): void {
+  closeSidebar(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     this.sidebarOpen.set(false);
+    this.cdr.detectChanges();
   }
 
   logout(): void {

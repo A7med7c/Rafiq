@@ -214,3 +214,32 @@ export interface AiPerformance {
   avgLatencyMs: number;
   errorRatePercent: number;
 }
+
+
+export interface AdminReview {
+  id: string;
+  displayName: string;
+  stars: number;
+  comment: string | null;
+  isVisible: boolean;
+  createdAt: string;
+}
+
+export interface AdminReviewsPage {
+  items: AdminReview[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface ReviewStats {
+  total: number;
+  visible: number;
+  hidden: number;
+  averageStars: number;
+  fiveStars: number;
+  fourStars: number;
+  threeStars: number;
+  twoStars: number;
+  oneStar: number;
+}

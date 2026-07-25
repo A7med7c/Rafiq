@@ -1,18 +1,14 @@
 <div class="admin-shell" [class.admin-shell--dark]="darkMode()">
-  @if (sidebarOpen()) {
-    <button class="admin-backdrop" type="button" (click)="closeSidebar()" [attr.aria-label]="copy().close"></button>
-  }
-
   <aside class="admin-sidebar" [class.admin-sidebar--open]="sidebarOpen()">
     <div class="admin-brand">
-      <a routerLink="/admin/dashboard" class="admin-brand__link" (click)="closeSidebar()">
+      <a routerLink="/admin/dashboard" class="admin-brand__link" (click)="closeSidebar($event)">
         <img src="images/RafiqLogo.png" alt="" class="admin-brand__logo">
         <span>
           <strong>{{ copy().brand }}</strong>
           <small>{{ copy().workspace }}</small>
         </span>
       </a>
-      <button class="icon-button admin-sidebar__close" type="button" (click)="closeSidebar()" [attr.aria-label]="copy().close">
+      <button class="icon-button admin-sidebar__close" type="button" (click)="closeSidebar($event)" [attr.aria-label]="copy().close">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -23,7 +19,7 @@
           [routerLink]="item.path"
           routerLinkActive="admin-nav__link--active"
           class="admin-nav__link"
-          (click)="closeSidebar()">
+          (click)="closeSidebar($event)">
           <i class="fa-solid {{ item.icon }}" aria-hidden="true"></i>
           <span>{{ copy().nav[item.label] }}</span>
         </a>
@@ -31,7 +27,7 @@
     </nav>
 
     <div class="admin-sidebar__footer">
-      <a routerLink="/admin/profile" class="admin-account-card" (click)="closeSidebar()">
+      <a routerLink="/admin/profile" class="admin-account-card" (click)="closeSidebar($event)">
         <img [src]="avatarUrl" alt="" class="admin-avatar">
         <span>
           <strong>{{ adminName }}</strong>
@@ -98,3 +94,7 @@
     </main>
   </section>
 </div>
+
+@if (sidebarOpen()) {
+  <button class="admin-backdrop" type="button" (click)="closeSidebar($event)" [attr.aria-label]="copy().close"></button>
+}

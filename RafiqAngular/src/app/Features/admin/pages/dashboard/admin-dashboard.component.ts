@@ -11,7 +11,7 @@ import { RouterLink } from '@angular/router';
 import { environment } from '../../../../Environments/Environment';
 import { LocalizationService } from '../../../../Services/localization.service';
 import { adminCopy } from '../../admin-copy';
-import { AdminDashboard, AdminDistributionItem, AdminTrendPoint } from '../../models/admin.models';
+import { AdminDashboard, AdminDistributionItem, AdminTrendPoint, ReviewStats } from '../../models/admin.models';
 import { AdminService } from '../../services/admin.service';
 
 @Component({
@@ -28,6 +28,7 @@ export class AdminDashboardComponent implements OnInit {
 
   readonly copy = computed(() => adminCopy[this.l10n.lang()].dashboard);
   readonly dashboard = signal<AdminDashboard | null>(null);
+  readonly reviewStats = signal<ReviewStats | null>(null);
   readonly loading = signal(true);
   readonly error = signal(false);
 
@@ -129,6 +130,9 @@ export class AdminDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboard();
+    this.adminService.getReviewStats().subscribe({
+      next: s => this.reviewStats.set(s)
+    });
   }
 
   loadDashboard(): void {

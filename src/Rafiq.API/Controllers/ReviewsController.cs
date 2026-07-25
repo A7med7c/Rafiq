@@ -1,8 +1,12 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Rafiq.Application.Features.Reviews.Commands.DeleteReview;
 using Rafiq.Application.Features.Reviews.Commands.SubmitReview;
+using Rafiq.Application.Features.Reviews.Commands.ToggleReviewVisibility;
+using Rafiq.Application.Features.Reviews.Queries.GetAdminReviews;
 using Rafiq.Application.Features.Reviews.Queries.GetPublicReviews;
+using Rafiq.Application.Features.Reviews.Queries.GetReviewStats;
 
 namespace Rafiq.API.Controllers;
 
@@ -35,10 +39,52 @@ public class ReviewsController : ControllerBase
         var result = await _mediator.Send(new GetPublicReviewsQuery(limit), cancellationToken);
         return Ok(result);
     }
+
+    [HttpGet("admin")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAdminReviews(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(new GetAdminReviewsQuery(page, pageSize), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("stats")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetStats(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetReviewStatsQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteReview(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new DeleteReviewCommand(id), cancellationToken);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
+
+    [HttpPatch("{id:guid}/visibility")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ToggleVisibility(
+        Guid id, [FromBody] ToggleVisibilityBody body, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(
+            new ToggleReviewVisibilityCommand(id, body.IsVisible), cancellationToken);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
 }
 
 public sealed class SubmitReviewRequest
 {
     public int Stars { get; set; }
     public string? Comment { get; set; }
+}
+
+public sealed class ToggleVisibilityBody
+{
+    public bool IsVisible { get; set; }
 }
