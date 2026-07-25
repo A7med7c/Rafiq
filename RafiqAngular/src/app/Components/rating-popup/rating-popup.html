@@ -1,0 +1,58 @@
+@if (tracking.showPopup()) {
+<div class="rp-overlay" (click)="dismiss()"></div>
+
+<div class="rp-card" role="dialog" aria-modal="true" aria-labelledby="rp-title">
+  <button type="button" class="rp-close" (click)="dismiss()" [attr.aria-label]="t().common.close">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+
+  @if (!submitted()) {
+    <div class="rp-robot-wrap">
+      <img src="images/rafiq-robot.png" alt="Rafiq" class="rp-robot">
+    </div>
+    <h3 class="rp-title" id="rp-title">{{ t().ratingPopup.title }}</h3>
+    <p class="rp-sub">{{ t().ratingPopup.subtitle }}</p>
+
+    <div class="rp-stars">
+      @for (star of stars; track star) {
+        <button
+          type="button"
+          class="rp-star"
+          [class.rp-star--active]="star <= activeStars"
+          (mouseenter)="hovered.set(star)"
+          (mouseleave)="hovered.set(0)"
+          (click)="select(star)"
+          [attr.aria-label]="star + ' star'">
+          <i class="fa-solid fa-star"></i>
+        </button>
+      }
+    </div>
+
+    <textarea
+      class="rp-comment"
+      rows="3"
+      [ngModel]="comment()"
+      (ngModelChange)="comment.set($event)"
+      [placeholder]="t().ratingPopup.commentPlaceholder">
+    </textarea>
+
+    @if (error()) {
+      <p class="rp-error"><i class="fa-solid fa-circle-exclamation"></i> {{ error() }}</p>
+    }
+
+    <button type="button" class="rp-submit" (click)="submit()" [disabled]="submitting()">
+      @if (submitting()) {
+        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().ratingPopup.submittingBtn }}
+      } @else {
+        <i class="fa-solid fa-paper-plane"></i> {{ t().ratingPopup.submitBtn }}
+      }
+    </button>
+  } @else {
+    <div class="rp-success">
+      <div class="rp-success-ico"><i class="fa-solid fa-circle-check"></i></div>
+      <h3 class="rp-success-title">{{ t().ratingPopup.successTitle }}</h3>
+      <p class="rp-success-sub">{{ t().ratingPopup.successSub }}</p>
+    </div>
+  }
+</div>
+}

@@ -478,7 +478,7 @@ export const ar: Translations = {
       'عندي مواعيد قادمة؟',
       'وريني التذكيرات النشطة.',
       'اعملي تقرير طبي.',
-      'وضحلي الروشتة دي.',
+      'إيه المأكولات اللي تناسب صحتي؟',
     ],
   },
 
@@ -745,6 +745,16 @@ export const ar: Translations = {
     remindersNote: 'التذكيرات هتتلغى. التاريخ السابق هيتحفظ.',
     deleteMedicationBtn: 'امسح الدوا',
     dismiss: 'إخفاء',
+    checkingSafety: 'جاري فحص السلامة...',
+    allergyWarningTitle: 'تحذير حساسية محتمل',
+    allergyWarningSubtitle: 'راجع قبل المتابعة',
+    allergyWarningMsg: 'بناءً على حساسيتك المسجلة، هذا الدواء قد يسبب رد فعل تحسسي.',
+    allergyWarningAdvice: 'لا تبدأ في تناول هذا الدواء قبل استشارة طبيبك أو الصيدلي.',
+    allergyTriggeredBy: 'السبب',
+    allergyRiskLevel: 'درجة الخطورة',
+    allergyExplain: 'التفاصيل',
+    allergyContinueBtn: 'فاهم، أكمل على مسؤوليتي',
+    allergyCancelBtn: 'إلغاء',
   },
 
   family: {
@@ -1236,5 +1246,17 @@ export const ar: Translations = {
     toastFileTooLargeTitle: 'الملف كبير أوي',
     toastFileTooLargeBody: 'اختار صورة أصغر من 6 ميجا.',
     toastOwnPhoneError: 'مينفعش تضيف رقمك الخاص كجهة طوارئ.',
+  },
+
+  ratingPopup: {
+    title: 'إيه رأيك في رفيق؟',
+    subtitle: 'رأيك بيساعدنا نحسّن رفيق للجميع.',
+    commentPlaceholder: 'قولنا أكتر (اختياري)...',
+    submitBtn: 'ابعت تقييمك',
+    submittingBtn: 'جاري الإرسال...',
+    selectStarError: 'اختار عدد النجوم الأول.',
+    submitError: 'مقدرناش نبعت. حاول تاني.',
+    successTitle: 'شكراً ليك!',
+    successSub: 'رأيك مهم جداً بالنسبالنا.',
   },
 };

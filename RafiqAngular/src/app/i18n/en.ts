@@ -476,7 +476,7 @@ export const en = {
       'Do I have any upcoming appointments?',
       'Show my active reminders.',
       'Generate my medical report.',
-      'Explain this prescription.',
+      'What foods suit my health condition?',
     ],
   },
 
@@ -743,6 +743,16 @@ export const en = {
     remindersNote: 'Active reminders are cancelled. Past history is kept.',
     deleteMedicationBtn: 'Delete Medication',
     dismiss: 'Dismiss',
+    checkingSafety: 'Checking safety...',
+    allergyWarningTitle: 'Potential Allergy Warning',
+    allergyWarningSubtitle: 'Review before continuing',
+    allergyWarningMsg: 'Based on your recorded allergies, this medication may cause an allergic reaction.',
+    allergyWarningAdvice: 'Do not start taking this medication until you consult your doctor or pharmacist.',
+    allergyTriggeredBy: 'Triggered by',
+    allergyRiskLevel: 'Risk level',
+    allergyExplain: 'Why',
+    allergyContinueBtn: 'I Understand, Continue',
+    allergyCancelBtn: 'Cancel',
   },
 
   family: {
@@ -1235,6 +1245,18 @@ export const en = {
     toastFileTooLargeTitle: 'File Too Large',
     toastFileTooLargeBody: 'Please choose an image under 6 MB.',
     toastOwnPhoneError: 'You cannot add your own phone number as an emergency contact.',
+  },
+
+  ratingPopup: {
+    title: 'How\'s your experience?',
+    subtitle: 'Your feedback helps us improve Rafiq for everyone.',
+    commentPlaceholder: 'Tell us more (optional)...',
+    submitBtn: 'Submit Review',
+    submittingBtn: 'Submitting...',
+    selectStarError: 'Please select a star rating.',
+    submitError: 'Could not submit. Please try again.',
+    successTitle: 'Thank you!',
+    successSub: 'Your review means a lot to us.',
   },
 };
 

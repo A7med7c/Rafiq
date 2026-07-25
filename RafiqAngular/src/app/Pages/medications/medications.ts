@@ -10,12 +10,13 @@ import { AuthService } from '../../Services/auth-service';
 import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { NotificationService } from '../../Services/notification.service';
-import { MedicationRemindersService } from '../../Services/medication-reminders.service';
+import { AllergyCheckResult, MedicationRemindersService } from '../../Services/medication-reminders.service';
 import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
 import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UpdateUserMedicinePayload, UserMedicine } from '../../Modles/dashboard.models';
 import { LocalizationService } from '../../Services/localization.service';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 
 type MedTab = 'schedule' | 'medications';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -132,6 +133,7 @@ export class Medications implements OnInit, OnDestroy {
   protected readonly t = this.l10n.t;
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
+  private readonly reviewTracking = inject(ReviewTrackingService);
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {
@@ -235,6 +237,12 @@ export class Medications implements OnInit, OnDestroy {
   readonly showAddMedModal = signal(false);
   readonly addMedSaving = signal(false);
   readonly addMedTouched = signal(false);
+
+  // ── Allergy safety check ──────────────────────────────────────────────────
+  readonly allergyChecking = signal(false);
+  readonly showAllergyWarning = signal(false);
+  readonly allergyCheckResult = signal<AllergyCheckResult | null>(null);
+  private _pendingMedPayload: AddUserMedicinePayload | null = null;
 
   // ── Edit Medicine modal ───────────────────────────────────────────────────
   readonly showEditMedModal = signal(false);
@@ -919,6 +927,7 @@ export class Medications implements OnInit, OnDestroy {
           })
         );
 
+        this.reviewTracking.trackAction();
         this.toast(`${log.medicineName} marked as taken. Great job! 💊`, 'success');
         this.notifSvc.push({
           title: 'Medication Confirmed',
@@ -1151,6 +1160,7 @@ export class Medications implements OnInit, OnDestroy {
           this.addReminderSaving.set(false);
           this.closeAddReminder();
           this.notifSvc.notifyReminderChanged();
+          this.reviewTracking.trackAction();
           this.toast(`Reminder set for ${medName}.`, 'success');
         },
         error: err => {
@@ -1430,19 +1440,53 @@ export class Medications implements OnInit, OnDestroy {
       source: 1,
     };
 
+    this.allergyChecking.set(true);
+    this.medSvc.checkMedicationAllergy(payload.medicineName, this.fpProfileId() ?? undefined).subscribe({
+      next: res => {
+        this.allergyChecking.set(false);
+        if (res.data && !res.data.isSafe) {
+          this._pendingMedPayload = payload;
+          this.allergyCheckResult.set(res.data);
+          this.showAllergyWarning.set(true);
+        } else {
+          this.doSaveMedicine(payload);
+        }
+      },
+      error: () => {
+        this.allergyChecking.set(false);
+        this.doSaveMedicine(payload);
+      },
+    });
+  }
+
+  continueAfterWarning(): void {
+    const payload = this._pendingMedPayload;
+    this.showAllergyWarning.set(false);
+    this.allergyCheckResult.set(null);
+    this._pendingMedPayload = null;
+    if (payload) this.doSaveMedicine(payload);
+  }
+
+  dismissAllergyWarning(): void {
+    this.showAllergyWarning.set(false);
+    this.allergyCheckResult.set(null);
+    this._pendingMedPayload = null;
+  }
+
+  private doSaveMedicine(payload: AddUserMedicinePayload): void {
     this.addMedSaving.set(true);
     this.medSvc.createMedicine(payload, this.fpProfileId() ?? undefined).subscribe({
       next: res => {
         this.addMedSaving.set(false);
         this.showAddMedModal.set(false);
         this.toast(`${payload.medicineName} added successfully.`, 'success');
+        this.reviewTracking.trackAction();
         this.loadMedicines();
         if (res.data?.id) {
           this.setTab('medications');
         }
       },
       error: err => {
-        // Prefer the first specific validation error over the generic "Validation failed." message.
         const msg = err?.error?.errors?.[0] ?? err?.error?.message ?? 'Could not add medication.';
         this.toast(msg, 'error');
         this.addMedSaving.set(false);

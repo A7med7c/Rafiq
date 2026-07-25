@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities;
 using Rafiq.Domain.Entities.Ai;
 using Rafiq.Domain.Entities.Chat;
 using Rafiq.Domain.Entities.Documents;
@@ -70,6 +71,12 @@ public sealed class RafiqDbContext : IdentityDbContext<
     #region Identity
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    #endregion
+
+    #region Reviews
+
+    public DbSet<AppReview> AppReviews => Set<AppReview>();
 
     #endregion
 

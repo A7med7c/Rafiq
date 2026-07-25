@@ -1341,15 +1341,74 @@
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddMed()"
         [disabled]="addMedSaving()">{{ t().common.cancel }}</button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="saveAddMed()"
-        [disabled]="addMedSaving()">
+        [disabled]="addMedSaving() || allergyChecking()">
         @if (addMedSaving()) {
-        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.savingBtn }}
+          <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.savingBtn }}
+        } @else if (allergyChecking()) {
+          <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.checkingSafety }}
         } @else {
-        <i class="fa-solid fa-plus"></i> {{ t().medications.addMedicationBtn }}
+          <i class="fa-solid fa-plus"></i> {{ t().medications.addMedicationBtn }}
         }
       </button>
     </div>
 
+  </div>
+</div>
+}
+
+<!-- ═══════════ ALLERGY WARNING DIALOG ═══════════ -->
+@if (showAllergyWarning()) {
+<div class="modal-overlay" (click)="dismissAllergyWarning()">
+  <div class="modal-card allergy-warn-card" (click)="$event.stopPropagation()" role="alertdialog"
+    aria-modal="true" aria-labelledby="allergy-warn-title">
+
+    <div class="allergy-warn-hdr">
+      <div class="allergy-warn-ico">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h2 class="allergy-warn-title" id="allergy-warn-title">{{ t().medications.allergyWarningTitle }}</h2>
+        <p class="allergy-warn-subtitle">{{ t().medications.allergyWarningSubtitle }}</p>
+      </div>
+    </div>
+
+    <div class="allergy-warn-body">
+      <p class="allergy-warn-msg">
+        {{ t().medications.allergyWarningMsg }}
+        <strong>{{ t().medications.allergyWarningAdvice }}</strong>
+      </p>
+
+      @if (allergyCheckResult()?.triggeredAllergy) {
+        <div class="allergy-warn-detail">
+          <span class="allergy-warn-label"><i class="fa-solid fa-dna"></i> {{ t().medications.allergyTriggeredBy }}</span>
+          <span class="allergy-warn-value">{{ allergyCheckResult()!.triggeredAllergy }}</span>
+        </div>
+      }
+
+      @if (allergyCheckResult()?.riskLevel && allergyCheckResult()!.riskLevel !== 'None') {
+        <div class="allergy-warn-detail">
+          <span class="allergy-warn-label"><i class="fa-solid fa-gauge-high"></i> {{ t().medications.allergyRiskLevel }}</span>
+          <span class="allergy-risk-badge allergy-risk-badge--{{ allergyCheckResult()!.riskLevel | lowercase }}">
+            {{ allergyCheckResult()!.riskLevel }}
+          </span>
+        </div>
+      }
+
+      @if (allergyCheckResult()?.explanation) {
+        <p class="allergy-warn-explanation">
+          <i class="fa-solid fa-circle-info"></i> {{ allergyCheckResult()!.explanation }}
+        </p>
+      }
+    </div>
+
+    <div class="allergy-warn-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="dismissAllergyWarning()">
+        <i class="fa-solid fa-xmark"></i> {{ t().medications.allergyCancelBtn }}
+      </button>
+      <button type="button" class="modal-btn allergy-warn-continue-btn" (click)="continueAfterWarning()">
+        <i class="fa-solid fa-circle-check"></i> {{ t().medications.allergyContinueBtn }}
+      </button>
+    </div>
   </div>
 </div>
 }

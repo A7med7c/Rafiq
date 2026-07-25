@@ -6,6 +6,7 @@ import { AuthService } from '../../Services/auth-service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { LocalizationService } from '../../Services/localization.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-chat.models';
 import { catchError, of, Subscription } from 'rxjs';
 import { VoiceAgentPanel } from '../voice-agent-panel/voice-agent-panel';
@@ -33,6 +34,7 @@ export class AiPanel implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   protected readonly aiChatService = inject(AiChatService);
   protected readonly l10n = inject(LocalizationService);
+  private readonly reviewTracking = inject(ReviewTrackingService);
   protected readonly t = this.l10n.t;
 
   private readonly _routerSub: Subscription;
@@ -600,6 +602,7 @@ export class AiPanel implements OnInit, OnDestroy {
           }
           this.sending.set(false);
           this.scrollToBottom();
+          this.reviewTracking.trackAction();
         },
         error: () => {
           this.sending.set(false);
