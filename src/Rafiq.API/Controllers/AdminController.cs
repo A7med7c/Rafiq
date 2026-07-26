@@ -11,7 +11,7 @@ namespace Rafiq.API.Controllers;
 [ApiController]
 [Authorize(Roles = Roles.Admin)]
 [Route("api/v1/admin")]
-public sealed class AdminController(IAdminService adminService) : ControllerBase
+public sealed class AdminController(IAdminService adminService, IAuditLogService auditLogService) : ControllerBase
 {
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
@@ -44,6 +44,15 @@ public sealed class AdminController(IAdminService adminService) : ControllerBase
 
         return Ok(ApiResponseBase.SuccessResponse(
             request.IsActive ? "User activated successfully." : "User deactivated successfully."));
+    }
+
+    [HttpGet("audit-logs")]
+    public async Task<IActionResult> GetAuditLogs(
+        [FromQuery] AuditLogQuery query,
+        CancellationToken cancellationToken)
+    {
+        var result = await auditLogService.GetPagedAsync(query, cancellationToken);
+        return Ok(ApiResponse<PagedResult<AuditLogDto>>.SuccessResponse(result));
     }
 }
 

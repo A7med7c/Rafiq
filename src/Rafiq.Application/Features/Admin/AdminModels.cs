@@ -76,6 +76,33 @@ public sealed record PagedResult<T>(
         : (int)Math.Ceiling(TotalCount / (double)PageSize);
 }
 
+// ── Audit Logs ─────────────────────────────────────────────────────────────
+
+public sealed record AuditChangeDto(string Field, string? Before, string? After);
+
+public sealed record AuditLogDto(
+    Guid Id,
+    DateTime Timestamp,
+    string ActorName,
+    string ActorEmail,
+    string Module,
+    string Action,
+    string Target,
+    string Severity,
+    string Description,
+    IReadOnlyList<AuditChangeDto> Changes);
+
+public sealed class AuditLogQuery
+{
+    public string? Search    { get; init; }
+    public string? Module    { get; init; }
+    public string? Severity  { get; init; }
+    public string? DateFrom  { get; init; }
+    public string? DateTo    { get; init; }
+    public int Page          { get; init; } = 1;
+    public int PageSize      { get; init; } = 10;
+}
+
 // ── AI Operations ──────────────────────────────────────────────────────────
 
 // Overview

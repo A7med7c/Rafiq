@@ -35,6 +35,12 @@ export const ADMIN_ROUTES: Routes = [
           import('./pages/reviews/admin-reviews.component')
             .then(m => m.AdminReviewsComponent)
       },
+      {
+        path: 'audit-logs',
+        loadComponent: () =>
+          import('./pages/audit-logs/admin-audit-logs.component')
+            .then(m => m.AdminAuditLogsComponent)
+      },
       ...[
         'families',
         'medical-records',
@@ -42,8 +48,7 @@ export const ADMIN_ROUTES: Routes = [
         'medications',
         'documents',
         'analytics',
-        'settings',
-        'audit-logs'
+        'settings'
       ].map(path => ({
         path,
         loadComponent: () =>

@@ -40,7 +40,8 @@ export class AdminLayoutComponent {
     { path: '/admin/dashboard',      icon: 'fa-chart-pie',           label: 'dashboard' },
     { path: '/admin/users',          icon: 'fa-users',               label: 'users' },
     { path: '/admin/ai-operations',  icon: 'fa-robot',               label: 'aiOperations' },
-    { path: '/admin/reviews',        icon: 'fa-star',                label: 'reviews' }
+    { path: '/admin/reviews',        icon: 'fa-star',                label: 'reviews' },
+    { path: '/admin/audit-logs',     icon: 'fa-shield-halved',       label: 'auditLogs' }
   ];
 
   get adminName(): string {

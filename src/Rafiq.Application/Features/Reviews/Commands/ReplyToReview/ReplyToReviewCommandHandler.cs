@@ -13,17 +13,23 @@ public sealed class ReplyToReviewCommandHandler
     private readonly IUserNotificationRepository _notifRepo;
     private readonly IUnitOfWork _uow;
     private readonly INotificationService _signalR;
+    private readonly IAuditLogService _audit;
+    private readonly ICurrentUserService _currentUser;
 
     public ReplyToReviewCommandHandler(
         IAppReviewRepository repo,
         IUserNotificationRepository notifRepo,
         IUnitOfWork uow,
-        INotificationService signalR)
+        INotificationService signalR,
+        IAuditLogService audit,
+        ICurrentUserService currentUser)
     {
         _repo = repo;
         _notifRepo = notifRepo;
         _uow = uow;
         _signalR = signalR;
+        _audit = audit;
+        _currentUser = currentUser;
     }
 
     public async Task<ApiResponse<bool>> Handle(
@@ -60,6 +66,21 @@ public sealed class ReplyToReviewCommandHandler
                 "رد على تقييمك",
                 request.Reply,
                 cancellationToken);
+        }
+
+        if (_currentUser.UserId.HasValue && request.Reply is not null)
+        {
+            await _audit.LogAsync(
+                actorId:     _currentUser.UserId.Value,
+                actorName:   "Admin",
+                actorEmail:  string.Empty,
+                module:      "Reviews",
+                action:      "ReviewReplied",
+                target:      $"Review by {review.DisplayName} (#{review.Id.ToString()[..6]})",
+                severity:    "Info",
+                description: $"Admin replied to review by '{review.DisplayName}'.",
+                changes:     [("Admin Reply", null, request.Reply)],
+                cancellationToken: cancellationToken);
         }
 
         return ApiResponse<bool>.SuccessResponse(true, "Reply saved");

@@ -65,6 +65,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<IAdminAiService, AdminAiService>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddHttpContextAccessor();
         services.AddScoped<IBackgroundUserContext, BackgroundUserContext>();

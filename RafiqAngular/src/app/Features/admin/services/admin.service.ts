@@ -18,6 +18,8 @@ import {
   AiRequestDetail,
   AiRequestItem,
   AiRequestQuery,
+  AuditLogEntry,
+  AuditLogQuery,
   PagedResult,
   ReviewCategory,
   ReviewOverview,
@@ -172,5 +174,19 @@ export class AdminService {
 
   replyToReview(id: string, reply: string | null): Observable<ApiResponseBase> {
     return this.http.post<ApiResponseBase>(`${this.reviewsBase}/${id}/reply`, { reply });
+  }
+
+  // ── Audit Logs ───────────────────────────────────────────────────────────
+
+  getAuditLogs(query: AuditLogQuery): Observable<PagedResult<AuditLogEntry>> {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    }
+    return this.http
+      .get<ApiResponse<PagedResult<AuditLogEntry>>>(`${this.baseUrl}/audit-logs`, { params })
+      .pipe(map(r => r.data));
   }
 }
