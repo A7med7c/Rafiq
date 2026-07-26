@@ -239,14 +239,14 @@ export const en = {
     goodAfternoon: 'Good afternoon',
     goodEvening: 'Good evening',
     reminder: 'Reminder',
-    medicalReport:'Medical Report',
-    generateAndDown:'Generate & Download',
+    medicalReport: 'Medical Report',
+    generateAndDown: 'Generate & Download',
     chooseMedicalType: 'Choose the report type to generate',
-    doctorSummary:'Doctor Summary',
-    pagesRange:'1 - 2 Pages',
+    doctorSummary: 'Doctor Summary',
+    pagesRange: '1 - 2 Pages',
     doctorSummaryDesc: 'A concise report for doctor consultations — vitals, conditions, medications, latest results and AI summary.',
-    completeHistory:'Complete Medical History',
-    completeHistoryDesc:'Full report with all records, prescriptions, lab and imaging history, timeline and AI clinical summary.',
+    completeHistory: 'Complete Medical History',
+    completeHistoryDesc: 'Full report with all records, prescriptions, lab and imaging history, timeline and AI clinical summary.',
     generatingReportSub: 'This may take a few seconds while the AI prepares your summary'
   },
 
@@ -578,6 +578,14 @@ export const en = {
     viewDetails: 'View Details',
     viewOnly: 'View Only',
     viewingFor: 'Viewing appointments for:',
+    lab: "Lab / Blood Test",
+    doctor: "Doctor Visit",
+    vaccination: "Vaccination",
+    imaging: "X-Ray & Imaging",
+    therapy: "Therapy Session",
+    dental: "Dental Checkup",
+    other: "Other",
+    followUp: "Follow-up Visit"
   },
 
   uploadValidation: {
@@ -906,8 +914,8 @@ export const en = {
     guardian: 'Guardian',
     caregiver: 'Caregiver',
     self: 'You',
-    member:'Member',
-    
+    member: 'Member',
+
   },
 
   onboarding: {
@@ -1072,18 +1080,18 @@ export const en = {
   },
 
   voiceAgent: {
-    switchToVoice:  'Voice',
-    switchToChat:   'Chat',
-    tapToSpeak:     'Tap the mic to speak',
-    listening:      'Listening…',
-    thinking:       'Rafiq is thinking…',
-    callingTool:    'Working on it…',
-    speaking:       'Speaking…',
-    sessionError:   'Could not start voice session. Please try again.',
-    micDenied:      'Microphone access was denied. Please allow microphone access in your browser settings.',
-    notSupported:   'Voice is not supported in this browser. Please use Chrome or Edge.',
-    retry:          'Try again',
-    youSaid:        'You said',
+    switchToVoice: 'Voice',
+    switchToChat: 'Chat',
+    tapToSpeak: 'Tap the mic to speak',
+    listening: 'Listening…',
+    thinking: 'Rafiq is thinking…',
+    callingTool: 'Working on it…',
+    speaking: 'Speaking…',
+    sessionError: 'Could not start voice session. Please try again.',
+    micDenied: 'Microphone access was denied. Please allow microphone access in your browser settings.',
+    notSupported: 'Voice is not supported in this browser. Please use Chrome or Edge.',
+    retry: 'Try again',
+    youSaid: 'You said',
   },
 
   landing: {
