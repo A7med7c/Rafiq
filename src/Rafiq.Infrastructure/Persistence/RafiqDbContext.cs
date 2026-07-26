@@ -78,6 +78,8 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<AppReview> AppReviews => Set<AppReview>();
 
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+
     #endregion
 
     #region AI Chat

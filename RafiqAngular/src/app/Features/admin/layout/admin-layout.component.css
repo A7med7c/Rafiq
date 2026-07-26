@@ -1,5 +1,10 @@
 :host {
   display: block;
+  /* Own the full viewport so position:absolute overlays (sidebar, backdrop)
+     are always relative to the screen — never trapped by an ancestor transform */
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
 }
 
 .admin-shell {
@@ -16,7 +21,7 @@
   --admin-success: #16875a;
   --admin-warning: #c97716;
   --admin-danger: #c2414b;
-  min-height: 100dvh;
+  height: 100%;
   display: flex;
   background: var(--admin-bg);
   color: var(--admin-ink);
@@ -175,6 +180,7 @@
   flex: 1;
   min-width: 0;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .admin-header {
@@ -372,12 +378,15 @@
 
 /* ── Tablet & mobile (≤ 980px) ───────────────────────────── */
 @media (max-width: 980px) {
-  /* ----- Sidebar: pull from flex flow, become a fixed drawer ----- */
+  /* ----- Sidebar: pull from flex flow, become an absolute drawer
+         (absolute is relative to :host which owns the full viewport) ----- */
   .admin-sidebar {
-    position: fixed;
+    position: absolute;
     flex: none;
-    inset-block: 0;
-    inset-inline-start: 0;   /* logical: left in LTR, right in RTL */
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
     width: min(300px, 85vw);
     transform: translateX(-110%);
     transition: transform 240ms cubic-bezier(.22, 1, .36, 1);
@@ -385,8 +394,10 @@
     box-shadow: none;
   }
 
-  /* RTL: flip the slide direction only — inset is already correct */
+  /* RTL: anchor to right edge, flip slide direction */
   [dir='rtl'] .admin-sidebar {
+    left: auto;
+    right: 0;
     transform: translateX(110%);
   }
 
@@ -399,9 +410,9 @@
     box-shadow: -8px 0 40px rgba(8, 18, 28, .25);
   }
 
-  /* ----- Backdrop: shown as sibling of admin-shell ----- */
+  /* ----- Backdrop: absolute relative to :host (= full viewport) ----- */
   .admin-backdrop {
-    position: fixed;
+    position: absolute;
     inset: 0;
     display: block;
     border: 0;

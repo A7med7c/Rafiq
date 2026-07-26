@@ -216,12 +216,26 @@ export interface AiPerformance {
 }
 
 
+// ── Reviews ────────────────────────────────────────────────────────────────
+
+export type ReviewStatus = 'Pending' | 'Reviewed' | 'Resolved' | 'Archived';
+export type ReviewCategory = 'General' | 'BugReport' | 'FeatureRequest' | 'Performance' | 'UiUx' | 'ContentQuality';
+
 export interface AdminReview {
   id: string;
   displayName: string;
   stars: number;
   comment: string | null;
   isVisible: boolean;
+  status: ReviewStatus;
+  category: ReviewCategory;
+  adminNotes: string | null;
+  adminReply: string | null;
+  repliedAt: string | null;
+  reviewedAt: string | null;
+  deviceInfo: string | null;
+  appVersion: string | null;
+  appLanguage: string | null;
   createdAt: string;
 }
 
@@ -242,4 +256,39 @@ export interface ReviewStats {
   threeStars: number;
   twoStars: number;
   oneStar: number;
+}
+
+export interface ReviewOverview {
+  total: number;
+  pending: number;
+  thisWeek: number;
+  averageStars: number;
+  healthScore: number;
+  positiveRate: number;
+  withReply: number;
+  fiveStars: number;
+  fourStars: number;
+  threeStars: number;
+  twoStars: number;
+  oneStar: number;
+  visible: number;
+  hidden: number;
+  byCategory: Record<string, number>;
+  byStatus: Record<string, number>;
+}
+
+export interface ReviewTrendPoint {
+  month: string;
+  averageStars: number;
+  count: number;
+}
+
+export interface AdminReviewQuery {
+  page?: number;
+  pageSize?: number;
+  status?: ReviewStatus | '';
+  category?: ReviewCategory | '';
+  minStars?: number | null;
+  maxStars?: number | null;
+  sortBy?: string;
 }

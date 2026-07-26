@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Rafiq.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Rafiq.Infrastructure.Persistence;
 namespace Rafiq.Infrastructure.Migrations
 {
     [DbContext(typeof(RafiqDbContext))]
-    partial class RafiqDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260726000608_addrev")]
+    partial class addrev
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -337,57 +340,6 @@ namespace Rafiq.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AppReviews", (string)null);
-                });
-
-            modelBuilder.Entity("Rafiq.Domain.Entities.UserNotification", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("ReadAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2(7)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("UserId", "IsRead");
-
-                    b.ToTable("UserNotifications", (string)null);
                 });
 
             modelBuilder.Entity("Rafiq.Domain.Entities.Chat.AiConversation", b =>
