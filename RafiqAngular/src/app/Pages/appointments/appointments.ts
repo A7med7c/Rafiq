@@ -20,6 +20,18 @@ import {
   APPOINTMENT_TYPE_LABELS, APPOINTMENT_TYPE_ICONS,
 } from '../../Modles/appointment.models';
 
+/** Maps each AppointmentType enum value to its key path in the i18n objects */
+const APPT_TYPE_KEYS: Record<AppointmentType, string> = {
+  [AppointmentType.DoctorVisit]: 'appointments.doctor',
+  [AppointmentType.LabTest]:     'appointments.lab',
+  [AppointmentType.Imaging]:     'appointments.imaging',
+  [AppointmentType.Vaccination]: 'appointments.vaccination',
+  [AppointmentType.Dentist]:     'appointments.dental',
+  [AppointmentType.Therapy]:     'appointments.therapy',
+  [AppointmentType.FollowUp]:    'appointments.followUp',
+  [AppointmentType.Other]:       'appointments.other',
+};
+
 type ApptTab = 'all' | 'upcoming' | 'completed' | 'cancelled';
 
 interface Toast {
@@ -75,6 +87,11 @@ export class Appointments implements OnInit, OnDestroy {
   // otherwise falls back to the profile stored in localStorage by the
   // family-profiles page.  If the resolved profile's access role is 'Viewer'
   // all write actions are hidden.
+
+translate(key: string): string {
+  return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? key;
+}
+
   readonly viewingProfile = toSignal<AccessibleProfileDto | null>(
     this.route.queryParamMap.pipe(
       map(params => params.get('profileId') ?? this.profileSelectSvc.selectedProfileId),
@@ -774,7 +791,16 @@ nextPage() {
 
   typeLabel(a: AppointmentDto): string {
     if (a.appointmentType === AppointmentType.Other && a.customType) return a.customType;
-    return APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+    const key = APPT_TYPE_KEYS[a.appointmentType];
+    if (!key) return APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+    return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+  }
+
+  /** Returns the translated label for a type enum value (used in the type-picker grid) */
+  typeLabelForType(type: AppointmentType): string {
+    const key = APPT_TYPE_KEYS[type];
+    if (!key) return APPOINTMENT_TYPE_LABELS[type] ?? '';
+    return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[type] ?? '';
   }
 
   typeIcon(t: AppointmentType): string {

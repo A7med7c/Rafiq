@@ -241,15 +241,15 @@ export const ar: Translations = {
     goodAfternoon: 'مساء الخير',
     goodEvening: 'مساء النور',
     reminder: 'تذكير',
-    medicalReport:'الملف الطبي',
-    generateAndDown:'نزل ملفك الطبي',
-    chooseMedicalType:'اختار نوع الملف اللي محتاجه',
-    doctorSummary:'ملخص من دكتور',
+    medicalReport: 'الملف الطبي',
+    generateAndDown: 'نزل ملفك الطبي',
+    chooseMedicalType: 'اختار نوع الملف اللي محتاجه',
+    doctorSummary: 'ملخص من دكتور',
     pagesRange: 'من صفحتين ل تلاتة',
-    doctorSummaryDesc:'ملخص سريع للدكتور فيه العلامات الحيوية، والحالات المرضية، والأدوية، وآخر النتائج، وملخص بالذكاء الاصطناعي.',
-    completeHistory:'الملف الطبي بالكامل',
-    completeHistoryDesc:'تقرير كامل فيه كل سجلاتك الطبية، والروشتات، وتاريخ التحاليل والأشعات، وتسلسل حالتك مع الوقت، وملخص طبي بالذكاء الاصطناعي.',
-    generatingReportSub:'ممكن يستغرق ثواني قليلة أثناء إعداد الذكاء الاصطناعي لتلخيصك',   
+    doctorSummaryDesc: 'ملخص سريع للدكتور فيه العلامات الحيوية، والحالات المرضية، والأدوية، وآخر النتائج، وملخص بالذكاء الاصطناعي.',
+    completeHistory: 'الملف الطبي بالكامل',
+    completeHistoryDesc: 'تقرير كامل فيه كل سجلاتك الطبية، والروشتات، وتاريخ التحاليل والأشعات، وتسلسل حالتك مع الوقت، وملخص طبي بالذكاء الاصطناعي.',
+    generatingReportSub: 'ممكن يستغرق ثواني قليلة أثناء إعداد الذكاء الاصطناعي لتلخيصك',
   },
 
   medicalRecordsPage: {
@@ -412,7 +412,7 @@ export const ar: Translations = {
     enterManually: 'اكتب بنفسك',
     tryAgain: 'حاول تاني',
     clearFilters: 'امسح الفلاتر',
-    filteredLabel: 'مفلتر', 
+    filteredLabel: 'مفلتر',
   },
 
   aiAssistant: {
@@ -580,6 +580,14 @@ export const ar: Translations = {
     viewDetails: 'شوف التفاصيل',
     viewOnly: 'مشاهدة فقط',
     viewingFor: 'عم تشوف مواعيد:',
+    lab: "تحليل أو فحص دم",
+    doctor: "زيارة طبيب",
+    vaccination: "تطعيم",
+    imaging: "أشعة ",
+    therapy: "جلسة علاج",
+    dental: "فحص الأسنان",
+    other: "أخرى",
+    followUp: "زيارة متابعة"
   },
 
   uploadValidation: {
@@ -1073,18 +1081,18 @@ export const ar: Translations = {
   },
 
   voiceAgent: {
-    switchToVoice:  'صوت',
-    switchToChat:   'نص',
-    tapToSpeak:     'اضغط الميكروفون للتحدث',
-    listening:      'جاري الاستماع…',
-    thinking:       'رفيق يفكر…',
-    callingTool:    'جاري التنفيذ…',
-    speaking:       'جاري الكلام…',
-    sessionError:   'تعذّر بدء جلسة صوتية. يرجى المحاولة مجدداً.',
-    micDenied:      'تم رفض الوصول إلى الميكروفون. يرجى السماح بالوصول من إعدادات المتصفح.',
-    notSupported:   'الصوت غير مدعوم في هذا المتصفح. يرجى استخدام Chrome أو Edge.',
-    retry:          'حاول مجدداً',
-    youSaid:        'قلت',
+    switchToVoice: 'صوت',
+    switchToChat: 'نص',
+    tapToSpeak: 'اضغط الميكروفون للتحدث',
+    listening: 'جاري الاستماع…',
+    thinking: 'رفيق يفكر…',
+    callingTool: 'جاري التنفيذ…',
+    speaking: 'جاري الكلام…',
+    sessionError: 'تعذّر بدء جلسة صوتية. يرجى المحاولة مجدداً.',
+    micDenied: 'تم رفض الوصول إلى الميكروفون. يرجى السماح بالوصول من إعدادات المتصفح.',
+    notSupported: 'الصوت غير مدعوم في هذا المتصفح. يرجى استخدام Chrome أو Edge.',
+    retry: 'حاول مجدداً',
+    youSaid: 'قلت',
   },
 
   landing: {
