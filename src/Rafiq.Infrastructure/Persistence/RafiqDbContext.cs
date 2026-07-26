@@ -74,6 +74,12 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     #endregion
 
+    #region Audit Logs
+
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    #endregion
+
     #region Reviews
 
     public DbSet<AppReview> AppReviews => Set<AppReview>();

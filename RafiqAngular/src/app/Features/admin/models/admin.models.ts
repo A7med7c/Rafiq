@@ -292,3 +292,48 @@ export interface AdminReviewQuery {
   maxStars?: number | null;
   sortBy?: string;
 }
+
+// ── Audit Logs ─────────────────────────────────────────────────────────────
+
+export type AuditSeverity = 'Info' | 'Success' | 'Warning' | 'Critical';
+export type AuditModule   = 'Users' | 'Reviews' | 'AI Operations' | 'Settings' | 'System';
+
+export interface AuditChange {
+  field: string;
+  before: string | null;
+  after:  string | null;
+}
+
+export interface AuditLogEntry {
+  id:          string;
+  timestamp:   string;
+  actorName:   string;
+  actorEmail:  string;
+  module:      AuditModule;
+  action:      string;
+  target:      string;
+  severity:    AuditSeverity;
+  description: string;
+  changes:     AuditChange[];
+}
+
+export interface AuditLogSummary {
+  total:         number;
+  today:         number;
+  critical:      number;
+  adminActions:  number;
+  infoCount:     number;
+  successCount:  number;
+  warningCount:  number;
+  criticalCount: number;
+}
+
+export interface AuditLogQuery {
+  search?:   string;
+  module?:   string;
+  severity?: string;
+  dateFrom?: string;
+  dateTo?:   string;
+  page?:     number;
+  pageSize?: number;
+}

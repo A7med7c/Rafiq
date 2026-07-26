@@ -7,7 +7,7 @@ using Rafiq.Infrastructure.Persistence;
 
 namespace Rafiq.Infrastructure.Services;
 
-public sealed class AdminService(RafiqDbContext dbContext) : IAdminService
+public sealed class AdminService(RafiqDbContext dbContext, IAuditLogService auditLog) : IAdminService
 {
     public async Task<AdminDashboardDto> GetDashboardAsync(CancellationToken cancellationToken = default)
     {
@@ -312,6 +312,32 @@ public sealed class AdminService(RafiqDbContext dbContext) : IAdminService
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var actor = await dbContext.Users
+            .AsNoTracking()
+            .Where(u => u.Id == actorUserId)
+            .Select(u => new { u.FirstName, u.LastName, u.Email })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var actorName  = actor is null ? "Admin" : $"{actor.FirstName} {actor.LastName}".Trim();
+        var actorEmail = actor?.Email ?? string.Empty;
+        var action     = isActive ? "UserActivated" : "UserSuspended";
+        var severity   = isActive ? "Success" : "Warning";
+        var targetName = $"{user.FirstName} {user.LastName}".Trim();
+
+        await auditLog.LogAsync(
+            actorId:     actorUserId,
+            actorName:   actorName,
+            actorEmail:  actorEmail,
+            module:      "Users",
+            action:      action,
+            target:      targetName,
+            severity:    severity,
+            description: isActive
+                ? $"User account '{targetName}' was activated."
+                : $"User account '{targetName}' was suspended.",
+            changes:     [("Status", isActive ? "Inactive" : "Active", isActive ? "Active" : "Suspended")],
+            cancellationToken: cancellationToken);
     }
 
     private static IReadOnlyList<AdminTrendPointDto> BuildSixMonthTrend(

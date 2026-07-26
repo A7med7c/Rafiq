@@ -7,7 +7,10 @@ using Rafiq.Infrastructure.Persistence;
 
 namespace Rafiq.Infrastructure.Services;
 
-public sealed class AdminAiService(RafiqDbContext dbContext) : IAdminAiService
+public sealed class AdminAiService(
+    RafiqDbContext dbContext,
+    IAuditLogService auditLog,
+    ICurrentUserService currentUser) : IAdminAiService
 {
     // ── Overview ─────────────────────────────────────────────────────────────
 
@@ -335,8 +338,56 @@ public sealed class AdminAiService(RafiqDbContext dbContext) : IAdminAiService
         if (!Enum.TryParse<FeedbackStatus>(dto.TriageStatus, ignoreCase: true, out var status))
             throw new BadRequestException($"Unknown triage status: {dto.TriageStatus}");
 
+        // Capture before state for audit
+        var beforeStatus   = reaction.TriageStatus.ToString();
+        var beforeCategory = reaction.Category;
+        var beforeNotes    = reaction.AdminNotes;
+
         reaction.Triage(status, dto.Category, dto.AdminNotes);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (!currentUser.UserId.HasValue) return;
+
+        var actor = await dbContext.Users
+            .AsNoTracking()
+            .Where(u => u.Id == currentUser.UserId.Value)
+            .Select(u => new { u.FirstName, u.LastName, u.Email })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var actorName  = actor is null ? "Admin" : $"{actor.FirstName} {actor.LastName}".Trim();
+        var actorEmail = actor?.Email ?? string.Empty;
+        var afterStatus = status.ToString();
+
+        var (action, severity) = status switch
+        {
+            FeedbackStatus.Resolved      => ("FeedbackResolved",  "Success"),
+            FeedbackStatus.Investigating => ("FeedbackReviewed",  "Info"),
+            FeedbackStatus.Ignored       => ("FeedbackIgnored",   "Info"),
+            _                            => ("FeedbackTriaged",   "Info")
+        };
+
+        var changes = new List<(string Field, string? Before, string? After)>();
+
+        if (beforeStatus != afterStatus)
+            changes.Add(("Review Status", beforeStatus, afterStatus));
+
+        if (beforeCategory != dto.Category)
+            changes.Add(("Category", beforeCategory, dto.Category));
+
+        if (beforeNotes != dto.AdminNotes)
+            changes.Add(("Admin Notes", beforeNotes, dto.AdminNotes));
+
+        await auditLog.LogAsync(
+            actorId:     currentUser.UserId.Value,
+            actorName:   actorName,
+            actorEmail:  actorEmail,
+            module:      "AI Operations",
+            action:      action,
+            target:      $"Feedback #{id.ToString()[..8]}",
+            severity:    severity,
+            description: $"AI feedback triage status changed from '{beforeStatus}' to '{afterStatus}'.",
+            changes:     changes,
+            cancellationToken: cancellationToken);
     }
 
     // ── Performance ───────────────────────────────────────────────────────────

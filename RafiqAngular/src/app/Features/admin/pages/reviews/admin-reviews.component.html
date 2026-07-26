@@ -370,10 +370,10 @@
 
 </div>
 
-<!-- ── Detail modal ──────────────────────────────────────────────────────────── -->
+<!-- ── Detail drawer ──────────────────────────────────────────────────────────── -->
 @if (activeReview(); as r) {
-  <div class="rv-detail-modal-wrap" (click)="closeDetail()">
-    <div class="rv-detail-dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+  <div class="rv-detail-backdrop" (click)="closeDetail()"></div>
+  <aside class="rv-detail-drawer" role="dialog" aria-modal="true">
     <div class="rv-dp-inner">
 
       <!-- Header -->
@@ -515,8 +515,7 @@
       </div>
 
     </div>
-    </div>
-  </div>
+  </aside>
 }
 
 <!-- ── Delete confirm ────────────────────────────────────────────────────── -->
