@@ -5,6 +5,7 @@ import { AppointmentsService } from './appointments.service';
 import { MedicationRemindersService } from './medication-reminders.service';
 import { AppointmentReminderNotificationPayload, MedicationReminderNotificationPayload, NotificationEventPayload, SignalRService } from './signalr.service';
 import { NotificationSoundService } from './notification-sound.service';
+import { PersistedNotificationsService } from './persisted-notifications.service';
 
 export interface AppNotification {
   id: string;
@@ -14,6 +15,8 @@ export interface AppNotification {
   createdAt: Date;
   read: boolean;
   sourceId?: string;
+  /** Server-assigned ID for notifications persisted in the DB (e.g. review replies). */
+  serverId?: string;
 }
 
 export interface NotificationToast {
@@ -45,6 +48,7 @@ interface StoredAppNotification {
   createdAt: string;
   read: boolean;
   sourceId?: string;
+  serverId?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -56,6 +60,7 @@ export class NotificationService {
   private readonly medicationRemindersService = inject(MedicationRemindersService);
   private readonly appointmentsService = inject(AppointmentsService);
   private readonly notificationSoundService = inject(NotificationSoundService);
+  private readonly persistedSvc = inject(PersistedNotificationsService);
 
   private readonly router = inject(Router);
   private readonly ngZone = inject(NgZone);
@@ -140,6 +145,9 @@ export class NotificationService {
         this._notifications.set([]);
         this.suppressPersistence = false;
         this.loadPersistedNotifications();
+        if (nextUserId) {
+          this.loadServerNotifications();
+        }
       }
 
       this.lastKnownUserId = nextUserId;
@@ -191,12 +199,17 @@ export class NotificationService {
 
   markAllRead(): void {
     this._notifications.update(list => list.map(notification => ({ ...notification, read: true })));
+    this.persistedSvc.markAllRead().subscribe();
   }
 
   markRead(id: string): void {
+    const target = this._notifications().find(n => n.id === id);
     this._notifications.update(list =>
       list.map(notification => (notification.id === id ? { ...notification, read: true } : notification))
     );
+    if (target?.serverId) {
+      this.persistedSvc.markRead(target.serverId).subscribe();
+    }
   }
 
   markReadBySourceId(sourceId: string): void {
@@ -831,6 +844,7 @@ export class NotificationService {
       createdAt: notification.createdAt.toISOString(),
       read: notification.read,
       sourceId: notification.sourceId,
+      serverId: notification.serverId,
     }));
 
     window.localStorage.setItem(this.persistenceKey, JSON.stringify(payload));
@@ -856,6 +870,7 @@ export class NotificationService {
         createdAt: new Date(notification.createdAt),
         read: notification.read,
         sourceId: notification.sourceId,
+        serverId: notification.serverId,
       }));
 
       this.suppressPersistence = true;
@@ -865,6 +880,36 @@ export class NotificationService {
     } finally {
       this.suppressPersistence = false;
     }
+  }
+
+  private loadServerNotifications(): void {
+    this.persistedSvc.getAll(1, 50).subscribe({
+      next: result => {
+        const existing = this._notifications();
+        const existingServerIds = new Set(existing.map(n => n.serverId).filter(Boolean));
+
+        const incoming: AppNotification[] = result.items
+          .filter(n => !existingServerIds.has(n.id))
+          .map(n => ({
+            id: crypto.randomUUID(),
+            serverId: n.id,
+            title: n.title,
+            body: n.body,
+            type: 'system' as const,
+            createdAt: new Date(n.createdAt),
+            read: n.isRead,
+          }));
+
+        if (incoming.length === 0) return;
+
+        this._notifications.update(list => {
+          const merged = [...list, ...incoming];
+          merged.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+          return merged;
+        });
+      },
+      error: () => { /* silently ignore if not authenticated yet */ }
+    });
   }
 
   private getPersistenceKey(userId: string | null): string {

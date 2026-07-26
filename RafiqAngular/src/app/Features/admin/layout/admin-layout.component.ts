@@ -5,8 +5,7 @@ import {
   HostListener,
   computed,
   inject,
-  signal,
-  ChangeDetectorRef
+  signal
 } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../Services/auth-service';
@@ -32,8 +31,6 @@ export class AdminLayoutComponent {
   private readonly authService = inject(AuthService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly notifications = inject(NotificationService);
-  private readonly cdr = inject(ChangeDetectorRef);
-
   readonly sidebarOpen = signal(false);
   readonly profileOpen = signal(false);
   readonly darkMode = signal(localStorage.getItem('rafiq_admin_theme') === 'dark');
@@ -68,13 +65,12 @@ export class AdminLayoutComponent {
     this.l10n.toggle();
   }
 
-  closeSidebar(event?: Event): void {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+  closeSidebar(): void {
     this.sidebarOpen.set(false);
-    this.cdr.detectChanges();
+  }
+
+  openSidebar(): void {
+    this.sidebarOpen.set(true);
   }
 
   logout(): void {

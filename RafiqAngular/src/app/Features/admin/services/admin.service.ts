@@ -6,6 +6,7 @@ import { ApiResponse, ApiResponseBase } from '../../../Modles/api-response';
 import {
   AdminDashboard,
   AdminReview,
+  AdminReviewQuery,
   AdminReviewsPage,
   AdminUser,
   AdminUserQuery,
@@ -18,7 +19,11 @@ import {
   AiRequestItem,
   AiRequestQuery,
   PagedResult,
+  ReviewCategory,
+  ReviewOverview,
   ReviewStats,
+  ReviewStatus,
+  ReviewTrendPoint,
   UpdateAiFeedbackRequest
 } from '../models/admin.models';
 
@@ -114,10 +119,28 @@ export class AdminService {
 
   private readonly reviewsBase = `${environment.apiUrl}/reviews`;
 
-  getAdminReviews(page = 1, pageSize = 20): Observable<AdminReviewsPage> {
-    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
+  getAdminReviews(query: AdminReviewQuery = {}): Observable<AdminReviewsPage> {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    }
     return this.http
       .get<ApiResponse<AdminReviewsPage>>(`${this.reviewsBase}/admin`, { params })
+      .pipe(map(r => r.data));
+  }
+
+  getReviewOverview(): Observable<ReviewOverview> {
+    return this.http
+      .get<ApiResponse<ReviewOverview>>(`${this.reviewsBase}/overview`)
+      .pipe(map(r => r.data));
+  }
+
+  getReviewTrends(months = 6): Observable<ReviewTrendPoint[]> {
+    const params = new HttpParams().set('months', months);
+    return this.http
+      .get<ApiResponse<ReviewTrendPoint[]>>(`${this.reviewsBase}/trends`, { params })
       .pipe(map(r => r.data));
   }
 
@@ -133,5 +156,21 @@ export class AdminService {
 
   toggleReviewVisibility(id: string, isVisible: boolean): Observable<ApiResponseBase> {
     return this.http.patch<ApiResponseBase>(`${this.reviewsBase}/${id}/visibility`, { isVisible });
+  }
+
+  updateReviewStatus(id: string, status: ReviewStatus): Observable<ApiResponseBase> {
+    return this.http.patch<ApiResponseBase>(`${this.reviewsBase}/${id}/status`, { status });
+  }
+
+  updateReviewCategory(id: string, category: ReviewCategory): Observable<ApiResponseBase> {
+    return this.http.patch<ApiResponseBase>(`${this.reviewsBase}/${id}/category`, { category });
+  }
+
+  updateAdminNotes(id: string, notes: string | null): Observable<ApiResponseBase> {
+    return this.http.patch<ApiResponseBase>(`${this.reviewsBase}/${id}/notes`, { notes });
+  }
+
+  replyToReview(id: string, reply: string | null): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(`${this.reviewsBase}/${id}/reply`, { reply });
   }
 }

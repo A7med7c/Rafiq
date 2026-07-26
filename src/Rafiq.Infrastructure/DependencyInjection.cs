@@ -107,6 +107,7 @@ public static class DependencyInjection
         services.AddScoped<IEmergencyContactRepository, EmergencyContactRepository>();
         services.AddScoped<IAiConversationRepository, AiConversationRepository>();
         services.AddScoped<IAppReviewRepository, AppReviewRepository>();
+        services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
         services.AddScoped<IMessageReactionRepository, MessageReactionRepository>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 

@@ -1,153 +1,351 @@
-<div class="ar-page" [class.rtl]="l10n.lang() === 'ar'">
+<div class="rv-page" [class.rtl]="isRtl()">
 
-  <!-- Page header -->
-  <div class="ar-header">
+  <!-- ── Page header ──────────────────────────────────────────────────────── -->
+  <header class="rv-header">
     <div>
-      <h1 class="ar-title">{{ copy().title }}</h1>
-      <p class="ar-subtitle">{{ copy().subtitle }}</p>
+      <h1 class="rv-title">{{ copy().title }}</h1>
+      <p class="rv-subtitle">{{ copy().subtitle }}</p>
     </div>
-  </div>
+  </header>
 
-  <!-- Stats cards -->
-  @if (stats(); as s) {
-    <div class="ar-dashboard-top">
-      <div class="ar-stats-grid">
-        <div class="ar-stat-card ar-stat-avg">
-          <div class="ar-stat-icon"><i class="fas fa-star"></i></div>
-          <div class="ar-stat-body">
-            <span class="ar-stat-value">{{ s.averageStars.toFixed(1) }}</span>
-            <span class="ar-stat-label">{{ copy().avgStars }}</span>
-          </div>
-        </div>
-        <div class="ar-stat-card ar-stat-total">
-          <div class="ar-stat-icon"><i class="fas fa-comments"></i></div>
-          <div class="ar-stat-body">
-            <span class="ar-stat-value">{{ s.total }}</span>
-            <span class="ar-stat-label">{{ copy().totalReviews }}</span>
-          </div>
-        </div>
-        <div class="ar-stat-card ar-stat-visible">
-          <div class="ar-stat-icon"><i class="fas fa-eye"></i></div>
-          <div class="ar-stat-body">
-            <span class="ar-stat-value">{{ s.visible }}</span>
-            <span class="ar-stat-label">{{ copy().visibleReviews }}</span>
-          </div>
-        </div>
-        <div class="ar-stat-card ar-stat-hidden">
-          <div class="ar-stat-icon"><i class="fas fa-eye-slash"></i></div>
-          <div class="ar-stat-body">
-            <span class="ar-stat-value">{{ s.hidden }}</span>
-            <span class="ar-stat-label">{{ copy().hiddenReviews }}</span>
-          </div>
-        </div>
-      </div>
+  <!-- ── KPI cards ────────────────────────────────────────────────────────── -->
+  @if (overview(); as o) {
+    <div class="rv-kpi-grid">
 
-      <!-- Star distribution -->
-      <div class="ar-dist-card">
-        <div class="ar-dist-header">{{ copy().statsCard }}</div>
-        <div class="ar-dist-bars">
-          @for (entry of [
-            { stars: 5, count: s.fiveStars },
-            { stars: 4, count: s.fourStars },
-            { stars: 3, count: s.threeStars },
-            { stars: 2, count: s.twoStars },
-            { stars: 1, count: s.oneStar }
-          ]; track entry.stars) {
-            <div class="ar-dist-row">
-              <span class="ar-dist-label">{{ entry.stars }} <i class="fas fa-star ar-dist-star"></i></span>
-              <div class="ar-dist-track">
-                <div class="ar-dist-fill"
-                     [style.width.%]="s.total > 0 ? (entry.count / s.total * 100) : 0">
-                </div>
-              </div>
-              <span class="ar-dist-count">{{ entry.count }}</span>
-            </div>
-          }
+      <!-- Health Score -->
+      <article class="rv-kpi rv-kpi--health">
+        <div class="rv-kpi__icon" [style.background]="healthColor(o.healthScore) + '18'" [style.color]="healthColor(o.healthScore)">
+          <i class="fa-solid fa-heart-pulse"></i>
         </div>
-      </div>
+        <div class="rv-kpi__body">
+          <span class="rv-kpi__value" [style.color]="healthColor(o.healthScore)">
+            {{ o.healthScore | number:'1.0-0' }}<small>/100</small>
+          </span>
+          <span class="rv-kpi__label">{{ copy().healthScore }}</span>
+        </div>
+        <div class="rv-kpi__gauge">
+          <div class="rv-kpi__gauge-fill"
+               [style.width.%]="o.healthScore"
+               [style.background]="healthColor(o.healthScore)">
+          </div>
+        </div>
+      </article>
+
+      <!-- Total Reviews -->
+      <article class="rv-kpi">
+        <div class="rv-kpi__icon" style="background:#ede9fe;color:#6366f1">
+          <i class="fa-regular fa-star"></i>
+        </div>
+        <div class="rv-kpi__body">
+          <span class="rv-kpi__value">{{ o.total | number }}</span>
+          <span class="rv-kpi__label">{{ copy().totalReviews }}</span>
+        </div>
+        <div class="rv-kpi__sub">
+          <span class="rv-pill rv-pill--avg">
+            <i class="fa-solid fa-star"></i> {{ o.averageStars | number:'1.1-1' }}
+          </span>
+          <span class="rv-pill rv-pill--week">+{{ o.thisWeek }} {{ copy().thisWeek }}</span>
+        </div>
+      </article>
+
+      <!-- Pending -->
+      <article class="rv-kpi" [class.rv-kpi--warn]="o.pending > 0">
+        <div class="rv-kpi__icon" style="background:#fef3c7;color:#d97706">
+          <i class="fa-regular fa-clock"></i>
+        </div>
+        <div class="rv-kpi__body">
+          <span class="rv-kpi__value">{{ o.pending | number }}</span>
+          <span class="rv-kpi__label">{{ copy().pendingReviews }}</span>
+        </div>
+        @if (o.pending > 0) {
+          <button class="rv-kpi__action" (click)="setStatusTab('Pending')">
+            {{ copy().filterPending }} <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        }
+      </article>
+
+      <!-- Positive Rate -->
+      <article class="rv-kpi">
+        <div class="rv-kpi__icon" style="background:#d1fae5;color:#059669">
+          <i class="fa-solid fa-face-smile"></i>
+        </div>
+        <div class="rv-kpi__body">
+          <span class="rv-kpi__value">{{ o.positiveRate | number:'1.0-0' }}<small>%</small></span>
+          <span class="rv-kpi__label">{{ copy().positiveRate }}</span>
+        </div>
+        <div class="rv-kpi__sub">
+          <span class="rv-pill rv-pill--replied">
+            <i class="fa-solid fa-reply"></i> {{ o.withReply }} {{ copy().withReply }}
+          </span>
+        </div>
+      </article>
+
     </div>
   }
 
-  <!-- Reviews table -->
-  <div class="ar-table-card">
-    <div class="ar-table-header">
-      <h2 class="ar-table-title">{{ copy().tableTitle }}</h2>
+  <!-- ── Analytics row ─────────────────────────────────────────────────────── -->
+  <div class="rv-analytics-row">
+
+    <!-- Trend chart -->
+    <article class="rv-panel rv-panel--trend">
+      <div class="rv-panel__head">
+        <div>
+          <h2 class="rv-panel__title">{{ copy().trendTitle }}</h2>
+          <p class="rv-panel__desc">{{ copy().trendDesc }}</p>
+        </div>
+        <i class="fa-solid fa-chart-line rv-panel__icon-deco"></i>
+      </div>
+      @if (trends().length > 0) {
+        <div class="rv-trend-chart">
+          <svg viewBox="0 0 380 80" preserveAspectRatio="none" class="rv-trend-svg">
+            <defs>
+              <linearGradient id="trend-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#6366f1" stop-opacity="0.2"/>
+                <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path [attr.d]="trendAreaPath(trends())" fill="url(#trend-grad)"/>
+            <path [attr.d]="trendPath(trends())" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="rv-trend-labels">
+            @for (pt of trends(); track pt.month) {
+              <div class="rv-trend-label">
+                <span class="rv-trend-avg">{{ pt.averageStars | number:'1.1-1' }}</span>
+                <span class="rv-trend-month">{{ pt.month }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <p class="rv-empty-inline">Not enough data yet.</p>
+      }
+    </article>
+
+    <!-- Star distribution + category breakdown -->
+    <article class="rv-panel rv-panel--dist">
+      @if (overview(); as o) {
+        <!-- Star distribution -->
+        <h2 class="rv-panel__title rv-panel__title--sub">{{ copy().distTitle }}</h2>
+        <div class="rv-dist-bars">
+          @for (entry of [
+            {n:5, count:o.fiveStars}, {n:4, count:o.fourStars},
+            {n:3, count:o.threeStars}, {n:2, count:o.twoStars}, {n:1, count:o.oneStar}
+          ]; track entry.n) {
+            <div class="rv-dist-row"
+                 (click)="setStarFilter(starFilter() === entry.n ? null : entry.n)"
+                 [class.rv-dist-row--active]="starFilter() === entry.n">
+              <span class="rv-dist-n">{{ entry.n }}<i class="fa-solid fa-star rv-dist-star"></i></span>
+              <div class="rv-dist-track">
+                <div class="rv-dist-fill"
+                     [style.width.%]="o.total > 0 ? (entry.count / o.total * 100) : 0">
+                </div>
+              </div>
+              <span class="rv-dist-count">{{ entry.count }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Category breakdown -->
+        <h2 class="rv-panel__title rv-panel__title--sub rv-panel__title--sep">{{ copy().categoryTitle }}</h2>
+        @if ((o.byCategory | keyvalue).length > 0) {
+          <div class="rv-cat-dots">
+            @for (kv of o.byCategory | keyvalue; track kv.key) {
+              @if (kv.value > 0) {
+                <div class="rv-cat-dot">
+                  <span class="rv-cat-dot__swatch" [style.background]="catColors[kv.key]"></span>
+                  <span class="rv-cat-dot__label">{{ catLabel($any(kv.key)) }}</span>
+                  <span class="rv-cat-dot__count">{{ kv.value }}</span>
+                </div>
+              }
+            }
+          </div>
+        }
+      }
+    </article>
+
+  </div>
+
+  <!-- ── Filters toolbar ───────────────────────────────────────────────────── -->
+  <div class="rv-toolbar">
+    <!-- Status tabs -->
+    <div class="rv-status-tabs">
+      <button class="rv-tab" [class.rv-tab--active]="statusTab() === ''"
+              (click)="setStatusTab('')">
+        {{ copy().filterAll }}
+        @if (overview(); as o) {
+          <span class="rv-tab-count">{{ o.total }}</span>
+        }
+      </button>
+      <button class="rv-tab" [class.rv-tab--active]="statusTab() === 'Pending'"
+              (click)="setStatusTab('Pending')">
+        {{ copy().filterPending }}
+        @if (overview(); as o) {
+          <span class="rv-tab-count rv-tab-count--warn">{{ o.pending }}</span>
+        }
+      </button>
+      <button class="rv-tab" [class.rv-tab--active]="statusTab() === 'Reviewed'"
+              (click)="setStatusTab('Reviewed')">
+        {{ copy().filterReviewed }}
+      </button>
+      <button class="rv-tab" [class.rv-tab--active]="statusTab() === 'Resolved'"
+              (click)="setStatusTab('Resolved')">
+        {{ copy().filterResolved }}
+      </button>
+      <button class="rv-tab" [class.rv-tab--active]="statusTab() === 'Archived'"
+              (click)="setStatusTab('Archived')">
+        {{ copy().filterArchived }}
+      </button>
     </div>
 
+    <!-- Right-side controls -->
+    <div class="rv-toolbar__controls">
+      <select class="rv-select" (change)="setCategoryFilter($any($event.target).value)">
+        <option value="">{{ copy().allCategories }}</option>
+        @for (cat of categories; track cat) {
+          <option [value]="cat">{{ catLabel(cat) }}</option>
+        }
+      </select>
+
+      <select class="rv-select" (change)="setSortBy($any($event.target).value)">
+        <option value="newest">{{ copy().sortNewest }}</option>
+        <option value="oldest">{{ copy().sortOldest }}</option>
+        <option value="stars_desc">{{ copy().sortStarsDesc }}</option>
+        <option value="stars_asc">{{ copy().sortStarsAsc }}</option>
+      </select>
+
+      @if (starFilter() !== null) {
+        <button class="rv-clear-filter" (click)="setStarFilter(null)">
+          <i class="fa-solid fa-star"></i> {{ starFilter() }}
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- ── Reviews table ─────────────────────────────────────────────────────── -->
+  <div class="rv-table-card">
+
     @if (loading()) {
-      <div class="ar-loading">
-        <div class="ar-spinner"></div>
+      <div class="rv-state">
+        <div class="rv-spinner"></div>
       </div>
     } @else if (error()) {
-      <div class="ar-error">
+      <div class="rv-state">
+        <i class="fa-solid fa-triangle-exclamation rv-state__icon"></i>
         <p>{{ copy().loadError }}</p>
-        <button class="ar-btn ar-btn-secondary" (click)="goToPage(page())">{{ copy().retry }}</button>
+        <button class="rv-btn rv-btn--secondary" (click)="load()">{{ copy().retry }}</button>
       </div>
-    } @else if (!result()?.items?.length) {
-      <div class="ar-empty">
-        <i class="fas fa-star ar-empty-icon"></i>
-        <p>{{ copy().empty }}</p>
+    } @else if (reviews().length === 0) {
+      <div class="rv-state">
+        <i class="fa-regular fa-star rv-state__icon rv-state__icon--muted"></i>
+        <p>{{ (statusTab() || starFilter() !== null || categoryFilter()) ? copy().empty : copy().emptyAll }}</p>
       </div>
     } @else {
-      <div class="ar-table-wrap">
-        <table class="ar-table">
+
+      <div class="rv-table-wrap">
+        <table class="rv-table">
           <thead>
             <tr>
               <th>{{ copy().colUser }}</th>
               <th>{{ copy().colStars }}</th>
-              <th>{{ copy().colComment }}</th>
+              <th>{{ copy().colCategory }}</th>
               <th>{{ copy().colStatus }}</th>
+              <th class="rv-col-comment">{{ copy().colComment }}</th>
               <th>{{ copy().colDate }}</th>
               <th>{{ copy().colActions }}</th>
             </tr>
           </thead>
           <tbody>
-            @for (review of result()!.items; track review.id) {
-              <tr [class.ar-row-hidden]="!review.isVisible">
-                <td class="ar-cell-name">
-                  <div class="ar-avatar">{{ review.displayName[0] | uppercase }}</div>
-                  <span>{{ review.displayName }}</span>
-                </td>
-                <td class="ar-cell-stars">
-                  @for (s of starsArray(review.stars); track $index) {
-                    <i class="fas fa-star ar-star"></i>
-                  }
-                </td>
-                <td class="ar-cell-comment">
-                  {{ review.comment || copy().noComment }}
-                </td>
+            @for (r of reviews(); track r.id) {
+              <tr [class.rv-row--hidden]="!r.isVisible"
+                  [class.rv-row--deleting]="deletingId() === r.id"
+                  class="rv-row--clickable"
+                  (click)="openDetail(r)">
+
+                <!-- User -->
                 <td>
-                  @if (review.isVisible) {
-                    <span class="ar-badge ar-badge-visible">{{ copy().visible }}</span>
-                  } @else {
-                    <span class="ar-badge ar-badge-hidden">{{ copy().hidden }}</span>
+                  <div class="rv-cell-user">
+                    <div class="rv-avatar">{{ r.displayName.charAt(0).toUpperCase() }}</div>
+                    <span class="rv-cell-user__name">{{ r.displayName }}</span>
+                  </div>
+                </td>
+
+                <!-- Stars -->
+                <td class="rv-cell-stars">
+                  @for (i of stars(r.stars); track i) {
+                    <i class="fa-solid fa-star rv-star" [class.rv-star--empty]="i > r.stars"></i>
                   }
                 </td>
-                <td class="ar-cell-date">{{ review.createdAt | date:'mediumDate' }}</td>
-                <td class="ar-cell-actions">
-                  <button class="ar-action-btn ar-action-toggle"
-                          [disabled]="togglingId() === review.id || deletingId() === review.id"
-                          (click)="toggleVisibility(review)"
-                          [title]="review.isVisible ? copy().hide : copy().show">
-                    @if (togglingId() === review.id) {
-                      <i class="fas fa-spinner fa-spin"></i>
-                    } @else if (review.isVisible) {
-                      <i class="fas fa-eye-slash"></i>
-                    } @else {
-                      <i class="fas fa-eye"></i>
-                    }
-                  </button>
-                  <button class="ar-action-btn ar-action-delete"
-                          [disabled]="deletingId() === review.id || togglingId() === review.id"
-                          (click)="confirmDelete(review)"
-                          [title]="copy().delete">
-                    @if (deletingId() === review.id) {
-                      <i class="fas fa-spinner fa-spin"></i>
-                    } @else {
-                      <i class="fas fa-trash"></i>
-                    }
-                  </button>
+
+                <!-- Category -->
+                <td>
+                  <span class="rv-cat-badge"
+                        [style.background]="catColors[r.category] + '18'"
+                        [style.color]="catColors[r.category]">
+                    {{ catLabel(r.category) }}
+                  </span>
                 </td>
+
+                <!-- Status -->
+                <td>
+                  <span class="rv-status-badge rv-status--{{ r.status | lowercase }}">
+                    {{ statusLabel(r.status) }}
+                  </span>
+                </td>
+
+                <!-- Comment -->
+                <td class="rv-col-comment">
+                  <span class="rv-comment-excerpt">
+                    {{ r.comment
+                        ? (r.comment.length > 80 ? ((r.comment | slice:0:80) + '…') : r.comment)
+                        : copy().noComment }}
+                  </span>
+                  @if (r.adminReply) {
+                    <span class="rv-replied-badge" [title]="copy().replyTitle">
+                      <i class="fa-solid fa-reply"></i>
+                    </span>
+                  }
+                </td>
+
+                <!-- Date -->
+                <td class="rv-cell-date">{{ formatDate(r.createdAt) }}</td>
+
+                <!-- Actions -->
+                <td (click)="$event.stopPropagation()">
+                  <div class="rv-cell-actions">
+                    <button class="rv-action rv-action--open"
+                            (click)="openDetail(r)"
+                            [title]="copy().viewDetail">
+                      <i class="fa-solid fa-expand"></i>
+                    </button>
+
+                    @if (r.status === 'Pending') {
+                      <button class="rv-action rv-action--check"
+                              [disabled]="updatingStatusId() === r.id"
+                              (click)="quickStatus(r, 'Reviewed')"
+                              [title]="copy().markReviewed">
+                        <i class="fa-solid fa-check"></i>
+                      </button>
+                    }
+
+                    <button class="rv-action rv-action--eye"
+                            [disabled]="togglingId() === r.id"
+                            (click)="toggleVisibility(r)"
+                            [title]="r.isVisible ? copy().hide : copy().show">
+                      <i class="fa-solid"
+                         [class.fa-eye]="r.isVisible"
+                         [class.fa-eye-slash]="!r.isVisible"></i>
+                    </button>
+
+                    <button class="rv-action rv-action--del"
+                            [disabled]="deletingId() === r.id"
+                            (click)="confirmDelete(r)"
+                            [title]="copy().delete">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+
               </tr>
             }
           </tbody>
@@ -156,31 +354,181 @@
 
       <!-- Pagination -->
       @if (totalPages() > 1) {
-        <div class="ar-pagination">
-          <button class="ar-page-btn" [disabled]="page() === 1" (click)="goToPage(page() - 1)">
-            <i class="fas fa-chevron-left"></i> {{ copy().previous }}
+        <div class="rv-pagination">
+          <button class="rv-page-btn" [disabled]="page() === 1" (click)="goToPage(page() - 1)">
+            <i class="fa-solid fa-chevron-left"></i> {{ copy().previous }}
           </button>
-          <span class="ar-page-info">{{ copy().page }} {{ page() }} {{ copy().of }} {{ totalPages() }}</span>
-          <button class="ar-page-btn" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">
-            {{ copy().next }} <i class="fas fa-chevron-right"></i>
+          <span class="rv-page-info">{{ copy().page }} {{ page() }} {{ copy().of }} {{ totalPages() }}</span>
+          <button class="rv-page-btn" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">
+            {{ copy().next }} <i class="fa-solid fa-chevron-right"></i>
           </button>
         </div>
       }
+
     }
   </div>
 
 </div>
 
-<!-- Delete confirmation modal -->
-@if (deleteTarget(); as target) {
-  <div class="ar-modal-backdrop" (click)="cancelDelete()">
-    <div class="ar-modal" (click)="$event.stopPropagation()">
-      <div class="ar-modal-icon"><i class="fas fa-trash-alt"></i></div>
-      <p class="ar-modal-msg">{{ copy().deleteConfirm }}</p>
-      <div class="ar-modal-name">"{{ target.displayName }}"</div>
-      <div class="ar-modal-actions">
-        <button class="ar-btn ar-btn-secondary" (click)="cancelDelete()">{{ copy().cancel }}</button>
-        <button class="ar-btn ar-btn-danger" (click)="doDelete()">{{ copy().confirm }}</button>
+<!-- ── Detail modal ──────────────────────────────────────────────────────────── -->
+@if (activeReview(); as r) {
+  <div class="rv-detail-modal-wrap" (click)="closeDetail()">
+    <div class="rv-detail-dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <div class="rv-dp-inner">
+
+      <!-- Header -->
+      <div class="rv-dp-head">
+        <h2 class="rv-dp-title">{{ copy().detailTitle }}</h2>
+        <button class="rv-dp-close" (click)="closeDetail()" [title]="copy().closeDetail">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Review card -->
+      <div class="rv-dp-card">
+        <div class="rv-dp-user">
+          <div class="rv-avatar rv-avatar--lg">{{ r.displayName.charAt(0).toUpperCase() }}</div>
+          <div class="rv-dp-user__info">
+            <strong>{{ r.displayName }}</strong>
+            <span class="rv-dp-date">{{ formatDate(r.createdAt) }}</span>
+          </div>
+        </div>
+        <div class="rv-dp-stars">
+          @for (i of stars(r.stars); track i) {
+            <i class="fa-solid fa-star rv-star rv-star--lg" [class.rv-star--empty]="i > r.stars"></i>
+          }
+        </div>
+        @if (r.comment) {
+          <blockquote class="rv-dp-comment">"{{ r.comment }}"</blockquote>
+        }
+        @if (r.deviceInfo || r.appVersion || r.appLanguage) {
+          <div class="rv-dp-meta">
+            <span class="rv-dp-meta__label">{{ copy().detailMeta }}</span>
+            @if (r.deviceInfo) {
+              <span>{{ copy().detailDevice }}: <strong>{{ r.deviceInfo }}</strong></span>
+            }
+            @if (r.appVersion) {
+              <span>{{ copy().detailVersion }}: <strong>{{ r.appVersion }}</strong></span>
+            }
+            @if (r.appLanguage) {
+              <span>{{ copy().detailLanguage }}: <strong>{{ r.appLanguage }}</strong></span>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Status & Category selectors -->
+      <div class="rv-dp-controls">
+        <div class="rv-dp-field">
+          <label class="rv-dp-field__label">{{ copy().colStatus }}</label>
+          <select class="rv-select rv-select--full" [value]="r.status"
+                  (change)="updatePanelStatus(r, $any($event.target).value)">
+            @for (s of statuses; track s) {
+              <option [value]="s">{{ statusLabel(s) }}</option>
+            }
+          </select>
+        </div>
+        <div class="rv-dp-field">
+          <label class="rv-dp-field__label">{{ copy().colCategory }}</label>
+          <select class="rv-select rv-select--full" [value]="r.category"
+                  (change)="updatePanelCategory(r, $any($event.target).value)">
+            @for (c of categories; track c) {
+              <option [value]="c">{{ catLabel(c) }}</option>
+            }
+          </select>
+        </div>
+        <div class="rv-dp-field">
+          <label class="rv-dp-field__label">{{ copy().visible }} / {{ copy().hidden }}</label>
+          <button class="rv-btn rv-btn--secondary rv-btn--sm"
+                  [disabled]="togglingId() === r.id"
+                  (click)="toggleVisibility(r)">
+            <i class="fa-solid" [class.fa-eye]="r.isVisible" [class.fa-eye-slash]="!r.isVisible"></i>
+            {{ r.isVisible ? copy().hide : copy().show }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Notes (private) -->
+      <div class="rv-dp-section rv-dp-section--notes">
+        <label class="rv-dp-section__label">
+          <i class="fa-solid fa-lock"></i> {{ copy().adminNotes }}
+        </label>
+        <textarea class="rv-dp-textarea" rows="3"
+                  [placeholder]="copy().adminNotesPlaceholder"
+                  [value]="panelNotes()"
+                  (input)="panelNotes.set($any($event.target).value)">
+        </textarea>
+        <div class="rv-dp-foot">
+          @if (savedNotes()) {
+            <span class="rv-saved"><i class="fa-solid fa-check"></i> {{ copy().saved }}</span>
+          }
+          <button class="rv-btn rv-btn--secondary rv-btn--sm"
+                  [disabled]="savingNotes()"
+                  (click)="saveNotes()">
+            {{ savingNotes() ? copy().saving : copy().saveNotes }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Reply to user -->
+      <div class="rv-dp-section rv-dp-section--reply">
+        <label class="rv-dp-section__label">
+          <i class="fa-solid fa-reply"></i> {{ copy().replyTitle }}
+        </label>
+        @if (r.adminReply) {
+          <div class="rv-existing-reply">
+            <p>{{ r.adminReply }}</p>
+            <small>{{ copy().repliedAt }}: {{ r.repliedAt ? formatDate(r.repliedAt) : '' }}</small>
+          </div>
+        }
+        <div class="rv-quick-replies">
+          <span class="rv-quick-replies__label">{{ copy().quickReplies }}</span>
+          @for (qr of [copy().qr1, copy().qr2, copy().qr3, copy().qr4]; track qr) {
+            <button class="rv-qr-btn" (click)="useQuickReply(qr)">{{ qr }}</button>
+          }
+        </div>
+        <textarea class="rv-dp-textarea" rows="3"
+                  [placeholder]="copy().replyPlaceholder"
+                  [value]="panelReply()"
+                  (input)="panelReply.set($any($event.target).value)">
+        </textarea>
+        <div class="rv-dp-foot">
+          <button class="rv-btn rv-btn--ghost rv-btn--sm"
+                  [disabled]="savingReply() || !panelReply()"
+                  (click)="panelReply.set('')">
+            {{ copy().clearReply }}
+          </button>
+          <button class="rv-btn rv-btn--primary rv-btn--sm"
+                  [disabled]="savingReply() || !panelReply()"
+                  (click)="sendReply()">
+            <i class="fa-solid fa-paper-plane"></i>
+            {{ savingReply() ? copy().saving : (r.adminReply ? copy().updateReply : copy().sendReply) }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="rv-dp-danger">
+        <button class="rv-btn rv-btn--danger rv-btn--sm" (click)="confirmDelete(r); closeDetail()">
+          <i class="fa-solid fa-trash"></i> {{ copy().delete }}
+        </button>
+      </div>
+
+    </div>
+    </div>
+  </div>
+}
+
+<!-- ── Delete confirm ────────────────────────────────────────────────────── -->
+@if (deleteTarget(); as dt) {
+  <div class="rv-modal-overlay" (click)="cancelDelete()">
+    <div class="rv-modal" (click)="$event.stopPropagation()">
+      <div class="rv-modal__icon"><i class="fa-solid fa-trash"></i></div>
+      <p class="rv-modal__msg">{{ copy().deleteConfirm }}</p>
+      <p class="rv-modal__name">{{ dt.displayName }}</p>
+      <div class="rv-modal__actions">
+        <button class="rv-btn rv-btn--secondary" (click)="cancelDelete()">{{ copy().cancel }}</button>
+        <button class="rv-btn rv-btn--danger" (click)="doDelete()">{{ copy().confirm }}</button>
       </div>
     </div>
   </div>
