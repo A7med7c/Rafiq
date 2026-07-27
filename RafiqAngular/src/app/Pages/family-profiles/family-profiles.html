@@ -590,7 +590,7 @@
               {{ t().family.notEnoughInfo }}
             </p>
             } @else {
-            <p class="ai-body">{{ healthSummary()!.summary }}</p>
+            <p class="ai-body">{{ summaryText(healthSummary()!) }}</p>
             }
           </div>
           }

@@ -12,5 +12,7 @@ public interface IChatBackgroundJobService
         Guid assistantMessageId,
         string userText,
         string? base64Image,
-        string? imageFormat);
+        string? imageFormat,
+        string language,
+        int utcOffsetMinutes);
 }

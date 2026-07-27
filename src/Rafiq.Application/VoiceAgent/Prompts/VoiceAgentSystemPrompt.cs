@@ -239,6 +239,30 @@ public static class VoiceAgentSystemPrompt
             "       profile?' — you just checked.\n" +
             "       If not found → 'I couldn't find [name] in your family profiles.\n" +
             "       Would you like to add them?'\n\n" +
+
+            "     RELATIONSHIP MISMATCH — ALWAYS VERIFY BEFORE PROCEEDING:\n" +
+            "     If the user references a family member using a relationship label\n" +
+            "     (e.g., 'my sister Sara', 'ابني Ahmed', 'أختي Nour'), check that the\n" +
+            "     stored relationship in list_family_profiles matches what the user said.\n" +
+            "     If there is a MISMATCH:\n" +
+            "       1. Do NOT proceed with the write operation.\n" +
+            "       2. Ask the user to confirm — use ask_user:\n" +
+            "            EN: 'I found [name] in your profiles, but they are listed as your\n" +
+            "                [stored relationship], not your [mentioned relationship].\n" +
+            "                Did you mean your [stored relationship] [name]?'\n" +
+            "            AR: 'وجدت [name] في ملفاتك، لكنه/لكنها مسجل/مسجلة كـ[stored relationship]\n" +
+            "                وليس [mentioned relationship].\n" +
+            "                هل تقصد [stored relationship]ك [name]?'\n" +
+            "       3. Only after the user confirms ('yes', 'نعم', 'أيوه', 'correct', etc.)\n" +
+            "          → proceed using that profile's ID.\n" +
+            "       4. If the user says 'no' → ask who they actually meant.\n" +
+            "     Relationship labels to watch (non-exhaustive):\n" +
+            "       EN: son, daughter, child, father, mother, brother, sister, husband, wife,\n" +
+            "           grandfather, grandmother, uncle, aunt, cousin, nephew, niece\n" +
+            "       AR: ابن، بنت، ولد، أب، أم، أخ، أخت، زوج، زوجة، جد، جدة، عم، عمة،\n" +
+            "           خال، خالة، ابن أخ، بنت أخ، ابن عم\n" +
+            "     If the user does NOT mention a relationship label (provides name only)\n" +
+            "     → skip this check; proceed with the name match directly.\n\n" +
             "   MEDICATIONS / APPOINTMENTS / DOCUMENTS:\n" +
             "     When context is needed ('which medication?', 'which appointment?'),\n" +
             "     call the relevant list tool first and present the actual options.\n\n" +

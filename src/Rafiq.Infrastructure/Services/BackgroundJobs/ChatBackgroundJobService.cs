@@ -11,9 +11,14 @@ public sealed class ChatBackgroundJobService(IBackgroundJobClient backgroundJobC
         Guid assistantMessageId,
         string userText,
         string? base64Image,
-        string? imageFormat)
+        string? imageFormat,
+        string language,
+        int utcOffsetMinutes)
     {
         backgroundJobClient.Enqueue<ChatMessageProcessorJob>(
-            job => job.ExecuteAsync(userId, conversationId, assistantMessageId, userText, base64Image, imageFormat));
+            job => job.ExecuteAsync(
+                userId, conversationId, assistantMessageId,
+                userText, base64Image, imageFormat,
+                language, utcOffsetMinutes));
     }
 }

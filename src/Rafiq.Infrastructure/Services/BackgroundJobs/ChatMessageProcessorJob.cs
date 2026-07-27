@@ -29,7 +29,9 @@ public sealed class ChatMessageProcessorJob(
         Guid assistantMessageId,
         string userText,
         string? base64Image,
-        string? imageFormat)
+        string? imageFormat,
+        string language = "en",
+        int utcOffsetMinutes = 0)
     {
         // Inject user identity for any downstream service that reads ICurrentUserService.
         backgroundUserContext.UserId = userId;
@@ -79,10 +81,10 @@ public sealed class ChatMessageProcessorJob(
             UserId: userId,
             ProfileId: session.UserHealthProfileId,
             SessionId: session.Id,
-            Language: "en",
+            Language: language,
             Today: DateOnly.FromDateTime(nowUtc),
             NowUtc: nowUtc,
-            UtcOffsetMinutes: 0);
+            UtcOffsetMinutes: utcOffsetMinutes);
 
         try
         {

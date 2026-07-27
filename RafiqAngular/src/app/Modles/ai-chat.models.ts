@@ -39,4 +39,6 @@ export interface SendMessageRequest {
   text: string;
   base64Image?: string | null;
   imageFormat?: string | null;
+  language?: string;
+  utcOffsetMinutes?: number;
 }

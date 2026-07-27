@@ -831,7 +831,7 @@
       <p class="family-summary-empty-sub">Upload medical records to generate an AI summary.</p>
     </div>
     } @else {
-    <p class="family-summary-text">{{ familySummaryData()!.summary }}</p>
+    <p class="family-summary-text">{{ summaryText(familySummaryData()!) }}</p>
     }
 
     <div class="modal-footer">
