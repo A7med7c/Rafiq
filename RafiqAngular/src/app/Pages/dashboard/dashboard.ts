@@ -82,6 +82,7 @@ export class Dashboard implements OnInit, OnDestroy {
   // ── Medical Report dialog ─────────────────────────────────────────────────
   readonly profilePickerOpen       = signal(false);
   readonly reportDialogOpen        = signal(false);
+  readonly reportCameFromPicker    = signal(false);
   readonly selectedReportType      = signal<ReportType>('DoctorSummary');
   readonly reportGenerating        = signal(false);
   readonly reportTargetProfileId   = signal<string | null>(null);
@@ -402,10 +403,12 @@ export class Dashboard implements OnInit, OnDestroy {
     this.selectedReportType.set('DoctorSummary');
     this.reportTargetProfileId.set(profileId);
     this.reportTargetProfileName.set(this.getProfileDisplayName(profileId));
+    this.reportCameFromPicker.set(true);
     this.reportDialogOpen.set(true);
   }
 
   openReportDialog(profileId?: string): void {
+    this.reportCameFromPicker.set(false);
     if (profileId) {
       this.reportTargetProfileId.set(profileId);
       this.reportTargetProfileName.set(this.getProfileDisplayName(profileId));
@@ -417,6 +420,11 @@ export class Dashboard implements OnInit, OnDestroy {
         this.reportDialogOpen.set(true);
       });
     }
+  }
+
+  backToProfilePicker(): void {
+    this.reportDialogOpen.set(false);
+    this.profilePickerOpen.set(true);
   }
 
   closeReportDialog(): void { if (!this.reportGenerating()) this.reportDialogOpen.set(false); }
