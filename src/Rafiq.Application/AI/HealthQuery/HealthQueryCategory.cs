@@ -23,5 +23,11 @@ public enum HealthQueryCategory
     /// Cross-family summary. Use ONLY when the question spans multiple family members
     /// without naming a specific person (e.g. "who has the most medications?").
     /// </summary>
-    FamilyOverview
+    FamilyOverview,
+
+    /// <summary>Uploaded general medical documents (not prescriptions, lab, or imaging reports).</summary>
+    GeneralDocuments,
+
+    /// <summary>Emergency contacts saved by the user (name, phone, relation).</summary>
+    EmergencyContacts
 }

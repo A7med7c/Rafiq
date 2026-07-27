@@ -133,6 +133,10 @@ public static class DependencyInjection
         services.AddScoped<IAppointmentReminderScheduler, AppointmentReminderScheduler>();
         services.AddScoped<AppointmentReminderJob>();
 
+        // ── Chat async processor ──────────────────────────────────────────
+        services.AddScoped<ChatMessageProcessorJob>();
+        services.AddScoped<IChatBackgroundJobService, ChatBackgroundJobService>();
+
         // ── Hangfire ──────────────────────────────────────────────────────
         var connectionString = configuration.GetConnectionString("DefaultConnection")!;
 

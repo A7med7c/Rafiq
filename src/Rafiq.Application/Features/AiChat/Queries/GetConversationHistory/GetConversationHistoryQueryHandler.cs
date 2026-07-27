@@ -61,7 +61,9 @@ public sealed class GetConversationHistoryQueryHandler
                     m.Content,
                     m.SequenceNumber,
                     m.CreatedAt,
-                    userReactions.TryGetValue(m.Id, out var reaction) ? reaction.ToString() : null))
+                    userReactions.TryGetValue(m.Id, out var reaction) ? reaction.ToString() : null,
+                    m.Role == AiMessageRole.Assistant ? m.Status.ToString() : null,
+                    m.Role == AiMessageRole.Assistant ? m.ErrorMessage : null))
                 .ToList());
 
         return ApiResponse<ConversationHistoryDto>.SuccessResponse(dto, "Conversation retrieved successfully.");

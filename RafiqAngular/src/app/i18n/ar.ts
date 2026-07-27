@@ -250,6 +250,8 @@ export const ar: Translations = {
     completeHistory: 'الملف الطبي بالكامل',
     completeHistoryDesc: 'تقرير كامل فيه كل سجلاتك الطبية، والروشتات، وتاريخ التحاليل والأشعات، وتسلسل حالتك مع الوقت، وملخص طبي بالذكاء الاصطناعي.',
     generatingReportSub: 'ممكن يستغرق ثواني قليلة أثناء إعداد الذكاء الاصطناعي لتلخيصك',
+    selectProfileTitle: 'اختار الملف الشخصي',
+    selectProfileDesc: 'اختار مين تحب تولد الملف الطبي بتاعه',
   },
 
   medicalRecordsPage: {
@@ -580,14 +582,14 @@ export const ar: Translations = {
     viewDetails: 'شوف التفاصيل',
     viewOnly: 'مشاهدة فقط',
     viewingFor: 'عم تشوف مواعيد:',
-    lab: "تحليل أو فحص دم",
-    doctor: "زيارة طبيب",
-    vaccination: "تطعيم",
-    imaging: "أشعة ",
-    therapy: "جلسة علاج",
-    dental: "فحص الأسنان",
-    other: "أخرى",
-    followUp: "زيارة متابعة"
+    lab: 'تحليل أو فحص دم',
+    doctor: 'زيارة طبيب',
+    vaccination: 'تطعيم',
+    imaging: 'أشعة',
+    therapy: 'جلسة علاج',
+    dental: 'فحص الأسنان',
+    other: 'أخرى',
+    followUp: 'زيارة متابعة',
   },
 
   uploadValidation: {

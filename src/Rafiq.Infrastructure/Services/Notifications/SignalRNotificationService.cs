@@ -142,6 +142,36 @@ namespace Rafiq.Infrastructure.Services.Notifications
                 cancellationToken);
         }
 
+        public async Task SendChatResponseAsync(
+            string userId,
+            ChatResponsePayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var connectionList = GetConnectionList(userId);
+            if (connectionList.Count == 0)
+            {
+                _logger.LogWarning(
+                    "No SignalR connections for userId={UserId}. ChatResponse NOT delivered for msg {MsgId}.",
+                    userId, payload.AssistantMessageId);
+                return;
+            }
+
+            await _hubContext.Clients.Clients(connectionList).SendAsync(
+                "ChatResponse", payload, cancellationToken);
+        }
+
+        public async Task SendChatErrorAsync(
+            string userId,
+            ChatErrorPayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var connectionList = GetConnectionList(userId);
+            if (connectionList.Count == 0) return;
+
+            await _hubContext.Clients.Clients(connectionList).SendAsync(
+                "ChatError", payload, cancellationToken);
+        }
+
         private System.Collections.Generic.IReadOnlyList<string> GetConnectionList(string userId)
         {
             var connections = _connectionManager.GetConnections(userId);

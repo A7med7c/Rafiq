@@ -25,6 +25,10 @@ public sealed class ListFamilyProfilesTool(ISender mediator) : IVoiceTool
         "  profileType          — 'Managed' (no account) or 'Shared' (has account)\n" +
         "  isSelf               — true when this is the authenticated user's own profile\n\n" +
 
+        "IMPORTANT: isSelf == true means the authenticated user's OWN profile. NEVER use a\n" +
+        "  profile where isSelf == true when answering questions about a FAMILY MEMBER.\n" +
+        "  Only use isSelf == true profiles when the user is asking about themselves.\n\n" +
+
         "RELATIONSHIP RESOLUTION — map natural language to the relationship field:\n" +
         "  'my son'         → relationship == Son\n" +
         "  'my daughter'    → relationship == Daughter\n" +
@@ -39,7 +43,16 @@ public sealed class ListFamilyProfilesTool(ISender mediator) : IVoiceTool
         "  'ابني'           → Son | 'ابنتي' → Daughter | 'زوجتي' → Wife\n" +
         "  'زوجي'           → Husband | 'أبي' → Father | 'أمي' → Mother\n\n" +
 
-        "DISAMBIGUATION — when multiple members match the same relationship:\n" +
+        "PLURAL/GROUP RELATIONSHIPS — when the user asks about a group:\n" +
+        "  'my children' / 'أولادي' / 'أبنائي' → all profiles where relationship is Son OR Daughter\n" +
+        "  'my sons'                            → all profiles where relationship == Son\n" +
+        "  'my daughters' / 'بناتي'             → all profiles where relationship == Daughter\n" +
+        "  'my parents' / 'والديا'              → all profiles where relationship is Father OR Mother\n" +
+        "  'my siblings' / 'إخواتي'             → all profiles where relationship is Brother OR Sister\n" +
+        "  For group queries, call each matching profile's data tool with their respective\n" +
+        "  targetProfileId and aggregate the results before answering.\n\n" +
+
+        "DISAMBIGUATION — when multiple members match the same singular relationship:\n" +
         "  Never guess. List them numbered with name and age, then ask:\n" +
         "  EN: 'I found two sons: 1. Omar (born 2012), 2. Ali (born 2016). Which one?'\n" +
         "  AR: 'وجدت ابنين: 1. عمر (مواليد 2012)، 2. علي (مواليد 2016). أيهما تقصد؟'\n\n" +

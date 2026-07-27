@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, computed, inject, signal, effect } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, computed, inject, signal, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationStart } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
@@ -10,6 +10,7 @@ import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-chat.models';
 import { catchError, of, Subscription } from 'rxjs';
 import { VoiceAgentPanel } from '../voice-agent-panel/voice-agent-panel';
+import { SignalRService } from '../../Services/signalr.service';
 
 type ChatMessage = ConversationMessageDto & { imagePreviewUrl?: string };
 
@@ -35,6 +36,7 @@ export class AiPanel implements OnInit, OnDestroy {
   protected readonly aiChatService = inject(AiChatService);
   protected readonly l10n = inject(LocalizationService);
   private readonly reviewTracking = inject(ReviewTrackingService);
+  private readonly signalRService = inject(SignalRService);
   protected readonly t = this.l10n.t;
 
   private readonly _routerSub: Subscription;
@@ -215,6 +217,97 @@ export class AiPanel implements OnInit, OnDestroy {
       if (req > 0) {
         this.activeMode.set('voice');
       }
+    });
+
+    // Handle async chat responses delivered via SignalR.
+    effect(() => {
+      const events = this.signalRService.chatResponseEvents();
+      if (!events.length) return;
+      const drained = this.signalRService.drainChatResponseEvents();
+
+      untracked(() => {
+        const convId = this.selectedConversationId();
+        if (!convId) return;
+
+        for (const event of drained) {
+          if (event.conversationId !== convId) continue;
+
+          this.messages.update(list =>
+            list.map(m => m.id === event.assistantMessageId
+              ? { ...m, content: event.content, status: 'Completed' }
+              : m)
+          );
+
+          // Generate title after the first real assistant reply.
+          const assistantCount = this.messages().filter(m => m.role === 'Assistant').length;
+          if (assistantCount === 1) {
+            this.aiChatService.generateConversationTitle(convId).subscribe({
+              next: res => {
+                if (res.data) {
+                  this.conversations.update(list =>
+                    list.map(c => c.id === convId ? { ...c, title: res.data! } : c)
+                  );
+                }
+              },
+            });
+          }
+
+          this.conversations.update(list =>
+            list
+              .map(c => c.id === convId ? { ...c, lastMessageAt: new Date().toISOString() } : c)
+              .sort((a, b) => this.sortKey(b) - this.sortKey(a))
+          );
+          this.scrollToBottom();
+          this.reviewTracking.trackAction();
+        }
+      });
+    });
+
+    // Handle async chat errors delivered via SignalR.
+    effect(() => {
+      const events = this.signalRService.chatErrorEvents();
+      if (!events.length) return;
+      const drained = this.signalRService.drainChatErrorEvents();
+
+      untracked(() => {
+        const convId = this.selectedConversationId();
+        if (!convId) return;
+
+        for (const event of drained) {
+          if (event.conversationId !== convId) continue;
+
+          this.messages.update(list =>
+            list.map(m => m.id === event.assistantMessageId
+              ? { ...m, content: event.errorMessage, status: 'Failed' }
+              : m)
+          );
+          this.scrollToBottom();
+        }
+      });
+    });
+
+    // On SignalR reconnect, reload the active conversation to pick up any
+    // messages that completed while the connection was down.
+    effect(() => {
+      const reconnectCount = this.signalRService.reconnectedAt();
+      if (reconnectCount === 0) return;
+
+      untracked(() => {
+        const convId = this.selectedConversationId();
+        if (!convId) return;
+
+        this.aiChatService.getConversationHistory(convId).subscribe(history => {
+          this.messages.set(
+            (history?.messages ?? []).map(m => ({
+              ...m,
+              imagePreviewUrl: m.role === 'User'
+                ? this.aiChatService.getCachedImage(convId, m.sequenceNumber)
+                : undefined,
+            }))
+          );
+          this.scrollToBottom();
+        });
+      });
     });
   }
 
@@ -570,39 +663,23 @@ export class AiPanel implements OnInit, OnDestroy {
       .sendMessage(conversationId, { text, base64Image, imageFormat })
       .subscribe({
         next: res => {
-          const id = res.data?.id ?? crypto.randomUUID();
-          const content = res.data?.content ?? '';
+          // 202 response: server accepted the message and enqueued it.
+          // Push a Pending placeholder — the real reply arrives via ChatResponse SignalR event.
+          const placeholderId = res.data?.id ?? crypto.randomUUID();
           const nextSeq = (this.messages().at(-1)?.sequenceNumber ?? 0) + 1;
           this.messages.update(list => [
             ...list,
             {
-              id,
+              id: placeholderId,
               role: 'Assistant',
-              content,
+              content: '…',
               sequenceNumber: nextSeq,
               createdAt: new Date().toISOString(),
+              status: 'Pending',
             },
           ]);
-          const isFirstExchange = this.messages().filter(m => m.role === 'Assistant').length === 1;
-          this.conversations.update(list =>
-            list
-              .map(c => (c.id === conversationId ? { ...c, lastMessageAt: new Date().toISOString() } : c))
-              .sort((a, b) => this.sortKey(b) - this.sortKey(a))
-          );
-          if (isFirstExchange) {
-            this.aiChatService.generateConversationTitle(conversationId).subscribe({
-              next: res => {
-                if (res.data) {
-                  this.conversations.update(list =>
-                    list.map(c => c.id === conversationId ? { ...c, title: res.data! } : c)
-                  );
-                }
-              },
-            });
-          }
           this.sending.set(false);
           this.scrollToBottom();
-          this.reviewTracking.trackAction();
         },
         error: () => {
           this.sending.set(false);
