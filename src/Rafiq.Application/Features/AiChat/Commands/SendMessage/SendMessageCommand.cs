@@ -8,4 +8,6 @@ public sealed record SendMessageCommand(
     Guid ConversationId,
     string Text,
     string? Base64Image,
-    string? ImageFormat) : IRequest<ApiResponse<AiMessageResponseDto>>;
+    string? ImageFormat,
+    string Language = "en",
+    int UtcOffsetMinutes = 0) : IRequest<ApiResponse<AiMessageResponseDto>>;

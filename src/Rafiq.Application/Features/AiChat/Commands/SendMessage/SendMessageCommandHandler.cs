@@ -80,7 +80,9 @@ public sealed class SendMessageCommandHandler : IRequestHandler<SendMessageComma
             assistantPlaceholder.Id,
             request.Text,
             request.Base64Image,
-            request.ImageFormat);
+            request.ImageFormat,
+            request.Language,
+            request.UtcOffsetMinutes);
 
         // Return immediately with the placeholder ID so the frontend knows which
         // message will be updated via the "ChatResponse" SignalR event.

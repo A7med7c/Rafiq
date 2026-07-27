@@ -337,6 +337,17 @@ export class FamilyProfiles implements OnInit {
     });
   }
 
+  summaryText(s: HealthSummaryDto): string {
+    const parts: string[] = [`Status: ${s.overallStatus}${s.overallStatusNote ? ' — ' + s.overallStatusNote : ''}`];
+    if (s.conditions.length) parts.push(`Conditions: ${s.conditions.join(', ')}`);
+    if (s.allergies.length) parts.push(`Allergies: ${s.allergies.map(a => `${a.name} (${a.severity})`).join(', ')}`);
+    parts.push(`Medications: ${s.medications.count} active${s.medications.hasIssues && s.medications.issueNote ? ' — ' + s.medications.issueNote : ''}`);
+    parts.push(`Lab results: ${s.labResults.status}${s.labResults.abnormalCount > 0 ? ` (${s.labResults.abnormalCount} abnormal)` : ''}`);
+    if (s.insights.length) parts.push(`Insights: ${s.insights.join('; ')}`);
+    if (s.recommendations.length) parts.push(`Recommendations: ${s.recommendations.join('; ')}`);
+    return parts.join('\n');
+  }
+
   navigateToRecords(): void {
     const p = this.selectedProfile();
     if (!p) return;

@@ -122,7 +122,7 @@ public class AiChatController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new SendMessageCommand(conversationId, request.Text, request.Base64Image, request.ImageFormat),
+            new SendMessageCommand(conversationId, request.Text, request.Base64Image, request.ImageFormat, request.Language, request.UtcOffsetMinutes),
             cancellationToken);
         return Accepted(result);
     }
@@ -161,6 +161,8 @@ public sealed class SendMessageRequest
     public string Text { get; set; } = string.Empty;
     public string? Base64Image { get; set; }
     public string? ImageFormat { get; set; }
+    public string Language { get; set; } = "en";
+    public int UtcOffsetMinutes { get; set; } = 0;
 }
 
 public sealed class ReactToMessageRequest

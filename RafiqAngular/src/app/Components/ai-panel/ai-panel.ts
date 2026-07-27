@@ -660,7 +660,13 @@ export class AiPanel implements OnInit, OnDestroy {
     imageFormat: string | null
   ): void {
     this.aiChatService
-      .sendMessage(conversationId, { text, base64Image, imageFormat })
+      .sendMessage(conversationId, {
+        text,
+        base64Image,
+        imageFormat,
+        language: this.l10n.lang(),
+        utcOffsetMinutes: -new Date().getTimezoneOffset(),
+      })
       .subscribe({
         next: res => {
           // 202 response: server accepted the message and enqueued it.

@@ -26,10 +26,33 @@ public sealed class GetHealthSummaryTool(ISender mediator) : IVoiceTool
         if (!result.Success)
             return new ToolResult(false, result.Message ?? "Failed to retrieve health summary.");
 
-        var summary = result.Data;
-        if (summary is null || !summary.HasData)
+        var s = result.Data;
+        if (s is null || !s.HasData)
             return new ToolResult(true, "No health data found for this profile.", new { hasData = false, summary = (string?)null });
 
-        return new ToolResult(true, "Health summary retrieved.", new { hasData = true, summary = summary.Summary });
+        var lines = new System.Text.StringBuilder();
+        lines.AppendLine($"Overall status: {s.OverallStatus}{(s.OverallStatusNote is not null ? " — " + s.OverallStatusNote : "")}");
+
+        lines.AppendLine(s.Conditions.Count > 0
+            ? $"Conditions: {string.Join(", ", s.Conditions)}"
+            : "Conditions: none recorded");
+
+        lines.AppendLine(s.Allergies.Count > 0
+            ? $"Allergies: {string.Join(", ", s.Allergies.Select(a => $"{a.Name} ({a.Severity})"))}"
+            : "Allergies: none recorded");
+
+        lines.AppendLine($"Medications: {s.Medications.Count} active" +
+            (s.Medications.HasIssues && s.Medications.IssueNote is not null ? $" — {s.Medications.IssueNote}" : ""));
+
+        lines.AppendLine($"Lab results: {s.LabResults.Status}" +
+            (s.LabResults.AbnormalCount > 0 ? $" ({s.LabResults.AbnormalCount} abnormal)" : ""));
+
+        if (s.Insights.Count > 0)
+            lines.AppendLine($"Insights: {string.Join("; ", s.Insights)}");
+
+        if (s.Recommendations.Count > 0)
+            lines.AppendLine($"Recommendations: {string.Join("; ", s.Recommendations)}");
+
+        return new ToolResult(true, "Health summary retrieved.", new { hasData = true, summary = lines.ToString().TrimEnd() });
     }
 }
