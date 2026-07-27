@@ -582,6 +582,14 @@ export const ar: Translations = {
     viewDetails: 'شوف التفاصيل',
     viewOnly: 'مشاهدة فقط',
     viewingFor: 'عم تشوف مواعيد:',
+    lab: 'تحليل أو فحص دم',
+    doctor: 'زيارة طبيب',
+    vaccination: 'تطعيم',
+    imaging: 'أشعة',
+    therapy: 'جلسة علاج',
+    dental: 'فحص الأسنان',
+    other: 'أخرى',
+    followUp: 'زيارة متابعة',
   },
 
   uploadValidation: {

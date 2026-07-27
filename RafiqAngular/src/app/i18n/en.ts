@@ -580,6 +580,14 @@ export const en = {
     viewDetails: 'View Details',
     viewOnly: 'View Only',
     viewingFor: 'Viewing appointments for:',
+    lab: 'Lab Test / Blood Work',
+    doctor: 'Doctor Visit',
+    vaccination: 'Vaccination',
+    imaging: 'Imaging / Radiology',
+    therapy: 'Therapy Session',
+    dental: 'Dental Checkup',
+    other: 'Other',
+    followUp: 'Follow-up Visit',
   },
 
   uploadValidation: {

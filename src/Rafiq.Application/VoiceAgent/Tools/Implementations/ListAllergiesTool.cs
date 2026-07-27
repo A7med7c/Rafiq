@@ -18,7 +18,7 @@ public sealed class ListAllergiesTool(ISender mediator) : IVoiceTool
         "Arabic family triggers: حساسيات ابني، الحساسية بتوع ابنتي، ايه الحاجات اللي أبي عنده حساسية منها\n\n" +
         "Result fields per allergy: id, name, severity.\n" +
         "Severity values: Mild, Moderate, Severe.\n\n" +
-        "If the user wants to ADD an allergy, tell them to use the health profile section in the app.\n\n" +
+        "If the user wants to ADD an allergy, use the add_allergy tool.\n\n" +
         "FAMILY MEMBER CONTEXT: When asking about a family member:\n" +
         "  1. Call list_family_profiles first to find their userHealthProfileId\n" +
         "  2. Pass their id as targetProfileId in this tool call";
