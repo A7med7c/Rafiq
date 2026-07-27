@@ -108,6 +108,13 @@ public class AiChatController : ControllerBase
     /// Sends a message (text-only or with an image) to an existing conversation.
     /// Optionally include Base64Image and ImageFormat for multimodal (image+question) requests.
     /// </summary>
+    /// <summary>
+    /// Accepts a message and immediately returns 202 with { userMessageId, assistantMessageId }.
+    /// The assistant's reply is delivered asynchronously via the "ChatResponse" SignalR event
+    /// and can be retrieved from the conversation history at any time.
+    /// This design survives page refreshes — the background job continues regardless of
+    /// whether the browser connection is still open when processing completes.
+    /// </summary>
     [HttpPost("conversations/{conversationId:guid}/messages")]
     public async Task<IActionResult> SendMessage(
         Guid conversationId,
@@ -117,7 +124,7 @@ public class AiChatController : ControllerBase
         var result = await _mediator.Send(
             new SendMessageCommand(conversationId, request.Text, request.Base64Image, request.ImageFormat),
             cancellationToken);
-        return Ok(result);
+        return Accepted(result);
     }
 
     /// <summary>

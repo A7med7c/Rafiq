@@ -32,6 +32,20 @@ export interface AppointmentReminderNotificationPayload {
 
 export type ConnectionState = 'Disconnected' | 'Connecting' | 'Connected' | 'Reconnecting';
 
+// ── Chat async payloads ───────────────────────────────────────────────────────
+
+export interface ChatResponsePayload {
+  conversationId: string;
+  assistantMessageId: string;
+  content: string;
+}
+
+export interface ChatErrorPayload {
+  conversationId: string;
+  assistantMessageId: string;
+  errorMessage: string;
+}
+
 // ── Voice Agent SignalR payloads ──────────────────────────────────────────────
 
 export interface VoiceAgentThinkingPayload {
@@ -67,6 +81,13 @@ export class SignalRService {
   readonly voiceThinkingEvents  = signal<VoiceAgentThinkingPayload[]>([]);
   readonly voiceResponseEvents  = signal<VoiceAgentResponsePayload[]>([]);
   readonly voiceErrorEvents     = signal<VoiceAgentErrorPayload[]>([]);
+
+  // Chat async events
+  readonly chatResponseEvents   = signal<ChatResponsePayload[]>([]);
+  readonly chatErrorEvents      = signal<ChatErrorPayload[]>([]);
+
+  /** Incremented each time the SignalR connection recovers after a drop. */
+  readonly reconnectedAt        = signal(0);
 
   constructor() {
     // Connect only while a user is signed in; never negotiate anonymously.
@@ -137,6 +158,14 @@ export class SignalRService {
       this.voiceErrorEvents.update(q => [...q, payload]);
     });
 
+    this.connection.on('ChatResponse', (payload: ChatResponsePayload) => {
+      this.chatResponseEvents.update(q => [...q, payload]);
+    });
+
+    this.connection.on('ChatError', (payload: ChatErrorPayload) => {
+      this.chatErrorEvents.update(q => [...q, payload]);
+    });
+
     this.connection.onclose(() => {
       this.log('Disconnected.');
       this.setConnectionState('Disconnected');
@@ -150,6 +179,7 @@ export class SignalRService {
     this.connection.onreconnected(() => {
       this.log('Reconnected.');
       this.setConnectionState('Connected');
+      this.reconnectedAt.update(n => n + 1);
     });
 
     this.log(`Starting connection to ${hubUrl}`);
@@ -238,6 +268,20 @@ export class SignalRService {
     const events = this.voiceErrorEvents();
     if (!events.length) return [];
     this.voiceErrorEvents.set([]);
+    return events;
+  }
+
+  drainChatResponseEvents(): ChatResponsePayload[] {
+    const events = this.chatResponseEvents();
+    if (!events.length) return [];
+    this.chatResponseEvents.set([]);
+    return events;
+  }
+
+  drainChatErrorEvents(): ChatErrorPayload[] {
+    const events = this.chatErrorEvents();
+    if (!events.length) return [];
+    this.chatErrorEvents.set([]);
     return events;
   }
 

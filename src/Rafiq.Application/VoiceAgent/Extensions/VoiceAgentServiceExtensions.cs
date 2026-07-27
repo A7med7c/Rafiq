@@ -21,9 +21,17 @@ public static class VoiceAgentServiceExtensions
 
         // ── Read tools ────────────────────────────────────────────────────────
         services.AddScoped<IVoiceTool, GetHealthSummaryTool>();
+        services.AddScoped<IVoiceTool, GetProfileInfoTool>();
         services.AddScoped<IVoiceTool, ListMedicationsTool>();
         services.AddScoped<IVoiceTool, ListAppointmentsTool>();
         services.AddScoped<IVoiceTool, ListUpcomingAppointmentsTool>();
+        services.AddScoped<IVoiceTool, ListAllergiesTool>();
+        services.AddScoped<IVoiceTool, ListChronicDiseasesTool>();
+        services.AddScoped<IVoiceTool, ListPrescriptionsTool>();
+        services.AddScoped<IVoiceTool, ListLabReportsTool>();
+        services.AddScoped<IVoiceTool, ListImagingReportsTool>();
+        services.AddScoped<IVoiceTool, ListDocumentsTool>();
+        services.AddScoped<IVoiceTool, ListEmergencyContactsTool>();
 
         // ── Medication write tools ────────────────────────────────────────────
         services.AddScoped<IVoiceTool, AddMedicationTool>();
@@ -42,6 +50,10 @@ public static class VoiceAgentServiceExtensions
         services.AddScoped<IVoiceTool, UpdateAppointmentTool>();
         services.AddScoped<IVoiceTool, CancelAppointmentTool>();
         services.AddScoped<IVoiceTool, CompleteAppointmentTool>();
+
+        // ── Allergy / chronic disease write tools ─────────────────────────────
+        services.AddScoped<IVoiceTool, AddAllergyTool>();
+        services.AddScoped<IVoiceTool, AddChronicDiseaseTool>();
 
         // ── Family profile tools ──────────────────────────────────────────────
         services.AddScoped<IVoiceTool, ListFamilyProfilesTool>();

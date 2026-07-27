@@ -247,7 +247,9 @@ export const en = {
     doctorSummaryDesc: 'A concise report for doctor consultations — vitals, conditions, medications, latest results and AI summary.',
     completeHistory:'Complete Medical History',
     completeHistoryDesc:'Full report with all records, prescriptions, lab and imaging history, timeline and AI clinical summary.',
-    generatingReportSub: 'This may take a few seconds while the AI prepares your summary'
+    generatingReportSub: 'This may take a few seconds while the AI prepares your summary',
+    selectProfileTitle: 'Select Profile',
+    selectProfileDesc: 'Choose whose medical report to generate',
   },
 
   medicalRecordsPage: {

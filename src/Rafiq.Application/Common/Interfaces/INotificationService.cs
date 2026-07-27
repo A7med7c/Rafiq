@@ -88,5 +88,33 @@ namespace Rafiq.Application.Common.Interfaces
             string userId,
             VoiceAgentErrorPayload payload,
             CancellationToken cancellationToken = default);
+
+        // ── Chat async events ─────────────────────────────────────────────────
+
+        /// <summary>Emitted when the background chat processor completes an assistant message.</summary>
+        Task SendChatResponseAsync(
+            string userId,
+            ChatResponsePayload payload,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>Emitted when the background chat processor fails to produce an answer.</summary>
+        Task SendChatErrorAsync(
+            string userId,
+            ChatErrorPayload payload,
+            CancellationToken cancellationToken = default);
+    }
+
+    public class ChatResponsePayload
+    {
+        public Guid ConversationId { get; set; }
+        public Guid AssistantMessageId { get; set; }
+        public string Content { get; set; } = string.Empty;
+    }
+
+    public class ChatErrorPayload
+    {
+        public Guid ConversationId { get; set; }
+        public Guid AssistantMessageId { get; set; }
+        public string ErrorMessage { get; set; } = string.Empty;
     }
 }

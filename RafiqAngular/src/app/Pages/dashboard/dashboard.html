@@ -162,7 +162,7 @@
             {{ t().dashboard.familyWell }}
           </p>
         </div>
-        <button type="button" class="report-btn" (click)="openReportDialog()">
+        <button type="button" class="report-btn" (click)="openDownloadFlow()">
           <div class="report-btn-ico-bg">
             <i class="fa-solid fa-file-medical"></i>
           </div>
@@ -566,6 +566,50 @@
   </div><!-- /dsh-main -->
 </div><!-- /dsh -->
 
+<!-- ═══════════ PROFILE PICKER DIALOG ═══════════ -->
+@if (profilePickerOpen()) {
+<div class="modal-backdrop" (click)="profilePickerOpen.set(false)">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico-wrap">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div>
+          <h2 class="modal-title">{{ t().dashboard.selectProfileTitle }}</h2>
+          <p class="modal-subtitle">{{ t().dashboard.selectProfileDesc }}</p>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" (click)="profilePickerOpen.set(false)">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="profile-picker-list">
+      @for (profile of familyProfiles(); track profile.userHealthProfileId) {
+        <button type="button" class="profile-picker-item"
+          (click)="selectProfileAndContinue(profile.userHealthProfileId)">
+          <div class="profile-picker-av" [style.background]="getProfileAvatarColor(profile.firstName)">
+            {{ getInitial(profile.firstName) }}
+          </div>
+          <div class="profile-picker-info">
+            <span class="profile-picker-name">{{ profile.firstName }} {{ profile.lastName }}</span>
+            <span class="profile-picker-rel">
+              {{ profile.isSelf ? t().dashboard.you : getRelationshipLabel(profile.relationship) }}
+            </span>
+          </div>
+          <i class="fa-solid fa-chevron-right profile-picker-arrow"></i>
+        </button>
+      }
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" (click)="profilePickerOpen.set(false)">
+        {{ t().records.cancelBtn }}
+      </button>
+    </div>
+  </div>
+</div>
+}
+
 <!-- ═══════════ MEDICAL REPORT DIALOG ═══════════ -->
 @if (reportDialogOpen()) {
 <div class="modal-backdrop" (click)="closeReportDialog()">
@@ -580,11 +624,10 @@
           <p class="modal-subtitle">{{t().dashboard.chooseMedicalType}}</p>
         </div>
       </div>
-      @if (!reportGenerating()) {
-      <button type="button" class="modal-close-btn" (click)="closeReportDialog()">
+      <button type="button" class="modal-close-btn"
+        (click)="reportGenerating() ? cancelReport() : closeReportDialog()">
         <i class="fa-solid fa-xmark"></i>
       </button>
-      }
     </div>
 
     @if (!reportGenerating()) {

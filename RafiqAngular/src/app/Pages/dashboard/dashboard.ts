@@ -10,7 +10,7 @@ import { NotificationService } from '../../Services/notification.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { MedicalRecord, ReminderDisplayItem } from '../../Modles/dashboard.models';
 import { AppointmentDto, AppointmentStatus } from '../../Modles/appointment.models';
-import { catchError, of } from 'rxjs';
+import { catchError, of, Subscription } from 'rxjs';
 import { AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { HealthSummaryDto } from '../../Services/dashboard.service';
 import { MedicalReportService, ReportType } from '../../Services/medical-report.service';
@@ -80,10 +80,13 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly SUMMARY_CHAR_LIMIT = 260;
 
   // ── Medical Report dialog ─────────────────────────────────────────────────
-  readonly reportDialogOpen      = signal(false);
-  readonly selectedReportType    = signal<ReportType>('DoctorSummary');
-  readonly reportGenerating      = signal(false);
-  readonly reportTargetProfileId = signal<string | null>(null);
+  readonly profilePickerOpen       = signal(false);
+  readonly reportDialogOpen        = signal(false);
+  readonly selectedReportType      = signal<ReportType>('DoctorSummary');
+  readonly reportGenerating        = signal(false);
+  readonly reportTargetProfileId   = signal<string | null>(null);
+  readonly reportTargetProfileName = signal<string | null>(null);
+  private _reportSub: Subscription | null = null;
 
   // ── Robot speech bubble ───────────────────────────────────────────────────
   readonly robotBubbleVisible = signal(false);
@@ -190,6 +193,7 @@ export class Dashboard implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this._bubbleHideTimer)  clearTimeout(this._bubbleHideTimer);
     if (this._inactivityTimer)  clearTimeout(this._inactivityTimer);
+    this._reportSub?.unsubscribe();
   }
 
   private showRobotBubble(): void {
@@ -380,13 +384,36 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   // ── Medical Report methods ────────────────────────────────────────────────
+
+  /** Entry-point from the Download button. Shows profile picker when the user has
+   *  family members; goes straight to the file-type dialog when only self exists. */
+  openDownloadFlow(): void {
+    const nonSelf = this.familyProfiles().filter(p => !p.isSelf);
+    if (!this.familyLoading() && nonSelf.length > 0) {
+      this.profilePickerOpen.set(true);
+    } else {
+      this.openReportDialog();
+    }
+  }
+
+  /** Called when the user picks a profile in the picker. */
+  selectProfileAndContinue(profileId: string): void {
+    this.profilePickerOpen.set(false);
+    this.selectedReportType.set('DoctorSummary');
+    this.reportTargetProfileId.set(profileId);
+    this.reportTargetProfileName.set(this.getProfileDisplayName(profileId));
+    this.reportDialogOpen.set(true);
+  }
+
   openReportDialog(profileId?: string): void {
     if (profileId) {
       this.reportTargetProfileId.set(profileId);
+      this.reportTargetProfileName.set(this.getProfileDisplayName(profileId));
       this.reportDialogOpen.set(true);
     } else {
       this.dashboardService.getActiveProfileId().subscribe(id => {
         this.reportTargetProfileId.set(id);
+        this.reportTargetProfileName.set(this.getProfileDisplayName(id));
         this.reportDialogOpen.set(true);
       });
     }
@@ -394,23 +421,51 @@ export class Dashboard implements OnInit, OnDestroy {
 
   closeReportDialog(): void { if (!this.reportGenerating()) this.reportDialogOpen.set(false); }
 
+  cancelReport(): void {
+    this._reportSub?.unsubscribe();
+    this._reportSub = null;
+    this.reportGenerating.set(false);
+    this.reportDialogOpen.set(false);
+  }
+
+  getProfileAvatarColor(name: string): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
+  private getProfileDisplayName(profileId: string): string | null {
+    const p = this.familyProfiles().find(p => p.userHealthProfileId === profileId);
+    return p ? `${p.firstName} ${p.lastName}` : null;
+  }
+
   generateReport(): void {
     const profileId = this.reportTargetProfileId();
     if (!profileId) return;
 
     this.reportGenerating.set(true);
-    this.medicalReportSvc.generateReport(profileId, this.selectedReportType()).subscribe({
+    this._reportSub = this.medicalReportSvc.generateReport(profileId, this.selectedReportType()).subscribe({
       next: (blob) => {
+        const name = this.reportTargetProfileName();
+        const safeName = name
+          ? '_' + name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_؀-ۿ-]/g, '')
+          : '';
+        const typeLabel = this.selectedReportType() === 'DoctorSummary' ? 'Medical_Summary' : 'Medical_Record';
         const url = URL.createObjectURL(blob);
         const a   = document.createElement('a');
-        a.href    = url;
-        a.download = `RafiqMedicalReport_${this.selectedReportType()}_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.href     = url;
+        a.download = `${typeLabel}${safeName}.pdf`;
         a.click();
         URL.revokeObjectURL(url);
+        this._reportSub = null;
         this.reportGenerating.set(false);
         this.reportDialogOpen.set(false);
       },
-      error: () => { this.reportGenerating.set(false); }
+      error: () => {
+        this._reportSub = null;
+        this.reportGenerating.set(false);
+      }
     });
   }
 

@@ -13,6 +13,9 @@ export interface ConversationMessageDto {
   sequenceNumber: number;
   createdAt: string;
   userReaction?: 'ThumbsUp' | 'ThumbsDown' | null;
+  /** "Pending" | "Processing" | "Completed" | "Failed" — only set for Assistant messages */
+  status?: string;
+  errorMessage?: string;
 }
 
 export interface ConversationHistoryDto {

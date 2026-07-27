@@ -206,28 +206,42 @@
                 <div class="ai-msg ai-msg--ai">
                   <div class="ai-msg-avatar"><img src="images/RafiqLogo.png" alt="Rafiq" class="ai-msg-logo"></div>
                   <div class="ai-msg-col">
-                    <div class="ai-bubble ai-bubble--ai">
-                      <markdown [data]="msg.content"></markdown>
-                    </div>
-                    <div class="ai-msg-footer">
-                      <span class="ai-msg-time">{{ formatMessageTime(msg) }}</span>
-                      <div class="ai-reactions">
-                        <button type="button"
-                          class="ai-react-btn"
-                          [class.ai-react-btn--active]="msg.userReaction === 'ThumbsUp'"
-                          [title]="t().aiAssistant.reactionHelpful"
-                          (click)="toggleReaction(msg, 'ThumbsUp')">
-                          <i class="fa-regular fa-thumbs-up"></i>
-                        </button>
-                        <button type="button"
-                          class="ai-react-btn"
-                          [class.ai-react-btn--active-down]="msg.userReaction === 'ThumbsDown'"
-                          [title]="t().aiAssistant.reactionNotHelpful"
-                          (click)="toggleReaction(msg, 'ThumbsDown')">
-                          <i class="fa-regular fa-thumbs-down"></i>
-                        </button>
+                    @if (msg.status === 'Pending' || msg.status === 'Processing') {
+                      <div class="ai-bubble ai-bubble--ai ai-typing">
+                        <span class="ai-dot"></span>
+                        <span class="ai-dot"></span>
+                        <span class="ai-dot"></span>
                       </div>
-                    </div>
+                      <span class="ai-typing-label">{{ t().aiAssistant.rafiqTyping }}</span>
+                    } @else if (msg.status === 'Failed') {
+                      <div class="ai-bubble ai-bubble--ai ai-bubble--error">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        {{ msg.errorMessage || t().aiAssistant.sendFailed }}
+                      </div>
+                    } @else {
+                      <div class="ai-bubble ai-bubble--ai">
+                        <markdown [data]="msg.content"></markdown>
+                      </div>
+                      <div class="ai-msg-footer">
+                        <span class="ai-msg-time">{{ formatMessageTime(msg) }}</span>
+                        <div class="ai-reactions">
+                          <button type="button"
+                            class="ai-react-btn"
+                            [class.ai-react-btn--active]="msg.userReaction === 'ThumbsUp'"
+                            [title]="t().aiAssistant.reactionHelpful"
+                            (click)="toggleReaction(msg, 'ThumbsUp')">
+                            <i class="fa-regular fa-thumbs-up"></i>
+                          </button>
+                          <button type="button"
+                            class="ai-react-btn"
+                            [class.ai-react-btn--active-down]="msg.userReaction === 'ThumbsDown'"
+                            [title]="t().aiAssistant.reactionNotHelpful"
+                            (click)="toggleReaction(msg, 'ThumbsDown')">
+                            <i class="fa-regular fa-thumbs-down"></i>
+                          </button>
+                        </div>
+                      </div>
+                    }
                   </div>
                 </div>
               }

@@ -12,4 +12,7 @@ public sealed record ConversationMessageDto(
     string Content,
     int SequenceNumber,
     DateTime CreatedAt,
-    string? UserReaction = null);
+    string? UserReaction = null,
+    /// <summary>"Pending", "Processing", "Completed", or "Failed" — only set for Assistant messages.</summary>
+    string? Status = null,
+    string? ErrorMessage = null);

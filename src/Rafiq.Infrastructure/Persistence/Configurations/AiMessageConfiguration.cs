@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Rafiq.Domain.Entities.Chat;
+using Rafiq.Domain.Enums;
 
 namespace Rafiq.Infrastructure.Persistence.Configurations;
 
@@ -22,6 +23,17 @@ public class AiMessageConfiguration : IEntityTypeConfiguration<AiMessage>
 
         builder.Property(m => m.SequenceNumber)
             .IsRequired();
+
+        builder.Property(m => m.Status)
+            .IsRequired()
+            .HasConversion<int>()
+            // HasDefaultValue must receive the enum value; EF applies the conversion
+            // and emits DEFAULT 2 in the migration SQL.
+            .HasDefaultValue(AiMessageStatus.Completed);
+
+        builder.Property(m => m.ErrorMessage)
+            .HasColumnType("nvarchar(1000)")
+            .HasDefaultValue(null);
 
         // An AiMessage belongs to an AiConversation
         builder.HasOne(m => m.AiConversation)
