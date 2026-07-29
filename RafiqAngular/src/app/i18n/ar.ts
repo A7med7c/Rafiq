@@ -1286,6 +1286,8 @@ export const ar: Translations = {
     commentPlaceholder: 'قولنا أكتر (اختياري)...',
     submitBtn: 'ابعت تقييمك',
     submittingBtn: 'جاري الإرسال...',
+    notNow: 'مش دلوقتي',
+    rateRafiq: 'قيّم رفيق',
     selectStarError: 'اختار عدد النجوم الأول.',
     submitError: 'مقدرناش نبعت. حاول تاني.',
     successTitle: 'شكراً ليك!',

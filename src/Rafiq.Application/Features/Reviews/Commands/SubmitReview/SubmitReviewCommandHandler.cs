@@ -31,10 +31,6 @@ public sealed class SubmitReviewCommandHandler : IRequestHandler<SubmitReviewCom
         var userId = _currentUserService.UserId
             ?? throw new UnauthorizedException("Authentication required.");
 
-        var alreadyReviewed = await _reviewRepository.HasReviewedAsync(userId, cancellationToken);
-        if (alreadyReviewed)
-            return ApiResponse<bool>.FailureResponse("You have already submitted a review.");
-
         var account = await _identityService.GetAccountAsync(userId, cancellationToken);
         var displayName = account?.FirstName?.Trim() is { Length: > 0 } name ? name : "Anonymous";
 

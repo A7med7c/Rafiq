@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReviewService } from '../../Services/review.service';
@@ -18,14 +18,26 @@ export class RatingPopup {
   private readonly l10n = inject(LocalizationService);
   readonly t = this.l10n.t;
 
-  readonly hovered = signal(0);
-  readonly selected = signal(0);
-  readonly comment = signal('');
+  readonly hovered   = signal(0);
+  readonly selected  = signal(0);
+  readonly comment   = signal('');
   readonly submitting = signal(false);
-  readonly submitted = signal(false);
-  readonly error = signal('');
+  readonly submitted  = signal(false);
+  readonly error      = signal('');
 
   readonly stars = [1, 2, 3, 4, 5];
+
+  // Reset form state every time the popup is opened.
+  private readonly _resetOnOpen = effect(() => {
+    if (this.tracking.showPopup()) {
+      this.hovered.set(0);
+      this.selected.set(0);
+      this.comment.set('');
+      this.submitting.set(false);
+      this.submitted.set(false);
+      this.error.set('');
+    }
+  });
 
   get activeStars(): number {
     return this.hovered() || this.selected();
@@ -49,12 +61,12 @@ export class RatingPopup {
         this.submitting.set(false);
         if (res.success) {
           this.submitted.set(true);
-          setTimeout(() => this.tracking.markSubmitted(), 2000);
+          setTimeout(() => this.tracking.markSubmitted(), 2_000);
         } else {
           this.error.set(res.message ?? this.t().ratingPopup.submitError);
         }
       },
-      error: (err) => {
+      error: err => {
         this.submitting.set(false);
         const msg = err?.error?.message ?? err?.error?.title ?? null;
         this.error.set(msg ?? this.t().ratingPopup.submitError);
