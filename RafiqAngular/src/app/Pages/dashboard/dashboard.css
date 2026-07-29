@@ -1245,6 +1245,10 @@ html[dir="rtl"] .user-dropdown {
   color: var(--green);
 }
 
+.sys-warn {
+  color: var(--amber, #d97706);
+}
+
 .sys-spark {
   width: 100%;
   height: 44px;
@@ -1423,6 +1427,11 @@ html[dir="rtl"] .user-dropdown {
 .pill-red {
   background: var(--red-lt);
   color: var(--red);
+}
+
+.pill-yellow {
+  background: #fef3c7;
+  color: #d97706;
 }
 
 .pill-green-sm {
@@ -2011,6 +2020,15 @@ html[dir="rtl"] .user-dropdown {
 }
 
 /* Today's Schedule */
+.sched-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+  gap: 6px;
+}
+
 .sched-list {
   list-style: none;
   margin: 0;

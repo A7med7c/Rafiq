@@ -71,6 +71,67 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly apptLoading     = signal(true);
   readonly allAppointments = signal<AppointmentDto[]>([]);
 
+  // ── System status tracking ────────────────────────────────────────────────
+  readonly lastSyncAt    = signal<Date | null>(null);
+  readonly hasLoadError  = signal(false);
+  private _nowTick       = signal(Date.now());
+  private _tickInterval: ReturnType<typeof setInterval> | null = null;
+
+  readonly syncAgo = computed(() => {
+    const now = this._nowTick();
+    const t   = this.lastSyncAt();
+    if (!t) return '—';
+    const mins = Math.floor((now - t.getTime()) / 60_000);
+    if (mins < 1)  return 'just now';
+    if (mins === 1) return '1 min ago';
+    if (mins < 60) return `${mins} mins ago`;
+    const hrs = Math.floor(mins / 60);
+    return hrs === 1 ? '1 hour ago' : `${hrs} hours ago`;
+  });
+
+  readonly aiStatus = computed(() => {
+    if (this.summaryLoading()) return 'Loading…';
+    return this.healthSummary() !== null ? 'Optimal' : 'Unavailable';
+  });
+
+  readonly systemOk = computed(() => !this.hasLoadError());
+
+  // ── Today's schedule ──────────────────────────────────────────────────────
+  readonly todaySchedule = computed(() => {
+    const todayStr = new Date().toDateString();
+    const today    = new Date(); today.setHours(0, 0, 0, 0);
+    type ScheduleItem = { time: string; sortMs: number; title: string; subtitle: string; type: 'appointment' | 'medication' };
+    const items: ScheduleItem[] = [];
+
+    for (const a of this.allAppointments()) {
+      if (a.status !== AppointmentStatus.Upcoming) continue;
+      const d = new Date(a.appointmentDateTime);
+      if (d.toDateString() !== todayStr) continue;
+      items.push({
+        time:    d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sortMs:  d.getTime(),
+        title:   a.provider || a.title,
+        subtitle: a.title,
+        type:    'appointment',
+      });
+    }
+
+    for (const r of this.reminders()) {
+      if (!r.isEnabled) continue;
+      const [h, m]  = (r.reminderTime || '08:00').split(':').map(Number);
+      const timeDate = new Date(); timeDate.setHours(h, m, 0, 0);
+      items.push({
+        time:    timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sortMs:  timeDate.getTime(),
+        title:   r.medicineName + (r.dosage ? ` ${r.dosage}` : ''),
+        subtitle: this.t().dashboard.medicationReminder,
+        type:    'medication',
+      });
+    }
+
+    return items.sort((a, b) => a.sortMs - b.sortMs);
+  });
+
   readonly familyProfiles  = signal<AccessibleProfileDto[]>([]);
   readonly familyLoading   = signal(true);
   readonly healthSummary   = signal<HealthSummaryDto | null>(null);
@@ -187,13 +248,14 @@ export class Dashboard implements OnInit, OnDestroy {
     this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadDashboardData();
-    // Show greeting bubble 1.5 s after load, then repeat after long inactivity.
+    this._tickInterval = setInterval(() => this._nowTick.set(Date.now()), 60_000);
     setTimeout(() => this.showRobotBubble(), 1_500);
   }
 
   ngOnDestroy(): void {
     if (this._bubbleHideTimer)  clearTimeout(this._bubbleHideTimer);
     if (this._inactivityTimer)  clearTimeout(this._inactivityTimer);
+    if (this._tickInterval)     clearInterval(this._tickInterval);
     this._reportSub?.unsubscribe();
   }
 
@@ -241,19 +303,21 @@ export class Dashboard implements OnInit, OnDestroy {
     this.apptLoading.set(true);
     this.familyLoading.set(true);
     this.summaryLoading.set(true);
+    this.lastSyncAt.set(new Date());
+    this.hasLoadError.set(false);
 
     this.dashboardService.getMedicalRecords().subscribe({
       next: d => { this.records.set(d); this.recordsLoading.set(false); },
-      error: () => { this.records.set([]); this.recordsLoading.set(false); },
+      error: () => { this.records.set([]); this.recordsLoading.set(false); this.hasLoadError.set(true); },
     });
 
     this.dashboardService.getMedicinesWithReminders().subscribe({
       next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
-      error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
+      error: () => { this.reminders.set([]); this.remindersLoading.set(false); this.hasLoadError.set(true); },
     });
 
     this.apptService.getAll().pipe(
-      catchError(() => of([] as AppointmentDto[]))
+      catchError(() => { this.hasLoadError.set(true); return of([] as AppointmentDto[]); })
     ).subscribe(data => {
       this.allAppointments.set(data);
       this.apptLoading.set(false);

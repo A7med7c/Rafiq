@@ -321,7 +321,9 @@
         <div class="card sys-card">
           <div class="sys-hdr">
             <span class="sys-title">{{ t().dashboard.systemStatus }}</span>
-            <span class="pill pill-green">{{ t().dashboard.allSystemsOptimal }}</span>
+            <span class="pill" [class.pill-green]="systemOk()" [class.pill-yellow]="!systemOk()">
+              {{ systemOk() ? t().dashboard.allSystemsOptimal : t().dashboard.systemDegraded }}
+            </span>
           </div>
           <div class="sys-rows">
             <div class="sys-row">
@@ -329,21 +331,23 @@
                 <i class="fa-solid fa-microchip sys-ico sys-ico-blue"></i>
                 <span>{{ t().dashboard.aiProcessing }}</span>
               </div>
-              <span class="sys-val sys-green">{{ t().dashboard.optimal }}</span>
+              <span class="sys-val" [class.sys-green]="aiStatus() === 'Optimal'" [class.sys-warn]="aiStatus() === 'Unavailable'">
+                {{ aiStatus() === 'Optimal' ? t().dashboard.optimal : aiStatus() === 'Unavailable' ? t().dashboard.unavailable : t().common.loading }}
+              </span>
             </div>
             <div class="sys-row">
               <div class="sys-row-l">
                 <i class="fa-solid fa-rotate sys-ico sys-ico-orange"></i>
                 <span>{{ t().dashboard.dataSync }}</span>
               </div>
-              <span class="sys-val">2 {{ t().dashboard.minsAgo }}</span>
+              <span class="sys-val">{{ syncAgo() }}</span>
             </div>
             <div class="sys-row">
               <div class="sys-row-l">
-                <i class="fa-solid fa-cloud-arrow-up sys-ico sys-ico-purple"></i>
-                <span>{{ t().dashboard.lastBackup }}</span>
+                <i class="fa-solid fa-calendar-check sys-ico sys-ico-purple"></i>
+                <span>{{ t().dashboard.todayEvents }}</span>
               </div>
-              <span class="sys-val">1 {{ t().dashboard.hourAgo }}</span>
+              <span class="sys-val sys-green">{{ todaySchedule().length }}</span>
             </div>
           </div>
           <svg class="sys-spark" viewBox="0 0 220 44" preserveAspectRatio="none">
@@ -358,10 +362,6 @@
             <path d="M0 34 C20 28, 40 38, 60 22 C80 8, 100 36, 120 14 C140 2, 160 30, 180 16 C195 6, 210 20, 220 12"
               fill="none" stroke="#4A7CF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-          <div class="sys-bpm-row">
-            <span class="sys-bpm-lbl">{{ t().dashboard.avgHeartRate }}</span>
-            <span class="sys-bpm-val">72 {{ t().dashboard.bpm }}</span>
-          </div>
         </div>
 
         <!-- Upcoming Appointment -->
@@ -606,46 +606,38 @@
         <div class="card">
           <div class="bot-card-hdr">
             <span class="bot-card-title">{{ t().dashboard.todaySchedule }}</span>
-            <a href="#" class="link-sm">{{ t().dashboard.viewCalendar }}</a>
+            <a routerLink="/appointments" class="link-sm">{{ t().dashboard.viewCalendar }}</a>
           </div>
 
+          @if (apptLoading() || remindersLoading()) {
+          <div class="sched-empty">
+            <i class="fa-solid fa-spinner fa-spin" style="color:var(--text-3)"></i>
+          </div>
+          } @else if (todaySchedule().length === 0) {
+          <div class="sched-empty">
+            <i class="fa-regular fa-calendar-check" style="font-size:28px;color:var(--text-4);margin-bottom:8px"></i>
+            <p style="color:var(--text-3);font-size:13px">{{ t().dashboard.noEventsToday }}</p>
+          </div>
+          } @else {
           <ul class="sched-list">
-            <li class="sched-item">
-              <span class="sched-time">10:30 AM</span>
+            @for (item of todaySchedule(); track item.sortMs; let last = $last) {
+            <li class="sched-item" [class.sched-last]="last">
+              <span class="sched-time">{{ item.time }}</span>
               <div class="sched-line-wrap">
-                <div class="sched-dot dot-blue"></div>
-                <div class="sched-line"></div>
+                <div class="sched-dot" [class.dot-blue]="item.type === 'appointment'" [class.dot-green]="item.type === 'medication'"></div>
+                @if (!last) { <div class="sched-line"></div> }
               </div>
               <div class="sched-info">
-                <p class="sched-title">Dr. Mohamed Ali</p>
-                <p class="sched-sub">Cardiology Checkup</p>
+                <p class="sched-title">{{ item.title }}</p>
+                <p class="sched-sub">{{ item.subtitle }}</p>
               </div>
             </li>
-            <li class="sched-item">
-              <span class="sched-time">02:00 PM</span>
-              <div class="sched-line-wrap">
-                <div class="sched-dot dot-green"></div>
-                <div class="sched-line"></div>
-              </div>
-              <div class="sched-info">
-                <p class="sched-title">Amoxicillin 500mg</p>
-                <p class="sched-sub">{{ t().dashboard.medicationReminder }}</p>
-              </div>
-            </li>
-            <li class="sched-item sched-last">
-              <span class="sched-time">06:00 PM</span>
-              <div class="sched-line-wrap">
-                <div class="sched-dot dot-blue"></div>
-              </div>
-              <div class="sched-info">
-                <p class="sched-title">Family Walk</p>
-                <p class="sched-sub">{{ t().dashboard.activityReminder }}</p>
-              </div>
-            </li>
+            }
           </ul>
+          }
 
-          <button type="button" class="bot-action-btn">
-            <i class="fa-regular fa-calendar"></i> {{ t().dashboard.addToCalendar }}
+          <button type="button" class="bot-action-btn" [routerLink]="['/appointments']">
+            <i class="fa-regular fa-calendar"></i> {{ t().dashboard.viewCalendar }}
           </button>
         </div>
 
