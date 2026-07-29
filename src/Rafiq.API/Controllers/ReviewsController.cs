@@ -36,7 +36,7 @@ public class ReviewsController : ControllerBase
         var result = await _mediator.Send(
             new SubmitReviewCommand(request.Stars, request.Comment),
             cancellationToken);
-        return result.Success ? Ok(result) : BadRequest(result);
+        return Ok(result);
     }
 
     [HttpGet("public")]
