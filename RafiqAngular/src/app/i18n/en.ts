@@ -1285,6 +1285,8 @@ export const en = {
     commentPlaceholder: 'Tell us more (optional)...',
     submitBtn: 'Submit Review',
     submittingBtn: 'Submitting...',
+    notNow: 'Not now',
+    rateRafiq: 'Rate Rafiq',
     selectStarError: 'Please select a star rating.',
     submitError: 'Could not submit. Please try again.',
     successTitle: 'Thank you!',

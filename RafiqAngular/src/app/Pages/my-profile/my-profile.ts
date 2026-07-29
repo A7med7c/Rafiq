@@ -12,6 +12,7 @@ import { EmergencyContactService, EmergencyContactResponse } from '../../Service
 import { NotificationService } from '../../Services/notification.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { AiChatService } from '../../Services/ai-chat.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../Environments/Environment';
 import { ApiResponse } from '../../Modles/api-response';
@@ -44,6 +45,7 @@ export class MyProfile implements OnInit {
   protected readonly notifService     = inject(NotificationService);
   protected readonly l10n             = inject(LocalizationService);
   readonly aiChatService              = inject(AiChatService);
+  private readonly reviewTracking     = inject(ReviewTrackingService);
   protected readonly t                = this.l10n.t;
   private readonly router             = inject(Router);
   private readonly elRef              = inject(ElementRef);
@@ -652,6 +654,8 @@ export class MyProfile implements OnInit {
 
   // ── Delete Account ────────────────────────────────────────────────────────
   openDeleteModal(): void { this.deleteModalOpen.set(true); }
+
+  openRatingPopup(): void { this.reviewTracking.openManually(); }
   closeDeleteModal(): void { if (!this.deleteLoading()) this.deleteModalOpen.set(false); }
 
   confirmDeleteAccount(): void {
