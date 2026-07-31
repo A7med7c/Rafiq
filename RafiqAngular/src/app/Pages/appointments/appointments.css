@@ -1128,10 +1128,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding-top: 14px;
+  gap: 16px;
+  padding: 16px 20px;
   border-top: 1px solid var(--border-lt);
-  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 

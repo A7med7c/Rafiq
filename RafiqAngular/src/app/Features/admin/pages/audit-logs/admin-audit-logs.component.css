@@ -190,7 +190,7 @@
 .al-empty p    { margin: 0; font-size: .9rem; }
 
 /* ── Pagination ──────────────────────────────────────────────────────────────── */
-.al-pagination { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.al-pagination { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; }
 .al-pg-btn {
   display: inline-flex; align-items: center; gap: .45rem;
   padding: .55rem 1.1rem;

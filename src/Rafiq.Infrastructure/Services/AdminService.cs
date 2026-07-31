@@ -27,20 +27,22 @@ public sealed class AdminService(RafiqDbContext dbContext, IAuditLogService audi
         var managedProfiles = await dbContext.UserHealthProfiles.CountAsync(
             profile => profile.UserId == null,
             cancellationToken);
-        var appointmentsToday = await dbContext.Appointments.CountAsync(
-            appointment => appointment.AppointmentDateTime >= today
-                && appointment.AppointmentDateTime < tomorrow,
-            cancellationToken);
-        var appointmentsThisMonth = await dbContext.Appointments.CountAsync(
-            appointment => appointment.AppointmentDateTime >= monthStart
-                && appointment.AppointmentDateTime < nextMonthStart,
-            cancellationToken);
-        var pendingAppointments = await dbContext.Appointments.CountAsync(
-            appointment => appointment.Status == AppointmentStatus.Upcoming,
-            cancellationToken);
-        var completedAppointments = await dbContext.Appointments.CountAsync(
-            appointment => appointment.Status == AppointmentStatus.Completed,
-            cancellationToken);
+        var totalAiRequests = await dbContext.AiRequestLogs.CountAsync(cancellationToken);
+        var flaggedAiRequests = await dbContext.AiFlaggedRequests.CountAsync(cancellationToken);
+        
+        var mostActiveAiUserGroup = await dbContext.AiRequestLogs
+            .Where(r => r.UserId != null)
+            .GroupBy(r => r.UserId)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .OrderByDescending(g => g.Count)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        string? mostActiveAiUser = null;
+        if (mostActiveAiUserGroup?.UserId != null)
+        {
+            var topUser = await dbContext.Users.FindAsync(mostActiveAiUserGroup.UserId);
+            mostActiveAiUser = topUser != null ? topUser.FirstName + " " + topUser.LastName : null;
+        }
         var remindersToday = await dbContext.MedicationReminderLogs.CountAsync(
             reminder => reminder.ScheduledDate == todayOnly,
             cancellationToken);
@@ -68,23 +70,9 @@ public sealed class AdminService(RafiqDbContext dbContext, IAuditLogService audi
             .Select(group => new { group.Key.Year, group.Key.Month, Count = group.Count() })
             .ToListAsync(cancellationToken);
 
-        var appointmentRows = await dbContext.Appointments
-            .AsNoTracking()
-            .Where(appointment => appointment.AppointmentDateTime >= growthStart)
-            .GroupBy(appointment => new
-            {
-                appointment.AppointmentDateTime.Year,
-                appointment.AppointmentDateTime.Month
-            })
-            .Select(group => new { group.Key.Year, group.Key.Month, Count = group.Count() })
-            .ToListAsync(cancellationToken);
-
         var userGrowth = BuildSixMonthTrend(
             monthStart,
             userGrowthRows.ToDictionary(row => (row.Year, row.Month), row => row.Count));
-        var appointmentTrend = BuildSixMonthTrend(
-            monthStart,
-            appointmentRows.ToDictionary(row => (row.Year, row.Month), row => row.Count));
 
         // EF Core cannot translate enum.ToString() inside a SQL GroupBy projection.
         // Pull the grouped counts into memory first, then convert enum keys to strings.
@@ -114,32 +102,32 @@ public sealed class AdminService(RafiqDbContext dbContext, IAuditLogService audi
                 user.ProfileImageUrl))
             .ToListAsync(cancellationToken);
 
-        // EF Core cannot translate enum.ToString() inside a SQL Select projection.
-        // Fetch the raw rows first, then project to the DTO in memory.
-        var recentAppointmentRows = await dbContext.Appointments
+        var usersNeedAttentionGroups = await dbContext.AiFlaggedRequests
             .AsNoTracking()
-            .OrderByDescending(appointment => appointment.CreatedAt)
-            .Take(6)
-            .Select(appointment => new
-            {
-                appointment.Id,
-                appointment.Title,
-                appointment.Provider,
-                PatientName = appointment.UserHealthProfile.FirstName + " " + appointment.UserHealthProfile.LastName,
-                appointment.AppointmentDateTime,
-                appointment.Status
-            })
+            .GroupBy(f => f.UserId)
+            .Select(g => new { UserId = g.Key, FlaggedCount = g.Count() })
+            .OrderByDescending(x => x.FlaggedCount)
+            .Take(5)
             .ToListAsync(cancellationToken);
 
-        var recentAppointments = recentAppointmentRows
-            .Select(a => new AdminRecentAppointmentDto(
-                a.Id,
-                a.Title,
-                a.Provider,
-                a.PatientName,
-                a.AppointmentDateTime,
-                a.Status.ToString()))
-            .ToList<AdminRecentAppointmentDto>();
+        var attentionUserIds = usersNeedAttentionGroups.Select(x => x.UserId).ToList();
+        var attentionUsersData = await dbContext.Users
+            .AsNoTracking()
+            .Where(u => attentionUserIds.Contains(u.Id))
+            .Select(u => new { u.Id, u.FirstName, u.LastName, u.ProfileImageUrl })
+            .ToListAsync(cancellationToken);
+
+        var usersNeedAttention = usersNeedAttentionGroups
+            .Select(g => {
+                var u = attentionUsersData.FirstOrDefault(x => x.Id == g.UserId);
+                return new AdminDashboardAttentionUserDto(
+                    g.UserId,
+                    u != null ? $"{u.FirstName} {u.LastName}" : "Unknown",
+                    u?.ProfileImageUrl,
+                    $"{g.FlaggedCount} Flagged Requests"
+                );
+            })
+            .ToList<AdminDashboardAttentionUserDto>();
 
         var monthlyGrowth = previousRegistrations == 0
             ? currentRegistrations > 0 ? 100m : 0m
@@ -152,20 +140,18 @@ public sealed class AdminService(RafiqDbContext dbContext, IAuditLogService audi
             activeUsers,
             totalProfiles,
             managedProfiles,
-            appointmentsToday,
-            appointmentsThisMonth,
-            pendingAppointments,
-            completedAppointments,
             remindersToday,
             prescriptions + labReports + imagingReports + generalDocuments,
             aiConversations,
+            totalAiRequests,
+            flaggedAiRequests,
+            mostActiveAiUser,
             currentRegistrations,
             monthlyGrowth,
             userGrowth,
-            appointmentTrend,
             genderDistribution,
             recentUsers,
-            recentAppointments);
+            usersNeedAttention);
     }
 
     public async Task<PagedResult<AdminUserListItemDto>> GetUsersAsync(

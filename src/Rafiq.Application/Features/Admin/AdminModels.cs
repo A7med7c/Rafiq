@@ -5,20 +5,24 @@ public sealed record AdminDashboardDto(
     int ActiveUsers,
     int TotalProfiles,
     int ManagedProfiles,
-    int AppointmentsToday,
-    int AppointmentsThisMonth,
-    int PendingAppointments,
-    int CompletedAppointments,
     int MedicationRemindersToday,
     int MedicalDocuments,
     int AiConversations,
+    int TotalAiRequests,
+    int FlaggedAiRequests,
+    string? MostActiveAiUser,
     int NewRegistrationsThisMonth,
     decimal MonthlyGrowthPercent,
     IReadOnlyList<AdminTrendPointDto> UserGrowth,
-    IReadOnlyList<AdminTrendPointDto> AppointmentTrend,
     IReadOnlyList<AdminDistributionItemDto> GenderDistribution,
     IReadOnlyList<AdminRecentUserDto> RecentUsers,
-    IReadOnlyList<AdminRecentAppointmentDto> RecentAppointments);
+    IReadOnlyList<AdminDashboardAttentionUserDto> UsersNeedAttention);
+
+public sealed record AdminDashboardAttentionUserDto(
+    Guid UserId,
+    string UserName,
+    string? ProfileImageUrl,
+    string Reason);
 
 public sealed record AdminTrendPointDto(string Label, int Value);
 

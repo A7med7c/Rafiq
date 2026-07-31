@@ -31,20 +31,25 @@ export interface AdminDashboard {
   activeUsers: number;
   totalProfiles: number;
   managedProfiles: number;
-  appointmentsToday: number;
-  appointmentsThisMonth: number;
-  pendingAppointments: number;
-  completedAppointments: number;
   medicationRemindersToday: number;
   medicalDocuments: number;
   aiConversations: number;
+  totalAiRequests: number;
+  flaggedAiRequests: number;
+  mostActiveAiUser: string | null;
   newRegistrationsThisMonth: number;
   monthlyGrowthPercent: number;
   userGrowth: AdminTrendPoint[];
-  appointmentTrend: AdminTrendPoint[];
   genderDistribution: AdminDistributionItem[];
   recentUsers: AdminRecentUser[];
-  recentAppointments: AdminRecentAppointment[];
+  usersNeedAttention: AdminDashboardAttentionUser[];
+}
+
+export interface AdminDashboardAttentionUser {
+  userId: string;
+  userName: string;
+  profileImageUrl?: string | null;
+  reason: string;
 }
 
 export interface AdminUser {
