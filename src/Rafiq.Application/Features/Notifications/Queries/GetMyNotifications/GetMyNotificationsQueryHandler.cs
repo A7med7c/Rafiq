@@ -29,7 +29,7 @@ public sealed class GetMyNotificationsQueryHandler
         var unreadCount = await _repo.GetUnreadCountAsync(userId, cancellationToken);
 
         var dtos = items.Select(n => new UserNotificationDto(
-            n.Id, n.Title, n.Body, n.Type, n.IsRead, n.ReadAt, n.CreatedAt
+            n.Id, n.Title, n.Body, n.TitleAr, n.BodyAr, n.Type, n.IsRead, n.ReadAt, n.CreatedAt
         )).ToList();
 
         return ApiResponse<GetMyNotificationsResult>.SuccessResponse(

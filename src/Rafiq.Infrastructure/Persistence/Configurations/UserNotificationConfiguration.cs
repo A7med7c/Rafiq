@@ -12,6 +12,8 @@ public class UserNotificationConfiguration : IEntityTypeConfiguration<UserNotifi
 
         builder.Property(n => n.Title).HasMaxLength(300).IsRequired();
         builder.Property(n => n.Body).HasMaxLength(2000).IsRequired();
+        builder.Property(n => n.TitleAr).HasMaxLength(300);
+        builder.Property(n => n.BodyAr).HasMaxLength(2000);
         builder.Property(n => n.Type).HasMaxLength(50).IsRequired();
 
         builder.HasIndex(n => new { n.UserId, n.IsRead });
