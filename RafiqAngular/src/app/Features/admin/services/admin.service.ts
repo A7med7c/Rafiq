@@ -26,7 +26,11 @@ import {
   ReviewStats,
   ReviewStatus,
   ReviewTrendPoint,
-  UpdateAiFeedbackRequest
+  TakeUsageActionRequest,
+  UpdateAiFeedbackRequest,
+  UsageAttentionUser,
+  UsageIntelligenceOverview,
+  UsageUserDetail
 } from '../models/admin.models';
 
 @Injectable({ providedIn: 'root' })
@@ -174,6 +178,33 @@ export class AdminService {
 
   replyToReview(id: string, reply: string | null): Observable<ApiResponseBase> {
     return this.http.post<ApiResponseBase>(`${this.reviewsBase}/${id}/reply`, { reply });
+  }
+
+  // ── Usage Intelligence ───────────────────────────────────────────────────
+
+  private readonly usageBase = `${this.baseUrl}/usage-intelligence`;
+
+  getUsageIntelligenceOverview(): Observable<UsageIntelligenceOverview> {
+    return this.http
+      .get<ApiResponse<UsageIntelligenceOverview>>(`${this.usageBase}/overview`)
+      .pipe(map(r => r.data));
+  }
+
+  getUsageAttentionQueue(page = 1, pageSize = 20): Observable<PagedResult<UsageAttentionUser>> {
+    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    return this.http
+      .get<ApiResponse<PagedResult<UsageAttentionUser>>>(`${this.usageBase}/attention-queue`, { params })
+      .pipe(map(r => r.data));
+  }
+
+  getUsageUserDetail(userId: string): Observable<UsageUserDetail> {
+    return this.http
+      .get<ApiResponse<UsageUserDetail>>(`${this.usageBase}/users/${userId}`)
+      .pipe(map(r => r.data));
+  }
+
+  takeUsageAction(userId: string, body: TakeUsageActionRequest): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(`${this.usageBase}/users/${userId}/actions`, body);
   }
 
   // ── Audit Logs ───────────────────────────────────────────────────────────

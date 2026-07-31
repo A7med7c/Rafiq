@@ -293,6 +293,65 @@ export interface AdminReviewQuery {
   sortBy?: string;
 }
 
+// ── Usage Intelligence ─────────────────────────────────────────────────────
+
+export interface UsageIntelligenceOverview {
+  totalAiRequests: number;
+  flaggedRequests: number;
+  usersNeedingReview: number;
+  warningsSent: number;
+}
+
+export interface UsageAttentionUser {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  profileImageUrl?: string | null;
+  totalRequests: number;
+  flaggedRequests: number;
+  warningsSent: number;
+  lastActivity?: string | null;
+}
+
+export interface UsageFlaggedRequest {
+  id: string;
+  requestType: string;
+  userRequest: string;
+  aiResponse: string;
+  classification: string;
+  reason: string;
+  createdAt: string;
+}
+
+export interface UsageAdminAction {
+  id: string;
+  actionType: string;
+  adminName: string;
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface UsageUserDetail {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  profileImageUrl?: string | null;
+  totalRequests: number;
+  flaggedRequests: number;
+  warningsSent: number;
+  lastActivity?: string | null;
+  isAiRestricted: boolean;
+  isRestricted: boolean;
+  isSuspended: boolean;
+  flaggedItems: UsageFlaggedRequest[];
+  actionHistory: UsageAdminAction[];
+}
+
+export interface TakeUsageActionRequest {
+  actionType: string;
+  notes?: string | null;
+}
+
 // ── Audit Logs ─────────────────────────────────────────────────────────────
 
 export type AuditSeverity = 'Info' | 'Success' | 'Warning' | 'Critical';

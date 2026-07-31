@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Rafiq.Application.Common.Interfaces;
+using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.AiChat.Commands.ArchiveConversation;
 using Rafiq.Application.Features.AiChat.Commands.CreateConversation;
 using Rafiq.Application.Features.AiChat.Commands.GenerateConversationTitle;
@@ -20,10 +22,14 @@ namespace Rafiq.API.Controllers;
 public class AiChatController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IUserStatusService _userStatusService;
 
-    public AiChatController(IMediator mediator)
+    public AiChatController(IMediator mediator, ICurrentUserService currentUserService, IUserStatusService userStatusService)
     {
         _mediator = mediator;
+        _currentUserService = currentUserService;
+        _userStatusService = userStatusService;
     }
 
     /// <summary>
@@ -143,7 +149,24 @@ public class AiChatController : ControllerBase
             cancellationToken);
         return Ok(result);
     }
+
+    /// <summary>
+    /// Returns whether the current user's AI access is restricted.
+    /// Called by the frontend before sending any message to decide whether to lock the chat UI.
+    /// </summary>
+    [HttpGet("ai-status")]
+    public async Task<IActionResult> GetMyAiStatus(CancellationToken cancellationToken)
+    {
+        var userId = _currentUserService.UserId;
+        if (userId is null)
+            return Ok(ApiResponse<AiAccessStatusDto>.SuccessResponse(new AiAccessStatusDto(false)));
+
+        var status = await _userStatusService.GetStatusAsync(userId.Value, cancellationToken);
+        return Ok(ApiResponse<AiAccessStatusDto>.SuccessResponse(new AiAccessStatusDto(status?.IsAiRestricted ?? false)));
+    }
 }
+
+public sealed record AiAccessStatusDto(bool IsAiRestricted);
 
 public sealed class CreateConversationRequest
 {

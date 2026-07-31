@@ -502,6 +502,12 @@ export const en = {
       'Generate my medical report.',
       'What foods suit my health condition?',
     ],
+    aiRestrictedTitle: 'AI Access Restricted',
+    aiRestrictedMessage: 'Your access to Rafiq AI has been restricted by an administrator. You cannot use the AI assistant until the restriction is removed. Please contact support if you believe this is a mistake.',
+    validationEmpty: 'Please enter a message before sending.',
+    validationTooShort: 'Your message is too short. Please write a more complete question.',
+    validationGibberish: 'Your message doesn\'t look like a real question. Please describe what you need in plain words.',
+    validationRepetitive: 'Your message appears to be repetitive. Please write a clear, specific question.',
   },
 
   appointments: {

@@ -17,7 +17,8 @@ public sealed class ProcessVoiceMessageCommandHandler(
     VoiceAgentLoop agentLoop,
     INotificationService notificationService,
     IUnitOfWork unitOfWork,
-    IAiTelemetryContext telemetryContext)
+    IAiTelemetryContext telemetryContext,
+    IRequestClassificationJobService classificationJobService)
     : IRequestHandler<ProcessVoiceMessageCommand, ApiResponse<VoiceAgentResponseDto>>
 {
     public async Task<ApiResponse<VoiceAgentResponseDto>> Handle(
@@ -104,6 +105,14 @@ public sealed class ProcessVoiceMessageCommandHandler(
             // Push the completed response via SignalR so the frontend receives it regardless
             // of whether this handler was called synchronously or from a background task.
             await TrySendResponseAsync(userIdString, dto, cancellationToken);
+
+            // Fire-and-forget: classify the voice request for usage intelligence (non-blocking).
+            if (!string.IsNullOrWhiteSpace(request.Text) && !string.IsNullOrWhiteSpace(dto.Response))
+            {
+                classificationJobService.EnqueueClassification(
+                    userId, "Voice", request.Text, dto.Response);
+            }
+
             return ApiResponse<VoiceAgentResponseDto>.SuccessResponse(dto);
         }
 

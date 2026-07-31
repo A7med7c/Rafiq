@@ -18,6 +18,7 @@ public sealed class ChatMessageProcessorJob(
     INotificationService notificationService,
     IUnitOfWork unitOfWork,
     IBackgroundUserContext backgroundUserContext,
+    IBackgroundJobClient backgroundJobClient,
     ILogger<ChatMessageProcessorJob> logger)
 {
     // No automatic retries — a failed AI call should show the user an error message,
@@ -122,6 +123,13 @@ public sealed class ChatMessageProcessorJob(
             assistantMsg.Complete(!string.IsNullOrWhiteSpace(finalText) ? finalText : "…");
             session.MarkMessageActivity(DateTime.UtcNow);
             await unitOfWork.SaveChangesAsync(CancellationToken.None);
+
+            // Fire-and-forget: classify the request for usage intelligence (non-blocking).
+            if (!string.IsNullOrWhiteSpace(userText) && !string.IsNullOrWhiteSpace(finalText))
+            {
+                backgroundJobClient.Enqueue<AiRequestClassificationJob>(
+                    j => j.ExecuteAsync(userId, "Chat", userText, finalText));
+            }
 
             // Notify the frontend via SignalR (non-fatal if the user is offline).
             try

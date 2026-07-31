@@ -16,3 +16,11 @@ public interface IChatBackgroundJobService
         string language,
         int utcOffsetMinutes);
 }
+
+/// <summary>
+/// Queues an AI request classification job without coupling the Application layer to Hangfire.
+/// </summary>
+public interface IRequestClassificationJobService
+{
+    void EnqueueClassification(Guid userId, string requestType, string userRequest, string aiResponse);
+}

@@ -137,6 +137,13 @@ public static class DependencyInjection
         services.AddScoped<ChatMessageProcessorJob>();
         services.AddScoped<IChatBackgroundJobService, ChatBackgroundJobService>();
 
+        // ── Usage Intelligence ────────────────────────────────────────────
+        services.AddScoped<IAiRequestClassifier, AiRequestClassifier>();
+        services.AddScoped<IUsageIntelligenceService, UsageIntelligenceService>();
+        services.AddScoped<IUserStatusService, UserStatusService>();
+        services.AddScoped<AiRequestClassificationJob>();
+        services.AddScoped<IRequestClassificationJobService, RequestClassificationJobService>();
+
         // ── Hangfire ──────────────────────────────────────────────────────
         var connectionString = configuration.GetConnectionString("DefaultConnection")!;
 

@@ -11,6 +11,15 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     public bool IsActive { get; set; } = true;
 
+    /// <summary>Set by admin via Usage Intelligence. Blocks AI features; user can still use the app.</summary>
+    public bool IsAiRestricted { get; set; }
+
+    /// <summary>Set by admin via Usage Intelligence. Blocks all authenticated API access; user can still attempt login.</summary>
+    public bool IsRestricted { get; set; }
+
+    /// <summary>Set by admin via Usage Intelligence. Blocks login and all authenticated API access.</summary>
+    public bool IsSuspended { get; set; }
+
     public bool IsDeleted { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
