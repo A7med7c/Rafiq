@@ -9,6 +9,8 @@ export interface PersistedNotification {
   id: string;
   title: string;
   body: string;
+  titleAr?: string;
+  bodyAr?: string;
   type: string;
   isRead: boolean;
   readAt: string | null;

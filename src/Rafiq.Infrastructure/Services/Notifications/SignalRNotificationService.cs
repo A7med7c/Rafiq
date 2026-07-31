@@ -26,12 +26,13 @@ namespace Rafiq.Infrastructure.Services.Notifications
             string userId,
             string title,
             string message,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            string? titleAr = null,
+            string? bodyAr = null)
         {
             await _hubContext.Clients.User(userId).SendAsync(
                 "ReceiveNotification",
-                title,
-                message,
+                new { title, message, titleAr, bodyAr },
                 cancellationToken);
         }
 

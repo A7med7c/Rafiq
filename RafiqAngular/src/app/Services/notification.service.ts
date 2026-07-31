@@ -6,11 +6,14 @@ import { MedicationRemindersService } from './medication-reminders.service';
 import { AppointmentReminderNotificationPayload, MedicationReminderNotificationPayload, NotificationEventPayload, SignalRService } from './signalr.service';
 import { NotificationSoundService } from './notification-sound.service';
 import { PersistedNotificationsService } from './persisted-notifications.service';
+import { LocalizationService } from './localization.service';
 
 export interface AppNotification {
   id: string;
   title: string;
   body: string;
+  titleAr?: string;
+  bodyAr?: string;
   type: 'appointment' | 'reminder' | 'confirmation' | 'system';
   createdAt: Date;
   read: boolean;
@@ -44,6 +47,8 @@ interface StoredAppNotification {
   id: string;
   title: string;
   body: string;
+  titleAr?: string;
+  bodyAr?: string;
   type: AppNotification['type'];
   createdAt: string;
   read: boolean;
@@ -61,6 +66,7 @@ export class NotificationService {
   private readonly appointmentsService = inject(AppointmentsService);
   private readonly notificationSoundService = inject(NotificationSoundService);
   private readonly persistedSvc = inject(PersistedNotificationsService);
+  private readonly localization = inject(LocalizationService);
 
   private readonly router = inject(Router);
   private readonly ngZone = inject(NgZone);
@@ -113,17 +119,21 @@ export class NotificationService {
   readonly centerFilter = signal<NotificationCenterFilter>('all');
   readonly visibleNotifications = computed(() => {
     const filter = this.centerFilter();
-    const list = this.notifications();
+    const isAr = this.localization.lang() === 'ar';
+    const list = this.notifications().map(n => isAr
+      ? { ...n, title: n.titleAr ?? n.title, body: n.bodyAr ?? n.body }
+      : n
+    );
 
     switch (filter) {
       case 'unread':
-        return list.filter(notification => !notification.read);
+        return list.filter(n => !n.read);
       case 'read':
-        return list.filter(notification => notification.read);
+        return list.filter(n => n.read);
       case 'reminders':
-        return list.filter(notification => notification.type === 'reminder');
+        return list.filter(n => n.type === 'reminder');
       case 'confirmations':
-        return list.filter(notification => notification.type === 'confirmation');
+        return list.filter(n => n.type === 'confirmation');
       default:
         return list;
     }
@@ -285,21 +295,24 @@ export class NotificationService {
         this.markReadBySourceId(reminder.reminderId);
 
         if (!res.success) {
+          const nc = this.localization.t().notifications;
           this.showToast(
-            'Already up to date',
+            nc.alreadyUpToDate,
             res.message || `${reminder.medicineName} has already been updated.`,
             'info'
           );
         } else {
+          const nc = this.localization.t().notifications;
           this.pushDerivedNotification({
-            title: `${reminder.medicineName} confirmed`,
+            title: nc.medicationConfirmed,
             body: reminder.notificationText || `You confirmed taking ${reminder.medicineName}.`,
             type: 'confirmation',
             sourceId: reminder.reminderId,
           });
+          const ncAfter = this.localization.t().notifications;
           this.showToast(
-            'Medication Confirmed',
-            `${reminder.medicineName} has been marked as taken.`,
+            ncAfter.medicationConfirmed,
+            ncAfter.medicationConfirmedBody.replace('{name}', reminder.medicineName),
             'success'
           );
         }
@@ -310,9 +323,10 @@ export class NotificationService {
       },
       error: err => {
         this._confirmingReminder.set(false);
+        const nc = this.localization.t().notifications;
         this.showToast(
-          'Could not confirm medication',
-          err?.error?.message || `We could not confirm ${reminder.medicineName}. Please try again.`,
+          nc.couldNotConfirmMedication,
+          err?.error?.message || nc.couldNotConfirmMedBody.replace('{name}', reminder.medicineName),
           'error'
         );
       },
@@ -457,7 +471,7 @@ export class NotificationService {
     this._reminderQueue.update(queue => [...queue, reminder]);
     this._reminderModalOpen.set(true);
     this.showToast(
-      'Medication Reminder Toast',
+      this.localization.t().notifications.medicationReminderToast,
       `${reminder.medicineName} • ${reminder.reminderTime}`,
       'info',
       { sourceId: reminder.reminderId, action: 'open-reminder' }
@@ -477,13 +491,18 @@ export class NotificationService {
   }
 
   private recordNotificationEvent(event: NotificationEventPayload): void {
+    const isAr = this.localization.lang() === 'ar';
     const notification = this.pushDerivedNotification({
       title: event.title,
       body: event.message,
+      titleAr: event.titleAr,
+      bodyAr: event.bodyAr,
       type: 'system',
     });
 
-    this.showToast(notification.title, notification.body, 'info');
+    const displayTitle = isAr ? (event.titleAr ?? notification.title) : notification.title;
+    const displayBody  = isAr ? (event.bodyAr  ?? notification.body)  : notification.body;
+    this.showToast(displayTitle, displayBody, 'info');
   }
 
   private recordAppointmentReminder(event: AppointmentReminderNotificationPayload): void {
@@ -493,9 +512,11 @@ export class NotificationService {
 
     this.processedReminderIds.add(event.appointmentId);
 
+    const nc = this.localization.t().notifications;
     this.pushDerivedNotification({
-      title: 'Appointment Reminder',
+      title: nc.appointmentReminder,
       body: event.notificationText || `Upcoming appointment: ${event.title} with ${event.provider}`,
+      titleAr: nc.appointmentReminder,
       type: 'appointment',
       sourceId: event.appointmentId,
     });
@@ -745,22 +766,30 @@ export class NotificationService {
         this.markReadBySourceId(appointmentId);
         this.dismissAppointmentToast(appointmentId);
 
+        const nc = this.localization.t().notifications;
         this.pushDerivedNotification({
-          title: 'Appointment confirmed',
-          body: `${reminder.title} with ${reminder.provider} – marked as completed.`,
+          title: nc.appointmentConfirmedNotifTitle,
+          body: nc.appointmentConfirmedNotifBody
+            .replace('{title}', reminder.title)
+            .replace('{provider}', reminder.provider),
           type: 'confirmation',
           sourceId: appointmentId,
         });
 
-        this.showToast('Appointment Confirmed', `${reminder.title} marked as completed.`, 'success');
+        this.showToast(
+          nc.appointmentConfirmed,
+          nc.appointmentConfirmedBody.replace('{title}', reminder.title),
+          'success'
+        );
         this._confirmingAppointment.set(false);
         this.notifyAppointmentChanged();
       },
       error: err => {
         this._confirmingAppointment.set(false);
+        const nc = this.localization.t().notifications;
         this.showToast(
-          'Could not confirm appointment',
-          err?.error?.message || `We could not confirm ${reminder.title}. Please try again.`,
+          nc.couldNotConfirmAppointment,
+          err?.error?.message || nc.couldNotConfirmApptBody.replace('{title}', reminder.title),
           'error'
         );
       },
@@ -840,6 +869,8 @@ export class NotificationService {
       id: notification.id,
       title: notification.title,
       body: notification.body,
+      titleAr: notification.titleAr,
+      bodyAr: notification.bodyAr,
       type: notification.type,
       createdAt: notification.createdAt.toISOString(),
       read: notification.read,
@@ -866,6 +897,8 @@ export class NotificationService {
         id: notification.id,
         title: notification.title,
         body: notification.body,
+        titleAr: notification.titleAr,
+        bodyAr: notification.bodyAr,
         type: notification.type,
         createdAt: new Date(notification.createdAt),
         read: notification.read,
@@ -895,6 +928,8 @@ export class NotificationService {
             serverId: n.id,
             title: n.title,
             body: n.body,
+            titleAr: n.titleAr ?? undefined,
+            bodyAr: n.bodyAr ?? undefined,
             type: 'system' as const,
             createdAt: new Date(n.createdAt),
             read: n.isRead,

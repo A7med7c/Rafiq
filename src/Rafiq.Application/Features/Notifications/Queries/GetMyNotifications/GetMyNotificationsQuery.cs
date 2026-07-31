@@ -7,6 +7,8 @@ public record UserNotificationDto(
     Guid Id,
     string Title,
     string Body,
+    string? TitleAr,
+    string? BodyAr,
     string Type,
     bool IsRead,
     DateTime? ReadAt,

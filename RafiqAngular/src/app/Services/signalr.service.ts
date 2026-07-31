@@ -18,6 +18,8 @@ export interface MedicationReminderNotificationPayload {
 export interface NotificationEventPayload {
   title: string;
   message: string;
+  titleAr?: string;
+  bodyAr?: string;
 }
 
 export interface AppointmentReminderNotificationPayload {
@@ -138,8 +140,8 @@ export class SignalRService {
       this.reminderEvents.update((currentQueue) => [...currentQueue, payload]);
     });
 
-    this.connection.on('ReceiveNotification', (title: string, message: string) => {
-      this.notificationEvents.update((currentQueue) => [...currentQueue, { title, message }]);
+    this.connection.on('ReceiveNotification', (payload: NotificationEventPayload) => {
+      this.notificationEvents.update((currentQueue) => [...currentQueue, payload]);
     });
 
     this.connection.on('AppointmentReminderDue', (payload: AppointmentReminderNotificationPayload) => {

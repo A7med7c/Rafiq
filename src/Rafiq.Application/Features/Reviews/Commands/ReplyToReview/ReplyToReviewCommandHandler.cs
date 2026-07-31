@@ -49,9 +49,11 @@ public sealed class ReplyToReviewCommandHandler
         {
             var notification = new UserNotification(
                 userId: review.UserId,
-                title: "رد على تقييمك",
+                title: "Reply to Your Review",
                 body: request.Reply,
-                type: "review_reply");
+                type: "review_reply",
+                titleAr: "رد على تقييمك",
+                bodyAr: request.Reply);
 
             await _notifRepo.AddAsync(notification, cancellationToken);
         }
@@ -63,9 +65,11 @@ public sealed class ReplyToReviewCommandHandler
         {
             await _signalR.SendNotificationToUserAsync(
                 review.UserId.ToString(),
-                "رد على تقييمك",
+                "Reply to Your Review",
                 request.Reply,
-                cancellationToken);
+                cancellationToken,
+                titleAr: "رد على تقييمك",
+                bodyAr: request.Reply);
         }
 
         if (_currentUser.UserId.HasValue && request.Reply is not null)

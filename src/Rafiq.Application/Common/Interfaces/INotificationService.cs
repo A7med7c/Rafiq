@@ -57,7 +57,9 @@ namespace Rafiq.Application.Common.Interfaces
             string userId,
             string title,
             string message,
-            CancellationToken cancellationToken = default);
+            CancellationToken cancellationToken = default,
+            string? titleAr = null,
+            string? bodyAr = null);
 
         Task SendMedicationReminderAsync(
             string userId,

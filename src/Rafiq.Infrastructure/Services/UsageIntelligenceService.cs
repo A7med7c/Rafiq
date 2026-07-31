@@ -153,35 +153,55 @@ public sealed class UsageIntelligenceService(
         var action = AiUsageAction.Create(targetUserId, adminId, adminName, dto.ActionType, dto.Notes);
         db.AiUsageActions.Add(action);
 
-        // Build notification content
-        var (title, body) = dto.ActionType switch
+        // Build notification content (EN + AR)
+        var (title, body, titleAr, bodyAr) = dto.ActionType switch
         {
             "Warning"                 => ("⚠️ Usage Warning",
-                                         "You have received a warning regarding your AI usage on Rafiq. Please use the AI features for health-related topics only."),
+                                         "You have received a warning regarding your AI usage on Rafiq. Please use the AI features for health-related topics only.",
+                                         "⚠️ تحذير استخدام",
+                                         "لقد تلقيت تحذيرًا بشأن استخدامك للذكاء الاصطناعي على رفيق. يرجى استخدام ميزات الذكاء الاصطناعي للمواضيع الصحية فقط."),
             "FinalWarning"            => ("🚨 Final Warning",
-                                         "You have received a final warning regarding your AI usage. Further policy violations may result in access restrictions."),
+                                         "You have received a final warning regarding your AI usage. Further policy violations may result in access restrictions.",
+                                         "🚨 تحذير أخير",
+                                         "لقد تلقيت تحذيرًا نهائيًا بشأن استخدامك للذكاء الاصطناعي. قد تؤدي الانتهاكات المستقبلية إلى تقييد وصولك."),
             "RestrictAi"              => ("AI Access Restricted",
-                                         "Your AI access has been restricted by an administrator. Please contact support for assistance."),
+                                         "Your AI access has been restricted by an administrator. Please contact support for assistance.",
+                                         "تم تقييد وصولك للذكاء الاصطناعي",
+                                         "تم تقييد وصولك إلى الذكاء الاصطناعي من قِبَل المسؤول. يرجى التواصل مع الدعم للمساعدة."),
             "RemoveAiRestriction"     => ("AI Access Restored",
-                                         "Your AI access has been restored by an administrator."),
+                                         "Your AI access has been restored by an administrator.",
+                                         "تمت استعادة وصولك للذكاء الاصطناعي",
+                                         "تمت استعادة وصولك إلى الذكاء الاصطناعي من قِبَل المسؤول."),
             "RestrictAccount"         => ("Account Restricted",
-                                         "Your account has been restricted by an administrator. Please contact support for assistance."),
+                                         "Your account has been restricted by an administrator. Please contact support for assistance.",
+                                         "تم تقييد حسابك",
+                                         "تم تقييد حسابك من قِبَل المسؤول. يرجى التواصل مع الدعم للمساعدة."),
             "RemoveAccountRestriction"=> ("Account Restriction Removed",
-                                         "Your account restriction has been removed by an administrator."),
+                                         "Your account restriction has been removed by an administrator.",
+                                         "تمت إزالة قيود الحساب",
+                                         "تمت إزالة قيود حسابك من قِبَل المسؤول."),
             "SuspendAccount"          => ("Account Suspended",
-                                         "Your account has been suspended by an administrator. Please contact support for further information."),
+                                         "Your account has been suspended by an administrator. Please contact support for further information.",
+                                         "تم تعليق حسابك",
+                                         "تم تعليق حسابك من قِبَل المسؤول. يرجى التواصل مع الدعم لمزيد من المعلومات."),
             "UnsuspendAccount"        => ("Account Unsuspended",
-                                         "Your account has been unsuspended by an administrator. You may now log in again."),
-            _                         => ("Administrator Notice", "You have received a notice from the Rafiq administration team.")
+                                         "Your account has been unsuspended by an administrator. You may now log in again.",
+                                         "تمت إعادة تفعيل حسابك",
+                                         "تمت إعادة تفعيل حسابك من قِبَل المسؤول. يمكنك تسجيل الدخول مرة أخرى الآن."),
+            _                         => ("Administrator Notice",
+                                         "You have received a notice from the Rafiq administration team.",
+                                         "إشعار من الإدارة",
+                                         "لقد تلقيت إشعارًا من فريق إدارة رفيق.")
         };
 
-        db.UserNotifications.Add(new UserNotification(targetUserId, title, body, "admin"));
+        db.UserNotifications.Add(new UserNotification(targetUserId, title, body, "admin", titleAr, bodyAr));
         await db.SaveChangesAsync(ct);
 
         // Push via SignalR (best-effort)
         try
         {
-            await notificationService.SendNotificationToUserAsync(targetUserId.ToString(), title, body, ct);
+            await notificationService.SendNotificationToUserAsync(targetUserId.ToString(), title, body, ct,
+                titleAr: titleAr, bodyAr: bodyAr);
         }
         catch (Exception ex)
         {
