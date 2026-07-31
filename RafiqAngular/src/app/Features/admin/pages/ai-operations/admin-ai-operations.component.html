@@ -30,6 +30,11 @@
       (click)="switchTab('performance')">
       <i class="fa-solid fa-chart-line"></i> {{ copy().tabPerformance }}
     </button>
+    <button type="button" role="tab" class="aio__tab"
+      [class.aio__tab--active]="activeTab() === 'usageIntelligence'"
+      (click)="switchTab('usageIntelligence')">
+      <i class="fa-solid fa-shield-halved"></i> {{ copy().tabUsageIntelligence }}
+    </button>
   </nav>
 
   <!-- ════════════════════════════════════════════════════════════════
@@ -783,6 +788,370 @@
           <p>{{ copy().noPerformanceData }}</p>
         </div>
       }
+    }
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════
+       TAB: USAGE INTELLIGENCE
+  ════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'usageIntelligence') {
+
+    <!-- ── USER DETAIL VIEW ─────────────────────────────────────────── -->
+    @if (uiSelectedUser() || uiDetailLoading() || uiDetailError()) {
+
+      <div class="ui-detail">
+        <!-- Back -->
+        <button type="button" class="ui-back-btn" (click)="backToQueue()">
+          <i class="fa-solid fa-arrow-left"></i> {{ copy().uiBack }}
+        </button>
+
+        @if (uiDetailLoading()) {
+          <div class="aio__empty">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <p>{{ copy().uiLoadingUser }}</p>
+          </div>
+        } @else if (uiDetailError()) {
+          <div class="aio__empty">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <p>{{ copy().loadError }}</p>
+          </div>
+        } @else if (uiSelectedUser(); as u) {
+
+          <!-- User header -->
+          <div class="ui-user-hdr">
+            @if (u.profileImageUrl) {
+              <img class="ui-user-av" [src]="u.profileImageUrl" [alt]="u.userName">
+            } @else {
+              <div class="ui-user-av ui-user-av--initials">
+                {{ u.userName.charAt(0).toUpperCase() }}
+              </div>
+            }
+            <div>
+              <div class="ui-user-name">{{ u.userName }}</div>
+              <div class="ui-user-email">{{ u.userEmail }}</div>
+              <div class="ui-user-stats">
+                <span><i class="fa-solid fa-robot"></i> {{ u.totalRequests }}</span>
+                <span class="ui-stat--flag"><i class="fa-solid fa-flag"></i> {{ u.flaggedRequests }}</span>
+                <span><i class="fa-solid fa-triangle-exclamation"></i> {{ u.warningsSent }}</span>
+              </div>
+              @if (u.isAiRestricted || u.isRestricted || u.isSuspended) {
+                <div class="ui-status-badges">
+                  @if (u.isAiRestricted) {
+                    <span class="pill pill--orange"><i class="fa-solid fa-ban"></i> {{ copy().uiStatusAiRestricted }}</span>
+                  }
+                  @if (u.isRestricted) {
+                    <span class="pill pill--red"><i class="fa-solid fa-lock"></i> {{ copy().uiStatusRestricted }}</span>
+                  }
+                  @if (u.isSuspended) {
+                    <span class="pill pill--red"><i class="fa-solid fa-user-slash"></i> {{ copy().uiStatusSuspended }}</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Flagged requests table -->
+          <div class="ui-section">
+            <h3 class="ui-section-title">
+              <i class="fa-solid fa-flag"></i> {{ copy().uiUserDetail }}
+              <span class="ui-section-sub">{{ copy().uiUserDetailSub }}</span>
+            </h3>
+
+            @if (u.flaggedItems.length === 0) {
+              <div class="aio__empty">
+                <i class="fa-solid fa-check-circle"></i>
+                <p>{{ copy().uiNoFlagged }}</p>
+              </div>
+            } @else {
+              <div class="ui-flagged-list">
+                @for (item of u.flaggedItems; track item.id) {
+                  <div class="ui-flagged-card">
+                    <div class="ui-flagged-card__head">
+                      <span class="pill" [class]="classificationPillClass(item.classification)">
+                        {{ classificationLabel(item.classification) }}
+                      </span>
+                      <span class="ui-req-type">{{ item.requestType }}</span>
+                      <span class="ui-flagged-date">{{ formatDate(item.createdAt) }}</span>
+                    </div>
+                    <div class="ui-flagged-card__body">
+                      <div class="ui-flagged-row">
+                        <span class="ui-flagged-lbl">{{ copy().uiColUserRequest }}</span>
+                        <span class="ui-flagged-val">{{ item.userRequest }}</span>
+                      </div>
+                      <div class="ui-flagged-row">
+                        <span class="ui-flagged-lbl">{{ copy().uiColAiResponse }}</span>
+                        <span class="ui-flagged-val">{{ item.aiResponse }}</span>
+                      </div>
+                      <div class="ui-flagged-row">
+                        <span class="ui-flagged-lbl">{{ copy().uiColReason }}</span>
+                        <span class="ui-flagged-val ui-flagged-val--reason">{{ item.reason }}</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Admin action history -->
+          <div class="ui-section">
+            <h3 class="ui-section-title">
+              <i class="fa-solid fa-clock-rotate-left"></i> {{ copy().uiActionHistory }}
+            </h3>
+            @if (u.actionHistory.length === 0) {
+              <p class="ui-empty-sub">{{ copy().uiNoActions }}</p>
+            } @else {
+              <table class="aio-table">
+                <thead>
+                  <tr>
+                    <th>{{ copy().uiColAction }}</th>
+                    <th>{{ copy().uiColAdmin }}</th>
+                    <th>{{ copy().uiColNotes }}</th>
+                    <th>{{ copy().date }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (action of u.actionHistory; track action.id) {
+                    <tr>
+                      <td>
+                        <span class="pill" [class]="actionPillClass(action.actionType)">
+                          {{ actionLabel(action.actionType) }}
+                        </span>
+                      </td>
+                      <td>{{ action.adminName }}</td>
+                      <td class="ui-notes-cell">{{ action.notes ?? '—' }}</td>
+                      <td>{{ formatDate(action.createdAt) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+
+          <!-- Admin actions panel -->
+          <div class="ui-actions-panel">
+            <h3 class="ui-section-title"><i class="fa-solid fa-gavel"></i> Admin Actions</h3>
+
+            @if (uiActionMsg()) {
+              <div class="ui-action-msg" [class.ui-action-msg--ok]="uiActionMsgOk()" [class.ui-action-msg--err]="!uiActionMsgOk()">
+                <i class="fa-solid" [class.fa-circle-check]="uiActionMsgOk()" [class.fa-circle-xmark]="!uiActionMsgOk()"></i>
+                {{ uiActionMsg() }}
+              </div>
+            }
+
+            @if (!uiConfirmAction()) {
+              <!-- Action buttons -->
+              <div class="ui-action-btns">
+                <button type="button" class="ui-action-btn ui-action-btn--warn"
+                  (click)="confirmAdminAction('Warning')">
+                  <i class="fa-solid fa-triangle-exclamation"></i> {{ copy().uiSendWarning }}
+                </button>
+                <button type="button" class="ui-action-btn ui-action-btn--final"
+                  (click)="confirmAdminAction('FinalWarning')">
+                  <i class="fa-solid fa-circle-exclamation"></i> {{ copy().uiSendFinalWarning }}
+                </button>
+
+                @if (u.isAiRestricted) {
+                  <button type="button" class="ui-action-btn ui-action-btn--remove"
+                    (click)="confirmAdminAction('RemoveAiRestriction')">
+                    <i class="fa-solid fa-circle-check"></i> {{ copy().uiRemoveAiRestriction }}
+                  </button>
+                } @else {
+                  <button type="button" class="ui-action-btn ui-action-btn--restrict"
+                    (click)="confirmAdminAction('RestrictAi')">
+                    <i class="fa-solid fa-ban"></i> {{ copy().uiRestrictAi }}
+                  </button>
+                }
+
+                @if (u.isRestricted) {
+                  <button type="button" class="ui-action-btn ui-action-btn--remove"
+                    (click)="confirmAdminAction('RemoveAccountRestriction')">
+                    <i class="fa-solid fa-lock-open"></i> {{ copy().uiRemoveAccountRestriction }}
+                  </button>
+                } @else {
+                  <button type="button" class="ui-action-btn ui-action-btn--restrict"
+                    (click)="confirmAdminAction('RestrictAccount')">
+                    <i class="fa-solid fa-lock"></i> {{ copy().uiRestrictAccount }}
+                  </button>
+                }
+
+                @if (u.isSuspended) {
+                  <button type="button" class="ui-action-btn ui-action-btn--remove"
+                    (click)="confirmAdminAction('UnsuspendAccount')">
+                    <i class="fa-solid fa-user-check"></i> {{ copy().uiUnsuspendAccount }}
+                  </button>
+                } @else {
+                  <button type="button" class="ui-action-btn ui-action-btn--suspend"
+                    (click)="confirmAdminAction('SuspendAccount')">
+                    <i class="fa-solid fa-user-slash"></i> {{ copy().uiSuspendAccount }}
+                  </button>
+                }
+              </div>
+            } @else {
+              <!-- Confirmation form -->
+              <div class="ui-confirm-box">
+                <p class="ui-confirm-label">
+                  <i class="fa-solid fa-circle-info"></i>
+                  Confirm: <strong>{{ actionLabel(uiConfirmAction()) }}</strong> for <strong>{{ u.userName }}</strong>
+                </p>
+                <textarea
+                  class="ui-notes-input"
+                  rows="2"
+                  [placeholder]="copy().uiActionNotesPlaceholder"
+                  [ngModel]="uiActionNotes()"
+                  (ngModelChange)="uiActionNotes.set($event)">
+                </textarea>
+                <div class="ui-confirm-btns">
+                  <button type="button" class="btn-retry" (click)="submitAdminAction()" [disabled]="uiActioning()">
+                    @if (uiActioning()) {
+                      <i class="fa-solid fa-circle-notch fa-spin"></i> {{ copy().uiActionSending }}
+                    } @else {
+                      <i class="fa-solid fa-check"></i> {{ copy().uiConfirmAction }}
+                    }
+                  </button>
+                  <button type="button" class="ui-cancel-btn" (click)="cancelAdminAction()" [disabled]="uiActioning()">
+                    {{ copy().uiCancelAction }}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    } @else {
+
+      <!-- ── QUEUE VIEW ────────────────────────────────────────────── -->
+
+      <!-- Overview KPI cards -->
+      @if (uiOverviewLoading()) {
+        <div class="ov-kpi-row">
+          @for (_ of [1,2,3,4]; track $index) {
+            <div class="kpi-skeleton"></div>
+          }
+        </div>
+      } @else if (uiOverviewError()) {
+        <div class="aio__empty">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <p>{{ copy().loadError }}</p>
+          <button type="button" class="btn-retry" (click)="loadUiOverview()">{{ copy().retry }}</button>
+        </div>
+      } @else if (uiOverview(); as ov) {
+        <div class="ov-kpi-row ui-kpi-row">
+          <div class="ov-kpi-tile">
+            <div class="ov-kpi-tile__icon" style="background:#eff6ff">
+              <i class="fa-solid fa-robot" style="color:#3b82f6"></i>
+            </div>
+            <div class="ov-kpi-tile__val">{{ ov.totalAiRequests | number }}</div>
+            <div class="ov-kpi-tile__lbl">{{ copy().uiTotalRequests }}</div>
+          </div>
+          <div class="ov-kpi-tile">
+            <div class="ov-kpi-tile__icon" style="background:#fef2f2">
+              <i class="fa-solid fa-flag" style="color:#ef4444"></i>
+            </div>
+            <div class="ov-kpi-tile__val">{{ ov.flaggedRequests | number }}</div>
+            <div class="ov-kpi-tile__lbl">{{ copy().uiFlaggedRequests }}</div>
+          </div>
+          <div class="ov-kpi-tile">
+            <div class="ov-kpi-tile__icon" style="background:#fff7ed">
+              <i class="fa-solid fa-users" style="color:#f97316"></i>
+            </div>
+            <div class="ov-kpi-tile__val">{{ ov.usersNeedingReview | number }}</div>
+            <div class="ov-kpi-tile__lbl">{{ copy().uiUsersToReview }}</div>
+          </div>
+          <div class="ov-kpi-tile">
+            <div class="ov-kpi-tile__icon" style="background:#fffbeb">
+              <i class="fa-solid fa-bell" style="color:#f59e0b"></i>
+            </div>
+            <div class="ov-kpi-tile__val">{{ ov.warningsSent | number }}</div>
+            <div class="ov-kpi-tile__lbl">{{ copy().uiWarningsSent }}</div>
+          </div>
+        </div>
+      }
+
+      <!-- Attention Queue -->
+      <div class="ui-queue-section">
+        <div class="ui-queue-header">
+          <h2 class="ui-queue-title"><i class="fa-solid fa-bell-concierge"></i> {{ copy().uiAttentionQueue }}</h2>
+          <p class="ui-queue-sub">{{ copy().uiAttentionQueueSub }}</p>
+        </div>
+
+        @if (uiQueueLoading()) {
+          <div class="aio__empty">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+          </div>
+        } @else if (uiQueueError()) {
+          <div class="aio__empty">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <p>{{ copy().loadError }}</p>
+            <button type="button" class="btn-retry" (click)="loadUiQueue()">{{ copy().retry }}</button>
+          </div>
+        } @else if (uiQueue().length === 0) {
+          <div class="aio__empty">
+            <i class="fa-solid fa-shield-check" style="color:#10b981"></i>
+            <p>{{ copy().uiEmptyQueue }}</p>
+            <p class="aio__empty-sub">{{ copy().uiEmptyQueueSub }}</p>
+          </div>
+        } @else {
+          <div class="aio-table-wrap">
+            <table class="aio-table">
+              <thead>
+                <tr>
+                  <th>{{ copy().uiColUser }}</th>
+                  <th>{{ copy().uiColTotalReq }}</th>
+                  <th>{{ copy().uiColFlagged }}</th>
+                  <th>{{ copy().uiColWarnings }}</th>
+                  <th>{{ copy().uiColLastActivity }}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (u of uiQueue(); track u.userId) {
+                  <tr>
+                    <td>
+                      <div class="req-user">
+                        @if (u.profileImageUrl) {
+                          <img class="req-user__av" [src]="u.profileImageUrl" [alt]="u.userName">
+                        } @else {
+                          <div class="req-user__av req-user__av--initials">{{ u.userName.charAt(0).toUpperCase() }}</div>
+                        }
+                        <div>
+                          <div class="req-user__name">{{ u.userName }}</div>
+                          <div class="req-user__email">{{ u.userEmail }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ u.totalRequests | number }}</td>
+                    <td>
+                      <span class="pill pill--red">{{ u.flaggedRequests }}</span>
+                    </td>
+                    <td>{{ u.warningsSent }}</td>
+                    <td>{{ u.lastActivity ? formatDate(u.lastActivity) : '—' }}</td>
+                    <td>
+                      <button type="button" class="btn-view" (click)="openUserDetail(u)">
+                        {{ copy().uiViewDetail }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          @if (uiQueueTotalPages() > 1) {
+            <div class="aio-pagination">
+              <button type="button" class="page-btn" [disabled]="uiQueuePage() <= 1" (click)="prevUiQueuePage()">
+                <i class="fa-solid fa-chevron-left"></i> {{ copy().previous }}
+              </button>
+              <span class="page-info">{{ copy().page }} {{ uiQueuePage() }} {{ copy().of }} {{ uiQueueTotalPages() }}</span>
+              <button type="button" class="page-btn" [disabled]="uiQueuePage() >= uiQueueTotalPages()" (click)="nextUiQueuePage()">
+                {{ copy().next }} <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          }
+        }
+      </div>
     }
   }
 

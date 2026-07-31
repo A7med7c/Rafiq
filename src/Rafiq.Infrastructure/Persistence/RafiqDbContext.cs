@@ -98,6 +98,10 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<AiRequestLog> AiRequestLogs => Set<AiRequestLog>();
 
+    public DbSet<AiFlaggedRequest> AiFlaggedRequests => Set<AiFlaggedRequest>();
+
+    public DbSet<AiUsageAction> AiUsageActions => Set<AiUsageAction>();
+
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

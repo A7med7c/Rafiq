@@ -1,4 +1,5 @@
 using MediatR;
+using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.VoiceAgent.DTOs;
 
@@ -17,4 +18,4 @@ public sealed record ProcessVoiceMessageCommand(
     Guid BackgroundUserId = default,
     /// <summary>Client's UTC offset in minutes (e.g. +180 for Egypt UTC+3).</summary>
     int UtcOffsetMinutes = 0)
-    : IRequest<ApiResponse<VoiceAgentResponseDto>>;
+    : IRequest<ApiResponse<VoiceAgentResponseDto>>, IAiCommand;

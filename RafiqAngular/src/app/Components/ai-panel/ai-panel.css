@@ -959,6 +959,30 @@
   flex-shrink: 0;
 }
 
+.ai-validation-bar {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+/* AI restriction banner inside the panel */
+.ai-restricted-banner {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #fff1f2; border: 1px solid #fecdd3; border-radius: 10px;
+  padding: 12px; margin: 0 0 4px;
+}
+.ai-restricted-icon { color: #dc2626; font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+.ai-restricted-body strong { display: block; font-size: 12px; color: #991b1b; margin-bottom: 3px; }
+.ai-restricted-body p { font-size: 11px; color: #7f1d1d; margin: 0; line-height: 1.5; }
+
 .ai-error-bar {
   background: #FEE2E2;
   color: #DC2626;

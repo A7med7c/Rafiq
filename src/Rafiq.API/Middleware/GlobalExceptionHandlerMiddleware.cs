@@ -47,6 +47,7 @@ public sealed class GlobalExceptionHandlerMiddleware
             BadRequestException badRequestException => (HttpStatusCode.BadRequest, badRequestException.Message, new[] { badRequestException.Message }, (string?)null),
             Rafiq.Domain.Exceptions.AuthenticationException authenticationException => (HttpStatusCode.Unauthorized, authenticationException.Message, new[] { authenticationException.Message }, (string?)null),
             UnauthorizedException unauthorizedException => (HttpStatusCode.Unauthorized, unauthorizedException.Message, new[] { unauthorizedException.Message }, (string?)null),
+            ForbiddenException forbiddenException => (HttpStatusCode.Forbidden, forbiddenException.Message, new[] { forbiddenException.Message }, (string?)null),
             NotFoundException notFoundException => (HttpStatusCode.NotFound, notFoundException.Message, new[] { notFoundException.Message }, (string?)null),
             ConflictException conflictException => (HttpStatusCode.Conflict, conflictException.Message, new[] { conflictException.Message }, (string?)null),
             ExternalServiceException externalServiceException => (HttpStatusCode.BadGateway, "External service error.", new[] { externalServiceException.Message }, (string?)null),

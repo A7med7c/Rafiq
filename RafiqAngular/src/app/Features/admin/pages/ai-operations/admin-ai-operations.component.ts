@@ -11,11 +11,15 @@ import {
   AiInsights, AiOverview, AiPerformance,
   AiRequestDetail, AiRequestItem, AiRequestQuery,
   AdminDistributionItem,
-  UpdateAiFeedbackRequest
+  TakeUsageActionRequest,
+  UpdateAiFeedbackRequest,
+  UsageAttentionUser,
+  UsageIntelligenceOverview,
+  UsageUserDetail
 } from '../../models/admin.models';
 import { AdminService } from '../../services/admin.service';
 
-type Tab = 'overview' | 'conversations' | 'feedback' | 'performance';
+type Tab = 'overview' | 'conversations' | 'feedback' | 'performance' | 'usageIntelligence';
 
 // Predefined category values (must match backend validation)
 const FEEDBACK_CATEGORIES = [
@@ -157,6 +161,28 @@ export class AdminAiOperationsComponent implements OnInit {
   readonly performanceLoading = signal(false);
   readonly performanceError   = signal(false);
 
+  // ── Usage Intelligence ────────────────────────────────────────────────────
+  readonly uiOverview        = signal<UsageIntelligenceOverview | null>(null);
+  readonly uiOverviewLoading = signal(false);
+  readonly uiOverviewError   = signal(false);
+
+  readonly uiQueue        = signal<UsageAttentionUser[]>([]);
+  readonly uiQueueTotal   = signal(0);
+  readonly uiQueuePage    = signal(1);
+  readonly uiQueueTotalPages = signal(0);
+  readonly uiQueueLoading = signal(false);
+  readonly uiQueueError   = signal(false);
+
+  readonly uiSelectedUser  = signal<UsageUserDetail | null>(null);
+  readonly uiDetailLoading = signal(false);
+  readonly uiDetailError   = signal(false);
+
+  readonly uiActionNotes    = signal('');
+  readonly uiActioning      = signal(false);
+  readonly uiActionMsg      = signal('');
+  readonly uiActionMsgOk    = signal(true);
+  readonly uiConfirmAction  = signal('');  // the action type being confirmed
+
   ngOnInit(): void {
     this.loadOverview();
     this.loadInsights();
@@ -169,9 +195,10 @@ export class AdminAiOperationsComponent implements OnInit {
     if (!loaded.has(tab)) {
       loaded.add(tab);
       this.loadedTabs.set(new Set(loaded));
-      if (tab === 'conversations') this.loadRequests();
-      if (tab === 'feedback')      this.loadFeedback();
-      if (tab === 'performance')   this.loadPerformance();
+      if (tab === 'conversations')      this.loadRequests();
+      if (tab === 'feedback')           this.loadFeedback();
+      if (tab === 'performance')        this.loadPerformance();
+      if (tab === 'usageIntelligence')  { this.loadUiOverview(); this.loadUiQueue(); }
     }
   }
 
@@ -322,6 +349,150 @@ export class AdminAiOperationsComponent implements OnInit {
       },
       error: () => this.savingFeedback.update(s => ({ ...s, [item.id]: false }))
     });
+  }
+
+  // ── Usage Intelligence ────────────────────────────────────────────────────
+  loadUiOverview(): void {
+    this.uiOverviewLoading.set(true);
+    this.uiOverviewError.set(false);
+    this.adminService.getUsageIntelligenceOverview().subscribe({
+      next: data => { this.uiOverview.set(data); this.uiOverviewLoading.set(false); },
+      error: ()   => { this.uiOverviewError.set(true); this.uiOverviewLoading.set(false); }
+    });
+  }
+
+  loadUiQueue(): void {
+    this.uiQueueLoading.set(true);
+    this.uiQueueError.set(false);
+    this.adminService.getUsageAttentionQueue(this.uiQueuePage(), 20).subscribe({
+      next: data => {
+        this.uiQueue.set(data.items);
+        this.uiQueueTotal.set(data.totalCount);
+        this.uiQueueTotalPages.set(data.totalPages);
+        this.uiQueueLoading.set(false);
+      },
+      error: () => { this.uiQueueError.set(true); this.uiQueueLoading.set(false); }
+    });
+  }
+
+  prevUiQueuePage(): void {
+    if (this.uiQueuePage() <= 1) return;
+    this.uiQueuePage.update(p => p - 1);
+    this.loadUiQueue();
+  }
+
+  nextUiQueuePage(): void {
+    if (this.uiQueuePage() >= this.uiQueueTotalPages()) return;
+    this.uiQueuePage.update(p => p + 1);
+    this.loadUiQueue();
+  }
+
+  openUserDetail(user: UsageAttentionUser): void {
+    this.uiSelectedUser.set(null);
+    this.uiDetailLoading.set(true);
+    this.uiDetailError.set(false);
+    this.uiActionNotes.set('');
+    this.uiActionMsg.set('');
+    this.uiConfirmAction.set('');
+    this.adminService.getUsageUserDetail(user.userId).subscribe({
+      next: detail => { this.uiSelectedUser.set(detail); this.uiDetailLoading.set(false); },
+      error: ()     => { this.uiDetailError.set(true); this.uiDetailLoading.set(false); }
+    });
+  }
+
+  backToQueue(): void {
+    this.uiSelectedUser.set(null);
+    this.uiActionMsg.set('');
+    this.uiConfirmAction.set('');
+  }
+
+  confirmAdminAction(actionType: string): void {
+    this.uiConfirmAction.set(actionType);
+    this.uiActionMsg.set('');
+  }
+
+  cancelAdminAction(): void {
+    this.uiConfirmAction.set('');
+    this.uiActionNotes.set('');
+  }
+
+  submitAdminAction(): void {
+    const user   = this.uiSelectedUser();
+    const action = this.uiConfirmAction();
+    if (!user || !action) return;
+
+    this.uiActioning.set(true);
+    this.uiActionMsg.set('');
+
+    const body: TakeUsageActionRequest = { actionType: action, notes: this.uiActionNotes() || null };
+
+    this.adminService.takeUsageAction(user.userId, body).subscribe({
+      next: () => {
+        this.uiActioning.set(false);
+        this.uiActionMsgOk.set(true);
+        this.uiActionMsg.set(this.copy().uiActionSuccess);
+        this.uiConfirmAction.set('');
+        this.uiActionNotes.set('');
+        // Refresh detail and queue
+        this.adminService.getUsageUserDetail(user.userId).subscribe({
+          next: d => this.uiSelectedUser.set(d)
+        });
+        this.loadUiOverview();
+        this.loadUiQueue();
+      },
+      error: () => {
+        this.uiActioning.set(false);
+        this.uiActionMsgOk.set(false);
+        this.uiActionMsg.set(this.copy().uiActionError);
+      }
+    });
+  }
+
+  classificationLabel(cls: string): string {
+    const c = this.copy();
+    const map: Record<string, string> = {
+      NonMedicalUpload:   c.uiClassNonMedical,
+      WrongDocumentType:  c.uiClassWrongType,
+      OffDomainChat:      c.uiClassOffDomainChat,
+      OffDomainVoice:     c.uiClassOffDomainVoice,
+      PolicyViolation:    c.uiClassPolicyViolation,
+    };
+    return map[cls] ?? cls;
+  }
+
+  classificationPillClass(cls: string): string {
+    return cls === 'PolicyViolation'   ? 'pill--red'
+         : cls === 'NonMedicalUpload'  ? 'pill--yellow'
+         : cls === 'WrongDocumentType' ? 'pill--orange'
+         : cls === 'OffDomainChat'     ? 'pill--blue'
+         : cls === 'OffDomainVoice'    ? 'pill--blue'
+         : 'pill--muted';
+  }
+
+  actionLabel(actionType: string): string {
+    const c = this.copy();
+    const map: Record<string, string> = {
+      Warning:                   c.uiActionWarning,
+      FinalWarning:              c.uiActionFinalWarning,
+      RestrictAi:                c.uiActionRestrictAi,
+      RemoveAiRestriction:       c.uiActionRemoveAiRestriction,
+      RestrictAccount:           c.uiActionRestrictAccount,
+      RemoveAccountRestriction:  c.uiActionRemoveAccountRestriction,
+      SuspendAccount:            c.uiActionSuspend,
+      UnsuspendAccount:          c.uiActionUnsuspend,
+    };
+    return map[actionType] ?? actionType;
+  }
+
+  actionPillClass(actionType: string): string {
+    return actionType === 'SuspendAccount'           ? 'pill--red'
+         : actionType === 'FinalWarning'             ? 'pill--yellow'
+         : actionType === 'RestrictAi'               ? 'pill--orange'
+         : actionType === 'RestrictAccount'          ? 'pill--red'
+         : actionType === 'RemoveAiRestriction'      ? 'pill--green'
+         : actionType === 'RemoveAccountRestriction' ? 'pill--green'
+         : actionType === 'UnsuspendAccount'         ? 'pill--green'
+         : 'pill--muted';
   }
 
   // ── Performance ───────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import { MarkdownComponent } from 'ngx-markdown';
 import { AuthService } from '../../Services/auth-service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { AiChatService } from '../../Services/ai-chat.service';
+import { AiMessageValidatorService } from '../../Services/ai-message-validator.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-chat.models';
@@ -34,6 +35,7 @@ export class AiPanel implements OnInit, OnDestroy {
   private readonly healthProfileService = inject(HealthProfileService);
   private readonly router = inject(Router);
   protected readonly aiChatService = inject(AiChatService);
+  private readonly validator = inject(AiMessageValidatorService);
   protected readonly l10n = inject(LocalizationService);
   private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly signalRService = inject(SignalRService);
@@ -160,12 +162,16 @@ export class AiPanel implements OnInit, OnDestroy {
 
   closeMenu(): void { this.openMenuId.set(null); }
 
+  // ── AI restriction ──
+  readonly isAiRestricted = this.aiChatService.isAiRestricted;
+
   // ── Messages ──
   readonly messages = signal<ChatMessage[]>([]);
   readonly messagesLoading = signal(false);
   readonly messageText = signal('');
   readonly sending = signal(false);
   readonly sendError = signal<string | null>(null);
+  readonly validationError = signal<string | null>(null);
 
   // ── Dislike reason dialog ──
   readonly dislikeDialogOpen = signal(false);
@@ -208,6 +214,8 @@ export class AiPanel implements OnInit, OnDestroy {
         } else {
           this.scrollToBottom();
         }
+        // Always refresh AI status when the panel opens so the lock state is current.
+        this.aiChatService.loadAiStatus();
       }
     });
 
@@ -570,14 +578,29 @@ export class AiPanel implements OnInit, OnDestroy {
 
   onMessageInput(value: string): void {
     this.messageText.set(value);
+    if (this.validationError()) this.validationError.set(null);
   }
 
   sendMessage(): void {
+    // Hard block: AI access is restricted by admin
+    if (this.isAiRestricted()) return;
+
     const text = this.messageText().trim();
     const imageBase64 = this.attachedImageBase64();
     const imageFormat = this.attachedImageFormat();
 
     if ((!text && !imageBase64) || this.sending()) return;
+
+    // Stage 1: local validation — only validates text messages (images are always allowed)
+    if (text && !imageBase64) {
+      const check = this.validator.validate(text);
+      if (!check.valid) {
+        const copy = this.t().aiAssistant as Record<string, unknown>;
+        this.validationError.set((copy[check.errorKey!] as string) ?? '');
+        return;
+      }
+    }
+    this.validationError.set(null);
 
     const profileId = this.profileId();
     if (!profileId) {

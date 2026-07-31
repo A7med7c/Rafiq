@@ -282,6 +282,9 @@
         @if (sendError()) {
           <div class="ai-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ sendError() }}</div>
         }
+        @if (validationError()) {
+          <div class="ai-validation-bar"><i class="fa-solid fa-triangle-exclamation"></i> {{ validationError() }}</div>
+        }
         @if (attachError()) {
           <div class="ai-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ attachError() }}</div>
         }
@@ -296,31 +299,41 @@
           </div>
         }
 
-        <div class="ai-composer">
-          <input #fileInput type="file" accept="image/jpeg,image/jpg,image/png,image/webp"
-            class="ai-file-input" (change)="onFileSelected($event)">
-          <button type="button" class="ai-composer-ico"
-            [disabled]="sending()"
-            [title]="t().aiAssistant.attachImage"
-            (click)="triggerFileSelect()">
-            <i class="fa-solid fa-paperclip"></i>
-          </button>
-          <textarea
-            #messageInput
-            class="ai-composer-input"
-            rows="1"
-            [attr.placeholder]="t().aiAssistant.typePlaceholder"
-            [value]="messageText()"
-            (input)="onMessageInput($any($event.target).value)"
-            (keydown)="onComposerKeydown($event)"
-          ></textarea>
-          <button type="button" class="ai-send-btn"
-            [disabled]="(!messageText().trim() && !attachedImageBase64()) || sending()"
-            (click)="sendMessage()">
-            <i class="fa-solid fa-paper-plane"></i>
-          </button>
-        </div>
-        <p class="ai-composer-hint">{{ t().aiAssistant.composerHintPanel }}</p>
+        @if (isAiRestricted()) {
+          <div class="ai-restricted-banner">
+            <i class="fa-solid fa-ban ai-restricted-icon"></i>
+            <div class="ai-restricted-body">
+              <strong>{{ t().aiAssistant.aiRestrictedTitle }}</strong>
+              <p>{{ t().aiAssistant.aiRestrictedMessage }}</p>
+            </div>
+          </div>
+        } @else {
+          <div class="ai-composer">
+            <input #fileInput type="file" accept="image/jpeg,image/jpg,image/png,image/webp"
+              class="ai-file-input" (change)="onFileSelected($event)">
+            <button type="button" class="ai-composer-ico"
+              [disabled]="sending()"
+              [title]="t().aiAssistant.attachImage"
+              (click)="triggerFileSelect()">
+              <i class="fa-solid fa-paperclip"></i>
+            </button>
+            <textarea
+              #messageInput
+              class="ai-composer-input"
+              rows="1"
+              [attr.placeholder]="t().aiAssistant.typePlaceholder"
+              [value]="messageText()"
+              (input)="onMessageInput($any($event.target).value)"
+              (keydown)="onComposerKeydown($event)"
+            ></textarea>
+            <button type="button" class="ai-send-btn"
+              [disabled]="(!messageText().trim() && !attachedImageBase64()) || sending()"
+              (click)="sendMessage()">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </div>
+          <p class="ai-composer-hint">{{ t().aiAssistant.composerHintPanel }}</p>
+        }
       </div>
       }
 

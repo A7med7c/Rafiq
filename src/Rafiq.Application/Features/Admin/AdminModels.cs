@@ -236,3 +236,62 @@ public sealed record AiPerformanceDto(
     int     P95LatencyMs,
     int     AvgLatencyMs,
     decimal ErrorRatePercent);
+
+// ── Usage Intelligence ──────────────────────────────────────────────────────
+
+public sealed record UsageIntelligenceOverviewDto(
+    int TotalAiRequests,
+    int FlaggedRequests,
+    int UsersNeedingReview,
+    int WarningsSent);
+
+public sealed record UsageAttentionUserDto(
+    Guid     UserId,
+    string   UserName,
+    string   UserEmail,
+    string?  ProfileImageUrl,
+    int      TotalRequests,
+    int      FlaggedRequests,
+    int      WarningsSent,
+    DateTime? LastActivity);
+
+public sealed record UsageFlaggedRequestDto(
+    Guid     Id,
+    string   RequestType,
+    string   UserRequest,
+    string   AiResponse,
+    string   Classification,
+    string   Reason,
+    DateTime CreatedAt);
+
+public sealed record UsageAdminActionDto(
+    Guid     Id,
+    string   ActionType,
+    string   AdminName,
+    string?  Notes,
+    DateTime CreatedAt);
+
+public sealed record UsageUserDetailDto(
+    Guid                              UserId,
+    string                            UserName,
+    string                            UserEmail,
+    string?                           ProfileImageUrl,
+    int                               TotalRequests,
+    int                               FlaggedRequests,
+    int                               WarningsSent,
+    DateTime?                         LastActivity,
+    bool                              IsAiRestricted,
+    bool                              IsRestricted,
+    bool                              IsSuspended,
+    IReadOnlyList<UsageFlaggedRequestDto> FlaggedItems,
+    IReadOnlyList<UsageAdminActionDto>    ActionHistory);
+
+public sealed class UsageAttentionQueueQuery
+{
+    public int Page     { get; init; } = 1;
+    public int PageSize { get; init; } = 20;
+}
+
+public sealed record TakeUsageActionDto(
+    string  ActionType,
+    string? Notes);

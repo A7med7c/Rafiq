@@ -68,6 +68,7 @@ public class Program
         // app.UseHttpsRedirection();
         app.UseCors("Angular");
         app.UseAuthentication();
+        app.UseMiddleware<UserAccessMiddleware>();
         app.UseAuthorization();
         app.UseStaticFiles();
         app.MapControllers();
