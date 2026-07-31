@@ -1,6 +1,8 @@
 .users-page {
   display: grid;
   gap: 18px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .page-heading {
@@ -169,7 +171,6 @@
 
 table {
   width: 100%;
-  min-width: 920px;
   border-collapse: collapse;
 }
 
@@ -228,7 +229,7 @@ td {
 .action-menu {
   position: absolute;
   top: calc(100% + 4px);
-  right: 0;
+  inset-inline-end: 0;
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
   border-radius: 8px;
@@ -244,7 +245,7 @@ td {
   background: transparent;
   border: none;
   width: 100%;
-  text-align: left;
+  text-align: start;
   padding: 10px 16px;
   font-size: 13px;
   color: var(--admin-text);
@@ -267,6 +268,7 @@ td {
 tbody tr:hover {
   background: color-mix(in srgb, var(--admin-accent-soft) 45%, transparent);
 }
+
 
 .user-cell {
   min-width: 230px;
@@ -400,16 +402,19 @@ time {
   min-height: 58px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 16px;
-  padding: 10px 16px;
+  padding: 16px;
+  border-top: 1px solid var(--admin-border);
   color: var(--admin-muted);
   font-size: 11px;
+  flex-wrap: wrap;
 }
 
 .pagination div {
   display: flex;
   gap: 7px;
+  flex-wrap: wrap;
 }
 
 .pagination button {

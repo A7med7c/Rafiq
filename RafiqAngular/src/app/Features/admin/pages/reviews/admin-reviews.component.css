@@ -627,9 +627,11 @@
 .rv-pagination {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 1rem 1.25rem;
   border-top: 1px solid #f8fafc;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .rv-page-btn {

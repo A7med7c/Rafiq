@@ -27,6 +27,19 @@ export class AdminDashboardComponent implements OnInit {
   protected readonly l10n = inject(LocalizationService);
 
   readonly copy = computed(() => adminCopy[this.l10n.lang()].dashboard);
+  // Typed accessor for the new AI-related copy keys added to adminCopy but not yet in the inferred type
+  readonly aiCopy = computed(() => {
+    const c = adminCopy[this.l10n.lang()].dashboard as Record<string, string>;
+    return {
+      aiUsage:             c['aiUsage']             ?? 'AI Usage Overview',
+      totalAiRequests:     c['totalAiRequests']     ?? 'Total AI requests',
+      flaggedAiRequests:   c['flaggedAiRequests']   ?? 'Flagged AI requests',
+      mostActiveUser:      c['mostActiveUser']      ?? 'Most active user',
+      usersNeedAttention:  c['usersNeedAttention']  ?? 'Users needing attention',
+      reason:              c['reason']              ?? 'Reason',
+      actionView:          c['actionView']          ?? 'View user',
+    };
+  });
   readonly dashboard = signal<AdminDashboard | null>(null);
   readonly reviewStats = signal<ReviewStats | null>(null);
   readonly loading = signal(true);
@@ -69,14 +82,14 @@ export class AdminDashboardComponent implements OnInit {
         sparkPoints: [] as AdminTrendPoint[]
       },
       {
-        label: this.copy().monthlyAppointments,
-        value: d.appointmentsThisMonth,
-        icon: 'fa-calendar-check',
+        label: (this.copy() as any).totalAiRequests,
+        value: d.totalAiRequests,
+        icon: 'fa-robot',
         color: '#f59e0b',
         bg: '#fffbeb',
         growth: null,
         suffix: '',
-        sparkPoints: d.appointmentTrend
+        sparkPoints: [] as AdminTrendPoint[]
       }
     ];
   });
@@ -106,9 +119,9 @@ export class AdminDashboardComponent implements OnInit {
         sparkPoints: [] as AdminTrendPoint[]
       },
       {
-        label: this.copy().pendingAppointments,
-        value: d.pendingAppointments,
-        icon: 'fa-hourglass-half',
+        label: (this.copy() as any).flaggedAiRequests,
+        value: d.flaggedAiRequests,
+        icon: 'fa-triangle-exclamation',
         color: '#ef4444',
         bg: '#fef2f2',
         growth: null,

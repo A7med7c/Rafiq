@@ -2622,8 +2622,9 @@ html[dir="rtl"] .user-dropdown {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding-top: 14px;
+  padding: 14px 16px;
   border-top: 1px solid var(--border-lt);
+  flex-wrap: wrap;
 }
 
 

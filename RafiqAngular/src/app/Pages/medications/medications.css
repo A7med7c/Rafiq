@@ -2826,6 +2826,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   gap: 6px;
   padding: 14px 16px;
   border-top: 1px solid var(--border-lt);
+  flex-wrap: wrap;
 }
 
 .page-btn {

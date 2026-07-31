@@ -117,6 +117,20 @@
               <div class="trend-bars">
                 @for (day of o.qualityTrend; track day.date) {
                   <div class="trend-day">
+                    <!-- Hover Tooltip -->
+                    <div class="trend-tooltip">
+                      <div class="trend-tooltip__date">{{ day.date }}</div>
+                      <div class="trend-tooltip__row">
+                        <span class="trend-tooltip__dot" style="background:var(--admin-accent); opacity:.6;"></span>
+                        <span class="trend-tooltip__label">{{ copy().requests }}</span>
+                        <span class="trend-tooltip__val">{{ day.requests }}</span>
+                      </div>
+                      <div class="trend-tooltip__row">
+                        <span class="trend-tooltip__dot" style="background:#ef4444; opacity:.8;"></span>
+                        <span class="trend-tooltip__label">{{ copy().failures }}</span>
+                        <span class="trend-tooltip__val trend-tooltip__val--fail">{{ day.failed }}</span>
+                      </div>
+                    </div>
                     <div class="trend-bar-wrap">
                       <div class="trend-bar trend-bar--req"
                         [style.height.%]="barHeight(day.requests, o.qualityTrend.map(d => ({value:d.requests})))">
