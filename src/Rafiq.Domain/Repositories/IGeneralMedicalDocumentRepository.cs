@@ -9,6 +9,11 @@ public interface IGeneralDocumentRepository
         Guid userHealthProfileId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Loads a document by ID without scoping to a profile — used by background jobs.</summary>
+    Task<GeneralDocument?> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<GeneralDocument>> GetAllByUserIdAsync(
         Guid userHealthProfileId,
         CancellationToken cancellationToken = default);

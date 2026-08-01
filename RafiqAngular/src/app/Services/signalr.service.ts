@@ -65,6 +65,22 @@ export interface VoiceAgentErrorPayload {
   message: string;
 }
 
+// ── Document analysis payloads ────────────────────────────────────────────────
+
+export interface DocumentAnalysisCompletedPayload {
+  documentId: string;
+  title: string;
+  documentType: string | null;
+  aiSummary: string | null;
+  imagePath: string;
+}
+
+export interface DocumentAnalysisFailedPayload {
+  documentId: string;
+  title: string;
+  failureReason: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -87,6 +103,10 @@ export class SignalRService {
   // Chat async events
   readonly chatResponseEvents   = signal<ChatResponsePayload[]>([]);
   readonly chatErrorEvents      = signal<ChatErrorPayload[]>([]);
+
+  // Document analysis events
+  readonly documentAnalysisCompletedEvents = signal<DocumentAnalysisCompletedPayload[]>([]);
+  readonly documentAnalysisFailedEvents    = signal<DocumentAnalysisFailedPayload[]>([]);
 
   /** Incremented each time the SignalR connection recovers after a drop. */
   readonly reconnectedAt        = signal(0);
@@ -166,6 +186,14 @@ export class SignalRService {
 
     this.connection.on('ChatError', (payload: ChatErrorPayload) => {
       this.chatErrorEvents.update(q => [...q, payload]);
+    });
+
+    this.connection.on('DocumentAnalysisCompleted', (payload: DocumentAnalysisCompletedPayload) => {
+      this.documentAnalysisCompletedEvents.update(q => [...q, payload]);
+    });
+
+    this.connection.on('DocumentAnalysisFailed', (payload: DocumentAnalysisFailedPayload) => {
+      this.documentAnalysisFailedEvents.update(q => [...q, payload]);
     });
 
     this.connection.onclose(() => {
@@ -284,6 +312,20 @@ export class SignalRService {
     const events = this.chatErrorEvents();
     if (!events.length) return [];
     this.chatErrorEvents.set([]);
+    return events;
+  }
+
+  drainDocumentAnalysisCompletedEvents(): DocumentAnalysisCompletedPayload[] {
+    const events = this.documentAnalysisCompletedEvents();
+    if (!events.length) return [];
+    this.documentAnalysisCompletedEvents.set([]);
+    return events;
+  }
+
+  drainDocumentAnalysisFailedEvents(): DocumentAnalysisFailedPayload[] {
+    const events = this.documentAnalysisFailedEvents();
+    if (!events.length) return [];
+    this.documentAnalysisFailedEvents.set([]);
     return events;
   }
 

@@ -104,6 +104,18 @@ namespace Rafiq.Application.Common.Interfaces
             string userId,
             ChatErrorPayload payload,
             CancellationToken cancellationToken = default);
+
+        // ── Document Analysis events ──────────────────────────────────────────
+
+        Task SendDocumentAnalysisCompletedAsync(
+            string userId,
+            DocumentAnalysisCompletedPayload payload,
+            CancellationToken cancellationToken = default);
+
+        Task SendDocumentAnalysisFailedAsync(
+            string userId,
+            DocumentAnalysisFailedPayload payload,
+            CancellationToken cancellationToken = default);
     }
 
     public class ChatResponsePayload
@@ -118,5 +130,23 @@ namespace Rafiq.Application.Common.Interfaces
         public Guid ConversationId { get; set; }
         public Guid AssistantMessageId { get; set; }
         public string ErrorMessage { get; set; } = string.Empty;
+    }
+
+    // ── Document Analysis events ──────────────────────────────────────────────
+
+    public class DocumentAnalysisCompletedPayload
+    {
+        public Guid DocumentId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? DocumentType { get; set; }
+        public string? AiSummary { get; set; }
+        public string ImagePath { get; set; } = string.Empty;
+    }
+
+    public class DocumentAnalysisFailedPayload
+    {
+        public Guid DocumentId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string FailureReason { get; set; } = string.Empty;
     }
 }

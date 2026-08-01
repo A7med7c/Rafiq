@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { AuthService } from './auth-service';
 import { AppointmentsService } from './appointments.service';
 import { MedicationRemindersService } from './medication-reminders.service';
-import { AppointmentReminderNotificationPayload, MedicationReminderNotificationPayload, NotificationEventPayload, SignalRService } from './signalr.service';
+import { AppointmentReminderNotificationPayload, DocumentAnalysisCompletedPayload, DocumentAnalysisFailedPayload, MedicationReminderNotificationPayload, NotificationEventPayload, SignalRService } from './signalr.service';
 import { NotificationSoundService } from './notification-sound.service';
 import { PersistedNotificationsService } from './persisted-notifications.service';
 import { LocalizationService } from './localization.service';
@@ -174,11 +174,14 @@ export class NotificationService {
     });
 
     effect(() => {
-      const reminderEvents = this.signalr.reminderEvents();
-      const notificationEvents = this.signalr.notificationEvents();
-      const appointmentReminderEvents = this.signalr.appointmentReminderEvents();
+      const reminderEvents             = this.signalr.reminderEvents();
+      const notificationEvents         = this.signalr.notificationEvents();
+      const appointmentReminderEvents  = this.signalr.appointmentReminderEvents();
+      const docCompletedEvents         = this.signalr.documentAnalysisCompletedEvents();
+      const docFailedEvents            = this.signalr.documentAnalysisFailedEvents();
 
-      if (!reminderEvents.length && !notificationEvents.length && !appointmentReminderEvents.length) {
+      if (!reminderEvents.length && !notificationEvents.length && !appointmentReminderEvents.length
+          && !docCompletedEvents.length && !docFailedEvents.length) {
         return;
       }
 
@@ -192,6 +195,22 @@ export class NotificationService {
 
       if (appointmentReminderEvents.length) {
         this.ingestAppointmentReminderEvents(this.signalr.drainAppointmentReminderEvents());
+      }
+
+      if (docCompletedEvents.length) {
+        const events = this.signalr.drainDocumentAnalysisCompletedEvents();
+        const t = this.localization.t().documentAnalysis;
+        events.forEach(e => {
+          this.showToast(`${t.analysisComplete}: ${e.title}`, t.analysisCompleteBody, 'success');
+        });
+      }
+
+      if (docFailedEvents.length) {
+        const events = this.signalr.drainDocumentAnalysisFailedEvents();
+        const t = this.localization.t().documentAnalysis;
+        events.forEach(e => {
+          this.showToast(`${t.analysisFailed}: ${e.title}`, e.failureReason || t.analysisFailedBody, 'error');
+        });
       }
     });
   }

@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.GeneralDocuments.Commands.UploadGeneralDocument;
+using Rafiq.Application.Features.GeneralDocuments.Commands.UploadGeneralDocumentAsync;
+using Rafiq.Application.Features.GeneralDocuments.Commands.RetryDocumentAnalysis;
+using Rafiq.Application.Features.GeneralDocuments.Queries.GetGeneralDocumentStatus;
 using Rafiq.Application.Features.GeneralDocuments.Commands.DeleteGeneralDocument;
 using Rafiq.Application.Features.GeneralDocuments.Commands.SaveGeneralDocument;
 using Rafiq.Application.Features.GeneralDocuments.Commands.UpdateGeneralDocument;
@@ -293,6 +296,49 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new DeleteGeneralDocumentCommand(id), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Async upload: saves the image immediately and queues AI analysis as a background job.
+    /// Returns a documentId — the client polls GET /general or listens to SignalR for completion.
+    /// </summary>
+    [HttpPost("general/upload-async")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadGeneralDocumentAsync(
+        [FromQuery] Guid profileId,
+        IFormFile image,
+        [FromForm] string? description,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new UploadGeneralDocumentAsyncCommand(image, profileId, description),
+            cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Returns the current analysis status of a single general document.
+    /// Used as a polling fallback when SignalR is unavailable.
+    /// </summary>
+    [HttpGet("general/status/{id:guid}")]
+    public async Task<IActionResult> GetGeneralDocumentStatus(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetGeneralDocumentStatusQuery(id), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Re-queues a Failed document for AI analysis. Returns 400 if the document is not in Failed state.
+    /// </summary>
+    [HttpPost("general/{id:guid}/retry")]
+    public async Task<IActionResult> RetryDocumentAnalysis(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new RetryDocumentAnalysisCommand(id), cancellationToken);
         return Ok(result);
     }
 
