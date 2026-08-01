@@ -7,7 +7,7 @@ using Rafiq.Infrastructure.Persistence;
 
 namespace Rafiq.Infrastructure.Services;
 
-public sealed class AdminService(RafiqDbContext dbContext) : IAdminService
+public sealed class AdminService(RafiqDbContext dbContext, IAuditLogService auditLog) : IAdminService
 {
     public async Task<AdminDashboardDto> GetDashboardAsync(CancellationToken cancellationToken = default)
     {
@@ -27,20 +27,22 @@ public sealed class AdminService(RafiqDbContext dbContext) : IAdminService
         var managedProfiles = await dbContext.UserHealthProfiles.CountAsync(
             profile => profile.UserId == null,
             cancellationToken);
-        var appointmentsToday = await dbContext.Appointments.CountAsync(
-            appointment => appointment.AppointmentDateTime >= today
-                && appointment.AppointmentDateTime < tomorrow,
-            cancellationToken);
-        var appointmentsThisMonth = await dbContext.Appointments.CountAsync(
-            appointment => appointment.AppointmentDateTime >= monthStart
-                && appointment.AppointmentDateTime < nextMonthStart,
-            cancellationToken);
-        var pendingAppointments = await dbContext.Appointments.CountAsync(
-            appointment => appointment.Status == AppointmentStatus.Upcoming,
-            cancellationToken);
-        var completedAppointments = await dbContext.Appointments.CountAsync(
-            appointment => appointment.Status == AppointmentStatus.Completed,
-            cancellationToken);
+        var totalAiRequests = await dbContext.AiRequestLogs.CountAsync(cancellationToken);
+        var flaggedAiRequests = await dbContext.AiFlaggedRequests.CountAsync(cancellationToken);
+        
+        var mostActiveAiUserGroup = await dbContext.AiRequestLogs
+            .Where(r => r.UserId != null)
+            .GroupBy(r => r.UserId)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .OrderByDescending(g => g.Count)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        string? mostActiveAiUser = null;
+        if (mostActiveAiUserGroup?.UserId != null)
+        {
+            var topUser = await dbContext.Users.FindAsync(mostActiveAiUserGroup.UserId);
+            mostActiveAiUser = topUser != null ? topUser.FirstName + " " + topUser.LastName : null;
+        }
         var remindersToday = await dbContext.MedicationReminderLogs.CountAsync(
             reminder => reminder.ScheduledDate == todayOnly,
             cancellationToken);
@@ -68,30 +70,23 @@ public sealed class AdminService(RafiqDbContext dbContext) : IAdminService
             .Select(group => new { group.Key.Year, group.Key.Month, Count = group.Count() })
             .ToListAsync(cancellationToken);
 
-        var appointmentRows = await dbContext.Appointments
-            .AsNoTracking()
-            .Where(appointment => appointment.AppointmentDateTime >= growthStart)
-            .GroupBy(appointment => new
-            {
-                appointment.AppointmentDateTime.Year,
-                appointment.AppointmentDateTime.Month
-            })
-            .Select(group => new { group.Key.Year, group.Key.Month, Count = group.Count() })
-            .ToListAsync(cancellationToken);
-
         var userGrowth = BuildSixMonthTrend(
             monthStart,
             userGrowthRows.ToDictionary(row => (row.Year, row.Month), row => row.Count));
-        var appointmentTrend = BuildSixMonthTrend(
-            monthStart,
-            appointmentRows.ToDictionary(row => (row.Year, row.Month), row => row.Count));
 
-        var genderDistribution = await dbContext.UserHealthProfiles
+        // EF Core cannot translate enum.ToString() inside a SQL GroupBy projection.
+        // Pull the grouped counts into memory first, then convert enum keys to strings.
+        var genderGroups = await dbContext.UserHealthProfiles
             .AsNoTracking()
+            .Where(profile => !profile.IsDeleted)
             .GroupBy(profile => profile.Gender)
-            .Select(group => new AdminDistributionItemDto(group.Key.ToString(), group.Count()))
-            .OrderByDescending(item => item.Value)
+            .Select(group => new { Key = group.Key, Count = group.Count() })
             .ToListAsync(cancellationToken);
+
+        var genderDistribution = genderGroups
+            .Select(g => new AdminDistributionItemDto(g.Key.ToString(), g.Count))
+            .OrderByDescending(item => item.Value)
+            .ToList<AdminDistributionItemDto>();
 
         var recentUsers = await dbContext.Users
             .AsNoTracking()
@@ -107,18 +102,32 @@ public sealed class AdminService(RafiqDbContext dbContext) : IAdminService
                 user.ProfileImageUrl))
             .ToListAsync(cancellationToken);
 
-        var recentAppointments = await dbContext.Appointments
+        var usersNeedAttentionGroups = await dbContext.AiFlaggedRequests
             .AsNoTracking()
-            .OrderByDescending(appointment => appointment.CreatedAt)
-            .Take(6)
-            .Select(appointment => new AdminRecentAppointmentDto(
-                appointment.Id,
-                appointment.Title,
-                appointment.Provider,
-                appointment.UserHealthProfile.FirstName + " " + appointment.UserHealthProfile.LastName,
-                appointment.AppointmentDateTime,
-                appointment.Status.ToString()))
+            .GroupBy(f => f.UserId)
+            .Select(g => new { UserId = g.Key, FlaggedCount = g.Count() })
+            .OrderByDescending(x => x.FlaggedCount)
+            .Take(5)
             .ToListAsync(cancellationToken);
+
+        var attentionUserIds = usersNeedAttentionGroups.Select(x => x.UserId).ToList();
+        var attentionUsersData = await dbContext.Users
+            .AsNoTracking()
+            .Where(u => attentionUserIds.Contains(u.Id))
+            .Select(u => new { u.Id, u.FirstName, u.LastName, u.ProfileImageUrl })
+            .ToListAsync(cancellationToken);
+
+        var usersNeedAttention = usersNeedAttentionGroups
+            .Select(g => {
+                var u = attentionUsersData.FirstOrDefault(x => x.Id == g.UserId);
+                return new AdminDashboardAttentionUserDto(
+                    g.UserId,
+                    u != null ? $"{u.FirstName} {u.LastName}" : "Unknown",
+                    u?.ProfileImageUrl,
+                    $"{g.FlaggedCount} Flagged Requests"
+                );
+            })
+            .ToList<AdminDashboardAttentionUserDto>();
 
         var monthlyGrowth = previousRegistrations == 0
             ? currentRegistrations > 0 ? 100m : 0m
@@ -131,20 +140,18 @@ public sealed class AdminService(RafiqDbContext dbContext) : IAdminService
             activeUsers,
             totalProfiles,
             managedProfiles,
-            appointmentsToday,
-            appointmentsThisMonth,
-            pendingAppointments,
-            completedAppointments,
             remindersToday,
             prescriptions + labReports + imagingReports + generalDocuments,
             aiConversations,
+            totalAiRequests,
+            flaggedAiRequests,
+            mostActiveAiUser,
             currentRegistrations,
             monthlyGrowth,
             userGrowth,
-            appointmentTrend,
             genderDistribution,
             recentUsers,
-            recentAppointments);
+            usersNeedAttention);
     }
 
     public async Task<PagedResult<AdminUserListItemDto>> GetUsersAsync(
@@ -291,6 +298,32 @@ public sealed class AdminService(RafiqDbContext dbContext) : IAdminService
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var actor = await dbContext.Users
+            .AsNoTracking()
+            .Where(u => u.Id == actorUserId)
+            .Select(u => new { u.FirstName, u.LastName, u.Email })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var actorName  = actor is null ? "Admin" : $"{actor.FirstName} {actor.LastName}".Trim();
+        var actorEmail = actor?.Email ?? string.Empty;
+        var action     = isActive ? "UserActivated" : "UserSuspended";
+        var severity   = isActive ? "Success" : "Warning";
+        var targetName = $"{user.FirstName} {user.LastName}".Trim();
+
+        await auditLog.LogAsync(
+            actorId:     actorUserId,
+            actorName:   actorName,
+            actorEmail:  actorEmail,
+            module:      "Users",
+            action:      action,
+            target:      targetName,
+            severity:    severity,
+            description: isActive
+                ? $"User account '{targetName}' was activated."
+                : $"User account '{targetName}' was suspended.",
+            changes:     [("Status", isActive ? "Inactive" : "Active", isActive ? "Active" : "Suspended")],
+            cancellationToken: cancellationToken);
     }
 
     private static IReadOnlyList<AdminTrendPointDto> BuildSixMonthTrend(

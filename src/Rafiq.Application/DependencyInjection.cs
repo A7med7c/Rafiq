@@ -3,7 +3,6 @@ using MediatR;
 using Mapster;
 using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
-using Rafiq.Application.AI.Resolution;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Features.AiChat.Services;
 using Rafiq.Application.VoiceAgent.Extensions;
@@ -20,6 +19,7 @@ public static class DependencyInjection
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(assembly);
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(Common.Behaviors.AiAccessBehavior<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(Common.Behaviors.ValidationBehavior<,>));
         });
 
@@ -30,9 +30,9 @@ public static class DependencyInjection
         services.AddSingleton(config);
         services.AddScoped<IMapper, ServiceMapper>();
 
+        // HealthQueryContextBuilder is still used by GenerateHealthSummary — the AI-chat
+        // send pipeline moved off it in the Chat/Voice unification (uses tool loop instead).
         services.AddScoped<IHealthQueryContextBuilder, HealthQueryContextBuilder>();
-        services.AddScoped<IFamilyProfileResolver, FamilyProfileResolver>();
-        services.AddSingleton<IConversationStateCache, ConversationStateCache>();
 
         services.AddVoiceAgent();
 

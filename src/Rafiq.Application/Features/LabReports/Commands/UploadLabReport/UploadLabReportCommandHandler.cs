@@ -14,7 +14,9 @@ public sealed class UploadLabReportCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IBedrockService bedrockService,
-    IFileStorageService fileStorageService)
+    IFileStorageService fileStorageService,
+    IAiTelemetryContext telemetryContext,
+    IUsageIntelligenceService usageIntelligence)
     : IRequestHandler<UploadLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
     public async Task<ApiResponse<LabReportResponseDto>> Handle(
@@ -34,6 +36,9 @@ public sealed class UploadLabReportCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
 
+        telemetryContext.Feature = Rafiq.Domain.Enums.AiFeature.LabOcr;
+        telemetryContext.UserId  = currentUserService.UserId;
+
         using var imageStream = request.Image.OpenReadStream();
         using var memoryStream = new MemoryStream();
         await imageStream.CopyToAsync(memoryStream, cancellationToken);
@@ -48,10 +53,28 @@ public sealed class UploadLabReportCommandHandler(
 
         if (!extracted.IsValidDocument)
         {
-            var detected = extracted.DetectedDocumentType;
+            var detected = extracted.DetectedDocumentType ?? "Unknown";
             var detailMessage = string.IsNullOrWhiteSpace(detected) || detected == "Unknown"
                 ? "The uploaded image could not be identified as a valid document."
                 : $"Detected document type: {detected}.";
+
+            // Save a flag — the AI already determined this is the wrong document type.
+            var userId = currentUserService.UserId;
+            if (userId.HasValue)
+            {
+                var isMedicalWrongType = detected.Contains("prescription", StringComparison.OrdinalIgnoreCase)
+                    || detected.Contains("imaging", StringComparison.OrdinalIgnoreCase)
+                    || detected.Contains("report", StringComparison.OrdinalIgnoreCase);
+                var classification = isMedicalWrongType ? "WrongDocumentType" : "NonMedicalUpload";
+                await usageIntelligence.SaveFlaggedRequestAsync(new(
+                    UserId:         userId.Value,
+                    RequestType:    "LabOcr",
+                    UserRequest:    "User uploaded an image as a Lab Report.",
+                    AiResponse:     $"Rejected. {detailMessage}",
+                    Classification: classification,
+                    Reason:         $"Expected: Lab Report. Detected: {detected}."),
+                    cancellationToken);
+            }
 
             throw new DocumentValidationException(
                 "WRONG_DOCUMENT_TYPE_LAB_REPORT",

@@ -8,6 +8,7 @@ using Rafiq.Application.Features.UserMedicines.Commands.AddUserMedicine;
 using Rafiq.Application.Features.UserMedicines.Commands.DeleteUserMedicine;
 using Rafiq.Application.Features.UserMedicines.Commands.ScanMedicineBox;
 using Rafiq.Application.Features.UserMedicines.Commands.UpdateUserMedicine;
+using Rafiq.Application.Features.UserMedicines.Queries.CheckMedicationSafety;
 using Rafiq.Application.Features.UserMedicines.Queries.GetMyUserMedicines;
 using Rafiq.Application.Features.UserMedicines.Queries.GetUserMedicineById;
 using Rafiq.Domain.Enums;
@@ -21,6 +22,22 @@ public sealed class UserMedicinesController(
     IMediator mediator,
     IFileStorageService fileStorageService) : ControllerBase
 {
+    /// <summary>
+    /// Check whether a medication is safe given the user's recorded allergies.
+    /// Returns isSafe=true with riskLevel="None" when no allergies are on file.
+    /// On AI failure the endpoint still returns a safe result so the user is never blocked.
+    /// </summary>
+    [HttpPost("check-allergy")]
+    public async Task<IActionResult> CheckMedicationAllergy(
+        [FromBody] CheckAllergyBody body,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new CheckMedicationSafetyQuery(body.ProfileId, body.MedicationName),
+            cancellationToken);
+        return Ok(result);
+    }
+
     /// <summary>
     /// Upload a medicine box image without AI processing.
     /// Stores the image and returns its path for use when adding a medicine manually.
@@ -184,3 +201,6 @@ public sealed record AddUserMedicineBody(
 
 /// <summary>Request body for adding medicines from a prescription.</summary>
 public sealed record AddFromPrescriptionBody(List<Guid> PrescriptionMedicineIds);
+
+/// <summary>Request body for allergy safety check.</summary>
+public sealed record CheckAllergyBody(Guid ProfileId, string MedicationName);

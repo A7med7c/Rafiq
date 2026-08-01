@@ -1,14 +1,17 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, computed, inject, signal, effect } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, computed, inject, signal, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationStart } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
 import { AuthService } from '../../Services/auth-service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { AiChatService } from '../../Services/ai-chat.service';
+import { AiMessageValidatorService } from '../../Services/ai-message-validator.service';
 import { LocalizationService } from '../../Services/localization.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-chat.models';
 import { catchError, of, Subscription } from 'rxjs';
 import { VoiceAgentPanel } from '../voice-agent-panel/voice-agent-panel';
+import { SignalRService } from '../../Services/signalr.service';
 
 type ChatMessage = ConversationMessageDto & { imagePreviewUrl?: string };
 
@@ -32,7 +35,10 @@ export class AiPanel implements OnInit, OnDestroy {
   private readonly healthProfileService = inject(HealthProfileService);
   private readonly router = inject(Router);
   protected readonly aiChatService = inject(AiChatService);
+  private readonly validator = inject(AiMessageValidatorService);
   protected readonly l10n = inject(LocalizationService);
+  private readonly reviewTracking = inject(ReviewTrackingService);
+  private readonly signalRService = inject(SignalRService);
   protected readonly t = this.l10n.t;
 
   private readonly _routerSub: Subscription;
@@ -90,12 +96,82 @@ export class AiPanel implements OnInit, OnDestroy {
     this.conversations().find(c => c.id === this.selectedConversationId()) ?? null
   );
 
+  // ── Pin (persisted to localStorage) ──
+  private readonly PINS_KEY = 'rafiq_pinned_convs';
+  readonly pinnedIds = signal<Set<string>>(this.loadPins());
+
+  readonly sortedConversations = computed(() => {
+    const pinned = this.pinnedIds();
+    return [...this.conversations()].sort((a, b) => {
+      const aPin = pinned.has(a.id) ? 1 : 0;
+      const bPin = pinned.has(b.id) ? 1 : 0;
+      if (bPin !== aPin) return bPin - aPin;
+      return this.sortKey(b) - this.sortKey(a);
+    });
+  });
+
+  private loadPins(): Set<string> {
+    try { return new Set(JSON.parse(localStorage.getItem(this.PINS_KEY) ?? '[]')); }
+    catch { return new Set(); }
+  }
+  private savePins(): void {
+    localStorage.setItem(this.PINS_KEY, JSON.stringify([...this.pinnedIds()]));
+  }
+
+  togglePin(event: Event, id: string): void {
+    event.stopPropagation();
+    this.pinnedIds.update(s => {
+      const next = new Set(s);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+    this.savePins();
+  }
+
+  // ── Inline rename ──
+  readonly renamingId   = signal<string | null>(null);
+  readonly renameValue  = signal('');
+
+  startRename(convId: string, title: string): void {
+    this.openMenuId.set(null);
+    this.renamingId.set(convId);
+    this.renameValue.set(title);
+  }
+
+  commitRename(convId: string): void {
+    const title = this.renameValue().trim();
+    this.renamingId.set(null);
+    if (!title) return;
+    this.conversations.update(list =>
+      list.map(c => c.id === convId ? { ...c, title } : c)
+    );
+    this.aiChatService.renameConversation(convId, title).subscribe({
+      error: () => this.loadConversations()
+    });
+  }
+
+  cancelRename(): void { this.renamingId.set(null); }
+
+  // ── Context menu (⋮) ──
+  readonly openMenuId = signal<string | null>(null);
+
+  toggleMenu(event: Event, id: string): void {
+    event.stopPropagation();
+    this.openMenuId.update(cur => cur === id ? null : id);
+  }
+
+  closeMenu(): void { this.openMenuId.set(null); }
+
+  // ── AI restriction ──
+  readonly isAiRestricted = this.aiChatService.isAiRestricted;
+
   // ── Messages ──
   readonly messages = signal<ChatMessage[]>([]);
   readonly messagesLoading = signal(false);
   readonly messageText = signal('');
   readonly sending = signal(false);
   readonly sendError = signal<string | null>(null);
+  readonly validationError = signal<string | null>(null);
 
   // ── Dislike reason dialog ──
   readonly dislikeDialogOpen = signal(false);
@@ -138,6 +214,8 @@ export class AiPanel implements OnInit, OnDestroy {
         } else {
           this.scrollToBottom();
         }
+        // Always refresh AI status when the panel opens so the lock state is current.
+        this.aiChatService.loadAiStatus();
       }
     });
 
@@ -147,6 +225,97 @@ export class AiPanel implements OnInit, OnDestroy {
       if (req > 0) {
         this.activeMode.set('voice');
       }
+    });
+
+    // Handle async chat responses delivered via SignalR.
+    effect(() => {
+      const events = this.signalRService.chatResponseEvents();
+      if (!events.length) return;
+      const drained = this.signalRService.drainChatResponseEvents();
+
+      untracked(() => {
+        const convId = this.selectedConversationId();
+        if (!convId) return;
+
+        for (const event of drained) {
+          if (event.conversationId !== convId) continue;
+
+          this.messages.update(list =>
+            list.map(m => m.id === event.assistantMessageId
+              ? { ...m, content: event.content, status: 'Completed' }
+              : m)
+          );
+
+          // Generate title after the first real assistant reply.
+          const assistantCount = this.messages().filter(m => m.role === 'Assistant').length;
+          if (assistantCount === 1) {
+            this.aiChatService.generateConversationTitle(convId).subscribe({
+              next: res => {
+                if (res.data) {
+                  this.conversations.update(list =>
+                    list.map(c => c.id === convId ? { ...c, title: res.data! } : c)
+                  );
+                }
+              },
+            });
+          }
+
+          this.conversations.update(list =>
+            list
+              .map(c => c.id === convId ? { ...c, lastMessageAt: new Date().toISOString() } : c)
+              .sort((a, b) => this.sortKey(b) - this.sortKey(a))
+          );
+          this.scrollToBottom();
+          this.reviewTracking.trackAction();
+        }
+      });
+    });
+
+    // Handle async chat errors delivered via SignalR.
+    effect(() => {
+      const events = this.signalRService.chatErrorEvents();
+      if (!events.length) return;
+      const drained = this.signalRService.drainChatErrorEvents();
+
+      untracked(() => {
+        const convId = this.selectedConversationId();
+        if (!convId) return;
+
+        for (const event of drained) {
+          if (event.conversationId !== convId) continue;
+
+          this.messages.update(list =>
+            list.map(m => m.id === event.assistantMessageId
+              ? { ...m, content: event.errorMessage, status: 'Failed' }
+              : m)
+          );
+          this.scrollToBottom();
+        }
+      });
+    });
+
+    // On SignalR reconnect, reload the active conversation to pick up any
+    // messages that completed while the connection was down.
+    effect(() => {
+      const reconnectCount = this.signalRService.reconnectedAt();
+      if (reconnectCount === 0) return;
+
+      untracked(() => {
+        const convId = this.selectedConversationId();
+        if (!convId) return;
+
+        this.aiChatService.getConversationHistory(convId).subscribe(history => {
+          this.messages.set(
+            (history?.messages ?? []).map(m => ({
+              ...m,
+              imagePreviewUrl: m.role === 'User'
+                ? this.aiChatService.getCachedImage(convId, m.sequenceNumber)
+                : undefined,
+            }))
+          );
+          this.scrollToBottom();
+        });
+      });
     });
   }
 
@@ -237,6 +406,11 @@ export class AiPanel implements OnInit, OnDestroy {
     this.isDragging.set(false);
   }
 
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    if (this.openMenuId()) this.openMenuId.set(null);
+  }
+
 
   private loadProfileThenConversations(): void {
     this.healthProfileService
@@ -256,7 +430,7 @@ export class AiPanel implements OnInit, OnDestroy {
       });
   }
 
-  private loadConversations(): void {
+  loadConversations(): void {
     this.conversationsLoading.set(true);
     this.aiChatService.getConversations().subscribe(list => {
       this.conversations.set(list);
@@ -277,6 +451,21 @@ export class AiPanel implements OnInit, OnDestroy {
     this.startNewConversation();
     this.messageText.set(prompt);
     this.sendMessage();
+  }
+
+  deleteConversation(event: Event, conversationId: string): void {
+    event.stopPropagation();
+    // Optimistic removal
+    this.conversations.update(list => list.filter(c => c.id !== conversationId));
+    if (this.selectedConversationId() === conversationId) {
+      this.startNewConversation();
+    }
+    this.aiChatService.archiveConversation(conversationId).subscribe({
+      error: () => {
+        // Restore on failure
+        this.loadConversations();
+      }
+    });
   }
 
   selectConversation(conversation: ConversationSummaryDto): void {
@@ -301,6 +490,40 @@ export class AiPanel implements OnInit, OnDestroy {
         }))
       );
       this.messagesLoading.set(false);
+      this.scrollToBottom();
+    });
+  }
+
+  // ── Voice panel event handlers ──────────────────────────────────────────────
+
+  onVoiceConversationCreated(summary: ConversationSummaryDto): void {
+    this.conversations.update(list => [summary, ...list]);
+    this.selectedConversationId.set(summary.id);
+  }
+
+  // Called when the voice panel captures speech — mirrors pushOptimisticUserMessage
+  // + sending indicator so the shared message list shows the same experience as typing.
+  onVoiceMessageStarted(text: string): void {
+    this.pushOptimisticUserMessage(text);
+    this.sending.set(true);
+  }
+
+  onVoiceResponseReceived(conversationId: string): void {
+    this.aiChatService.getConversationHistory(conversationId).subscribe(history => {
+      this.messages.set(
+        (history?.messages ?? []).map(m => ({
+          ...m,
+          imagePreviewUrl: m.role === 'User'
+            ? this.aiChatService.getCachedImage(conversationId, m.sequenceNumber)
+            : undefined,
+        }))
+      );
+      this.conversations.update(list =>
+        list
+          .map(c => c.id === conversationId ? { ...c, lastMessageAt: new Date().toISOString() } : c)
+          .sort((a, b) => this.sortKey(b) - this.sortKey(a))
+      );
+      this.sending.set(false);
       this.scrollToBottom();
     });
   }
@@ -355,14 +578,29 @@ export class AiPanel implements OnInit, OnDestroy {
 
   onMessageInput(value: string): void {
     this.messageText.set(value);
+    if (this.validationError()) this.validationError.set(null);
   }
 
   sendMessage(): void {
+    // Hard block: AI access is restricted by admin
+    if (this.isAiRestricted()) return;
+
     const text = this.messageText().trim();
     const imageBase64 = this.attachedImageBase64();
     const imageFormat = this.attachedImageFormat();
 
     if ((!text && !imageBase64) || this.sending()) return;
+
+    // Stage 1: local validation — only validates text messages (images are always allowed)
+    if (text && !imageBase64) {
+      const check = this.validator.validate(text);
+      if (!check.valid) {
+        const copy = this.t().aiAssistant as Record<string, unknown>;
+        this.validationError.set((copy[check.errorKey!] as string) ?? '');
+        return;
+      }
+    }
+    this.validationError.set(null);
 
     const profileId = this.profileId();
     if (!profileId) {
@@ -445,27 +683,30 @@ export class AiPanel implements OnInit, OnDestroy {
     imageFormat: string | null
   ): void {
     this.aiChatService
-      .sendMessage(conversationId, { text, base64Image, imageFormat })
+      .sendMessage(conversationId, {
+        text,
+        base64Image,
+        imageFormat,
+        language: this.l10n.lang(),
+        utcOffsetMinutes: -new Date().getTimezoneOffset(),
+      })
       .subscribe({
         next: res => {
-          const id = res.data?.id ?? crypto.randomUUID();
-          const content = res.data?.content ?? '';
+          // 202 response: server accepted the message and enqueued it.
+          // Push a Pending placeholder — the real reply arrives via ChatResponse SignalR event.
+          const placeholderId = res.data?.id ?? crypto.randomUUID();
           const nextSeq = (this.messages().at(-1)?.sequenceNumber ?? 0) + 1;
           this.messages.update(list => [
             ...list,
             {
-              id,
+              id: placeholderId,
               role: 'Assistant',
-              content,
+              content: '…',
               sequenceNumber: nextSeq,
               createdAt: new Date().toISOString(),
+              status: 'Pending',
             },
           ]);
-          this.conversations.update(list =>
-            list
-              .map(c => (c.id === conversationId ? { ...c, lastMessageAt: new Date().toISOString() } : c))
-              .sort((a, b) => this.sortKey(b) - this.sortKey(a))
-          );
           this.sending.set(false);
           this.scrollToBottom();
         },
@@ -497,8 +738,16 @@ export class AiPanel implements OnInit, OnDestroy {
     setTimeout(() => this.messagesEnd?.nativeElement.scrollIntoView({ behavior: 'smooth' }), 50);
   }
 
+  private asUtc(dateStr: string): Date {
+    // EF Core returns DateTime without timezone suffix; treat bare ISO strings as UTC.
+    if (dateStr && !dateStr.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(dateStr)) {
+      return new Date(dateStr + 'Z');
+    }
+    return new Date(dateStr);
+  }
+
   formatMessageTime(message: ConversationMessageDto): string {
-    return new Date(message.createdAt).toLocaleTimeString('en-US', {
+    return this.asUtc(message.createdAt).toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -507,7 +756,7 @@ export class AiPanel implements OnInit, OnDestroy {
 
   formatSidebarTime(conv: ConversationSummaryDto): string {
     const dateStr = conv.lastMessageAt ?? conv.createdAt;
-    const date = new Date(dateStr);
+    const date = this.asUtc(dateStr);
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
 

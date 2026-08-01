@@ -17,6 +17,11 @@ public sealed class AllergyRepository : IAllergyRepository
         => _dbContext.Allergies
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<Allergy>> GetAllByProfileIdAsync(Guid profileId, CancellationToken cancellationToken = default)
+        => await _dbContext.Allergies
+            .Where(x => x.UserHealthProfileId == profileId)
+            .ToListAsync(cancellationToken);
+
     public Task<bool> ExistsByNameForProfileAsync(
         Guid profileId, string name, Guid? excludeId, CancellationToken cancellationToken = default)
         => _dbContext.Allergies

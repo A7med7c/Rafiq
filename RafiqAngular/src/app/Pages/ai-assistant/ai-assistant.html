@@ -12,7 +12,7 @@
           <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
         <div class="sb-logo-text">
-          <span class="sb-logo-title">{{ t().sidebar.aiAssistant }}</span>
+          <span class="sb-logo-title">{{ t().sidebar.brandName }}</span>
           <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
         </div>
       </button>
@@ -42,10 +42,7 @@
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>{{ t().sidebar.medications }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
-        <span>{{ t().sidebar.analytics }}</span>
-      </a>
+
       <!-- <a class="sb-link sb-sos" href="#">
         <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
         <span>SOS &amp; Emergency</span>
@@ -54,9 +51,9 @@
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
-        <span>{{ t().sidebar.settings }}</span>
+      <a class="sb-link" routerLink="/my-profile" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-user"></i></span>
+        <span>{{ t().sidebar.myProfile }}</span>
       </a>
     </nav>
 
@@ -122,6 +119,10 @@
             <button type="button" class="user-dropdown-item">
               <i class="fa-solid fa-gear"></i>
               {{ t().header.settings }}
+            </button>
+            <button type="button" class="user-dropdown-item" (click)="openRatingPopup()">
+              <i class="fa-regular fa-star"></i>
+              {{ t().ratingPopup.rateRafiq }}
             </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
@@ -363,6 +364,13 @@
         </div>
         }
 
+        @if (validationError()) {
+        <div class="chat-validation-bar">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          {{ validationError() }}
+        </div>
+        }
+
         @if (attachError()) {
         <div class="chat-error-bar">
           <i class="fa-solid fa-circle-exclamation"></i>
@@ -379,6 +387,17 @@
         </div>
         }
 
+        @if (isAiRestricted()) {
+        <div class="chat-restricted-banner">
+          <div class="chat-restricted-icon">
+            <i class="fa-solid fa-ban"></i>
+          </div>
+          <div class="chat-restricted-body">
+            <strong>{{ t().aiAssistant.aiRestrictedTitle }}</strong>
+            <p>{{ t().aiAssistant.aiRestrictedMessage }}</p>
+          </div>
+        </div>
+        } @else {
         <div class="chat-composer">
           <input
             #fileInput
@@ -418,6 +437,7 @@
           <i class="fa-regular fa-image"></i>
           {{ t().aiAssistant.composerHint }}
         </p>
+        }
       </section>
       }
     </div>

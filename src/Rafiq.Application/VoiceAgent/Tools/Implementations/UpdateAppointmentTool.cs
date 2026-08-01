@@ -34,22 +34,58 @@ public sealed class UpdateAppointmentTool(ISender mediator) : IVoiceTool
         "  STEP 1 — IDENTIFY the appointment.\n" +
         "    Call list_upcoming_appointments.\n" +
         "    Filter results using type, title, provider, date, or any keywords the user mentioned.\n" +
-        "    ▸ No match → tell user: 'I couldn't find a matching upcoming appointment.'\n" +
-        "    ▸ Exactly one match → confirm once: 'I found your [title] with [provider]\n" +
-        "      on [date] at [time]. Is that the one you want to update?' Then proceed.\n" +
+        "    ▸ No match → tell user:\n" +
+        "        EN: 'I couldn\\'t find a matching upcoming appointment. Would you like me to list all?'\n" +
+        "        AR: 'لم أجد موعداً مطابقاً. هل تريد أن أعرض جميع مواعيدك القادمة؟'\n" +
+        "      If yes → display the full list, then re-ask which one to update.\n" +
+        "    ▸ Exactly one match → confirm once: 'I found your [title] with [provider] on [date]\n" +
+        "        at [time]. Is that the one you want to update?'\n" +
         "    ▸ Multiple matches → list them and ask which one:\n" +
-        "      '1. Dentist appointment on Monday 21 July at 4:00 PM\n" +
-        "       2. Dentist appointment on Friday 25 July at 10:00 AM\n" +
-        "       Which one would you like to update?'\n\n" +
+        "        EN: '1. Dentist on Monday 21 July at 4:00 PM\\n2. Dentist on Friday 25 July at 10:00 AM\\nWhich one?'\n" +
+        "        AR: '1. أسنان الاثنين 21 يوليو الساعة 4 مساءً\\n2. أسنان الجمعة 25 يوليو الساعة 10 صباحاً\\nأيهم؟'\n" +
+        "    Keep asking until the user confirms the correct appointment.\n\n" +
 
-        "  STEP 2 — ASK what the user wants to change.\n" +
-        "    Example: 'What would you like to update — the date, time, provider, or something else?'\n\n" +
+        "  STEP 2 — ASK what to change (REQUIRED FIELDS — KEEP ASKING).\n" +
+        "    EN: 'What would you like to update — the date, time, type, title, provider, or something else?'\n" +
+        "    AR: 'ماذا تريد تعديله — التاريخ، أو الوقت، أو النوع، أو العنوان، أو المزود؟'\n" +
+        "    For each required field the user wants to change: keep re-asking until provided.\n" +
+        "    ⚠ If user changes date but NOT time → ALWAYS ask: 'What time on [new date]?'\n" +
+        "      Never invent a time. Never keep an old time without confirming.\n\n" +
 
         "  STEP 3 — COLLECT new values; keep current values for unchanged fields.\n" +
-        "    For date/time: apply DATE/TIME RESOLUTION rules (same as book_appointment).\n" +
-        "    If user changes date but NOT time → ask: 'What time on [new date]?' Never invent it.\n\n" +
+        "    APPOINTMENT TYPE MAPPING (Arabic → enum):\n" +
+        "      أسنان / سنان → Dentist\n" +
+        "      تحليل / تحاليل → LabTest\n" +
+        "      أشعة / صور → Imaging\n" +
+        "      تطعيم / لقاح → Vaccination\n" +
+        "      متابعة → FollowUp\n" +
+        "      دكتور / طبيب / كشف → DoctorVisit\n" +
+        "      نفسي / جلسة → Therapy\n" +
+        "    DATE/TIME RESOLUTION:\n" +
+        "      Convert relative dates: 'tomorrow' → today+1, 'next [day]' → nearest that weekday.\n" +
+        "      Never generate appointmentDateTime in the past — if the computed time is past, re-ask.\n" +
+        "    OPTIONAL FIELDS — TWO-ATTEMPT RULE:\n" +
+        "      reminderOffsetMinutes: If user hasn\\'t mentioned a reminder, ask once:\n" +
+        "        EN: 'Would you like to update the reminder? How many minutes before the appointment?'\n" +
+        "        AR: 'هل تريد تحديث التذكير؟ كم دقيقة قبل الموعد؟'\n" +
+        "        If ignored → ask once more briefly. Still no answer → keep current value.\n" +
+        "        REMINDER VALIDATION: trigger = appointmentDateTime − reminderOffsetMinutes.\n" +
+        "          If trigger is not in the future → warn and ask for a smaller offset.\n" +
+        "      notes: If user hasn\\'t mentioned notes, ask once:\n" +
+        "        EN: 'Any notes to update (like bring previous test results)?'\n" +
+        "        AR: 'هل هناك ملاحظات تريد تحديثها (مثل إحضار نتائج سابقة)؟'\n" +
+        "        If ignored → ask once more briefly. Still no answer → keep current value.\n" +
+        "        If user says 'No' / 'لا' / 'مش مهم' → keep as-is and never re-ask.\n\n" +
 
-        "  STEP 4 — CALL update_appointment.\n\n" +
+        "  STEP 4 — CALL update_appointment and WAIT for the tool result.\n" +
+        "    Only claim success AFTER the tool returns success=true.\n" +
+        "    If success=false, relay the exact error — never fabricate 'تم التعديل' or 'updated'.\n" +
+        "    VALIDATION ERROR RECOVERY:\n" +
+        "      • 'NOT_FOUND': Appointment no longer exists. Tell the user and offer to list appointments.\n" +
+        "      • 'VALIDATION_ERROR' / past datetime: The new datetime is in the past.\n" +
+        "          Ask for a future date/time.\n" +
+        "      • 'VALIDATION_ERROR' / duplicate: Updated details match another appointment.\n" +
+        "          Tell the user and ask if they want different details or if it was a mistake.\n\n" +
 
         "REQUIRED (pass existing value for any field the user did not change):\n" +
         "  id, appointmentType, title, provider, appointmentDateTime.\n\n" +
@@ -57,12 +93,19 @@ public sealed class UpdateAppointmentTool(ISender mediator) : IVoiceTool
         "CONDITIONAL REQUIRED:\n" +
         "  customType: Required ONLY when appointmentType is 'Other'.\n\n" +
 
-        "OPTIONAL (keep existing value if user didn't mention it):\n" +
-        "  reminderOffsetMinutes, notes.\n\n" +
+        "OPTIONAL (two-attempt rule; keep existing value if user doesn\\'t answer):\n" +
+        "  reminderOffsetMinutes: Minutes before appointment; trigger must be strictly in the future.\n" +
+        "  notes: Free-text notes.\n\n" +
 
-        "BACKEND ENFORCES (do not pre-validate yourself — relay any error returned):\n" +
-        "  - appointmentDateTime must be in the future.\n" +
-        "  - Updated type+title+provider+datetime must not duplicate another appointment.";
+        "PARTIAL SUCCESS: Report this operation's result independently. If the appointment update\n" +
+        "  succeeds but a related reminder update (via a second tool call) fails, report both\n" +
+        "  outcomes separately and honestly — never summarise as a single 'all done'.\n\n" +
+
+        "BACKEND ENFORCES (relay any error returned; do not pre-validate beyond STEP 3 checks):\n" +
+        "  - appointmentDateTime must be strictly in the future.\n" +
+        "  - Updated type+title+provider+datetime must not duplicate another appointment.\n\n" +
+
+        "LANGUAGE: Always respond in the same language the user is using (Arabic or English).";
 
     public async Task<ToolResult> ExecuteAsync(
         ToolCallRequest request, AgentContext context, CancellationToken cancellationToken)

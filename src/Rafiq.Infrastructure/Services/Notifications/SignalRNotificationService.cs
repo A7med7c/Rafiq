@@ -26,12 +26,13 @@ namespace Rafiq.Infrastructure.Services.Notifications
             string userId,
             string title,
             string message,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            string? titleAr = null,
+            string? bodyAr = null)
         {
             await _hubContext.Clients.User(userId).SendAsync(
                 "ReceiveNotification",
-                title,
-                message,
+                new { title, message, titleAr, bodyAr },
                 cancellationToken);
         }
 
@@ -140,6 +141,74 @@ namespace Rafiq.Infrastructure.Services.Notifications
                 "VoiceAgentError",
                 payload,
                 cancellationToken);
+        }
+
+        public async Task SendChatResponseAsync(
+            string userId,
+            ChatResponsePayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var connectionList = GetConnectionList(userId);
+            if (connectionList.Count == 0)
+            {
+                _logger.LogWarning(
+                    "No SignalR connections for userId={UserId}. ChatResponse NOT delivered for msg {MsgId}.",
+                    userId, payload.AssistantMessageId);
+                return;
+            }
+
+            await _hubContext.Clients.Clients(connectionList).SendAsync(
+                "ChatResponse", payload, cancellationToken);
+        }
+
+        public async Task SendChatErrorAsync(
+            string userId,
+            ChatErrorPayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var connectionList = GetConnectionList(userId);
+            if (connectionList.Count == 0) return;
+
+            await _hubContext.Clients.Clients(connectionList).SendAsync(
+                "ChatError", payload, cancellationToken);
+        }
+
+        public async Task SendDocumentAnalysisCompletedAsync(
+            string userId,
+            DocumentAnalysisCompletedPayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var connectionList = GetConnectionList(userId);
+            if (connectionList.Count == 0)
+            {
+                _logger.LogInformation(
+                    "No SignalR connections for userId={UserId}. DocumentAnalysisCompleted NOT sent in real-time (user will see it via polling).",
+                    userId);
+                return;
+            }
+
+            await _hubContext.Clients.Clients(connectionList).SendAsync(
+                "DocumentAnalysisCompleted", payload, cancellationToken);
+
+            _logger.LogInformation(
+                "DocumentAnalysisCompleted sent to userId={UserId} for docId={DocId}.",
+                userId, payload.DocumentId);
+        }
+
+        public async Task SendDocumentAnalysisFailedAsync(
+            string userId,
+            DocumentAnalysisFailedPayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var connectionList = GetConnectionList(userId);
+            if (connectionList.Count == 0) return;
+
+            await _hubContext.Clients.Clients(connectionList).SendAsync(
+                "DocumentAnalysisFailed", payload, cancellationToken);
+
+            _logger.LogInformation(
+                "DocumentAnalysisFailed sent to userId={UserId} for docId={DocId}: {Reason}.",
+                userId, payload.DocumentId, payload.FailureReason);
         }
 
         private System.Collections.Generic.IReadOnlyList<string> GetConnectionList(string userId)

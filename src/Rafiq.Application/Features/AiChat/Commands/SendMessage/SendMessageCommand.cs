@@ -1,4 +1,5 @@
 using MediatR;
+using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.AiChat.DTOs;
 
@@ -8,4 +9,6 @@ public sealed record SendMessageCommand(
     Guid ConversationId,
     string Text,
     string? Base64Image,
-    string? ImageFormat) : IRequest<ApiResponse<AiMessageResponseDto>>;
+    string? ImageFormat,
+    string Language = "en",
+    int UtcOffsetMinutes = 0) : IRequest<ApiResponse<AiMessageResponseDto>>, IAiCommand;

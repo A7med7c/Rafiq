@@ -1,0 +1,352 @@
+/*
+  Tokens reuse the same custom-properties defined on :host in app.css / dashboard.css.
+  Primary brand:  #0EAFD7   (--blue)
+  Light primary:  #EEF3FF   (--blue-lt)
+  Success:        #16A34A / #DCFCE7
+  Error:          #DC2626 / #FEE2E2
+  Warning:        #EA580C / #FFF7ED
+*/
+
+/* ── Floating chip (minimized) ────────────────────────────────────────────── */
+.dac-chip {
+  position: fixed;
+  bottom: 88px;
+  inset-inline-end: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0EAFD7;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(14, 175, 215, 0.40);
+  z-index: 1100;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.dac-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(14, 175, 215, 0.55);
+}
+
+.dac-chip__ring {
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pulse while analysis is running */
+.dac-chip__ring--spinning {
+  animation: dac-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes dac-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+.dac-chip__badge {
+  position: absolute;
+  top: -4px;
+  inset-inline-end: -4px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: #DC2626;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid #fff;
+}
+
+/* ── Expanded panel ────────────────────────────────────────────────────────── */
+.dac-panel {
+  position: fixed;
+  bottom: 88px;
+  inset-inline-end: 20px;
+  width: 340px;
+  background: #fff;
+  border: 1px solid var(--border, #E5E7EB);
+  border-radius: var(--r, 16px);
+  box-shadow: 0 8px 32px rgba(17, 24, 39, 0.14);
+  z-index: 1100;
+  overflow: hidden;
+  font-family: 'Inter', 'Outfit', sans-serif;
+  animation: dac-slide-in 0.18s ease;
+}
+
+@keyframes dac-slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Panel header — same colour as .modal-btn-primary on the site ────────── */
+.dac-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  background: #0EAFD7;
+  color: #fff;
+}
+
+.dac-panel__header--draggable {
+  cursor: grab;
+  user-select: none;
+}
+
+.dac-panel__header--draggable:active {
+  cursor: grabbing;
+}
+
+.dac-panel__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dac-panel__icon {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.dac-panel__title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.dac-panel__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.dac-panel__badge--active {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.dac-panel__minimize {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: var(--r-xs, 8px);
+  font-size: 0.7rem;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.dac-panel__minimize:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+/* ── Document list ─────────────────────────────────────────────────────────── */
+.dac-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* ── Single item ───────────────────────────────────────────────────────────── */
+.dac-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-lt, #F3F4F6);
+  transition: background 0.12s;
+}
+
+.dac-item:last-child { border-bottom: none; }
+.dac-item:hover      { background: #F8FDFF; }
+
+/* ── Status icon ring ──────────────────────────────────────────────────────── */
+.dac-item__icon-wrap {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Spinner (Pending / Processing) */
+.dac-item__spinner {
+  width: 34px;
+  height: 34px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0EAFD7;
+}
+
+.dac-spin {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: dac-rotate 1.1s linear infinite;
+}
+
+/* Track ring: light blue matching --blue-lt feel */
+.dac-spin circle { stroke: #D0F0FA; }
+/* Arc: the brand cyan */
+.dac-spin path   { stroke: #0EAFD7; }
+
+@keyframes dac-rotate { to { transform: rotate(360deg); } }
+
+/* Completed: green — matches --green / --green-lt */
+.dac-item__done-ring {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #DCFCE7;
+  color: #16A34A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+/* Ready-to-review: brand cyan */
+.dac-item__ready-ring {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #E0F7FC;
+  color: #0EAFD7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  animation: dac-ready-pulse 2s ease-in-out infinite;
+}
+
+@keyframes dac-ready-pulse {
+  0%, 100% { box-shadow: 0 0 0 0   rgba(14, 175, 215, 0.35); }
+  50%       { box-shadow: 0 0 0 6px rgba(14, 175, 215, 0);    }
+}
+
+/* Failed: red — matches --red / --red-lt */
+.dac-item__fail-ring {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #FEE2E2;
+  color: #DC2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+/* ── Body (title + status) ─────────────────────────────────────────────────── */
+.dac-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dac-item__title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text, #111827);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dac-item__status {
+  font-size: 0.72rem;
+  color: var(--text-3, #6B7280);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.dac-item--failed .dac-item__status { color: #DC2626; }
+.dac-item--ready  .dac-item__status { color: #0EAFD7; font-weight: 500; }
+
+/* ── Action buttons ────────────────────────────────────────────────────────── */
+.dac-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.dac-btn {
+  border: none;
+  border-radius: var(--r-xs, 8px);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  transition: opacity 0.15s, background 0.15s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.dac-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.dac-btn:not(:disabled):active { transform: scale(0.96); }
+
+/* Review — brand cyan (same as modal-btn-primary) */
+.dac-btn--review {
+  background: #0EAFD7;
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(14, 175, 215, 0.30);
+}
+.dac-btn--review:not(:disabled):hover { background: #0c9dbf; }
+
+/* View — subtle gray */
+.dac-btn--view {
+  background: var(--border-lt, #F3F4F6);
+  color: var(--text-2, #374151);
+  border: 1px solid var(--border, #E5E7EB);
+}
+.dac-btn--view:hover { background: #E9EFF5; }
+
+/* Retry — orange (--orange / --orange-lt) */
+.dac-btn--retry {
+  background: #FFF7ED;
+  color: #EA580C;
+}
+.dac-btn--retry:not(:disabled):hover { background: #FFEDD5; }
+
+/* Dismiss — ghost */
+.dac-btn--dismiss {
+  background: transparent;
+  color: var(--text-4, #9CA3AF);
+  padding: 5px 7px;
+}
+.dac-btn--dismiss:hover {
+  background: var(--border-lt, #F3F4F6);
+  color: var(--text-3, #6B7280);
+}

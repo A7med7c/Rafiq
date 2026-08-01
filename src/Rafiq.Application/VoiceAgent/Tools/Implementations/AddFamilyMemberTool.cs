@@ -29,69 +29,98 @@ public sealed class AddFamilyMemberTool(ISender mediator) : IVoiceTool
     public string[] RelatedToolNames => [];
 
     public string DomainContext =>
-        "USE THIS TOOL to add a family member who does NOT have their own Rafiq account.\n" +
-        "For members with an existing account, use the invitation system instead.\n\n" +
+        "USE THIS TOOL to add a family member who does NOT have their own Rafiq account.\n\n" +
 
-        "WORKFLOW — follow these steps in order:\n\n" +
+        "═══════════════════════════ WORKFLOW ═══════════════════════════\n\n" +
 
-        "  STEP 1 — COLLECT all five required fields.\n" +
-        "    Often the user gives several at once (e.g. 'Add my 10-year-old son Mohamed').\n" +
-        "    Extract: firstName='Mohamed', relationship='Son', dateOfBirth can be inferred.\n" +
-        "    Ask only for what is still missing. Never ask for a field already provided.\n\n" +
+        "STEP 1 — EXTRACT what the user already gave you.\n" +
+        "  Users often pack several fields into one sentence:\n" +
+        "    'Add my 10-year-old son Mohamed Ali'  → firstName=Mohamed, lastName=Ali,\n" +
+        "       relationship=Son, gender=Male (implied), age≈10 (infer DOB).\n" +
+        "    'عايز أضيف بنتي نور، عندها 7 سنين'    → firstName=نور, relationship=Daughter,\n" +
+        "       gender=Female (implied), age≈7 (infer DOB).\n" +
+        "  Extract everything you can. Ask ONLY for what is genuinely missing.\n\n" +
 
-        "  STEP 2 — OFFER optional medical details (ask at most once each):\n" +
-        "    'Do you know their blood type?' (skip if user says no/skip/لا/تجاوز)\n" +
-        "    'What is their height and weight?' (optional, skip freely)\n" +
-        "    Do NOT ask about allergies or chronic diseases — those can be added later.\n\n" +
+        "STEP 2 — COLLECT the five required fields (ask for missing ones naturally).\n" +
+        "  Combine questions where sensible: 'What is her last name and date of birth?'\n" +
+        "  Never ask for a field the user already provided.\n\n" +
 
-        "  STEP 3 — CONFIRM before creating:\n" +
-        "    Show a summary, then ask for confirmation.\n" +
-        "    EN example:\n" +
-        "      'I'll add a profile for:\n" +
-        "       • Name: Mohamed Ali\n" +
-        "       • Relationship: Son\n" +
-        "       • Date of birth: 2014-03-15\n" +
-        "       • Gender: Male\n" +
-        "       Shall I go ahead?'\n" +
-        "    AR example:\n" +
-        "      'سأضيف ملف صحي لـ:\n" +
-        "       • الاسم: محمد علي\n" +
-        "       • الصلة: ابن\n" +
-        "       • تاريخ الميلاد: 2014-03-15\n" +
-        "       • الجنس: ذكر\n" +
-        "       هل تريد المتابعة؟'\n\n" +
+        "STEP 3 — OFFER optional medical details (TWO-ATTEMPT RULE per field):\n" +
+        "  Ask once each (combine into one question if possible):\n" +
+        "    EN: 'Do you know their blood type, height, or weight? (you can skip any of these)'\n" +
+        "    AR: 'هل تعرف فصيلة الدم أو الطول أو الوزن؟ (ممكن تتجاوزها)'\n" +
+        "  If the user says no / skip / لا / تجاوز / مش عارف → skip ALL optional fields.\n" +
+        "  Do NOT ask separately about allergies or chronic diseases — add those after creation.\n\n" +
 
-        "  STEP 4 — CALL add_family_member after explicit confirmation.\n\n" +
+        "STEP 4 — CONFIRM before creating (always use ask_user):\n" +
+        "  Show a clear summary in the user's language, then ask to proceed.\n" +
+        "  EN:\n" +
+        "    'I'll create a health profile for:\n" +
+        "     • Name: [firstName] [lastName]\n" +
+        "     • Relationship: [relationship]\n" +
+        "     • Date of birth: [dateOfBirth]\n" +
+        "     • Gender: [Male/Female]\n" +
+        "     [• Blood type: X  (only if provided)]\n" +
+        "     [• Height: X cm / Weight: X kg  (only if provided)]\n" +
+        "     Shall I go ahead?'\n" +
+        "  AR:\n" +
+        "    'سأنشئ ملف صحي لـ:\n" +
+        "     • الاسم: [firstName] [lastName]\n" +
+        "     • الصلة: [relationship بالعربي]\n" +
+        "     • تاريخ الميلاد: [dateOfBirth]\n" +
+        "     • الجنس: [ذكر/أنثى]\n" +
+        "     هل تريد المتابعة؟'\n\n" +
 
-        "REQUIRED — must be provided by the user; never invent or guess:\n" +
-        "  firstName     — given name. Max 100 characters.\n" +
-        "  lastName      — family name. Max 100 characters.\n" +
-        "  dateOfBirth   — YYYY-MM-DD. Must be today or in the past.\n" +
-        "                  If user says 'he is 10 years old', compute approximately:\n" +
-        "                  dateOfBirth ≈ TODAY - 10 years (e.g. 2015-01-01 — ask to confirm).\n" +
-        "                  If user gives birth year only ('born in 2012'), use 2012-01-01.\n" +
-        "                  Always confirm the computed date before calling the tool.\n" +
-        "  gender        — 'Male' or 'Female'. Often implied by relationship (Son→Male, Daughter→Female).\n" +
-        "                  Confirm if not explicit.\n" +
-        "  relationship  — the user's relationship to this person:\n" +
-        "                  Son, Daughter, Father, Mother, Husband, Wife, Brother, Sister,\n" +
-        "                  Grandfather, Grandmother, Other.\n" +
-        "                  'Self' is NOT allowed for managed profiles.\n\n" +
+        "STEP 5 — CALL add_family_member only after explicit confirmation.\n" +
+        "  On success, offer to continue: add medications, book an appointment, etc.\n\n" +
 
-        "OPTIONAL — ask at most once; skip freely if user declines or ignores:\n" +
-        "  bloodType — APositive, ANegative, BPositive, BNegative, ABPositive, ABNegative,\n" +
-        "              OPositive, ONegative. Omit if unknown.\n" +
-        "  height    — in centimetres (30–300). Omit if not provided.\n" +
-        "  weight    — in kilograms (1–500). Omit if not provided.\n\n" +
+        "════════════════════════ FIELD REFERENCE ════════════════════════\n\n" +
 
-        "BACKEND ENFORCES (never pre-validate; relay any error):\n" +
-        "  - dateOfBirth cannot be in the future.\n" +
-        "  - height must be 30–300 cm when provided.\n" +
-        "  - weight must be 1–500 kg when provided.\n" +
-        "  - relationship cannot be Self.\n\n" +
+        "REQUIRED — never invent, never guess:\n" +
+        "  firstName   — given name. Max 100 chars.\n" +
+        "  lastName    — family/last name. Max 100 chars.\n" +
+        "  dateOfBirth — YYYY-MM-DD. Must be in the past.\n" +
+        "                Age → DOB: subtract from today's year. Use Jan 1 if no month given.\n" +
+        "                  'he is 10'       → TODAY_YEAR - 10 + '-01-01' (confirm before saving)\n" +
+        "                  'born in 2012'   → '2012-01-01'\n" +
+        "                  'born March 2015'→ '2015-03-01'\n" +
+        "                Always tell the user the computed date and ask to confirm.\n" +
+        "  gender      — 'Male' or 'Female'.\n" +
+        "                Infer silently from relationship when unambiguous (confirm in summary):\n" +
+        "                  Male  → Son, Father, Husband, Brother, Grandfather\n" +
+        "                  Female→ Daughter, Mother, Wife, Sister, Grandmother\n" +
+        "                For Other/ambiguous relationships, ask explicitly.\n" +
+        "  relationship— enum value to send (always English regardless of conversation language):\n" +
+        "                  Son | Daughter | Father | Mother | Husband | Wife |\n" +
+        "                  Brother | Sister | Grandfather | Grandmother | Other\n" +
+        "                Arabic → enum mapping:\n" +
+        "                  ابن/ولد           → Son\n" +
+        "                  بنت/ابنة          → Daughter\n" +
+        "                  أب/والد           → Father\n" +
+        "                  أم/والدة          → Mother\n" +
+        "                  زوج              → Husband\n" +
+        "                  زوجة             → Wife\n" +
+        "                  أخ              → Brother\n" +
+        "                  أخت             → Sister\n" +
+        "                  جد/جدو           → Grandfather\n" +
+        "                  جدة/ستو          → Grandmother\n" +
+        "                  عم/خال/ابن عم/غيره→ Other\n\n" +
 
-        "RESULT: The new profile's id is returned. Use it as targetProfileId to immediately\n" +
-        "act on this profile (e.g. add their medications or book an appointment).";
+        "OPTIONAL — ask at most once; omit if user skips:\n" +
+        "  bloodType — APositive | ANegative | BPositive | BNegative |\n" +
+        "              ABPositive | ABNegative | OPositive | ONegative\n" +
+        "              Arabic input: A+ → APositive, B- → BNegative, O+ → OPositive, etc.\n" +
+        "  height    — centimetres (30–300).\n" +
+        "  weight    — kilograms (1–500).\n\n" +
+
+        "BACKEND ENFORCES (never pre-validate; relay errors as-is):\n" +
+        "  dateOfBirth cannot be in the future · height 30–300 · weight 1–500 · no Self.\n\n" +
+
+        "AFTER SUCCESS:\n" +
+        "  Confirm the name and offer what to do next:\n" +
+        "    EN: '[Name]'s profile has been created! Would you like to add their medications,\n" +
+        "        book an appointment, or do something else for them?'\n" +
+        "    AR: 'تم إنشاء ملف [Name] بنجاح! هل تريد إضافة أدويته/أدويتها أو حجز موعد؟'";
 
     public async Task<ToolResult> ExecuteAsync(
         ToolCallRequest request, AgentContext context, CancellationToken cancellationToken)

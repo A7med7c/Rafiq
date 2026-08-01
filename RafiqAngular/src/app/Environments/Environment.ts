@@ -1,4 +1,4 @@
-const apiUrl ='https://10.175.240.116:7082/api';
+const apiUrl ='https://localhost:7082/api';
 export const environment = {
 
     apiUrl,

@@ -16,7 +16,9 @@ public sealed class ProcessVoiceMessageCommandHandler(
     IAiConversationRepository conversationRepository,
     VoiceAgentLoop agentLoop,
     INotificationService notificationService,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAiTelemetryContext telemetryContext,
+    IRequestClassificationJobService classificationJobService)
     : IRequestHandler<ProcessVoiceMessageCommand, ApiResponse<VoiceAgentResponseDto>>
 {
     public async Task<ApiResponse<VoiceAgentResponseDto>> Handle(
@@ -31,27 +33,29 @@ public sealed class ProcessVoiceMessageCommandHandler(
         var userId = currentUserService.UserId
             ?? throw new UnauthorizedException("Authentication required.");
 
+        telemetryContext.Feature        = Rafiq.Domain.Enums.AiFeature.Voice;
+        telemetryContext.UserId         = userId;
+        telemetryContext.ConversationId = request.SessionId;
+
         var userIdString = userId.ToString();
 
         var session = await conversationRepository.GetWithMessagesAsync(
             request.SessionId, userId, cancellationToken)
             ?? throw new NotFoundException("Voice session", request.SessionId);
 
-        if (session.Source != AiConversationSource.Voice)
-            throw new BadRequestException("The specified session is not a voice session.");
-
         var existingHistory = session.Messages
             .OrderBy(m => m.SequenceNumber)
             .Select(m => (m.Role, m.Content))
             .ToList();
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc   = DateTime.UtcNow;
+        var localNow = nowUtc.AddMinutes(request.UtcOffsetMinutes);
         var ctx = new AgentContext(
             UserId: userId,
             ProfileId: session.UserHealthProfileId,
             SessionId: session.Id,
             Language: request.Language,
-            Today: DateOnly.FromDateTime(nowUtc),
+            Today: DateOnly.FromDateTime(localNow),   // local date, not UTC
             NowUtc: nowUtc,
             UtcOffsetMinutes: request.UtcOffsetMinutes);
 
@@ -101,6 +105,14 @@ public sealed class ProcessVoiceMessageCommandHandler(
             // Push the completed response via SignalR so the frontend receives it regardless
             // of whether this handler was called synchronously or from a background task.
             await TrySendResponseAsync(userIdString, dto, cancellationToken);
+
+            // Fire-and-forget: classify the voice request for usage intelligence (non-blocking).
+            if (!string.IsNullOrWhiteSpace(request.Text) && !string.IsNullOrWhiteSpace(dto.Response))
+            {
+                classificationJobService.EnqueueClassification(
+                    userId, "Voice", request.Text, dto.Response);
+            }
+
             return ApiResponse<VoiceAgentResponseDto>.SuccessResponse(dto);
         }
 

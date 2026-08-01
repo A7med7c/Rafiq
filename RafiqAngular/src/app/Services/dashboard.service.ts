@@ -16,8 +16,16 @@ import { ProfileSelectionService } from './profile-selection.service';
 import { FamilyProfilesService, AccessibleProfileDto } from './family-profiles.service';
 import { LocalizationService } from './localization.service';
 
+export interface AllergyBrief { name: string; severity: string; }
 export interface HealthSummaryDto {
-  summary: string;
+  overallStatus: string;       // "Good" | "Stable" | "Needs Attention"
+  overallStatusNote: string | null;
+  conditions: string[];
+  allergies: AllergyBrief[];
+  medications: { count: number; hasIssues: boolean; issueNote: string | null };
+  labResults: { status: string; abnormalCount: number };
+  insights: string[];
+  recommendations: string[];
   hasData: boolean;
 }
 
@@ -37,6 +45,11 @@ export class DashboardService {
   private getCurrentProfileId(): Observable<string> {
     const stored = this.profileSelectSvc.selectedProfileId;
     if (stored) return of(stored);
+    return this.healthProfileSvc.getMyProfile().pipe(map(r => r.data.id));
+  }
+
+  /** Always resolves the authenticated user's own profile ID, ignoring any family-member selection. */
+  private getSelfProfileId(): Observable<string> {
     return this.healthProfileSvc.getMyProfile().pipe(map(r => r.data.id));
   }
 
@@ -87,6 +100,16 @@ export class DashboardService {
     );
   }
 
+  getMedicinesForSelf(): Observable<ReminderDisplayItem[]> {
+    return this.getSelfProfileId().pipe(
+      switchMap(profileId =>
+        this.http.get<ApiResponse<UserMedicine[]>>(`${this.base}/user-medicines?profileId=${profileId}`)
+      ),
+      map(r => this.toDisplayItems(r.data ?? [])),
+      catchError(() => of([] as ReminderDisplayItem[]))
+    );
+  }
+
   private fetchMedicines(): Observable<UserMedicine[]> {
     return this.getCurrentProfileId().pipe(
       switchMap(profileId =>
@@ -126,6 +149,18 @@ export class DashboardService {
   }
 
   // ─── AI Health Summary ────────────────────────────────────────────────────
+  getHealthSummaryForSelf(): Observable<HealthSummaryDto | null> {
+    return this.getSelfProfileId().pipe(
+      switchMap(profileId => {
+        const lang = this.l10n.lang();
+        return this.http
+          .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}?language=${lang}`)
+          .pipe(map(r => r.data ?? null));
+      }),
+      catchError(() => of(null))
+    );
+  }
+
   getHealthSummary(): Observable<HealthSummaryDto | null> {
     return this.getCurrentProfileId().pipe(
       switchMap(profileId => {
@@ -137,8 +172,7 @@ export class DashboardService {
           .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}?language=${lang}`)
           .pipe(
             map(r => {
-              const raw = r.data ?? null;
-              const data = raw ? { ...raw, summary: this.stripMarkdown(raw.summary) } : null;
+              const data = r.data ?? null;
               this._cachedSummary = data;
               this._summaryProfileId = profileId;
               this._summaryLanguage = lang;
@@ -155,20 +189,8 @@ export class DashboardService {
     return this.http
       .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}?language=${lang}`)
       .pipe(
-        map(r => {
-          const raw = r.data ?? null;
-          return raw ? { ...raw, summary: this.stripMarkdown(raw.summary) } : null;
-        }),
+        map(r => r.data ?? null),
         catchError(() => of(null))
       );
-  }
-
-  private stripMarkdown(text: string): string {
-    return text
-      .replace(/\*{1,3}([^*]+?)\*{1,3}/g, '$1')   // **bold** / *italic*
-      .replace(/^#{1,6}\s+/gm, '')                  // ## headings
-      .replace(/^\s*[-*]\s+/gm, '')                 // - bullet points
-      .replace(/\n{3,}/g, '\n\n')                   // collapse blank lines
-      .trim();
   }
 }

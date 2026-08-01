@@ -5,8 +5,10 @@ import { MarkdownComponent } from 'ngx-markdown';
 import { AuthService } from '../../Services/auth-service';
 import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { NotificationService } from '../../Services/notification.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { AiChatService } from '../../Services/ai-chat.service';
+import { AiMessageValidatorService } from '../../Services/ai-message-validator.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-chat.models';
 import { catchError, of } from 'rxjs';
@@ -38,6 +40,8 @@ export class AiAssistant implements OnInit {
   protected readonly notifService = inject(NotificationService);
   private readonly healthProfileService = inject(HealthProfileService);
   private readonly aiChatService = inject(AiChatService);
+  private readonly validator = inject(AiMessageValidatorService);
+  private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
   protected readonly l10n = inject(LocalizationService);
@@ -82,12 +86,16 @@ export class AiAssistant implements OnInit {
     this.conversations().find(c => c.id === this.selectedConversationId()) ?? null
   );
 
+  // ── AI restriction ──
+  readonly isAiRestricted = this.aiChatService.isAiRestricted;
+
   // ── Messages ──
   readonly messages = signal<ChatMessage[]>([]);
   readonly messagesLoading = signal(false);
   readonly messageText = signal('');
   readonly sending = signal(false);
   readonly sendError = signal<string | null>(null);
+  readonly validationError = signal<string | null>(null);
 
   // ── Image attachment ──
   readonly attachedImagePreviewUrl = signal<string | null>(null);
@@ -148,6 +156,7 @@ export class AiAssistant implements OnInit {
     this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadProfileThenConversations();
+    this.aiChatService.loadAiStatus();
   }
 
   private loadProfileThenConversations(): void {
@@ -321,15 +330,30 @@ export class AiAssistant implements OnInit {
 
   onMessageInput(value: string): void {
     this.messageText.set(value);
+    if (this.validationError()) this.validationError.set(null);
   }
 
   sendMessage(): void {
+    // Hard block: AI access is restricted by admin
+    if (this.isAiRestricted()) return;
+
     const text = this.messageText().trim();
     const imageBase64 = this.attachedImageBase64();
     const imageFormat = this.attachedImageFormat();
 
     // Allow sending an image with no caption, but require at least one of the two.
     if ((!text && !imageBase64) || this.sending()) return;
+
+    // Stage 1: local validation — only validates text messages (images are always allowed)
+    if (text && !imageBase64) {
+      const check = this.validator.validate(text);
+      if (!check.valid) {
+        const copy = this.t().aiAssistant as Record<string, unknown>;
+        this.validationError.set((copy[check.errorKey!] as string) ?? '');
+        return;
+      }
+    }
+    this.validationError.set(null);
 
     const profileId = this.profileId();
     if (!profileId) {
@@ -612,4 +636,5 @@ export class AiAssistant implements OnInit {
     this.dropdownOpen.set(false);
     this.authService.logout().subscribe();
   }
+  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
 }

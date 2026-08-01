@@ -57,7 +57,9 @@ namespace Rafiq.Application.Common.Interfaces
             string userId,
             string title,
             string message,
-            CancellationToken cancellationToken = default);
+            CancellationToken cancellationToken = default,
+            string? titleAr = null,
+            string? bodyAr = null);
 
         Task SendMedicationReminderAsync(
             string userId,
@@ -88,5 +90,63 @@ namespace Rafiq.Application.Common.Interfaces
             string userId,
             VoiceAgentErrorPayload payload,
             CancellationToken cancellationToken = default);
+
+        // ── Chat async events ─────────────────────────────────────────────────
+
+        /// <summary>Emitted when the background chat processor completes an assistant message.</summary>
+        Task SendChatResponseAsync(
+            string userId,
+            ChatResponsePayload payload,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>Emitted when the background chat processor fails to produce an answer.</summary>
+        Task SendChatErrorAsync(
+            string userId,
+            ChatErrorPayload payload,
+            CancellationToken cancellationToken = default);
+
+        // ── Document Analysis events ──────────────────────────────────────────
+
+        Task SendDocumentAnalysisCompletedAsync(
+            string userId,
+            DocumentAnalysisCompletedPayload payload,
+            CancellationToken cancellationToken = default);
+
+        Task SendDocumentAnalysisFailedAsync(
+            string userId,
+            DocumentAnalysisFailedPayload payload,
+            CancellationToken cancellationToken = default);
+    }
+
+    public class ChatResponsePayload
+    {
+        public Guid ConversationId { get; set; }
+        public Guid AssistantMessageId { get; set; }
+        public string Content { get; set; } = string.Empty;
+    }
+
+    public class ChatErrorPayload
+    {
+        public Guid ConversationId { get; set; }
+        public Guid AssistantMessageId { get; set; }
+        public string ErrorMessage { get; set; } = string.Empty;
+    }
+
+    // ── Document Analysis events ──────────────────────────────────────────────
+
+    public class DocumentAnalysisCompletedPayload
+    {
+        public Guid DocumentId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? DocumentType { get; set; }
+        public string? AiSummary { get; set; }
+        public string ImagePath { get; set; } = string.Empty;
+    }
+
+    public class DocumentAnalysisFailedPayload
+    {
+        public Guid DocumentId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string FailureReason { get; set; } = string.Empty;
     }
 }

@@ -43,6 +43,18 @@ public sealed class LocalFileStorageService : IFileStorageService
         return $"/{relativeFolder.Replace('\\', '/')}/{fileName}";
     }
 
+    public async Task<byte[]> GetFileBytesAsync(string fileUrl, CancellationToken cancellationToken = default)
+    {
+        var wwwRootPath = _webHostEnvironment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(wwwRootPath))
+            wwwRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
+        var relativePath = fileUrl.TrimStart('/');
+        var absoluteFilePath = Path.Combine(wwwRootPath, relativePath);
+
+        return await File.ReadAllBytesAsync(absoluteFilePath, cancellationToken);
+    }
+
     public Task DeleteFileAsync(string fileUrl, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(fileUrl))

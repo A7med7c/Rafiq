@@ -23,11 +23,37 @@ public sealed class GeneralDocumentConfiguration
         builder.Property(x => x.ImagePath)
             .IsRequired();
 
+        builder.Property(x => x.DocumentType)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.DoctorName)
+            .HasMaxLength(200);
+
+        builder.Property(x => x.HospitalOrClinic)
+            .HasMaxLength(200);
+
+        builder.Property(x => x.DocumentDate)
+            .HasMaxLength(50);
+
+        builder.Property(x => x.OcrText)
+            .HasMaxLength(10000);
+
+        builder.Property(x => x.AnalysisStatus)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
+
+        builder.Property(x => x.FailureReason)
+            .HasMaxLength(500);
+
         builder.HasOne(x => x.UserHealthProfile)
             .WithMany()
             .HasForeignKey(x => x.UserHealthProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => x.UserHealthProfileId);
+
+        // Used by the stuck-document recovery job
+        builder.HasIndex(x => new { x.AnalysisStatus, x.UpdatedAt });
     }
 }

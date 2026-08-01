@@ -54,7 +54,12 @@ export class AuthService {
   }
 
   navigateToAppEntry(): void {
-    void this.router.navigate([this.isLoggedIn ? '/dashboard' : '/login']);
+    if (!this.isLoggedIn) {
+      void this.router.navigate(['/login']);
+      return;
+    }
+    const role = this.currentUser?.role;
+    void this.router.navigate([role === 'Admin' ? '/admin/dashboard' : '/dashboard']);
   }
 
   /** Resolves the current user's avatar to an absolute URL, falling back to the default avatar. */

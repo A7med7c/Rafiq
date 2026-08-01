@@ -17,6 +17,7 @@ using Rafiq.Infrastructure.Services.Notifications;
 using Rafiq.Infrastructure.Services.BackgroundJobs;
 using Rafiq.Infrastructure.Services.MedicationReminders;
 using Rafiq.Infrastructure.Services.AppointmentReminders;
+using Rafiq.Infrastructure.Services.Ai;
 using Rafiq.Infrastructure.Services.AiChat;
 using Rafiq.Infrastructure.Services.Common;
 using Rafiq.Infrastructure.Services.MedicalReport;
@@ -63,6 +64,8 @@ public static class DependencyInjection
         services.AddScoped<INotificationService, SignalRNotificationService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IAdminService, AdminService>();
+        services.AddScoped<IAdminAiService, AdminAiService>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddHttpContextAccessor();
         services.AddScoped<IBackgroundUserContext, BackgroundUserContext>();
@@ -77,13 +80,19 @@ public static class DependencyInjection
         services.AddScoped<IResetTokenService, ResetTokenService>();
         services.AddScoped<IGeneralDocumentRepository, GeneralDocumentRepository>();
 
+        // ── Telemetry ─────────────────────────────────────────────────────
+        services.AddScoped<IAiTelemetryContext, AiTelemetryContext>();
+        services.AddSingleton<IAiRequestLogWriter, AiRequestLogWriter>();
+
         // ── Bedrock ────────────────────────────────────────────────────────
         services.Configure<BedrockSettings>(configuration.GetSection("Bedrock"));
-        services.AddHttpClient<IBedrockService, BedrockService>();
+        services.AddHttpClient<BedrockService>();                         // concrete typed client
+        services.AddScoped<IBedrockService, InstrumentedBedrockService>(); // decorator
 
         // ── AiChat ────────────────────────────────────────────────────────
         services.Configure<AiChatSettings>(configuration.GetSection("AiChat"));
-        services.AddHttpClient<IAiChatService, AiChatService>();
+        services.AddHttpClient<AiChatService>();                           // concrete typed client
+        services.AddScoped<IAiChatService, InstrumentedAiChatService>();   // decorator
 
         // ── Medical Report ────────────────────────────────────────────────
         services.AddScoped<IMedicalReportPdfGenerator, MedicalReportPdfGenerator>();
@@ -98,6 +107,8 @@ public static class DependencyInjection
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddScoped<IEmergencyContactRepository, EmergencyContactRepository>();
         services.AddScoped<IAiConversationRepository, AiConversationRepository>();
+        services.AddScoped<IAppReviewRepository, AppReviewRepository>();
+        services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
         services.AddScoped<IMessageReactionRepository, MessageReactionRepository>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
@@ -121,6 +132,22 @@ public static class DependencyInjection
         // ── Appointment Reminder Engine ────────────────────────────────────
         services.AddScoped<IAppointmentReminderScheduler, AppointmentReminderScheduler>();
         services.AddScoped<AppointmentReminderJob>();
+
+        // ── Chat async processor ──────────────────────────────────────────
+        services.AddScoped<ChatMessageProcessorJob>();
+        services.AddScoped<IChatBackgroundJobService, ChatBackgroundJobService>();
+
+        // ── Usage Intelligence ────────────────────────────────────────────
+        services.AddScoped<IAiRequestClassifier, AiRequestClassifier>();
+        services.AddScoped<IUsageIntelligenceService, UsageIntelligenceService>();
+        services.AddScoped<IUserStatusService, UserStatusService>();
+        services.AddScoped<AiRequestClassificationJob>();
+        services.AddScoped<IRequestClassificationJobService, RequestClassificationJobService>();
+
+        // ── Async Document Analysis ───────────────────────────────────────
+        services.AddScoped<DocumentAnalysisJob>();
+        services.AddScoped<DocumentRecoveryJob>();
+        services.AddScoped<IDocumentAnalysisJobService, DocumentAnalysisJobService>();
 
         // ── Hangfire ──────────────────────────────────────────────────────
         var connectionString = configuration.GetConnectionString("DefaultConnection")!;

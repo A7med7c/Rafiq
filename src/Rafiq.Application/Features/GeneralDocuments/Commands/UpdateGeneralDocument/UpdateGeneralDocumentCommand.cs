@@ -9,5 +9,10 @@ public sealed record UpdateGeneralDocumentCommand(
     string Title,
     string Description,
     string? AiSummary,
-    string? ImagePath)
+    string? ImagePath,
+    string? DocumentType,
+    string? DoctorName,
+    string? HospitalOrClinic,
+    string? DocumentDate,
+    string? OcrText)
     : IRequest<ApiResponse<GeneralDocumentResponseDto>>;

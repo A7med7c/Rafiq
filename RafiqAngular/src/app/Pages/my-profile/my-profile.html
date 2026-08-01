@@ -7,15 +7,15 @@
   <!-- ════════════ SIDEBAR ════════════ -->
   <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <div class="sb-top">
-      <div class="sb-logo">
+      <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
         <div class="sb-logo-icon">
           <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
         <div class="sb-logo-text">
-          <span class="sb-logo-title">Rafiq AI</span>
+          <span class="sb-logo-title">{{ t().sidebar.brandName }}</span>
           <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
         </div>
-      </div>
+      </button>
       <button type="button" class="sb-toggle"
         [attr.aria-label]="sidebarCollapsed() ? t().sidebar.expandSidebar : t().sidebar.collapseSidebar"
         (click)="toggleSidebar()">
@@ -40,25 +40,18 @@
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
         <span>{{ t().sidebar.appointments }}</span>
       </a>
-      <a class="sb-link" routerLink="/ai-assistant" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-solid fa-robot"></i></span>
-        <span>{{ t().sidebar.aiAssistant }}</span>
-      </a>
       <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>{{ t().sidebar.medications }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
-        <span>{{ t().sidebar.analytics }}</span>
-      </a>
+
       <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
-        <span>{{ t().sidebar.settings }}</span>
+      <a class="sb-link" routerLink="/my-profile" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-user"></i></span>
+        <span>{{ t().sidebar.myProfile }}</span>
       </a>
     </nav>
 
@@ -68,7 +61,7 @@
         <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
         <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
       </div>
-      <button type="button" class="sb-help-btn" routerLink="/ai-assistant">
+      <button type="button" class="sb-help-btn" (click)="aiChatService.openPanel()">
         <i class="fa-regular fa-comment-dots"></i>
         {{ t().sidebar.askNow }}
       </button>
@@ -89,10 +82,12 @@
         <input type="text" class="hdr-search-inp" [placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
-        <button type="button" class="hdr-ask-btn" routerLink="/ai-assistant">
+        <button type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
           <i class="fa-solid fa-wand-magic-sparkles"></i> {{ t().header.askAI }}
         </button>
-        <button type="button" class="hdr-bell">
+        <button type="button" class="hdr-bell" (click)="notifService.toggleNotificationCenter()"
+          [attr.aria-label]="t().header.notifications"
+          [class.hdr-bell--active]="notifService.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
           @if (unreadNotifCount() > 0) {
           <span class="hdr-badge">{{ unreadNotifCount() }}</span>
@@ -119,6 +114,9 @@
             </button>
             <button type="button" class="user-dropdown-item">
               <i class="fa-solid fa-gear"></i> {{ t().header.settings }}
+            </button>
+            <button type="button" class="user-dropdown-item" (click)="openRatingPopup()">
+              <i class="fa-regular fa-star"></i> {{ t().ratingPopup.rateRafiq }}
             </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
@@ -212,7 +210,7 @@
 
         <div class="mp-row">
         <!-- ══ Personal Information ═══════════════════════════════════════════ -->
-        <div class="mp-card">
+        <div class="mp-card" assistantAnchor="profile-personal-info">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-blue">
               <i class="fa-regular fa-user"></i>
@@ -331,7 +329,7 @@
             }
             <div class="mp-form-actions">
               <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEditPersonal()" [disabled]="personalSaving()">{{ t().myProfile.cancelBtn }}</button>
-              <button type="submit" class="mp-btn mp-btn-primary" [disabled]="personalSaving()">
+              <button type="submit" class="mp-btn mp-btn-primary" [disabled]="personalSaving()" assistantAnchor="save-profile">
                 @if (personalSaving()) { <span class="mp-btn-spinner"></span> {{ t().myProfile.savingBtn }} } @else { {{ t().myProfile.saveChanges }} }
               </button>
             </div>
@@ -340,7 +338,7 @@
         </div>
 
         <!-- ══ Health Information ══════════════════════════════════════════════ -->
-        <div class="mp-card">
+        <div class="mp-card" assistantAnchor="profile-health-info">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-teal">
               <i class="fa-solid fa-heartbeat"></i>
@@ -413,7 +411,7 @@
 
         <!-- ══ Allergies + Chronic Diseases ═════════════════════════════════════ -->
         <div class="mp-row">
-        <div class="mp-card">
+        <div class="mp-card" assistantAnchor="profile-allergies">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-purple">
               <i class="fa-solid fa-hand-dots"></i>
@@ -479,7 +477,7 @@
         </div>
 
         <!-- ══ Chronic Diseases ═══════════════════════════════════════════════ -->
-        <div class="mp-card">
+        <div class="mp-card" assistantAnchor="profile-chronic-diseases">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-green">
               <i class="fa-solid fa-heart-pulse"></i>
@@ -554,7 +552,7 @@
 
         <div class="mp-row">
         <!-- ══ Emergency Contacts ═════════════════════════════════════════════ -->
-        <div class="mp-card">
+        <div class="mp-card" assistantAnchor="profile-emergency-contacts">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-teal">
               <i class="fa-solid fa-phone-volume"></i>
@@ -598,7 +596,7 @@
           }
 
           @if (!addingContact()) {
-          <button type="button" class="mp-add-block-btn" (click)="openAddContact()">
+          <button type="button" class="mp-add-block-btn" (click)="openAddContact()" assistantAnchor="add-emergency-contact">
             <i class="fa-solid fa-plus"></i> {{ t().myProfile.addContactBtn }}
           </button>
           }

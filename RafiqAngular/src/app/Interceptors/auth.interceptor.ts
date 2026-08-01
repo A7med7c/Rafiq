@@ -26,7 +26,9 @@ function shouldAttachToken(url: string): boolean {
     '/auth/verify-reset-otp',
     '/auth/reset-password',
     '/auth/verify-phone',
-    '/auth/resend-phone-code'
+    '/auth/resend-phone-code',
+    '/speech/elevenlabs-tts',
+    '/speech/token'
   ];
 
   return !publicAuthPaths.some((path) => url.includes(path));

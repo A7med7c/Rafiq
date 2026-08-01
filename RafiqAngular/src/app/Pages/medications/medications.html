@@ -12,7 +12,7 @@
           <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
         <div class="sb-logo-text">
-          <span class="sb-logo-title">Rafiq AI</span>
+          <span class="sb-logo-title">{{ t().sidebar.brandName }}</span>
           <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
         </div>
       </button>
@@ -43,17 +43,14 @@
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>{{ t().sidebar.medications }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
-        <span>{{ t().sidebar.analytics }}</span>
-      </a>
+
       <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
-        <span>{{ t().sidebar.settings }}</span>
+      <a class="sb-link" routerLink="/my-profile" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-user"></i></span>
+        <span>{{ t().sidebar.myProfile }}</span>
       </a>
     </nav>
 
@@ -116,6 +113,9 @@
             <button type="button" class="user-dropdown-item">
               <i class="fa-solid fa-gear"></i> {{ t().header.settings }}
             </button>
+            <button type="button" class="user-dropdown-item" (click)="openRatingPopup()">
+              <i class="fa-regular fa-star"></i> {{ t().ratingPopup.rateRafiq }}
+            </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
               <i class="fa-solid fa-arrow-right-from-bracket"></i> {{ t().header.logout }}
@@ -129,25 +129,6 @@
     <!-- BODY -->
     <div class="dsh-body">
 
-      <!-- ── Family profile banner ── -->
-      @if (fpProfileId()) {
-      <div class="fp-context-banner">
-        <span class="fp-context-icon"><i class="fa-solid fa-people-group"></i></span>
-        <div class="fp-context-info">
-          <span class="fp-context-label">{{ t().medications.viewingFor }}</span>
-          <strong class="fp-context-name">{{ fpProfileName() ?? 'Family Member' }}</strong>
-        </div>
-        @if (fpReadOnly()) {
-        <span class="fp-context-badge fp-context-badge--viewer">
-          <i class="fa-solid fa-eye"></i> {{ t().medications.viewOnly }}
-        </span>
-        }
-        <button type="button" class="fp-context-back" (click)="router.navigate(['/family-profiles'])">
-          <i class="fa-solid fa-arrow-right"></i> {{ t().common.back }}
-        </button>
-      </div>
-      }
-
       <!-- ── Title Bar ── -->
       <div class="med-title-bar">
         <div>
@@ -155,18 +136,21 @@
           <p class="med-subtitle">{{ todayLabel() }}</p>
         </div>
         @if (!fpReadOnly()) {
-        <button type="button" class="add-med-btn" (click)="openAddMed()">
+        <button type="button" class="add-med-btn" (click)="openAddMed()" assistantAnchor="add-medication">
           <i class="fa-solid fa-plus"></i> {{ t().medications.addMedication }}
         </button>
         }
       </div>
+
+      <!-- ── Family profile banner ── -->
+      <app-family-profile-banner [profile]="viewingFpProfile()" [readOnly]="fpReadOnly()" />
 
       <!-- ── Day Rail: the next dose, and the shape of the day ── -->
       @if (!scheduleLoading() && !scheduleError() && doses().length > 0) {
       <section class="rail-card" [class.rail-card--overdue]="nextDose() && isOverdue(nextDose()!)"
         aria-label="Today's dosing timeline">
 
-        <div class="rail-head">
+        <div class="rail-head" assistantAnchor="med-next-dose-card">
           @if (nextDose(); as dose) {
           <div class="rail-next">
             <span class="rail-eyebrow">
@@ -292,7 +276,7 @@
       </div>
 
       <!-- ── Tab Bar ── -->
-      <div class="med-tabs">
+      <div class="med-tabs" assistantAnchor="medications-list">
         <button type="button" class="med-tab" [class.med-tab--active]="activeTab() === 'schedule'"
           (click)="setTab('schedule')">
           <i class="fa-regular fa-calendar-check"></i>
@@ -353,7 +337,7 @@
               <i class="fa-solid fa-bell-slash empty-icon"></i>
               <p class="empty-title">{{ t().medications.noRemindersYet }}</p>
               <p class="empty-sub">{{ t().medications.noRemindersSub }}</p>
-              <button type="button" class="med-add-reminder-btn" style="margin-top: 12px;" (click)="goToMedsAndHighlight()">
+              <button type="button" class="med-add-reminder-btn" style="margin-top: 12px;" (click)="goToMedsAndHighlight()" assistantAnchor="add-medication-reminder">
                 <i class="fa-solid fa-plus"></i> {{ t().medications.createReminder }}
               </button>
               } @else {
@@ -646,6 +630,37 @@
               <span class="tab-count">{{ pausedMedCount() }}</span>
             </button>
           </div>
+
+          <!-- Mobile-only: collapsible tab selector -->
+          <div class="mobile-tab-select">
+            <button type="button" class="mobile-tab-trigger" [class.is-open]="mobileTabMenuOpen()" (click)="toggleMobileTabMenu()">
+              <i [class]="'fa-solid ' + activeTabIcon() + ' mtt-icon'"></i>
+              <span class="mtt-label">{{ activeTabLabel() }}</span>
+              <i class="fa-solid fa-chevron-down mtt-chevron"></i>
+            </button>
+            @if (mobileTabMenuOpen()) {
+              <div class="mobile-tab-backdrop" (click)="closeMobileTabMenu()"></div>
+              <div class="mobile-tab-dropdown">
+                <button type="button" class="mobile-tab-item" [class.is-active]="medSubTab() === 'all'" (click)="setMedSubTab('all')">
+                  <i class="fa-solid fa-layer-group"></i> {{ t().medications.allTab }}
+                  <span class="mti-count">{{ medicines().length }}</span>
+                </button>
+                <button type="button" class="mobile-tab-item" [class.is-active]="medSubTab() === 'with-reminder'" (click)="setMedSubTab('with-reminder')">
+                  <i class="fa-solid fa-bell"></i> {{ t().medications.withReminderTab }}
+                  <span class="mti-count">{{ withReminderCount() }}</span>
+                </button>
+                <button type="button" class="mobile-tab-item" [class.is-active]="medSubTab() === 'no-reminder'" (click)="setMedSubTab('no-reminder')">
+                  <i class="fa-solid fa-bell-slash"></i> {{ t().medications.noReminderTab }}
+                  <span class="mti-count">{{ noReminderCount() }}</span>
+                </button>
+                <button type="button" class="mobile-tab-item" [class.is-active]="medSubTab() === 'paused'" (click)="setMedSubTab('paused')">
+                  <i class="fa-solid fa-pause"></i> {{ t().medications.pausedTab }}
+                  <span class="mti-count">{{ pausedMedCount() }}</span>
+                </button>
+              </div>
+            }
+          </div>
+
           <div class="appts-controls-row">
             <div class="appts-search-wrap">
               <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
@@ -740,12 +755,12 @@
                   </div>
                 </td>
                 <!-- Schedule -->
-                <td>
+                <td [attr.data-label]="t().medications.schedule">
                   <p class="meds-freq">{{ med.frequency }}</p>
                   <p class="meds-dur">{{ med.duration }}</p>
                 </td>
                 <!-- Reminder -->
-                <td>
+                <td [attr.data-label]="t().medications.reminderHeader">
                   @if (hasActiveReminders(med.id)) {
                   <div class="meds-rem-times">
                     @for (t of getSortedReminderTimes(med.id); track t) {
@@ -765,7 +780,7 @@
                   }
                 </td>
                 <!-- Source -->
-                <td>
+                <td [attr.data-label]="t().medications.source">
                   <span [class]="sourceClass(med.source)">{{ sourceLabel(med.source) }}</span>
                 </td>
                 <!-- Actions -->
@@ -779,7 +794,7 @@
                     </button>
                     } @else {
                     <button type="button" class="rec-action-btn" [title]="t().medications.addReminderAction"
-                      (click)="openAddReminder(med)">
+                      (click)="openAddReminder(med)" assistantAnchor="add-medication-reminder">
                       <i class="fa-solid fa-bell"></i>
                     </button>
                     }
@@ -1313,15 +1328,74 @@
       <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddMed()"
         [disabled]="addMedSaving()">{{ t().common.cancel }}</button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="saveAddMed()"
-        [disabled]="addMedSaving()">
+        [disabled]="addMedSaving() || allergyChecking()">
         @if (addMedSaving()) {
-        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.savingBtn }}
+          <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.savingBtn }}
+        } @else if (allergyChecking()) {
+          <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().medications.checkingSafety }}
         } @else {
-        <i class="fa-solid fa-plus"></i> {{ t().medications.addMedicationBtn }}
+          <i class="fa-solid fa-plus"></i> {{ t().medications.addMedicationBtn }}
         }
       </button>
     </div>
 
+  </div>
+</div>
+}
+
+<!-- ═══════════ ALLERGY WARNING DIALOG ═══════════ -->
+@if (showAllergyWarning()) {
+<div class="modal-overlay" (click)="dismissAllergyWarning()">
+  <div class="modal-card allergy-warn-card" (click)="$event.stopPropagation()" role="alertdialog"
+    aria-modal="true" aria-labelledby="allergy-warn-title">
+
+    <div class="allergy-warn-hdr">
+      <div class="allergy-warn-ico">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h2 class="allergy-warn-title" id="allergy-warn-title">{{ t().medications.allergyWarningTitle }}</h2>
+        <p class="allergy-warn-subtitle">{{ t().medications.allergyWarningSubtitle }}</p>
+      </div>
+    </div>
+
+    <div class="allergy-warn-body">
+      <p class="allergy-warn-msg">
+        {{ t().medications.allergyWarningMsg }}
+        <strong>{{ t().medications.allergyWarningAdvice }}</strong>
+      </p>
+
+      @if (allergyCheckResult()?.triggeredAllergy) {
+        <div class="allergy-warn-detail">
+          <span class="allergy-warn-label"><i class="fa-solid fa-dna"></i> {{ t().medications.allergyTriggeredBy }}</span>
+          <span class="allergy-warn-value">{{ allergyCheckResult()!.triggeredAllergy }}</span>
+        </div>
+      }
+
+      @if (allergyCheckResult()?.riskLevel && allergyCheckResult()!.riskLevel !== 'None') {
+        <div class="allergy-warn-detail">
+          <span class="allergy-warn-label"><i class="fa-solid fa-gauge-high"></i> {{ t().medications.allergyRiskLevel }}</span>
+          <span class="allergy-risk-badge allergy-risk-badge--{{ allergyCheckResult()!.riskLevel | lowercase }}">
+            {{ allergyCheckResult()!.riskLevel }}
+          </span>
+        </div>
+      }
+
+      @if (allergyCheckResult()?.explanation) {
+        <p class="allergy-warn-explanation">
+          <i class="fa-solid fa-circle-info"></i> {{ allergyCheckResult()!.explanation }}
+        </p>
+      }
+    </div>
+
+    <div class="allergy-warn-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="dismissAllergyWarning()">
+        <i class="fa-solid fa-xmark"></i> {{ t().medications.allergyCancelBtn }}
+      </button>
+      <button type="button" class="modal-btn allergy-warn-continue-btn" (click)="continueAfterWarning()">
+        <i class="fa-solid fa-circle-check"></i> {{ t().medications.allergyContinueBtn }}
+      </button>
+    </div>
   </div>
 </div>
 }

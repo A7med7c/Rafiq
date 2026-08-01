@@ -23,19 +23,32 @@ export const ADMIN_ROUTES: Routes = [
           import('./pages/users/admin-users.component')
             .then(module => module.AdminUsersComponent)
       },
+      {
+        path: 'ai-operations',
+        loadComponent: () =>
+          import('./pages/ai-operations/admin-ai-operations.component')
+            .then(m => m.AdminAiOperationsComponent)
+      },
+      {
+        path: 'reviews',
+        loadComponent: () =>
+          import('./pages/reviews/admin-reviews.component')
+            .then(m => m.AdminReviewsComponent)
+      },
+      {
+        path: 'audit-logs',
+        loadComponent: () =>
+          import('./pages/audit-logs/admin-audit-logs.component')
+            .then(m => m.AdminAuditLogsComponent)
+      },
       ...[
-        'doctors',
         'families',
         'medical-records',
         'appointments',
         'medications',
-        'notifications',
         'documents',
-        'ai-analysis',
-        'statistics',
-        'settings',
-        'audit-logs',
-        'profile'
+        'analytics',
+        'settings'
       ].map(path => ({
         path,
         loadComponent: () =>

@@ -1,0 +1,223 @@
+/* ══════════════════════════════════════════════════════════
+   Host — no longer positioned itself; the bubble (position:fixed,
+   driven entirely by AvatarPositionService/floating-ui) is the
+   single source of truth for both bubble AND mascot placement.
+   ══════════════════════════════════════════════════════════ */
+:host {
+  display: block;
+  pointer-events: none;
+}
+
+:host * { box-sizing: border-box; }
+
+/* ══ Speech bubble ═══════════════════════════════════════════ */
+.tour-bubble {
+  position: fixed;
+  z-index: 1000000010;
+  max-width: min(370px, calc(100vw - 32px));
+  width: min(370px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1.5px solid rgba(14, 175, 215, .4);
+  border-radius: 20px;
+  background: #F0FAFD;
+  box-shadow:
+    0 14px 44px rgba(14, 175, 215, .2),
+    0 6px 20px rgba(15, 23, 42, .14);
+  color: #0E2A3D;
+  pointer-events: auto;
+  font-family: 'Cairo', 'Segoe UI', system-ui, sans-serif;
+  overflow-wrap: break-word;
+  word-break: break-word;
+
+  opacity: 0;
+  transform: scale(0.94) translateY(6px);
+  transition:
+    opacity 200ms cubic-bezier(.16, 1, .3, 1),
+    transform 200ms cubic-bezier(.16, 1, .3, 1);
+  pointer-events: none; /* not interactive until visible */
+}
+
+.tour-bubble--visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+/* ══ Mascot chip — nested inside the bubble, attached to whichever corner
+   floating-ui's flip() resolved to. Never positioned independently. ══ */
+.mascot-chip {
+  --mascot-size: 96px;
+  position: absolute;
+  width: var(--mascot-size);
+  height: var(--mascot-size);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 16px rgba(14, 175, 215, 0.45));
+  animation: mascot-enter 420ms cubic-bezier(.16, 1, .3, 1) both;
+  transition: width 0.3s cubic-bezier(.16,1,.3,1), height 0.3s cubic-bezier(.16,1,.3,1);
+}
+
+.mascot-chip--large {
+  --mascot-size: 130px;
+}
+
+.mascot-chip--speaking {
+  animation: mascot-talk 0.52s ease-in-out infinite alternate;
+}
+
+/* Corners: chip sits half-outside the bubble edge, like a chat-app sender avatar. */
+.mascot-chip--top-left     { top: calc(var(--mascot-size) / -2);    left: calc(var(--mascot-size) / -2); }
+.mascot-chip--top-right    { top: calc(var(--mascot-size) / -2);    right: calc(var(--mascot-size) / -2); }
+.mascot-chip--bottom-left  { bottom: calc(var(--mascot-size) / -2); left: calc(var(--mascot-size) / -2); }
+.mascot-chip--bottom-right { bottom: calc(var(--mascot-size) / -2); right: calc(var(--mascot-size) / -2); }
+
+/* ══ Header ══════════════════════════════════════════════════ */
+.tour-bubble__progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tour-bubble__step-text {
+  background: rgba(14, 175, 215, 0.12);
+  color: #08819e;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.tour-bubble__top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.tour-bubble__skip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #cfe8ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.tour-bubble__skip-btn:hover {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fca5a5;
+  transform: scale(1.05);
+}
+
+/* ══ Step dots ════════════════════════════════════════════════ */
+.tour-bubble__dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.tour-bubble__dots i {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+.tour-bubble__dots .tour-bubble__dot--active {
+  background: #0eafd7;
+  transform: scale(1.55);
+}
+
+/* ══ Message text ═════════════════════════════════════════════ */
+.tour-bubble__message {
+  margin: 0;
+  color: #0E2A3D;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.8;
+  text-align: right;
+  direction: rtl;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* ══ Controls footer ══════════════════════════════════════════ */
+.tour-bubble__controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.tour-bubble__button {
+  min-height: 38px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.tour-bubble__button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+.tour-bubble__button:active:not(:disabled){ transform: translateY(0); }
+.tour-bubble__button:disabled { opacity: .38; cursor: not-allowed; }
+
+.tour-bubble__button--quiet {
+  border-color: #cfe8ef;
+  background: #ffffff;
+  color: #475569;
+}
+.tour-bubble__button--primary {
+  background: linear-gradient(135deg, #1abddd, #0e8ac7);
+  box-shadow: 0 4px 14px rgba(14, 175, 215, .32);
+  color: #fff;
+}
+.tour-bubble__button--finish {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, .32);
+  color: #fff;
+}
+
+/* ══ Keyframes ════════════════════════════════════════════════ */
+@keyframes mascot-enter {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes mascot-talk {
+  from { transform: translateY(0) scale(1); }
+  to   { transform: translateY(-4px) scale(1.04); }
+}
+
+/* ══ Responsive ════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .tour-bubble { width: min(300px, calc(100vw - 20px)); padding: 14px; }
+  .tour-bubble__message { font-size: 12.5px; }
+  .tour-bubble__button  { min-height: 34px; font-size: 11px; padding: 0 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-chip,
+  .mascot-chip--speaking,
+  .tour-bubble--visible { animation: none; }
+}

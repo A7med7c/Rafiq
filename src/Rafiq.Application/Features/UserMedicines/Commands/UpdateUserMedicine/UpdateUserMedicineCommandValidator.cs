@@ -13,8 +13,9 @@ internal sealed class UpdateUserMedicineCommandValidator
             .NotEmpty().WithMessage("Medicine name is required.")
             .MaximumLength(300).WithMessage("Medicine name must not exceed 300 characters.");
 
+        // Dosage is intentionally optional (matches AddUserMedicine): many users
+        // don't know the exact dosage. Empty string is stored and shown as "Not specified".
         RuleFor(x => x.Dosage)
-            .NotEmpty().WithMessage("Dosage is required.")
             .MaximumLength(200).WithMessage("Dosage must not exceed 200 characters.");
 
         RuleFor(x => x.Frequency)

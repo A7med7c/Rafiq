@@ -1,4 +1,6 @@
-﻿namespace Rafiq.Application.Features.GeneralDocuments.DTOs;
+﻿using Rafiq.Domain.Enums;
+
+namespace Rafiq.Application.Features.GeneralDocuments.DTOs;
 
 public sealed class GeneralDocumentResponseDto
 {
@@ -12,5 +14,27 @@ public sealed class GeneralDocumentResponseDto
 
     public string? ImagePath { get; init; }
 
+    public string? DocumentType { get; init; }
+
+    public string? DoctorName { get; init; }
+
+    public string? HospitalOrClinic { get; init; }
+
+    public string? DocumentDate { get; init; }
+
+    public string? OcrText { get; init; }
+
     public DateTime CreatedAt { get; init; }
+
+    public string AnalysisStatus { get; init; } = "Completed";
+
+    public string? FailureReason { get; init; }
+}
+
+/// <summary>Returned immediately after async upload — the client uses this ID to track analysis.</summary>
+public sealed class UploadGeneralDocumentAsyncResponseDto
+{
+    public Guid DocumentId { get; init; }
+    public string ImagePath { get; init; } = null!;
+    public string Title { get; init; } = null!;
 }

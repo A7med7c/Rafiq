@@ -2,6 +2,7 @@ import { ApplicationConfig, APP_INITIALIZER, provideBrowserGlobalErrorListeners 
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { provideMarkdown } from 'ngx-markdown';
+import { provideLottieOptions } from 'ngx-lottie';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './Interceptors/auth.interceptor';
@@ -17,6 +18,9 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideMarkdown(),
+    provideLottieOptions({
+      player: () => import('lottie-web')
+    }),
     {
       provide: APP_INITIALIZER,
       useFactory: initializeAuth,

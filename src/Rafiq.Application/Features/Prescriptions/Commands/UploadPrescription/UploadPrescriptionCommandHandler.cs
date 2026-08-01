@@ -14,7 +14,9 @@ public sealed class UploadPrescriptionCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IBedrockService bedrockService,
-    IFileStorageService fileStorageService)
+    IFileStorageService fileStorageService,
+    IAiTelemetryContext telemetryContext,
+    IUsageIntelligenceService usageIntelligence)
     : IRequestHandler<UploadPrescriptionCommand, ApiResponse<PrescriptionResponseDto>>
 {
     public async Task<ApiResponse<PrescriptionResponseDto>> Handle(
@@ -34,6 +36,9 @@ public sealed class UploadPrescriptionCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
 
+        telemetryContext.Feature = Rafiq.Domain.Enums.AiFeature.PrescriptionOcr;
+        telemetryContext.UserId  = currentUserService.UserId;
+
         using var imageStream = request.Image.OpenReadStream();
         using var memoryStream = new MemoryStream();
         await imageStream.CopyToAsync(memoryStream, cancellationToken);
@@ -48,10 +53,26 @@ public sealed class UploadPrescriptionCommandHandler(
 
         if (!extracted.IsValidDocument)
         {
-            var detected = extracted.DetectedDocumentType;
+            var detected = extracted.DetectedDocumentType ?? "Unknown";
             var detailMessage = string.IsNullOrWhiteSpace(detected) || detected == "Unknown"
                 ? "The uploaded image could not be identified as a valid document."
                 : $"Detected document type: {detected}.";
+
+            var userId = currentUserService.UserId;
+            if (userId.HasValue)
+            {
+                var isMedicalWrongType = detected.Contains("lab", StringComparison.OrdinalIgnoreCase)
+                    || detected.Contains("imaging", StringComparison.OrdinalIgnoreCase)
+                    || detected.Contains("report", StringComparison.OrdinalIgnoreCase);
+                await usageIntelligence.SaveFlaggedRequestAsync(new(
+                    UserId:         userId.Value,
+                    RequestType:    "PrescriptionOcr",
+                    UserRequest:    "User uploaded an image as a Prescription.",
+                    AiResponse:     $"Rejected. {detailMessage}",
+                    Classification: isMedicalWrongType ? "WrongDocumentType" : "NonMedicalUpload",
+                    Reason:         $"Expected: Prescription. Detected: {detected}."),
+                    cancellationToken);
+            }
 
             throw new DocumentValidationException(
                 "WRONG_DOCUMENT_TYPE_PRESCRIPTION",

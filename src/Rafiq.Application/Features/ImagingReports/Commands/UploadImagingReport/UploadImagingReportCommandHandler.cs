@@ -14,7 +14,9 @@ public sealed class UploadImagingReportCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IBedrockService bedrockService,
-    IFileStorageService fileStorageService)
+    IFileStorageService fileStorageService,
+    IAiTelemetryContext telemetryContext,
+    IUsageIntelligenceService usageIntelligence)
     : IRequestHandler<UploadImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
 {
     public async Task<ApiResponse<ImagingReportResponseDto>> Handle(
@@ -34,6 +36,9 @@ public sealed class UploadImagingReportCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(profileId, cancellationToken);
 
+        telemetryContext.Feature = Rafiq.Domain.Enums.AiFeature.ImagingOcr;
+        telemetryContext.UserId  = currentUserService.UserId;
+
         using var imageStream = request.Image.OpenReadStream();
         using var memoryStream = new MemoryStream();
         await imageStream.CopyToAsync(memoryStream, cancellationToken);
@@ -48,10 +53,26 @@ public sealed class UploadImagingReportCommandHandler(
 
         if (!extracted.IsValidDocument)
         {
-            var detected = extracted.DetectedDocumentType;
+            var detected = extracted.DetectedDocumentType ?? "Unknown";
             var detailMessage = string.IsNullOrWhiteSpace(detected) || detected == "Unknown"
                 ? "The uploaded image could not be identified as a valid document."
                 : $"Detected document type: {detected}.";
+
+            var userId = currentUserService.UserId;
+            if (userId.HasValue)
+            {
+                var isMedicalWrongType = detected.Contains("prescription", StringComparison.OrdinalIgnoreCase)
+                    || detected.Contains("lab", StringComparison.OrdinalIgnoreCase)
+                    || detected.Contains("report", StringComparison.OrdinalIgnoreCase);
+                await usageIntelligence.SaveFlaggedRequestAsync(new(
+                    UserId:         userId.Value,
+                    RequestType:    "ImagingOcr",
+                    UserRequest:    "User uploaded an image as an Imaging Report.",
+                    AiResponse:     $"Rejected. {detailMessage}",
+                    Classification: isMedicalWrongType ? "WrongDocumentType" : "NonMedicalUpload",
+                    Reason:         $"Expected: Imaging Report. Detected: {detected}."),
+                    cancellationToken);
+            }
 
             throw new DocumentValidationException(
                 "WRONG_DOCUMENT_TYPE_IMAGING_REPORT",

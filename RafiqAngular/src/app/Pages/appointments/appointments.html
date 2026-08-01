@@ -12,7 +12,7 @@
           <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
         <div class="sb-logo-text">
-          <span class="sb-logo-title">{{ t().sidebar.brandName }} AI</span>
+          <span class="sb-logo-title">{{ t().sidebar.brandName }}</span>
           <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
         </div>
       </button>
@@ -44,10 +44,7 @@
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>{{ t().sidebar.medications }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
-        <span>{{ t().sidebar.analytics }}</span>
-      </a>
+
       <!-- <a class="sb-link sb-sos" href="#">
         <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
         <span>SOS &amp; Emergency</span>
@@ -56,9 +53,9 @@
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
-        <span>{{ t().sidebar.settings }}</span>
+      <a class="sb-link" routerLink="/my-profile" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-user"></i></span>
+        <span>{{ t().sidebar.myProfile }}</span>
       </a>
     </nav>
 
@@ -123,6 +120,9 @@
             <button type="button" class="user-dropdown-item">
               <i class="fa-solid fa-gear"></i> {{ t().header.settings }}
             </button>
+            <button type="button" class="user-dropdown-item" (click)="openRatingPopup()">
+              <i class="fa-regular fa-star"></i> {{ t().ratingPopup.rateRafiq }}
+            </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
               <i class="fa-solid fa-arrow-right-from-bracket"></i> {{ t().header.logout }}
@@ -147,12 +147,15 @@
           <i class="fa-regular fa-eye"></i> {{ t().appointments.viewOnly }}
         </span>
         } @else {
-        <button type="button" class="add-appt-btn" (click)="openAdd()">
+        <button assistantAnchor="add-appointment" type="button" class="add-appt-btn" (click)="openAdd()">
           <i class="fa-solid fa-plus"></i>
           {{ t().appointments.addAppointment }}
         </button>
         }
       </div>
+
+      <!-- ── Family profile context banner ── -->
+      <app-family-profile-banner [profile]="viewingProfile()" [readOnly]="fpReadOnly()" />
 
       <!-- ── Stat Cards ── -->
       <div class="appointment-overview">
@@ -161,7 +164,7 @@
 
         @if (nextAppointment(); as next) {
 
-        <div class="next-card">
+        <div assistantAnchor="next-appointment-card" class="next-card">
 
           <div class="next-card-content">
 
@@ -280,7 +283,7 @@
 
         <div class="stat-grid">
 
-          <div class="stat-card stat-card-blue" (click)="setTab('upcoming')">
+          <div assistantAnchor="upcoming-stat-card" class="stat-card stat-card-blue" (click)="setTab('upcoming')">
 
             <div class="stat-ico-wrap stat-ico-blue">
               <i class="fa-solid fa-clipboard-check" style="color: rgb(116, 192, 252);"></i>
@@ -305,7 +308,7 @@
 
 
 
-          <div class="stat-card stat-card-green" (click)="setTab('completed')">
+          <div assistantAnchor="completed-stat-card" class="stat-card stat-card-green" (click)="setTab('completed')">
 
             <div class="stat-ico-wrap stat-ico-green">
               <i class="fa-solid fa-circle-check" style="color: rgb(68, 239, 122);"></i>
@@ -415,10 +418,37 @@
 
         </div>
 
+        <!-- Mobile-only: collapsible tab selector -->
+        <div class="mobile-tab-select">
+          <button type="button" class="mobile-tab-trigger" [class.is-open]="mobileTabMenuOpen()" (click)="toggleMobileTabMenu()">
+            <i [class]="'fa-solid ' + activeTabIcon() + ' mtt-icon'"></i>
+            <span class="mtt-label">{{ activeTabLabel() }}</span>
+            <i class="fa-solid fa-chevron-down mtt-chevron"></i>
+          </button>
+          @if (mobileTabMenuOpen()) {
+            <div class="mobile-tab-backdrop" (click)="closeMobileTabMenu()"></div>
+            <div class="mobile-tab-dropdown">
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'all'" (click)="setTab('all')">
+                <i class="fa-solid fa-layer-group"></i> {{ t().appointments.all }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'upcoming'" (click)="setTab('upcoming')">
+                <i class="fa-solid fa-calendar"></i> {{ t().appointments.upcoming }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'completed'" (click)="setTab('completed')">
+                <i class="fa-solid fa-circle-check"></i> {{ t().appointments.completed }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'cancelled'" (click)="setTab('cancelled')">
+                <i class="fa-solid fa-circle-xmark"></i> {{ t().appointments.cancelledMissed }}
+              </button>
+            </div>
+          }
+        </div>
+
+
         <!-- Search + Filters -->
         <div class="appts-controls-row">
 
-          <div class="appts-search-wrap">
+          <div assistantAnchor="appointments-search" class="appts-search-wrap">
 
             <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
 
@@ -517,10 +547,8 @@
           </button>
           } -->
         </div>
-        }
-
-        @else {
-        <div class="records-table-wrap">
+        } @else {
+        <div class="records-table-wrap appts-desktop-view">
           <table class="records-table appts-table">
             <thead>
               <tr>
@@ -543,22 +571,22 @@
                     </div>
                     <div>
                       <p class="rec-name" style="margin:0 0 2px">{{ a.title }}</p>
-                      <span class="type-pill">{{ a.appointmentType }}</span>
+                      <span class="type-pill">{{ typeLabel(a) }}</span>
                     </div>
                   </div>
                 </td>
                 <!-- Date & Time -->
-                <td>
+                <td [attr.data-label]="t().appointments.dateTime">
                   <p style="margin:0 0 2px;font-weight:600;color:var(--text)">{{ formatDate(a.appointmentDateTime) }}
                   </p>
                   <p style="margin:0;font-size:12px;color:var(--text-3)">{{ formatTime(a.appointmentDateTime) }}</p>
                 </td>
                 <!-- Provider -->
-                <td style="font-weight:500;color:var(--text-2)">{{ a.provider }}</td>
+                <td style="font-weight:500;color:var(--text-2)" [attr.data-label]="t().appointments.provider">{{ a.provider }}</td>
                 <!-- Status -->
-                <td><span [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></td>
+                <td [attr.data-label]="t().appointments.status"><span [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></td>
                 <!-- Reminder -->
-                <td style="color:var(--text-3);font-size:12px">
+                <td style="color:var(--text-3);font-size:12px" [attr.data-label]="t().appointments.reminder">
                   <i class="fa-regular fa-bell" style="margin-right:4px;color:var(--blue)"></i>
                   {{ reminderLabel(a.reminderOffsetMinutes) }}
                 </td>
@@ -603,6 +631,78 @@
               }
             </tbody>
           </table>
+        </div>
+
+        <!-- Mobile cards view -->
+        <div class="appts-mobile-view">
+          @for (a of paginated(); track a.id; let i = $index) {
+            <div class="appt-mobile-card">
+              <!-- Card Header -->
+              <div class="appt-card-hdr">
+                <div class="appt-card-title-wrap">
+                  <div class="appt-type-ico appt-type-ico-{{ a.appointmentType }}">
+                    <i class="fa-solid {{ typeIcon(a.appointmentType) }}"></i>
+                  </div>
+                  <div class="appt-card-title-info">
+                    <h4 class="appt-card-title" [attr.title]="a.title">{{ a.title }}</h4>
+                    <span class="type-pill type-{{ a.appointmentType }}">{{ typeLabel(a) }}</span>
+                  </div>
+                </div>
+                <div class="appt-card-actions">
+                  <button type="button" class="rec-action-btn" [title]="t().appointments.viewDetailsAction" (click)="openView(a)">
+                    <i class="fa-regular fa-eye"></i>
+                  </button>
+                  @if (!fpReadOnly()) {
+                    <button type="button" class="rec-action-btn rec-action-more" title="More options" (click)="toggleMenu(a.id, $event)">
+                      <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    @if (openMenuId() === a.id) {
+                      <div class="record-menu record-menu-down" (click)="$event.stopPropagation()">
+                        <button type="button" class="rec-menu-item rec-menu-item--danger" (click)="confirmDelete(a.id); openMenuId.set(null)">
+                          <i class="fa-solid fa-trash"></i> {{ t().appointments.deleteAction }}
+                        </button>
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+
+              <!-- Card Body -->
+              <div class="appt-card-body">
+                <div class="appt-info-row">
+                  <span class="appt-info-label"><i class="fa-regular fa-calendar"></i> {{ t().appointments.dateTime }}</span>
+                  <span class="appt-info-value">{{ formatDate(a.appointmentDateTime) }} {{ formatTime(a.appointmentDateTime) }}</span>
+                </div>
+                <div class="appt-info-row">
+                  <span class="appt-info-label"><i class="fa-solid fa-user-doctor"></i> {{ t().appointments.provider }}</span>
+                  <span class="appt-info-value">{{ a.provider }}</span>
+                </div>
+                <div class="appt-info-row">
+                  <span class="appt-info-label"><i class="fa-regular fa-bell"></i> {{ t().appointments.reminder }}</span>
+                  <span class="appt-info-value">{{ reminderLabel(a.reminderOffsetMinutes) }}</span>
+                </div>
+                <div class="appt-info-row">
+                  <span class="appt-info-label"><i class="fa-solid fa-circle-info"></i> {{ t().appointments.status }}</span>
+                  <span class="appt-info-value"><span [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></span>
+                </div>
+              </div>
+
+              <!-- Card Footer -->
+              @if (!fpReadOnly() && a.status === AppointmentStatus.Upcoming) {
+                <div class="appt-card-footer">
+                  <button type="button" class="appt-footer-btn appt-btn-complete" (click)="markComplete(a.id)">
+                    <i class="fa-solid fa-check"></i> {{ t().appointments.markComplete }}
+                  </button>
+                  <button type="button" class="appt-footer-btn appt-btn-edit" (click)="openEdit(a)">
+                    <i class="fa-regular fa-pen-to-square"></i> {{ t().appointments.editAction }}
+                  </button>
+                  <button type="button" class="appt-footer-btn appt-btn-cancel" (click)="confirmCancel(a.id)">
+                    <i class="fa-solid fa-ban"></i> {{ t().appointments.cancelAction }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
         </div>
 
         <!-- Pagination -->
@@ -698,7 +798,7 @@
           <span class="type-card-ico">
             <i class="fa-solid {{ typeIcon(t) }}"></i>
           </span>
-          <span class="type-card-lbl">{{ TYPE_LABELS[t] }}</span>
+          <span class="type-card-lbl">{{ typeLabelForType(t) }}</span>
           @if (fType() === t) {
           <span class="type-card-check"><i class="fa-solid fa-check"></i></span>
           }

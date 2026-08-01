@@ -24,6 +24,9 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
     private readonly IPrescriptionRepository _prescriptionRepository;
     private readonly IImagingReportRepository _imagingReportRepository;
     private readonly IMedicineReminderRepository _medicineReminderRepository;
+    private readonly IGeneralDocumentRepository _generalDocumentRepository;
+    private readonly IEmergencyContactRepository _emergencyContactRepository;
+    private readonly ICurrentUserService _currentUserService;
 
     public HealthQueryContextBuilder(
         IPatientProfileRepository patientProfileRepository,
@@ -32,7 +35,10 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         ILabReportRepository labReportRepository,
         IPrescriptionRepository prescriptionRepository,
         IImagingReportRepository imagingReportRepository,
-        IMedicineReminderRepository medicineReminderRepository)
+        IMedicineReminderRepository medicineReminderRepository,
+        IGeneralDocumentRepository generalDocumentRepository,
+        IEmergencyContactRepository emergencyContactRepository,
+        ICurrentUserService currentUserService)
     {
         _patientProfileRepository = patientProfileRepository;
         _appointmentRepository = appointmentRepository;
@@ -41,6 +47,9 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         _prescriptionRepository = prescriptionRepository;
         _imagingReportRepository = imagingReportRepository;
         _medicineReminderRepository = medicineReminderRepository;
+        _generalDocumentRepository = generalDocumentRepository;
+        _emergencyContactRepository = emergencyContactRepository;
+        _currentUserService = currentUserService;
     }
 
     public async Task<string> BuildAsync(
@@ -81,6 +90,8 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
                 HealthQueryCategory.Prescriptions      => await BuildPrescriptionsSectionAsync(scope.ProfileId, intent, ct),
                 HealthQueryCategory.ImagingReports     => await BuildImagingReportsSectionAsync(scope.ProfileId, intent, ct),
                 HealthQueryCategory.MedicationReminders=> await BuildMedicationRemindersSectionAsync(scope.ProfileId, intent, ct),
+                HealthQueryCategory.GeneralDocuments   => await BuildGeneralDocumentsSectionAsync(scope.ProfileId, intent, ct),
+                HealthQueryCategory.EmergencyContacts  => await BuildEmergencyContactsSectionAsync(ct),
                 HealthQueryCategory.FamilyOverview     => null, // no data when viewing single profile
                 _                                      => null
             };
@@ -185,6 +196,8 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
                 HealthQueryCategory.Prescriptions      => await BuildPrescriptionsSectionAsync(profile.ProfileId, intent, ct),
                 HealthQueryCategory.ImagingReports     => await BuildImagingReportsSectionAsync(profile.ProfileId, intent, ct),
                 HealthQueryCategory.MedicationReminders=> await BuildMedicationRemindersSectionAsync(profile.ProfileId, intent, ct),
+                HealthQueryCategory.GeneralDocuments   => await BuildGeneralDocumentsSectionAsync(profile.ProfileId, intent, ct),
+                HealthQueryCategory.EmergencyContacts  => await BuildEmergencyContactsSectionAsync(ct),
                 _                                      => null
             };
 
@@ -626,6 +639,62 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         }
     }
 
+    private async Task<string?> BuildGeneralDocumentsSectionAsync(
+        Guid profileId, ParsedHealthQueryIntent intent, CancellationToken ct)
+    {
+        var documents = await _generalDocumentRepository.GetAllByUserIdAsync(profileId, ct);
+
+        var terms = intent.SearchTerm is null ? null : MedicalTermSynonyms.Expand(intent.SearchTerm);
+        IEnumerable<GeneralDocument> items = documents;
+        if (terms is not null)
+            items = items.Where(d =>
+                ContainsAny(d.Title, terms) ||
+                ContainsAny(d.DocumentType, terms) ||
+                ContainsAny(d.DoctorName, terms) ||
+                ContainsAny(d.HospitalOrClinic, terms));
+
+        var list = items.OrderByDescending(d => d.CreatedAt).ToList();
+
+        string Describe(GeneralDocument d)
+        {
+            var parts = new List<string> { d.Title };
+            if (!string.IsNullOrEmpty(d.DocumentType)) parts.Add($"type: {d.DocumentType}");
+            if (!string.IsNullOrEmpty(d.DoctorName))   parts.Add($"doctor: {d.DoctorName}");
+            if (!string.IsNullOrEmpty(d.DocumentDate)) parts.Add($"date: {d.DocumentDate}");
+            if (!string.IsNullOrEmpty(d.AiSummary))    parts.Add($"summary: {d.AiSummary}");
+            return string.Join(", ", parts);
+        }
+
+        return intent.Operation switch
+        {
+            HealthQueryOperation.Count  => DescribeCount("General documents", intent.SearchTerm, list.Count),
+            HealthQueryOperation.Exists => DescribeExists("General documents", intent.SearchTerm, list.Count,
+                list.Count > 0 ? list[0].Title : null),
+            HealthQueryOperation.GetLatest => FormatSingleOrEmpty("General documents", list.FirstOrDefault(), Describe),
+            HealthQueryOperation.GetOldest => FormatSingleOrEmpty("General documents",
+                list.OrderBy(d => d.CreatedAt).FirstOrDefault(), Describe),
+            _ => list.Count == 0
+                ? "General documents: no documents are currently uploaded in Rafiq."
+                : "General documents:\n" + string.Join("\n", list.Take(MaxItemsPerCategory).Select(d => $"- {Describe(d)}"))
+        };
+    }
+
+    private async Task<string?> BuildEmergencyContactsSectionAsync(CancellationToken ct)
+    {
+        var userId = _currentUserService.UserId;
+        if (userId is null)
+            return "Emergency contacts: unable to retrieve (not authenticated).";
+
+        var contacts = await _emergencyContactRepository.GetAllByUserIdAsync(userId.Value, ct);
+
+        if (contacts.Count == 0)
+            return "Emergency contacts: no emergency contacts are currently registered in Rafiq.";
+
+        return "Emergency contacts:\n" +
+               string.Join("\n", contacts.Select(c =>
+                   $"- {c.Name} ({c.Relation}): {c.PhoneNumber}"));
+    }
+
     // ── Utility helpers ───────────────────────────────────────────────────────
 
     private static string CategoryLabel(HealthQueryCategory category) => category switch
@@ -640,6 +709,8 @@ public sealed class HealthQueryContextBuilder : IHealthQueryContextBuilder
         HealthQueryCategory.ImagingReports      => "Imaging reports",
         HealthQueryCategory.MedicationReminders => "Medication reminders",
         HealthQueryCategory.FamilyOverview      => "Family overview",
+        HealthQueryCategory.GeneralDocuments    => "General documents",
+        HealthQueryCategory.EmergencyContacts   => "Emergency contacts",
         _                                       => category.ToString()
     };
 

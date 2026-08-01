@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.LabReports.DTOs;
 
@@ -11,4 +12,4 @@ namespace Rafiq.Application.Features.LabReports.Commands.UploadLabReport;
 /// UserId is NEVER accepted from the client — it comes from the JWT.
 /// </summary>
 public sealed record UploadLabReportCommand(Guid ProfileId, IFormFile Image)
-    : IRequest<ApiResponse<LabReportResponseDto>>;
+    : IRequest<ApiResponse<LabReportResponseDto>>, IAiCommand;

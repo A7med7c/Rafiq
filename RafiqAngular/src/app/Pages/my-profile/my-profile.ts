@@ -11,10 +11,13 @@ import { HealthProfileService, PatientProfileResponse } from '../../Services/hea
 import { EmergencyContactService, EmergencyContactResponse } from '../../Services/emergency-contact.service';
 import { NotificationService } from '../../Services/notification.service';
 import { LocalizationService } from '../../Services/localization.service';
+import { AiChatService } from '../../Services/ai-chat.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../Environments/Environment';
 import { ApiResponse } from '../../Modles/api-response';
 import { map, switchMap } from 'rxjs';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 
 interface UpdateProfileBody {
   patientProfileId: string;
@@ -31,7 +34,7 @@ interface UpdateProfileBody {
 @Component({
   selector: 'app-my-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',
 })
@@ -42,6 +45,8 @@ export class MyProfile implements OnInit {
   private readonly emergencySvc       = inject(EmergencyContactService);
   protected readonly notifService     = inject(NotificationService);
   protected readonly l10n             = inject(LocalizationService);
+  readonly aiChatService              = inject(AiChatService);
+  private readonly reviewTracking     = inject(ReviewTrackingService);
   protected readonly t                = this.l10n.t;
   private readonly router             = inject(Router);
   private readonly elRef              = inject(ElementRef);
@@ -134,7 +139,7 @@ export class MyProfile implements OnInit {
   get displayName(): string {
     const u = this.authService.currentUser;
     if (!u) return '';
-    return `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email;
+    return u.firstName?.trim() || u.email;
   }
 
   get userEmail(): string {
@@ -650,6 +655,8 @@ export class MyProfile implements OnInit {
 
   // ── Delete Account ────────────────────────────────────────────────────────
   openDeleteModal(): void { this.deleteModalOpen.set(true); }
+
+  openRatingPopup(): void { this.reviewTracking.openManually(); }
   closeDeleteModal(): void { if (!this.deleteLoading()) this.deleteModalOpen.set(false); }
 
   confirmDeleteAccount(): void {

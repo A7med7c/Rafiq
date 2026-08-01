@@ -9,6 +9,18 @@
     }
   </header>
 
+  <div class="metric-grid">
+    @for (metric of kpiMetrics(); track metric.label) {
+      <article class="metric" [attr.data-tone]="metric.tone">
+        <span class="metric__icon"><i class="fa-solid {{ metric.icon }}"></i></span>
+        <div>
+          <p>{{ metric.label }}</p>
+          <strong>{{ metric.value | number }}</strong>
+        </div>
+      </article>
+    }
+  </div>
+
   <div class="filters">
     <label class="search-field">
       <i class="fa-solid fa-magnifying-glass"></i>
@@ -100,20 +112,34 @@
                     </span>
                   </td>
                   <td class="actions-cell">
-                    <button
-                      type="button"
-                      class="status-action"
-                      [class.status-action--activate]="!user.isActive"
-                      [disabled]="updatingUserId() === user.id || isCurrentAdmin(user)"
-                      (click)="requestStatusChange(user)">
-                      @if (updatingUserId() === user.id) {
-                        <i class="fa-solid fa-circle-notch fa-spin"></i>
-                        {{ user.isActive ? copy().deactivating : copy().activating }}
-                      } @else {
-                        <i class="fa-solid" [class.fa-user-lock]="user.isActive" [class.fa-user-check]="!user.isActive"></i>
-                        {{ user.isActive ? copy().deactivate : copy().activate }}
+                    <div class="action-dropdown">
+                      <button 
+                        type="button" 
+                        class="action-trigger" 
+                        [class.active]="openMenuId() === user.id"
+                        (click)="toggleMenu(user.id, $event)">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                      </button>
+                      
+                      @if (openMenuId() === user.id) {
+                        <div class="action-menu" (click)="$event.stopPropagation()">
+                          <button 
+                            type="button" 
+                            class="action-item" 
+                            [disabled]="updatingUserId() === user.id || isCurrentAdmin(user)"
+                            (click)="requestStatusChange(user); openMenuId.set(null)">
+                            
+                            @if (updatingUserId() === user.id) {
+                              <i class="fa-solid fa-circle-notch fa-spin"></i>
+                              {{ user.isActive ? copy().deactivating : copy().activating }}
+                            } @else {
+                              <i class="fa-solid" [class.fa-user-lock]="user.isActive" [class.fa-user-check]="!user.isActive"></i>
+                              {{ user.isActive ? copy().deactivate : copy().activate }}
+                            }
+                          </button>
+                        </div>
                       }
-                    </button>
+                    </div>
                   </td>
                 </tr>
               }
