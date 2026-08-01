@@ -1,1 +1,0 @@
-import{a as t}from"./chunk-UKSHG6J2.js";var e={[t.none]:"",[t.touchId]:"Touch ID",[t.faceId]:"Face ID",[t.fingerprintAuthentication]:"Fingerprint Authentication",[t.faceAuthentication]:"Face Authentication",[t.irisAuthentication]:"Iris Authentication"};function o(i){return e[i]||""}export{o as a};
