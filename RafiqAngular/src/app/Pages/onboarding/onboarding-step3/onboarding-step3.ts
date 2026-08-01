@@ -4,11 +4,13 @@ import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } fr
 import { CommonModule } from '@angular/common';
 import { DiseaseStatus } from '../../../Modles/health-profile-enums';
 import { LocalizationService } from '../../../Services/localization.service';
+import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
+import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
 @Component({
   selector: 'app-onboarding-step3',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective],
   templateUrl: './onboarding-step3.html',
   styleUrl: './onboarding-step3.css',
 })
@@ -16,6 +18,7 @@ export class OnboardingStep3 implements OnInit {
 
   private readonly router = inject(Router);
   private readonly fb     = inject(FormBuilder);
+  private readonly tourEngine = inject(TourEngineService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
@@ -132,6 +135,7 @@ export class OnboardingStep3 implements OnInit {
       'onboarding_step3',
       JSON.stringify({ hasConditions: this.hasConditions, conditions: data })
     );
+    if (this.tourEngine.isPlaying()) this.tourEngine.nextStep();
     this.router.navigate(['/onboarding/step4']);
   }
 
@@ -142,6 +146,7 @@ export class OnboardingStep3 implements OnInit {
       'onboarding_step3',
       JSON.stringify({ hasConditions: 'no', conditions: [] })
     );
+    if (this.tourEngine.isPlaying()) this.tourEngine.nextStep();
     this.router.navigate(['/onboarding/step4']);
   }
 }

@@ -6,11 +6,13 @@ import { inject } from '@angular/core';
 import { EmergencyContactService, EmergencyContactResponse } from '../../../Services/emergency-contact.service';
 import { TokenStorageService } from '../../../Services/token-storage-service';
 import { LocalizationService } from '../../../Services/localization.service';
+import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
+import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
 @Component({
   selector: 'app-onboarding-emergency',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective],
   templateUrl: './onboarding-emergency.html',
   styleUrl: './onboarding-emergency.css',
 })
@@ -21,6 +23,7 @@ export class OnboardingEmergency implements OnInit {
   private readonly emergencyService = inject(EmergencyContactService);
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly tourEngine = inject(TourEngineService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
@@ -136,10 +139,12 @@ export class OnboardingEmergency implements OnInit {
   }
 
   skip(): void {
+    if (this.tourEngine.isPlaying()) this.tourEngine.nextStep();
     this.router.navigate(['/onboarding/step2']);
   }
 
   continueToNextStep(): void {
+    if (this.tourEngine.isPlaying()) this.tourEngine.nextStep();
     this.router.navigate(['/onboarding/step2']);
   }
 }

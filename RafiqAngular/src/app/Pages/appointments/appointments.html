@@ -168,7 +168,7 @@
           <i class="fa-regular fa-eye"></i> {{ t().appointments.viewOnly }}
         </span>
         } @else {
-        <button type="button" class="add-appt-btn" (click)="openAdd()">
+        <button assistantAnchor="add-appointment" type="button" class="add-appt-btn" (click)="openAdd()">
           <i class="fa-solid fa-plus"></i>
           {{ t().appointments.addAppointment }}
         </button>
@@ -182,7 +182,7 @@
 
         @if (nextAppointment(); as next) {
 
-        <div class="next-card">
+        <div assistantAnchor="next-appointment-card" class="next-card">
 
           <div class="next-card-content">
 
@@ -301,7 +301,7 @@
 
         <div class="stat-grid">
 
-          <div class="stat-card stat-card-blue" (click)="setTab('upcoming')">
+          <div assistantAnchor="upcoming-stat-card" class="stat-card stat-card-blue" (click)="setTab('upcoming')">
 
             <div class="stat-ico-wrap stat-ico-blue">
               <i class="fa-solid fa-clipboard-check" style="color: rgb(116, 192, 252);"></i>
@@ -326,7 +326,7 @@
 
 
 
-          <div class="stat-card stat-card-green" (click)="setTab('completed')">
+          <div assistantAnchor="completed-stat-card" class="stat-card stat-card-green" (click)="setTab('completed')">
 
             <div class="stat-ico-wrap stat-ico-green">
               <i class="fa-solid fa-circle-check" style="color: rgb(68, 239, 122);"></i>
@@ -439,7 +439,7 @@
         <!-- Search + Filters -->
         <div class="appts-controls-row">
 
-          <div class="appts-search-wrap">
+          <div assistantAnchor="appointments-search" class="appts-search-wrap">
 
             <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
 

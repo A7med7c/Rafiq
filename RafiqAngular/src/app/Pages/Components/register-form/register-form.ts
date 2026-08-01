@@ -12,6 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../Services/auth-service';
 import { LocalizationService } from '../../../Services/localization.service';
 import { getApiErrorMessages } from '../../../Utils/api-error.util';
+import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
 const EGYPTIAN_PHONE_PATTERN = /^01[0125][0-9]{8}$/;
 const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
@@ -26,7 +27,7 @@ function passwordsMatchValidator(group: AbstractControl): ValidationErrors | nul
 @Component({
   selector: 'app-register-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AssistantAnchorDirective],
   templateUrl: './register-form.html',
   styleUrl: './register-form.css'
 })

@@ -152,7 +152,7 @@
           <p class="med-subtitle">{{ todayLabel() }}</p>
         </div>
         @if (!fpReadOnly()) {
-        <button type="button" class="add-med-btn" (click)="openAddMed()">
+        <button type="button" class="add-med-btn" (click)="openAddMed()" assistantAnchor="add-medication">
           <i class="fa-solid fa-plus"></i> {{ t().medications.addMedication }}
         </button>
         }
@@ -163,7 +163,7 @@
       <section class="rail-card" [class.rail-card--overdue]="nextDose() && isOverdue(nextDose()!)"
         aria-label="Today's dosing timeline">
 
-        <div class="rail-head">
+        <div class="rail-head" assistantAnchor="med-next-dose-card">
           @if (nextDose(); as dose) {
           <div class="rail-next">
             <span class="rail-eyebrow">
@@ -289,7 +289,7 @@
       </div>
 
       <!-- ── Tab Bar ── -->
-      <div class="med-tabs">
+      <div class="med-tabs" assistantAnchor="medications-list">
         <button type="button" class="med-tab" [class.med-tab--active]="activeTab() === 'schedule'"
           (click)="setTab('schedule')">
           <i class="fa-regular fa-calendar-check"></i>
@@ -350,7 +350,7 @@
               <i class="fa-solid fa-bell-slash empty-icon"></i>
               <p class="empty-title">{{ t().medications.noRemindersYet }}</p>
               <p class="empty-sub">{{ t().medications.noRemindersSub }}</p>
-              <button type="button" class="med-add-reminder-btn" style="margin-top: 12px;" (click)="goToMedsAndHighlight()">
+              <button type="button" class="med-add-reminder-btn" style="margin-top: 12px;" (click)="goToMedsAndHighlight()" assistantAnchor="add-medication-reminder">
                 <i class="fa-solid fa-plus"></i> {{ t().medications.createReminder }}
               </button>
               } @else {
@@ -776,7 +776,7 @@
                     </button>
                     } @else {
                     <button type="button" class="rec-action-btn" [title]="t().medications.addReminderAction"
-                      (click)="openAddReminder(med)">
+                      (click)="openAddReminder(med)" assistantAnchor="add-medication-reminder">
                       <i class="fa-solid fa-bell"></i>
                     </button>
                     }

@@ -1,3 +1,5 @@
+@import 'driver.js/dist/driver.css';
+
 *{
     margin:0;
     padding:0;
@@ -141,3 +143,107 @@ img {
     overflow: visible !important;
   }
 }
+
+/* ── Driver.js Spotlight Customization for Rafiq Tour Engine ── */
+.rafiq-tour-active .sb-logo-img {
+  opacity: 0;
+  transform: scale(.82);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.rafiq-tour-driver-popover-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Driver disables page pointer events while active. The tour's own controls
+   remain interactive above the spotlight layer. */
+.driver-active app-rafiq-assistant,
+.driver-active app-rafiq-assistant *,
+.driver-active .tour-skip-button {
+  pointer-events: auto !important;
+}
+
+/* BUG C fix: onboarding steps now highlight a small heading inside the card
+   (not the whole card) so floating-ui has real room to position the bubble.
+   Driver.js's blanket `.driver-active * { pointer-events: none }` would
+   otherwise disable the Back/Skip/Continue controls and every form field on
+   the page, since they're no longer descendants of the highlighted element.
+   Explicitly re-enable interaction across the entire onboarding chrome. */
+.driver-active .step-header,
+.driver-active .step-header *,
+.driver-active .form-card,
+.driver-active .form-card *,
+.driver-active .review-card,
+.driver-active .review-card *,
+.driver-active .onboarding-card,
+.driver-active .onboarding-card * {
+  pointer-events: auto !important;
+}
+
+.driver-active-element {
+  position: relative;
+  z-index: 1000000001 !important;
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px rgba(14, 175, 215, .75), 0 0 0 9px rgba(14, 175, 215, 0);
+  transition: box-shadow 200ms ease;
+}
+
+/* Nice-to-have: while the mascot is speaking, gently pulse the spotlight in sync with it. */
+body.rafiq-tour-speaking .driver-active-element {
+  animation: rafiq-tour-target-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes rafiq-tour-target-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(14, 175, 215, .75), 0 0 0 9px rgba(14, 175, 215, 0); }
+  50% { box-shadow: 0 0 0 5px rgba(14, 175, 215, .95), 0 0 0 15px rgba(14, 175, 215, 0); }
+}
+
+.tour-skip-button {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  z-index: 1000000002;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  border: 1px solid rgba(255, 255, 255, .42);
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #172033;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .24);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .16s ease, background-color .16s ease;
+}
+
+.tour-skip-button:hover {
+  transform: translateY(-1px);
+  background: #26344f;
+}
+
+.driver-popover {
+  border-radius: 16px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25) !important;
+  font-family: inherit !important;
+}
+
+.driver-stage {
+  box-shadow: 0 0 0 4px rgba(74, 124, 247, 0.45), 0 0 30px rgba(74, 124, 247, 0.3) !important;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* ── Agent Highlight Fallback ── */
+.rafiq-agent-highlight {
+  outline: 3px solid #4A7CF7 !important;
+  outline-offset: 4px !important;
+  box-shadow: 0 0 20px rgba(74, 124, 247, 0.6) !important;
+  transition: all 0.3s ease !important;
+}
+

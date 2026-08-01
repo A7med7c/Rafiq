@@ -161,7 +161,7 @@
                 </div>
             </div>
 
-            <button class="submit-button" type="submit" [disabled]="isSubmitting || registerForm.invalid">
+            <button assistantAnchor="register-submit" class="submit-button" type="submit" [disabled]="isSubmitting || registerForm.invalid">
                 @if (isSubmitting) {
                 {{ t().register.creatingAccount }}
                 } @else {

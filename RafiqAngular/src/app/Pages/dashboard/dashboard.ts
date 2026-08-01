@@ -14,11 +14,13 @@ import { catchError, of } from 'rxjs';
 import { AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { HealthSummaryDto } from '../../Services/dashboard.service';
 import { MedicalReportService, ReportType } from '../../Services/medical-report.service';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, AssistantAnchorDirective],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -28,18 +30,17 @@ export class Dashboard implements OnInit, OnDestroy {
   private readonly dashboardService   = inject(DashboardService);
   private readonly apptService        = inject(AppointmentsService);
   protected readonly notifService     = inject(NotificationService);
-  protected readonly l10n           = inject(LocalizationService);
-  protected readonly aiChatService  = inject(AiChatService);
-  protected readonly t              = this.l10n.t;
+  protected readonly l10n             = inject(LocalizationService);
+  protected readonly aiChatService    = inject(AiChatService);
+  protected readonly t                = this.l10n.t;
   private readonly router             = inject(Router);
   private readonly elRef              = inject(ElementRef);
   private readonly medicalReportSvc   = inject(MedicalReportService);
+  private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
 
+  // ── Reactive effects ─────────────────────────────────────────────────────
   private readonly dashboardRefreshEffect = effect(() => {
-    if (this.notifService.reminderDataRefreshTick() === 0) {
-      return;
-    }
-
+    if (this.notifService.reminderDataRefreshTick() === 0) return;
     this.loadReminderData();
   });
 
@@ -53,13 +54,11 @@ export class Dashboard implements OnInit, OnDestroy {
   });
 
   private readonly appointmentRefreshEffect = effect(() => {
-    if (this.notifService.appointmentDataRefreshTick() === 0) {
-      return;
-    }
-
+    if (this.notifService.appointmentDataRefreshTick() === 0) return;
     this.loadAppointmentData();
   });
 
+  // ── State signals ────────────────────────────────────────────────────────
   readonly records          = signal<MedicalRecord[]>([]);
   readonly reminders        = signal<ReminderDisplayItem[]>([]);
   readonly recordsLoading   = signal(true);
@@ -87,43 +86,25 @@ export class Dashboard implements OnInit, OnDestroy {
 
   // ── Robot speech bubble ───────────────────────────────────────────────────
   readonly robotBubbleVisible = signal(false);
-  private _bubbleHideTimer:      ReturnType<typeof setTimeout> | null = null;
-  private _inactivityTimer:      ReturnType<typeof setTimeout> | null = null;
-  private static readonly BUBBLE_DURATION_MS  = 5_000;   // visible for 5 s
-  private static readonly INACTIVITY_DELAY_MS = 3 * 60 * 1000; // 3 min
+  private _bubbleHideTimer:     ReturnType<typeof setTimeout> | null = null;
+  private _inactivityTimer:     ReturnType<typeof setTimeout> | null = null;
+  private static readonly BUBBLE_DURATION_MS  = 5_000;
+  private static readonly INACTIVITY_DELAY_MS = 3 * 60 * 1000;
 
   // ── Family member AI summary modal ────────────────────────────────────────
-  readonly familySummaryOpen      = signal(false);
-  readonly familySummaryProfile   = signal<AccessibleProfileDto | null>(null);
-  readonly familySummaryLoading   = signal(false);
-  readonly familySummaryData      = signal<HealthSummaryDto | null>(null);
+  readonly familySummaryOpen    = signal(false);
+  readonly familySummaryProfile = signal<AccessibleProfileDto | null>(null);
+  readonly familySummaryLoading = signal(false);
+  readonly familySummaryData    = signal<HealthSummaryDto | null>(null);
 
-  getTruncatedSummary(full: string): string {
-    if (this.summaryExpanded() || full.length <= this.SUMMARY_CHAR_LIMIT) return full;
-    return full.slice(0, this.SUMMARY_CHAR_LIMIT).trimEnd() + '…';
-  }
-
-  isSummaryTruncatable(full: string): boolean {
-    return full.length > this.SUMMARY_CHAR_LIMIT;
-  }
-
-
-
+  // ── Computed ─────────────────────────────────────────────────────────────
   readonly familySlots = computed(() => {
     const profiles = this.familyProfiles().slice(0, 4);
     const slots: { type: 'profile' | 'add' | 'empty'; data: AccessibleProfileDto | null }[] = [];
-    
-    profiles.forEach(p => {
-      slots.push({ type: 'profile', data: p });
-    });
 
-    if (slots.length < 4) {
-      slots.push({ type: 'add', data: null });
-    }
-
-    while (slots.length < 4) {
-      slots.push({ type: 'empty', data: null });
-    }
+    profiles.forEach(p => slots.push({ type: 'profile', data: p }));
+    if (slots.length < 4) slots.push({ type: 'add', data: null });
+    while (slots.length < 4) slots.push({ type: 'empty', data: null });
 
     return slots;
   });
@@ -137,9 +118,9 @@ export class Dashboard implements OnInit, OnDestroy {
   });
 
   readonly unreadNotifCount = this.notifService.unreadCount;
-
   readonly today = new Date();
 
+  // ── Getters ───────────────────────────────────────────────────────────────
   get displayName(): string {
     const u = this.authService.currentUser;
     if (!u) return 'there';
@@ -154,7 +135,9 @@ export class Dashboard implements OnInit, OnDestroy {
     return this.authService.avatarUrl;
   }
 
-  get hasProfileImage(): boolean { return !!this.authService.currentUser?.profileImageUrl; }
+  get hasProfileImage(): boolean {
+    return !!this.authService.currentUser?.profileImageUrl;
+  }
 
   get userInitials(): string {
     const u = this.authService.currentUser;
@@ -179,19 +162,30 @@ export class Dashboard implements OnInit, OnDestroy {
     return this.t().dashboard.goodEvening;
   }
 
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadDashboardData();
-    // Show greeting bubble 1.5 s after load, then repeat after long inactivity.
-    setTimeout(() => this.showRobotBubble(), 1_500);
+    // Auto-trigger full welcome tour on first visit after login/onboarding
+    setTimeout(() => {
+      const tourDone = typeof localStorage !== 'undefined'
+        ? localStorage.getItem('rafiq_tour_completed')
+        : null;
+      if (!tourDone && !this.assistantOrchestrator.tourEngine.isPlaying()) {
+        this.startWelcomeTour();
+      } else {
+        this.showRobotBubble();
+      }
+    }, 1_800);
   }
 
   ngOnDestroy(): void {
-    if (this._bubbleHideTimer)  clearTimeout(this._bubbleHideTimer);
-    if (this._inactivityTimer)  clearTimeout(this._inactivityTimer);
+    if (this._bubbleHideTimer) clearTimeout(this._bubbleHideTimer);
+    if (this._inactivityTimer) clearTimeout(this._inactivityTimer);
   }
 
+  // ── Private helpers ───────────────────────────────────────────────────────
   private showRobotBubble(): void {
     if (this._bubbleHideTimer) clearTimeout(this._bubbleHideTimer);
     this.robotBubbleVisible.set(true);
@@ -212,15 +206,6 @@ export class Dashboard implements OnInit, OnDestroy {
   private resetInactivityTimer(): void {
     if (!this._inactivityTimer) return;
     this.scheduleInactivityBubble();
-  }
-
-  openVoiceMode(): void {
-    this.aiChatService.openPanelInVoiceMode();
-  }
-
-  @HostListener('window:resize')
-  onWindowResize(): void {
-    this.applyResponsiveSidebar();
   }
 
   private applyResponsiveSidebar(): void {
@@ -267,7 +252,6 @@ export class Dashboard implements OnInit, OnDestroy {
 
   private loadReminderData(): void {
     this.remindersLoading.set(true);
-
     this.dashboardService.getMedicinesWithReminders().subscribe({
       next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
       error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
@@ -276,7 +260,6 @@ export class Dashboard implements OnInit, OnDestroy {
 
   private loadAppointmentData(): void {
     this.apptLoading.set(true);
-
     this.apptService.getAll().pipe(
       catchError(() => of([] as AppointmentDto[]))
     ).subscribe(data => {
@@ -285,27 +268,13 @@ export class Dashboard implements OnInit, OnDestroy {
     });
   }
 
+  // ── Public methods ────────────────────────────────────────────────────────
   toggleSidebar(): void {
     this.sidebarCollapsed.update(v => !v);
   }
 
   toggleMobileSidebar(): void {
     this.mobileSidebarOpen.update(v => !v);
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.hdr-user')) {
-      this.dropdownOpen.set(false);
-    }
-    this.resetInactivityTimer();
-  }
-
-  @HostListener('document:keydown')
-  @HostListener('document:touchstart')
-  onUserActivity(): void {
-    this.resetInactivityTimer();
   }
 
   toggleDropdown(): void {
@@ -324,6 +293,46 @@ export class Dashboard implements OnInit, OnDestroy {
 
   goToAddAppointment(): void {
     this.router.navigate(['/appointments'], { queryParams: { openAdd: '1' } });
+  }
+
+  openVoiceMode(): void {
+    this.aiChatService.openPanelInVoiceMode();
+  }
+
+  startWelcomeTour(): void {
+    if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
+    this.assistantOrchestrator.startTour('welcome-tour');
+  }
+
+  // ── Host Listeners ────────────────────────────────────────────────────────
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.applyResponsiveSidebar();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.hdr-user')) {
+      this.dropdownOpen.set(false);
+    }
+    this.resetInactivityTimer();
+  }
+
+  @HostListener('document:keydown')
+  @HostListener('document:touchstart')
+  onUserActivity(): void {
+    this.resetInactivityTimer();
+  }
+
+  // ── Formatting helpers ────────────────────────────────────────────────────
+  getTruncatedSummary(full: string): string {
+    if (this.summaryExpanded() || full.length <= this.SUMMARY_CHAR_LIMIT) return full;
+    return full.slice(0, this.SUMMARY_CHAR_LIMIT).trimEnd() + '…';
+  }
+
+  isSummaryTruncatable(full: string): boolean {
+    return full.length > this.SUMMARY_CHAR_LIMIT;
   }
 
   formatApptDate(dt: string): string {
@@ -392,7 +401,9 @@ export class Dashboard implements OnInit, OnDestroy {
     }
   }
 
-  closeReportDialog(): void { if (!this.reportGenerating()) this.reportDialogOpen.set(false); }
+  closeReportDialog(): void {
+    if (!this.reportGenerating()) this.reportDialogOpen.set(false);
+  }
 
   generateReport(): void {
     const profileId = this.reportTargetProfileId();
@@ -427,26 +438,19 @@ export class Dashboard implements OnInit, OnDestroy {
     });
   }
 
-  closeFamilySummary(): void { this.familySummaryOpen.set(false); }
-
- getRelationshipLabel(relationship: string | null | undefined): string {
-  if (!relationship) {
-    return this.t().family.self;
+  closeFamilySummary(): void {
+    this.familySummaryOpen.set(false);
   }
 
-  const key = relationship.toLowerCase();
-
-  return (this.t().family as any)[key] ?? relationship;
-}
-
-getGenderLabel(gender: string | null | undefined): string {
-  if (!gender) {
-    return '-';
+  getRelationshipLabel(relationship: string | null | undefined): string {
+    if (!relationship) return this.t().family.self;
+    const key = relationship.toLowerCase();
+    return (this.t().family as any)[key] ?? relationship;
   }
 
-  const key = gender.toLowerCase();
-
-  return (this.t().common as any)[key] ?? gender;
+  getGenderLabel(gender: string | null | undefined): string {
+    if (!gender) return '-';
+    const key = gender.toLowerCase();
+    return (this.t().common as any)[key] ?? gender;
+  }
 }
-}
-
