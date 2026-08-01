@@ -167,7 +167,7 @@
             {{ t().dashboard.familyWell }}
           </p>
         </div>
-        <button assistantAnchor="medical-report-button" type="button" class="report-btn" (click)="openReportDialog()">
+        <button assistantAnchor="medical-report-button" type="button" class="report-btn" (click)="openDownloadFlow()">
           <div class="report-btn-ico-bg">
             <i class="fa-solid fa-file-medical"></i>
           </div>
@@ -206,17 +206,118 @@
                   class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
             </div>
             } @else if (!healthSummary()?.hasData) {
-            <p class="ai-body ai-body--empty">
-              {{ t().dashboard.aiSummaryEmpty }}
-            </p>
+            <p class="ai-body ai-body--empty">{{ t().dashboard.aiSummaryEmpty }}</p>
             } @else {
-            <p class="ai-body">{{ healthSummary()!.summary }}</p>
+            <!-- ── Structured summary ── -->
+            <div class="hs-grid">
+
+              <!-- Overall Status -->
+              <div class="hs-status-row">
+                <span class="hs-section-label">{{ t().dashboard.summaryOverallHealth }}</span>
+                <span class="hs-status-badge hs-status-badge--{{ healthSummary()!.overallStatus === 'Good' ? 'good' : healthSummary()!.overallStatus === 'Stable' ? 'stable' : 'warn' }}">
+                  <i class="fa-solid fa-circle-dot"></i>
+                  {{ healthSummary()!.overallStatus === 'Good' ? t().dashboard.summaryStatusGood :
+                     healthSummary()!.overallStatus === 'Stable' ? t().dashboard.summaryStatusStable :
+                     t().dashboard.summaryStatusNeedsAttention }}
+                </span>
+                @if (healthSummary()!.overallStatusNote) {
+                  <span class="hs-status-note">{{ healthSummary()!.overallStatusNote }}</span>
+                }
+              </div>
+
+              <!-- Two-column grid: Conditions | Allergies -->
+              <div class="hs-row2">
+                <div class="hs-cell">
+                  <span class="hs-section-label">
+                    <i class="fa-solid fa-heart-pulse"></i> {{ t().dashboard.summaryConditions }}
+                  </span>
+                  @if (healthSummary()!.conditions.length === 0) {
+                    <span class="hs-empty">{{ t().dashboard.summaryNoConditions }}</span>
+                  } @else {
+                    <ul class="hs-list">
+                      @for (c of healthSummary()!.conditions; track c) {
+                        <li>{{ c }}</li>
+                      }
+                    </ul>
+                  }
+                </div>
+                <div class="hs-cell">
+                  <span class="hs-section-label">
+                    <i class="fa-solid fa-triangle-exclamation"></i> {{ t().dashboard.summaryAllergies }}
+                  </span>
+                  @if (healthSummary()!.allergies.length === 0) {
+                    <span class="hs-empty">{{ t().dashboard.summaryNoAllergies }}</span>
+                  } @else {
+                    <div class="hs-allergy-list">
+                      @for (a of healthSummary()!.allergies; track a.name) {
+                        <span class="hs-allergy-pill hs-allergy-pill--{{ a.severity === 'Severe' ? 'severe' : a.severity === 'Moderate' ? 'moderate' : 'mild' }}">
+                          {{ a.name }}
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Two-column grid: Medications | Lab Results -->
+              <div class="hs-row2">
+                <div class="hs-cell">
+                  <span class="hs-section-label">
+                    <i class="fa-solid fa-pills"></i> {{ t().dashboard.summaryMedications }}
+                  </span>
+                  <span class="hs-stat">{{ healthSummary()!.medications.count }} {{ t().dashboard.summaryMedActive }}</span>
+                  @if (healthSummary()!.medications.hasIssues) {
+                    <span class="hs-warn-tag"><i class="fa-solid fa-circle-exclamation"></i> {{ t().dashboard.summaryMedIssues }}</span>
+                  }
+                </div>
+                <div class="hs-cell">
+                  <span class="hs-section-label">
+                    <i class="fa-solid fa-flask"></i> {{ t().dashboard.summaryLabResults }}
+                  </span>
+                  @if (healthSummary()!.labResults.status === 'Normal') {
+                    <span class="hs-lab-ok"><i class="fa-solid fa-check-circle"></i> {{ t().dashboard.summaryLabNormal }}</span>
+                  } @else if (healthSummary()!.labResults.status === 'HasAbnormal') {
+                    <span class="hs-lab-warn">
+                      <i class="fa-solid fa-circle-exclamation"></i>
+                      {{ healthSummary()!.labResults.abnormalCount }} {{ t().dashboard.summaryLabAbnormal }}
+                    </span>
+                  } @else {
+                    <span class="hs-lab-review"><i class="fa-solid fa-magnifying-glass"></i> {{ t().dashboard.summaryLabReview }}</span>
+                  }
+                </div>
+              </div>
+
+              <!-- AI Insights -->
+              @if (healthSummary()!.insights.length > 0) {
+              <div class="hs-section">
+                <span class="hs-section-label"><i class="fa-solid fa-wand-magic-sparkles"></i> {{ t().dashboard.summaryInsights }}</span>
+                <ul class="hs-bullets">
+                  @for (insight of healthSummary()!.insights; track insight) {
+                    <li>{{ insight }}</li>
+                  }
+                </ul>
+              </div>
+              }
+
+              <!-- Recommendations -->
+              @if (healthSummary()!.recommendations.length > 0) {
+              <div class="hs-section">
+                <span class="hs-section-label"><i class="fa-solid fa-lightbulb"></i> {{ t().dashboard.summaryRecommendations }}</span>
+                <ul class="hs-bullets hs-bullets--rec">
+                  @for (rec of healthSummary()!.recommendations; track rec) {
+                    <li>{{ rec }}</li>
+                  }
+                </ul>
+              </div>
+              }
+
+            </div><!-- /hs-grid -->
             }
           </div>
 
           <div class="ai-tags">
             <a href="javascript:void(0)" (click)="aiChatService.openPanel()" class="ai-tag ai-tag-teal">
-              <i class="fa-solid fa-robot"></i> {{ t().dashboard.openAiAssistant }}
+              <i class="fa-solid fa-robot"></i> {{ t().dashboard.summaryViewFull }}
             </a>
           </div>
         </div>
@@ -225,7 +326,9 @@
         <div assistantAnchor="system-status-card" class="card sys-card">
           <div class="sys-hdr">
             <span class="sys-title">{{ t().dashboard.systemStatus }}</span>
-            <span class="pill pill-green">{{ t().dashboard.allSystemsOptimal }}</span>
+            <span class="pill" [class.pill-green]="systemOk()" [class.pill-yellow]="!systemOk()">
+              {{ systemOk() ? t().dashboard.allSystemsOptimal : t().dashboard.systemDegraded }}
+            </span>
           </div>
           <div class="sys-rows">
             <div class="sys-row">
@@ -233,21 +336,23 @@
                 <i class="fa-solid fa-microchip sys-ico sys-ico-blue"></i>
                 <span>{{ t().dashboard.aiProcessing }}</span>
               </div>
-              <span class="sys-val sys-green">{{ t().dashboard.optimal }}</span>
+              <span class="sys-val" [class.sys-green]="aiStatus() === 'Optimal'" [class.sys-warn]="aiStatus() === 'Unavailable'">
+                {{ aiStatus() === 'Optimal' ? t().dashboard.optimal : aiStatus() === 'Unavailable' ? t().dashboard.unavailable : t().common.loading }}
+              </span>
             </div>
             <div class="sys-row">
               <div class="sys-row-l">
                 <i class="fa-solid fa-rotate sys-ico sys-ico-orange"></i>
                 <span>{{ t().dashboard.dataSync }}</span>
               </div>
-              <span class="sys-val">2 {{ t().dashboard.minsAgo }}</span>
+              <span class="sys-val">{{ syncAgo() }}</span>
             </div>
             <div class="sys-row">
               <div class="sys-row-l">
-                <i class="fa-solid fa-cloud-arrow-up sys-ico sys-ico-purple"></i>
-                <span>{{ t().dashboard.lastBackup }}</span>
+                <i class="fa-solid fa-calendar-check sys-ico sys-ico-purple"></i>
+                <span>{{ t().dashboard.todayEvents }}</span>
               </div>
-              <span class="sys-val">1 {{ t().dashboard.hourAgo }}</span>
+              <span class="sys-val sys-green">{{ todaySchedule().length }}</span>
             </div>
           </div>
           <svg class="sys-spark" viewBox="0 0 220 44" preserveAspectRatio="none">
@@ -262,10 +367,6 @@
             <path d="M0 34 C20 28, 40 38, 60 22 C80 8, 100 36, 120 14 C140 2, 160 30, 180 16 C195 6, 210 20, 220 12"
               fill="none" stroke="#4A7CF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-          <div class="sys-bpm-row">
-            <span class="sys-bpm-lbl">{{ t().dashboard.avgHeartRate }}</span>
-            <span class="sys-bpm-val">72 {{ t().dashboard.bpm }}</span>
-          </div>
         </div>
 
         <!-- Upcoming Appointment -->
@@ -510,46 +611,38 @@
         <div class="card">
           <div class="bot-card-hdr">
             <span class="bot-card-title">{{ t().dashboard.todaySchedule }}</span>
-            <a href="#" class="link-sm">{{ t().dashboard.viewCalendar }}</a>
+            <a routerLink="/appointments" class="link-sm">{{ t().dashboard.viewCalendar }}</a>
           </div>
 
+          @if (apptLoading() || remindersLoading()) {
+          <div class="sched-empty">
+            <i class="fa-solid fa-spinner fa-spin" style="color:var(--text-3)"></i>
+          </div>
+          } @else if (todaySchedule().length === 0) {
+          <div class="sched-empty">
+            <i class="fa-regular fa-calendar-check" style="font-size:28px;color:var(--text-4);margin-bottom:8px"></i>
+            <p style="color:var(--text-3);font-size:13px">{{ t().dashboard.noEventsToday }}</p>
+          </div>
+          } @else {
           <ul class="sched-list">
-            <li class="sched-item">
-              <span class="sched-time">10:30 AM</span>
+            @for (item of todaySchedule(); track item.sortMs; let last = $last) {
+            <li class="sched-item" [class.sched-last]="last">
+              <span class="sched-time">{{ item.time }}</span>
               <div class="sched-line-wrap">
-                <div class="sched-dot dot-blue"></div>
-                <div class="sched-line"></div>
+                <div class="sched-dot" [class.dot-blue]="item.type === 'appointment'" [class.dot-green]="item.type === 'medication'"></div>
+                @if (!last) { <div class="sched-line"></div> }
               </div>
               <div class="sched-info">
-                <p class="sched-title">Dr. Mohamed Ali</p>
-                <p class="sched-sub">Cardiology Checkup</p>
+                <p class="sched-title">{{ item.title }}</p>
+                <p class="sched-sub">{{ item.subtitle }}</p>
               </div>
             </li>
-            <li class="sched-item">
-              <span class="sched-time">02:00 PM</span>
-              <div class="sched-line-wrap">
-                <div class="sched-dot dot-green"></div>
-                <div class="sched-line"></div>
-              </div>
-              <div class="sched-info">
-                <p class="sched-title">Amoxicillin 500mg</p>
-                <p class="sched-sub">{{ t().dashboard.medicationReminder }}</p>
-              </div>
-            </li>
-            <li class="sched-item sched-last">
-              <span class="sched-time">06:00 PM</span>
-              <div class="sched-line-wrap">
-                <div class="sched-dot dot-blue"></div>
-              </div>
-              <div class="sched-info">
-                <p class="sched-title">Family Walk</p>
-                <p class="sched-sub">{{ t().dashboard.activityReminder }}</p>
-              </div>
-            </li>
+            }
           </ul>
+          }
 
-          <button type="button" class="bot-action-btn">
-            <i class="fa-regular fa-calendar"></i> {{ t().dashboard.addToCalendar }}
+          <button type="button" class="bot-action-btn" [routerLink]="['/appointments']">
+            <i class="fa-regular fa-calendar"></i> {{ t().dashboard.viewCalendar }}
           </button>
         </div>
 
@@ -571,12 +664,62 @@
   </div><!-- /dsh-main -->
 </div><!-- /dsh -->
 
+<!-- ═══════════ PROFILE PICKER DIALOG ═══════════ -->
+@if (profilePickerOpen()) {
+<div class="modal-backdrop" (click)="profilePickerOpen.set(false)">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico-wrap">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div>
+          <h2 class="modal-title">{{ t().dashboard.selectProfileTitle }}</h2>
+          <p class="modal-subtitle">{{ t().dashboard.selectProfileDesc }}</p>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" (click)="profilePickerOpen.set(false)">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="profile-picker-list">
+      @for (profile of familyProfiles(); track profile.userHealthProfileId) {
+        <button type="button" class="profile-picker-item"
+          (click)="selectProfileAndContinue(profile.userHealthProfileId)">
+          <div class="profile-picker-av" [style.background]="getProfileAvatarColor(profile.firstName)">
+            {{ getInitial(profile.firstName) }}
+          </div>
+          <div class="profile-picker-info">
+            <span class="profile-picker-name">{{ profile.firstName }} {{ profile.lastName }}</span>
+            <span class="profile-picker-rel">
+              {{ profile.isSelf ? t().dashboard.you : getRelationshipLabel(profile.relationship) }}
+            </span>
+          </div>
+          <i class="fa-solid fa-chevron-right profile-picker-arrow"></i>
+        </button>
+      }
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" (click)="profilePickerOpen.set(false)">
+        {{ t().records.cancelBtn }}
+      </button>
+    </div>
+  </div>
+</div>
+}
+
 <!-- ═══════════ MEDICAL REPORT DIALOG ═══════════ -->
 @if (reportDialogOpen()) {
 <div class="modal-backdrop" (click)="closeReportDialog()">
   <div class="modal-box" (click)="$event.stopPropagation()">
     <div class="modal-hdr">
       <div class="modal-hdr-left">
+        @if (reportCameFromPicker() && !reportGenerating()) {
+        <button type="button" class="modal-back-btn" (click)="backToProfilePicker()" [title]="t().common.back">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>{{t().common.back}}</span>
+        </button>
+        }
         <div class="modal-ico-wrap">
           <i class="fa-solid fa-file-medical"></i>
         </div>
@@ -585,11 +728,10 @@
           <p class="modal-subtitle">{{t().dashboard.chooseMedicalType}}</p>
         </div>
       </div>
-      @if (!reportGenerating()) {
-      <button type="button" class="modal-close-btn" (click)="closeReportDialog()">
+      <button type="button" class="modal-close-btn"
+        (click)="reportGenerating() ? cancelReport() : closeReportDialog()">
         <i class="fa-solid fa-xmark"></i>
       </button>
-      }
     </div>
 
     @if (!reportGenerating()) {
@@ -686,7 +828,7 @@
       <p class="family-summary-empty-sub">Upload medical records to generate an AI summary.</p>
     </div>
     } @else {
-    <p class="family-summary-text">{{ familySummaryData()!.summary }}</p>
+    <p class="family-summary-text">{{ summaryText(familySummaryData()!) }}</p>
     }
 
     <div class="modal-footer">

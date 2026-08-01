@@ -172,6 +172,39 @@
       <button type="button" class="tab-link" [class.active]="activeTab() === 'general'" (click)="setTab('general')">{{ t().records.otherDocumentsTab }}</button>
     </div>
 
+    <!-- Mobile-only: collapsible tab selector -->
+    <div class="mobile-tab-select">
+      <button type="button" class="mobile-tab-trigger" [class.is-open]="mobileTabMenuOpen()" (click)="toggleMobileTabMenu()">
+        <i [class]="'fa-solid ' + activeTabIcon() + ' mtt-icon'"></i>
+        <span class="mtt-label">{{ activeTabLabel() }}</span>
+        <i class="fa-solid fa-chevron-down mtt-chevron"></i>
+      </button>
+      @if (mobileTabMenuOpen()) {
+        <div class="mobile-tab-backdrop" (click)="closeMobileTabMenu()"></div>
+        <div class="mobile-tab-dropdown">
+          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'all'" (click)="setTab('all')">
+            <i class="fa-solid fa-layer-group"></i> {{ t().records.allRecords }}
+          </button>
+          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'lab'" (click)="setTab('lab')">
+            <i class="fa-solid fa-flask"></i> {{ t().records.labAnalysisTab }}
+          </button>
+          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'prescription'" (click)="setTab('prescription')">
+            <i class="fa-solid fa-prescription-bottle-medical"></i> {{ t().records.prescriptionsTab }}
+          </button>
+          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'imaging'" (click)="setTab('imaging')">
+            <i class="fa-solid fa-x-ray"></i> {{ t().records.xraysImagingTab }}
+          </button>
+          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'medicine'" (click)="setTab('medicine')">
+            <i class="fa-solid fa-pills"></i> {{ t().records.medicineBoxesTab }}
+          </button>
+          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'general'" (click)="setTab('general')">
+            <i class="fa-solid fa-file-medical"></i> {{ t().records.otherDocumentsTab }}
+          </button>
+        </div>
+      }
+    </div>
+
+
     <div class="records-table-tools">
       <div class="search-wrap">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
@@ -333,10 +366,10 @@
                 </div>
               </div>
             </td>
-            <td><span class="type-pill" [class]="'type-' + rec.type">{{ rec.typeLabel }}</span></td>
-            <td class="table-date">{{ rec.date }}</td>
-            <td class="table-uploaded">{{ rec.uploadedBy }}</td>
-            <td>
+            <td [attr.data-label]="t().records.type"><span class="type-pill" [class]="'type-' + rec.type">{{ rec.typeLabel }}</span></td>
+            <td class="table-date" [attr.data-label]="t().records.date">{{ rec.date }}</td>
+            <td class="table-uploaded" [attr.data-label]="t().records.uploadedBy">{{ rec.uploadedBy }}</td>
+            <td [attr.data-label]="t().records.aiSummaryStatus">
               <span class="pill" [class]="rec.hasAiSummary ? 'pill-green' : 'pill-yellow'">
                 <i class="fa-solid" [class.fa-check-double]="rec.hasAiSummary" [class.fa-spinner]="!rec.hasAiSummary"></i>
                 {{ rec.hasAiSummary ? t().records.processed : t().records.pending }}
@@ -630,28 +663,6 @@
         }
       </button>
     </footer>
-  </div>
-</div>
-}
-
-<!-- ═══ UPLOAD LOADING DIALOG ═══ -->
-@if (uploadLoading()) {
-<div class="scan-backdrop">
-  <div class="scan-dialog">
-    <div class="scan-ring-wrap">
-      <svg class="scan-spinner" viewBox="0 0 60 60">
-        <circle cx="30" cy="30" r="24" fill="none" stroke="#E0E7FF" stroke-width="4" />
-        <circle cx="30" cy="30" r="24" fill="none" stroke="#4A7CF7" stroke-width="4" stroke-dasharray="150.8"
-          stroke-dashoffset="75" stroke-linecap="round" transform="rotate(-90 30 30)" />
-      </svg>
-      <div class="scan-ico-center"><i class="fa-solid fa-file-medical"></i></div>
-    </div>
-    <p class="scan-title">{{ uploadLoadingLabel() }}</p>
-    <p class="scan-sub">{{ t().records.extractingInfo }}</p>
-    <div class="scan-dots"><span></span><span></span><span></span></div>
-    <button type="button" class="scan-cancel-btn" (click)="cancelUpload()">
-      <i class="fa-solid fa-xmark"></i> {{ t().records.cancelBtn }}
-    </button>
   </div>
 </div>
 }

@@ -18,6 +18,8 @@ export interface MedicationReminderNotificationPayload {
 export interface NotificationEventPayload {
   title: string;
   message: string;
+  titleAr?: string;
+  bodyAr?: string;
 }
 
 export interface AppointmentReminderNotificationPayload {
@@ -31,6 +33,20 @@ export interface AppointmentReminderNotificationPayload {
 }
 
 export type ConnectionState = 'Disconnected' | 'Connecting' | 'Connected' | 'Reconnecting';
+
+// ── Chat async payloads ───────────────────────────────────────────────────────
+
+export interface ChatResponsePayload {
+  conversationId: string;
+  assistantMessageId: string;
+  content: string;
+}
+
+export interface ChatErrorPayload {
+  conversationId: string;
+  assistantMessageId: string;
+  errorMessage: string;
+}
 
 // ── Voice Agent SignalR payloads ──────────────────────────────────────────────
 
@@ -47,6 +63,22 @@ export interface VoiceAgentResponsePayload {
 
 export interface VoiceAgentErrorPayload {
   message: string;
+}
+
+// ── Document analysis payloads ────────────────────────────────────────────────
+
+export interface DocumentAnalysisCompletedPayload {
+  documentId: string;
+  title: string;
+  documentType: string | null;
+  aiSummary: string | null;
+  imagePath: string;
+}
+
+export interface DocumentAnalysisFailedPayload {
+  documentId: string;
+  title: string;
+  failureReason: string;
 }
 
 @Injectable({
@@ -67,6 +99,17 @@ export class SignalRService {
   readonly voiceThinkingEvents  = signal<VoiceAgentThinkingPayload[]>([]);
   readonly voiceResponseEvents  = signal<VoiceAgentResponsePayload[]>([]);
   readonly voiceErrorEvents     = signal<VoiceAgentErrorPayload[]>([]);
+
+  // Chat async events
+  readonly chatResponseEvents   = signal<ChatResponsePayload[]>([]);
+  readonly chatErrorEvents      = signal<ChatErrorPayload[]>([]);
+
+  // Document analysis events
+  readonly documentAnalysisCompletedEvents = signal<DocumentAnalysisCompletedPayload[]>([]);
+  readonly documentAnalysisFailedEvents    = signal<DocumentAnalysisFailedPayload[]>([]);
+
+  /** Incremented each time the SignalR connection recovers after a drop. */
+  readonly reconnectedAt        = signal(0);
 
   constructor() {
     // Connect only while a user is signed in; never negotiate anonymously.
@@ -117,8 +160,8 @@ export class SignalRService {
       this.reminderEvents.update((currentQueue) => [...currentQueue, payload]);
     });
 
-    this.connection.on('ReceiveNotification', (title: string, message: string) => {
-      this.notificationEvents.update((currentQueue) => [...currentQueue, { title, message }]);
+    this.connection.on('ReceiveNotification', (payload: NotificationEventPayload) => {
+      this.notificationEvents.update((currentQueue) => [...currentQueue, payload]);
     });
 
     this.connection.on('AppointmentReminderDue', (payload: AppointmentReminderNotificationPayload) => {
@@ -137,6 +180,22 @@ export class SignalRService {
       this.voiceErrorEvents.update(q => [...q, payload]);
     });
 
+    this.connection.on('ChatResponse', (payload: ChatResponsePayload) => {
+      this.chatResponseEvents.update(q => [...q, payload]);
+    });
+
+    this.connection.on('ChatError', (payload: ChatErrorPayload) => {
+      this.chatErrorEvents.update(q => [...q, payload]);
+    });
+
+    this.connection.on('DocumentAnalysisCompleted', (payload: DocumentAnalysisCompletedPayload) => {
+      this.documentAnalysisCompletedEvents.update(q => [...q, payload]);
+    });
+
+    this.connection.on('DocumentAnalysisFailed', (payload: DocumentAnalysisFailedPayload) => {
+      this.documentAnalysisFailedEvents.update(q => [...q, payload]);
+    });
+
     this.connection.onclose(() => {
       this.log('Disconnected.');
       this.setConnectionState('Disconnected');
@@ -150,6 +209,7 @@ export class SignalRService {
     this.connection.onreconnected(() => {
       this.log('Reconnected.');
       this.setConnectionState('Connected');
+      this.reconnectedAt.update(n => n + 1);
     });
 
     this.log(`Starting connection to ${hubUrl}`);
@@ -238,6 +298,34 @@ export class SignalRService {
     const events = this.voiceErrorEvents();
     if (!events.length) return [];
     this.voiceErrorEvents.set([]);
+    return events;
+  }
+
+  drainChatResponseEvents(): ChatResponsePayload[] {
+    const events = this.chatResponseEvents();
+    if (!events.length) return [];
+    this.chatResponseEvents.set([]);
+    return events;
+  }
+
+  drainChatErrorEvents(): ChatErrorPayload[] {
+    const events = this.chatErrorEvents();
+    if (!events.length) return [];
+    this.chatErrorEvents.set([]);
+    return events;
+  }
+
+  drainDocumentAnalysisCompletedEvents(): DocumentAnalysisCompletedPayload[] {
+    const events = this.documentAnalysisCompletedEvents();
+    if (!events.length) return [];
+    this.documentAnalysisCompletedEvents.set([]);
+    return events;
+  }
+
+  drainDocumentAnalysisFailedEvents(): DocumentAnalysisFailedPayload[] {
+    const events = this.documentAnalysisFailedEvents();
+    if (!events.length) return [];
+    this.documentAnalysisFailedEvents.set([]);
     return events;
   }
 

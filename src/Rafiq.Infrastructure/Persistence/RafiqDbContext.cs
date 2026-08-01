@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 using Rafiq.Domain.Common;
+using Rafiq.Domain.Entities;
 using Rafiq.Domain.Entities.Ai;
 using Rafiq.Domain.Entities.Chat;
 using Rafiq.Domain.Entities.Documents;
@@ -73,6 +74,20 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     #endregion
 
+    #region Audit Logs
+
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    #endregion
+
+    #region Reviews
+
+    public DbSet<AppReview> AppReviews => Set<AppReview>();
+
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+
+    #endregion
+
     #region AI Chat
 
     public DbSet<AiConversation> AiConversations => Set<AiConversation>();
@@ -82,6 +97,10 @@ public sealed class RafiqDbContext : IdentityDbContext<
     public DbSet<MessageReaction> MessageReactions => Set<MessageReaction>();
 
     public DbSet<AiRequestLog> AiRequestLogs => Set<AiRequestLog>();
+
+    public DbSet<AiFlaggedRequest> AiFlaggedRequests => Set<AiFlaggedRequest>();
+
+    public DbSet<AiUsageAction> AiUsageActions => Set<AiUsageAction>();
 
     #endregion
 

@@ -10,7 +10,7 @@ import { NotificationService } from '../../Services/notification.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { MedicalRecord, ReminderDisplayItem } from '../../Modles/dashboard.models';
 import { AppointmentDto, AppointmentStatus } from '../../Modles/appointment.models';
-import { catchError, of } from 'rxjs';
+import { catchError, of, Subscription } from 'rxjs';
 import { AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { HealthSummaryDto } from '../../Services/dashboard.service';
 import { MedicalReportService, ReportType } from '../../Services/medical-report.service';
@@ -70,6 +70,67 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly apptLoading     = signal(true);
   readonly allAppointments = signal<AppointmentDto[]>([]);
 
+  // ── System status tracking ────────────────────────────────────────────────
+  readonly lastSyncAt    = signal<Date | null>(null);
+  readonly hasLoadError  = signal(false);
+  private _nowTick       = signal(Date.now());
+  private _tickInterval: ReturnType<typeof setInterval> | null = null;
+
+  readonly syncAgo = computed(() => {
+    const now = this._nowTick();
+    const t   = this.lastSyncAt();
+    if (!t) return '—';
+    const mins = Math.floor((now - t.getTime()) / 60_000);
+    if (mins < 1)  return 'just now';
+    if (mins === 1) return '1 min ago';
+    if (mins < 60) return `${mins} mins ago`;
+    const hrs = Math.floor(mins / 60);
+    return hrs === 1 ? '1 hour ago' : `${hrs} hours ago`;
+  });
+
+  readonly aiStatus = computed(() => {
+    if (this.summaryLoading()) return 'Loading…';
+    return this.healthSummary() !== null ? 'Optimal' : 'Unavailable';
+  });
+
+  readonly systemOk = computed(() => !this.hasLoadError());
+
+  // ── Today's schedule ──────────────────────────────────────────────────────
+  readonly todaySchedule = computed(() => {
+    const todayStr = new Date().toDateString();
+    const today    = new Date(); today.setHours(0, 0, 0, 0);
+    type ScheduleItem = { time: string; sortMs: number; title: string; subtitle: string; type: 'appointment' | 'medication' };
+    const items: ScheduleItem[] = [];
+
+    for (const a of this.allAppointments()) {
+      if (a.status !== AppointmentStatus.Upcoming) continue;
+      const d = new Date(a.appointmentDateTime);
+      if (d.toDateString() !== todayStr) continue;
+      items.push({
+        time:    d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sortMs:  d.getTime(),
+        title:   a.provider || a.title,
+        subtitle: a.title,
+        type:    'appointment',
+      });
+    }
+
+    for (const r of this.reminders()) {
+      if (!r.isEnabled) continue;
+      const [h, m]  = (r.reminderTime || '08:00').split(':').map(Number);
+      const timeDate = new Date(); timeDate.setHours(h, m, 0, 0);
+      items.push({
+        time:    timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sortMs:  timeDate.getTime(),
+        title:   r.medicineName + (r.dosage ? ` ${r.dosage}` : ''),
+        subtitle: this.t().dashboard.medicationReminder,
+        type:    'medication',
+      });
+    }
+
+    return items.sort((a, b) => a.sortMs - b.sortMs);
+  });
+
   readonly familyProfiles  = signal<AccessibleProfileDto[]>([]);
   readonly familyLoading   = signal(true);
   readonly healthSummary   = signal<HealthSummaryDto | null>(null);
@@ -79,10 +140,14 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly SUMMARY_CHAR_LIMIT = 260;
 
   // ── Medical Report dialog ─────────────────────────────────────────────────
-  readonly reportDialogOpen      = signal(false);
-  readonly selectedReportType    = signal<ReportType>('DoctorSummary');
-  readonly reportGenerating      = signal(false);
-  readonly reportTargetProfileId = signal<string | null>(null);
+  readonly profilePickerOpen       = signal(false);
+  readonly reportDialogOpen        = signal(false);
+  readonly reportCameFromPicker    = signal(false);
+  readonly selectedReportType      = signal<ReportType>('DoctorSummary');
+  readonly reportGenerating        = signal(false);
+  readonly reportTargetProfileId   = signal<string | null>(null);
+  readonly reportTargetProfileName = signal<string | null>(null);
+  private _reportSub: Subscription | null = null;
 
   // ── Robot speech bubble ───────────────────────────────────────────────────
   readonly robotBubbleVisible = signal(false);
@@ -167,6 +232,7 @@ export class Dashboard implements OnInit, OnDestroy {
     this.profileCache.ensure();
     this.applyResponsiveSidebar();
     this.loadDashboardData();
+    this._tickInterval = setInterval(() => this._nowTick.set(Date.now()), 60_000);
     // Auto-trigger full welcome tour on first visit after login/onboarding
     setTimeout(() => {
       const tourDone = typeof localStorage !== 'undefined'
@@ -181,8 +247,10 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this._bubbleHideTimer) clearTimeout(this._bubbleHideTimer);
-    if (this._inactivityTimer) clearTimeout(this._inactivityTimer);
+    if (this._bubbleHideTimer)  clearTimeout(this._bubbleHideTimer);
+    if (this._inactivityTimer)  clearTimeout(this._inactivityTimer);
+    if (this._tickInterval)     clearInterval(this._tickInterval);
+    this._reportSub?.unsubscribe();
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
@@ -221,19 +289,21 @@ export class Dashboard implements OnInit, OnDestroy {
     this.apptLoading.set(true);
     this.familyLoading.set(true);
     this.summaryLoading.set(true);
+    this.lastSyncAt.set(new Date());
+    this.hasLoadError.set(false);
 
     this.dashboardService.getMedicalRecords().subscribe({
       next: d => { this.records.set(d); this.recordsLoading.set(false); },
-      error: () => { this.records.set([]); this.recordsLoading.set(false); },
+      error: () => { this.records.set([]); this.recordsLoading.set(false); this.hasLoadError.set(true); },
     });
 
     this.dashboardService.getMedicinesWithReminders().subscribe({
       next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
-      error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
+      error: () => { this.reminders.set([]); this.remindersLoading.set(false); this.hasLoadError.set(true); },
     });
 
     this.apptService.getAll().pipe(
-      catchError(() => of([] as AppointmentDto[]))
+      catchError(() => { this.hasLoadError.set(true); return of([] as AppointmentDto[]); })
     ).subscribe(data => {
       this.allAppointments.set(data);
       this.apptLoading.set(false);
@@ -389,20 +459,69 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   // ── Medical Report methods ────────────────────────────────────────────────
+
+  /** Entry-point from the Download button. Shows profile picker when the user has
+   *  family members; goes straight to the file-type dialog when only self exists. */
+  openDownloadFlow(): void {
+    const nonSelf = this.familyProfiles().filter(p => !p.isSelf);
+    if (!this.familyLoading() && nonSelf.length > 0) {
+      this.profilePickerOpen.set(true);
+    } else {
+      this.openReportDialog();
+    }
+  }
+
+  /** Called when the user picks a profile in the picker. */
+  selectProfileAndContinue(profileId: string): void {
+    this.profilePickerOpen.set(false);
+    this.selectedReportType.set('DoctorSummary');
+    this.reportTargetProfileId.set(profileId);
+    this.reportTargetProfileName.set(this.getProfileDisplayName(profileId));
+    this.reportCameFromPicker.set(true);
+    this.reportDialogOpen.set(true);
+  }
+
   openReportDialog(profileId?: string): void {
+    this.reportCameFromPicker.set(false);
     if (profileId) {
       this.reportTargetProfileId.set(profileId);
+      this.reportTargetProfileName.set(this.getProfileDisplayName(profileId));
       this.reportDialogOpen.set(true);
     } else {
       this.dashboardService.getActiveProfileId().subscribe(id => {
         this.reportTargetProfileId.set(id);
+        this.reportTargetProfileName.set(this.getProfileDisplayName(id));
         this.reportDialogOpen.set(true);
       });
     }
   }
 
+  backToProfilePicker(): void {
+    this.reportDialogOpen.set(false);
+    this.profilePickerOpen.set(true);
+  }
+
   closeReportDialog(): void {
     if (!this.reportGenerating()) this.reportDialogOpen.set(false);
+  }
+
+  cancelReport(): void {
+    this._reportSub?.unsubscribe();
+    this._reportSub = null;
+    this.reportGenerating.set(false);
+    this.reportDialogOpen.set(false);
+  }
+
+  getProfileAvatarColor(name: string): string {
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+    return palette[Math.abs(h) % palette.length];
+  }
+
+  private getProfileDisplayName(profileId: string): string | null {
+    const p = this.familyProfiles().find(p => p.userHealthProfileId === profileId);
+    return p ? `${p.firstName} ${p.lastName}` : null;
   }
 
   generateReport(): void {
@@ -410,18 +529,27 @@ export class Dashboard implements OnInit, OnDestroy {
     if (!profileId) return;
 
     this.reportGenerating.set(true);
-    this.medicalReportSvc.generateReport(profileId, this.selectedReportType()).subscribe({
+    this._reportSub = this.medicalReportSvc.generateReport(profileId, this.selectedReportType()).subscribe({
       next: (blob) => {
+        const name = this.reportTargetProfileName();
+        const safeName = name
+          ? '_' + name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_؀-ۿ-]/g, '')
+          : '';
+        const typeLabel = this.selectedReportType() === 'DoctorSummary' ? 'Medical_Summary' : 'Medical_Record';
         const url = URL.createObjectURL(blob);
         const a   = document.createElement('a');
-        a.href    = url;
-        a.download = `RafiqMedicalReport_${this.selectedReportType()}_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.href     = url;
+        a.download = `${typeLabel}${safeName}.pdf`;
         a.click();
         URL.revokeObjectURL(url);
+        this._reportSub = null;
         this.reportGenerating.set(false);
         this.reportDialogOpen.set(false);
       },
-      error: () => { this.reportGenerating.set(false); }
+      error: () => {
+        this._reportSub = null;
+        this.reportGenerating.set(false);
+      }
     });
   }
 
@@ -440,6 +568,17 @@ export class Dashboard implements OnInit, OnDestroy {
 
   closeFamilySummary(): void {
     this.familySummaryOpen.set(false);
+  }
+
+  summaryText(s: HealthSummaryDto): string {
+    const parts: string[] = [`Status: ${s.overallStatus}${s.overallStatusNote ? ' — ' + s.overallStatusNote : ''}`];
+    if (s.conditions.length) parts.push(`Conditions: ${s.conditions.join(', ')}`);
+    if (s.allergies.length) parts.push(`Allergies: ${s.allergies.map(a => `${a.name} (${a.severity})`).join(', ')}`);
+    parts.push(`Medications: ${s.medications.count} active${s.medications.hasIssues && s.medications.issueNote ? ' — ' + s.medications.issueNote : ''}`);
+    parts.push(`Lab results: ${s.labResults.status}${s.labResults.abnormalCount > 0 ? ` (${s.labResults.abnormalCount} abnormal)` : ''}`);
+    if (s.insights.length) parts.push(`Insights: ${s.insights.join('; ')}`);
+    if (s.recommendations.length) parts.push(`Recommendations: ${s.recommendations.join('; ')}`);
+    return parts.join('\n');
   }
 
   getRelationshipLabel(relationship: string | null | undefined): string {

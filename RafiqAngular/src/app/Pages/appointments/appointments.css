@@ -1128,10 +1128,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding-top: 14px;
+  gap: 16px;
+  padding: 16px 20px;
   border-top: 1px solid var(--border-lt);
-  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 
@@ -2140,4 +2140,252 @@
 
     }
 
+}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE: Appointments Card Layout (≤ 768 px)
+   ══════════════════════════════════════════════ */
+.appts-mobile-view {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Controls Layout */
+  .appts-controls-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;    
+    gap: 8px !important;
+  }
+  .appts-search-wrap {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+  }
+  .meds-filter-select,
+  .clear-filters-btn {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Desktop/Mobile views toggling */
+  .appts-desktop-view {
+    display: none !important;
+  }
+  
+  .appts-mobile-view {
+    display: flex !important;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+
+  /* Mobile Card Layout (similar to Medical Records cards) */
+  .appt-mobile-card {
+    background: var(--white, #fff);
+    border: 1px solid var(--border-lt, #e8edf2);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+  }
+
+  /* Header */
+  .appt-card-hdr {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .appt-card-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .appt-card-title-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .appt-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text, #111827);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .appt-card-hdr .type-pill {
+    align-self: flex-start;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    width: fit-content;
+  }
+
+  .appt-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .appt-card-actions .rec-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border-lt, #e8edf2);
+    background: var(--white, #fff);
+    color: var(--text-2, #4b5563);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s;
+  }
+
+  .appt-card-actions .rec-action-btn:hover {
+    background: var(--border-lt, #e8edf2);
+  }
+
+  /* Dropdown Menu (RTL & LTR logical positioning) */
+  .appt-card-actions .record-menu {
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    inset-inline-end: 0 !important;
+    inset-inline-start: auto !important;
+    bottom: auto !important;
+    z-index: 500 !important;
+    min-width: 140px !important;
+    background: var(--white, #fff);
+    border: 1px solid var(--border-lt, #e8edf2);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 4px;
+    transform-origin: top inset-inline-end;
+  }
+
+  /* Body info lines */
+  .appt-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-top: 1px solid var(--border-lt, #e8edf2);
+    border-bottom: 1px solid var(--border-lt, #e8edf2);
+    padding: 12px 0;
+  }
+
+  .appt-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .appt-info-label {
+    color: var(--text-3, #8899aa);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .appt-info-label i {
+    width: 16px;
+    text-align: center;
+    color: var(--blue, #0EAFD7);
+  }
+
+  .appt-info-value {
+    color: var(--text-2, #4b5563);
+    font-weight: 500;
+    text-align: right;
+  }
+
+  :host-context([dir="rtl"]) .appt-info-value,
+  [dir="rtl"] .appt-info-value {
+    text-align: left;
+  }
+
+  /* Footer */
+  .appt-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  :host-context([dir="rtl"]) .appt-card-footer,
+  [dir="rtl"] .appt-card-footer {
+    justify-content: flex-start;
+  }
+
+  .appt-footer-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    border: 1px solid transparent;
+  }
+
+  .appt-btn-complete {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #a7f3d0;
+  }
+  .appt-btn-complete:hover {
+    background: #d1fae5;
+  }
+
+  .appt-btn-edit {
+    background: #f0f9ff;
+    color: #0284c7;
+    border-color: #bae6fd;
+  }
+  .appt-btn-edit:hover {
+    background: #e0f2fe;
+  }
+
+  .appt-btn-cancel {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+  }
+  .appt-btn-cancel:hover {
+    background: #fee2e2;
+  }
+
+  /* Compact pagination */
+  .pagination-bar {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    padding-top: 10px !important;
+  }
+  .page-btn {
+    min-width: 28px !important;
+    height: 28px !important;
+    font-size: 11px !important;
+  }
 }

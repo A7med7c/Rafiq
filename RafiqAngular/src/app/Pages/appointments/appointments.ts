@@ -21,6 +21,18 @@ import {
   APPOINTMENT_TYPE_LABELS, APPOINTMENT_TYPE_ICONS,
 } from '../../Modles/appointment.models';
 
+/** Maps each AppointmentType enum value to its key path in the i18n objects */
+const APPT_TYPE_KEYS: Record<AppointmentType, string> = {
+  [AppointmentType.DoctorVisit]: 'appointments.doctor',
+  [AppointmentType.LabTest]:     'appointments.lab',
+  [AppointmentType.Imaging]:     'appointments.imaging',
+  [AppointmentType.Vaccination]: 'appointments.vaccination',
+  [AppointmentType.Dentist]:     'appointments.dental',
+  [AppointmentType.Therapy]:     'appointments.therapy',
+  [AppointmentType.FollowUp]:    'appointments.followUp',
+  [AppointmentType.Other]:       'appointments.other',
+};
+
 type ApptTab = 'all' | 'upcoming' | 'completed' | 'cancelled';
 
 interface Toast {
@@ -76,6 +88,11 @@ export class Appointments implements OnInit, OnDestroy {
   // otherwise falls back to the profile stored in localStorage by the
   // family-profiles page.  If the resolved profile's access role is 'Viewer'
   // all write actions are hidden.
+
+translate(key: string): string {
+  return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? key;
+}
+
   readonly viewingProfile = toSignal<AccessibleProfileDto | null>(
     this.route.queryParamMap.pipe(
       map(params => params.get('profileId') ?? this.profileSelectSvc.selectedProfileId),
@@ -111,9 +128,10 @@ export class Appointments implements OnInit, OnDestroy {
   readonly dateTo      = signal('');
   readonly sortBy      = signal<'recent' | 'oldest' | 'az' | 'za'>('recent');
   readonly currentPage = signal(1);
-  readonly PAGE_SIZE    = 5;
+  readonly PAGE_SIZE    = 2;
   readonly tabDirection = signal<'left' | 'right'>('left');
   readonly tabAnimating = signal(false);
+  readonly mobileTabMenuOpen = signal(false);
 
   // ── Action menus ─────────────────────────────────────────────────────────
   readonly openMenuId = signal<string | null>(null);
@@ -430,6 +448,31 @@ nextPage() {
     this.animateTable(nextIndex >= currentIndex ? 'left' : 'right');
     this.activeTab.set(tab);
     this.currentPage.set(1);
+    this.mobileTabMenuOpen.set(false);
+  }
+
+  toggleMobileTabMenu(): void { this.mobileTabMenuOpen.update(v => !v); }
+  closeMobileTabMenu(): void  { this.mobileTabMenuOpen.set(false); }
+
+  activeTabLabel(): string {
+    const t = this.t().appointments;
+    const map: Record<string, string> = {
+      all:       t.all || 'All',
+      upcoming:  t.upcoming || 'Upcoming',
+      completed: t.completed || 'Completed',
+      cancelled: t.cancelledMissed || 'Cancelled/Missed',
+    };
+    return map[this.activeTab()] ?? (t.all || 'All');
+  }
+
+  activeTabIcon(): string {
+    const map: Record<string, string> = {
+      all: 'fa-layer-group',
+      upcoming: 'fa-calendar',
+      completed: 'fa-circle-check',
+      cancelled: 'fa-circle-xmark',
+    };
+    return map[this.activeTab()] ?? 'fa-layer-group';
   }
   setPage(p: number | '...'): void { if (typeof p === 'number') this.goToPage(p); }
   onFilterChange(): void {
@@ -749,7 +792,16 @@ nextPage() {
 
   typeLabel(a: AppointmentDto): string {
     if (a.appointmentType === AppointmentType.Other && a.customType) return a.customType;
-    return APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+    const key = APPT_TYPE_KEYS[a.appointmentType];
+    if (!key) return APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+    return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+  }
+
+  /** Returns the translated label for a type enum value (used in the type-picker grid) */
+  typeLabelForType(type: AppointmentType): string {
+    const key = APPT_TYPE_KEYS[type];
+    if (!key) return APPOINTMENT_TYPE_LABELS[type] ?? '';
+    return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[type] ?? '';
   }
 
   typeIcon(t: AppointmentType): string {

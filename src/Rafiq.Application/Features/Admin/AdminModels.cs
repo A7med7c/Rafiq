@@ -5,20 +5,24 @@ public sealed record AdminDashboardDto(
     int ActiveUsers,
     int TotalProfiles,
     int ManagedProfiles,
-    int AppointmentsToday,
-    int AppointmentsThisMonth,
-    int PendingAppointments,
-    int CompletedAppointments,
     int MedicationRemindersToday,
     int MedicalDocuments,
     int AiConversations,
+    int TotalAiRequests,
+    int FlaggedAiRequests,
+    string? MostActiveAiUser,
     int NewRegistrationsThisMonth,
     decimal MonthlyGrowthPercent,
     IReadOnlyList<AdminTrendPointDto> UserGrowth,
-    IReadOnlyList<AdminTrendPointDto> AppointmentTrend,
     IReadOnlyList<AdminDistributionItemDto> GenderDistribution,
     IReadOnlyList<AdminRecentUserDto> RecentUsers,
-    IReadOnlyList<AdminRecentAppointmentDto> RecentAppointments);
+    IReadOnlyList<AdminDashboardAttentionUserDto> UsersNeedAttention);
+
+public sealed record AdminDashboardAttentionUserDto(
+    Guid UserId,
+    string UserName,
+    string? ProfileImageUrl,
+    string Reason);
 
 public sealed record AdminTrendPointDto(string Label, int Value);
 
@@ -74,6 +78,33 @@ public sealed record PagedResult<T>(
     public int TotalPages => TotalCount == 0
         ? 0
         : (int)Math.Ceiling(TotalCount / (double)PageSize);
+}
+
+// ── Audit Logs ─────────────────────────────────────────────────────────────
+
+public sealed record AuditChangeDto(string Field, string? Before, string? After);
+
+public sealed record AuditLogDto(
+    Guid Id,
+    DateTime Timestamp,
+    string ActorName,
+    string ActorEmail,
+    string Module,
+    string Action,
+    string Target,
+    string Severity,
+    string Description,
+    IReadOnlyList<AuditChangeDto> Changes);
+
+public sealed class AuditLogQuery
+{
+    public string? Search    { get; init; }
+    public string? Module    { get; init; }
+    public string? Severity  { get; init; }
+    public string? DateFrom  { get; init; }
+    public string? DateTo    { get; init; }
+    public int Page          { get; init; } = 1;
+    public int PageSize      { get; init; } = 10;
 }
 
 // ── AI Operations ──────────────────────────────────────────────────────────
@@ -209,3 +240,62 @@ public sealed record AiPerformanceDto(
     int     P95LatencyMs,
     int     AvgLatencyMs,
     decimal ErrorRatePercent);
+
+// ── Usage Intelligence ──────────────────────────────────────────────────────
+
+public sealed record UsageIntelligenceOverviewDto(
+    int TotalAiRequests,
+    int FlaggedRequests,
+    int UsersNeedingReview,
+    int WarningsSent);
+
+public sealed record UsageAttentionUserDto(
+    Guid     UserId,
+    string   UserName,
+    string   UserEmail,
+    string?  ProfileImageUrl,
+    int      TotalRequests,
+    int      FlaggedRequests,
+    int      WarningsSent,
+    DateTime? LastActivity);
+
+public sealed record UsageFlaggedRequestDto(
+    Guid     Id,
+    string   RequestType,
+    string   UserRequest,
+    string   AiResponse,
+    string   Classification,
+    string   Reason,
+    DateTime CreatedAt);
+
+public sealed record UsageAdminActionDto(
+    Guid     Id,
+    string   ActionType,
+    string   AdminName,
+    string?  Notes,
+    DateTime CreatedAt);
+
+public sealed record UsageUserDetailDto(
+    Guid                              UserId,
+    string                            UserName,
+    string                            UserEmail,
+    string?                           ProfileImageUrl,
+    int                               TotalRequests,
+    int                               FlaggedRequests,
+    int                               WarningsSent,
+    DateTime?                         LastActivity,
+    bool                              IsAiRestricted,
+    bool                              IsRestricted,
+    bool                              IsSuspended,
+    IReadOnlyList<UsageFlaggedRequestDto> FlaggedItems,
+    IReadOnlyList<UsageAdminActionDto>    ActionHistory);
+
+public sealed class UsageAttentionQueueQuery
+{
+    public int Page     { get; init; } = 1;
+    public int PageSize { get; init; } = 20;
+}
+
+public sealed record TakeUsageActionDto(
+    string  ActionType,
+    string? Notes);

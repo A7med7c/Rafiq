@@ -31,7 +31,6 @@ export class AdminLayoutComponent {
   private readonly authService = inject(AuthService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly notifications = inject(NotificationService);
-
   readonly sidebarOpen = signal(false);
   readonly profileOpen = signal(false);
   readonly darkMode = signal(localStorage.getItem('rafiq_admin_theme') === 'dark');
@@ -40,15 +39,9 @@ export class AdminLayoutComponent {
   readonly navigation: AdminNavItem[] = [
     { path: '/admin/dashboard',      icon: 'fa-chart-pie',           label: 'dashboard' },
     { path: '/admin/users',          icon: 'fa-users',               label: 'users' },
-    { path: '/admin/families',       icon: 'fa-people-roof',         label: 'families' },
     { path: '/admin/ai-operations',  icon: 'fa-robot',               label: 'aiOperations' },
-    { path: '/admin/medical-records',icon: 'fa-notes-medical',       label: 'medicalRecords' },
-    { path: '/admin/medications',    icon: 'fa-capsules',            label: 'medications' },
-    { path: '/admin/appointments',   icon: 'fa-calendar-check',      label: 'appointments' },
-    { path: '/admin/documents',      icon: 'fa-file-shield',         label: 'documents' },
-    { path: '/admin/analytics',      icon: 'fa-chart-line',          label: 'analytics' },
-    { path: '/admin/settings',       icon: 'fa-sliders',             label: 'settings' },
-    { path: '/admin/audit-logs',     icon: 'fa-clock-rotate-left',   label: 'auditLogs' }
+    { path: '/admin/reviews',        icon: 'fa-star',                label: 'reviews' },
+    { path: '/admin/audit-logs',     icon: 'fa-shield-halved',       label: 'auditLogs' }
   ];
 
   get adminName(): string {
@@ -75,6 +68,10 @@ export class AdminLayoutComponent {
 
   closeSidebar(): void {
     this.sidebarOpen.set(false);
+  }
+
+  openSidebar(): void {
+    this.sidebarOpen.set(true);
   }
 
   logout(): void {

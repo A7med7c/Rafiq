@@ -16,20 +16,42 @@ public sealed class VoiceAgentLoop(
 {
     private const int MaxIterations = 8;
 
+    // camelCase so the AI sees the field names it's instructed to look for in the prompt
+    // ("success", "message", "data", "entityType", "completenessGaps").
+    // No WhenWritingNull — null values in tool Data payloads must reach the AI as explicit
+    // nulls (e.g. "height": null) so it never invents a value. Outer ToolResult fields use
+    // per-property [JsonIgnore] instead.
     private static readonly JsonSerializerOptions _jsonOpts = new()
     {
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
     };
 
-    public async Task<(AgentOutput Output, IReadOnlyList<(AiMessageRole Role, string Content)> NewMessages)>
+    public Task<(AgentOutput Output, IReadOnlyList<(AiMessageRole Role, string Content)> NewMessages)>
         RunAsync(
             string userMessage,
             IEnumerable<(AiMessageRole Role, string Content)> existingHistory,
             AgentContext ctx,
             CancellationToken ct)
+        => RunAsync(userMessage, existingHistory, ctx, systemPromptOverride: null, base64Image: null, imageFormat: null, ct);
+
+    /// <summary>
+    /// Full form. Chat callers pass a Chat-specific system prompt override and optionally
+    /// an image; the image is attached only to the FIRST Bedrock iteration (subsequent
+    /// tool-result iterations are pure text reasoning and don't need the image re-sent).
+    /// </summary>
+    public async Task<(AgentOutput Output, IReadOnlyList<(AiMessageRole Role, string Content)> NewMessages)>
+        RunAsync(
+            string userMessage,
+            IEnumerable<(AiMessageRole Role, string Content)> existingHistory,
+            AgentContext ctx,
+            string? systemPromptOverride,
+            string? base64Image,
+            string? imageFormat,
+            CancellationToken ct)
     {
         var tools = toolRegistry.GetAll();
-        var systemPrompt = VoiceAgentSystemPrompt.Build(tools, ctx);
+        var systemPrompt = systemPromptOverride
+            ?? VoiceAgentSystemPrompt.Build(tools, ctx);
 
         var history = existingHistory.ToList();
         history.Add((AiMessageRole.User, userMessage));
@@ -57,7 +79,11 @@ public sealed class VoiceAgentLoop(
                 SystemPrompt = systemPrompt,
                 PreviousMessages = previousMessages,
                 CurrentUserMessage = lastMessage.Content,
-                MaxOutputTokens = 1024
+                MaxOutputTokens = 1024,
+                // Only attach image on the first iteration — subsequent iterations are
+                // pure text reasoning over tool results and re-sending the image wastes tokens.
+                Base64Image = i == 0 ? base64Image : null,
+                ImageFormat = i == 0 ? imageFormat : null,
             };
 
             AiChatResponse aiResponse;

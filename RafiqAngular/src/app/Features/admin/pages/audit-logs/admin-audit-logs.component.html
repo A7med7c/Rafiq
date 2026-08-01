@@ -1,0 +1,285 @@
+<div class="al-page" [class.al-rtl]="isRtl()">
+
+  <!-- ── Page header ──────────────────────────────────────────────────────── -->
+  <header class="al-header">
+    <div class="al-header-text">
+      <h1 class="al-title">
+        <i class="fa-solid fa-shield-halved al-title-icon"></i>
+        {{ copy().title }}
+      </h1>
+      <p class="al-subtitle">{{ copy().subtitle }}</p>
+    </div>
+  </header>
+
+  <!-- ── KPI cards ────────────────────────────────────────────────────────── -->
+  <section class="al-kpi-grid">
+    <div class="al-kpi-card">
+      <div class="al-kpi-icon al-kpi-icon--blue">
+        <i class="fa-solid fa-list-check"></i>
+      </div>
+      <div class="al-kpi-body">
+        <span class="al-kpi-value">{{ summary().total }}</span>
+        <span class="al-kpi-label">{{ copy().totalLogs }}</span>
+      </div>
+    </div>
+
+    <div class="al-kpi-card">
+      <div class="al-kpi-icon al-kpi-icon--purple">
+        <i class="fa-solid fa-clock"></i>
+      </div>
+      <div class="al-kpi-body">
+        <span class="al-kpi-value">{{ summary().today }}</span>
+        <span class="al-kpi-label">{{ copy().todayActivity }}</span>
+      </div>
+    </div>
+
+    <div class="al-kpi-card">
+      <div class="al-kpi-icon al-kpi-icon--teal">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <div class="al-kpi-body">
+        <span class="al-kpi-value">{{ summary().adminActions }}</span>
+        <span class="al-kpi-label">{{ copy().adminActions }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Activity summary strip ───────────────────────────────────────────── -->
+  <section class="al-summary-strip">
+    <span class="al-summary-label">{{ copy().activitySummary }}</span>
+    <div class="al-summary-pills">
+      <span class="al-pill al-pill--info">
+        <i class="fa-solid fa-circle-info"></i>
+        {{ copy().infoEvents }}: {{ summary().infoCount }}
+      </span>
+      <span class="al-pill al-pill--success">
+        <i class="fa-solid fa-circle-check"></i>
+        {{ copy().successEvents }}: {{ summary().successCount }}
+      </span>
+      <span class="al-pill al-pill--warning">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        {{ copy().warningEvents }}: {{ summary().warningCount }}
+      </span>
+    </div>
+  </section>
+
+  <!-- ── Filter toolbar ───────────────────────────────────────────────────── -->
+  <section class="al-filters">
+    <div class="al-search-wrap">
+      <i class="fa-solid fa-magnifying-glass al-search-icon"></i>
+      <input
+        class="al-search"
+        type="text"
+        [placeholder]="copy().searchPlaceholder"
+        [value]="search()"
+        (input)="setSearch($any($event.target).value)"
+      />
+    </div>
+
+    <select class="al-select" [value]="moduleFilter()" (change)="setModule($any($event.target).value)">
+      <option value="">{{ copy().allModules }}</option>
+      @for (m of modules; track m) {
+        <option [value]="m">{{ moduleLabel(m) }}</option>
+      }
+    </select>
+
+    <select class="al-select" [value]="severityFilter()" (change)="setSeverity($any($event.target).value)">
+      <option value="">{{ copy().allSeverities }}</option>
+      @for (s of severities; track s) {
+        <option [value]="s">{{ severityLabel(s) }}</option>
+      }
+    </select>
+
+    <input class="al-date" type="date" [value]="dateFrom()" (change)="setDateFrom($any($event.target).value)" [placeholder]="copy().filterFrom" />
+    <input class="al-date" type="date" [value]="dateTo()"   (change)="setDateTo($any($event.target).value)"   [placeholder]="copy().filterTo" />
+
+    @if (hasActiveFilters()) {
+      <button class="al-btn-clear" (click)="clearFilters()">
+        <i class="fa-solid fa-xmark"></i>
+        {{ copy().clearFilters }}
+      </button>
+    }
+  </section>
+
+  <!-- ── Table ────────────────────────────────────────────────────────────── -->
+  <section class="al-table-wrap">
+    <table class="al-table">
+      <thead>
+        <tr>
+          <th>{{ copy().colTime }}</th>
+          <th>{{ copy().colActor }}</th>
+          <th class="al-col-module">{{ copy().colModule }}</th>
+          <th>{{ copy().colAction }}</th>
+          <th class="al-col-target">{{ copy().colTarget }}</th>
+          <th>{{ copy().colSeverity }}</th>
+          <th class="al-col-view"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="7" class="al-empty-cell">
+              <div class="al-empty">
+                <i class="fa-solid fa-spinner fa-spin al-empty-icon"></i>
+              </div>
+            </td>
+          </tr>
+        } @else if (error()) {
+          <tr>
+            <td colspan="7" class="al-empty-cell">
+              <div class="al-empty">
+                <i class="fa-solid fa-circle-exclamation al-empty-icon"></i>
+                <p>{{ copy().loadError }}</p>
+                <button class="al-btn-clear" (click)="loadLogs()">{{ copy().retry }}</button>
+              </div>
+            </td>
+          </tr>
+        } @else if (pagedLogs().length === 0) {
+          <tr>
+            <td colspan="7" class="al-empty-cell">
+              <div class="al-empty">
+                <i class="fa-solid fa-scroll al-empty-icon"></i>
+                <p>{{ hasActiveFilters() ? copy().empty : copy().emptyAll }}</p>
+              </div>
+            </td>
+          </tr>
+        }
+        @for (log of pagedLogs(); track log.id) {
+          <tr class="al-row" (click)="openDrawer(log)">
+            <td class="al-td-time">{{ formatTime(log.timestamp) }}</td>
+            <td class="al-td-actor">
+              <span class="al-actor-name">{{ log.actorName }}</span>
+              <span class="al-actor-email">{{ log.actorEmail }}</span>
+            </td>
+            <td class="al-col-module">
+              <span class="al-module-badge">
+                <i class="fa-solid {{ moduleIcon(log.module) }}"></i>
+                {{ moduleLabel(log.module) }}
+              </span>
+            </td>
+            <td>
+              <span class="al-action-text">{{ actionLabel(log.action) }}</span>
+            </td>
+            <td class="al-col-target al-td-target">{{ log.target }}</td>
+            <td>
+              <span class="al-severity al-severity--{{ log.severity.toLowerCase() }}">
+                {{ severityLabel(log.severity) }}
+              </span>
+            </td>
+            <td class="al-col-view">
+              <button class="al-btn-view" (click)="openDrawer(log); $event.stopPropagation()">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── Pagination ────────────────────────────────────────────────────────── -->
+  @if (totalPages() > 1) {
+    <nav class="al-pagination">
+      <button class="al-pg-btn" [disabled]="page() === 1" (click)="goToPage(page() - 1)">
+        <i class="fa-solid fa-chevron-left"></i>
+        <span>{{ copy().previous }}</span>
+      </button>
+      <span class="al-pg-info">
+        {{ copy().page }} {{ page() }} {{ copy().of }} {{ totalPages() }}
+      </span>
+      <button class="al-pg-btn" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">
+        <span>{{ copy().next }}</span>
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </nav>
+  }
+
+</div>
+
+<!-- ── Drawer backdrop + panel ──────────────────────────────────────────────── -->
+@if (activeLog(); as log) {
+  <div class="al-drawer-backdrop" (click)="closeDrawer()"></div>
+  <aside class="al-drawer" role="dialog" aria-modal="true" [class.al-rtl]="isRtl()">
+
+    <div class="al-drawer-header">
+      <span class="al-drawer-title">
+        <i class="fa-solid fa-file-lines"></i>
+        {{ copy().drawerTitle }}
+      </span>
+      <button class="al-drawer-close" (click)="closeDrawer()" aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="al-drawer-body">
+
+      <!-- Severity badge -->
+      <div class="al-drawer-severity-row">
+        <span class="al-severity al-severity--{{ log.severity.toLowerCase() }} al-severity--lg">
+          {{ severityLabel(log.severity) }}
+        </span>
+        <span class="al-module-badge">
+          <i class="fa-solid {{ moduleIcon(log.module) }}"></i>
+          {{ moduleLabel(log.module) }}
+        </span>
+      </div>
+
+      <!-- Description -->
+      <p class="al-drawer-desc">{{ log.description }}</p>
+
+      <!-- Meta grid -->
+      <dl class="al-meta-grid">
+        <dt>{{ copy().drawerTimestamp }}</dt>
+        <dd>{{ formatFullDate(log.timestamp) }}</dd>
+
+        <dt>{{ copy().drawerActor }}</dt>
+        <dd>
+          <span class="al-actor-name">{{ log.actorName }}</span>
+          <span class="al-actor-email">{{ log.actorEmail }}</span>
+        </dd>
+
+        <dt>{{ copy().drawerTarget }}</dt>
+        <dd>{{ log.target }}</dd>
+      </dl>
+
+      <!-- Changes -->
+      <div class="al-changes-section">
+        <h3 class="al-changes-heading">
+          <i class="fa-solid fa-code-compare"></i>
+          {{ copy().drawerChanges }}
+        </h3>
+
+        @if (log.changes.length === 0) {
+          <p class="al-no-changes">{{ copy().drawerNoChanges }}</p>
+        } @else {
+          <div class="al-changes-list">
+            @for (change of log.changes; track change.field) {
+              <div class="al-change-row">
+                <span class="al-change-field">{{ change.field }}</span>
+                <div class="al-change-values">
+                  <span class="al-change-before">
+                    <span class="al-change-chip al-change-chip--before">{{ copy().drawerBefore }}</span>
+                    {{ change.before ?? '—' }}
+                  </span>
+                  <i class="fa-solid fa-arrow-right al-change-arrow"></i>
+                  <span class="al-change-after">
+                    <span class="al-change-chip al-change-chip--after">{{ copy().drawerAfter }}</span>
+                    {{ change.after ?? '—' }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    </div><!-- /.al-drawer-body -->
+
+    <div class="al-drawer-footer">
+      <button class="al-btn-close-drawer" (click)="closeDrawer()">
+        {{ copy().close }}
+      </button>
+    </div>
+
+  </aside>
+}

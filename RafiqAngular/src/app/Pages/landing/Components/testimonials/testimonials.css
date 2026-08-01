@@ -18,11 +18,13 @@
 }
 
 .stars {
-  color: #ffb020;
   letter-spacing: 2px;
   margin-bottom: 14px;
   font-size: .95rem;
 }
+
+.stars span { color: #d1d5db; }
+.stars span.star--filled { color: #ffb020; }
 
 .testimonial-card p {
   color: #35485e;

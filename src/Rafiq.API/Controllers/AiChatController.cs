@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Rafiq.Application.Common.Interfaces;
+using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.AiChat.Commands.ArchiveConversation;
 using Rafiq.Application.Features.AiChat.Commands.CreateConversation;
 using Rafiq.Application.Features.AiChat.Commands.GenerateConversationTitle;
@@ -20,10 +22,14 @@ namespace Rafiq.API.Controllers;
 public class AiChatController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IUserStatusService _userStatusService;
 
-    public AiChatController(IMediator mediator)
+    public AiChatController(IMediator mediator, ICurrentUserService currentUserService, IUserStatusService userStatusService)
     {
         _mediator = mediator;
+        _currentUserService = currentUserService;
+        _userStatusService = userStatusService;
     }
 
     /// <summary>
@@ -108,6 +114,13 @@ public class AiChatController : ControllerBase
     /// Sends a message (text-only or with an image) to an existing conversation.
     /// Optionally include Base64Image and ImageFormat for multimodal (image+question) requests.
     /// </summary>
+    /// <summary>
+    /// Accepts a message and immediately returns 202 with { userMessageId, assistantMessageId }.
+    /// The assistant's reply is delivered asynchronously via the "ChatResponse" SignalR event
+    /// and can be retrieved from the conversation history at any time.
+    /// This design survives page refreshes — the background job continues regardless of
+    /// whether the browser connection is still open when processing completes.
+    /// </summary>
     [HttpPost("conversations/{conversationId:guid}/messages")]
     public async Task<IActionResult> SendMessage(
         Guid conversationId,
@@ -115,9 +128,9 @@ public class AiChatController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new SendMessageCommand(conversationId, request.Text, request.Base64Image, request.ImageFormat),
+            new SendMessageCommand(conversationId, request.Text, request.Base64Image, request.ImageFormat, request.Language, request.UtcOffsetMinutes),
             cancellationToken);
-        return Ok(result);
+        return Accepted(result);
     }
 
     /// <summary>
@@ -136,7 +149,24 @@ public class AiChatController : ControllerBase
             cancellationToken);
         return Ok(result);
     }
+
+    /// <summary>
+    /// Returns whether the current user's AI access is restricted.
+    /// Called by the frontend before sending any message to decide whether to lock the chat UI.
+    /// </summary>
+    [HttpGet("ai-status")]
+    public async Task<IActionResult> GetMyAiStatus(CancellationToken cancellationToken)
+    {
+        var userId = _currentUserService.UserId;
+        if (userId is null)
+            return Ok(ApiResponse<AiAccessStatusDto>.SuccessResponse(new AiAccessStatusDto(false)));
+
+        var status = await _userStatusService.GetStatusAsync(userId.Value, cancellationToken);
+        return Ok(ApiResponse<AiAccessStatusDto>.SuccessResponse(new AiAccessStatusDto(status?.IsAiRestricted ?? false)));
+    }
 }
+
+public sealed record AiAccessStatusDto(bool IsAiRestricted);
 
 public sealed class CreateConversationRequest
 {
@@ -154,6 +184,8 @@ public sealed class SendMessageRequest
     public string Text { get; set; } = string.Empty;
     public string? Base64Image { get; set; }
     public string? ImageFormat { get; set; }
+    public string Language { get; set; } = "en";
+    public int UtcOffsetMinutes { get; set; } = 0;
 }
 
 public sealed class ReactToMessageRequest

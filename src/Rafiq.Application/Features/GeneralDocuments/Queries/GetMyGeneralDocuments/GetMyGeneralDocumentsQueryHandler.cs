@@ -33,7 +33,9 @@ public sealed class GetMyGeneralDocumentsQueryHandler(
             HospitalOrClinic = document.HospitalOrClinic,
             DocumentDate = document.DocumentDate,
             OcrText = document.OcrText,
-            CreatedAt = document.CreatedAt
+            CreatedAt = document.CreatedAt,
+            AnalysisStatus = document.AnalysisStatus.ToString(),
+            FailureReason = document.FailureReason,
         }).ToList();
 
         return ApiResponse<List<GeneralDocumentResponseDto>>.SuccessResponse(

@@ -139,31 +139,29 @@
         }
       </article>
 
-      <!-- Appointment trend bar chart -->
-      <article class="panel panel--chart" style="flex:1.3">
+      <!-- AI Usage Widget -->
+      <article class="panel" style="flex:1.3; display:flex; flex-direction:column;">
         <div class="panel__head">
           <div>
-            <h2>{{ copy().appointmentVolume }}</h2>
-            <p>{{ copy().lastSixMonths }}</p>
+            <h2>{{ aiCopy().aiUsage }}</h2>
           </div>
-          <i class="fa-regular fa-calendar panel-icon"></i>
+          <i class="fa-solid fa-robot panel-icon"></i>
         </div>
-
-        @if ((data.appointmentTrend || []).length) {
-          <div class="bar-chart">
-            @for (pt of data.appointmentTrend; track pt.label) {
-              <div class="bar-chart__col">
-                <span class="bar-chart__val">{{ pt.value }}</span>
-                <div class="bar-chart__track">
-                  <div class="bar-chart__fill" [style.height.%]="barHeight(pt, data.appointmentTrend)"></div>
-                </div>
-                <span class="bar-chart__lbl">{{ pt.label }}</span>
-              </div>
-            }
+        
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:20px; padding: 20px 0;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--admin-muted); font-weight:500;">{{ aiCopy().totalAiRequests }}</span>
+            <strong style="font-size:1.25rem;">{{ data.totalAiRequests | number }}</strong>
           </div>
-        } @else {
-          <p class="panel-empty">{{ copy().noData }}</p>
-        }
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--admin-muted); font-weight:500;">{{ aiCopy().flaggedAiRequests }}</span>
+            <strong style="font-size:1.25rem; color:var(--admin-danger);">{{ data.flaggedAiRequests | number }}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--admin-muted); font-weight:500;">{{ aiCopy().mostActiveUser }}</span>
+            <strong style="font-size:1rem;">{{ data.mostActiveAiUser || '-' }}</strong>
+          </div>
+        </div>
       </article>
 
       <!-- Gender / profile distribution donut -->
@@ -244,33 +242,36 @@
         </div>
       </article>
 
-      <!-- Recent Appointments -->
+      <!-- Users Need Attention -->
       <article class="panel panel--table" style="flex:1">
         <div class="panel__head">
-          <h2>{{ copy().recentAppointments }}</h2>
+          <h2>{{ aiCopy().usersNeedAttention }}</h2>
         </div>
         <div class="data-table-wrap">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Title</th>
-                <th>Patient</th>
-                <th>Date</th>
-                <th>Status</th>
+                <th>User</th>
+                <th>{{ aiCopy().reason }}</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              @for (appt of data.recentAppointments; track appt.id) {
+              @for (u of data.usersNeedAttention; track u.userId) {
                 <tr>
-                  <td><strong>{{ appt.title }}</strong></td>
-                  <td class="text-muted">{{ appt.patientName }}</td>
-                  <td class="text-muted">{{ formatAppointment(appt.appointmentDateTime) }}</td>
                   <td>
-                    <span class="appt-badge" [attr.data-status]="appt.status.toLowerCase()">{{ appt.status }}</span>
+                    <div class="user-cell">
+                      <img [src]="avatarUrl(u.profileImageUrl)" alt="">
+                      <strong>{{ u.userName }}</strong>
+                    </div>
+                  </td>
+                  <td class="text-muted">{{ u.reason }}</td>
+                  <td>
+                    <a [routerLink]="['/admin/users']" [queryParams]="{search: u.userName}" class="btn-retry" style="padding:4px 8px; font-size:12px;">{{ aiCopy().actionView }}</a>
                   </td>
                 </tr>
               } @empty {
-                <tr><td colspan="4" class="panel-empty">{{ copy().noData }}</td></tr>
+                <tr><td colspan="3" class="panel-empty">{{ copy().noData }}</td></tr>
               }
             </tbody>
           </table>
@@ -278,6 +279,60 @@
       </article>
 
     </div>
+
+    <!-- ── Review stats card ─────────────────────────────────────────────── -->
+    @if (reviewStats(); as rs) {
+      <div class="review-stats-card">
+        <div class="review-stats-header">
+          <div>
+            <h2>{{ copy().reviewStatsTitle }}</h2>
+          </div>
+          <a routerLink="/admin/reviews" class="view-all-link">
+            {{ copy().reviewStatsViewAll }} <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+        <div class="review-stats-body">
+          <div class="rs-avg">
+            <span class="rs-avg-val">{{ rs.averageStars.toFixed(1) }}</span>
+            <div class="rs-stars">
+              @for (i of [1,2,3,4,5]; track i) {
+                <i class="fas fa-star" [class.rs-star-filled]="i <= rs.averageStars" [class.rs-star-half]="i - 0.5 <= rs.averageStars && i > rs.averageStars"></i>
+              }
+            </div>
+            <span class="rs-total">{{ rs.total }} {{ copy().reviewStatsTotal }}</span>
+          </div>
+          <div class="rs-mini-bars">
+            @for (entry of [
+              { stars: 5, count: rs.fiveStars },
+              { stars: 4, count: rs.fourStars },
+              { stars: 3, count: rs.threeStars },
+              { stars: 2, count: rs.twoStars },
+              { stars: 1, count: rs.oneStar }
+            ]; track entry.stars) {
+              <div class="rs-bar-row">
+                <span class="rs-bar-label">{{ entry.stars }}<i class="fas fa-star rs-bar-star"></i></span>
+                <div class="rs-bar-track">
+                  <div class="rs-bar-fill" [style.width.%]="rs.total > 0 ? (entry.count / rs.total * 100) : 0"></div>
+                </div>
+                <span class="rs-bar-count">{{ entry.count }}</span>
+              </div>
+            }
+          </div>
+          <div class="rs-pills">
+            <div class="rs-pill rs-pill-visible">
+              <i class="fas fa-eye"></i>
+              <span>{{ rs.visible }}</span>
+              <small>{{ copy().reviewStatsVisible }}</small>
+            </div>
+            <div class="rs-pill rs-pill-hidden">
+              <i class="fas fa-eye-slash"></i>
+              <span>{{ rs.hidden }}</span>
+              <small>{{ copy().reviewStatsHidden }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
 
   }
 

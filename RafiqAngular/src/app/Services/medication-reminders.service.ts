@@ -7,6 +7,13 @@ import { MedicationReminderLogDto } from '../Modles/medication-reminder.models';
 import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UpdateUserMedicinePayload, UserMedicine } from '../Modles/dashboard.models';
 import { HealthProfileService } from './health-profile.service';
 
+export interface AllergyCheckResult {
+  isSafe: boolean;
+  riskLevel: 'None' | 'Low' | 'Medium' | 'High';
+  triggeredAllergy?: string;
+  explanation?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MedicationRemindersService {
   private readonly http             = inject(HttpClient);
@@ -90,5 +97,17 @@ export class MedicationRemindersService {
 
   deleteMedicine(id: string): Observable<ApiResponseBase> {
     return this.http.delete<ApiResponseBase>(`${this.medBase}/${id}`);
+  }
+
+  checkMedicationAllergy(medicationName: string, profileId?: string): Observable<ApiResponse<AllergyCheckResult>> {
+    const pid$ = profileId ? of(profileId) : this.profileId$;
+    return pid$.pipe(
+      switchMap(pid =>
+        this.http.post<ApiResponse<AllergyCheckResult>>(
+          `${this.medBase}/check-allergy`,
+          { profileId: pid, medicationName }
+        )
+      )
+    );
   }
 }

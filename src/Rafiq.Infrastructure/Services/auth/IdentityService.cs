@@ -85,7 +85,7 @@ public sealed class IdentityService(
                     cancellationToken);
         }
 
-        if (user is null || !user.IsActive)
+        if (user is null || !user.IsActive || user.IsSuspended)
             return null;
 
         var result = await _signInManager.CheckPasswordSignInAsync(
@@ -206,8 +206,8 @@ public sealed class IdentityService(
             if (!roleResult.Succeeded)
                 throw new ValidationException(createResult.Errors.Select(x => x.Description));
         }
-        if (!user.IsActive)
-            throw new AuthenticationException("Your account has been disabled.");
+        if (!user.IsActive || user.IsSuspended)
+            throw new AuthenticationException("Your account has been suspended or disabled.");
 
         var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
 

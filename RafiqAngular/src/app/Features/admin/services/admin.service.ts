@@ -5,6 +5,9 @@ import { environment } from '../../../Environments/Environment';
 import { ApiResponse, ApiResponseBase } from '../../../Modles/api-response';
 import {
   AdminDashboard,
+  AdminReview,
+  AdminReviewQuery,
+  AdminReviewsPage,
   AdminUser,
   AdminUserQuery,
   AiFeedbackItem,
@@ -15,8 +18,19 @@ import {
   AiRequestDetail,
   AiRequestItem,
   AiRequestQuery,
+  AuditLogEntry,
+  AuditLogQuery,
   PagedResult,
-  UpdateAiFeedbackRequest
+  ReviewCategory,
+  ReviewOverview,
+  ReviewStats,
+  ReviewStatus,
+  ReviewTrendPoint,
+  TakeUsageActionRequest,
+  UpdateAiFeedbackRequest,
+  UsageAttentionUser,
+  UsageIntelligenceOverview,
+  UsageUserDetail
 } from '../models/admin.models';
 
 @Injectable({ providedIn: 'root' })
@@ -104,6 +118,106 @@ export class AdminService {
   getAiInsights(): Observable<AiInsights> {
     return this.http
       .get<ApiResponse<AiInsights>>(`${this.baseUrl}/ai/insights`)
+      .pipe(map(r => r.data));
+  }
+
+  // ── Reviews ──────────────────────────────────────────────────────────────
+
+  private readonly reviewsBase = `${environment.apiUrl}/reviews`;
+
+  getAdminReviews(query: AdminReviewQuery = {}): Observable<AdminReviewsPage> {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    }
+    return this.http
+      .get<ApiResponse<AdminReviewsPage>>(`${this.reviewsBase}/admin`, { params })
+      .pipe(map(r => r.data));
+  }
+
+  getReviewOverview(): Observable<ReviewOverview> {
+    return this.http
+      .get<ApiResponse<ReviewOverview>>(`${this.reviewsBase}/overview`)
+      .pipe(map(r => r.data));
+  }
+
+  getReviewTrends(months = 6): Observable<ReviewTrendPoint[]> {
+    const params = new HttpParams().set('months', months);
+    return this.http
+      .get<ApiResponse<ReviewTrendPoint[]>>(`${this.reviewsBase}/trends`, { params })
+      .pipe(map(r => r.data));
+  }
+
+  getReviewStats(): Observable<ReviewStats> {
+    return this.http
+      .get<ApiResponse<ReviewStats>>(`${this.reviewsBase}/stats`)
+      .pipe(map(r => r.data));
+  }
+
+  deleteReview(id: string): Observable<ApiResponseBase> {
+    return this.http.delete<ApiResponseBase>(`${this.reviewsBase}/${id}`);
+  }
+
+  toggleReviewVisibility(id: string, isVisible: boolean): Observable<ApiResponseBase> {
+    return this.http.patch<ApiResponseBase>(`${this.reviewsBase}/${id}/visibility`, { isVisible });
+  }
+
+  updateReviewStatus(id: string, status: ReviewStatus): Observable<ApiResponseBase> {
+    return this.http.patch<ApiResponseBase>(`${this.reviewsBase}/${id}/status`, { status });
+  }
+
+  updateReviewCategory(id: string, category: ReviewCategory): Observable<ApiResponseBase> {
+    return this.http.patch<ApiResponseBase>(`${this.reviewsBase}/${id}/category`, { category });
+  }
+
+  updateAdminNotes(id: string, notes: string | null): Observable<ApiResponseBase> {
+    return this.http.patch<ApiResponseBase>(`${this.reviewsBase}/${id}/notes`, { notes });
+  }
+
+  replyToReview(id: string, reply: string | null): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(`${this.reviewsBase}/${id}/reply`, { reply });
+  }
+
+  // ── Usage Intelligence ───────────────────────────────────────────────────
+
+  private readonly usageBase = `${this.baseUrl}/usage-intelligence`;
+
+  getUsageIntelligenceOverview(): Observable<UsageIntelligenceOverview> {
+    return this.http
+      .get<ApiResponse<UsageIntelligenceOverview>>(`${this.usageBase}/overview`)
+      .pipe(map(r => r.data));
+  }
+
+  getUsageAttentionQueue(page = 1, pageSize = 20): Observable<PagedResult<UsageAttentionUser>> {
+    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    return this.http
+      .get<ApiResponse<PagedResult<UsageAttentionUser>>>(`${this.usageBase}/attention-queue`, { params })
+      .pipe(map(r => r.data));
+  }
+
+  getUsageUserDetail(userId: string): Observable<UsageUserDetail> {
+    return this.http
+      .get<ApiResponse<UsageUserDetail>>(`${this.usageBase}/users/${userId}`)
+      .pipe(map(r => r.data));
+  }
+
+  takeUsageAction(userId: string, body: TakeUsageActionRequest): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(`${this.usageBase}/users/${userId}/actions`, body);
+  }
+
+  // ── Audit Logs ───────────────────────────────────────────────────────────
+
+  getAuditLogs(query: AuditLogQuery): Observable<PagedResult<AuditLogEntry>> {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    }
+    return this.http
+      .get<ApiResponse<PagedResult<AuditLogEntry>>>(`${this.baseUrl}/audit-logs`, { params })
       .pipe(map(r => r.data));
   }
 }

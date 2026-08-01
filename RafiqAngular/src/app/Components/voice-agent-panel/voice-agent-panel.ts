@@ -15,10 +15,14 @@ import { ConversationSummaryDto } from '../../Modles/ai-chat.models';
 
 type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking' | 'error';
 
-// After the first exchange, 90 s of cumulative silence ends the session.
+// After the first exchange, 8 s of cumulative silence ends the session.
 // Short enough to avoid leaving the mic open indefinitely; long enough that
 // users checking their calendar or recalling a medication name are not cut off.
 const INACTIVITY_MS = 8_000;
+
+// Maximum time to wait for the AI SignalR response before showing a timeout error.
+// Covers slow AI processing with multiple tool-call hops (up to 8 iterations).
+const PROCESSING_TIMEOUT_MS = 90_000;
 
 @Component({
   selector: 'app-voice-agent-panel',
@@ -61,7 +65,10 @@ export class VoiceAgentPanel implements OnDestroy {
   // Inactivity tracking — timer only activates after the first completed exchange
   // so the initial "waiting for the user to speak" phase has no timeout.
   private _hasHadExchange   = false;
-  private _inactivityTimer: ReturnType<typeof setTimeout> | null = null;
+  private _inactivityTimer:  ReturnType<typeof setTimeout> | null = null;
+  // Safety net: if the SignalR response never arrives (network drop, hub failure),
+  // this timer fires and surfaces an error instead of leaving the UI stuck.
+  private _processingTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     // Keep local conversation id in sync with parent selection.
@@ -99,6 +106,7 @@ export class VoiceAgentPanel implements OnDestroy {
       const drained = this.signalr.drainVoiceErrorEvents();
       if (untracked(() => this.state()) === 'processing') {
         const msg = drained.at(-1)?.message ?? untracked(() => this.t().voiceAgent.sessionError);
+        this.clearProcessingTimer();
         this.clearInactivityTimer();
         this._hasHadExchange = false;
         this.errorMessage.set(msg);
@@ -110,6 +118,7 @@ export class VoiceAgentPanel implements OnDestroy {
 
   ngOnDestroy(): void {
     this.clearInactivityTimer();
+    this.clearProcessingTimer();
     this.isSessionActive.set(false);
     this.voiceCapture.stop();
     this.voiceSynthesis.stop();
@@ -194,9 +203,11 @@ export class VoiceAgentPanel implements OnDestroy {
 
     this.state.set('processing');
     this.messageStarted.emit(text);
+    this.armProcessingTimer();
 
     const convId = await this.ensureConversation(text);
     if (!convId) {
+      this.clearProcessingTimer();
       this.errorMessage.set(this.t().voiceAgent.sessionError);
       this._hasHadExchange = false;
       this.isSessionActive.set(false);
@@ -206,6 +217,7 @@ export class VoiceAgentPanel implements OnDestroy {
 
     this.voiceAgentSvc.sendMessageStream(convId, text, this.l10n.lang()).subscribe({
       error: () => {
+        this.clearProcessingTimer();
         this.clearInactivityTimer();
         this._hasHadExchange = false;
         this.errorMessage.set(this.t().voiceAgent.sessionError);
@@ -243,6 +255,27 @@ export class VoiceAgentPanel implements OnDestroy {
     if (this._inactivityTimer != null) {
       clearTimeout(this._inactivityTimer);
       this._inactivityTimer = null;
+    }
+  }
+
+  private armProcessingTimer(): void {
+    this.clearProcessingTimer();
+    this._processingTimer = setTimeout(() => {
+      this._processingTimer = null;
+      if (this.state() === 'processing') {
+        this.clearInactivityTimer();
+        this._hasHadExchange = false;
+        this.errorMessage.set(this.t().voiceAgent.sessionError);
+        this.isSessionActive.set(false);
+        this.state.set('error');
+      }
+    }, PROCESSING_TIMEOUT_MS);
+  }
+
+  private clearProcessingTimer(): void {
+    if (this._processingTimer != null) {
+      clearTimeout(this._processingTimer);
+      this._processingTimer = null;
     }
   }
 
@@ -285,6 +318,7 @@ export class VoiceAgentPanel implements OnDestroy {
   }
 
   private async onAgentResponse(payload: VoiceAgentResponsePayload): Promise<void> {
+    this.clearProcessingTimer();
     this.toolHint.set(null);
     this.state.set('speaking');
 

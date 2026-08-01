@@ -360,6 +360,13 @@
         </div>
         }
 
+        @if (validationError()) {
+        <div class="chat-validation-bar">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          {{ validationError() }}
+        </div>
+        }
+
         @if (attachError()) {
         <div class="chat-error-bar">
           <i class="fa-solid fa-circle-exclamation"></i>
@@ -376,6 +383,17 @@
         </div>
         }
 
+        @if (isAiRestricted()) {
+        <div class="chat-restricted-banner">
+          <div class="chat-restricted-icon">
+            <i class="fa-solid fa-ban"></i>
+          </div>
+          <div class="chat-restricted-body">
+            <strong>{{ t().aiAssistant.aiRestrictedTitle }}</strong>
+            <p>{{ t().aiAssistant.aiRestrictedMessage }}</p>
+          </div>
+        </div>
+        } @else {
         <div class="chat-composer">
           <input
             #fileInput
@@ -415,6 +433,7 @@
           <i class="fa-regular fa-image"></i>
           {{ t().aiAssistant.composerHint }}
         </p>
+        }
       </section>
       }
     </div>

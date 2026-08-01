@@ -934,7 +934,7 @@ html[dir="rtl"] .user-dropdown {
 .ai-card {
   display: flex;
   flex-direction: column;
-  height: 280px;
+  height: 360px;
 }
 
 /* scrollable text area fills all remaining space */
@@ -995,6 +995,154 @@ html[dir="rtl"] .user-dropdown {
 .ai-danger {
   color: var(--red);
   font-weight: 700;
+}
+
+/* ── Structured Health Summary ─────────────────────────────────────────── */
+.hs-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Overall status row */
+.hs-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hs-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.hs-status-badge--good   { background: #DCFCE7; color: #16A34A; }
+.hs-status-badge--stable { background: #E0F2FE; color: #0369A1; }
+.hs-status-badge--warn   { background: #FEF9C3; color: #854D0E; }
+
+.hs-status-note {
+  font-size: 11px;
+  color: var(--text-3);
+  font-style: italic;
+  flex: 1;
+}
+
+/* Two-column row */
+.hs-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.hs-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: var(--bg-2, #F9FAFB);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+/* Section label used everywhere */
+.hs-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hs-empty {
+  font-size: 12px;
+  color: var(--text-3);
+  font-style: italic;
+}
+
+/* Conditions list */
+.hs-list {
+  margin: 0;
+  padding: 0 0 0 14px;
+  list-style: disc;
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+/* Allergy pills */
+.hs-allergy-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.hs-allergy-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.hs-allergy-pill--mild     { background: #FEF9C3; color: #854D0E; }
+.hs-allergy-pill--moderate { background: #FED7AA; color: #C2410C; }
+.hs-allergy-pill--severe   { background: #FEE2E2; color: #B91C1C; }
+
+/* Medication & Lab stats */
+.hs-stat {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.hs-warn-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #C2410C;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.hs-lab-ok     { font-size: 12px; color: #16A34A; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.hs-lab-warn   { font-size: 12px; color: #B91C1C; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.hs-lab-review { font-size: 12px; color: #0369A1; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+
+/* Insights & Recommendations sections */
+.hs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hs-bullets {
+  margin: 0;
+  padding: 0 0 0 16px;
+  list-style: disc;
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.65;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hs-bullets--rec {
+  list-style: none;
+  padding: 0;
+}
+.hs-bullets--rec li {
+  display: flex;
+  gap: 6px;
+}
+.hs-bullets--rec li::before {
+  content: '→';
+  color: var(--blue);
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .ai-tags {
@@ -1107,6 +1255,10 @@ html[dir="rtl"] .user-dropdown {
 
 .sys-green {
   color: var(--green);
+}
+
+.sys-warn {
+  color: var(--amber, #d97706);
 }
 
 .sys-spark {
@@ -1287,6 +1439,11 @@ html[dir="rtl"] .user-dropdown {
 .pill-red {
   background: var(--red-lt);
   color: var(--red);
+}
+
+.pill-yellow {
+  background: #fef3c7;
+  color: #d97706;
 }
 
 .pill-green-sm {
@@ -1875,6 +2032,15 @@ html[dir="rtl"] .user-dropdown {
 }
 
 /* Today's Schedule */
+.sched-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+  gap: 6px;
+}
+
 .sched-list {
   list-style: none;
   margin: 0;
@@ -2451,6 +2617,27 @@ html[dir="rtl"] .user-dropdown {
   margin: 2px 0 0;
 }
 
+.modal-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+
+.modal-back-btn:hover {
+  background: #F3F4F6;
+  color: var(--text);
+}
+
 .modal-close-btn {
   width: 32px;
   height: 32px;
@@ -2515,6 +2702,77 @@ html[dir="rtl"] .user-dropdown {
 .btn-primary:hover {
   opacity: .92;
   transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════
+   PROFILE PICKER DIALOG
+═══════════════════════════════════════════════ */
+.profile-picker-list {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.profile-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 10px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  text-align: start;
+  transition: background .15s;
+}
+
+.profile-picker-item:hover {
+  background: #F0FBFE;
+}
+
+.profile-picker-av {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.profile-picker-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-picker-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.profile-picker-rel {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.profile-picker-arrow {
+  font-size: 12px;
+  color: var(--text-4);
+  flex-shrink: 0;
+}
+
+[dir="rtl"] .profile-picker-arrow {
+  transform: rotate(180deg);
 }
 
 /* ═══════════════════════════════════════════════

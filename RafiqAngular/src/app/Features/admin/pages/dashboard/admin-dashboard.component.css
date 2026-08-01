@@ -575,3 +575,249 @@
     display: none;
   }
 }
+
+/* ── Review Stats Card ───────────────────────────────────── */
+.review-stats-card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 1.5rem;
+}
+
+.review-stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.125rem 1.5rem;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.review-stats-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  margin: 0;
+}
+
+.review-stats-body {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 2rem;
+  padding: 1.5rem;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .review-stats-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* average score column */
+.rs-avg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 90px;
+}
+
+.rs-avg-val {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #111827);
+  line-height: 1;
+}
+
+.rs-stars { display: flex; gap: 2px; }
+.rs-star-filled { color: #f59e0b; font-size: 0.85rem; }
+.rs-star-half   { color: #fbbf24; font-size: 0.85rem; }
+.rs-stars .fas  { color: #d1d5db; font-size: 0.85rem; }
+.rs-stars .rs-star-filled,
+.rs-stars .rs-star-half { color: #f59e0b; }
+
+.rs-total {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary, #6b7280);
+  white-space: nowrap;
+}
+
+/* bar chart column */
+.rs-mini-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.rs-bar-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 30px;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rs-bar-label {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #6b7280);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rs-bar-star { color: #f59e0b; font-size: 0.7rem; }
+
+.rs-bar-track {
+  height: 7px;
+  background: var(--color-border, #e5e7eb);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rs-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.rs-bar-count {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary, #6b7280);
+  text-align: right;
+}
+
+/* pills column */
+.rs-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rs-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  min-width: 100px;
+}
+
+.rs-pill span {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #111827);
+}
+
+.rs-pill small {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+.rs-pill-visible {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.rs-pill-hidden {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.rs-pill-visible .fas,
+.rs-pill-hidden  .fas {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .dash__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dash__head h1 {
+    font-size: 20px;
+  }
+
+  .dash__head p {
+    font-size: 12px;
+  }
+
+  .date-badge {
+    display: none;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .kpi-card {
+    padding: 14px;
+  }
+
+  .kpi-card__value {
+    font-size: 22px;
+  }
+
+  .kpi-card__label {
+    font-size: 11px;
+  }
+
+  .charts-row {
+    gap: 10px;
+  }
+
+  .charts-row .panel {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .panel {
+    padding: 14px;
+  }
+
+  .panel__head h2 {
+    font-size: 13px;
+  }
+
+  .bottom-row {
+    gap: 10px;
+  }
+
+  .bottom-row .panel {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  /* Review stats card */
+  .review-stats-header {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .review-stats-body {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .rs-avg {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-card__value {
+    font-size: 28px;
+  }
+}

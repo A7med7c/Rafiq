@@ -16,8 +16,16 @@ import { ProfileSelectionService } from './profile-selection.service';
 import { FamilyProfilesService, AccessibleProfileDto } from './family-profiles.service';
 import { LocalizationService } from './localization.service';
 
+export interface AllergyBrief { name: string; severity: string; }
 export interface HealthSummaryDto {
-  summary: string;
+  overallStatus: string;       // "Good" | "Stable" | "Needs Attention"
+  overallStatusNote: string | null;
+  conditions: string[];
+  allergies: AllergyBrief[];
+  medications: { count: number; hasIssues: boolean; issueNote: string | null };
+  labResults: { status: string; abnormalCount: number };
+  insights: string[];
+  recommendations: string[];
   hasData: boolean;
 }
 
@@ -137,8 +145,7 @@ export class DashboardService {
           .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}?language=${lang}`)
           .pipe(
             map(r => {
-              const raw = r.data ?? null;
-              const data = raw ? { ...raw, summary: this.stripMarkdown(raw.summary) } : null;
+              const data = r.data ?? null;
               this._cachedSummary = data;
               this._summaryProfileId = profileId;
               this._summaryLanguage = lang;
@@ -155,20 +162,8 @@ export class DashboardService {
     return this.http
       .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}?language=${lang}`)
       .pipe(
-        map(r => {
-          const raw = r.data ?? null;
-          return raw ? { ...raw, summary: this.stripMarkdown(raw.summary) } : null;
-        }),
+        map(r => r.data ?? null),
         catchError(() => of(null))
       );
-  }
-
-  private stripMarkdown(text: string): string {
-    return text
-      .replace(/\*{1,3}([^*]+?)\*{1,3}/g, '$1')   // **bold** / *italic*
-      .replace(/^#{1,6}\s+/gm, '')                  // ## headings
-      .replace(/^\s*[-*]\s+/gm, '')                 // - bullet points
-      .replace(/\n{3,}/g, '\n\n')                   // collapse blank lines
-      .trim();
   }
 }

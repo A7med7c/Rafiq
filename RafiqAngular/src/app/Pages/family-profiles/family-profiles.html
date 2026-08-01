@@ -366,6 +366,39 @@
           </button>
         </div>
 
+        <!-- Mobile-only: collapsible tab selector -->
+        <div class="mobile-tab-select" style="margin-bottom: 12px;">
+          <button type="button" class="mobile-tab-trigger" [class.is-open]="mobileTabMenuOpen()" (click)="toggleMobileTabMenu()">
+            <i [class]="'fa-solid ' + activeTabIcon() + ' mtt-icon'"></i>
+            <span class="mtt-label">{{ activeTabLabel() }}</span>
+            <i class="fa-solid fa-chevron-down mtt-chevron"></i>
+          </button>
+          @if (mobileTabMenuOpen()) {
+            <div class="mobile-tab-backdrop" (click)="closeMobileTabMenu()"></div>
+            <div class="mobile-tab-dropdown">
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'overview'" (click)="switchTab('overview')">
+                <i class="fa-solid fa-house"></i> {{ t().family.overviewTab }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'records'" (click)="switchTab('records')">
+                <i class="fa-regular fa-folder-open"></i> {{ t().family.medicalRecordsTab }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'appointments'" (click)="switchTab('appointments')">
+                <i class="fa-regular fa-calendar-check"></i> {{ t().family.appointmentsTab }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'medications'" (click)="switchTab('medications')">
+                <i class="fa-solid fa-pills"></i> {{ t().family.medicationsTab }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'reminders'" (click)="switchTab('reminders')">
+                <i class="fa-regular fa-bell"></i> {{ t().family.remindersTab }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'summary'" (click)="switchTab('summary')">
+                <i class="fa-solid fa-chart-simple"></i> {{ t().family.healthSummaryTab }}
+              </button>
+            </div>
+          }
+        </div>
+
+
         <!-- ─── Tab content ─── -->
         <div class="fp-tab-content" [class.tab-animating]="tabAnimating()"
           [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
@@ -454,7 +487,7 @@
                 }
               </p>
             </div>
-            <div style="display:flex;gap:8px;flex-shrink:0">
+            <div class="fp-cta-btn-group">
               @if (selectedProfile()!.accessRole !== 'Viewer') {
               <a class="fp-manage-meds-btn" style="background:var(--blue);color:#fff;border-color:var(--blue)"
                 [routerLink]="['/appointments']"
@@ -557,7 +590,7 @@
               {{ t().family.notEnoughInfo }}
             </p>
             } @else {
-            <p class="ai-body">{{ healthSummary()!.summary }}</p>
+            <p class="ai-body">{{ summaryText(healthSummary()!) }}</p>
             }
           </div>
           }

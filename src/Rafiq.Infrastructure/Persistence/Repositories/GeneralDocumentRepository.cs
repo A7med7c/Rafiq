@@ -27,6 +27,12 @@ public sealed class GeneralDocumentRepository
                 x => x.Id == id && x.UserHealthProfileId == userHealthProfileId,
                 cancellationToken);
 
+    public Task<GeneralDocument?> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+        => _context.GeneralDocuments
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
     public async Task<IReadOnlyList<GeneralDocument>> GetAllByUserIdAsync(
         Guid userHealthProfileId,
         CancellationToken cancellationToken = default)

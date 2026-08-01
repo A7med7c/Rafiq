@@ -1,5 +1,10 @@
 :host {
   display: block;
+  /* Own the full viewport so position:absolute overlays (sidebar, backdrop)
+     are always relative to the screen — never trapped by an ancestor transform */
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
 }
 
 .admin-shell {
@@ -16,9 +21,8 @@
   --admin-success: #16875a;
   --admin-warning: #c97716;
   --admin-danger: #c2414b;
-  min-height: 100dvh;
-  display: grid;
-  grid-template-columns: 264px minmax(0, 1fr);
+  height: 100%;
+  display: flex;
   background: var(--admin-bg);
   color: var(--admin-ink);
   font-family: 'Inter', 'Outfit', sans-serif;
@@ -36,6 +40,8 @@
 }
 
 .admin-sidebar {
+  flex: 0 0 264px;
+  width: 264px;
   position: sticky;
   top: 0;
   height: 100dvh;
@@ -171,7 +177,10 @@
 }
 
 .admin-workspace {
+  flex: 1;
   min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .admin-header {
@@ -363,48 +372,78 @@
   display: none;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — sidebar drawer + mobile header
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Tablet & mobile (≤ 980px) ───────────────────────────── */
 @media (max-width: 980px) {
-  .admin-shell {
-    grid-template-columns: 1fr;
-  }
-
+  /* ----- Sidebar: pull from flex flow, become an absolute drawer
+         (absolute is relative to :host which owns the full viewport) ----- */
   .admin-sidebar {
-    position: fixed;
-    inset-block: 0;
-    inset-inline-start: 0;
-    width: 280px;
-    transform: translateX(-105%);
-    transition: transform 200ms cubic-bezier(.22, 1, .36, 1);
+    position: absolute;
+    flex: none;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: min(300px, 85vw);
+    transform: translateX(-110%);
+    transition: transform 240ms cubic-bezier(.22, 1, .36, 1);
+    z-index: 9999;
+    box-shadow: none;
   }
 
+  /* RTL: anchor to right edge, flip slide direction */
   [dir='rtl'] .admin-sidebar {
-    transform: translateX(105%);
+    left: auto;
+    right: 0;
+    transform: translateX(110%);
   }
 
-  .admin-sidebar--open,
+  .admin-sidebar--open {
+    transform: translateX(0) !important;
+    box-shadow: 8px 0 40px rgba(8, 18, 28, .25);
+  }
+
   [dir='rtl'] .admin-sidebar--open {
-    transform: translateX(0);
+    box-shadow: -8px 0 40px rgba(8, 18, 28, .25);
   }
 
+  /* ----- Backdrop: absolute relative to :host (= full viewport) ----- */
+  .admin-backdrop {
+    position: absolute;
+    inset: 0;
+    display: block;
+    border: 0;
+    z-index: 9998;
+    background: rgba(8, 18, 28, 0.6);
+    cursor: pointer;
+  }
+
+  /* ----- Show hamburger & close button ----- */
   .admin-menu-button,
   .admin-sidebar__close {
     display: inline-grid;
   }
+  
+  .admin-sidebar__close {
+    position: relative;
+    z-index: 10;
+  }
 
-  .admin-backdrop {
-    position: fixed;
-    inset: 0;
-    display: block;
-    border: 0;
-    background: rgba(8, 18, 28, .46);
-    z-index: 25;
+  /* ----- Header stays below backdrop/drawer ----- */
+  .admin-header {
+    z-index: 10;
+    backdrop-filter: none;
   }
 }
 
+/* ── Mobile header (≤ 680px) ─────────────────────────────── */
 @media (max-width: 680px) {
   .admin-header {
-    height: 62px;
-    padding: 0 14px;
+    height: 60px;
+    padding: 0 12px;
     gap: 8px;
   }
 
@@ -412,21 +451,60 @@
     display: none;
   }
 
+  /* avatar-only profile button */
   .admin-profile-trigger span,
   .admin-profile-trigger > i {
     display: none;
   }
 
   .admin-profile-trigger {
-    width: 40px;
-    padding: 2px;
+    width: 38px;
+    height: 38px;
+    padding: 0;
     justify-content: center;
+    border-radius: 50%;
+  }
+
+  .admin-header__actions {
+    gap: 4px;
   }
 
   .admin-main {
-    padding: 20px 14px;
+    padding: 16px 12px;
+  }
+
+  /* profile popover: pin to top edge, full width */
+  .admin-profile-popover {
+    position: fixed;
+    inset-inline-start: 8px;
+    inset-inline-end: 8px;
+    inset-block-start: 68px;
+    width: auto;
   }
 }
+
+/* ── Small phones (≤ 420px): full-screen sidebar ─────────── */
+@media (max-width: 420px) {
+  .admin-sidebar {
+    width: 100vw;
+    box-shadow: none !important;
+  }
+
+  .admin-header {
+    height: 56px;
+    padding: 0 10px;
+  }
+
+  .admin-main {
+    padding: 12px 10px;
+  }
+
+  .icon-button {
+    width: 34px;
+    height: 34px;
+  }
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   .admin-sidebar,
