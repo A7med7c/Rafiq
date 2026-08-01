@@ -11,12 +11,18 @@ import {
   SendMessageRequest,
 } from '../Modles/ai-chat.models';
 
+interface AiAccessStatus { isAiRestricted: boolean; }
+
 @Injectable({ providedIn: 'root' })
 export class AiChatService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/chat`;
 
-  readonly isPanelOpen = signal(true);
+  readonly isPanelOpen = signal(false);
+
+  // AI access restriction — loaded once on chat init, re-checked when panel opens.
+  readonly isAiRestricted = signal(false);
+  readonly aiStatusLoaded = signal(false);
   // Incremented each time the robot is clicked — AiPanel watches this and
   // switches to voice mode. Using a counter (not boolean) ensures the effect
   // fires even when the panel is already open.
@@ -56,6 +62,16 @@ export class AiChatService {
 
   getCachedImage(conversationId: string, seq: number): string | undefined {
     return this._imgCache.get(`${conversationId}:${seq}`);
+  }
+
+  loadAiStatus(): void {
+    this.http.get<ApiResponse<AiAccessStatus>>(`${this.base}/ai-status`).pipe(
+      map(r => r.data?.isAiRestricted ?? false),
+      catchError(() => of(false))
+    ).subscribe(restricted => {
+      this.isAiRestricted.set(restricted);
+      this.aiStatusLoaded.set(true);
+    });
   }
 
   openPanel(): void {
@@ -108,6 +124,10 @@ export class AiChatService {
 
   archiveConversation(conversationId: string): Observable<ApiResponse<boolean>> {
     return this.http.delete<ApiResponse<boolean>>(`${this.base}/conversations/${conversationId}`);
+  }
+
+  generateConversationTitle(conversationId: string): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(`${this.base}/conversations/${conversationId}/generate-title`, {});
   }
 
   reactToMessage(

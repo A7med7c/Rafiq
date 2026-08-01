@@ -27,14 +27,19 @@
 
 .brand {
     position: absolute;
-    top: 30px;
-    left: 40px;
+    top: 0;
+    left: 0;
     display: flex;
     align-items: center;
     gap: 14px;
     text-decoration: none;
     width: max-content;
     z-index: 30;
+}
+
+:host-context([dir="rtl"]) .brand {
+    left: auto;
+    right: 0;
 }
 
 .hero-main {
@@ -90,8 +95,8 @@
     position: relative;
     right: 0;
     top: 0;
-    width: clamp(200px, 36vh, 420px);
-    height: clamp(200px, 36vh, 420px);
+    width: clamp(230px, 40vh, 460px);
+    height: clamp(230px, 40vh, 460px);
     margin-top: 6px;
     flex-shrink: 1;
 }
@@ -126,14 +131,13 @@
 .platform {
     position: absolute;
     bottom: 8%;
-    /* Offset to 44.5% to compensate for asymmetrical transparent padding in RafiqLogo.png canvas */
-    left: 44.5%;
-    transform: translateX(-50%);
+    left: 50%;
     width: 70%;
     height: 60px;
     border: 2px solid rgba(255, 255, 255, .72);
     border-radius: 50%;
     box-shadow: 0 0 26px rgba(92, 225, 255, .76), inset 0 0 18px rgba(255, 255, 255, .68);
+    transform: translateX(-50%);
     animation: platformGlow 4.8s ease-in-out infinite;
 }
 
@@ -265,22 +269,14 @@
         right: auto;
         left: auto;
         bottom: auto;
-        width: min(160px, 44vw);
-        height: min(160px, 44vw);
-        transform:none;
+        width: min(180px, 44vw);
+        height: min(180px, 44vw);
+        transform: none;
     }
 
-}
+    .platform {
+        height: 24px;
+        bottom: 6%;
+    }
 
-@media (max-height: 600px) and (max-width: 960px) {
-    .auth-hero {
-        min-height: auto;
-        padding: 8px 0 0;
-    }
-    .hero-main {
-        padding-top: 8px;
-    }
-    .robot-stage {
-        display: none;
-    }
 }

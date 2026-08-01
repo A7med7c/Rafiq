@@ -11,14 +11,29 @@ import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { NotificationService } from '../../Services/notification.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import {
   AppointmentDto, AppointmentStatus, AppointmentType,
   CreateAppointmentRequest, UpdateAppointmentRequest,
   APPOINTMENT_TYPE_LABELS, APPOINTMENT_TYPE_ICONS,
 } from '../../Modles/appointment.models';
+import { FamilyProfileBannerComponent } from '../../Components/family-profile-banner/family-profile-banner';
+
+/** Maps each AppointmentType enum value to its key path in the i18n objects */
+const APPT_TYPE_KEYS: Record<AppointmentType, string> = {
+  [AppointmentType.DoctorVisit]: 'appointments.doctor',
+  [AppointmentType.LabTest]:     'appointments.lab',
+  [AppointmentType.Imaging]:     'appointments.imaging',
+  [AppointmentType.Vaccination]: 'appointments.vaccination',
+  [AppointmentType.Dentist]:     'appointments.dental',
+  [AppointmentType.Therapy]:     'appointments.therapy',
+  [AppointmentType.FollowUp]:    'appointments.followUp',
+  [AppointmentType.Other]:       'appointments.other',
+};
 
 type ApptTab = 'all' | 'upcoming' | 'completed' | 'cancelled';
 
@@ -46,14 +61,14 @@ const blankForm = (): ApptForm => ({
   provider: '',
   date: '',
   time: '',
-  reminderOffsetMinutes: 30,
+  reminderOffsetMinutes: 1440,
   notes: '',
 });
 
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
 })
@@ -69,12 +84,18 @@ export class Appointments implements OnInit, OnDestroy {
   protected readonly t        = this.l10n.t;
   private readonly fpSvc      = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
+  private readonly reviewTracking   = inject(ReviewTrackingService);
 
   // ── Family-profile read-only gate ────────────────────────────────────────
   // Uses profileId from query param when present (direct link from family-profiles),
   // otherwise falls back to the profile stored in localStorage by the
   // family-profiles page.  If the resolved profile's access role is 'Viewer'
   // all write actions are hidden.
+
+translate(key: string): string {
+  return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? key;
+}
+
   readonly viewingProfile = toSignal<AccessibleProfileDto | null>(
     this.route.queryParamMap.pipe(
       map(params => params.get('profileId') ?? this.profileSelectSvc.selectedProfileId),
@@ -110,9 +131,10 @@ export class Appointments implements OnInit, OnDestroy {
   readonly dateTo      = signal('');
   readonly sortBy      = signal<'recent' | 'oldest' | 'az' | 'za'>('recent');
   readonly currentPage = signal(1);
-  readonly PAGE_SIZE    = 5;
+  readonly PAGE_SIZE    = 2;
   readonly tabDirection = signal<'left' | 'right'>('left');
   readonly tabAnimating = signal(false);
+  readonly mobileTabMenuOpen = signal(false);
 
   // ── Action menus ─────────────────────────────────────────────────────────
   readonly openMenuId = signal<string | null>(null);
@@ -349,7 +371,7 @@ nextPage() {
     this.notifTimer = setInterval(() => this.checkDueNotifications(), 60_000);
 
     this.route.queryParams.subscribe(params => {
-      const profileId = params['profileId'] ?? null;
+      const profileId = params['profileId'] ?? this.profileSelectSvc.selectedProfileId ?? null;
       this.fpProfileId.set(profileId);
       this.loadAppointments();
 
@@ -387,6 +409,9 @@ nextPage() {
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
   goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
+
+  goToFamilyProfiles(): void { this.router.navigate(['/family-profiles']); }
 
   toggleMenu(id: string, e: MouseEvent): void {
     e.stopPropagation();
@@ -427,6 +452,31 @@ nextPage() {
     this.animateTable(nextIndex >= currentIndex ? 'left' : 'right');
     this.activeTab.set(tab);
     this.currentPage.set(1);
+    this.mobileTabMenuOpen.set(false);
+  }
+
+  toggleMobileTabMenu(): void { this.mobileTabMenuOpen.update(v => !v); }
+  closeMobileTabMenu(): void  { this.mobileTabMenuOpen.set(false); }
+
+  activeTabLabel(): string {
+    const t = this.t().appointments;
+    const map: Record<string, string> = {
+      all:       t.all || 'All',
+      upcoming:  t.upcoming || 'Upcoming',
+      completed: t.completed || 'Completed',
+      cancelled: t.cancelledMissed || 'Cancelled/Missed',
+    };
+    return map[this.activeTab()] ?? (t.all || 'All');
+  }
+
+  activeTabIcon(): string {
+    const map: Record<string, string> = {
+      all: 'fa-layer-group',
+      upcoming: 'fa-calendar',
+      completed: 'fa-circle-check',
+      cancelled: 'fa-circle-xmark',
+    };
+    return map[this.activeTab()] ?? 'fa-layer-group';
   }
   setPage(p: number | '...'): void { if (typeof p === 'number') this.goToPage(p); }
   onFilterChange(): void {
@@ -746,7 +796,16 @@ nextPage() {
 
   typeLabel(a: AppointmentDto): string {
     if (a.appointmentType === AppointmentType.Other && a.customType) return a.customType;
-    return APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+    const key = APPT_TYPE_KEYS[a.appointmentType];
+    if (!key) return APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+    return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+  }
+
+  /** Returns the translated label for a type enum value (used in the type-picker grid) */
+  typeLabelForType(type: AppointmentType): string {
+    const key = APPT_TYPE_KEYS[type];
+    if (!key) return APPOINTMENT_TYPE_LABELS[type] ?? '';
+    return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[type] ?? '';
   }
 
   typeIcon(t: AppointmentType): string {

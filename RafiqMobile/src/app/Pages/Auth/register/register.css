@@ -17,10 +17,10 @@
 
 @media (max-width: 960px){
     .login-page{
-        display:flex;
-        flex-direction:column;
+        grid-template-columns:1fr;
+        grid-template-rows:auto 1fr;
         gap:16px;
-        padding:max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+        padding:18px;
     }
 }
 

@@ -5,11 +5,13 @@ import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { AllergySeverity } from '../../../Modles/health-profile-enums';
 import { LocalizationService } from '../../../Services/localization.service';
+import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
+import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
 @Component({
   selector: 'app-onboarding-step2',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective],
   templateUrl: './onboarding-step2.html',
   styleUrl: './onboarding-step2.css',
 })
@@ -17,6 +19,7 @@ export class OnboardingStep2 implements OnInit {
 
   private readonly router = inject(Router);
   private readonly fb     = inject(FormBuilder);
+  private readonly tourEngine = inject(TourEngineService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
@@ -123,6 +126,7 @@ export class OnboardingStep2 implements OnInit {
       : [];
 
     sessionStorage.setItem('onboarding_step2', JSON.stringify({ hasAllergies: this.hasAllergies, allergies: data }));
+    if (this.tourEngine.isPlaying()) this.tourEngine.nextStep();
     this.router.navigate(['/onboarding/step3']);
   }
 
@@ -130,6 +134,7 @@ export class OnboardingStep2 implements OnInit {
     this.hasAllergies = 'no';
     this.allergiesArray.clear();
     sessionStorage.setItem('onboarding_step2', JSON.stringify({ hasAllergies: 'no', allergies: [] }));
+    if (this.tourEngine.isPlaying()) this.tourEngine.nextStep();
     this.router.navigate(['/onboarding/step3']);
   }
 

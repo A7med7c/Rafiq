@@ -7,11 +7,24 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { NotificationService } from '../../Services/notification.service';
+import { LocalizationService } from '../../Services/localization.service';
 import {
   AppointmentDto, AppointmentStatus, AppointmentType,
   CreateAppointmentRequest, UpdateAppointmentRequest,
   APPOINTMENT_TYPE_LABELS, APPOINTMENT_TYPE_ICONS,
 } from '../../Modles/appointment.models';
+
+/** Maps each AppointmentType enum value to its key path in the i18n objects */
+const APPT_TYPE_KEYS: Record<AppointmentType, string> = {
+  [AppointmentType.DoctorVisit]: 'appointments.doctor',
+  [AppointmentType.LabTest]:     'appointments.lab',
+  [AppointmentType.Imaging]:     'appointments.imaging',
+  [AppointmentType.Vaccination]: 'appointments.vaccination',
+  [AppointmentType.Dentist]:     'appointments.dental',
+  [AppointmentType.Therapy]:     'appointments.therapy',
+  [AppointmentType.FollowUp]:    'appointments.followUp',
+  [AppointmentType.Other]:       'appointments.other',
+};
 
 type ApptTab = 'all' | 'upcoming' | 'completed' | 'cancelled';
 
@@ -38,6 +51,8 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   private readonly notifSvc = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly l10n  = inject(LocalizationService);
+  readonly t = this.l10n.t;
 
   // ── Data ─────────────────────────────────────────────────────────────────
   readonly appointments = signal<AppointmentDto[]>([]);
@@ -612,7 +627,16 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   typeLabel(a: AppointmentDto): string {
     if (a.appointmentType === AppointmentType.Other && a.customType) return a.customType;
-    return APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+    const key = APPT_TYPE_KEYS[a.appointmentType];
+    if (!key) return APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+    return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+  }
+
+  /** Returns the translated label for a type enum value (used in the type-picker grid) */
+  typeLabelForType(type: AppointmentType): string {
+    const key = APPT_TYPE_KEYS[type];
+    if (!key) return APPOINTMENT_TYPE_LABELS[type] ?? '';
+    return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[type] ?? '';
   }
 
   typeIcon(t: AppointmentType): string {

@@ -1,8 +1,4 @@
 <div class="admin-shell" [class.admin-shell--dark]="darkMode()">
-  @if (sidebarOpen()) {
-    <button class="admin-backdrop" type="button" (click)="closeSidebar()" [attr.aria-label]="copy().close"></button>
-  }
-
   <aside class="admin-sidebar" [class.admin-sidebar--open]="sidebarOpen()">
     <div class="admin-brand">
       <a routerLink="/admin/dashboard" class="admin-brand__link" (click)="closeSidebar()">
@@ -98,3 +94,7 @@
     </main>
   </section>
 </div>
+
+@if (sidebarOpen()) {
+  <button class="admin-backdrop" type="button" (click)="closeSidebar()" [attr.aria-label]="copy().close"></button>
+}

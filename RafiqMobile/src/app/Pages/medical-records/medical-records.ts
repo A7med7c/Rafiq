@@ -2,10 +2,13 @@ import {
   Component, OnInit, signal,
   HostListener,
   computed,
+  ElementRef,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { RecordsContentComponent } from '../../Components/records-content/records-content';
+import { FamilyProfileBannerComponent } from '../../Components/family-profile-banner/family-profile-banner';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -19,12 +22,13 @@ import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { NotificationService } from '../../Services/notification.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { switchMap, catchError, of, map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { LocalizationService } from '../../Services/localization.service';
-import { ImagePickerService } from '../../Services/image-picker.service';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -143,7 +147,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 @Component({
   selector: 'app-medical-records',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent, AssistantAnchorDirective, FamilyProfileBannerComponent],
   templateUrl: './medical-records.html',
   styleUrl: './medical-records.css',
 })
@@ -158,12 +162,12 @@ export class MedicalRecords implements OnInit {
   private readonly reminderSvc = inject(MedicationRemindersService);
   private readonly healthProfileSvc = inject(HealthProfileService);
   readonly notificationSvc = inject(NotificationService);
+  private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
-  private readonly imagePicker = inject(ImagePickerService);
   private readonly base = environment.apiUrl;
 
   readonly viewingProfile = toSignal<AccessibleProfileDto | null>(
@@ -183,9 +187,18 @@ export class MedicalRecords implements OnInit {
   readonly contextProfileId = computed(() => this.viewingProfile()?.userHealthProfileId ?? undefined);
   readonly contextProfileName = computed(() => {
     const p = this.viewingProfile();
-    return p ? `${p.firstName} ${p.lastName}` : null;
+    return p && !p.isSelf ? `${p.firstName} ${p.lastName}` : null;
+  });
+  readonly contextRelationship = computed(() => {
+    const p = this.viewingProfile();
+    return p && !p.isSelf ? (p.relationship ?? null) : null;
   });
   readonly contextReadOnly = computed(() => this.viewingProfile()?.accessRole === 'Viewer');
+
+  @ViewChild('labInput') labInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('prescriptionInput') prescriptionInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('imagingInput') imagingInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('medicineInput') medicineInput?: ElementRef<HTMLInputElement>;
 
   readonly loading = signal(false);
   readonly allRecords = signal<UnifiedMedicalRecord[]>([]);
@@ -435,6 +448,7 @@ export class MedicalRecords implements OnInit {
   logout(): void { this.dropdownOpen.set(false); this.authService.logout().subscribe(); }
 
   goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
 
   toggleAddRecordMenu(event: MouseEvent): void {
     event.stopPropagation();
@@ -746,30 +760,46 @@ export class MedicalRecords implements OnInit {
   openLightbox(url: string): void { this.lightboxUrl.set(url); }
   closeLightbox(): void { this.lightboxUrl.set(null); }
 
-  async triggerUpload(type: string): Promise<void> {
+  triggerUpload(type: string): void {
     if (type === 'General Medical Document') {
       this.openGeneralUploadForm();
       return;
     }
 
-    const accept: Record<string, string> = {
-      'Lab Analysis': '.jpg,.jpeg,.png,.pdf,.webp',
-      'Prescription': '.jpg,.jpeg,.png,.pdf,.webp',
-      'X-Ray & Imaging': '.jpg,.jpeg,.png,.pdf,.dcm,.webp',
-      'Medicine Box': '.jpg,.jpeg,.png,.webp',
+    const map: Record<string, ElementRef<HTMLInputElement> | undefined> = {
+      'Lab Analysis': this.labInput,
+      'Prescription': this.prescriptionInput,
+      'X-Ray & Imaging': this.imagingInput,
+      'Medicine Box': this.medicineInput,
     };
-    const file = await this.imagePicker.pickImage({ accept: accept[type] ?? accept['Lab Analysis'] });
-    if (!file) return;
+    (map[type] ?? this.labInput)?.nativeElement.click();
+  }
 
-    if (type === 'Medicine Box') {
-      this.startMedicineScan(file);
-    } else if (type === 'Prescription') {
-      this.uploadAndReview('prescription', file);
-    } else if (type === 'X-Ray & Imaging') {
-      this.uploadAndReview('imaging', file);
-    } else {
-      this.uploadAndReview('lab', file);
-    }
+  onLabFileSelected(e: Event): void {
+    const f = this.extractFile(e);
+    if (f) this.uploadAndReview('lab', f);
+  }
+
+  onPrescriptionFileSelected(e: Event): void {
+    const f = this.extractFile(e);
+    if (f) this.uploadAndReview('prescription', f);
+  }
+
+  onImagingFileSelected(e: Event): void {
+    const f = this.extractFile(e);
+    if (f) this.uploadAndReview('imaging', f);
+  }
+
+  onMedicineFileSelected(e: Event): void {
+    const f = this.extractFile(e);
+    if (f) this.startMedicineScan(f);
+  }
+
+  onGeneralFileSelected(e: Event): void {
+    const f = this.extractFile(e);
+    if (!f) return;
+    this.generalUploadForm.file = f;
+    this.generalUploadForm.fileName = f.name;
   }
 
   openGeneralUploadForm(): void {
@@ -792,11 +822,11 @@ export class MedicalRecords implements OnInit {
     this.uploadAndReview('general', file, this.generalUploadForm.description);
   }
 
-  async chooseGeneralUploadImage(): Promise<void> {
-    const file = await this.imagePicker.pickImage({ accept: '.jpg,.jpeg,.png,.webp' });
-    if (!file) return;
-    this.generalUploadForm.file = file;
-    this.generalUploadForm.fileName = file.name;
+  private extractFile(event: Event): File | null {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    return file;
   }
 
   private uploadAndReview(type: 'lab' | 'imaging' | 'prescription' | 'general', file: File, description = ''): void {

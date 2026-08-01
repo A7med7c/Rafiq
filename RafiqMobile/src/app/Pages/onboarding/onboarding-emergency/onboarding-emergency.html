@@ -34,7 +34,7 @@
     <!-- Form card -->
     <div class="form-card">
       <p class="step-indicator">{{ t().onboarding.emergency.stepIndicator }}</p>
-      <h2 class="form-title">{{ t().onboarding.emergency.title }}</h2>
+      <h2 class="form-title" assistantAnchor="onboarding-form-heading">{{ t().onboarding.emergency.title }}</h2>
       <p class="form-subtitle">{{ t().onboarding.emergency.subtitle }}</p>
 
       <form [formGroup]="form" (ngSubmit)="addContact()" novalidate autocomplete="off">

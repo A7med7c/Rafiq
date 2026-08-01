@@ -12,7 +12,7 @@
           <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
         <div class="sb-logo-text">
-          <span class="sb-logo-title">Rafiq AI</span>
+          <span class="sb-logo-title">{{ t().sidebar.brandName }}</span>
           <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
         </div>
       </button>
@@ -42,10 +42,7 @@
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>{{ t().sidebar.medications }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
-        <span>{{ t().sidebar.analytics }}</span>
-      </a>
+
       <!-- <a class="sb-link sb-sos" href="#">
         <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
         <span>SOS &amp; Emergency</span>
@@ -54,9 +51,9 @@
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
-        <span>{{ t().sidebar.settings }}</span>
+      <a class="sb-link" routerLink="/my-profile" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-user"></i></span>
+        <span>{{ t().sidebar.myProfile }}</span>
       </a>
     </nav>
 
@@ -90,7 +87,9 @@
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           {{ t().header.askAI }}
         </button>
-        <button type="button" class="hdr-bell">
+        <button type="button" class="hdr-bell" (click)="notifSvc.toggleNotificationCenter()"
+          [attr.aria-label]="t().header.notifications"
+          [class.hdr-bell--active]="notifSvc.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
           @if (unreadNotifCount() > 0) {
           <span class="hdr-badge">{{ unreadNotifCount() }}</span>
@@ -114,6 +113,7 @@
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item" (click)="goToMyProfile()"><i class="fa-regular fa-user"></i> {{ t().header.myProfile }}</button>
             <button type="button" class="user-dropdown-item"><i class="fa-solid fa-gear"></i> {{ t().header.settings }}</button>
+            <button type="button" class="user-dropdown-item" (click)="openRatingPopup()"><i class="fa-regular fa-star"></i> {{ t().ratingPopup.rateRafiq }}</button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
               <i class="fa-solid fa-arrow-right-from-bracket"></i> {{ t().header.logout }}
@@ -151,7 +151,7 @@
             <i class="fa-solid fa-shield-halved"></i>
             {{ t().family.supervisionSettings }}
           </button>
-          <button type="button" class="fp-add-member-btn" (click)="openAddModal()">
+          <button type="button" class="fp-add-member-btn" (click)="openAddModal()" assistantAnchor="add-family-profile">
             <i class="fa-solid fa-plus"></i>
             {{ t().family.addFamilyMember }}
           </button>
@@ -175,7 +175,7 @@
           }
         </div>
         } @else {
-        <div class="fp-carousel-inner" #carouselEl>
+        <div class="fp-carousel-inner" #carouselEl assistantAnchor="family-profiles-list">
           @for (profile of profiles(); track profile.userHealthProfileId; let i = $index) {
           <div class="fp-profile-card"
             [class.fp-profile-card--selected]="selectedProfile()?.userHealthProfileId === profile.userHealthProfileId"
@@ -350,7 +350,7 @@
           <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'overview'" (click)="switchTab('overview')">
             <i class="fa-solid fa-house"></i> {{ t().family.overviewTab }}
           </button>
-          <button class="fp-tab" (click)="navigateToRecords()">
+          <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'records'" (click)="switchTab('records')">
             <i class="fa-regular fa-folder-open"></i> {{ t().family.medicalRecordsTab }}
           </button>
           <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'appointments'"
@@ -368,6 +368,39 @@
             <i class="fa-solid fa-chart-simple"></i> {{ t().family.healthSummaryTab }}
           </button>
         </div>
+
+        <!-- Mobile-only: collapsible tab selector -->
+        <div class="mobile-tab-select" style="margin-bottom: 12px;">
+          <button type="button" class="mobile-tab-trigger" [class.is-open]="mobileTabMenuOpen()" (click)="toggleMobileTabMenu()">
+            <i [class]="'fa-solid ' + activeTabIcon() + ' mtt-icon'"></i>
+            <span class="mtt-label">{{ activeTabLabel() }}</span>
+            <i class="fa-solid fa-chevron-down mtt-chevron"></i>
+          </button>
+          @if (mobileTabMenuOpen()) {
+            <div class="mobile-tab-backdrop" (click)="closeMobileTabMenu()"></div>
+            <div class="mobile-tab-dropdown">
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'overview'" (click)="switchTab('overview')">
+                <i class="fa-solid fa-house"></i> {{ t().family.overviewTab }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'records'" (click)="switchTab('records')">
+                <i class="fa-regular fa-folder-open"></i> {{ t().family.medicalRecordsTab }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'appointments'" (click)="switchTab('appointments')">
+                <i class="fa-regular fa-calendar-check"></i> {{ t().family.appointmentsTab }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'medications'" (click)="switchTab('medications')">
+                <i class="fa-solid fa-pills"></i> {{ t().family.medicationsTab }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'reminders'" (click)="switchTab('reminders')">
+                <i class="fa-regular fa-bell"></i> {{ t().family.remindersTab }}
+              </button>
+              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'summary'" (click)="switchTab('summary')">
+                <i class="fa-solid fa-chart-simple"></i> {{ t().family.healthSummaryTab }}
+              </button>
+            </div>
+          }
+        </div>
+
 
         <!-- ─── Tab content ─── -->
         <div class="fp-tab-content" [class.tab-animating]="tabAnimating()"
@@ -413,11 +446,72 @@
           }
           }
 
+          <!-- MEDICAL RECORDS -->
+          @else if (activeTab() === 'records') {
+          <div class="fp-manage-meds-cta">
+            <div class="fp-manage-meds-ico" style="background:rgba(79,70,229,.1);color:#4f46e5">
+              <i class="fa-regular fa-folder-open"></i>
+            </div>
+            <div class="fp-manage-meds-info">
+              <p class="fp-manage-meds-title">{{ t().family.medicalRecordsTab }}</p>
+              <p class="fp-manage-meds-sub">
+                @if (selectedProfile()!.accessRole === 'Viewer') {
+                  {{ t().family.viewMedicalRecords }} — {{ selectedProfile()!.firstName }}
+                } @else {
+                  {{ t().family.manageMedicalRecords }} — {{ selectedProfile()!.firstName }}
+                }
+              </p>
+            </div>
+            <a class="fp-manage-meds-btn"
+              [routerLink]="['/medical-records']"
+              [queryParams]="{ profileId: selectedProfile()!.userHealthProfileId }">
+              @if (selectedProfile()!.accessRole === 'Viewer') {
+                <i class="fa-regular fa-eye"></i> {{ t().family.viewMedicalRecords }}
+              } @else {
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ t().family.manageMedicalRecords }}
+              }
+            </a>
+          </div>
+          }
+
           <!-- APPOINTMENTS -->
           @else if (activeTab() === 'appointments') {
-          <app-appointments-content [profileId]="selectedProfile()?.userHealthProfileId" [compact]="true"
-            [readOnly]="selectedProfile()?.accessRole === 'Viewer'">
-          </app-appointments-content>
+          <div class="fp-manage-meds-cta">
+            <div class="fp-manage-meds-ico" style="background:rgba(14,175,215,.1);color:var(--blue)">
+              <i class="fa-regular fa-calendar-check"></i>
+            </div>
+            <div class="fp-manage-meds-info">
+              <p class="fp-manage-meds-title">{{ t().family.appointmentsTab }}</p>
+              <p class="fp-manage-meds-sub">
+                @if (selectedProfile()!.accessRole === 'Viewer') {
+                  {{ t().family.viewAppointments }} — {{ selectedProfile()!.firstName }}
+                } @else {
+                  {{ t().family.manageAppointments }} — {{ selectedProfile()!.firstName }}
+                }
+              </p>
+            </div>
+            <div class="fp-cta-btn-group">
+              @if (selectedProfile()!.accessRole !== 'Viewer') {
+              <a class="fp-manage-meds-btn" style="background:var(--blue);color:#fff;border-color:var(--blue)"
+                [routerLink]="['/appointments']"
+                [queryParams]="{
+                  profileId: selectedProfile()!.userHealthProfileId,
+                  openAdd: '1'
+                }">
+                <i class="fa-solid fa-plus"></i> {{ t().appointments.addAppointment }}
+              </a>
+              }
+              <a class="fp-manage-meds-btn"
+                [routerLink]="['/appointments']"
+                [queryParams]="{ profileId: selectedProfile()!.userHealthProfileId }">
+                @if (selectedProfile()!.accessRole === 'Viewer') {
+                  <i class="fa-regular fa-eye"></i> {{ t().family.viewAppointments }}
+                } @else {
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ t().family.manageAppointments }}
+                }
+              </a>
+            </div>
+          </div>
           }
 
           <!-- MEDICATIONS -->
@@ -499,7 +593,7 @@
               {{ t().family.notEnoughInfo }}
             </p>
             } @else {
-            <p class="ai-body">{{ healthSummary()!.summary }}</p>
+            <p class="ai-body">{{ summaryText(healthSummary()!) }}</p>
             }
           </div>
           }
@@ -601,11 +695,10 @@
             }
           </div>
           <div class="fp-img-actions">
-            <button type="button" class="fp-image-picker-button" (click)="chooseCreateImage()">
-              {{ t().family.chooseImage }}
-            </button>
+            <input #createImageInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+              (change)="onCreateImageSelected($event)">
             @if (createForm.profileImage) {
-            <button type="button" class="fp-remove-btn" (click)="removeCreateImage()">{{ t().common.remove }}</button>
+            <button type="button" class="fp-remove-btn" (click)="removeCreateImage(createImageInput)">{{ t().common.remove }}</button>
             }
           </div>
         </div>
@@ -847,11 +940,10 @@
             }
           </div>
           <div class="fp-img-actions">
-            <button type="button" class="fp-image-picker-button" (click)="chooseEditImage()">
-              {{ t().family.chooseImage }}
-            </button>
+            <input #editImageInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+              (change)="onEditImageSelected($event)">
             @if (editForm.profileImage || (editForm.existingImageUrl && !editForm.removeImage)) {
-            <button type="button" class="fp-remove-btn" (click)="removeEditImage()">{{ t().common.remove }}</button>
+            <button type="button" class="fp-remove-btn" (click)="removeEditImage(editImageInput)">{{ t().common.remove }}</button>
             }
           </div>
         </div>

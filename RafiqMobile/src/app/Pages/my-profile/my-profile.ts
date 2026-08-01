@@ -1,6 +1,6 @@
 import {
   Component, OnInit, inject, signal, computed,
-  HostListener, ElementRef
+  HostListener, ElementRef, viewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,11 +11,13 @@ import { HealthProfileService, PatientProfileResponse } from '../../Services/hea
 import { EmergencyContactService, EmergencyContactResponse } from '../../Services/emergency-contact.service';
 import { NotificationService } from '../../Services/notification.service';
 import { LocalizationService } from '../../Services/localization.service';
-import { ImagePickerService } from '../../Services/image-picker.service';
+import { AiChatService } from '../../Services/ai-chat.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../Environments/Environment';
 import { ApiResponse } from '../../Modles/api-response';
 import { map, switchMap } from 'rxjs';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 
 interface UpdateProfileBody {
   patientProfileId: string;
@@ -32,7 +34,7 @@ interface UpdateProfileBody {
 @Component({
   selector: 'app-my-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',
 })
@@ -43,11 +45,12 @@ export class MyProfile implements OnInit {
   private readonly emergencySvc       = inject(EmergencyContactService);
   protected readonly notifService     = inject(NotificationService);
   protected readonly l10n             = inject(LocalizationService);
+  readonly aiChatService              = inject(AiChatService);
+  private readonly reviewTracking     = inject(ReviewTrackingService);
   protected readonly t                = this.l10n.t;
   private readonly router             = inject(Router);
   private readonly elRef              = inject(ElementRef);
   private readonly http               = inject(HttpClient);
-  private readonly imagePicker        = inject(ImagePickerService);
 
   // ── Sidebar / Header state ────────────────────────────────────────────────
   readonly sidebarCollapsed  = signal(false);
@@ -102,6 +105,7 @@ export class MyProfile implements OnInit {
   readonly deleteLoading    = signal(false);
 
   // ── Profile photo upload ──────────────────────────────────────────────────
+  readonly photoInput = viewChild<ElementRef<HTMLInputElement>>('photoInput');
   readonly photoUploading  = signal(false);
   readonly photoModalOpen  = signal(false);
   readonly deletingPhoto   = signal(false);
@@ -135,7 +139,7 @@ export class MyProfile implements OnInit {
   get displayName(): string {
     const u = this.authService.currentUser;
     if (!u) return '';
-    return `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email;
+    return u.firstName?.trim() || u.email;
   }
 
   get userEmail(): string {
@@ -590,9 +594,8 @@ export class MyProfile implements OnInit {
     this.photoModalOpen.set(false);
   }
 
-  async triggerPhotoUpload(): Promise<void> {
-    const file = await this.imagePicker.pickImage({ accept: 'image/*' });
-    if (file) this.processSelectedPhoto(file);
+  triggerPhotoUpload(): void {
+    this.photoInput()?.nativeElement.click();
   }
 
   deleteProfilePhoto(): void {
@@ -615,7 +618,12 @@ export class MyProfile implements OnInit {
     });
   }
 
-  private processSelectedPhoto(file: File): void {
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
     const id = this.profileId();
     if (!id) return;
 
@@ -647,6 +655,8 @@ export class MyProfile implements OnInit {
 
   // ── Delete Account ────────────────────────────────────────────────────────
   openDeleteModal(): void { this.deleteModalOpen.set(true); }
+
+  openRatingPopup(): void { this.reviewTracking.openManually(); }
   closeDeleteModal(): void { if (!this.deleteLoading()) this.deleteModalOpen.set(false); }
 
   confirmDeleteAccount(): void {

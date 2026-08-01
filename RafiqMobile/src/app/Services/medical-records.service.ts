@@ -68,7 +68,7 @@ export class MedicalRecordsService {
           map(r => r.data ?? []),
           catchError(() => of([] as UserMedicine[]))
         );
-        const generalDocuments$ = this.http.get<ApiResponse<GeneralMedicalDocument[]>>(`${this.base}/documents/general`).pipe(
+        const generalDocuments$ = this.http.get<ApiResponse<GeneralMedicalDocument[]>>(`${this.base}/documents/general${pid}`).pipe(
           map(r => r.data ?? []),
           catchError(() => of([] as GeneralMedicalDocument[]))
         );

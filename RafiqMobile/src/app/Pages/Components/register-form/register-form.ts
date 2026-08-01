@@ -11,8 +11,8 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../Services/auth-service';
 import { LocalizationService } from '../../../Services/localization.service';
-import { ImagePickerService } from '../../../Services/image-picker.service';
 import { getApiErrorMessages } from '../../../Utils/api-error.util';
+import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
 const EGYPTIAN_PHONE_PATTERN = /^01[0125][0-9]{8}$/;
 const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
@@ -27,7 +27,7 @@ function passwordsMatchValidator(group: AbstractControl): ValidationErrors | nul
 @Component({
   selector: 'app-register-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AssistantAnchorDirective],
   templateUrl: './register-form.html',
   styleUrl: './register-form.css'
 })
@@ -37,7 +37,6 @@ export class RegisterFormComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly changeDetector = inject(ChangeDetectorRef);
-  private readonly imagePicker = inject(ImagePickerService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
@@ -74,23 +73,26 @@ export class RegisterFormComponent {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  async chooseProfileImage(): Promise<void> {
-    const file = await this.imagePicker.pickImage({
-      accept: 'image/jpeg,image/png,image/webp,image/gif',
-    });
-    if (file) this.processProfileImage(file);
-  }
-
-  private processProfileImage(file: File): void {
+  onProfileImageSelected(event: Event): void {
     this.apiErrors = [];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+
+    if (!file) {
+      this.profileImage = null;
+      this.profileImagePreview = null;
+      return;
+    }
 
     if (!RegisterFormComponent.ALLOWED_IMAGE_TYPES.includes(file.type)) {
       this.apiErrors = ['Profile image must be a JPEG, PNG, WEBP, or GIF file.'];
+      input.value = '';
       return;
     }
 
     if (file.size > RegisterFormComponent.MAX_IMAGE_SIZE_BYTES) {
       this.apiErrors = ['Profile image must not exceed 5 MB.'];
+      input.value = '';
       return;
     }
 
@@ -104,9 +106,10 @@ export class RegisterFormComponent {
     reader.readAsDataURL(file);
   }
 
-  removeProfileImage(): void {
+  removeProfileImage(input: HTMLInputElement): void {
     this.profileImage = null;
     this.profileImagePreview = null;
+    input.value = '';
   }
 
   onSubmit(): void {

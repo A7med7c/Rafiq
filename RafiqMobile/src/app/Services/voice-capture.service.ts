@@ -1,5 +1,4 @@
 import { Injectable, isDevMode } from '@angular/core';
-import { Capacitor } from '@capacitor/core';
 
 /**
  * Wraps the Web Speech Recognition API (STT).
@@ -36,9 +35,7 @@ export class VoiceCaptureService {
    *   'no-speech'   — browser timed out without any speech
    *   'aborted'     — stop() was called before any speech arrived
    */
-  async captureOnce(lang: string): Promise<string> {
-    await this.ensureNativeMicrophonePermission();
-
+  captureOnce(lang: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       const SpeechRecognition =
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -152,26 +149,6 @@ export class VoiceCaptureService {
     if (this.silenceTimer !== null) {
       clearTimeout(this.silenceTimer);
       this.silenceTimer = null;
-    }
-  }
-
-  private async ensureNativeMicrophonePermission(): Promise<void> {
-    if (!Capacitor.isNativePlatform()) return;
-
-    const mediaDevices = navigator.mediaDevices;
-    if (!mediaDevices?.getUserMedia) {
-      throw new Error('not-supported');
-    }
-
-    try {
-      const stream = await mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop());
-    } catch (error: unknown) {
-      const name = error instanceof DOMException ? error.name : '';
-      if (name === 'NotAllowedError' || name === 'SecurityError') {
-        throw new Error('not-allowed');
-      }
-      throw error;
     }
   }
 }

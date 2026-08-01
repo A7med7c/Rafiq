@@ -26,7 +26,9 @@ function shouldAttachToken(url: string): boolean {
     '/auth/verify-reset-otp',
     '/auth/reset-password',
     '/auth/verify-phone',
-    '/auth/resend-phone-code'
+    '/auth/resend-phone-code',
+    '/speech/elevenlabs-tts',
+    '/speech/token'
   ];
 
   return !publicAuthPaths.some((path) => url.includes(path));
@@ -37,34 +39,22 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Always attach this — every request through the ngrok free-tier tunnel
-  // (including public auth endpoints) can be intercepted by ngrok's
-  // browser-warning interstitial page, which returns 200 + HTML with no
-  // CORS headers instead of reaching our backend at all. This header tells
-  // ngrok to skip that page and forward the request straight through.
-  let authReq = req.clone({
-    setHeaders: {
-      'ngrok-skip-browser-warning': 'true'
-    }
-  });
+  let authReq = req;
 
   if (shouldAttachToken(req.url)) {
     const token = tokenStorage.getAccessToken();
 
     if (token) {
-      authReq = authReq.clone({
+      authReq = req.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
         }
       });
 
-      console.debug(`[Auth] Interceptor executing for → ${req.method} ${req.url}`);
-      console.debug(`[Auth] Authorization header present: YES`);
-      console.debug(`[Auth] Token length: ${token.length}`);
-      console.debug(`[Auth] Token first 20 chars: ${token.substring(0, 20)}`);
-      console.debug(`[Auth] Token last 20 chars: ${token.substring(token.length - 20)}`);
-
-    } else {
+      if (isDevMode()) {
+        console.debug(`[Auth] Authorization attached → ${req.method} ${req.url}`);
+      }
+    } else if (isDevMode()) {
       console.warn(`[Auth] No access token in storage → ${req.method} ${req.url}`);
     }
   }
@@ -96,8 +86,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             return next(
               req.clone({
                 setHeaders: {
-                  Authorization: `Bearer ${newToken}`,
-                  'ngrok-skip-browser-warning': 'true'
+                  Authorization: `Bearer ${newToken}`
                 }
               })
             );

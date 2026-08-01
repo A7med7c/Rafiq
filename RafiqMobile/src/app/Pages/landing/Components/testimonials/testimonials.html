@@ -6,9 +6,13 @@
     </div>
 
     <div class="testimonials-grid">
-      @for (item of t.items; track item.name; let i = $index) {
+      @for (item of items(); track item.name; let i = $index) {
         <article class="testimonial-card">
-          <div class="stars" aria-hidden="true">★★★★★</div>
+          <div class="stars" aria-hidden="true">
+            @for (s of starsArray(item.stars); track s) {
+              <span [class.star--filled]="s <= item.stars">★</span>
+            }
+          </div>
           <p>{{ item.quote }}</p>
           <div class="testimonial-author">
             <span class="avatar" [style.background]="item.gradient">{{ item.initials }}</span>
@@ -22,7 +26,7 @@
     </div>
 
     <div class="dots">
-      @for (item of t.items; track item.name; let i = $index) {
+      @for (item of items(); track item.name; let i = $index) {
         <button
           type="button"
           [class.active]="activeSlide() === i"

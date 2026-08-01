@@ -1,0 +1,116 @@
+@if (hasAny()) {
+
+<!-- ══ MINIMIZED CHIP ══════════════════════════════════════════════════════ -->
+@if (minimized()) {
+<button
+  type="button"
+  class="dac-chip"
+  [style]="panelStyle"
+  (click)="toggle()"
+  [attr.aria-label]="l10n.t().documentAnalysis.panelTitle">
+  <span class="dac-chip__ring" [class.dac-chip__ring--spinning]="activeCount() > 0">
+    <i class="fa-solid fa-file-waveform"></i>
+  </span>
+  @if (documents().length > 0) {
+    <span class="dac-chip__badge">{{ documents().length }}</span>
+  }
+</button>
+
+} @else {
+
+<!-- ══ EXPANDED PANEL ══════════════════════════════════════════════════════ -->
+<div class="dac-panel" role="region" [attr.aria-label]="l10n.t().documentAnalysis.panelTitle"
+     [style]="panelStyle">
+
+  <!-- Header — drag handle -->
+  <div class="dac-panel__header dac-panel__header--draggable"
+       (pointerdown)="onHeaderPointerDown($event)">
+    <div class="dac-panel__title-wrap">
+      <span class="dac-panel__icon">
+        <i class="fa-solid fa-file-waveform"></i>
+      </span>
+      <span class="dac-panel__title">{{ l10n.t().documentAnalysis.panelTitle }}</span>
+      @if (activeCount() > 0) {
+        <span class="dac-panel__badge dac-panel__badge--active">{{ activeCount() }}</span>
+      }
+    </div>
+    <button type="button" class="dac-panel__minimize" (click)="toggle()" aria-label="Minimize">
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+  </div>
+
+  <!-- Document list -->
+  <ul class="dac-list" role="list">
+    @for (doc of documents(); track trackByDocId($index, doc)) {
+    <li class="dac-item"
+        [class.dac-item--completed]="doc.status === 'Completed'"
+        [class.dac-item--failed]="doc.status === 'Failed'"
+        [class.dac-item--ready]="doc.status === 'ReadyToReview'">
+
+      <!-- Left: status icon -->
+      <div class="dac-item__icon-wrap" aria-hidden="true">
+        @if (doc.status === 'Pending' || doc.status === 'Processing') {
+          <span class="dac-item__spinner">
+            <svg class="dac-spin" viewBox="0 0 32 32">
+              <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity=".2"/>
+              <path d="M28 16a12 12 0 0 0-12-12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </span>
+        } @else if (doc.status === 'Completed') {
+          <span class="dac-item__done-ring"><i class="fa-solid fa-check"></i></span>
+        } @else if (doc.status === 'ReadyToReview') {
+          <span class="dac-item__ready-ring"><i class="fa-solid fa-pen-to-square"></i></span>
+        } @else {
+          <span class="dac-item__fail-ring"><i class="fa-solid fa-triangle-exclamation"></i></span>
+        }
+      </div>
+
+      <!-- Centre: title + status label -->
+      <div class="dac-item__body">
+        <p class="dac-item__title" [title]="doc.title">{{ doc.title }}</p>
+        <p class="dac-item__status">{{ statusLabel(doc) }}</p>
+      </div>
+
+      <!-- Right: actions -->
+      <div class="dac-item__actions">
+        @if (doc.status === 'ReadyToReview') {
+          <button type="button" class="dac-btn dac-btn--review" (click)="requestReview(doc)">
+            <i class="fa-solid fa-pen-to-square"></i>
+            {{ l10n.t().documentAnalysis.review }}
+          </button>
+        } @else if (doc.status === 'Completed') {
+          <button type="button" class="dac-btn dac-btn--view" (click)="viewDocument(doc)">
+            {{ l10n.t().documentAnalysis.view }}
+          </button>
+          <button type="button" class="dac-btn dac-btn--dismiss" (click)="dismiss(doc)"
+            [attr.aria-label]="l10n.t().documentAnalysis.dismiss">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        } @else if (doc.status === 'Failed') {
+          @if (doc.uploadType === 'general') {
+            <button type="button" class="dac-btn dac-btn--retry"
+              [disabled]="retrying().has(doc.documentId)"
+              (click)="retry(doc)">
+              @if (retrying().has(doc.documentId)) {
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+              } @else {
+                <i class="fa-solid fa-rotate-right"></i>
+              }
+              {{ l10n.t().documentAnalysis.retry }}
+            </button>
+          }
+          <button type="button" class="dac-btn dac-btn--dismiss" (click)="dismiss(doc)"
+            [attr.aria-label]="l10n.t().documentAnalysis.dismiss">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        }
+      </div>
+
+    </li>
+    }
+  </ul>
+
+</div>
+}<!-- end expanded -->
+
+}<!-- end hasAny -->

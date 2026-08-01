@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HealthProfileService } from '../../../Services/health-profile.service';
 import { LocalizationService } from '../../../Services/localization.service';
-import { ImagePickerService } from '../../../Services/image-picker.service';
 import { Gender, BloodType, AllergySeverity, DiseaseStatus } from '../../../Modles/health-profile-enums';
 import { CreatePatientProfileRequest } from '../../../Modles/health-profile-request';
 
@@ -46,7 +45,6 @@ interface Step3Data {
 export class OnboardingAiUpload implements OnInit {
   private readonly router        = inject(Router);
   private readonly healthProfile = inject(HealthProfileService);
-  private readonly imagePicker = inject(ImagePickerService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
@@ -133,12 +131,16 @@ export class OnboardingAiUpload implements OnInit {
     this.router.navigate(['/onboarding/step4']);
   }
 
-  async triggerUpload(docId: string): Promise<void> {
-    const accept = docId === 'other'
-      ? '.pdf,.jpg,.jpeg,.png,.doc,.docx'
-      : '.pdf,.jpg,.jpeg,.png';
-    const file = await this.imagePicker.pickImage({ accept });
-    if (file) this.uploadedFiles[docId] = file;
+  triggerUpload(docId: string): void {
+    const el = document.getElementById('file-' + docId) as HTMLInputElement;
+    el?.click();
+  }
+
+  onFileSelected(event: Event, docId: string): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.[0]) {
+      this.uploadedFiles[docId] = input.files[0];
+    }
   }
 
   hasUpload(docId: string): boolean {

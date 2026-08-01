@@ -44,10 +44,7 @@
         <span>{{ t().sidebar.medications }}</span>
       </a>
 
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-chart-line"></i></span>
-        <span>{{ t().sidebar.analytics }}</span>
-      </a>
+
       <!-- <a class="sb-link sb-sos" href="#">
         <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
         <span>SOS &amp; Emergency</span>
@@ -56,9 +53,9 @@
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
-      <a class="sb-link" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-gear"></i></span>
-        <span>{{ t().sidebar.settings }}</span>
+      <a class="sb-link" routerLink="/my-profile" routerLinkActive="sb-active">
+        <span class="sb-ico"><i class="fa-regular fa-user"></i></span>
+        <span>{{ t().sidebar.myProfile }}</span>
       </a>
     </nav>
 
@@ -124,6 +121,10 @@
               <i class="fa-solid fa-gear"></i>
               {{ t().header.settings }}
             </button>
+            <button type="button" class="user-dropdown-item" (click)="openRatingPopup()">
+              <i class="fa-regular fa-star"></i>
+              {{ t().ratingPopup.rateRafiq }}
+            </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
               <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -139,26 +140,16 @@
     <div class="dsh-body">
 
       <!-- TOP TITLE BAR -->
-      <section class="records-title-bar">
-        <div class="title-left">
+      <section class="records-title-bar" assistantAnchor="upload-medical-record">
+        <div class="title-left" assistantAnchor="records-search">
           <h1 class="records-h1">{{ t().medicalRecordsPage.title }}</h1>
           <p class="records-sub">{{ t().medicalRecordsPage.subtitle }}</p>
         </div>
       </section>
 
       <!-- RECORDS CONTENT (upload cards + table + modals) -->
-      @if (contextProfileName()) {
-      <div class="records-context-banner">
-        <span class="records-context-text">
-          <i class="fa-solid fa-user-group"></i>
-          {{ t().medicalRecordsPage.viewing }} <strong>{{ contextProfileName() }}</strong>{{ t().medicalRecordsPage.records }}
-        </span>
-        <a class="records-context-back" routerLink="/family-profiles">
-          <i class="fa-solid fa-arrow-left"></i> {{ t().medicalRecordsPage.backToFamilyProfiles }}
-        </a>
-      </div>
-      }
-      <app-records-content [profileId]="contextProfileId()" [readOnly]="contextReadOnly()"></app-records-content>
+      <app-family-profile-banner [profile]="viewingProfile()" [readOnly]="contextReadOnly()" />
+      <app-records-content [profileId]="contextProfileId()" [readOnly]="contextReadOnly()" assistantAnchor="medical-records-grid"></app-records-content>
 
     </div>
   </div>

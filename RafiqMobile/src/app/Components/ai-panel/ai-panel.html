@@ -39,14 +39,61 @@
             <p class="ai-sb-empty">{{ t().aiAssistant.noConversations }}</p>
           } @else {
             <ul class="ai-sb-list">
-              @for (conv of conversations(); track conv.id) {
+              @for (conv of sortedConversations(); track conv.id) {
                 <li
                   class="ai-sb-item"
                   [class.ai-sb-item--active]="conv.id === selectedConversationId()"
+                  [class.ai-sb-item--pinned]="pinnedIds().has(conv.id)"
                   (click)="selectConversation(conv)"
                 >
-                  <i class="fa-regular fa-comment-dots ai-sb-ico"></i>
-                  <span class="ai-sb-title">{{ conv.title }}</span>
+                  @if (pinnedIds().has(conv.id)) {
+                    <i class="fa-solid fa-thumbtack ai-sb-ico ai-sb-ico--pin"></i>
+                  } @else {
+                    <i class="fa-regular fa-comment-dots ai-sb-ico"></i>
+                  }
+
+                  @if (renamingId() === conv.id) {
+                    <input
+                      class="ai-sb-rename-input"
+                      [value]="renameValue()"
+                      (input)="renameValue.set($any($event.target).value)"
+                      (keydown.enter)="commitRename(conv.id)"
+                      (keydown.escape)="cancelRename()"
+                      (blur)="commitRename(conv.id)"
+                      (click)="$event.stopPropagation()"
+                      autofocus />
+                  } @else {
+                    <span class="ai-sb-title">{{ conv.title }}</span>
+                  }
+
+                  <!-- ⋮ menu trigger -->
+                  <button type="button" class="ai-sb-more"
+                    (click)="toggleMenu($event, conv.id)"
+                    title="More options">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                  </button>
+
+                  <!-- Dropdown -->
+                  @if (openMenuId() === conv.id) {
+                    <div class="ai-sb-menu" (click)="$event.stopPropagation()">
+                      <button type="button" class="ai-sb-menu-item"
+                        (click)="togglePin($event, conv.id); closeMenu()">
+                        <i class="fa-solid fa-thumbtack"></i>
+                        {{ pinnedIds().has(conv.id) ? 'Unpin' : 'Pin' }}
+                      </button>
+                      <button type="button" class="ai-sb-menu-item"
+                        (click)="startRename(conv.id, conv.title)">
+                        <i class="fa-solid fa-pencil"></i>
+                        Rename
+                      </button>
+                      <div class="ai-sb-menu-divider"></div>
+                      <button type="button" class="ai-sb-menu-item ai-sb-menu-item--danger"
+                        (click)="deleteConversation($event, conv.id); closeMenu()">
+                        <i class="fa-solid fa-trash-can"></i>
+                        Delete
+                      </button>
+                    </div>
+                  }
                 </li>
               }
             </ul>
@@ -61,28 +108,21 @@
 
       <!-- Header -->
       <header class="ai-main-hdr"
-        [class.ai-main-hdr--minimized]="minimized()"
         (mousedown)="onHeaderPointerDown($event)"
         (touchstart)="onHeaderPointerDown($event)">
-        <div class="ai-main-hdr-left"
-          [attr.role]="minimized() ? 'button' : null"
-          [attr.tabindex]="minimized() ? 0 : null"
-          (click)="minimized() && toggleMinimize()"
-          (keydown.enter)="minimized() && toggleMinimize()">
+        <div class="ai-main-hdr-left">
           <div class="ai-avatar-badge">
             <img src="images/RafiqLogo.png" alt="Rafiq" class="ai-badge-logo">
             <span class="online-dot"></span>
           </div>
-          @if (!minimized()) {
-            <div class="ai-hdr-info">
-              <h3 class="ai-main-title">Rafiq AI</h3>
-              @if (selectedConversation()) {
-                <p class="ai-main-sub">{{ selectedConversation()!.title }}</p>
-              } @else {
-                <p class="ai-main-sub online-text">{{ t().aiAssistant.onlineStatus }}</p>
-              }
-            </div>
-          }
+          <div class="ai-hdr-info">
+            <h3 class="ai-main-title">Rafiq AI</h3>
+            @if (selectedConversation()) {
+              <p class="ai-main-sub">{{ selectedConversation()!.title }}</p>
+            } @else {
+              <p class="ai-main-sub online-text">{{ t().aiAssistant.onlineStatus }}</p>
+            }
+          </div>
         </div>
         <div class="ai-main-hdr-right">
           @if (!minimized()) {
@@ -104,28 +144,21 @@
               [title]="maximized() ? t().aiAssistant.restoreWindow : t().aiAssistant.expandFullscreen">
               <i class="fa-solid" [class.fa-expand]="!maximized()" [class.fa-compress]="maximized()"></i>
             </button>
-            <button type="button" class="ai-hdr-btn ai-hdr-btn--minimize"
-              (click)="toggleMinimize()"
-              [title]="t().common.close">
-              <i class="fa-solid fa-chevron-down"></i>
-            </button>
-            <button type="button" class="ai-hdr-btn ai-hdr-btn--close" (click)="closePanel()"
-              [title]="t().common.close">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
           }
+          <button type="button" class="ai-hdr-btn ai-hdr-btn--minimize"
+            (click)="toggleMinimize()"
+            [title]="minimized() ? t().aiAssistant.onlineStatus : t().common.close">
+            <i class="fa-solid" [class.fa-chevron-down]="!minimized()" [class.fa-chevron-up]="minimized()"></i>
+          </button>
+          <button type="button" class="ai-hdr-btn ai-hdr-btn--close" (click)="closePanel()"
+            [title]="t().common.close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
       </header>
 
-      <!-- Voice Mode -->
-      @if (activeMode() === 'voice') {
-        <div class="ai-messages-wrap">
-          <app-voice-agent-panel></app-voice-agent-panel>
-        </div>
-      }
-
-      <!-- Messages Area (Chat Mode) -->
-      <div class="ai-messages-wrap" [style.display]="activeMode() === 'voice' ? 'none' : null">
+      <!-- Messages Area — always visible in both chat and voice modes -->
+      <div class="ai-messages-wrap">
 
         @if (profileError()) {
           <div class="ai-state-empty">
@@ -173,28 +206,42 @@
                 <div class="ai-msg ai-msg--ai">
                   <div class="ai-msg-avatar"><img src="images/RafiqLogo.png" alt="Rafiq" class="ai-msg-logo"></div>
                   <div class="ai-msg-col">
-                    <div class="ai-bubble ai-bubble--ai">
-                      <markdown [data]="msg.content"></markdown>
-                    </div>
-                    <div class="ai-msg-footer">
-                      <span class="ai-msg-time">{{ formatMessageTime(msg) }}</span>
-                      <div class="ai-reactions">
-                        <button type="button"
-                          class="ai-react-btn"
-                          [class.ai-react-btn--active]="msg.userReaction === 'ThumbsUp'"
-                          [title]="t().aiAssistant.reactionHelpful"
-                          (click)="toggleReaction(msg, 'ThumbsUp')">
-                          <i class="fa-regular fa-thumbs-up"></i>
-                        </button>
-                        <button type="button"
-                          class="ai-react-btn"
-                          [class.ai-react-btn--active-down]="msg.userReaction === 'ThumbsDown'"
-                          [title]="t().aiAssistant.reactionNotHelpful"
-                          (click)="toggleReaction(msg, 'ThumbsDown')">
-                          <i class="fa-regular fa-thumbs-down"></i>
-                        </button>
+                    @if (msg.status === 'Pending' || msg.status === 'Processing') {
+                      <div class="ai-bubble ai-bubble--ai ai-typing">
+                        <span class="ai-dot"></span>
+                        <span class="ai-dot"></span>
+                        <span class="ai-dot"></span>
                       </div>
-                    </div>
+                      <span class="ai-typing-label">{{ t().aiAssistant.rafiqTyping }}</span>
+                    } @else if (msg.status === 'Failed') {
+                      <div class="ai-bubble ai-bubble--ai ai-bubble--error">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        {{ msg.errorMessage || t().aiAssistant.sendFailed }}
+                      </div>
+                    } @else {
+                      <div class="ai-bubble ai-bubble--ai">
+                        <markdown [data]="msg.content"></markdown>
+                      </div>
+                      <div class="ai-msg-footer">
+                        <span class="ai-msg-time">{{ formatMessageTime(msg) }}</span>
+                        <div class="ai-reactions">
+                          <button type="button"
+                            class="ai-react-btn"
+                            [class.ai-react-btn--active]="msg.userReaction === 'ThumbsUp'"
+                            [title]="t().aiAssistant.reactionHelpful"
+                            (click)="toggleReaction(msg, 'ThumbsUp')">
+                            <i class="fa-regular fa-thumbs-up"></i>
+                          </button>
+                          <button type="button"
+                            class="ai-react-btn"
+                            [class.ai-react-btn--active-down]="msg.userReaction === 'ThumbsDown'"
+                            [title]="t().aiAssistant.reactionNotHelpful"
+                            (click)="toggleReaction(msg, 'ThumbsDown')">
+                            <i class="fa-regular fa-thumbs-down"></i>
+                          </button>
+                        </div>
+                      </div>
+                    }
                   </div>
                 </div>
               }
@@ -218,11 +265,25 @@
 
       </div>
 
-      <!-- Composer Footer (chat mode only) -->
+      <!-- Voice controls footer — shown in voice mode instead of the composer -->
+      @if (activeMode() === 'voice') {
+        <app-voice-agent-panel
+          [profileId]="profileId()"
+          [conversationId]="selectedConversationId()"
+          (conversationCreated)="onVoiceConversationCreated($event)"
+          (messageStarted)="onVoiceMessageStarted($event)"
+          (responseReceived)="onVoiceResponseReceived($event)"
+        ></app-voice-agent-panel>
+      }
+
+      <!-- Composer Footer — shown in chat mode -->
       @if (activeMode() === 'chat') {
       <div class="ai-composer-wrap">
         @if (sendError()) {
           <div class="ai-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ sendError() }}</div>
+        }
+        @if (validationError()) {
+          <div class="ai-validation-bar"><i class="fa-solid fa-triangle-exclamation"></i> {{ validationError() }}</div>
         }
         @if (attachError()) {
           <div class="ai-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ attachError() }}</div>
@@ -238,29 +299,41 @@
           </div>
         }
 
-        <div class="ai-composer">
-          <button type="button" class="ai-composer-ico"
-            [disabled]="sending()"
-            [title]="t().aiAssistant.attachImage"
-            (click)="triggerFileSelect()">
-            <i class="fa-solid fa-paperclip"></i>
-          </button>
-          <textarea
-            #messageInput
-            class="ai-composer-input"
-            rows="1"
-            [attr.placeholder]="t().aiAssistant.typePlaceholder"
-            [value]="messageText()"
-            (input)="onMessageInput($any($event.target).value)"
-            (keydown)="onComposerKeydown($event)"
-          ></textarea>
-          <button type="button" class="ai-send-btn"
-            [disabled]="(!messageText().trim() && !attachedImageBase64()) || sending()"
-            (click)="sendMessage()">
-            <i class="fa-solid fa-paper-plane"></i>
-          </button>
-        </div>
-        <p class="ai-composer-hint">{{ t().aiAssistant.composerHintPanel }}</p>
+        @if (isAiRestricted()) {
+          <div class="ai-restricted-banner">
+            <i class="fa-solid fa-ban ai-restricted-icon"></i>
+            <div class="ai-restricted-body">
+              <strong>{{ t().aiAssistant.aiRestrictedTitle }}</strong>
+              <p>{{ t().aiAssistant.aiRestrictedMessage }}</p>
+            </div>
+          </div>
+        } @else {
+          <div class="ai-composer">
+            <input #fileInput type="file" accept="image/jpeg,image/jpg,image/png,image/webp"
+              class="ai-file-input" (change)="onFileSelected($event)">
+            <button type="button" class="ai-composer-ico"
+              [disabled]="sending()"
+              [title]="t().aiAssistant.attachImage"
+              (click)="triggerFileSelect()">
+              <i class="fa-solid fa-paperclip"></i>
+            </button>
+            <textarea
+              #messageInput
+              class="ai-composer-input"
+              rows="1"
+              [attr.placeholder]="t().aiAssistant.typePlaceholder"
+              [value]="messageText()"
+              (input)="onMessageInput($any($event.target).value)"
+              (keydown)="onComposerKeydown($event)"
+            ></textarea>
+            <button type="button" class="ai-send-btn"
+              [disabled]="(!messageText().trim() && !attachedImageBase64()) || sending()"
+              (click)="sendMessage()">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </div>
+          <p class="ai-composer-hint">{{ t().aiAssistant.composerHintPanel }}</p>
+        }
       </div>
       }
 

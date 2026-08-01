@@ -85,12 +85,12 @@
             </div>
 
 
-            <a class="forgot" routerLink="/forgot-password">
+            <a assistantAnchor="forgot-password-link" class="forgot" routerLink="/forgot-password">
                 {{ t().login.forgotPassword }}
             </a>
 
 
-            <button class="submit-button" type="submit" [attr.aria-busy]="isSubmitting" [disabled]="isSubmitting || loginForm.invalid">
+            <button assistantAnchor="login-submit" class="submit-button" type="submit" [attr.aria-busy]="isSubmitting" [disabled]="isSubmitting || loginForm.invalid">
                 <span class="button-content">
                     @if (isSubmitting) {
                     <span class="button-spinner" aria-hidden="true"></span>

@@ -12,7 +12,7 @@ import { AiChatService } from '../../Services/ai-chat.service';
 import { AuthService } from '../../Services/auth-service';
 import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { NotificationService } from '../../Services/notification.service';
-import { ImagePickerService } from '../../Services/image-picker.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { environment } from '../../Environments/Environment';
 import {
@@ -23,8 +23,8 @@ import {
   ProfileMemberDto,
   SentInvitationDto,
 } from '../../Services/family-profiles.service';
-import { AppointmentsContentComponent } from '../../Components/appointments-content/appointments-content';
 import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.service';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 
 type AddStep = 'choose' | 'create' | 'invite' | 'invited';
 
@@ -45,7 +45,7 @@ interface SupervisionMemberEntry {
 @Component({
   selector: 'app-family-profiles',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AppointmentsContentComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective],
   templateUrl: './family-profiles.html',
   styleUrl: './family-profiles.css',
 })
@@ -59,10 +59,10 @@ export class FamilyProfiles implements OnInit {
   protected readonly profileCache = inject(ProfileCacheService);
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
-  private readonly notifSvc = inject(NotificationService);
+  protected readonly notifSvc = inject(NotificationService); // template access
+  private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly http = inject(HttpClient);
   private readonly changeDetector = inject(ChangeDetectorRef);
-  private readonly imagePicker = inject(ImagePickerService);
   private readonly base = environment.apiUrl;
   readonly router = inject(Router);
 
@@ -119,11 +119,12 @@ export class FamilyProfiles implements OnInit {
   readonly sentInvitationsLoading = signal(false);
 
   // ─── Supervision pagination ───────────────────────────────────
-  readonly PAGE_SIZE = 5;
+  readonly PAGE_SIZE = 2;
   readonly supervisedPage = signal(0);
   readonly supervisingPage = signal(0);
   readonly supervisedVisible = signal(true);
   readonly supervisingVisible = signal(true);
+  readonly mobileTabMenuOpen = signal(false);
 
   // ─── Medications / Reminders tab ────────────────────────────
   readonly fpMedicines = signal<any[]>([]);
@@ -311,7 +312,9 @@ export class FamilyProfiles implements OnInit {
       this.profiles.set(list);
       this.profilesLoading.set(false);
       if (list.length > 0 && !this.selectedProfile()) {
-        this.selectProfile(list[0]);
+        const storedId = this.profileSelectSvc.selectedProfileId;
+        const restored = storedId ? list.find(p => p.userHealthProfileId === storedId) : null;
+        this.selectProfile(restored ?? list[0]);
       }
     });
   }
@@ -337,6 +340,17 @@ export class FamilyProfiles implements OnInit {
     });
   }
 
+  summaryText(s: HealthSummaryDto): string {
+    const parts: string[] = [`Status: ${s.overallStatus}${s.overallStatusNote ? ' — ' + s.overallStatusNote : ''}`];
+    if (s.conditions.length) parts.push(`Conditions: ${s.conditions.join(', ')}`);
+    if (s.allergies.length) parts.push(`Allergies: ${s.allergies.map(a => `${a.name} (${a.severity})`).join(', ')}`);
+    parts.push(`Medications: ${s.medications.count} active${s.medications.hasIssues && s.medications.issueNote ? ' — ' + s.medications.issueNote : ''}`);
+    parts.push(`Lab results: ${s.labResults.status}${s.labResults.abnormalCount > 0 ? ` (${s.labResults.abnormalCount} abnormal)` : ''}`);
+    if (s.insights.length) parts.push(`Insights: ${s.insights.join('; ')}`);
+    if (s.recommendations.length) parts.push(`Recommendations: ${s.recommendations.join('; ')}`);
+    return parts.join('\n');
+  }
+
   navigateToRecords(): void {
     const p = this.selectedProfile();
     if (!p) return;
@@ -354,6 +368,35 @@ export class FamilyProfiles implements OnInit {
     if (tab === 'summary') {
       this.loadHealthSummary();
     }
+    this.mobileTabMenuOpen.set(false);
+  }
+
+  toggleMobileTabMenu(): void { this.mobileTabMenuOpen.update(v => !v); }
+  closeMobileTabMenu(): void  { this.mobileTabMenuOpen.set(false); }
+
+  activeTabLabel(): string {
+    const t = this.t().family;
+    const map: Record<string, string> = {
+      overview:     t.overviewTab || 'Overview',
+      records:      t.medicalRecordsTab || 'Medical Records',
+      appointments: t.appointmentsTab || 'Appointments',
+      medications:  t.medicationsTab || 'Medications',
+      reminders:    t.remindersTab || 'Reminders',
+      summary:      t.healthSummaryTab || 'Health Summary',
+    };
+    return map[this.activeTab()] ?? (t.overviewTab || 'Overview');
+  }
+
+  activeTabIcon(): string {
+    const map: Record<string, string> = {
+      overview: 'fa-house',
+      records: 'fa-folder-open',
+      appointments: 'fa-calendar-check',
+      medications: 'fa-pills',
+      reminders: 'fa-bell',
+      summary: 'fa-chart-simple',
+    };
+    return map[this.activeTab()] ?? 'fa-house';
   }
 
   private animateTabContent(direction: 'left' | 'right'): void {
@@ -437,30 +480,29 @@ export class FamilyProfiles implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  async chooseCreateImage(): Promise<void> {
+  onCreateImageSelected(event: Event): void {
     this.errorMessage = '';
-    const file = await this.imagePicker.pickImage({
-      accept: 'image/jpeg,image/png,image/webp,image/gif',
-    });
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
     if (!file) { return; }
 
     this.validateAndPreviewImage(
       file,
       (f, preview) => { this.createForm.profileImage = f; this.createForm.profileImagePreview = preview; },
-      (message) => { this.errorMessage = message; }
+      (message) => { this.errorMessage = message; input.value = ''; }
     );
   }
 
-  removeCreateImage(): void {
+  removeCreateImage(input: HTMLInputElement): void {
     this.createForm.profileImage = null;
     this.createForm.profileImagePreview = null;
+    input.value = '';
   }
 
-  async chooseEditImage(): Promise<void> {
+  onEditImageSelected(event: Event): void {
     this.editError = '';
-    const file = await this.imagePicker.pickImage({
-      accept: 'image/jpeg,image/png,image/webp,image/gif',
-    });
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
     if (!file) { return; }
 
     this.validateAndPreviewImage(
@@ -470,14 +512,15 @@ export class FamilyProfiles implements OnInit {
         this.editForm.profileImagePreview = preview;
         this.editForm.removeImage = false;
       },
-      (message) => { this.editError = message; }
+      (message) => { this.editError = message; input.value = ''; }
     );
   }
 
-  removeEditImage(): void {
+  removeEditImage(input: HTMLInputElement): void {
     this.editForm.profileImage = null;
     this.editForm.profileImagePreview = null;
     this.editForm.removeImage = true;
+    input.value = '';
   }
 
   submitCreateManaged(): void {
@@ -941,6 +984,7 @@ export class FamilyProfiles implements OnInit {
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
   goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {

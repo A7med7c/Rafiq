@@ -296,7 +296,6 @@ input::placeholder{
     .login-card{
         max-width:min(100%, 440px);
         padding:34px 24px;
-        margin-bottom:env(safe-area-inset-bottom);
     }
 
     .card-header h2{

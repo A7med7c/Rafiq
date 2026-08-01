@@ -287,7 +287,6 @@ input::placeholder {
     .login-card {
         max-width: min(100%, 560px);
         padding: 30px 24px;
-        margin-bottom: env(safe-area-inset-bottom);
     }
 }
 
@@ -342,26 +341,6 @@ input[type="file"]::file-selector-button {
 
 /* Hover state for the button */
 input[type="file"]::file-selector-button:hover {
-    background-color: rgba(78, 137, 184, 0.05);
-    border-color: #4E89B8;
-    color: #4E89B8;
-}
-
-.image-picker-button {
-    height: 40px;
-    padding: 0 18px;
-    border: 1px solid #d8d8d8;
-    border-radius: 12px;
-    background-color: #fff;
-    color: #333;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    transition: 0.25s ease;
-}
-
-.image-picker-button:hover {
     background-color: rgba(78, 137, 184, 0.05);
     border-color: #4E89B8;
     color: #4E89B8;

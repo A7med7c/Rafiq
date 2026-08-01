@@ -21,7 +21,6 @@ import { guestGuard } from './Guards/guest.guard';
 import { FamilyProfiles } from './Pages/family-profiles/family-profiles';
 import { adminGuard } from './Guards/admin.guard';
 import { MyProfile } from './Pages/my-profile/my-profile';
-
 export const routes: Routes = [
   { path: '', component: Landing },
   {

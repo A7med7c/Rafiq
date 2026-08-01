@@ -1,149 +1,339 @@
-<section class="admin-page">
-  <header class="page-heading">
+<section class="dash">
+
+  <!-- ── Page header ──────────────────────────────────────────────────── -->
+  <header class="dash__head">
     <div>
-      <h1>{{ copy().title }}</h1>
-      <p>{{ copy().subtitle }}</p>
+      <h1>Dashboard</h1>
+      <p>Welcome back! <span>Here's what's happening on your platform today.</span></p>
     </div>
-    <span class="live-indicator"><i></i>{{ copy().live }}</span>
+    <div class="dash__head-actions">
+      <span class="date-badge">
+        <i class="fa-regular fa-calendar"></i>
+        {{ today() }}
+      </span>
+    </div>
   </header>
 
+  <!-- ── Loading skeletons ────────────────────────────────────────────── -->
   @if (loading()) {
-    <div class="metric-grid metric-grid--loading" aria-busy="true">
-      @for (item of [1, 2, 3, 4]; track item) {
-        <div class="metric-skeleton"></div>
-      }
+    <div class="kpi-grid" aria-busy="true">
+      @for (i of [1,2,3,4]; track i) { <div class="kpi-skeleton"></div> }
     </div>
-    <div class="dashboard-skeleton"></div>
-  } @else if (error()) {
-    <div class="admin-state">
-      <i class="fa-solid fa-chart-simple"></i>
+    <div class="kpi-grid" aria-busy="true">
+      @for (i of [1,2,3,4]; track i) { <div class="kpi-skeleton"></div> }
+    </div>
+    <div class="charts-row">
+      <div class="chart-skeleton" style="flex:2"></div>
+      <div class="chart-skeleton" style="flex:1"></div>
+    </div>
+    <div class="bottom-row">
+      <div class="chart-skeleton" style="flex:1"></div>
+      <div class="chart-skeleton" style="flex:1"></div>
+    </div>
+  }
+
+  <!-- ── Error ────────────────────────────────────────────────────────── -->
+  @else if (error()) {
+    <div class="dash-empty">
+      <i class="fa-solid fa-triangle-exclamation"></i>
       <h2>{{ copy().loadError }}</h2>
-      <button type="button" (click)="loadDashboard()">{{ copy().retry }}</button>
+      <button type="button" class="btn-retry" (click)="loadDashboard()">{{ copy().retry }}</button>
     </div>
-  } @else if (dashboard(); as data) {
-    <div class="metric-grid">
-      @for (metric of primaryMetrics(); track metric.label) {
-        <article class="metric" [attr.data-tone]="metric.tone">
-          <span class="metric__icon"><i class="fa-solid {{ metric.icon }}"></i></span>
-          <div>
-            <p>{{ metric.label }}</p>
-            <strong>{{ metric.value | number }}</strong>
+  }
+
+  <!-- ── Main content ─────────────────────────────────────────────────── -->
+  @else if (dashboard(); as data) {
+
+    <!-- Row 1 KPIs -->
+    <div class="kpi-grid">
+      @for (card of kpiRow1(); track card.label) {
+        <article class="kpi-card">
+          <div class="kpi-card__header">
+            <div class="kpi-card__icon" [style.background]="card.bg" [style.color]="card.color">
+              <i class="fa-solid {{ card.icon }}"></i>
+            </div>
+            @if (card.sparkPoints.length > 1) {
+              <svg class="kpi-sparkline" viewBox="0 0 88 32" preserveAspectRatio="none">
+                <path [attr.d]="sparkPath(card.sparkPoints)" fill="none" [attr.stroke]="card.color" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            }
           </div>
+          <p class="kpi-card__label">{{ card.label }}</p>
+          <strong class="kpi-card__value">{{ card.value | number }}</strong>
+          @if (card.growth !== null) {
+            <div class="kpi-card__footer">
+              <span class="kpi-badge" [class.kpi-badge--up]="card.growth >= 0" [class.kpi-badge--down]="card.growth < 0">
+                <i class="fa-solid" [class.fa-arrow-trend-up]="card.growth >= 0" [class.fa-arrow-trend-down]="card.growth < 0"></i>
+                {{ card.growth | number:'1.0-1' }}%
+              </span>
+              <small>vs last 30 days</small>
+            </div>
+          }
         </article>
       }
     </div>
 
-    <div class="growth-strip">
-      <div class="growth-strip__lead">
-        <span>{{ copy().newRegistrations }}</span>
-        <strong>{{ data.newRegistrationsThisMonth | number }}</strong>
-        <small [class.negative]="data.monthlyGrowthPercent < 0">
-          <i class="fa-solid" [class.fa-arrow-trend-up]="data.monthlyGrowthPercent >= 0" [class.fa-arrow-trend-down]="data.monthlyGrowthPercent < 0"></i>
-          {{ data.monthlyGrowthPercent | number:'1.0-1' }}% {{ copy().monthlyGrowth }}
-        </small>
-      </div>
-      <div class="growth-strip__stats">
-        @for (metric of secondaryMetrics(); track metric.label) {
-          <div>
-            <span>{{ metric.label }}</span>
-            <strong>{{ metric.value | number }}</strong>
+    <!-- Row 2 KPIs -->
+    <div class="kpi-grid">
+      @for (card of kpiRow2(); track card.label) {
+        <article class="kpi-card">
+          <div class="kpi-card__header">
+            <div class="kpi-card__icon" [style.background]="card.bg" [style.color]="card.color">
+              <i class="fa-solid {{ card.icon }}"></i>
+            </div>
+            @if (card.sparkPoints.length > 1) {
+              <svg class="kpi-sparkline" viewBox="0 0 88 32" preserveAspectRatio="none">
+                <path [attr.d]="sparkPath(card.sparkPoints)" fill="none" [attr.stroke]="card.color" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            }
           </div>
+          <p class="kpi-card__label">{{ card.label }}</p>
+          <strong class="kpi-card__value">{{ card.value | number }}</strong>
+        </article>
+      }
+    </div>
+
+    <!-- ── Charts row ──────────────────────────────────────────────────── -->
+    <div class="charts-row">
+
+      <!-- User growth line chart -->
+      <article class="panel panel--chart" style="flex:2.2">
+        <div class="panel__head">
+          <div>
+            <h2>{{ copy().userGrowth }}</h2>
+            <p>{{ copy().lastSixMonths }}</p>
+          </div>
+          <span class="panel-tag">Last 30 Days</span>
+        </div>
+
+        @if ((data.userGrowth || []).length > 1) {
+          <div class="line-chart-wrap">
+            <!-- Y-axis labels -->
+            <div class="line-chart__ylabels">
+              @for (label of lineYLabels(data.userGrowth); track label) {
+                <span>{{ label }}</span>
+              }
+            </div>
+            <!-- SVG chart -->
+            <div class="line-chart__svg-wrap">
+              <svg viewBox="0 0 380 120" preserveAspectRatio="none" class="line-chart__svg">
+                <defs>
+                  <linearGradient id="lg-growth" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.18"/>
+                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path [attr.d]="lineChartArea(data.userGrowth)" fill="url(#lg-growth)"/>
+                <path [attr.d]="lineChartPath(data.userGrowth)" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+              <!-- X labels -->
+              <div class="line-chart__xlabels">
+                @for (pt of data.userGrowth; track pt.label) {
+                  <span>{{ pt.label }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        } @else {
+          <p class="panel-empty">{{ copy().noData }}</p>
         }
+      </article>
+
+      <!-- AI Usage Widget -->
+      <article class="panel" style="flex:1.3; display:flex; flex-direction:column;">
+        <div class="panel__head">
+          <div>
+            <h2>{{ aiCopy().aiUsage }}</h2>
+          </div>
+          <i class="fa-solid fa-robot panel-icon"></i>
+        </div>
+        
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:20px; padding: 20px 0;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--admin-muted); font-weight:500;">{{ aiCopy().totalAiRequests }}</span>
+            <strong style="font-size:1.25rem;">{{ data.totalAiRequests | number }}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--admin-muted); font-weight:500;">{{ aiCopy().flaggedAiRequests }}</span>
+            <strong style="font-size:1.25rem; color:var(--admin-danger);">{{ data.flaggedAiRequests | number }}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--admin-muted); font-weight:500;">{{ aiCopy().mostActiveUser }}</span>
+            <strong style="font-size:1rem;">{{ data.mostActiveAiUser || '-' }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <!-- Gender / profile distribution donut -->
+      <article class="panel panel--chart" style="flex:1">
+        <div class="panel__head">
+          <div>
+            <h2>{{ copy().genderDistribution }}</h2>
+            <p>{{ data.totalProfiles | number }} profiles</p>
+          </div>
+        </div>
+
+        @if ((data.genderDistribution || []).length) {
+          <div class="donut-wrap">
+            <svg viewBox="0 0 100 100" class="donut-svg">
+              <circle cx="50" cy="50" r="25" fill="var(--admin-body)"/>
+              @for (seg of donutSegments(data.genderDistribution); track seg.label) {
+                <path [attr.d]="seg.path" [attr.fill]="seg.color" opacity="0.9"/>
+              }
+            </svg>
+            <div class="donut-legend">
+              @for (seg of donutSegments(data.genderDistribution); track seg.label) {
+                <div class="legend-row">
+                  <span class="legend-dot" [style.background]="seg.color"></span>
+                  <span class="legend-label">{{ seg.label }}</span>
+                  <span class="legend-pct">{{ seg.pct }}%</span>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <p class="panel-empty">{{ copy().noData }}</p>
+        }
+      </article>
+
+    </div>
+
+    <!-- ── Bottom row ──────────────────────────────────────────────────── -->
+    <div class="bottom-row">
+
+      <!-- Latest Users -->
+      <article class="panel panel--table" style="flex:1.3">
+        <div class="panel__head">
+          <h2>{{ copy().recentUsers }}</h2>
+          <a routerLink="/admin/users" class="view-all-link">View All <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Joined</th>
+                <th>Profile</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of data.recentUsers; track user.id) {
+                <tr>
+                  <td>
+                    <div class="user-cell">
+                      <img [src]="avatarUrl(user.profileImageUrl)" alt="">
+                      <strong>{{ user.fullName }}</strong>
+                    </div>
+                  </td>
+                  <td class="text-muted">{{ user.email }}</td>
+                  <td class="text-muted">{{ formatDate(user.createdAt) }}</td>
+                  <td>
+                    <span class="status-pill" [class.status-pill--active]="user.isActive" [class.status-pill--inactive]="!user.isActive">
+                      {{ user.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="panel-empty">{{ copy().noData }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- Users Need Attention -->
+      <article class="panel panel--table" style="flex:1">
+        <div class="panel__head">
+          <h2>{{ aiCopy().usersNeedAttention }}</h2>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>{{ aiCopy().reason }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of data.usersNeedAttention; track u.userId) {
+                <tr>
+                  <td>
+                    <div class="user-cell">
+                      <img [src]="avatarUrl(u.profileImageUrl)" alt="">
+                      <strong>{{ u.userName }}</strong>
+                    </div>
+                  </td>
+                  <td class="text-muted">{{ u.reason }}</td>
+                  <td>
+                    <a [routerLink]="['/admin/users']" [queryParams]="{search: u.userName}" class="btn-retry" style="padding:4px 8px; font-size:12px;">{{ aiCopy().actionView }}</a>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="3" class="panel-empty">{{ copy().noData }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- ── Review stats card ─────────────────────────────────────────────── -->
+    @if (reviewStats(); as rs) {
+      <div class="review-stats-card">
+        <div class="review-stats-header">
+          <div>
+            <h2>{{ copy().reviewStatsTitle }}</h2>
+          </div>
+          <a routerLink="/admin/reviews" class="view-all-link">
+            {{ copy().reviewStatsViewAll }} <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+        <div class="review-stats-body">
+          <div class="rs-avg">
+            <span class="rs-avg-val">{{ rs.averageStars.toFixed(1) }}</span>
+            <div class="rs-stars">
+              @for (i of [1,2,3,4,5]; track i) {
+                <i class="fas fa-star" [class.rs-star-filled]="i <= rs.averageStars" [class.rs-star-half]="i - 0.5 <= rs.averageStars && i > rs.averageStars"></i>
+              }
+            </div>
+            <span class="rs-total">{{ rs.total }} {{ copy().reviewStatsTotal }}</span>
+          </div>
+          <div class="rs-mini-bars">
+            @for (entry of [
+              { stars: 5, count: rs.fiveStars },
+              { stars: 4, count: rs.fourStars },
+              { stars: 3, count: rs.threeStars },
+              { stars: 2, count: rs.twoStars },
+              { stars: 1, count: rs.oneStar }
+            ]; track entry.stars) {
+              <div class="rs-bar-row">
+                <span class="rs-bar-label">{{ entry.stars }}<i class="fas fa-star rs-bar-star"></i></span>
+                <div class="rs-bar-track">
+                  <div class="rs-bar-fill" [style.width.%]="rs.total > 0 ? (entry.count / rs.total * 100) : 0"></div>
+                </div>
+                <span class="rs-bar-count">{{ entry.count }}</span>
+              </div>
+            }
+          </div>
+          <div class="rs-pills">
+            <div class="rs-pill rs-pill-visible">
+              <i class="fas fa-eye"></i>
+              <span>{{ rs.visible }}</span>
+              <small>{{ copy().reviewStatsVisible }}</small>
+            </div>
+            <div class="rs-pill rs-pill-hidden">
+              <i class="fas fa-eye-slash"></i>
+              <span>{{ rs.hidden }}</span>
+              <small>{{ copy().reviewStatsHidden }}</small>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    }
 
-    <div class="analytics-grid">
-      <article class="panel chart-panel">
-        <header class="panel__header">
-          <div><h2>{{ copy().userGrowth }}</h2><p>{{ copy().lastSixMonths }}</p></div>
-          <i class="fa-solid fa-arrow-trend-up"></i>
-        </header>
-        <div class="bar-chart" role="img" [attr.aria-label]="copy().userGrowth">
-          @for (point of data.userGrowth; track point.label) {
-            <div class="bar-chart__item">
-              <span class="bar-chart__value">{{ point.value }}</span>
-              <div class="bar-chart__track">
-                <i [style.height.%]="barHeight(point, data.userGrowth)"></i>
-              </div>
-              <span class="bar-chart__label">{{ point.label }}</span>
-            </div>
-          }
-        </div>
-      </article>
-
-      <article class="panel chart-panel chart-panel--appointments">
-        <header class="panel__header">
-          <div><h2>{{ copy().appointmentVolume }}</h2><p>{{ copy().lastSixMonths }}</p></div>
-          <i class="fa-regular fa-calendar"></i>
-        </header>
-        <div class="bar-chart" role="img" [attr.aria-label]="copy().appointmentVolume">
-          @for (point of data.appointmentTrend; track point.label) {
-            <div class="bar-chart__item">
-              <span class="bar-chart__value">{{ point.value }}</span>
-              <div class="bar-chart__track">
-                <i [style.height.%]="barHeight(point, data.appointmentTrend)"></i>
-              </div>
-              <span class="bar-chart__label">{{ point.label }}</span>
-            </div>
-          }
-        </div>
-      </article>
-
-      <article class="panel distribution-panel">
-        <header class="panel__header">
-          <div><h2>{{ copy().genderDistribution }}</h2><p>{{ data.totalProfiles | number }} {{ copy().profiles }}</p></div>
-        </header>
-        <div class="distribution-list">
-          @for (item of data.genderDistribution; track item.label) {
-            <div class="distribution-item">
-              <div><span>{{ item.label }}</span><strong>{{ item.value }}</strong></div>
-              <div class="distribution-track"><i [style.width.%]="distributionWidth(item.value)"></i></div>
-            </div>
-          } @empty {
-            <p class="empty-copy">{{ copy().noData }}</p>
-          }
-        </div>
-      </article>
-    </div>
-
-    <div class="activity-grid">
-      <article class="panel">
-        <header class="panel__header">
-          <div><h2>{{ copy().recentUsers }}</h2></div>
-          <a routerLink="/admin/users">{{ copy().viewUsers }} <i class="fa-solid fa-arrow-right"></i></a>
-        </header>
-        <div class="user-list">
-          @for (user of data.recentUsers; track user.id) {
-            <div class="user-row">
-              <img [src]="avatarUrl(user.profileImageUrl)" alt="">
-              <div><strong>{{ user.fullName }}</strong><span>{{ user.email }}</span></div>
-              <time>{{ formatDate(user.createdAt) }}</time>
-              <i class="status-dot" [class.status-dot--inactive]="!user.isActive"></i>
-            </div>
-          } @empty {
-            <p class="empty-copy">{{ copy().noData }}</p>
-          }
-        </div>
-      </article>
-
-      <article class="panel appointment-panel">
-        <header class="panel__header"><div><h2>{{ copy().recentAppointments }}</h2></div></header>
-        <div class="appointment-list">
-          @for (appointment of data.recentAppointments; track appointment.id) {
-            <div class="appointment-row">
-              <span class="appointment-row__date"><i class="fa-regular fa-calendar"></i></span>
-              <div>
-                <strong>{{ appointment.title }}</strong>
-                <span>{{ appointment.patientName }} · {{ appointment.provider }}</span>
-              </div>
-              <time>{{ formatAppointment(appointment.appointmentDateTime) }}</time>
-              <em [attr.data-status]="appointment.status.toLowerCase()">{{ appointment.status }}</em>
-            </div>
-          } @empty {
-            <p class="empty-copy">{{ copy().noData }}</p>
-          }
-        </div>
-      </article>
-    </div>
   }
+
 </section>

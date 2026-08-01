@@ -10,12 +10,15 @@ import { AuthService } from '../../Services/auth-service';
 import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { NotificationService } from '../../Services/notification.service';
-import { MedicationRemindersService } from '../../Services/medication-reminders.service';
+import { AllergyCheckResult, MedicationRemindersService } from '../../Services/medication-reminders.service';
+import { FamilyProfileBannerComponent } from '../../Components/family-profile-banner/family-profile-banner';
 import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
 import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UpdateUserMedicinePayload, UserMedicine } from '../../Modles/dashboard.models';
 import { LocalizationService } from '../../Services/localization.service';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 
 type MedTab = 'schedule' | 'medications';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -92,7 +95,7 @@ interface Dose {
 @Component({
   selector: 'app-medications',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent],
   templateUrl: './medications.html',
   styleUrl: './medications.css',
 })
@@ -132,6 +135,7 @@ export class Medications implements OnInit, OnDestroy {
   protected readonly t = this.l10n.t;
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
+  private readonly reviewTracking = inject(ReviewTrackingService);
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {
@@ -163,6 +167,17 @@ export class Medications implements OnInit, OnDestroy {
   );
 
   readonly fpReadOnly = computed(() => this._viewingMedProfile()?.accessRole === 'Viewer');
+
+  /** The resolved family profile for template use (banner name + relationship). */
+  readonly viewingFpProfile = computed(() => this._viewingMedProfile());
+  readonly fpBannerName = computed(() => {
+    const p = this._viewingMedProfile();
+    return p && !p.isSelf ? `${p.firstName} ${p.lastName}` : null;
+  });
+  readonly fpBannerRelationship = computed(() => {
+    const p = this._viewingMedProfile();
+    return p && !p.isSelf ? (p.relationship ?? null) : null;
+  });
 
   /** Display label for the owner of every dose card on this page. */
   readonly doseOwnerLabel = computed<string>(() => {
@@ -197,7 +212,8 @@ export class Medications implements OnInit, OnDestroy {
   readonly openMedMenuId = signal<string | null>(null);
   readonly viewingMed = signal<UserMedicine | null>(null);
   readonly medPage = signal(1);
-  private readonly MED_PAGE_SIZE = 8;
+  private readonly MED_PAGE_SIZE = 2;
+  readonly mobileTabMenuOpen = signal(false);
 
   // ── Medicine Reminders ────────────────────────────────────────────────────
   readonly medicineReminders = signal<Record<string, MedicineReminder[]>>({});
@@ -234,6 +250,12 @@ export class Medications implements OnInit, OnDestroy {
   readonly showAddMedModal = signal(false);
   readonly addMedSaving = signal(false);
   readonly addMedTouched = signal(false);
+
+  // ── Allergy safety check ──────────────────────────────────────────────────
+  readonly allergyChecking = signal(false);
+  readonly showAllergyWarning = signal(false);
+  readonly allergyCheckResult = signal<AllergyCheckResult | null>(null);
+  private _pendingMedPayload: AddUserMedicinePayload | null = null;
 
   // ── Edit Medicine modal ───────────────────────────────────────────────────
   readonly showEditMedModal = signal(false);
@@ -412,12 +434,12 @@ export class Medications implements OnInit, OnDestroy {
     this.doses().filter(d => d.status === 'Cancelled').length
   );
 
-  /** Share of doses whose time has passed that were actually taken. */
+  /** Share of non-cancelled doses that were actually taken. */
   readonly adherencePct = computed(() => {
-    const elapsed = this.doses().filter(d => d.minutes <= this.nowMinutes() && d.status !== 'Cancelled');
-    if (elapsed.length === 0) return null;
-    const taken = elapsed.filter(d => d.status === 'Confirmed').length;
-    return Math.round((taken / elapsed.length) * 100);
+    const nonCancelled = this.doses().filter(d => d.status !== 'Cancelled');
+    if (nonCancelled.length === 0) return null;
+    const taken = nonCancelled.filter(d => d.status === 'Confirmed').length;
+    return Math.round((taken / nonCancelled.length) * 100);
   });
 
   /** The dose the page is really about: the next one still owed. */
@@ -596,7 +618,7 @@ export class Medications implements OnInit, OnDestroy {
     this.clockId = setInterval(() => this.nowMinutes.set(Medications.minutesNow()), 30_000);
 
     this.route.queryParams.subscribe(params => {
-      const fpId = params['profileId'] ?? null;
+      const fpId = params['profileId'] ?? this.profileSelectSvc.selectedProfileId ?? null;
       if (fpId !== this.fpProfileId()) {
         this.fpProfileId.set(fpId);
         this.fpProfileName.set(params['name'] ?? null);
@@ -661,6 +683,7 @@ export class Medications implements OnInit, OnDestroy {
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
   goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
   setTab(tab: MedTab): void {
@@ -918,6 +941,7 @@ export class Medications implements OnInit, OnDestroy {
           })
         );
 
+        this.reviewTracking.trackAction();
         this.toast(`${log.medicineName} marked as taken. Great job! 💊`, 'success');
         this.notifSvc.push({
           title: 'Medication Confirmed',
@@ -1150,6 +1174,7 @@ export class Medications implements OnInit, OnDestroy {
           this.addReminderSaving.set(false);
           this.closeAddReminder();
           this.notifSvc.notifyReminderChanged();
+          this.reviewTracking.trackAction();
           this.toast(`Reminder set for ${medName}.`, 'success');
         },
         error: err => {
@@ -1330,6 +1355,31 @@ export class Medications implements OnInit, OnDestroy {
   setMedSubTab(tab: MedSubTab): void {
     this.medSubTab.set(tab);
     this.medPage.set(1);
+    this.mobileTabMenuOpen.set(false);
+  }
+
+  toggleMobileTabMenu(): void { this.mobileTabMenuOpen.update(v => !v); }
+  closeMobileTabMenu(): void  { this.mobileTabMenuOpen.set(false); }
+
+  activeTabLabel(): string {
+    const t = this.t().medications;
+    const map: Record<string, string> = {
+      all:              t.allTab || 'All',
+      'with-reminder':  t.withReminderTab || 'With Reminder',
+      'no-reminder':    t.noReminderTab || 'No Reminder',
+      paused:           t.pausedTab || 'Paused',
+    };
+    return map[this.medSubTab()] ?? (t.allTab || 'All');
+  }
+
+  activeTabIcon(): string {
+    const map: Record<string, string> = {
+      all: 'fa-layer-group',
+      'with-reminder': 'fa-bell',
+      'no-reminder': 'fa-bell-slash',
+      paused: 'fa-pause',
+    };
+    return map[this.medSubTab()] ?? 'fa-layer-group';
   }
 
   onMedSearch(q: string): void {
@@ -1404,19 +1454,53 @@ export class Medications implements OnInit, OnDestroy {
       source: 1,
     };
 
+    this.allergyChecking.set(true);
+    this.medSvc.checkMedicationAllergy(payload.medicineName, this.fpProfileId() ?? undefined).subscribe({
+      next: res => {
+        this.allergyChecking.set(false);
+        if (res.data && !res.data.isSafe) {
+          this._pendingMedPayload = payload;
+          this.allergyCheckResult.set(res.data);
+          this.showAllergyWarning.set(true);
+        } else {
+          this.doSaveMedicine(payload);
+        }
+      },
+      error: () => {
+        this.allergyChecking.set(false);
+        this.doSaveMedicine(payload);
+      },
+    });
+  }
+
+  continueAfterWarning(): void {
+    const payload = this._pendingMedPayload;
+    this.showAllergyWarning.set(false);
+    this.allergyCheckResult.set(null);
+    this._pendingMedPayload = null;
+    if (payload) this.doSaveMedicine(payload);
+  }
+
+  dismissAllergyWarning(): void {
+    this.showAllergyWarning.set(false);
+    this.allergyCheckResult.set(null);
+    this._pendingMedPayload = null;
+  }
+
+  private doSaveMedicine(payload: AddUserMedicinePayload): void {
     this.addMedSaving.set(true);
     this.medSvc.createMedicine(payload, this.fpProfileId() ?? undefined).subscribe({
       next: res => {
         this.addMedSaving.set(false);
         this.showAddMedModal.set(false);
         this.toast(`${payload.medicineName} added successfully.`, 'success');
+        this.reviewTracking.trackAction();
         this.loadMedicines();
         if (res.data?.id) {
           this.setTab('medications');
         }
       },
       error: err => {
-        // Prefer the first specific validation error over the generic "Validation failed." message.
         const msg = err?.error?.errors?.[0] ?? err?.error?.message ?? 'Could not add medication.';
         this.toast(msg, 'error');
         this.addMedSaving.set(false);

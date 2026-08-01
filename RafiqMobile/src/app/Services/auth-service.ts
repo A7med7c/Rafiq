@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, isDevMode, NgZone } from '@angular/core';
+import { Injectable, inject, isDevMode } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   BehaviorSubject, Observable, Subject, catchError, finalize, firstValueFrom,
@@ -24,7 +24,6 @@ export class AuthService {
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly router = inject(Router);
   private readonly profileSelectionSvc = inject(ProfileSelectionService);
-  private readonly ngZone = inject(NgZone);
 
   private readonly currentUserSubject = new BehaviorSubject<Account | null>(
     this.tokenStorage.getUser()
@@ -55,7 +54,12 @@ export class AuthService {
   }
 
   navigateToAppEntry(): void {
-    void this.router.navigate([this.isLoggedIn ? '/dashboard' : '/login']);
+    if (!this.isLoggedIn) {
+      void this.router.navigate(['/login']);
+      return;
+    }
+    const role = this.currentUser?.role;
+    void this.router.navigate([role === 'Admin' ? '/admin/dashboard' : '/dashboard']);
   }
 
   /** Resolves the current user's avatar to an absolute URL, falling back to the default avatar. */
@@ -91,7 +95,6 @@ export class AuthService {
   }
 
   login(request: LoginRequest): Observable<AuthResponse> {
-    console.log(`[TRACE] [${new Date().toISOString()}] AuthService.login() called. NgZone.isInAngularZone: ${NgZone.isInAngularZone()}`);
     return this.http.post<AuthResponse>(
       `${environment.apiUrl}/auth/login`,
       request
@@ -258,15 +261,12 @@ export class AuthService {
   }
 
   getMe(): Observable<Account> {
-    console.log(`[TRACE] [${new Date().toISOString()}] AuthService.getMe() initiated. NgZone.isInAngularZone: ${NgZone.isInAngularZone()}`);
     return this.http.get<ApiResponse<Account>>(
       `${environment.apiUrl}/auth/me`
     ).pipe(
       map((response) => response.data),
       tap((user) => {
-        console.log(`[TRACE] [${new Date().toISOString()}] AuthService.getMe() tap response. NgZone.isInAngularZone: ${NgZone.isInAngularZone()}`);
         this.tokenStorage.setUser(user);
-        console.log(`[TRACE] [${new Date().toISOString()}] Calling currentUserSubject.next(user)`);
         this.currentUserSubject.next(user);
       })
     );
@@ -329,16 +329,6 @@ export class AuthService {
   }
 
   private handleAuthSuccess(response: AuthResponse, loadProfile = true): void {
-    console.debug(`[AuthService] handleAuthSuccess called. Login token length: ${response.data.accessToken.length}`);
-    console.debug(`[AuthService] Login token first 20 chars: ${response.data.accessToken.substring(0, 20)}`);
-    console.debug(`[AuthService] Login token last 20 chars: ${response.data.accessToken.substring(response.data.accessToken.length - 20)}`);
-    
-    console.log(`\n===========================================`);
-    console.log(`[TRACE] Step: handleAuthSuccess()`);
-    console.log(`[TRACE] Timestamp: ${new Date().toISOString()}`);
-    console.log(`[TRACE] NgZone.isInAngularZone(): ${NgZone.isInAngularZone()}`);
-    console.log(`===========================================\n`);
-    
     this.tokenStorage.setTokens(response.data);
 
     if (loadProfile) {

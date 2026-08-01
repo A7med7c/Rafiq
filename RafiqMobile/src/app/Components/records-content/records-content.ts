@@ -1,7 +1,7 @@
 import {
   Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges,
   inject, signal, computed, effect,
-  HostListener, ViewEncapsulation,
+  ElementRef, ViewChild, HostListener, ViewEncapsulation,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { CommonModule } from '@angular/common';
@@ -15,8 +15,9 @@ import { PdfService } from '../../Services/pdf.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { of, forkJoin, Subscription } from 'rxjs';
 import { LocalizationService } from '../../Services/localization.service';
-import { ImagePickerService } from '../../Services/image-picker.service';
+import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 import { switchMap, map } from 'rxjs';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -109,7 +110,7 @@ export interface Toast {
   type: 'success' | 'error';
 }
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 2;
 const FILTER_SORT_STORAGE_KEY = 'rafiq-medical-records-sort';
 
 const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
@@ -124,7 +125,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 @Component({
   selector: 'app-records-content',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AssistantAnchorDirective],
   templateUrl: './records-content.html',
   styleUrl: '../../Pages/medical-records/medical-records.css',
   encapsulation: ViewEncapsulation.None,
@@ -135,6 +136,14 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   @Input() compact = false;
   @Input() readOnly = false;
 
+  @ViewChild('labInput') labInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('prescriptionInput') prescriptionInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('imagingInput') imagingInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('medicineInput') medicineInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('generalInput') generalInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('manualImageInput') manualImageInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('manualMedImageInput') manualMedImageInput!: ElementRef<HTMLInputElement>;
+
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
@@ -143,7 +152,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   private readonly pdfService = inject(PdfService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly imagePicker = inject(ImagePickerService);
+  private readonly documentAnalysisState = inject(DocumentAnalysisStateService);
   private readonly base = environment.apiUrl;
 
   readonly allRecords = signal<UnifiedMedicalRecord[]>([]);
@@ -159,6 +168,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly deleting = signal(false);
   readonly tabDirection = signal<'left' | 'right'>('left');
   readonly tabAnimating = signal(false);
+  readonly mobileTabMenuOpen = signal(false);
 
   readonly lightboxUrl = signal<string | null>(null);
   readonly detailImageFailed = signal(false);
@@ -271,10 +281,18 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   private readonly _doc = inject(DOCUMENT);
 
   constructor() {
+    // Open review modal when the floating card's "Review" button is clicked
+    effect(() => {
+      const review = this.documentAnalysisState.pendingReview();
+      if (!review) return;
+      this.openReviewModal(review.uploadType as any, review.data);
+      this.documentAnalysisState.clearPendingReview();
+    });
+
     effect(() => {
       const open = !!(
         this.selectedRecord() || this.deleteTarget() || this.reviewForm() ||
-        this.generalUploadFormOpen() || this.uploadLoading() || this.scanLoading() ||
+        this.generalUploadFormOpen() || this.scanLoading() ||
         this.scanResult() || this.showReminderPromptModal() || this.lightboxUrl() ||
         this.showAiFailDialog()
       );
@@ -582,7 +600,33 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.animateTable(nextIndex >= currentIndex ? 'left' : 'right');
     this.activeTab.set(tab);
     this.currentPage.set(1);
+    this.mobileTabMenuOpen.set(false);
   }
+
+  toggleMobileTabMenu(): void { this.mobileTabMenuOpen.update(v => !v); }
+  closeMobileTabMenu(): void  { this.mobileTabMenuOpen.set(false); }
+
+  activeTabLabel(): string {
+    const t = this.t().records;
+    const map: Record<string, string> = {
+      all:          t.allRecords,
+      lab:          t.labAnalysisTab,
+      prescription: t.prescriptionsTab,
+      imaging:      t.xraysImagingTab,
+      medicine:     t.medicineBoxesTab,
+      general:      t.otherDocumentsTab,
+    };
+    return map[this.activeTab()] ?? t.allRecords;
+  }
+
+  activeTabIcon(): string {
+    const map: Record<string, string> = {
+      all: 'fa-layer-group', lab: 'fa-flask', prescription: 'fa-prescription-bottle-medical',
+      imaging: 'fa-x-ray', medicine: 'fa-pills', general: 'fa-file-medical',
+    };
+    return map[this.activeTab()] ?? 'fa-layer-group';
+  }
+
 
   private animateTable(direction: 'left' | 'right'): void {
     this.tabDirection.set(direction);
@@ -697,27 +741,25 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   openLightbox(url: string): void { this.lightboxUrl.set(url); }
   closeLightbox(): void { this.lightboxUrl.set(null); }
 
-  async triggerUpload(type: string): Promise<void> {
+  triggerUpload(type: string): void {
     if (this.readOnly) return;
-    if (type === 'General Medical Document') { this.openGeneralUploadForm(); return; }
-    const accept: Record<string, string> = {
-      'Lab Analysis': '.jpg,.jpeg,.png,.pdf,.webp',
-      'Prescription': '.jpg,.jpeg,.png,.pdf,.webp',
-      'X-Ray & Imaging': '.jpg,.jpeg,.png,.pdf,.dcm,.webp',
-      'Medicine Box': '.jpg,.jpeg,.png,.webp',
+    const map: Record<string, ElementRef<HTMLInputElement> | undefined> = {
+      'Lab Analysis': this.labInput,
+      'Prescription': this.prescriptionInput,
+      'X-Ray & Imaging': this.imagingInput,
+      'Medicine Box': this.medicineInput,
+      'General Medical Document': this.generalInput,
     };
-    const file = await this.imagePicker.pickImage({ accept: accept[type] ?? accept['Lab Analysis'] });
-    if (!file) return;
+    (map[type] ?? this.labInput)?.nativeElement.click();
+  }
 
-    if (type === 'Medicine Box') {
-      this.startMedicineScan(file);
-    } else if (type === 'Prescription') {
-      this.uploadAndReview('prescription', file);
-    } else if (type === 'X-Ray & Imaging') {
-      this.uploadAndReview('imaging', file);
-    } else {
-      this.uploadAndReview('lab', file);
-    }
+  onLabFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.uploadAndReview('lab', f); }
+  onPrescriptionFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.uploadAndReview('prescription', f); }
+  onImagingFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.uploadAndReview('imaging', f); }
+  onMedicineFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.startMedicineScan(f); }
+  onGeneralFileSelected(e: Event): void {
+    const f = this.extractFile(e);
+    if (f) this.uploadGeneralAsync(f, '');
   }
 
   openGeneralUploadForm(): void {
@@ -734,77 +776,103 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   submitGeneralUpload(): void {
     const file = this.generalUploadForm.file;
     if (!file) { this.showToast('Please choose an image before uploading.', 'error'); return; }
-    this.uploadAndReview('general', file, this.generalUploadForm.description);
+    this.uploadGeneralAsync(file, this.generalUploadForm.description);
   }
 
-  async chooseGeneralUploadImage(): Promise<void> {
-    const file = await this.imagePicker.pickImage({ accept: '.jpg,.jpeg,.png,.webp' });
-    if (!file) return;
-    this.generalUploadForm.file = file;
-    this.generalUploadForm.fileName = file.name;
-  }
-
-  private uploadAndReview(type: 'lab' | 'imaging' | 'prescription' | 'general', file: File, description = ''): void {
+  private uploadGeneralAsync(file: File, description: string): void {
     const pid = this.profileId ? `?profileId=${this.profileId}` : '';
-    const urls: Record<'lab' | 'imaging' | 'prescription' | 'general', string> = {
-      lab: `${this.base}/documents/upload/lab${pid}`,
-      imaging: `${this.base}/documents/upload/imaging${pid}`,
-      prescription: `${this.base}/prescriptions/upload${pid}`,
-      general: `${this.base}/documents/general/upload`,
-    };
-    const labels: Record<'lab' | 'imaging' | 'prescription' | 'general', string> = {
-      lab: this.t().records.analysingLab,
-      imaging: this.t().records.analysingImaging,
-      prescription: this.t().records.extractingPrescription,
-      general: this.t().records.analysingDocument,
-    };
+    const url = `${this.base}/documents/general/upload-async${pid}`;
 
+    // uploadLoading controls the form submit-button spinner only (no full-screen overlay)
     this.uploadLoading.set(true);
-    this.uploadLoadingLabel.set(labels[type]);
-    this.setUploading(type, true);
-    this._pendingUploadType = type;
+    this.setUploading('general', true);
 
     const form = new FormData();
     form.append('image', file);
-    if (type === 'general') form.append('description', description.trim());
+    form.append('description', description.trim());
 
-    this._uploadSub = this.http.post<{ data: any }>(urls[type], form).subscribe({
+    this.http.post<{ data: { documentId: string; imagePath: string; title: string } }>(url, form).subscribe({
       next: res => {
-        this._uploadSub = null;
-        this._pendingUploadType = null;
         this.uploadLoading.set(false);
-        this.setUploading(type, false);
-        const data = res?.data ?? (res as any);
-        if (type === 'general') {
-          data.description = description.trim();
-          this.generalUploadFormOpen.set(false);
-          this.generalUploadForm = this.emptyGeneralUploadForm();
+        this.setUploading('general', false);
+        this.generalUploadFormOpen.set(false);
+        this.generalUploadForm = this.emptyGeneralUploadForm();
+
+        const d = res?.data;
+        if (d?.documentId) {
+          this.documentAnalysisState.trackDocument(d.documentId, d.title, d.imagePath);
         }
-        this.openReviewModal(type, data);
       },
       error: err => {
-        this._uploadSub = null;
-        this._pendingUploadType = null;
         this.uploadLoading.set(false);
+        this.setUploading('general', false);
+        this.showToast(err?.error?.message || 'Upload failed. Please try again.', 'error');
+      },
+    });
+  }
+
+  private extractFile(event: Event): File | null {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    return file;
+  }
+
+  private uploadAndReview(type: 'lab' | 'imaging' | 'prescription', file: File): void {
+    const pid = this.profileId ? `?profileId=${this.profileId}` : '';
+    const urls: Record<'lab' | 'imaging' | 'prescription', string> = {
+      lab: `${this.base}/documents/upload/lab${pid}`,
+      imaging: `${this.base}/documents/upload/imaging${pid}`,
+      prescription: `${this.base}/prescriptions/upload${pid}`,
+    };
+    const cardTitles: Record<'lab' | 'imaging' | 'prescription', string> = {
+      lab: this.t().records.analysingLab,
+      imaging: this.t().records.analysingImaging,
+      prescription: this.t().records.extractingPrescription,
+    };
+
+    const tempId = crypto.randomUUID();
+    // Add to floating card immediately — user can navigate away
+    this.documentAnalysisState.trackSyncUpload(tempId, cardTitles[type], type);
+    this.setUploading(type, true);
+
+    const form = new FormData();
+    form.append('image', file);
+
+    this.http.post<{ data: any }>(urls[type], form).subscribe({
+      next: res => {
+        this.setUploading(type, false);
+        const data = res?.data ?? (res as any);
+        // Floating card shows "Ready to Review" button; clicking it opens the modal
+        this.documentAnalysisState.completeWithReviewData(tempId, data);
+      },
+      error: err => {
         this.setUploading(type, false);
         const errCode = err?.error?.errorCode as string | undefined;
         const v = this.t().uploadValidation;
+
         if (errCode === 'WRONG_DOCUMENT_TYPE_LAB_REPORT') {
+          this.documentAnalysisState.failSyncUpload(tempId, v.lab);
           this.showToast(v.lab, 'error');
         } else if (errCode === 'WRONG_DOCUMENT_TYPE_IMAGING_REPORT') {
+          this.documentAnalysisState.failSyncUpload(tempId, v.imaging);
           this.showToast(v.imaging, 'error');
         } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
+          this.documentAnalysisState.failSyncUpload(tempId, v.prescription);
           this.showToast(v.prescription, 'error');
-        } else if (errCode === 'UNREADABLE_DOCUMENT_LAB_REPORT' || errCode === 'UNREADABLE_DOCUMENT_IMAGING_REPORT' || errCode === 'UNREADABLE_DOCUMENT_PRESCRIPTION') {
+        } else if (errCode?.startsWith('UNREADABLE_DOCUMENT_')) {
+          this.documentAnalysisState.failSyncUpload(tempId, 'Document unreadable — enter manually.');
           this._failedFile = file;
           this._failedType = type;
-          this._failedDesc = description;
+          this._failedDesc = '';
           this.aiFailIsUnreadable.set(true);
           this.showAiFailDialog.set(true);
         } else {
+          const reason = err?.error?.message || 'Analysis failed. Please try again.';
+          this.documentAnalysisState.failSyncUpload(tempId, reason);
           this._failedFile = file;
           this._failedType = type;
-          this._failedDesc = description;
+          this._failedDesc = '';
           this.aiFailIsUnreadable.set(false);
           this.showAiFailDialog.set(true);
         }
@@ -813,14 +881,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   cancelUpload(): void {
-    this._uploadSub?.unsubscribe();
-    this._uploadSub = null;
-    if (this._pendingUploadType) {
-      this.setUploading(this._pendingUploadType, false);
-      this._pendingUploadType = null;
-    }
-    this.uploadLoading.set(false);
-    this.uploadLoadingLabel.set('');
+    // No-op: kept for template backward-compat. Upload now runs in background.
   }
 
   private openReviewModal(
@@ -963,10 +1024,14 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         ? this.http.put(`${this.base}/prescriptions/${rf.recordId}`, payload)
         : this.http.post(`${this.base}/prescriptions${pid}`, payload);
     } else {
-      const payload = { title: rf.title, description: rf.description, aiSummary: rf.summary, imagePath: rf.imagePath };
+      const payload = {
+        title: rf.title, description: rf.description, aiSummary: rf.summary, imagePath: rf.imagePath,
+        documentType: rf.documentType, doctorName: rf.doctorName, hospitalOrClinic: rf.hospitalOrClinic,
+        documentDate: rf.documentDate, ocrText: rf.ocrText,
+      };
       request$ = rf.mode === 'edit' && rf.recordId
         ? this.http.put(`${this.base}/documents/general/${rf.recordId}`, payload)
-        : this.http.post(`${this.base}/documents/general`, payload);
+        : this.http.post(`${this.base}/documents/general${pid}`, payload);
     }
 
     request$.subscribe({
@@ -1053,11 +1118,14 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.manualImageUploading.set(false);
   }
 
-  async chooseManualImage(target: 'review' | 'medicine'): Promise<void> {
-    const file = await this.imagePicker.pickImage({
-      accept: '.jpg,.jpeg,.png,.webp,.gif',
-    });
-    if (file) this.uploadManualImage(file, target);
+  onManualImageSelected(e: Event): void {
+    const f = this.extractFile(e);
+    if (f) this.uploadManualImage(f, 'review');
+  }
+
+  onManualMedImageSelected(e: Event): void {
+    const f = this.extractFile(e);
+    if (f) this.uploadManualImage(f, 'medicine');
   }
 
   private uploadManualImage(file: File, target: 'review' | 'medicine'): void {
@@ -1105,8 +1173,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       this.scanResult.set({ medicineName: '', strength: '', dosageForm: '', manufacturer: '', imagePath: '' });
       return;
     }
-    const typeMap: Record<string, 'lab' | 'imaging' | 'prescription'> = {
-      lab: 'lab', imaging: 'imaging', prescription: 'prescription',
+    const typeMap: Record<string, 'lab' | 'imaging' | 'prescription' | 'general'> = {
+      lab: 'lab', imaging: 'imaging', prescription: 'prescription', general: 'general',
     };
     const reviewType = typeMap[type];
     if (!reviewType) return;
@@ -1114,6 +1182,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       lab: { results: [{ testName: '', value: '', unit: '', normalRange: '', status: 'Normal' }] },
       prescription: { medicines: [{ medicineName: '', dosage: '', frequency: '', duration: '', instructions: '' }] },
       imaging: {},
+      general: {},
     };
     this.manualReviewMode.set(true);
     this.openReviewModal(reviewType, seedData[reviewType], 'create');
@@ -1227,7 +1296,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         })),
       });
     }
-    return JSON.stringify({ title: rf.title, description: rf.description, summary: rf.summary });
+    return JSON.stringify({ title: rf.title, description: rf.description, summary: rf.summary, documentType: rf.documentType, doctorName: rf.doctorName, hospitalOrClinic: rf.hospitalOrClinic, documentDate: rf.documentDate, ocrText: rf.ocrText });
   }
 
   private snapshotScanForm(sf: ScanForm): string {
@@ -1364,8 +1433,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.showAiFailDialog.set(false);
     if (type === 'medicine') {
       this.startMedicineScan(file);
+    } else if (type === 'general') {
+      this.uploadGeneralAsync(file, this._failedDesc);
     } else {
-      this.uploadAndReview(type, file, this._failedDesc);
+      this.uploadAndReview(type, file);
     }
   }
 }

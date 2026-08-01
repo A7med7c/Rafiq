@@ -134,7 +134,7 @@
 
             <!-- Row 4: Optional Profile Details (Standalone) -->
             <div class="field profile-image-field">
-                <label>{{ t().register.profilePhotoOptional }}</label>
+                <label for="profileImage">{{ t().register.profilePhotoOptional }}</label>
                 <div class="profile-image-picker">
                     <div class="profile-image-preview">
                         @if (profileImagePreview) {
@@ -149,11 +149,11 @@
                         }
                     </div>
                     <div class="profile-image-actions">
-                        <button type="button" class="image-picker-button" (click)="chooseProfileImage()">
-                            {{ t().register.chooseImage }}
-                        </button>
+                        <input id="profileImage" #profileImageInput type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            (change)="onProfileImageSelected($event)">
                         @if (profileImage) {
-                        <button type="button" class="icon-button" (click)="removeProfileImage()">
+                        <button type="button" class="icon-button" (click)="removeProfileImage(profileImageInput)">
                             {{ t().register.remove }}
                         </button>
                         }
@@ -161,7 +161,7 @@
                 </div>
             </div>
 
-            <button class="submit-button" type="submit" [disabled]="isSubmitting || registerForm.invalid">
+            <button assistantAnchor="register-submit" class="submit-button" type="submit" [disabled]="isSubmitting || registerForm.invalid">
                 @if (isSubmitting) {
                 {{ t().register.creatingAccount }}
                 } @else {
