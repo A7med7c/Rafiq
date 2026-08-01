@@ -1,0 +1,100 @@
+<div class="admin-shell" [class.admin-shell--dark]="darkMode()">
+  @if (sidebarOpen()) {
+    <button class="admin-backdrop" type="button" (click)="closeSidebar()" [attr.aria-label]="copy().close"></button>
+  }
+
+  <aside class="admin-sidebar" [class.admin-sidebar--open]="sidebarOpen()">
+    <div class="admin-brand">
+      <a routerLink="/admin/dashboard" class="admin-brand__link" (click)="closeSidebar()">
+        <img src="images/RafiqLogo.png" alt="" class="admin-brand__logo">
+        <span>
+          <strong>{{ copy().brand }}</strong>
+          <small>{{ copy().workspace }}</small>
+        </span>
+      </a>
+      <button class="icon-button admin-sidebar__close" type="button" (click)="closeSidebar()" [attr.aria-label]="copy().close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <nav class="admin-nav" aria-label="Admin">
+      @for (item of navigation; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="admin-nav__link--active"
+          class="admin-nav__link"
+          (click)="closeSidebar()">
+          <i class="fa-solid {{ item.icon }}" aria-hidden="true"></i>
+          <span>{{ copy().nav[item.label] }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="admin-sidebar__footer">
+      <a routerLink="/admin/profile" class="admin-account-card" (click)="closeSidebar()">
+        <img [src]="avatarUrl" alt="" class="admin-avatar">
+        <span>
+          <strong>{{ adminName }}</strong>
+          <small>{{ adminEmail }}</small>
+        </span>
+        <i class="fa-solid fa-chevron-right"></i>
+      </a>
+    </div>
+  </aside>
+
+  <section class="admin-workspace">
+    <header class="admin-header">
+      <button class="icon-button admin-menu-button" type="button" (click)="sidebarOpen.set(true)" [attr.aria-label]="copy().menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <label class="admin-global-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" [placeholder]="copy().search">
+        <kbd>Ctrl K</kbd>
+      </label>
+
+      <div class="admin-header__actions">
+        <button class="icon-button" type="button" (click)="toggleLanguage()" [attr.aria-label]="copy().language">
+          <span class="language-mark">{{ l10n.lang() === 'en' ? 'AR' : 'EN' }}</span>
+        </button>
+        <button class="icon-button" type="button" (click)="toggleTheme()" [attr.aria-label]="copy().theme">
+          <i class="fa-solid" [class.fa-moon]="!darkMode()" [class.fa-sun]="darkMode()"></i>
+        </button>
+        <button class="icon-button notification-button" type="button" (click)="notifications.toggleNotificationCenter()" [attr.aria-label]="copy().notifications">
+          <i class="fa-regular fa-bell"></i>
+          @if (notifications.unreadCount() > 0) {
+            <span>{{ notifications.unreadCount() > 9 ? '9+' : notifications.unreadCount() }}</span>
+          }
+        </button>
+        <div class="admin-profile-menu">
+          <button class="admin-profile-trigger" type="button" (click)="profileOpen.update(value => !value)" [attr.aria-label]="copy().profile">
+            <img [src]="avatarUrl" alt="" class="admin-avatar">
+            <span>{{ adminName }}</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+          @if (profileOpen()) {
+            <div class="admin-profile-popover">
+              <div>
+                <strong>{{ adminName }}</strong>
+                <small>{{ adminEmail }}</small>
+              </div>
+              <a routerLink="/admin/profile" (click)="profileOpen.set(false)">
+                <i class="fa-regular fa-user"></i>
+                {{ copy().profile }}
+              </a>
+              <button type="button" (click)="logout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                {{ copy().logout }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <router-outlet></router-outlet>
+    </main>
+  </section>
+</div>

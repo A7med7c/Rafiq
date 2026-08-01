@@ -1,0 +1,92 @@
+<section class="login-container" [dir]="l10n.dir()">
+    <div class="login-card">
+
+        <div class="card-header">
+            <h2>{{ t().verifyAccount.title }}</h2>
+            @if (email) {
+                <p>{{ t().verifyAccount.subtitleWithEmail }}</p>
+                <p class="verification-email">{{ email }}</p>
+            } @else {
+                <p>{{ t().verifyAccount.subtitleNoEmail }}</p>
+            }
+        </div>
+
+        @if (successMessage) {
+            <div class="alert alert-success" role="status">
+                {{ successMessage }}
+            </div>
+        }
+
+        @if (apiErrors.length) {
+            <div class="alert alert-error" role="alert">
+                @for (error of apiErrors; track error) {
+                    <p>{{ error }}</p>
+                }
+            </div>
+        }
+
+        <div class="verification-panel">
+
+            @if (!email) {
+                <div class="field">
+                    <label for="email">{{ t().verifyAccount.emailLabel }}</label>
+                    <div class="input-shell">
+                        <input
+                            id="email"
+                            type="email"
+                            [value]="email"
+                            (input)="email = $any($event.target).value"
+                            [placeholder]="t().verifyAccount.emailPlaceholder"
+                            autocomplete="email">
+                    </div>
+                </div>
+            }
+
+            <div class="field">
+                <label for="verificationCode">{{ t().verifyAccount.codeLabel }}</label>
+                <div class="input-shell">
+                    <input
+                        id="verificationCode"
+                        type="text"
+                        inputmode="numeric"
+                        [value]="verificationCode"
+                        (input)="verificationCode = $any($event.target).value"
+                        [placeholder]="t().verifyAccount.codePlaceholder"
+                        autocomplete="one-time-code">
+                </div>
+            </div>
+
+            <button
+                class="submit-button"
+                type="button"
+                (click)="verify()"
+                [disabled]="isVerifying">
+                @if (isVerifying) {
+                    {{ t().verifyAccount.verifying }}
+                } @else {
+                    {{ t().verifyAccount.verify }}
+                }
+            </button>
+
+            <button
+                class="secondary-button"
+                type="button"
+                (click)="resend()"
+                [disabled]="isResending || resendCooldown > 0">
+                @if (isResending) {
+                    {{ t().verifyAccount.sending }}
+                } @else if (resendCooldown > 0) {
+                    {{ t().verifyAccount.resendCooldown }} {{ resendCooldown }}{{ t().verifyAccount.seconds }}
+                } @else {
+                    {{ t().verifyAccount.resendCode }}
+                }
+            </button>
+        </div>
+
+        <p class="register">
+            {{ t().verifyAccount.alreadyVerified }}
+            <a routerLink="/login">{{ t().verifyAccount.logIn }}</a>
+        </p>
+
+    </div>
+</section>

@@ -1,0 +1,174 @@
+<div class="step-page">
+
+  <!-- Top navigation bar -->
+  <header class="step-header">
+    <button class="back-btn" (click)="goBack()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      {{ t().onboarding.header.back }}
+    </button>
+    <h1 class="header-title">{{ t().onboarding.header.createHealthProfile }}</h1>
+    <div class="header-spacer"></div>
+  </header>
+
+  <div class="onboarding-layout">
+
+    <!-- Progress stepper -->
+    <div class="stepper-wrapper">
+      <div class="stepper">
+        @for (step of steps; track $index) {
+          <div class="step-item" [class.active]="$index === 1" [class.done]="$index < 1">
+            <div class="step-circle">
+              <span class="step-number">{{ $index + 1 }}</span>
+            </div>
+            <span class="step-label">{{ step.label }}</span>
+          </div>
+          @if ($index < steps.length - 1) {
+            <div class="step-connector" [class.filled]="$index < 1"></div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Form card -->
+    <div class="form-card">
+      <p class="step-indicator">{{ t().onboarding.emergency.stepIndicator }}</p>
+      <h2 class="form-title">{{ t().onboarding.emergency.title }}</h2>
+      <p class="form-subtitle">{{ t().onboarding.emergency.subtitle }}</p>
+
+      <form [formGroup]="form" (ngSubmit)="addContact()" novalidate autocomplete="off">
+
+        <div class="fields-row">
+          <!-- Name field -->
+          <div class="field">
+            <label for="name" class="field-label">{{ t().onboarding.emergency.contactName }}</label>
+            <div class="input-shell" [class.invalid]="isInvalid('name')">
+              <input
+                id="name"
+                type="text"
+                class="field-input"
+                formControlName="name"
+                [placeholder]="t().onboarding.emergency.contactNamePlaceholder"
+                autocomplete="off"
+              />
+            </div>
+            @if (isInvalid('name')) {
+              <p class="field-error">{{ t().onboarding.emergency.contactNameError }}</p>
+            }
+          </div>
+
+          <!-- Relation field -->
+          <div class="field">
+            <label for="relation" class="field-label">{{ t().onboarding.emergency.relationLabel }}</label>
+            <div class="input-shell" [class.invalid]="isInvalid('relation')">
+              <input
+                id="relation"
+                type="text"
+                class="field-input"
+                formControlName="relation"
+                [placeholder]="t().onboarding.emergency.relationPlaceholder"
+                autocomplete="off"
+              />
+            </div>
+            @if (isInvalid('relation')) {
+              <p class="field-error">{{ t().onboarding.emergency.relationError }}</p>
+            }
+          </div>
+        </div>
+
+        <!-- Phone Number field -->
+        <div class="field phone-field">
+          <label for="phoneNumber" class="field-label">{{ t().onboarding.emergency.phoneLabel }}</label>
+          <div class="input-shell" [class.invalid]="isInvalid('phoneNumber')">
+            <input
+              id="phoneNumber"
+              type="text"
+              class="field-input"
+              formControlName="phoneNumber"
+              [placeholder]="t().onboarding.emergency.phonePlaceholder"
+              autocomplete="off"
+            />
+          </div>
+          @if (isInvalid('phoneNumber')) {
+            <p class="field-error">{{ getPhoneError() }}</p>
+          }
+        </div>
+
+        @if (submitError) {
+          <div class="alert-box error-alert">
+            <p>{{ submitError }}</p>
+          </div>
+        }
+
+        <button type="submit" class="add-btn" [disabled]="isAdding">
+          @if (isAdding) {
+            {{ t().onboarding.emergency.adding }}
+          } @else {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            {{ t().onboarding.emergency.addContact }}
+          }
+        </button>
+
+      </form>
+
+      <!-- Divider -->
+      @if (contacts.length > 0) {
+        <div class="divider"></div>
+
+        <h3 class="list-title">{{ t().onboarding.emergency.addedContacts }}</h3>
+
+        <div class="contacts-list">
+          @for (c of contacts; track c.id) {
+            <div class="contact-card">
+              <div class="contact-info">
+                <p class="contact-name">{{ c.name }}</p>
+                <p class="contact-details">
+                  <span class="badge">{{ c.relation }}</span>
+                  <span class="phone">{{ c.phoneNumber }}</span>
+                </p>
+              </div>
+              <button class="delete-btn" (click)="deleteContact(c.id)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Bottom actions -->
+      <div class="action-footer">
+        <button
+          type="button"
+          class="skip-btn"
+          (click)="skip()">
+          {{ t().common.skip }}
+        </button>
+        <button
+          class="finish-btn"
+          [disabled]="contacts.length === 0"
+          (click)="continueToNextStep()">
+          {{ t().onboarding.emergency.continueBtn }}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Bottom progress bar -->
+    <div class="progress-footer">
+      <div class="progress-track">
+        <div class="progress-fill" style="width: 40%"></div>
+      </div>
+      <span class="progress-label">{{ t().onboarding.emergency.stepIndicator }}</span>
+    </div>
+
+  </div>
+
+</div>

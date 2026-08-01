@@ -1,0 +1,38 @@
+{
+	"appId": "com.rafiq.mobile",
+	"appName": "Rafiq",
+	"webDir": "dist/RafiqAngular/browser",
+	"plugins": {
+		"StatusBar": {
+			"overlaysWebView": false,
+			"style": "LIGHT",
+			"backgroundColor": "#f8fdffff"
+		},
+		"SplashScreen": {
+			"launchShowDuration": 1500,
+			"backgroundColor": "#f8fdffff",
+			"androidSplashResourceName": "splash",
+			"androidScaleType": "CENTER_CROP",
+			"showSpinner": false,
+			"splashFullScreen": false,
+			"splashImmersive": false
+		},
+		"Keyboard": {
+			"resize": "native",
+			"resizeOnFullScreen": true
+		}
+	},
+	"packageClassList": [
+		"BiometricAuthNative",
+		"SecureStorage",
+		"AppPlugin",
+		"CAPCameraPlugin",
+		"FilesystemPlugin",
+		"KeyboardPlugin",
+		"LocalNotificationsPlugin",
+		"SharePlugin",
+		"SplashScreenPlugin",
+		"StatusBarPlugin",
+		"FilePickerPlugin"
+	]
+}

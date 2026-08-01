@@ -1,0 +1,149 @@
+<section class="admin-page">
+  <header class="page-heading">
+    <div>
+      <h1>{{ copy().title }}</h1>
+      <p>{{ copy().subtitle }}</p>
+    </div>
+    <span class="live-indicator"><i></i>{{ copy().live }}</span>
+  </header>
+
+  @if (loading()) {
+    <div class="metric-grid metric-grid--loading" aria-busy="true">
+      @for (item of [1, 2, 3, 4]; track item) {
+        <div class="metric-skeleton"></div>
+      }
+    </div>
+    <div class="dashboard-skeleton"></div>
+  } @else if (error()) {
+    <div class="admin-state">
+      <i class="fa-solid fa-chart-simple"></i>
+      <h2>{{ copy().loadError }}</h2>
+      <button type="button" (click)="loadDashboard()">{{ copy().retry }}</button>
+    </div>
+  } @else if (dashboard(); as data) {
+    <div class="metric-grid">
+      @for (metric of primaryMetrics(); track metric.label) {
+        <article class="metric" [attr.data-tone]="metric.tone">
+          <span class="metric__icon"><i class="fa-solid {{ metric.icon }}"></i></span>
+          <div>
+            <p>{{ metric.label }}</p>
+            <strong>{{ metric.value | number }}</strong>
+          </div>
+        </article>
+      }
+    </div>
+
+    <div class="growth-strip">
+      <div class="growth-strip__lead">
+        <span>{{ copy().newRegistrations }}</span>
+        <strong>{{ data.newRegistrationsThisMonth | number }}</strong>
+        <small [class.negative]="data.monthlyGrowthPercent < 0">
+          <i class="fa-solid" [class.fa-arrow-trend-up]="data.monthlyGrowthPercent >= 0" [class.fa-arrow-trend-down]="data.monthlyGrowthPercent < 0"></i>
+          {{ data.monthlyGrowthPercent | number:'1.0-1' }}% {{ copy().monthlyGrowth }}
+        </small>
+      </div>
+      <div class="growth-strip__stats">
+        @for (metric of secondaryMetrics(); track metric.label) {
+          <div>
+            <span>{{ metric.label }}</span>
+            <strong>{{ metric.value | number }}</strong>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="analytics-grid">
+      <article class="panel chart-panel">
+        <header class="panel__header">
+          <div><h2>{{ copy().userGrowth }}</h2><p>{{ copy().lastSixMonths }}</p></div>
+          <i class="fa-solid fa-arrow-trend-up"></i>
+        </header>
+        <div class="bar-chart" role="img" [attr.aria-label]="copy().userGrowth">
+          @for (point of data.userGrowth; track point.label) {
+            <div class="bar-chart__item">
+              <span class="bar-chart__value">{{ point.value }}</span>
+              <div class="bar-chart__track">
+                <i [style.height.%]="barHeight(point, data.userGrowth)"></i>
+              </div>
+              <span class="bar-chart__label">{{ point.label }}</span>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="panel chart-panel chart-panel--appointments">
+        <header class="panel__header">
+          <div><h2>{{ copy().appointmentVolume }}</h2><p>{{ copy().lastSixMonths }}</p></div>
+          <i class="fa-regular fa-calendar"></i>
+        </header>
+        <div class="bar-chart" role="img" [attr.aria-label]="copy().appointmentVolume">
+          @for (point of data.appointmentTrend; track point.label) {
+            <div class="bar-chart__item">
+              <span class="bar-chart__value">{{ point.value }}</span>
+              <div class="bar-chart__track">
+                <i [style.height.%]="barHeight(point, data.appointmentTrend)"></i>
+              </div>
+              <span class="bar-chart__label">{{ point.label }}</span>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="panel distribution-panel">
+        <header class="panel__header">
+          <div><h2>{{ copy().genderDistribution }}</h2><p>{{ data.totalProfiles | number }} {{ copy().profiles }}</p></div>
+        </header>
+        <div class="distribution-list">
+          @for (item of data.genderDistribution; track item.label) {
+            <div class="distribution-item">
+              <div><span>{{ item.label }}</span><strong>{{ item.value }}</strong></div>
+              <div class="distribution-track"><i [style.width.%]="distributionWidth(item.value)"></i></div>
+            </div>
+          } @empty {
+            <p class="empty-copy">{{ copy().noData }}</p>
+          }
+        </div>
+      </article>
+    </div>
+
+    <div class="activity-grid">
+      <article class="panel">
+        <header class="panel__header">
+          <div><h2>{{ copy().recentUsers }}</h2></div>
+          <a routerLink="/admin/users">{{ copy().viewUsers }} <i class="fa-solid fa-arrow-right"></i></a>
+        </header>
+        <div class="user-list">
+          @for (user of data.recentUsers; track user.id) {
+            <div class="user-row">
+              <img [src]="avatarUrl(user.profileImageUrl)" alt="">
+              <div><strong>{{ user.fullName }}</strong><span>{{ user.email }}</span></div>
+              <time>{{ formatDate(user.createdAt) }}</time>
+              <i class="status-dot" [class.status-dot--inactive]="!user.isActive"></i>
+            </div>
+          } @empty {
+            <p class="empty-copy">{{ copy().noData }}</p>
+          }
+        </div>
+      </article>
+
+      <article class="panel appointment-panel">
+        <header class="panel__header"><div><h2>{{ copy().recentAppointments }}</h2></div></header>
+        <div class="appointment-list">
+          @for (appointment of data.recentAppointments; track appointment.id) {
+            <div class="appointment-row">
+              <span class="appointment-row__date"><i class="fa-regular fa-calendar"></i></span>
+              <div>
+                <strong>{{ appointment.title }}</strong>
+                <span>{{ appointment.patientName }} · {{ appointment.provider }}</span>
+              </div>
+              <time>{{ formatAppointment(appointment.appointmentDateTime) }}</time>
+              <em [attr.data-status]="appointment.status.toLowerCase()">{{ appointment.status }}</em>
+            </div>
+          } @empty {
+            <p class="empty-copy">{{ copy().noData }}</p>
+          }
+        </div>
+      </article>
+    </div>
+  }
+</section>

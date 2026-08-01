@@ -1,0 +1,321 @@
+@if (isPanelOpen()) {
+  <div class="ai-panel-overlay" (click)="closePanel()"></div>
+
+  <div class="ai-panel"
+    [attr.dir]="l10n.dir()"
+    [class.ai-panel--minimized]="minimized()"
+    [class.ai-panel--maximized]="maximized()"
+    [class.ai-panel--dragging]="isDragging()"
+    [style.animation]="_suppressAnimation() ? 'none' : null"
+    [style.top.px]="dragPos() ? dragPos()!.top : null"
+    [style.left.px]="dragPos() ? dragPos()!.left : null"
+    [style.right]="dragPos() ? 'auto' : null"
+    [style.transform]="dragPos() ? 'none' : null">
+
+    <!-- ══ CONVERSATIONS SIDEBAR (chat mode only) ══ -->
+    @if (activeMode() === 'chat') {
+    <aside class="ai-sidebar" [class.ai-sidebar--collapsed]="sidebarCollapsed()">
+      <div class="ai-sb-header">
+        <button type="button" class="ai-sb-new" (click)="startNewConversation()"
+          [title]="t().aiAssistant.newChat">
+          <i class="fa-solid fa-pen-to-square"></i>
+          @if (!sidebarCollapsed()) {
+            <span>{{ t().aiAssistant.newChat }}</span>
+          }
+        </button>
+      </div>
+
+      @if (!sidebarCollapsed()) {
+        <div class="ai-sb-body">
+          @if (conversationsLoading()) {
+            <div class="ai-sb-skel">
+              @for (s of [1,2,3]; track s) {
+                <div class="ai-sb-skel-row">
+                  <div class="ai-sb-skel-line" [style.width]="s === 1 ? '80%' : s === 2 ? '60%' : '72%'"></div>
+                </div>
+              }
+            </div>
+          } @else if (conversations().length === 0) {
+            <p class="ai-sb-empty">{{ t().aiAssistant.noConversations }}</p>
+          } @else {
+            <ul class="ai-sb-list">
+              @for (conv of conversations(); track conv.id) {
+                <li
+                  class="ai-sb-item"
+                  [class.ai-sb-item--active]="conv.id === selectedConversationId()"
+                  (click)="selectConversation(conv)"
+                >
+                  <i class="fa-regular fa-comment-dots ai-sb-ico"></i>
+                  <span class="ai-sb-title">{{ conv.title }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </aside>
+    }
+
+    <!-- ══ MAIN CHAT AREA ══ -->
+    <div class="ai-main">
+
+      <!-- Header -->
+      <header class="ai-main-hdr"
+        [class.ai-main-hdr--minimized]="minimized()"
+        (mousedown)="onHeaderPointerDown($event)"
+        (touchstart)="onHeaderPointerDown($event)">
+        <div class="ai-main-hdr-left"
+          [attr.role]="minimized() ? 'button' : null"
+          [attr.tabindex]="minimized() ? 0 : null"
+          (click)="minimized() && toggleMinimize()"
+          (keydown.enter)="minimized() && toggleMinimize()">
+          <div class="ai-avatar-badge">
+            <img src="images/RafiqLogo.png" alt="Rafiq" class="ai-badge-logo">
+            <span class="online-dot"></span>
+          </div>
+          @if (!minimized()) {
+            <div class="ai-hdr-info">
+              <h3 class="ai-main-title">Rafiq AI</h3>
+              @if (selectedConversation()) {
+                <p class="ai-main-sub">{{ selectedConversation()!.title }}</p>
+              } @else {
+                <p class="ai-main-sub online-text">{{ t().aiAssistant.onlineStatus }}</p>
+              }
+            </div>
+          }
+        </div>
+        <div class="ai-main-hdr-right">
+          @if (!minimized()) {
+            <!-- Voice / Chat toggle -->
+            <button type="button" class="ai-hdr-btn ai-hdr-btn--mode"
+              (click)="toggleMode()"
+              [title]="activeMode() === 'chat' ? t().voiceAgent.switchToVoice : t().voiceAgent.switchToChat">
+              <i class="fa-solid" [class.fa-microphone]="activeMode() === 'chat'" [class.fa-comment-dots]="activeMode() === 'voice'"></i>
+            </button>
+            @if (activeMode() === 'chat') {
+              <button type="button" class="ai-hdr-btn ai-hdr-btn--sidebar"
+                (click)="toggleSidebar()"
+                [title]="sidebarCollapsed() ? t().aiAssistant.showSidebar : t().aiAssistant.hideSidebar">
+                <i class="fa-solid fa-bars"></i>
+              </button>
+            }
+            <button type="button" class="ai-hdr-btn ai-hdr-btn--maximize"
+              (click)="toggleMaximize()"
+              [title]="maximized() ? t().aiAssistant.restoreWindow : t().aiAssistant.expandFullscreen">
+              <i class="fa-solid" [class.fa-expand]="!maximized()" [class.fa-compress]="maximized()"></i>
+            </button>
+            <button type="button" class="ai-hdr-btn ai-hdr-btn--minimize"
+              (click)="toggleMinimize()"
+              [title]="t().common.close">
+              <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <button type="button" class="ai-hdr-btn ai-hdr-btn--close" (click)="closePanel()"
+              [title]="t().common.close">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          }
+        </div>
+      </header>
+
+      <!-- Voice Mode -->
+      @if (activeMode() === 'voice') {
+        <div class="ai-messages-wrap">
+          <app-voice-agent-panel></app-voice-agent-panel>
+        </div>
+      }
+
+      <!-- Messages Area (Chat Mode) -->
+      <div class="ai-messages-wrap" [style.display]="activeMode() === 'voice' ? 'none' : null">
+
+        @if (profileError()) {
+          <div class="ai-state-empty">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <p>{{ t().aiAssistant.noProfileError }}</p>
+          </div>
+        } @else if (profileLoading()) {
+          <div class="ai-state-loading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+          </div>
+        } @else if (messages().length === 0 && !sending()) {
+          <!-- Welcome / Idle State -->
+          <div class="ai-welcome">
+            <div class="ai-welcome-icon">
+              <img src="images/RafiqLogo.png" alt="Rafiq" class="ai-welcome-logo">
+            </div>
+            <h2 class="ai-welcome-title">{{ t().aiAssistant.askRafiqAI }}</h2>
+            <p class="ai-welcome-sub">{{ t().aiAssistant.aiEmptyText }}</p>
+            <div class="ai-prompts">
+              @for (prompt of suggestedPrompts(); track prompt) {
+                <button type="button" class="ai-prompt-chip" (click)="usePrompt(prompt)">
+                  {{ prompt }}
+                </button>
+              }
+            </div>
+          </div>
+        } @else {
+          <!-- Chat messages -->
+          <div class="ai-messages">
+            @if (messagesLoading()) {
+              <div class="ai-state-loading"><i class="fa-solid fa-spinner fa-spin"></i></div>
+            }
+            @for (msg of messages(); track msg.id) {
+              @if (isUserMessage(msg)) {
+                <div class="ai-msg ai-msg--user">
+                  <div class="ai-bubble ai-bubble--user">
+                    @if (msg.imagePreviewUrl) {
+                      <img [src]="msg.imagePreviewUrl" alt="" class="ai-bubble-img">
+                    }
+                    @if (msg.content) { <p>{{ msg.content }}</p> }
+                  </div>
+                  <span class="ai-msg-time">{{ formatMessageTime(msg) }}</span>
+                </div>
+              } @else {
+                <div class="ai-msg ai-msg--ai">
+                  <div class="ai-msg-avatar"><img src="images/RafiqLogo.png" alt="Rafiq" class="ai-msg-logo"></div>
+                  <div class="ai-msg-col">
+                    <div class="ai-bubble ai-bubble--ai">
+                      <markdown [data]="msg.content"></markdown>
+                    </div>
+                    <div class="ai-msg-footer">
+                      <span class="ai-msg-time">{{ formatMessageTime(msg) }}</span>
+                      <div class="ai-reactions">
+                        <button type="button"
+                          class="ai-react-btn"
+                          [class.ai-react-btn--active]="msg.userReaction === 'ThumbsUp'"
+                          [title]="t().aiAssistant.reactionHelpful"
+                          (click)="toggleReaction(msg, 'ThumbsUp')">
+                          <i class="fa-regular fa-thumbs-up"></i>
+                        </button>
+                        <button type="button"
+                          class="ai-react-btn"
+                          [class.ai-react-btn--active-down]="msg.userReaction === 'ThumbsDown'"
+                          [title]="t().aiAssistant.reactionNotHelpful"
+                          (click)="toggleReaction(msg, 'ThumbsDown')">
+                          <i class="fa-regular fa-thumbs-down"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+            @if (sending()) {
+              <div class="ai-msg ai-msg--ai">
+                <div class="ai-msg-avatar"><img src="images/RafiqLogo.png" alt="Rafiq" class="ai-msg-logo"></div>
+                <div class="ai-msg-col">
+                  <div class="ai-bubble ai-bubble--ai ai-typing">
+                    <span class="ai-dot"></span>
+                    <span class="ai-dot"></span>
+                    <span class="ai-dot"></span>
+                  </div>
+                  <span class="ai-typing-label">{{ t().aiAssistant.rafiqTyping }}</span>
+                </div>
+              </div>
+            }
+            <div #messagesEnd></div>
+          </div>
+        }
+
+      </div>
+
+      <!-- Composer Footer (chat mode only) -->
+      @if (activeMode() === 'chat') {
+      <div class="ai-composer-wrap">
+        @if (sendError()) {
+          <div class="ai-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ sendError() }}</div>
+        }
+        @if (attachError()) {
+          <div class="ai-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ attachError() }}</div>
+        }
+        @if (attachedImagePreviewUrl()) {
+          <div class="ai-attach-preview">
+            <img [src]="attachedImagePreviewUrl()" alt="" class="ai-attach-img">
+            <button type="button" class="ai-attach-rm"
+              [title]="t().aiAssistant.removeImage"
+              (click)="removeAttachedImage()">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        }
+
+        <div class="ai-composer">
+          <button type="button" class="ai-composer-ico"
+            [disabled]="sending()"
+            [title]="t().aiAssistant.attachImage"
+            (click)="triggerFileSelect()">
+            <i class="fa-solid fa-paperclip"></i>
+          </button>
+          <textarea
+            #messageInput
+            class="ai-composer-input"
+            rows="1"
+            [attr.placeholder]="t().aiAssistant.typePlaceholder"
+            [value]="messageText()"
+            (input)="onMessageInput($any($event.target).value)"
+            (keydown)="onComposerKeydown($event)"
+          ></textarea>
+          <button type="button" class="ai-send-btn"
+            [disabled]="(!messageText().trim() && !attachedImageBase64()) || sending()"
+            (click)="sendMessage()">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+        <p class="ai-composer-hint">{{ t().aiAssistant.composerHintPanel }}</p>
+      </div>
+      }
+
+    </div><!-- /.ai-main -->
+  </div><!-- /.ai-panel -->
+}
+
+<!-- ═══ DISLIKE REASON DIALOG ═══ -->
+@if (dislikeDialogOpen()) {
+<div class="dislike-overlay" (click)="cancelDislikeDialog()"></div>
+<div class="dislike-dialog" role="dialog" aria-modal="true" [attr.dir]="l10n.dir()">
+  <div class="dislike-dialog-hdr">
+    <div class="dislike-dialog-icon">
+      <i class="fa-regular fa-thumbs-down"></i>
+    </div>
+    <div>
+      <h3 class="dislike-dialog-title">{{ t().aiAssistant.feedbackTitle }}</h3>
+      <p class="dislike-dialog-sub">{{ t().aiAssistant.feedbackSub }}</p>
+    </div>
+    <button type="button" class="dislike-close" (click)="cancelDislikeDialog()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="dislike-reasons">
+    @for (reason of dislikeReasons(); track reason) {
+      <button
+        type="button"
+        class="dislike-reason-chip"
+        [class.dislike-reason-chip--selected]="dislikeReason() === reason"
+        (click)="dislikeReason.set(reason)"
+      >
+        {{ reason }}
+      </button>
+    }
+  </div>
+
+  <textarea
+    class="dislike-textarea"
+    [attr.placeholder]="t().aiAssistant.feedbackTextPlaceholder"
+    [value]="dislikeFreeText()"
+    (input)="dislikeFreeText.set($any($event.target).value)"
+    rows="3"
+  ></textarea>
+
+  <div class="dislike-dialog-footer">
+    <button type="button" class="dislike-btn-cancel" (click)="cancelDislikeDialog()">{{ t().aiAssistant.feedbackCancel }}</button>
+    <button
+      type="button"
+      class="dislike-btn-submit"
+      (click)="submitDislikeReason()"
+    >
+      <i class="fa-regular fa-thumbs-down"></i>
+      {{ t().aiAssistant.feedbackSubmit }}
+    </button>
+  </div>
+</div>
+}

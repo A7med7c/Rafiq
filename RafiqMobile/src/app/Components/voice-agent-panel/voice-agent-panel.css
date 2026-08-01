@@ -1,0 +1,208 @@
+.vap-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+/* ── State overlays (init / error / not-supported) ── */
+.vap-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.vap-state-icon {
+  font-size: 2.5rem;
+  color: #0EAFD7;
+}
+
+.vap-state-icon--muted {
+  color: #9ca3af;
+}
+
+.vap-state--error .vap-state-icon {
+  color: #ef4444;
+}
+
+.vap-state-msg {
+  font-size: 0.875rem;
+  color: #6b7280;
+  max-width: 260px;
+  line-height: 1.5;
+}
+
+.vap-retry-btn {
+  margin-top: 4px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #0EAFD7;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.vap-retry-btn:hover {
+  opacity: 0.85;
+}
+
+/* ── Main body ── */
+.vap-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+/* ── Status label ── */
+.vap-status-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-align: center;
+  min-height: 1.25em;
+  transition: color 0.2s;
+}
+
+/* ── Mic button + rings ── */
+.vap-mic-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+}
+
+.vap-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid #0EAFD7;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.vap-ring--1 { width: 110%; height: 110%; }
+.vap-ring--2 { width: 130%; height: 130%; }
+
+.vap-mic-wrap--listening .vap-ring--1 {
+  opacity: 0.4;
+  animation: vap-pulse 1.2s ease-out infinite;
+}
+
+.vap-mic-wrap--listening .vap-ring--2 {
+  opacity: 0.2;
+  animation: vap-pulse 1.2s ease-out 0.4s infinite;
+}
+
+@keyframes vap-pulse {
+  0%   { transform: scale(0.9); opacity: 0.4; }
+  70%  { transform: scale(1.15); opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.vap-mic-btn {
+  position: relative;
+  z-index: 1;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  background: #0EAFD7;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.vap-mic-btn:hover:not(:disabled) {
+  transform: scale(1.06);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.vap-mic-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.vap-mic-btn--listening {
+  background: var(--danger, #ef4444);
+}
+
+.vap-mic-btn--processing,
+.vap-mic-btn--speaking {
+  background: #0EAFD7;
+  opacity: 0.75;
+  cursor: default;
+}
+
+.vap-mic-btn:disabled {
+  cursor: not-allowed;
+}
+
+/* ── Transcript & response bubbles ── */
+.vap-bubbles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.vap-bubble {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.vap-bubble p {
+  margin: 0;
+}
+
+.vap-bubble--user {
+  background: #0EAFD7;
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.vap-bubble-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.75;
+  margin-bottom: 4px;
+}
+
+.vap-bubble--ai {
+  background: #f3f4f6;
+  color: #111827;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.vap-bubble-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 2px;
+}

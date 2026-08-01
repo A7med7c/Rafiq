@@ -1,0 +1,247 @@
+<router-outlet></router-outlet>
+
+<div class="toast-container" aria-live="polite" aria-atomic="true">
+  @for (toast of notificationService.toasts(); track toast.id) {
+  @if (toast.action === 'open-reminder' && toast.sourceId) {
+  <div class="toast toast--clickable" role="button" tabindex="0" [class.toast--success]="toast.type === 'success'"
+    [class.toast--error]="toast.type === 'error'" (click)="notificationService.openReminderFromToast(toast.sourceId)"
+    (keydown.enter)="notificationService.openReminderFromToast(toast.sourceId)"
+    (keydown.space)="$event.preventDefault(); notificationService.openReminderFromToast(toast.sourceId)">
+    <span class="toast__icon">
+      <i class="fa-solid fa-bell"></i>
+    </span>
+    <span class="toast__body">
+      <span class="toast__title">{{ toast.title }}</span>
+      <span class="toast__message">{{ toast.body }}</span>
+    </span>
+    <button type="button" class="toast-close" (click)="$event.stopPropagation(); notificationService.dismissToast(toast.id)"
+      [attr.aria-label]="l10n.t().notifications.dismissToast">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  } @else if (toast.action === 'open-appointment' && toast.sourceId) {
+  <div class="toast" role="alert">
+    <span class="toast__icon">
+      <i class="fa-solid fa-calendar-check"></i>
+    </span>
+    <span class="toast__body">
+      <span class="toast__title">{{ toast.title }}</span>
+      <span class="toast__message">{{ toast.body }}</span>
+    </span>
+    <button type="button" class="reminder-btn reminder-btn--primary"
+      (click)="notificationService.acknowledgeAppointmentReminder(toast.sourceId!)"
+      [disabled]="notificationService.confirmingAppointment()">
+      @if (notificationService.confirmingAppointment()) {
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
+      } @else {
+      {{ l10n.t().notifications.confirmAttendance }}
+      }
+    </button>
+    <button type="button" class="toast-close" (click)="notificationService.dismissToast(toast.id)"
+      [attr.aria-label]="l10n.t().notifications.dismissToast">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  } @else {
+  <div class="toast" [class.toast--success]="toast.type === 'success'" [class.toast--error]="toast.type === 'error'">
+    <span class="toast__icon">
+      <i class="toast-icon fa-solid" [class.fa-circle-check]="toast.type === 'success'"
+        [class.fa-circle-xmark]="toast.type === 'error'" [class.fa-circle-info]="toast.type === 'info'"></i>
+    </span>
+    <span class="toast__body">
+      <span class="toast__title">{{ toast.title }}</span>
+      <span class="toast__message">{{ toast.body }}</span>
+    </span>
+    <button type="button" class="toast-close" (click)="notificationService.dismissToast(toast.id)"
+      [attr.aria-label]="l10n.t().notifications.dismissToast">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  }
+  }
+</div>
+
+@if (notificationService.notificationCenterOpen()) {
+<div class="notification-center-overlay" (click)="notificationService.closeNotificationCenter()">
+  <section class="notification-center" (click)="$event.stopPropagation()" role="dialog" aria-modal="true"
+    aria-labelledby="notification-center-title">
+    <header class="notification-center__header">
+      <div class="notification-center__title-wrap">
+        <div class="notification-center__icon" aria-hidden="true">
+          <i class="fa-regular fa-bell"></i>
+        </div>
+        <div class="notification-center__heading">
+          <h2 class="notification-center__title" id="notification-center-title">
+            {{ l10n.t().notifications.centerTitle }}
+          </h2>
+          <p class="notification-center__eyebrow">
+            @if (notificationService.unreadCount() > 0) {
+            {{ notificationService.unreadCount() }} {{ l10n.t().notifications.unreadCount }}
+            } @else {
+            {{ l10n.t().notifications.allCaughtUp }}
+            }
+          </p>
+        </div>
+      </div>
+
+      <div class="notification-center__actions">
+        @if (notificationService.unreadCount() > 0) {
+        <button type="button" class="notification-center__mark-read" (click)="notificationService.markAllRead()">
+          {{ l10n.t().notifications.markAllRead }}
+        </button>
+        }
+        <button type="button" class="notification-center__close" (click)="notificationService.closeNotificationCenter()"
+          [attr.aria-label]="l10n.t().notifications.closeCenter">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="notification-center__filters" role="tablist" [attr.aria-label]="l10n.t().notifications.filterAll">
+      <button type="button" class="notification-filter"
+        [class.notification-filter--active]="notificationService.centerFilter() === 'all'"
+        (click)="notificationService.setCenterFilter('all')">
+        {{ l10n.t().notifications.filterAll }}
+        <span class="notification-filter__count">{{ notificationService.notifications().length }}</span>
+      </button>
+      <button type="button" class="notification-filter"
+        [class.notification-filter--active]="notificationService.centerFilter() === 'unread'"
+        (click)="notificationService.setCenterFilter('unread')">
+        {{ l10n.t().notifications.filterUnread }}
+        <span class="notification-filter__count">{{ notificationService.unreadNotifications().length }}</span>
+      </button>
+      <button type="button" class="notification-filter"
+        [class.notification-filter--active]="notificationService.centerFilter() === 'read'"
+        (click)="notificationService.setCenterFilter('read')">
+        {{ l10n.t().notifications.filterRead }}
+        <span class="notification-filter__count">{{ notificationService.readNotifications().length }}</span>
+      </button>
+      <button type="button" class="notification-filter"
+        [class.notification-filter--active]="notificationService.centerFilter() === 'reminders'"
+        (click)="notificationService.setCenterFilter('reminders')">
+        {{ l10n.t().notifications.filterReminders }}
+        <span class="notification-filter__count">{{ notificationService.reminderNotifications().length }}</span>
+      </button>
+      <button type="button" class="notification-filter"
+        [class.notification-filter--active]="notificationService.centerFilter() === 'confirmations'"
+        (click)="notificationService.setCenterFilter('confirmations')">
+        {{ l10n.t().notifications.filterConfirmations }}
+        <span class="notification-filter__count">{{ notificationService.confirmationNotifications().length }}</span>
+      </button>
+    </div>
+
+    <div class="notification-center__body">
+      @if (notificationService.visibleNotifications().length === 0) {
+      <div class="notification-empty">
+        <div class="notification-empty__icon" aria-hidden="true">
+          <i class="fa-regular fa-bell"></i>
+        </div>
+        <p class="notification-empty__title">{{ l10n.t().notifications.emptyTitle }}</p>
+        <p class="notification-empty__body">{{ l10n.t().notifications.emptyBody }}</p>
+      </div>
+      } @else {
+      <div class="notification-list">
+        @for (notification of notificationService.visibleNotifications(); track notification.id) {
+        <button type="button" class="notification-item" [class.notification-item--unread]="!notification.read"
+          (click)="notificationService.openNotification(notification)">
+          <div class="notification-item__icon"
+            [class.notification-item__icon--reminder]="notification.type === 'reminder'"
+            [class.notification-item__icon--confirmation]="notification.type === 'confirmation'"
+            [class.notification-item__icon--appointment]="notification.type === 'appointment'"
+            [class.notification-item__icon--system]="notification.type === 'system'">
+            <i class="fa-solid"
+              [class.fa-bell]="notification.type === 'reminder'"
+              [class.fa-circle-check]="notification.type === 'confirmation'"
+              [class.fa-calendar-check]="notification.type === 'appointment'"
+              [class.fa-circle-info]="notification.type === 'system'"></i>
+          </div>
+
+          <div class="notification-item__content">
+            <div class="notification-item__top">
+              <p class="notification-item__title">{{ notification.title }}</p>
+              <span class="notification-item__time">{{ notification.createdAt | date:'shortTime' }}</span>
+            </div>
+            <p class="notification-item__body">{{ notification.body }}</p>
+            <div class="notification-item__meta">
+              <span class="notification-pill">{{ notification.type }}</span>
+              @if (!notification.read) {
+              <span class="notification-pill notification-pill--unread">{{ l10n.t().notifications.unreadPill }}</span>
+              }
+            </div>
+          </div>
+        </button>
+        }
+      </div>
+      }
+    </div>
+  </section>
+</div>
+}
+
+@if (notificationService.reminderModalOpen() && notificationService.activeReminder()) {
+<div class="reminder-modal-overlay" (click)="notificationService.dismissReminder()">
+  <section class="reminder-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true"
+    aria-labelledby="reminder-modal-title">
+    <header class="reminder-modal__header">
+      <div class="reminder-modal__icon" aria-hidden="true">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+      <div class="reminder-modal__heading">
+        <p class="reminder-modal__eyebrow">{{ l10n.t().notifications.medicationReminder }}</p>
+        <h2 class="reminder-modal__title" id="reminder-modal-title">
+          {{ notificationService.activeReminder()!.medicineName }}
+        </h2>
+      </div>
+      <button type="button" class="reminder-modal__close" (click)="notificationService.dismissReminder()"
+        [attr.aria-label]="l10n.t().notifications.dismissReminder">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+
+    <div class="reminder-modal__body">
+      <dl class="reminder-details">
+        <div class="reminder-details__row">
+          <dt>{{ l10n.t().notifications.medicine }}</dt>
+          <dd>{{ notificationService.activeReminder()!.medicineName }}</dd>
+        </div>
+        <div class="reminder-details__row">
+          <dt>{{ l10n.t().notifications.strength }}</dt>
+          <dd>{{ notificationService.activeReminder()!.strength || l10n.t().notifications.notSpecified }}</dd>
+        </div>
+        <div class="reminder-details__row">
+          <dt>{{ l10n.t().notifications.reminderTime }}</dt>
+          <dd>{{ notificationService.activeReminder()!.reminderTime }}</dd>
+        </div>
+      </dl>
+
+      @if (notificationService.activeReminder()!.notificationText) {
+      <p class="reminder-modal__message">
+        {{ notificationService.activeReminder()!.notificationText }}
+      </p>
+      }
+    </div>
+
+    <footer class="reminder-modal__footer">
+      <button type="button" class="reminder-btn reminder-btn--primary"
+        (click)="notificationService.takeCurrentReminder()" [disabled]="notificationService.confirmingReminder()">
+        @if (notificationService.confirmingReminder()) {
+        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ l10n.t().notifications.confirming }}
+        } @else {
+        {{ l10n.t().notifications.iTookIt }}
+        }
+      </button>
+      <button type="button" class="reminder-btn reminder-btn--secondary"
+        (click)="notificationService.remindMeLater()" [disabled]="notificationService.confirmingReminder()">
+        {{ l10n.t().notifications.remindMeLater }}
+      </button>
+      <button type="button" class="reminder-btn reminder-btn--ghost"
+        (click)="notificationService.dismissReminder()" [disabled]="notificationService.confirmingReminder()">
+        {{ l10n.t().notifications.dismiss }}
+      </button>
+    </footer>
+  </section>
+</div>
+}
+
+<app-ai-panel></app-ai-panel>
+

@@ -1,0 +1,286 @@
+:host {
+    min-height: 0;
+    display: block;
+}
+
+.auth-hero {
+    position: relative;
+    height: 100%;
+    min-height: min(620px, calc(100svh - 48px));
+    padding: clamp(28px, 5vh, 50px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.auth-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 43% 5%, rgba(255, 255, 255, .75) 0 3px, transparent 4px),
+        radial-gradient(circle at 33% 19%, rgba(255, 255, 255, .82) 0 3px, transparent 4px),
+        radial-gradient(circle at 52% 27%, rgba(255, 255, 255, .8) 0 4px, transparent 5px),
+        linear-gradient(115deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+.brand {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    width: max-content;
+    z-index: 30;
+}
+
+.hero-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 0;
+    text-align: center;
+    gap: clamp(6px, 1.5vh, 16px);
+    padding-top: clamp(56px, 10vh, 86px);
+    overflow: hidden;
+}
+
+.brand img {
+    width: 48px;
+    height: 48px;
+}
+
+.brand strong {
+    font-size: 26px;
+    font-weight: 800;
+    color: #08264a;
+}
+
+.brand small {
+    font-size: 17px;
+    color: #5d7692;
+}
+
+.hero-copy {
+    z-index: 20;
+    max-width: 620px;
+    width: 100%;
+}
+
+.hero-copy h1 {
+    font-size: clamp(32px, 4.2vh, 56px);
+    line-height: 1.2;
+    font-weight: 800;
+    color: #08264a;
+}
+
+.hero-copy p {
+    margin-top: 12px;
+    font-size: clamp(16px, 2.2vh, 26px);
+    line-height: 1.4;
+    color: #395a7c;
+}
+
+.robot-stage {
+    position: relative;
+    right: 0;
+    top: 0;
+    width: clamp(200px, 36vh, 420px);
+    height: clamp(200px, 36vh, 420px);
+    margin-top: 6px;
+    flex-shrink: 1;
+}
+
+.robot-stage::before {
+    content: "";
+    position: absolute;
+    right: -42%;
+    bottom: 28%;
+    width: 180%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .9), transparent);
+    filter: drop-shadow(0 0 8px rgba(89, 220, 255, .8));
+}
+
+.robot {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 28px 34px rgba(21, 146, 211, .28));
+    animation: robotFloat 4.8s ease-in-out infinite;
+    transition: transform .45s ease, filter .45s ease;
+}
+
+.robot-stage:hover .robot {
+    transform: translateY(-12px) rotate(-2deg) scale(1.02);
+    filter: drop-shadow(0 34px 40px rgba(21, 146, 211, .34));
+}
+
+.platform {
+    position: absolute;
+    bottom: 8%;
+    /* Offset to 44.5% to compensate for asymmetrical transparent padding in RafiqLogo.png canvas */
+    left: 44.5%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 60px;
+    border: 2px solid rgba(255, 255, 255, .72);
+    border-radius: 50%;
+    box-shadow: 0 0 26px rgba(92, 225, 255, .76), inset 0 0 18px rgba(255, 255, 255, .68);
+    animation: platformGlow 4.8s ease-in-out infinite;
+}
+
+.pulse {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, .5);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .16);
+}
+
+.pulse-one {
+    width: 120px;
+    height: 120px;
+    left: 0;
+    top: 34%;
+}
+
+.pulse-two {
+    width: 180px;
+    height: 180px;
+    right: -2%;
+    top: 4%;
+}
+
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(145deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, .08));
+}
+
+.orb-one {
+    width: 74px;
+    height: 74px;
+    right: 2%;
+    bottom: 22%;
+}
+
+.orb-two {
+    width: 42px;
+    height: 42px;
+    left: 10%;
+    bottom: 28%;
+}
+
+.plus {
+    position: absolute;
+    color: #fff;
+    font-size: 34px;
+    font-weight: 600;
+    text-shadow: 0 0 14px rgba(57, 199, 255, .8);
+}
+
+.plus-one {
+    left: 6%;
+    top: 24%;
+}
+
+.plus-two {
+    right: 10%;
+    bottom: 42%;
+}
+
+@keyframes robotFloat {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-18px) rotate(-1.5deg);
+    }
+}
+
+@keyframes platformGlow {
+
+    0%,
+    100% {
+        opacity: .64;
+        transform: translateX(-50%) scaleX(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateX(-50%) scaleX(1.08);
+    }
+}
+
+@media (max-width: 960px) {
+    :host {
+        min-height: 0;
+    }
+
+    .auth-hero {
+        min-height: 220px;
+        padding: 8px 0 10px;
+    }
+
+    .brand{
+        position:relative;
+        top:auto;
+        left:auto;
+        margin:0 auto;
+    }
+
+    .brand img{
+        width:40px;
+        height:40px;
+    }
+
+    .hero-copy {
+        margin-top: 10px;
+    }
+
+    .hero-main{
+        gap:8px;
+        padding-top: 18px;
+    }
+
+    .hero-copy h1{
+        font-size:28px;
+    }
+
+    .hero-copy p{
+        font-size:15px;
+    }
+
+    .robot-stage {
+        right: auto;
+        left: auto;
+        bottom: auto;
+        width: min(160px, 44vw);
+        height: min(160px, 44vw);
+        transform:none;
+    }
+
+}
+
+@media (max-height: 600px) and (max-width: 960px) {
+    .auth-hero {
+        min-height: auto;
+        padding: 8px 0 0;
+    }
+    .hero-main {
+        padding-top: 8px;
+    }
+    .robot-stage {
+        display: none;
+    }
+}

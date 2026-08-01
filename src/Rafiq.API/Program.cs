@@ -44,7 +44,9 @@ public class Program
                 {
                     policy
                         .WithOrigins(
-                            "http://localhost:4200"
+                            "http://localhost:4200",
+                            "http://localhost",
+                            "https://localhost"
                         )
                         .AllowAnyHeader()
                         .AllowAnyMethod()

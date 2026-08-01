@@ -1,0 +1,1 @@
+var t=(function(a){return a.Documents="DOCUMENTS",a.Data="DATA",a.Library="LIBRARY",a.Cache="CACHE",a.External="EXTERNAL",a.ExternalStorage="EXTERNAL_STORAGE",a.ExternalCache="EXTERNAL_CACHE",a.LibraryNoCloud="LIBRARY_NO_CLOUD",a.Temporary="TEMPORARY",a})(t||{}),E=(function(a){return a.UTF8="utf8",a.ASCII="ascii",a.UTF16="utf16",a})(E||{});export{t as a,E as b};

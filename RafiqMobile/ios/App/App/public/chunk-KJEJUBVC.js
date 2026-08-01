@@ -1,0 +1,1 @@
+import{c as r}from"./chunk-KXPOJV5I.js";var t=r("SecureStorage",{web:async()=>{let e=await import("./chunk-JYBEOQTU.js");return new e.SecureStorageWeb},ios:async()=>{let e=await import("./chunk-FVYNUUHZ.js");return new e.SecureStorageNative(t)},android:async()=>{let e=await import("./chunk-FVYNUUHZ.js");return new e.SecureStorageNative(t)}});export{t as a};
