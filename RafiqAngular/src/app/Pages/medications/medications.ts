@@ -11,6 +11,7 @@ import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { NotificationService } from '../../Services/notification.service';
 import { AllergyCheckResult, MedicationRemindersService } from '../../Services/medication-reminders.service';
+import { FamilyProfileBannerComponent } from '../../Components/family-profile-banner/family-profile-banner';
 import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
 import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UpdateUserMedicinePayload, UserMedicine } from '../../Modles/dashboard.models';
 import { LocalizationService } from '../../Services/localization.service';
@@ -94,7 +95,7 @@ interface Dose {
 @Component({
   selector: 'app-medications',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent],
   templateUrl: './medications.html',
   styleUrl: './medications.css',
 })
@@ -166,6 +167,17 @@ export class Medications implements OnInit, OnDestroy {
   );
 
   readonly fpReadOnly = computed(() => this._viewingMedProfile()?.accessRole === 'Viewer');
+
+  /** The resolved family profile for template use (banner name + relationship). */
+  readonly viewingFpProfile = computed(() => this._viewingMedProfile());
+  readonly fpBannerName = computed(() => {
+    const p = this._viewingMedProfile();
+    return p && !p.isSelf ? `${p.firstName} ${p.lastName}` : null;
+  });
+  readonly fpBannerRelationship = computed(() => {
+    const p = this._viewingMedProfile();
+    return p && !p.isSelf ? (p.relationship ?? null) : null;
+  });
 
   /** Display label for the owner of every dose card on this page. */
   readonly doseOwnerLabel = computed<string>(() => {
@@ -422,12 +434,12 @@ export class Medications implements OnInit, OnDestroy {
     this.doses().filter(d => d.status === 'Cancelled').length
   );
 
-  /** Share of doses whose time has passed that were actually taken. */
+  /** Share of non-cancelled doses that were actually taken. */
   readonly adherencePct = computed(() => {
-    const elapsed = this.doses().filter(d => d.minutes <= this.nowMinutes() && d.status !== 'Cancelled');
-    if (elapsed.length === 0) return null;
-    const taken = elapsed.filter(d => d.status === 'Confirmed').length;
-    return Math.round((taken / elapsed.length) * 100);
+    const nonCancelled = this.doses().filter(d => d.status !== 'Cancelled');
+    if (nonCancelled.length === 0) return null;
+    const taken = nonCancelled.filter(d => d.status === 'Confirmed').length;
+    return Math.round((taken / nonCancelled.length) * 100);
   });
 
   /** The dose the page is really about: the next one still owed. */
@@ -606,7 +618,7 @@ export class Medications implements OnInit, OnDestroy {
     this.clockId = setInterval(() => this.nowMinutes.set(Medications.minutesNow()), 30_000);
 
     this.route.queryParams.subscribe(params => {
-      const fpId = params['profileId'] ?? null;
+      const fpId = params['profileId'] ?? this.profileSelectSvc.selectedProfileId ?? null;
       if (fpId !== this.fpProfileId()) {
         this.fpProfileId.set(fpId);
         this.fpProfileName.set(params['name'] ?? null);
@@ -671,6 +683,7 @@ export class Medications implements OnInit, OnDestroy {
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
   goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
   setTab(tab: MedTab): void {

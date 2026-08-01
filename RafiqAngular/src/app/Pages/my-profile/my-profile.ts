@@ -139,7 +139,7 @@ export class MyProfile implements OnInit {
   get displayName(): string {
     const u = this.authService.currentUser;
     if (!u) return '';
-    return `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email;
+    return u.firstName?.trim() || u.email;
   }
 
   get userEmail(): string {

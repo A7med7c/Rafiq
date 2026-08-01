@@ -120,6 +120,9 @@
             <button type="button" class="user-dropdown-item">
               <i class="fa-solid fa-gear"></i> {{ t().header.settings }}
             </button>
+            <button type="button" class="user-dropdown-item" (click)="openRatingPopup()">
+              <i class="fa-regular fa-star"></i> {{ t().ratingPopup.rateRafiq }}
+            </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
               <i class="fa-solid fa-arrow-right-from-bracket"></i> {{ t().header.logout }}
@@ -132,30 +135,6 @@
 
     <!-- BODY -->
     <div class="dsh-body">
-
-      <!-- ── Family profile context banner ── -->
-      @if (viewingProfile() && !viewingProfile()!.isSelf) {
-      <div class="fp-context-banner">
-        <span class="fp-context-icon"><i class="fa-solid fa-people-group"></i></span>
-        <div class="fp-context-info">
-          <span class="fp-context-label">{{ t().appointments.viewingFor }}</span>
-          <strong class="fp-context-name">
-            {{ viewingProfile()!.firstName }} {{ viewingProfile()!.lastName }}
-            @if (viewingProfile()!.relationship) {
-              <span class="fp-context-rel">({{ viewingProfile()!.relationship }})</span>
-            }
-          </strong>
-        </div>
-        @if (fpReadOnly()) {
-        <span class="fp-context-badge fp-context-badge--viewer">
-          <i class="fa-solid fa-eye"></i> {{ t().appointments.viewOnly }}
-        </span>
-        }
-        <button type="button" class="fp-context-back" (click)="goToFamilyProfiles()">
-          <i class="fa-solid fa-arrow-left"></i> {{ t().common.backToFamilyProfiles }}
-        </button>
-      </div>
-      }
 
       <!-- ── Title Bar ── -->
       <div class="appts-title-bar">
@@ -174,6 +153,9 @@
         </button>
         }
       </div>
+
+      <!-- ── Family profile context banner ── -->
+      <app-family-profile-banner [profile]="viewingProfile()" [readOnly]="fpReadOnly()" />
 
       <!-- ── Stat Cards ── -->
       <div class="appointment-overview">

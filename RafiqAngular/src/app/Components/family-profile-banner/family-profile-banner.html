@@ -1,0 +1,22 @@
+@if (profile() && !profile()!.isSelf) {
+<div class="fp-context-banner">
+  <span class="fp-context-icon"><i class="fa-solid fa-people-group"></i></span>
+  <div class="fp-context-info">
+    <span class="fp-context-label">{{ t().medicalRecordsPage.viewing }}</span>
+    <strong class="fp-context-name">
+      {{ profile()!.firstName }} {{ profile()!.lastName }}
+      @if (profile()!.relationship) {
+        <span class="fp-context-rel">({{ profile()!.relationship }})</span>
+      }
+    </strong>
+  </div>
+  @if (readOnly()) {
+  <span class="fp-context-badge fp-context-badge--viewer">
+    <i class="fa-solid fa-eye"></i> View Only
+  </span>
+  }
+  <a class="fp-context-back" routerLink="/family-profiles">
+    <i class="fa-solid fa-arrow-right"></i> {{ t().medicalRecordsPage.backToFamilyProfiles }}
+  </a>
+</div>
+}

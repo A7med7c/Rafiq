@@ -1,65 +1,5 @@
 @import "../dashboard/dashboard.css";
 
-/* ── Family profile context banner ───────────── */
-.fp-context-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: linear-gradient(135deg, #EFF9FF 0%, #E8F4FD 100%);
-  border: 1px solid rgba(14, 175, 215, 0.25);
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
-}
-.fp-context-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(14, 175, 215, 0.12);
-  color: var(--blue);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  flex-shrink: 0;
-}
-.fp-context-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-.fp-context-label { font-size: 11px; color: var(--text-3); font-weight: 600; }
-.fp-context-name  { font-size: 14px; color: var(--text); font-weight: 700; }
-.fp-context-badge {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-.fp-context-badge--viewer { background: #FEF9C3; color: #92400E; }
-.fp-context-back {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-xs);
-  background: var(--white);
-  color: var(--text-3);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
-.fp-context-back:hover { background: var(--border-lt); color: var(--text); }
-
 /* ── Page title bar ──────────────────────────── */
 .med-title-bar {
   display: flex;
@@ -87,34 +27,35 @@
 .med-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .med-stat-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 18px 20px;
-  border-radius: 16px;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--white);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, .04);
-  transition: transform 0.18s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+  transition: transform 0.18s, box-shadow 0.18s;
 }
 
 .med-stat-card:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .08);
 }
 
 .med-stat-ico {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 14px;
   flex-shrink: 0;
 }
 
@@ -126,20 +67,24 @@
 .med-stat-body {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .med-stat-num {
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text);
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .med-stat-lbl {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Tab bar ─────────────────────────────────── */
@@ -152,9 +97,9 @@
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  box-shadow: var(--shadow-md);
-  padding: 22px 24px 16px;
-  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  padding: 12px 16px 10px;
+  margin-bottom: 14px;
   border-left: 3px solid var(--blue);
 }
 
@@ -164,46 +109,46 @@
 
 .rail-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 26px;
+  margin-bottom: 10px;
 }
 
 .rail-eyebrow {
   display: inline-block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--blue);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .rail-card--overdue .rail-eyebrow { color: var(--red); }
 
 .rail-med {
   font-family: 'Outfit', 'Inter', sans-serif;
-  font-size: 24px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text);
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   line-height: 1.2;
 }
 
 .rail-dose {
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-3);
-  margin-left: 8px;
+  margin-left: 6px;
 }
 
 .rail-when {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-3);
-  margin: 0 0 14px;
+  margin: 0 0 8px;
 }
 
 .rail-when strong {
@@ -211,56 +156,59 @@
   font-weight: 600;
 }
 
-.rail-sep { margin: 0 6px; color: var(--text-4); }
+.rail-sep { margin: 0 5px; color: var(--text-4); }
 
 .rail-countdown { font-weight: 600; color: var(--text-2); }
 
 .rail-card--overdue .rail-countdown { color: var(--red); }
 
-.rail-cta { padding: 9px 18px; }
+.rail-cta { padding: 6px 14px; font-size: 12px; }
 
-.rail-next--done .rail-med { font-size: 20px; }
+.rail-next--done .rail-med { font-size: 14px; }
 
 /* Adherence readout */
 .rail-adherence {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
-  min-width: 150px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border-lt);
+  border-radius: 20px;
+  padding: 5px 12px;
 }
 
 .rail-adh-num {
   font-family: 'Outfit', 'Inter', sans-serif;
-  font-size: 34px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text);
   line-height: 1;
 }
 
 .rail-adh-den {
-  font-size: 20px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-4);
 }
 
 .rail-adh-lbl {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-3);
-  margin-top: 6px;
+  margin-top: 0;
 }
 
 .rail-adh-pct {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--green);
-  margin-top: 4px;
+  margin-top: 0;
 }
 
 /* ── The rail ── */
 .rail {
   position: relative;
-  height: 46px;
+  height: 38px;
   margin: 0 6px;
 }
 
@@ -1814,7 +1762,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .dose-card {
@@ -1860,16 +1808,16 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .dose-card__hdr {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 18px 14px;
+  gap: 10px;
+  padding: 12px 14px 10px;
   flex-wrap: wrap;
 }
 
 .dose-card__ico {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  font-size: 17px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 14px;
   flex-shrink: 0;
 }
 
@@ -1879,25 +1827,25 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .dose-card__name {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
-  margin: 0 0 2px;
+  margin: 0 0 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .dose-card__dosage {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-3);
   margin: 0;
 }
 
 .dose-card__owner {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--blue, #0eafd7);
-  margin: 3px 0 0;
+  margin: 2px 0 0;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1923,8 +1871,8 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .dose-card__cta {
-  padding: 10px 20px;
-  font-size: 13px;
+  padding: 6px 14px;
+  font-size: 12px;
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -1932,13 +1880,13 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .dose-card__taken-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 12px;
+  gap: 4px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--green);
   background: var(--green-lt);
   border-radius: 20px;
-  padding: 6px 14px;
+  padding: 4px 10px;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -1946,50 +1894,45 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 /* ── Card body ── */
 .dose-card__body {
   display: flex;
-  align-items: stretch;
-  gap: 0;
-  padding: 0 18px 14px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 10px;
   flex-wrap: wrap;
-  gap: 10px;
 }
 
 .dose-card__detail-box {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: var(--bg);
   border: 1px solid var(--border-lt);
-  border-radius: var(--r-xs);
-  padding: 10px 12px;
-  min-width: 130px;
+  border-radius: 20px;
+  padding: 4px 10px;
 }
 
 .dose-card__detail-ico {
-  font-size: 14px;
+  font-size: 11px;
   color: var(--text-3);
-  margin-top: 2px;
   flex-shrink: 0;
 }
 
 .dose-card__detail-content {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 4px;
 }
 
 .dose-card__detail-lbl {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .dose-card__detail-val {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text);
-  line-height: 1.2;
+  line-height: 1;
 }
 
 .dose-card__detail-sub {
@@ -1998,22 +1941,20 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .dose-card__info-chip {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
   background: var(--blue-lt);
   border: 1px solid var(--blue-mid);
-  border-radius: var(--r-xs);
-  padding: 10px 12px;
+  border-radius: 20px;
+  padding: 4px 10px;
   font-size: 11px;
   font-weight: 600;
   color: var(--blue);
-  flex: 1;
-  min-width: 160px;
 }
 
 .dose-card__info-chip i {
-  font-size: 13px;
+  font-size: 11px;
   flex-shrink: 0;
 }
 
@@ -2025,7 +1966,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 
 /* ── Reminder timeline ── */
 .dose-card__timeline-section {
-  padding: 12px 18px 16px;
+  padding: 7px 14px 10px;
   border-top: 1px solid var(--border-lt);
   background: var(--bg);
 }
@@ -2037,7 +1978,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .dose-timeline {
@@ -2180,11 +2121,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
    OVERVIEW SIDEBAR
 ════════════════════════════════════════ */
 .sched-overview {
-  width: 240px;
+  width: 210px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .overview-card {
@@ -2192,7 +2133,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   border: 1px solid var(--border);
   border-radius: var(--r);
   box-shadow: var(--shadow-sm);
-  padding: 16px;
+  padding: 12px 14px;
 }
 
 .overview-title {
@@ -2205,9 +2146,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 /* Progress ring */
 .overview-ring-wrap {
   position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 16px;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 12px;
 }
 
 .overview-ring-svg {
@@ -2240,7 +2181,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .overview-ring-pct {
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text);
   line-height: 1;
@@ -2426,59 +2367,66 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 /* Stat cards row */
 .meds-stat-grid {
   display: flex;
-  gap: 18px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .stat-card {
   flex: 1 1 0;
-  min-width: 140px;
+  min-width: 120px;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  padding: 20px;
-  border-radius: 20px;
-  border: 1px solid #E8EEF6;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
   background: #fff;
-  box-shadow: 0 8px 24px rgba(0,0,0,.05);
-  transition: transform 0.18s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  transition: transform 0.18s, box-shadow 0.18s;
 }
 
-.stat-card:hover { transform: translateY(-3px); }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.08); }
 
 .stat-ico-wrap {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  font-size: 18px;
-  margin-bottom: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 15px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.stat-body { display: flex; flex-direction: column; }
+.stat-body { display: flex; flex-direction: column; min-width: 0; }
 
 .stat-num {
-  font-size: 32px;
+  font-size: 22px;
   font-weight: 700;
   color: #172B4D;
   line-height: 1;
-  margin: 12px 0 6px;
+  margin: 0 0 3px;
 }
 
 .stat-lbl {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: #172B4D;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stat-sub {
-  font-size: 12px;
+  font-size: 11px;
   color: #667085;
-  margin-top: 4px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Toolbar */

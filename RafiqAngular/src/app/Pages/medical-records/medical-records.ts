@@ -8,6 +8,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { RecordsContentComponent } from '../../Components/records-content/records-content';
+import { FamilyProfileBannerComponent } from '../../Components/family-profile-banner/family-profile-banner';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -21,6 +22,7 @@ import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { NotificationService } from '../../Services/notification.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { switchMap, catchError, of, map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
@@ -145,7 +147,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 @Component({
   selector: 'app-medical-records',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent, AssistantAnchorDirective],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent, AssistantAnchorDirective, FamilyProfileBannerComponent],
   templateUrl: './medical-records.html',
   styleUrl: './medical-records.css',
 })
@@ -160,6 +162,7 @@ export class MedicalRecords implements OnInit {
   private readonly reminderSvc = inject(MedicationRemindersService);
   private readonly healthProfileSvc = inject(HealthProfileService);
   readonly notificationSvc = inject(NotificationService);
+  private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -184,7 +187,11 @@ export class MedicalRecords implements OnInit {
   readonly contextProfileId = computed(() => this.viewingProfile()?.userHealthProfileId ?? undefined);
   readonly contextProfileName = computed(() => {
     const p = this.viewingProfile();
-    return p ? `${p.firstName} ${p.lastName}` : null;
+    return p && !p.isSelf ? `${p.firstName} ${p.lastName}` : null;
+  });
+  readonly contextRelationship = computed(() => {
+    const p = this.viewingProfile();
+    return p && !p.isSelf ? (p.relationship ?? null) : null;
   });
   readonly contextReadOnly = computed(() => this.viewingProfile()?.accessRole === 'Viewer');
 
@@ -441,6 +448,7 @@ export class MedicalRecords implements OnInit {
   logout(): void { this.dropdownOpen.set(false); this.authService.logout().subscribe(); }
 
   goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
 
   toggleAddRecordMenu(event: MouseEvent): void {
     event.stopPropagation();

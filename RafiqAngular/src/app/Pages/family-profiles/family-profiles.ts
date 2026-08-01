@@ -12,6 +12,7 @@ import { AiChatService } from '../../Services/ai-chat.service';
 import { AuthService } from '../../Services/auth-service';
 import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { NotificationService } from '../../Services/notification.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { environment } from '../../Environments/Environment';
 import {
@@ -58,7 +59,8 @@ export class FamilyProfiles implements OnInit {
   protected readonly profileCache = inject(ProfileCacheService);
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
-  private readonly notifSvc = inject(NotificationService);
+  protected readonly notifSvc = inject(NotificationService); // template access
+  private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly http = inject(HttpClient);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly base = environment.apiUrl;
@@ -982,6 +984,7 @@ export class FamilyProfiles implements OnInit {
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
   goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
