@@ -490,7 +490,7 @@ a {
 .dsh-main {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
   overflow: hidden;
   min-width: 0;
 }
@@ -817,10 +817,10 @@ html[dir="rtl"] .user-dropdown {
 .dsh-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 28px 40px;
+  padding: 16px 22px 28px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 
 /* ── Greeting ──────────────────────────────── */
@@ -907,14 +907,14 @@ html[dir="rtl"] .user-dropdown {
   border: 1px solid var(--border);
   border-radius: var(--r);
   box-shadow: var(--shadow);
-  padding: 20px;
+  padding: 14px 16px;
 }
 
 /* ── Middle Row ────────────────────────────── */
 .mid-row {
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
   align-items: stretch;
 }
 
@@ -922,7 +922,7 @@ html[dir="rtl"] .user-dropdown {
 .ai-card {
   display: flex;
   flex-direction: column;
-  height: 360px;
+  height: 290px;
 }
 
 /* scrollable text area fills all remaining space */
@@ -952,7 +952,7 @@ html[dir="rtl"] .user-dropdown {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   gap: 10px;
 }
 
@@ -1178,7 +1178,7 @@ html[dir="rtl"] .user-dropdown {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   gap: 8px;
 }
 
@@ -1191,8 +1191,8 @@ html[dir="rtl"] .user-dropdown {
 .sys-rows {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 7px;
+  margin-bottom: 10px;
 }
 
 .sys-row {
@@ -1211,13 +1211,13 @@ html[dir="rtl"] .user-dropdown {
 }
 
 .sys-ico {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .sys-ico-blue {
@@ -1251,9 +1251,9 @@ html[dir="rtl"] .user-dropdown {
 
 .sys-spark {
   width: 100%;
-  height: 44px;
+  height: 34px;
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .sys-bpm-row {
@@ -1770,7 +1770,7 @@ html[dir="rtl"] .user-dropdown {
 .bot-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 12px;
   align-items: stretch;
 }
 
@@ -1791,14 +1791,14 @@ html[dir="rtl"] .user-dropdown {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 24px 16px;
+  padding: 16px 12px;
   color: var(--text-3);
 }
 
 .empty-icon {
-  font-size: 28px;
+  font-size: 22px;
   color: var(--text-4);
-  margin-bottom: 10px;
+  margin-bottom: 7px;
 }
 
 .empty-title {
@@ -1819,7 +1819,7 @@ html[dir="rtl"] .user-dropdown {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .bot-card-title {
@@ -1842,8 +1842,8 @@ html[dir="rtl"] .user-dropdown {
 .rec-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 0;
+  gap: 9px;
+  padding: 8px 0;
   border-bottom: 1px solid var(--border-lt);
 }
 
@@ -1852,13 +1852,13 @@ html[dir="rtl"] .user-dropdown {
 }
 
 .rec-ico {
-  width: 38px;
-  height: 38px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--r-xs);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 13px;
   flex-shrink: 0;
 }
 
@@ -1924,8 +1924,8 @@ html[dir="rtl"] .user-dropdown {
 .med-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 0;
+  gap: 9px;
+  padding: 8px 0;
   border-bottom: 1px solid var(--border-lt);
 }
 
@@ -1934,13 +1934,13 @@ html[dir="rtl"] .user-dropdown {
 }
 
 .med-ico {
-  width: 38px;
-  height: 38px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--r-xs);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 13px;
   flex-shrink: 0;
 }
 
@@ -2078,7 +2078,7 @@ html[dir="rtl"] .user-dropdown {
 }
 
 .sched-info {
-  padding: 10px 0 10px;
+  padding: 7px 0 7px;
 }
 
 .sched-title {
@@ -2104,8 +2104,8 @@ html[dir="rtl"] .user-dropdown {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 9px;
+  gap: 6px;
+  padding: 7px;
   border: 1px solid var(--border);
   border-radius: var(--r-xs);
   background: transparent;
@@ -2134,20 +2134,20 @@ html[dir="rtl"] .user-dropdown {
 .skl-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .skl-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
   animation: skl-pulse 1.5s ease-in-out infinite;
 }
 
 .skl-sq {
-  width: 38px;
-  height: 38px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--r-xs);
   background: #E5E7EB;
   flex-shrink: 0;

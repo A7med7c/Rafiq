@@ -113,6 +113,9 @@
             <button type="button" class="user-dropdown-item">
               <i class="fa-solid fa-gear"></i> {{ t().header.settings }}
             </button>
+            <button type="button" class="user-dropdown-item" (click)="openRatingPopup()">
+              <i class="fa-regular fa-star"></i> {{ t().ratingPopup.rateRafiq }}
+            </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
               <i class="fa-solid fa-arrow-right-from-bracket"></i> {{ t().header.logout }}
@@ -126,25 +129,6 @@
     <!-- BODY -->
     <div class="dsh-body">
 
-      <!-- ── Family profile banner ── -->
-      @if (fpProfileId()) {
-      <div class="fp-context-banner">
-        <span class="fp-context-icon"><i class="fa-solid fa-people-group"></i></span>
-        <div class="fp-context-info">
-          <span class="fp-context-label">{{ t().medications.viewingFor }}</span>
-          <strong class="fp-context-name">{{ fpProfileName() ?? 'Family Member' }}</strong>
-        </div>
-        @if (fpReadOnly()) {
-        <span class="fp-context-badge fp-context-badge--viewer">
-          <i class="fa-solid fa-eye"></i> {{ t().medications.viewOnly }}
-        </span>
-        }
-        <button type="button" class="fp-context-back" (click)="router.navigate(['/family-profiles'])">
-          <i class="fa-solid fa-arrow-right"></i> {{ t().common.back }}
-        </button>
-      </div>
-      }
-
       <!-- ── Title Bar ── -->
       <div class="med-title-bar">
         <div>
@@ -157,6 +141,9 @@
         </button>
         }
       </div>
+
+      <!-- ── Family profile banner ── -->
+      <app-family-profile-banner [profile]="viewingFpProfile()" [readOnly]="fpReadOnly()" />
 
       <!-- ── Day Rail: the next dose, and the shape of the day ── -->
       @if (!scheduleLoading() && !scheduleError() && doses().length > 0) {

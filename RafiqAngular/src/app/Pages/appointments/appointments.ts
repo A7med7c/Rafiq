@@ -11,6 +11,7 @@ import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { NotificationService } from '../../Services/notification.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
@@ -19,6 +20,7 @@ import {
   CreateAppointmentRequest, UpdateAppointmentRequest,
   APPOINTMENT_TYPE_LABELS, APPOINTMENT_TYPE_ICONS,
 } from '../../Modles/appointment.models';
+import { FamilyProfileBannerComponent } from '../../Components/family-profile-banner/family-profile-banner';
 
 /** Maps each AppointmentType enum value to its key path in the i18n objects */
 const APPT_TYPE_KEYS: Record<AppointmentType, string> = {
@@ -65,7 +67,7 @@ const blankForm = (): ApptForm => ({
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, FamilyProfileBannerComponent],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
 })
@@ -81,6 +83,7 @@ export class Appointments implements OnInit, OnDestroy {
   protected readonly t        = this.l10n.t;
   private readonly fpSvc      = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
+  private readonly reviewTracking   = inject(ReviewTrackingService);
 
   // ── Family-profile read-only gate ────────────────────────────────────────
   // Uses profileId from query param when present (direct link from family-profiles),
@@ -367,7 +370,7 @@ nextPage() {
     this.notifTimer = setInterval(() => this.checkDueNotifications(), 60_000);
 
     this.route.queryParams.subscribe(params => {
-      const profileId = params['profileId'] ?? null;
+      const profileId = params['profileId'] ?? this.profileSelectSvc.selectedProfileId ?? null;
       this.fpProfileId.set(profileId);
       this.loadAppointments();
 
@@ -405,6 +408,7 @@ nextPage() {
   logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
 
   goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
+  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
 
   goToFamilyProfiles(): void { this.router.navigate(['/family-profiles']); }
 
