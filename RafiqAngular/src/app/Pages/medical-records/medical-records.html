@@ -140,8 +140,8 @@
     <div class="dsh-body">
 
       <!-- TOP TITLE BAR -->
-      <section class="records-title-bar">
-        <div class="title-left">
+      <section class="records-title-bar" assistantAnchor="upload-medical-record">
+        <div class="title-left" assistantAnchor="records-search">
           <h1 class="records-h1">{{ t().medicalRecordsPage.title }}</h1>
           <p class="records-sub">{{ t().medicalRecordsPage.subtitle }}</p>
         </div>
@@ -149,7 +149,7 @@
 
       <!-- RECORDS CONTENT (upload cards + table + modals) -->
       <app-family-profile-banner [profile]="viewingProfile()" [readOnly]="contextReadOnly()" />
-      <app-records-content [profileId]="contextProfileId()" [readOnly]="contextReadOnly()"></app-records-content>
+      <app-records-content [profileId]="contextProfileId()" [readOnly]="contextReadOnly()" assistantAnchor="medical-records-grid"></app-records-content>
 
     </div>
   </div>

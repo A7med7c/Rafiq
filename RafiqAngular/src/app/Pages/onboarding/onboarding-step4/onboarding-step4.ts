@@ -6,6 +6,8 @@ import { LocalizationService } from '../../../Services/localization.service';
 import { Gender, BloodType, AllergySeverity, DiseaseStatus } from '../../../Modles/health-profile-enums';
 import { CreatePatientProfileRequest } from '../../../Modles/health-profile-request';
 import { EmergencyContactService, EmergencyContactResponse } from '../../../Services/emergency-contact.service';
+import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
+import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
 interface Step1Data {
   dateOfBirth: string;
@@ -39,7 +41,7 @@ interface Step3Data {
 @Component({
   selector: 'app-onboarding-step4',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AssistantAnchorDirective],
   templateUrl: './onboarding-step4.html',
   styleUrl: './onboarding-step4.css',
 })
@@ -49,6 +51,7 @@ export class OnboardingStep4 implements OnInit {
   private readonly healthProfile = inject(HealthProfileService);
   private readonly emergencyService = inject(EmergencyContactService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly tourEngine = inject(TourEngineService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
@@ -236,6 +239,11 @@ export class OnboardingStep4 implements OnInit {
         this.isSubmitting = false;
         this.submitSuccess = res?.message || 'Patient profile created successfully!';
         this.clearSessionStorage();
+        // Mark onboarding done — dashboard will show welcome tour
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('rafiq_tour_completed');
+        }
+        if (this.tourEngine.isPlaying()) this.tourEngine.stopTour(false);
         setTimeout(() => {
           this.router.navigate(['/dashboard']);
         }, 2000);

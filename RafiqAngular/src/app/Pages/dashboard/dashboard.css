@@ -343,6 +343,7 @@ a {
   gap: 8px;
 }
 
+
 /* Row that holds robot button + copy text */
 .sb-help-main {
   display: grid;
@@ -482,6 +483,17 @@ a {
 
 .sb-help-btn:hover {
   background: linear-gradient(135deg, #24CAE6 0%, #0C9FCA 100%);
+}
+
+.sb-help-btn--tour {
+  margin-top: 8px;
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
+  border-color: rgba(124, 58, 237, .3);
+  direction: rtl;
+}
+
+.sb-help-btn--tour:hover {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
 }
 
 /* ═══════════════════════════════════════════════

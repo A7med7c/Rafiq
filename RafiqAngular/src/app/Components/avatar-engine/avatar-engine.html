@@ -1,0 +1,53 @@
+<div
+  class="avatar-engine-container"
+  [class]="'state--' + activeState()"
+  [style.width]="sizeInput()"
+  [style.height]="sizeInput()"
+  role="img"
+  [attr.aria-label]="'Rafiq Robot Avatar state: ' + activeState()"
+>
+  <!-- Ambient Backdrop Glow Aura -->
+  <div class="avatar-aura-glow" aria-hidden="true"></div>
+
+  <!-- Animated Ring Pulses (Listening / Speaking / Thinking) -->
+  <div class="avatar-ring-pulse ring-1" aria-hidden="true"></div>
+  <div class="avatar-ring-pulse ring-2" aria-hidden="true"></div>
+
+  <!-- Orbiting Thinking Particles -->
+  @if (activeState() === 'thinking') {
+  <div class="thinking-particles" aria-hidden="true">
+    <span class="particle particle-1"></span>
+    <span class="particle particle-2"></span>
+    <span class="particle particle-3"></span>
+  </div>
+  }
+
+  <!-- Celebration Sparkles -->
+  @if (activeState() === 'celebrate') {
+  <div class="celebrate-sparkles" aria-hidden="true">
+    <span class="sparkle sparkle-1">✨</span>
+    <span class="sparkle sparkle-2">⭐</span>
+    <span class="sparkle sparkle-3">🎉</span>
+    <span class="sparkle sparkle-4">✨</span>
+  </div>
+  }
+
+  <!-- Robot Stage Frame -->
+  <div class="robot-stage">
+    <!-- Living Robot PNG Image -->
+    <img
+      [src]="robotImageSrc"
+      class="robot-avatar-png"
+      alt="Rafiq AI Robot"
+    />
+
+    <!-- Eye Blinking & Expressive Light Layer -->
+    <div class="eye-expressive-layer" aria-hidden="true">
+      <span class="eye-glow left-eye"></span>
+      <span class="eye-glow right-eye"></span>
+    </div>
+  </div>
+
+  <!-- Ground Floating Shadow -->
+  <div class="ground-shadow" aria-hidden="true"></div>
+</div>

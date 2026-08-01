@@ -210,7 +210,7 @@
 
         <div class="mp-row">
         <!-- ══ Personal Information ═══════════════════════════════════════════ -->
-        <div class="mp-card">
+        <div class="mp-card" assistantAnchor="profile-personal-info">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-blue">
               <i class="fa-regular fa-user"></i>
@@ -329,7 +329,7 @@
             }
             <div class="mp-form-actions">
               <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEditPersonal()" [disabled]="personalSaving()">{{ t().myProfile.cancelBtn }}</button>
-              <button type="submit" class="mp-btn mp-btn-primary" [disabled]="personalSaving()">
+              <button type="submit" class="mp-btn mp-btn-primary" [disabled]="personalSaving()" assistantAnchor="save-profile">
                 @if (personalSaving()) { <span class="mp-btn-spinner"></span> {{ t().myProfile.savingBtn }} } @else { {{ t().myProfile.saveChanges }} }
               </button>
             </div>
@@ -338,7 +338,7 @@
         </div>
 
         <!-- ══ Health Information ══════════════════════════════════════════════ -->
-        <div class="mp-card">
+        <div class="mp-card" assistantAnchor="profile-health-info">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-teal">
               <i class="fa-solid fa-heartbeat"></i>
@@ -411,7 +411,7 @@
 
         <!-- ══ Allergies + Chronic Diseases ═════════════════════════════════════ -->
         <div class="mp-row">
-        <div class="mp-card">
+        <div class="mp-card" assistantAnchor="profile-allergies">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-purple">
               <i class="fa-solid fa-hand-dots"></i>
@@ -477,7 +477,7 @@
         </div>
 
         <!-- ══ Chronic Diseases ═══════════════════════════════════════════════ -->
-        <div class="mp-card">
+        <div class="mp-card" assistantAnchor="profile-chronic-diseases">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-green">
               <i class="fa-solid fa-heart-pulse"></i>
@@ -552,7 +552,7 @@
 
         <div class="mp-row">
         <!-- ══ Emergency Contacts ═════════════════════════════════════════════ -->
-        <div class="mp-card">
+        <div class="mp-card" assistantAnchor="profile-emergency-contacts">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-teal">
               <i class="fa-solid fa-phone-volume"></i>
@@ -596,7 +596,7 @@
           }
 
           @if (!addingContact()) {
-          <button type="button" class="mp-add-block-btn" (click)="openAddContact()">
+          <button type="button" class="mp-add-block-btn" (click)="openAddContact()" assistantAnchor="add-emergency-contact">
             <i class="fa-solid fa-plus"></i> {{ t().myProfile.addContactBtn }}
           </button>
           }

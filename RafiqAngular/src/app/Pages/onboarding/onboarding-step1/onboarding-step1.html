@@ -34,7 +34,7 @@
   <!-- Form card -->
   <div class="form-card">
     <p class="step-indicator">{{ t().onboarding.step1.stepIndicator }}</p>
-    <h2 class="form-title">{{ t().onboarding.step1.subtitle }}</h2>
+    <h2 class="form-title" assistantAnchor="onboarding-form-heading">{{ t().onboarding.step1.subtitle }}</h2>
 
     <form [formGroup]="form" (ngSubmit)="continue()" novalidate>
 

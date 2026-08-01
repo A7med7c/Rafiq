@@ -17,6 +17,7 @@ import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, Update
 import { LocalizationService } from '../../Services/localization.service';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 
 type MedTab = 'schedule' | 'medications';
@@ -94,7 +95,7 @@ interface Dose {
 @Component({
   selector: 'app-medications',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, FamilyProfileBannerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent],
   templateUrl: './medications.html',
   styleUrl: './medications.css',
 })

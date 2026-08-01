@@ -16,6 +16,7 @@ import { HealthProfileService } from '../../../Services/health-profile.service';
 import { LocalizationService } from '../../../Services/localization.service';
 import { environment } from '../../../Environments/Environment';
 import { getApiErrorMessages } from '../../../Utils/api-error.util';
+import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
 function loginIdentifierValidator(control: AbstractControl): ValidationErrors | null {
   const value = (control.value as string | null)?.trim();
@@ -33,7 +34,7 @@ function loginIdentifierValidator(control: AbstractControl): ValidationErrors | 
 @Component({
   selector: 'app-login-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AssistantAnchorDirective],
   templateUrl: './login-form.html',
   styleUrl: './login-form.css'
 })

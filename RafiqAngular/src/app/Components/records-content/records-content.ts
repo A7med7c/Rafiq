@@ -17,6 +17,7 @@ import { of, forkJoin, Subscription } from 'rxjs';
 import { LocalizationService } from '../../Services/localization.service';
 import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 import { switchMap, map } from 'rxjs';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -124,7 +125,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 @Component({
   selector: 'app-records-content',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AssistantAnchorDirective],
   templateUrl: './records-content.html',
   styleUrl: '../../Pages/medical-records/medical-records.css',
   encapsulation: ViewEncapsulation.None,

@@ -15,6 +15,7 @@ import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import {
   AppointmentDto, AppointmentStatus, AppointmentType,
   CreateAppointmentRequest, UpdateAppointmentRequest,
@@ -60,14 +61,14 @@ const blankForm = (): ApptForm => ({
   provider: '',
   date: '',
   time: '',
-  reminderOffsetMinutes: 30,
+  reminderOffsetMinutes: 1440,
   notes: '',
 });
 
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, FamilyProfileBannerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
 })

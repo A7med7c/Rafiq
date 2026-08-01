@@ -24,6 +24,7 @@ import {
   SentInvitationDto,
 } from '../../Services/family-profiles.service';
 import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.service';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 
 type AddStep = 'choose' | 'create' | 'invite' | 'invited';
 
@@ -44,7 +45,7 @@ interface SupervisionMemberEntry {
 @Component({
   selector: 'app-family-profiles',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective],
   templateUrl: './family-profiles.html',
   styleUrl: './family-profiles.css',
 })

@@ -1,0 +1,93 @@
+@if (tourEngine.isPlaying()) {
+  @for (stepIndex of [tourEngine.currentStepIndex()]; track stepIndex) {
+
+    <!-- ══ Speech bubble — position is the single source of truth (floating-ui). ══ -->
+    <article
+      #bubbleEl
+      class="tour-bubble"
+      [class.tour-bubble--visible]="tourEngine.stepVisible()"
+      [style.left.px]="positionService.bubbleLeft()"
+      [style.top.px]="positionService.bubbleTop()"
+      dir="rtl"
+      role="dialog"
+      aria-live="polite"
+      aria-label="رسالة رفيق"
+    >
+      <!-- ══ Mascot chip — always attached to a corner of THIS bubble, never independent ══ -->
+      <div
+        class="mascot-chip"
+        [class]="'mascot-chip mascot-chip--' + positionService.mascotCorner()"
+        [class.mascot-chip--large]="!tourEngine.currentStepHasAnchor()"
+        [class.mascot-chip--speaking]="tourEngine.isSpeaking()"
+        aria-hidden="true"
+      >
+        <app-avatar-engine
+          [size]="!tourEngine.currentStepHasAnchor() ? '130px' : '96px'"
+        ></app-avatar-engine>
+      </div>
+
+      <!-- Header: step counter + dots + skip -->
+      <header class="tour-bubble__progress" dir="rtl">
+        <span class="tour-bubble__step-text">
+          الخطوة {{ stepIndex + 1 }} من {{ tourEngine.totalSteps() }}
+        </span>
+        <div class="tour-bubble__top-actions">
+          <div class="tour-bubble__dots" aria-hidden="true" dir="ltr">
+            @for (index of stepIndexes(); track index) {
+              <i [class.tour-bubble__dot--active]="index === stepIndex"></i>
+            }
+          </div>
+          <button
+            type="button"
+            class="tour-bubble__skip-btn"
+            (click)="tourEngine.stopTour()"
+            title="تخطي الجولة"
+            aria-label="تخطي الجولة"
+          >
+            <i class="fa-solid fa-xmark"></i>
+            <span>تخطي</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Message — uses resolved speech so {{userName}} becomes real name -->
+      @if (tourEngine.currentStepSpeechResolved()) {
+        <p class="tour-bubble__message">{{ tourEngine.currentStepSpeechResolved() }}</p>
+      }
+
+      <!-- Controls: Previous / Next / Finish -->
+      <footer class="tour-bubble__controls" dir="rtl">
+        <button
+          type="button"
+          class="tour-bubble__button tour-bubble__button--quiet"
+          (click)="tourEngine.previousStep()"
+          [disabled]="stepIndex === 0"
+          aria-label="الخطوة السابقة"
+        >
+          <i class="fa-solid fa-arrow-right"></i> السابق
+        </button>
+
+        @if (stepIndex < tourEngine.totalSteps() - 1) {
+          <button
+            type="button"
+            class="tour-bubble__button tour-bubble__button--primary"
+            (click)="tourEngine.nextStep()"
+            aria-label="الخطوة التالية"
+          >
+            التالي <i class="fa-solid fa-arrow-left"></i>
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="tour-bubble__button tour-bubble__button--primary tour-bubble__button--finish"
+            (click)="tourEngine.stopTour(false)"
+            aria-label="إنهاء الجولة"
+          >
+            إنهاء الجولة <i class="fa-solid fa-check"></i>
+          </button>
+        }
+      </footer>
+    </article>
+
+  }
+}

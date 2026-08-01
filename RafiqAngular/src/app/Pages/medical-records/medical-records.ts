@@ -28,6 +28,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { LocalizationService } from '../../Services/localization.service';
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -146,7 +147,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 @Component({
   selector: 'app-medical-records',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent, FamilyProfileBannerComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent, AssistantAnchorDirective, FamilyProfileBannerComponent],
   templateUrl: './medical-records.html',
   styleUrl: './medical-records.css',
 })

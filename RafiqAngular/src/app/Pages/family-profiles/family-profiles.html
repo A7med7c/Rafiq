@@ -151,7 +151,7 @@
             <i class="fa-solid fa-shield-halved"></i>
             {{ t().family.supervisionSettings }}
           </button>
-          <button type="button" class="fp-add-member-btn" (click)="openAddModal()">
+          <button type="button" class="fp-add-member-btn" (click)="openAddModal()" assistantAnchor="add-family-profile">
             <i class="fa-solid fa-plus"></i>
             {{ t().family.addFamilyMember }}
           </button>
@@ -175,7 +175,7 @@
           }
         </div>
         } @else {
-        <div class="fp-carousel-inner" #carouselEl>
+        <div class="fp-carousel-inner" #carouselEl assistantAnchor="family-profiles-list">
           @for (profile of profiles(); track profile.userHealthProfileId; let i = $index) {
           <div class="fp-profile-card"
             [class.fp-profile-card--selected]="selectedProfile()?.userHealthProfileId === profile.userHealthProfileId"

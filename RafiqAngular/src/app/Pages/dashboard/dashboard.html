@@ -30,29 +30,29 @@
 
     <!-- Navigation -->
     <nav class="sb-nav">
-      <a class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact: true}">
+      <a assistantAnchor="dashboard-nav" class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact: true}">
         <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
         <span>{{ t().sidebar.dashboard }}</span>
       </a>
-      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
+      <a assistantAnchor="medical-records-nav" class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
         <span>{{ t().sidebar.medicalRecords }}</span>
       </a>
-      <a class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
+      <a assistantAnchor="appointments-nav" class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
         <span>{{ t().sidebar.appointments }}</span>
       </a>
-      <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
+      <a assistantAnchor="medications-nav" class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
         <span>{{ t().sidebar.medications }}</span>
       </a>
 
 
-      <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
+      <a assistantAnchor="family-profiles-nav" class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
         <span>{{ t().sidebar.familyProfiles }}</span>
       </a>
-      <a class="sb-link" routerLink="/my-profile" routerLinkActive="sb-active">
+      <a assistantAnchor="profile-nav" class="sb-link" routerLink="/my-profile" routerLinkActive="sb-active">
         <span class="sb-ico"><i class="fa-regular fa-user"></i></span>
         <span>{{ t().sidebar.myProfile }}</span>
       </a>
@@ -85,6 +85,11 @@
         <i class="fa-regular fa-comment-dots"></i>
         {{ t().sidebar.askNow }}
       </button>
+      <!-- Welcome tour trigger button -->
+      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startWelcomeTour()" title="ابدأ الجولة التعريفية">
+        <i class="fa-solid fa-compass"></i>
+        جولة تعريفية
+      </button>
     </div>
   </aside>
 
@@ -102,18 +107,18 @@
         <input type="text" class="hdr-search-inp" [placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
-        <button type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
+        <button assistantAnchor="ask-ai-button" type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           {{ t().header.askAI }}
         </button>
-        <button type="button" class="hdr-bell" (click)="notifService.toggleNotificationCenter()"
+        <button assistantAnchor="notifications-button" type="button" class="hdr-bell" (click)="notifService.toggleNotificationCenter()"
           [attr.aria-label]="t().header.notifications" [class.hdr-bell--active]="notifService.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
           @if (unreadNotifCount() > 0) {
           <span class="hdr-badge">{{ unreadNotifCount() }}</span>
           }
         </button>
-        <div class="hdr-user" (click)="toggleDropdown()">
+        <div assistantAnchor="user-menu" class="hdr-user" (click)="toggleDropdown()">
           <img [src]="profileCache.resolveNavbarAvatar()" alt="user" class="hdr-avatar">
           <span class="hdr-username">{{ displayName }}</span>
           <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
@@ -166,7 +171,7 @@
             {{ t().dashboard.familyWell }}
           </p>
         </div>
-        <button type="button" class="report-btn" (click)="openDownloadFlow()">
+        <button assistantAnchor="medical-report-button" type="button" class="report-btn" (click)="openDownloadFlow()">
           <div class="report-btn-ico-bg">
             <i class="fa-solid fa-file-medical"></i>
           </div>
@@ -181,7 +186,7 @@
       <div class="mid-row">
 
         <!-- AI Health Summary -->
-        <div class="card ai-card">
+        <div assistantAnchor="ai-health-summary-card" class="card ai-card">
           <div class="ai-hdr">
             <div class="ai-hdr-left">
               <i class="fa-solid fa-wand-magic-sparkles ai-ico"></i>
@@ -322,7 +327,7 @@
         </div>
 
         <!-- System Status -->
-        <div class="card sys-card">
+        <div assistantAnchor="system-status-card" class="card sys-card">
           <div class="sys-hdr">
             <span class="sys-title">{{ t().dashboard.systemStatus }}</span>
             <span class="pill" [class.pill-green]="systemOk()" [class.pill-yellow]="!systemOk()">
@@ -369,7 +374,7 @@
         </div>
 
         <!-- Upcoming Appointment -->
-        <div class="card appt-card">
+        <div assistantAnchor="upcoming-appointment-card" class="card appt-card">
           <div class="appt-hdr">
             <span class="appt-title">{{ t().dashboard.upcomingAppointment }}</span>
             <a routerLink="/appointments" class="link-sm">{{ t().dashboard.viewAll }}</a>
@@ -386,7 +391,7 @@
             </div>
           </div>
           } @else if (nextAppointment()) {
-          <div class="appt-body">
+          <div class="appt-body" assistantAnchor="upcoming-appointment-detail">
             <div class="appt-doc-wrap">
               <div class="appt-doc-ico">
                 <i class="fa-solid fa-user-doctor"></i>
@@ -415,7 +420,7 @@
 
           <div class="appt-add-row">
             <span class="appt-add-lbl">{{ t().dashboard.addNewAppointment }}</span>
-            <button type="button" class="appt-add-btn" (click)="goToAddAppointment()">
+            <button assistantAnchor="add-appointment-button" type="button" class="appt-add-btn" (click)="goToAddAppointment()">
               <i class="fa-solid fa-plus"></i> {{ t().dashboard.add }}
             </button>
           </div>
@@ -424,7 +429,7 @@
       </div><!-- /mid-row -->
 
       <!-- ── FAMILY OVERVIEW ── -->
-      <div class="family-section">
+      <div assistantAnchor="family-overview-section" class="family-section">
         <div class="section-hdr">
           <span class="section-title">{{ t().dashboard.familyOverview }}</span>
           <a routerLink="/family-profiles" class="link-sm">{{ t().dashboard.viewAllProfiles }}</a>
@@ -450,7 +455,7 @@
           } @else {
           @for (slot of familySlots(); track $index) {
           @if (slot.type === 'profile') {
-          <div class="fam-card">
+          <div class="fam-card" [assistantAnchor]="!slot.data!.isSelf ? 'family-member-card' : ''">
             <div class="fam-top">
               <div class="fam-av-wrap">
                 <div class="fam-av fam-av-letter">{{ getInitial(slot.data!.firstName) }}</div>
@@ -482,7 +487,7 @@
             </button>
           </div>
           } @else if (slot.type === 'add') {
-          <a class="fam-card fam-card--add" routerLink="/family-profiles">
+          <a assistantAnchor="add-family-member-button" class="fam-card fam-card--add" routerLink="/family-profiles">
             <i class="fa-solid fa-plus fam-add-ico"></i>
             <span class="fam-add-lbl">{{ t().dashboard.addFamilyMember }}</span>
           </a>
@@ -500,7 +505,7 @@
       <div class="bot-row">
 
         <!-- Recent Medical Records -->
-        <div class="card">
+        <div assistantAnchor="recent-records-card" class="card">
           <div class="bot-card-hdr">
             <span class="bot-card-title">{{ t().dashboard.recentMedicalRecords }}</span>
             <a href="#" class="link-sm">{{ t().dashboard.viewAll }}</a>
@@ -546,13 +551,13 @@
           </ul>
           }
 
-          <button type="button" class="bot-action-btn" routerLink="/medical-records">
+          <button assistantAnchor="upload-record-button" type="button" class="bot-action-btn" routerLink="/medical-records">
             <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().dashboard.uploadNewRecord }}
           </button>
         </div>
 
         <!-- Medications & Reminders -->
-        <div class="card">
+        <div assistantAnchor="medications-reminders-card" class="card">
           <div class="bot-card-hdr">
             <span class="bot-card-title">{{ t().dashboard.medicationsReminders }}</span>
             <a routerLink="/medications" class="link-sm">{{ t().dashboard.viewAll }}</a>
@@ -601,7 +606,7 @@
           </ul>
           }
 
-          <button type="button" routerLink="/medications" class="bot-action-btn bot-action-orange">
+          <button assistantAnchor="add-reminder-button" type="button" routerLink="/medications" class="bot-action-btn bot-action-orange">
             <i class="fa-regular fa-bell"></i> {{ t().dashboard.addReminder }}
           </button>
         </div>

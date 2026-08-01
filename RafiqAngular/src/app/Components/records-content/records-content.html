@@ -19,7 +19,7 @@
   <!-- UPLOAD CARDS GRID (hidden in compact mode and for read-only profiles) -->
   @if (!compact && !readOnly) {
   <section class="upload-grid">
-    <div class="up-card">
+    <div class="up-card" assistantAnchor="records-card-lab">
       <div class="up-ico bg-blue"><i class="fa-solid fa-flask"></i></div>
       <h2 class="up-title">{{ t().records.labAnalysis }}</h2>
       <p class="up-desc">{{ t().records.labDesc }}</p>
@@ -47,7 +47,7 @@
       </div>
     </div>
 
-    <div class="up-card">
+    <div class="up-card" assistantAnchor="records-card-prescription">
       <div class="up-ico bg-purple"><i class="fa-solid fa-prescription-bottle-medical"></i></div>
       <h2 class="up-title">{{ t().records.prescription }}</h2>
       <p class="up-desc">{{ t().records.prescriptionDesc }}</p>
@@ -75,7 +75,7 @@
       </div>
     </div>
 
-    <div class="up-card">
+    <div class="up-card" assistantAnchor="records-card-imaging">
       <div class="up-ico bg-teal"><i class="fa-solid fa-x-ray"></i></div>
       <h2 class="up-title">{{ t().records.xrayImaging }}</h2>
       <p class="up-desc">{{ t().records.xrayDesc }}</p>
@@ -103,7 +103,7 @@
       </div>
     </div>
 
-    <div class="up-card">
+    <div class="up-card" assistantAnchor="records-card-medicine">
       <div class="up-ico bg-orange"><i class="fa-solid fa-pills"></i></div>
       <h2 class="up-title">{{ t().records.medicineBox }}</h2>
       <p class="up-desc">{{ t().records.medicineBoxDesc }}</p>
@@ -131,7 +131,7 @@
       </div>
     </div>
 
-    <div class="up-card">
+    <div class="up-card" assistantAnchor="records-card-general">
       <div class="up-ico bg-gray"><i class="fa-solid fa-file-medical"></i></div>
       <h2 class="up-title">{{ t().records.generalDocument }}</h2>
       <p class="up-desc">{{ t().records.generalDocumentDesc }}</p>
@@ -277,7 +277,7 @@
       <!-- Add Record button (shown always — compact mode embeds it here) -->
       @if (!readOnly) {
       <div class="add-record-menu-wrap">
-        <button type="button" class="add-record-btn" [class.menu-open]="addRecordMenuOpen()"
+        <button type="button" class="add-record-btn" assistantAnchor="add-record-button" [class.menu-open]="addRecordMenuOpen()"
           (click)="toggleAddRecordMenu($event)">
           <i class="fa-solid fa-plus"></i> {{ t().records.addRecord }}
         </button>
