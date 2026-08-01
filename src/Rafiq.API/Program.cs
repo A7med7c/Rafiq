@@ -39,16 +39,18 @@ public class Program
 
 
         builder.Services.AddCors(options =>
-        {
-            options.AddPolicy("Angular", policy =>
             {
-                policy
-                    .WithOrigins("http://localhost:4200")
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials();
+                options.AddPolicy("Angular", policy =>
+                {
+                    policy
+                        .WithOrigins(
+                            "http://localhost:4200"
+                        )
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
             });
-        });
 
         var app = builder.Build();
 

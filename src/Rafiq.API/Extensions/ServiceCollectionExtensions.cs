@@ -84,8 +84,39 @@ public static class ServiceCollectionExtensions
                 {
                     OnMessageReceived = context =>
                     {
-                        // WebSockets cannot carry an Authorization header, so SignalR sends the
-                        // token as ?access_token=. Only honour it on the hub path.
+                        var logger = context.HttpContext.RequestServices
+                            .GetRequiredService<ILoggerFactory>()
+                            .CreateLogger("Rafiq.Auth.Diagnostics");
+
+                        bool hasHeader = context.Request.Headers.TryGetValue("Authorization", out var headerValues);
+                        var headerValue = headerValues.ToString();
+                        
+                        logger.LogInformation(
+                            "[JWT: OnMessageReceived] Method: {Method}, Path: {Path}, Scheme: {Scheme}, AuthorizationHeaderExists: {Exists}, HeaderLength: {Length}",
+                            context.Request.Method,
+                            context.Request.Path,
+                            context.Scheme.Name,
+                            hasHeader,
+                            headerValue?.Length ?? 0);
+
+                        if (hasHeader)
+                        {
+                            var headers = context.Request.Headers["Authorization"];
+                            logger.LogWarning("RAW header count={Count}, values={Values}", 
+                                headers.Count, string.Join(" ||| ", headers.ToArray()));
+                        }
+
+                        if (hasHeader && headerValue != null && headerValue.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var token = headerValue.Substring("Bearer ".Length).Trim();
+                            logger.LogInformation("[JWT: OnMessageReceived] Extracted Token Length: {TokenLength}", token.Length);
+                            if (token.Length > 20)
+                            {
+                                logger.LogInformation("[JWT: OnMessageReceived] Extracted Token Prefix/Suffix: {Prefix}...{Suffix}",
+                                    token.Substring(0, 10), token.Substring(token.Length - 10));
+                            }
+                        }
+
                         var accessToken = context.Request.Query["access_token"];
                         var path = context.HttpContext.Request.Path;
                         if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
@@ -96,56 +127,54 @@ public static class ServiceCollectionExtensions
                     },
                     OnTokenValidated = context =>
                     {
-                        if (isDevelopment)
+                        var logger = context.HttpContext.RequestServices
+                            .GetRequiredService<ILoggerFactory>()
+                            .CreateLogger("Rafiq.Auth.Diagnostics");
+
+                        var jwtToken = context.SecurityToken as Microsoft.IdentityModel.JsonWebTokens.JsonWebToken;
+                        var tokenIssuer = jwtToken?.Issuer ?? context.SecurityToken?.Issuer ?? "none";
+                        var tokenAudience = "none";
+                        
+                        if (jwtToken != null && jwtToken.TryGetPayloadValue("aud", out object audObj))
                         {
-                            var logger = context.HttpContext.RequestServices
-                                .GetRequiredService<ILoggerFactory>()
-                                .CreateLogger("Rafiq.Auth");
-
-                            var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                                         ?? context.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-
-                            logger.LogInformation(
-                                "JWT validated for userId={UserId} on {Method} {Path}",
-                                userId, context.Request.Method, context.Request.Path);
+                            tokenAudience = audObj?.ToString() ?? "none";
                         }
+
+                        logger.LogWarning(
+                            "[JWT: OnTokenValidated] Token validation SUCCESS for Method: {Method}, Path: {Path}. Validated Issuer: {Issuer}, Validated Audience: {Audience}",
+                            context.Request.Method, context.Request.Path, tokenIssuer, tokenAudience);
 
                         return Task.CompletedTask;
                     },
                     OnAuthenticationFailed = context =>
                     {
-                        if (isDevelopment)
-                        {
-                            var logger = context.HttpContext.RequestServices
-                                .GetRequiredService<ILoggerFactory>()
-                                .CreateLogger("Rafiq.Auth");
+                        var logger = context.HttpContext.RequestServices
+                            .GetRequiredService<ILoggerFactory>()
+                            .CreateLogger("Rafiq.Auth.Diagnostics");
 
-                            logger.LogWarning(
-                                "JWT authentication FAILED on {Method} {Path}: {Reason}",
-                                context.Request.Method,
-                                context.Request.Path,
-                                context.Exception.Message);
-                        }
+                        logger.LogError(
+                            "[JWT: OnAuthenticationFailed] FAILED on Method: {Method}, Path: {Path}. Exception Type: {ExceptionType}. Message: {Message}. InnerException: {InnerException}",
+                            context.Request.Method,
+                            context.Request.Path,
+                            context.Exception.GetType().Name,
+                            context.Exception.Message,
+                            context.Exception.InnerException?.Message ?? "None");
 
                         return Task.CompletedTask;
                     },
                     OnChallenge = async context =>
                     {
-                        if (isDevelopment)
-                        {
-                            var logger = context.HttpContext.RequestServices
-                                .GetRequiredService<ILoggerFactory>()
-                                .CreateLogger("Rafiq.Auth");
+                        var logger = context.HttpContext.RequestServices
+                            .GetRequiredService<ILoggerFactory>()
+                            .CreateLogger("Rafiq.Auth.Diagnostics");
 
-                            logger.LogWarning(
-                                "401 challenge on {Method} {Path}. HasAuthorizationHeader={HasHeader}, HasAccessTokenQuery={HasQuery}, Error={Error} {Description}",
-                                context.Request.Method,
-                                context.Request.Path,
-                                context.Request.Headers.ContainsKey("Authorization"),
-                                context.Request.Query.ContainsKey("access_token"),
-                                context.Error,
-                                context.ErrorDescription);
-                        }
+                        logger.LogWarning(
+                            "[JWT: OnChallenge] Challenge on Method: {Method}, Path: {Path}. Error: {Error}. ErrorDescription: {ErrorDescription}. AuthenticateFailure: {Failure}",
+                            context.Request.Method,
+                            context.Request.Path,
+                            context.Error ?? "None",
+                            context.ErrorDescription ?? "None",
+                            context.AuthenticateFailure?.Message ?? "None");
 
                         context.HandleResponse();
                         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
