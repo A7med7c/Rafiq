@@ -1311,6 +1311,26 @@ export const en = {
     successTitle: 'Thank you!',
     successSub: 'Your review means a lot to us.',
   },
+  documentAnalysis: {
+    panelTitle: 'Document Analysis',
+    statusPending: 'Queued for analysis…',
+    statusProcessing: 'Analyzing document…',
+    statusCompleted: 'Analysis complete',
+    statusFailed: 'Analysis failed',
+    statusReadyToReview: 'Ready to review',
+    review: 'Review',
+    view: 'View in Records',
+    retry: 'Retry',
+    dismiss: 'Dismiss',
+    retryFailed: 'Retry Failed',
+    retryFailedBody: 'Could not re-queue the document. Please try again.',
+    uploadSuccess: 'Document Uploaded',
+    uploadSuccessBody: 'Your document is being analyzed. We\'ll notify you when it\'s ready.',
+    analysisComplete: 'Document Ready',
+    analysisCompleteBody: 'has been analyzed successfully.',
+    analysisFailed: 'Analysis Failed',
+    analysisFailedBody: 'could not be analyzed.',
+  },
 };
 
 export type Translations = typeof en;

@@ -144,6 +144,11 @@ public static class DependencyInjection
         services.AddScoped<AiRequestClassificationJob>();
         services.AddScoped<IRequestClassificationJobService, RequestClassificationJobService>();
 
+        // ── Async Document Analysis ───────────────────────────────────────
+        services.AddScoped<DocumentAnalysisJob>();
+        services.AddScoped<DocumentRecoveryJob>();
+        services.AddScoped<IDocumentAnalysisJobService, DocumentAnalysisJobService>();
+
         // ── Hangfire ──────────────────────────────────────────────────────
         var connectionString = configuration.GetConnectionString("DefaultConnection")!;
 

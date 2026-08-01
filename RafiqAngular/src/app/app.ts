@@ -6,11 +6,12 @@ import { LocalizationService } from './Services/localization.service';
 import { AiChatService } from './Services/ai-chat.service';
 import { AiPanel } from './Components/ai-panel/ai-panel';
 import { RatingPopup } from './Components/rating-popup/rating-popup';
+import { DocumentAnalysisCardComponent } from './Components/document-analysis-card/document-analysis-card';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, AiPanel, RatingPopup],
+  imports: [CommonModule, RouterOutlet, AiPanel, RatingPopup, DocumentAnalysisCardComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

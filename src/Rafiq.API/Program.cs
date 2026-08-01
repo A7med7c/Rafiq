@@ -11,6 +11,7 @@ using Rafiq.Infrastructure;
 using Rafiq.Infrastructure.Persistence.Identity;
 using Rafiq.Infrastructure.Services.auth;
 using Rafiq.Infrastructure.Services.MedicationReminders;
+using Rafiq.Infrastructure.Services.BackgroundJobs;
 using System.Text.Json.Serialization;
 using Rafiq.Infrastructure.Services.Notifications;
 
@@ -93,6 +94,12 @@ public class Program
             job => job.ScheduleAsync(),
             "5 0 * * *",
             new RecurringJobOptions { TimeZone = reminderTimeZone });
+
+        // Recover documents that got stuck in Processing (e.g. server crash mid-job)
+        RecurringJob.AddOrUpdate<DocumentRecoveryJob>(
+            "document-recovery",
+            job => job.ExecuteAsync(),
+            "*/10 * * * *");   // every 10 minutes
 
         app.Run();
     }
