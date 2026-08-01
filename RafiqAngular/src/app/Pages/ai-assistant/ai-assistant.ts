@@ -5,6 +5,7 @@ import { MarkdownComponent } from 'ngx-markdown';
 import { AuthService } from '../../Services/auth-service';
 import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { NotificationService } from '../../Services/notification.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { AiMessageValidatorService } from '../../Services/ai-message-validator.service';
@@ -40,6 +41,7 @@ export class AiAssistant implements OnInit {
   private readonly healthProfileService = inject(HealthProfileService);
   private readonly aiChatService = inject(AiChatService);
   private readonly validator = inject(AiMessageValidatorService);
+  private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
   protected readonly l10n = inject(LocalizationService);
@@ -634,4 +636,5 @@ export class AiAssistant implements OnInit {
     this.dropdownOpen.set(false);
     this.authService.logout().subscribe();
   }
+  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
 }

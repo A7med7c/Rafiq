@@ -14,6 +14,7 @@ import { catchError, of, Subscription } from 'rxjs';
 import { AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { HealthSummaryDto } from '../../Services/dashboard.service';
 import { MedicalReportService, ReportType } from '../../Services/medical-report.service';
+import { ReviewTrackingService } from '../../Services/review-tracking.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -34,6 +35,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private readonly router             = inject(Router);
   private readonly elRef              = inject(ElementRef);
   private readonly medicalReportSvc   = inject(MedicalReportService);
+  private readonly reviewTracking      = inject(ReviewTrackingService);
 
   private readonly dashboardRefreshEffect = effect(() => {
     if (this.notifService.reminderDataRefreshTick() === 0) {
@@ -46,7 +48,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private readonly languageRefreshEffect = effect(() => {
     this.l10n.lang();
     this.summaryLoading.set(true);
-    this.dashboardService.getHealthSummary().subscribe({
+    this.dashboardService.getHealthSummaryForSelf().subscribe({
       next: d => { this.healthSummary.set(d); this.summaryLoading.set(false); },
       error: () => { this.healthSummary.set(null); this.summaryLoading.set(false); },
     });
@@ -311,7 +313,7 @@ export class Dashboard implements OnInit, OnDestroy {
       error: () => { this.records.set([]); this.recordsLoading.set(false); this.hasLoadError.set(true); },
     });
 
-    this.dashboardService.getMedicinesWithReminders().subscribe({
+    this.dashboardService.getMedicinesForSelf().subscribe({
       next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
       error: () => { this.reminders.set([]); this.remindersLoading.set(false); this.hasLoadError.set(true); },
     });
@@ -328,7 +330,7 @@ export class Dashboard implements OnInit, OnDestroy {
       error: () => { this.familyProfiles.set([]); this.familyLoading.set(false); },
     });
 
-    this.dashboardService.getHealthSummary().subscribe({
+    this.dashboardService.getHealthSummaryForSelf().subscribe({
       next: d => { this.healthSummary.set(d); this.summaryLoading.set(false); },
       error: () => { this.healthSummary.set(null); this.summaryLoading.set(false); },
     });
@@ -337,7 +339,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private loadReminderData(): void {
     this.remindersLoading.set(true);
 
-    this.dashboardService.getMedicinesWithReminders().subscribe({
+    this.dashboardService.getMedicinesForSelf().subscribe({
       next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
       error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
     });
@@ -385,6 +387,8 @@ export class Dashboard implements OnInit, OnDestroy {
     this.dropdownOpen.set(false);
     this.authService.logout().subscribe();
   }
+
+  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
 
   goToMyProfile(): void {
     this.dropdownOpen.set(false);

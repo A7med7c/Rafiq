@@ -48,6 +48,11 @@ export class DashboardService {
     return this.healthProfileSvc.getMyProfile().pipe(map(r => r.data.id));
   }
 
+  /** Always resolves the authenticated user's own profile ID, ignoring any family-member selection. */
+  private getSelfProfileId(): Observable<string> {
+    return this.healthProfileSvc.getMyProfile().pipe(map(r => r.data.id));
+  }
+
   getActiveProfileId(): Observable<string> {
     return this.getCurrentProfileId();
   }
@@ -95,6 +100,16 @@ export class DashboardService {
     );
   }
 
+  getMedicinesForSelf(): Observable<ReminderDisplayItem[]> {
+    return this.getSelfProfileId().pipe(
+      switchMap(profileId =>
+        this.http.get<ApiResponse<UserMedicine[]>>(`${this.base}/user-medicines?profileId=${profileId}`)
+      ),
+      map(r => this.toDisplayItems(r.data ?? [])),
+      catchError(() => of([] as ReminderDisplayItem[]))
+    );
+  }
+
   private fetchMedicines(): Observable<UserMedicine[]> {
     return this.getCurrentProfileId().pipe(
       switchMap(profileId =>
@@ -134,6 +149,18 @@ export class DashboardService {
   }
 
   // ─── AI Health Summary ────────────────────────────────────────────────────
+  getHealthSummaryForSelf(): Observable<HealthSummaryDto | null> {
+    return this.getSelfProfileId().pipe(
+      switchMap(profileId => {
+        const lang = this.l10n.lang();
+        return this.http
+          .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}?language=${lang}`)
+          .pipe(map(r => r.data ?? null));
+      }),
+      catchError(() => of(null))
+    );
+  }
+
   getHealthSummary(): Observable<HealthSummaryDto | null> {
     return this.getCurrentProfileId().pipe(
       switchMap(profileId => {
