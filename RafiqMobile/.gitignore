@@ -79,4 +79,4 @@ android/.kotlin/
 ios/App/App/public/
 android/app/src/main/assets/
 *.stackdump
-git rm --cached RafiqMobile/scratch.ps1
+scratch*.ps1
