@@ -1,0 +1,222 @@
+:host {
+  display: block;
+}
+
+.lang-switch {
+  position: relative;
+}
+
+/* ── Trigger pill ── */
+.lang-switch__trigger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  color: var(--blue, #0eafd7);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, .05));
+  transition: transform .15s ease, background .15s ease;
+}
+
+.lang-switch__trigger i {
+  font-size: 14px;
+}
+
+.lang-switch__trigger:hover {
+  background: var(--border-lt, #f3f4f6);
+}
+
+.lang-switch__trigger:active {
+  transform: scale(0.95);
+}
+
+.lang-switch__trigger:focus-visible {
+  outline: 2px solid var(--blue, #0eafd7);
+  outline-offset: 2px;
+}
+
+.lang-switch__code {
+  min-width: 1.4em;
+  text-align: center;
+}
+
+/* ── Backdrop + sheet (matches the app's existing bottom-sheet pattern) ── */
+.lang-switch__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: langFadeIn .18s ease;
+}
+
+@keyframes langFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lang-switch__sheet {
+  width: 100%;
+  max-width: 480px;
+  background: var(--white, #fff);
+  border-radius: var(--r, 16px) var(--r, 16px) 0 0;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, .18);
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: langSheetUp .28s cubic-bezier(.32, .72, 0, 1);
+}
+
+@keyframes langSheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.lang-switch__handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--border, #e5e7eb);
+  margin: 10px auto 0;
+}
+
+.lang-switch__hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px 12px;
+}
+
+.lang-switch__hdr-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lang-switch__ico-wrap {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm, 10px);
+  background: var(--blue-lt, #eef3ff);
+  color: var(--blue, #0eafd7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.lang-switch__title {
+  margin: 0;
+  font-family: var(--font-display, 'Outfit', sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text, #111827);
+}
+
+.lang-switch__close-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border, #e5e7eb);
+  background: var(--white, #fff);
+  color: var(--text-3, #6b7280);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.lang-switch__close-btn:hover {
+  background: var(--border-lt, #f3f4f6);
+}
+
+.lang-switch__list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lang-switch__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: var(--r-sm, 10px);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text, #111827);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.lang-switch__item:hover {
+  background: var(--border-lt, #f3f4f6);
+}
+
+.lang-switch__item:focus-visible {
+  outline: 2px solid var(--blue, #0eafd7);
+  outline-offset: 2px;
+}
+
+.lang-switch__item--active {
+  background: var(--blue-lt, #eef3ff);
+  border-color: var(--blue, #0eafd7);
+  color: var(--blue, #0eafd7);
+}
+
+.lang-switch__item-check {
+  color: var(--blue, #0eafd7);
+  font-size: 18px;
+}
+
+@media (min-width: 768px) {
+  .lang-switch__backdrop {
+    align-items: center;
+  }
+
+  .lang-switch__sheet {
+    border-radius: var(--r, 16px);
+    animation: langPopIn .2s cubic-bezier(.32, .72, 0, 1);
+  }
+
+  @keyframes langPopIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lang-switch__backdrop,
+  .lang-switch__sheet {
+    animation: none;
+  }
+}

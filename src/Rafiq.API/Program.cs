@@ -50,6 +50,17 @@ public class Program
                             "http://localhost",
                             "https://localhost"
                         )
+                        // AllowAnyHeader() is required, not optional, here: the client set
+                        // is Capacitor's Android WebView (which injects its own
+                        // "X-Requested-With: <package-id>" header on every request the
+                        // WebView makes — this is done natively by the OS, the app's JS
+                        // never sets it) plus @microsoft/signalr's HTTP client (which
+                        // unconditionally sets "X-Requested-With: XMLHttpRequest" on
+                        // negotiate — see XhrHttpClient.ts/FetchHttpClient.ts in the
+                        // signalr package). Neither header is something this app's code
+                        // controls or can enumerate up front, and an explicit WithHeaders()
+                        // allowlist rejects both, which is exactly what was breaking every
+                        // authenticated request and SignalR negotiate.
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
@@ -70,7 +81,7 @@ public class Program
             });
         }
 
-        // app.UseHttpsRedirection();
+        app.UseHttpsRedirection();
         app.UseCors("Angular");
         app.UseAuthentication();
         app.UseMiddleware<UserAccessMiddleware>();

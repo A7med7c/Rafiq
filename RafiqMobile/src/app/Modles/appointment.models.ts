@@ -63,3 +63,15 @@ export const APPOINTMENT_TYPE_ICONS: Record<AppointmentType, string> = {
   [AppointmentType.FollowUp]:    'fa-rotate-right',
   [AppointmentType.Other]:       'fa-calendar-plus',
 };
+
+/** Maps each AppointmentType enum value to its key path in the i18n objects */
+export const APPT_TYPE_KEYS: Record<AppointmentType, string> = {
+  [AppointmentType.DoctorVisit]: 'appointments.doctor',
+  [AppointmentType.LabTest]:     'appointments.lab',
+  [AppointmentType.Imaging]:     'appointments.imaging',
+  [AppointmentType.Vaccination]: 'appointments.vaccination',
+  [AppointmentType.Dentist]:     'appointments.dental',
+  [AppointmentType.Therapy]:     'appointments.therapy',
+  [AppointmentType.FollowUp]:    'appointments.followUp',
+  [AppointmentType.Other]:       'appointments.other',
+};

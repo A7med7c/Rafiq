@@ -5,7 +5,7 @@ import { AppointmentsService } from '../../Services/appointments.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { NotificationService } from '../../Services/notification.service';
 import { AiChatService } from '../../Services/ai-chat.service';
-import { AppointmentDto, AppointmentStatus, AppointmentType, APPOINTMENT_TYPE_LABELS } from '../../Modles/appointment.models';
+import { AppointmentDto, AppointmentStatus, AppointmentType, APPOINTMENT_TYPE_LABELS, APPT_TYPE_KEYS } from '../../Modles/appointment.models';
 import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
 import { MobileHeader } from '../../shared/mobile-header/mobile-header';
 import { AppointmentsContentComponent } from '../../Components/appointments-content/appointments-content';
@@ -30,7 +30,7 @@ export class Appointments implements OnInit {
 
   readonly appointments = signal<AppointmentDto[]>([]);
   readonly loading = signal(true);
-  readonly activeHistoryTab = signal<string>('This Month');
+  readonly activeHistoryTab = signal<string>('thisMonth');
 
   // ── Appointment Details Modal ──
   readonly viewingAppt = signal<AppointmentDto | null>(null);
@@ -68,9 +68,9 @@ export class Appointments implements OnInit {
     const currentYear = today.getFullYear();
 
     const groups: { title: string, appointments: AppointmentDto[] }[] = [
-      { title: 'This Month', appointments: [] },
-      { title: 'Last Month', appointments: [] },
-      { title: 'Earlier', appointments: [] }
+      { title: 'thisMonth', appointments: [] },
+      { title: 'lastMonth', appointments: [] },
+      { title: 'earlier', appointments: [] }
     ];
 
     for (const appt of previous) {
@@ -119,31 +119,49 @@ export class Appointments implements OnInit {
   readonly missedCount = computed(() => this.appointments().filter(a => a.status === AppointmentStatus.Missed).length);
   readonly cancelledCount = computed(() => this.appointments().filter(a => a.status === AppointmentStatus.Cancelled).length);
 
+  private get locale(): string {
+    return this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US';
+  }
+
   getApptTypeLabel(type: AppointmentType): string {
-    return APPOINTMENT_TYPE_LABELS[type] || 'Appointment';
+    const key = APPT_TYPE_KEYS[type];
+    const translated = key ? key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) : undefined;
+    return translated || APPOINTMENT_TYPE_LABELS[type] || this.t().appointments.appointmentFallback;
   }
 
   formatDate(dateString: string): string {
     if (!dateString) return '';
     const d = new Date(dateString);
-    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    return d.toLocaleDateString(this.locale, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', numberingSystem: 'latn' });
   }
 
   formatTime(dateString: string): string {
     if (!dateString) return '';
     const d = new Date(dateString);
-    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString(this.locale, { hour: '2-digit', minute: '2-digit', numberingSystem: 'latn' });
   }
 
   reminderLabel(mins: number | null | undefined): string {
-    if (mins == null) return 'No reminder';
-    if (mins === 0) return 'At time of event';
-    if (mins === 15) return '15 minutes before';
-    if (mins === 30) return '30 minutes before';
-    if (mins === 60) return '1 hour before';
-    if (mins === 1440) return '1 day before';
-    if (mins === 2880) return '2 days before';
-    return `${mins} min before`;
+    const ap = this.t().appointments;
+    if (mins == null) return ap.noReminder;
+    if (mins === 0) return ap.atTimeOfEvent;
+    if (mins === 15) return ap.reminder15Before;
+    if (mins === 30) return ap.reminder30Before;
+    if (mins === 60) return ap.reminder1hrBefore;
+    if (mins === 1440) return ap.reminder1dayBefore;
+    if (mins === 2880) return ap.reminder2daysBefore;
+    return ap.minBeforeFormat.replace('{mins}', String(mins));
+  }
+
+  statusLabel(status: AppointmentStatus | string): string {
+    const ap = this.t().appointments;
+    const map: Record<string, string> = {
+      [AppointmentStatus.Upcoming]: ap.upcomingStatus,
+      [AppointmentStatus.Completed]: ap.completedStatus,
+      [AppointmentStatus.Cancelled]: ap.cancelledStatus,
+      [AppointmentStatus.Missed]: ap.missedStatus,
+    };
+    return map[status] ?? String(status);
   }
 
   openView(appt: AppointmentDto): void {

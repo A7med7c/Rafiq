@@ -12,7 +12,6 @@
   color: #1A1A2E;
   padding-bottom: 96px;
   padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-  direction: rtl;
   /* Remove any default top spacing */
   padding-top: 0;
 }
@@ -796,7 +795,6 @@
   transition: border-color 0.2s, box-shadow 0.2s;
   -webkit-appearance: none;
   appearance: none;
-  direction: rtl;
 }
 .mp-field-input:focus {
   outline: none;

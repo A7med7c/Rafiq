@@ -18,12 +18,13 @@ import { AssistantAnchorDirective } from '../../core/assistant/directives/assist
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
+import { LanguageSwitcher } from '../../shared/language-switcher/language-switcher';
 import { environment } from '../../Environments/Environment';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, AssistantAnchorDirective, BottomNav],
+  imports: [CommonModule, RouterLink, AssistantAnchorDirective, BottomNav, LanguageSwitcher],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })

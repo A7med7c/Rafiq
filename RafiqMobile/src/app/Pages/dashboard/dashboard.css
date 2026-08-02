@@ -82,6 +82,10 @@ a {
   color: var(--white);
 }
 
+.dash-header__lang {
+  flex: 0 0 auto;
+}
+
 .dash-header__greet {
   flex: 1;
   min-width: 0;

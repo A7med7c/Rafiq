@@ -9,8 +9,8 @@
     
     <!-- ── Header ── -->
     <div class="appts-header">
-      <h1 class="appts-title">{{ t().sidebar.appointments || 'Appointments' }}</h1>
-      <p class="appts-subtitle">Manage your upcoming appointments and reminders.</p>
+      <h1 class="appts-title">{{ t().sidebar.appointments }}</h1>
+      <p class="appts-subtitle">{{ t().appointments.pageSubtitle }}</p>
     </div>
 
     <!-- ── Upcoming Appointment (Hero Card) ── -->
@@ -21,12 +21,12 @@
             <h2 class="hero-doc">{{ next.provider }}</h2>
             <p class="hero-spec">{{ getApptTypeLabel(next.appointmentType) }}</p>
           </div>
-          <div class="hero-badge badge-upcoming">Upcoming</div>
+          <div class="hero-badge badge-upcoming">{{ t().appointments.upcomingStatus }}</div>
         </div>
         <div class="hero-body">
           <div class="hero-row">
             <i class="fa-regular fa-hospital hero-row-icon"></i>
-            <span>{{ next.title || 'Clinic / Hospital' }}</span>
+            <span>{{ next.title || t().appointments.clinicHospitalFallback }}</span>
           </div>
           <div class="hero-row">
             <i class="fa-regular fa-calendar hero-row-icon"></i>
@@ -38,8 +38,8 @@
           </div>
         </div>
         <div class="hero-actions">
-          <button type="button" class="btn-primary" (click)="openView(next)">View Details</button>
-          <button type="button" class="btn-secondary" (click)="markAttended(next)">Mark as Attended</button>
+          <button type="button" class="btn-primary" (click)="openView(next)">{{ t().appointments.viewDetails }}</button>
+          <button type="button" class="btn-secondary" (click)="markAttended(next)">{{ t().appointments.markAttendedBtn }}</button>
         </div>
       </div>
     }
@@ -51,56 +51,56 @@
           <i class="fa-solid fa-bell rem-icon"></i>
         </div>
         <div class="rem-content">
-          <h3 class="rem-title">Appointment Reminder</h3>
-          <p class="rem-sub">{{ getApptTypeLabel(reminder.appointmentType) }} &bull; Today &bull; {{ formatTime(reminder.appointmentDateTime) }}</p>
-          <p class="rem-text">Reminder: {{ reminderLabel(reminder.reminderOffsetMinutes) }}</p>
-          <p class="rem-status">Status: Reminder Scheduled</p>
+          <h3 class="rem-title">{{ t().appointments.appointmentReminderTitle }}</h3>
+          <p class="rem-sub">{{ getApptTypeLabel(reminder.appointmentType) }} &bull; {{ t().appointments.todayWord }} &bull; {{ formatTime(reminder.appointmentDateTime) }}</p>
+          <p class="rem-text">{{ t().appointments.reminderPrefix }}: {{ reminderLabel(reminder.reminderOffsetMinutes) }}</p>
+          <p class="rem-status">{{ t().appointments.reminderScheduledStatus }}</p>
         </div>
-        <button type="button" class="btn-outline" (click)="openView(reminder)">View Reminder</button>
+        <button type="button" class="btn-outline" (click)="openView(reminder)">{{ t().appointments.viewReminderBtn }}</button>
       </div>
     }
 
     <!-- ── Quick Overview (Scrollable Chips) ── -->
     <div class="summary-chips-wrap">
       <div class="summary-chip chip-blue">
-        <span>Upcoming &bull; {{ upcomingCount() }}</span>
+        <span>{{ t().appointments.upcomingStatus }} &bull; {{ upcomingCount() }}</span>
       </div>
       <div class="summary-chip chip-green">
-        <span>Completed &bull; {{ completedCount() }}</span>
+        <span>{{ t().appointments.completedStatus }} &bull; {{ completedCount() }}</span>
       </div>
       <div class="summary-chip chip-red">
-        <span>Missed &bull; {{ missedCount() }}</span>
+        <span>{{ t().appointments.missedStatus }} &bull; {{ missedCount() }}</span>
       </div>
       <div class="summary-chip chip-gray">
-        <span>Cancelled &bull; {{ cancelledCount() }}</span>
+        <span>{{ t().appointments.cancelledStatus }} &bull; {{ cancelledCount() }}</span>
       </div>
     </div>
 
     @if (upcomingAppointments().length === 0 && previousAppointments().length === 0 && !loading()) {
       <!-- ── Empty State ── -->
       <div class="empty-state">
-        <img src="/images/calender.png" alt="No Appointments" class="empty-ill">
-        <h3 class="empty-title">No Appointments Yet</h3>
-        <p class="empty-desc">Your upcoming appointments will appear here once they are added by your healthcare provider or synced with your medical records.</p>
-        <button type="button" class="btn-primary" (click)="loadAppointments()">Refresh</button>
+        <img src="/images/calender.png" alt="{{ t().appointments.emptyStateTitle }}" class="empty-ill">
+        <h3 class="empty-title">{{ t().appointments.emptyStateTitle }}</h3>
+        <p class="empty-desc">{{ t().appointments.emptyStateDesc }}</p>
+        <button type="button" class="btn-primary" (click)="loadAppointments()">{{ t().appointments.refreshBtn }}</button>
       </div>
     } @else {
       <!-- ── Appointment Timeline (Upcoming) ── -->
       @if (upcomingAppointments().length > 0) {
         <section class="appt-section">
-          <h3 class="section-title">Upcoming Appointments</h3>
+          <h3 class="section-title">{{ t().appointments.upcomingAppointmentsSection }}</h3>
           <div class="appt-list">
             @for (appt of upcomingAppointments(); track appt.id) {
               <div class="timeline-card" (click)="openView(appt)">
                 <div class="tl-content">
                   <div class="tl-row-top">
                     <span class="tl-doc">{{ appt.provider }}</span>
-                    <span class="tl-badge badge-upcoming">Upcoming</span>
+                    <span class="tl-badge badge-upcoming">{{ t().appointments.upcomingStatus }}</span>
                   </div>
-                  <p class="tl-spec">{{ getApptTypeLabel(appt.appointmentType) }} &bull; {{ appt.title || 'Clinic' }}</p>
+                  <p class="tl-spec">{{ getApptTypeLabel(appt.appointmentType) }} &bull; {{ appt.title || t().appointments.clinicWord }}</p>
                   <p class="tl-meta">
-                    <i class="fa-regular fa-calendar"></i> {{ formatDate(appt.appointmentDateTime) }} 
-                    <i class="fa-regular fa-clock" style="margin-left: 8px;"></i> {{ formatTime(appt.appointmentDateTime) }}
+                    <i class="fa-regular fa-calendar"></i> {{ formatDate(appt.appointmentDateTime) }}
+                    <i class="fa-regular fa-clock tl-meta-time-ico"></i> {{ formatTime(appt.appointmentDateTime) }}
                   </p>
                 </div>
                 <div class="tl-arrow">
@@ -116,24 +116,24 @@
       @if (groupedPreviousAppointments().length > 0) {
         <section class="appt-section">
           <div class="history-header">
-            <h3 class="section-title">Previous Appointments</h3>
-            <a routerLink="/appointments" class="view-all-link">View All</a>
+            <h3 class="section-title">{{ t().appointments.previousAppointmentsSection }}</h3>
+            <a routerLink="/appointments" class="view-all-link">{{ t().appointments.viewAllLink }}</a>
           </div>
-          
+
           <div class="history-tabs">
-            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'This Month'" (click)="activeHistoryTab.set('This Month')">This Month</button>
-            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'Last Month'" (click)="activeHistoryTab.set('Last Month')">Last Month</button>
-            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'Earlier'" (click)="activeHistoryTab.set('Earlier')">Earlier</button>
+            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'thisMonth'" (click)="activeHistoryTab.set('thisMonth')">{{ t().appointments.thisMonthTab }}</button>
+            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'lastMonth'" (click)="activeHistoryTab.set('lastMonth')">{{ t().appointments.lastMonthTab }}</button>
+            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'earlier'" (click)="activeHistoryTab.set('earlier')">{{ t().appointments.earlierTab }}</button>
           </div>
 
           <div class="history-list-card">
             @for (appt of activeHistoryAppointments(); track appt.id; let last = $last) {
               <div class="history-row" [class.no-border]="last" (click)="openView(appt)">
                 <div class="hist-main">
-                  <h4 class="hist-title">{{ appt.title || 'Clinic Visit' }}</h4>
+                  <h4 class="hist-title">{{ appt.title || t().appointments.clinicVisitFallback }}</h4>
                   <p class="hist-doc-name">{{ appt.provider }}</p>
                   <p class="hist-spec">{{ getApptTypeLabel(appt.appointmentType) }}</p>
-                  <p class="hist-loc">Medical Center</p>
+                  <p class="hist-loc">{{ t().appointments.medicalCenterFallback }}</p>
                 </div>
                 <div class="hist-side">
                   <div class="hist-datetime">
@@ -141,14 +141,14 @@
                     <div class="hist-dt-row"><i class="fa-regular fa-clock"></i> {{ formatTime(appt.appointmentDateTime) }}</div>
                   </div>
                   <span class="tl-badge" [class.badge-completed]="appt.status === 'Completed'" [class.badge-missed]="appt.status === 'Missed'" [class.badge-cancelled]="appt.status === 'Cancelled'">
-                    {{ appt.status }}
+                    {{ statusLabel(appt.status) }}
                   </span>
                 </div>
                 <div class="hist-arrow"><i class="fa-solid fa-chevron-right"></i></div>
               </div>
             }
             @if (activeHistoryAppointments().length === 0) {
-              <div class="history-empty">No appointments found.</div>
+              <div class="history-empty">{{ t().appointments.noAppointmentsFound }}</div>
             }
           </div>
         </section>
@@ -156,15 +156,15 @@
     }
 
     <!-- ── Reminder Settings Section ── -->
-    <h3 class="section-title" style="margin-bottom: 8px;">Reminder Settings</h3>
+    <h3 class="section-title appts-reminder-settings-title">{{ t().appointments.reminderSettingsSection }}</h3>
     <div class="reminder-settings-card" [class.disabled-card]="!masterReminderEnabled()">
       <div class="rem-set-header">
         <div class="rem-set-icon-bg">
           <i class="fa-solid fa-bell rem-set-bell-icon"></i>
         </div>
         <div class="rem-set-text">
-          <h4>Appointment Reminder</h4>
-          <p>You will receive a notification before your appointment.</p>
+          <h4>{{ t().appointments.appointmentReminderTitle }}</h4>
+          <p>{{ t().appointments.receiveNotifBeforeText }}</p>
         </div>
         <div class="rem-set-toggle">
           <label class="ios-toggle">
@@ -173,33 +173,33 @@
           </label>
         </div>
       </div>
-      
+
       <hr class="rem-set-divider">
 
       <div class="rem-set-list">
         <div class="rem-time-pills-section">
-          <h5 class="rem-time-title">Reminder</h5>
+          <h5 class="rem-time-title">{{ t().appointments.reminderLabel }}</h5>
           <div class="rem-time-pills-container">
-            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === null" (click)="setReminderTime(null)">None</button>
-            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 15" (click)="setReminderTime(15)">15 minutes before</button>
-            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 30" (click)="setReminderTime(30)">30 minutes before</button>
-            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 60" (click)="setReminderTime(60)">1 hour before</button>
-            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 120" (click)="setReminderTime(120)">2 hours before</button>
-            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 1440" (click)="setReminderTime(1440)">1 day before</button>
-            <button type="button" class="time-pill" [class.active]="isCustomTimeActive()" (click)="enableCustomMode()">Custom</button>
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === null" (click)="setReminderTime(null)">{{ t().appointments.noneReminder }}</button>
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 15" (click)="setReminderTime(15)">{{ t().appointments.reminder15Before }}</button>
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 30" (click)="setReminderTime(30)">{{ t().appointments.reminder30Before }}</button>
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 60" (click)="setReminderTime(60)">{{ t().appointments.reminder1hrBefore }}</button>
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 120" (click)="setReminderTime(120)">{{ t().appointments.reminder2hrsBefore }}</button>
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 1440" (click)="setReminderTime(1440)">{{ t().appointments.reminder1dayBefore }}</button>
+            <button type="button" class="time-pill" [class.active]="isCustomTimeActive()" (click)="enableCustomMode()">{{ t().appointments.customReminder }}</button>
           </div>
           @if (isCustomTimeActive()) {
             <div class="rem-time-custom-wrap">
               <input type="number" class="rem-time-input" [value]="reminderTimeMins()" (input)="updateCustomTime($event)">
-              <span class="rem-row-value">minutes before</span>
+              <span class="rem-row-value">{{ t().appointments.minutesBefore }}</span>
             </div>
           }
         </div>
-        
+
         <div class="rem-set-row">
           <div class="rem-row-left">
             <i class="fa-regular fa-bell rem-row-icon"></i>
-            <span class="rem-row-title">Notification</span>
+            <span class="rem-row-title">{{ t().appointments.notificationRowLabel }}</span>
           </div>
           <div class="rem-row-right">
             <label class="ios-toggle toggle-small">
@@ -208,11 +208,11 @@
             </label>
           </div>
         </div>
-        
+
         <div class="rem-set-row">
           <div class="rem-row-left">
             <i class="fa-solid fa-volume-high rem-row-icon"></i>
-            <span class="rem-row-title">Sound</span>
+            <span class="rem-row-title">{{ t().appointments.soundRowLabel }}</span>
           </div>
           <div class="rem-row-right">
             <label class="ios-toggle toggle-small">
@@ -225,11 +225,11 @@
     </div>
 
 
-    <div style="height:80px"></div> <!-- Extra padding for FAB -->
+    <div class="appts-fab-spacer"></div> <!-- Extra padding for FAB -->
   </div><!-- /m-body -->
 
   <!-- Floating Action Button -->
-  <button class="fab-add" (click)="addAppointment()" aria-label="Add Appointment">
+  <button class="fab-add" (click)="addAppointment()" [attr.aria-label]="t().appointments.addAppointment">
     <i class="fa-solid fa-plus"></i>
   </button>
 
@@ -246,7 +246,7 @@
       <div class="modal-hdr-left">
         <div class="modal-ico-wrap"><i class="fa-solid fa-calendar-check"></i></div>
         <div>
-          <h2 class="modal-title">Appointment Details</h2>
+          <h2 class="modal-title">{{ t().appointments.appointmentDetails }}</h2>
           <p class="modal-subtitle">{{ appt.provider }}</p>
         </div>
       </div>
@@ -255,40 +255,40 @@
       </button>
     </div>
 
-    <div class="modal-body" style="padding: 16px 22px;">
-      <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-lt);">
-        <span style="color: var(--text-2); font-size: 14px; font-weight: 500;">Type</span>
-        <span style="color: var(--text); font-size: 14px; font-weight: 600;">{{ getApptTypeLabel(appt.appointmentType) }}</span>
+    <div class="modal-body appts-view-modal-body">
+      <div class="appts-view-detail-row">
+        <span class="appts-view-detail-lbl">{{ t().appointments.typeLabel }}</span>
+        <span class="appts-view-detail-val">{{ getApptTypeLabel(appt.appointmentType) }}</span>
       </div>
-      <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-lt);">
-        <span style="color: var(--text-2); font-size: 14px; font-weight: 500;">Date</span>
-        <span style="color: var(--text); font-size: 14px; font-weight: 600;">{{ formatDate(appt.appointmentDateTime) }}</span>
+      <div class="appts-view-detail-row">
+        <span class="appts-view-detail-lbl">{{ t().appointments.dateLabel }}</span>
+        <span class="appts-view-detail-val">{{ formatDate(appt.appointmentDateTime) }}</span>
       </div>
-      <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-lt);">
-        <span style="color: var(--text-2); font-size: 14px; font-weight: 500;">Time</span>
-        <span style="color: var(--text); font-size: 14px; font-weight: 600;">{{ formatTime(appt.appointmentDateTime) }}</span>
+      <div class="appts-view-detail-row">
+        <span class="appts-view-detail-lbl">{{ t().appointments.timeLabel }}</span>
+        <span class="appts-view-detail-val">{{ formatTime(appt.appointmentDateTime) }}</span>
       </div>
-      <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-lt);">
-        <span style="color: var(--text-2); font-size: 14px; font-weight: 500;">Reminder</span>
-        <span style="color: var(--text); font-size: 14px; font-weight: 600;">{{ reminderLabel(appt.reminderOffsetMinutes) }}</span>
+      <div class="appts-view-detail-row">
+        <span class="appts-view-detail-lbl">{{ t().appointments.reminder }}</span>
+        <span class="appts-view-detail-val">{{ reminderLabel(appt.reminderOffsetMinutes) }}</span>
       </div>
-      <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-lt);">
-        <span style="color: var(--text-2); font-size: 14px; font-weight: 500;">Status</span>
-        <span style="color: var(--text); font-size: 14px; font-weight: 600;">{{ appt.status }}</span>
+      <div class="appts-view-detail-row">
+        <span class="appts-view-detail-lbl">{{ t().appointments.status }}</span>
+        <span class="appts-view-detail-val">{{ statusLabel(appt.status) }}</span>
       </div>
       @if (appt.notes) {
-        <div style="padding: 12px 0;">
-          <span style="color: var(--text-2); font-size: 14px; font-weight: 500; display: block; margin-bottom: 6px;">Notes</span>
-          <p style="color: var(--text); font-size: 14px; background: var(--bg); padding: 12px; border-radius: 8px; margin: 0;">{{ appt.notes }}</p>
+        <div class="appts-view-notes-block">
+          <span class="appts-view-detail-lbl appts-view-notes-lbl">{{ t().appointments.notesLabel }}</span>
+          <p class="appts-view-notes-text">{{ appt.notes }}</p>
         </div>
       }
     </div>
 
     <div class="modal-footer">
-      <button type="button" class="btn-ghost" (click)="closeView()">Close</button>
+      <button type="button" class="btn-ghost" (click)="closeView()">{{ t().appointments.closeBtn }}</button>
       @if (appt.status === 'Upcoming') {
         <button type="button" class="btn-primary" (click)="markAttended(appt); closeView()">
-          <i class="fa-solid fa-check"></i> Mark Attended
+          <i class="fa-solid fa-check"></i> {{ t().appointments.markAttendedBtn }}
         </button>
       }
     </div>

@@ -3,7 +3,7 @@ import { Injectable, inject, isDevMode } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   BehaviorSubject, Observable, Subject, catchError, finalize, firstValueFrom,
-  map, of, shareReplay, tap, throwError
+  map, of, shareReplay, switchMap, tap, throwError
 } from 'rxjs';
 import { Account } from '../Modles/account';
 import { ApiResponse, ApiResponseBase } from '../Modles/api-response';
@@ -99,7 +99,7 @@ export class AuthService {
       `${environment.apiUrl}/auth/login`,
       request
     ).pipe(
-      tap((response) => this.handleAuthSuccess(response))
+      switchMap((response) => this.completeAuthentication(response))
     );
   }
 
@@ -169,7 +169,7 @@ export class AuthService {
       `${environment.apiUrl}/auth/google`,
       { idToken }
     ).pipe(
-      tap((response) => this.handleAuthSuccess(response))
+      switchMap((response) => this.completeAuthentication(response))
     );
   }
 
@@ -196,7 +196,7 @@ export class AuthService {
       { refreshToken }
     ).pipe(
       tap((response) => {
-        this.handleAuthSuccess(response, false);
+        this.storeTokens(response);
         this.log('Access token refreshed.');
         this.tokensRefreshedSubject.next();
       }),
@@ -328,14 +328,26 @@ export class AuthService {
     );
   }
 
-  private handleAuthSuccess(response: AuthResponse, loadProfile = true): void {
+  private storeTokens(response: AuthResponse): void {
     this.tokenStorage.setTokens(response.data);
+  }
 
-    if (loadProfile) {
-      this.getMe().subscribe({
-        error: () => this.clearLocalSession()
-      });
-    }
+  /**
+   * Stores the tokens from a login/social-login response and then loads the
+   * authenticated user before the caller is allowed to proceed. Login is not
+   * considered complete — and callers must not navigate — until this resolves:
+   * an in-flight token with no confirmed identity is not a logged-in session.
+   */
+  private completeAuthentication(response: AuthResponse): Observable<AuthResponse> {
+    this.storeTokens(response);
+
+    return this.getMe().pipe(
+      map(() => response),
+      catchError((error) => {
+        this.clearLocalSession();
+        return throwError(() => error);
+      })
+    );
   }
 
   private clearLocalSession(): void {

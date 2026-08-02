@@ -1,0 +1,61 @@
+<div class="lang-switch">
+  <button
+    type="button"
+    class="lang-switch__trigger"
+    (click)="toggleMenu()"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="open()"
+    [attr.aria-label]="t().language.changeLanguage"
+  >
+    <i class="fa-solid fa-globe" aria-hidden="true"></i>
+    <span class="lang-switch__code">{{ l10n.lang().toUpperCase() }}</span>
+  </button>
+
+  @if (open()) {
+    <div class="lang-switch__backdrop" (click)="closeMenu()">
+      <div
+        class="lang-switch__sheet"
+        role="menu"
+        [attr.aria-label]="t().language.changeLanguage"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="lang-switch__handle"></div>
+
+        <div class="lang-switch__hdr">
+          <div class="lang-switch__hdr-left">
+            <div class="lang-switch__ico-wrap"><i class="fa-solid fa-globe" aria-hidden="true"></i></div>
+            <h2 class="lang-switch__title">{{ t().language.changeLanguage }}</h2>
+          </div>
+          <button
+            type="button"
+            class="lang-switch__close-btn"
+            (click)="closeMenu()"
+            [attr.aria-label]="t().common.close"
+          >
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <ul class="lang-switch__list">
+          @for (option of languages; track option.code) {
+            <li role="none">
+              <button
+                type="button"
+                role="menuitemradio"
+                class="lang-switch__item"
+                [class.lang-switch__item--active]="l10n.lang() === option.code"
+                [attr.aria-checked]="l10n.lang() === option.code"
+                (click)="select(option.code)"
+              >
+                <span class="lang-switch__item-label">{{ option.nativeLabel }}</span>
+                @if (l10n.lang() === option.code) {
+                  <i class="fa-solid fa-circle-check lang-switch__item-check" aria-hidden="true"></i>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  }
+</div>

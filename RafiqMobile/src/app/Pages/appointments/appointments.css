@@ -403,7 +403,7 @@ h1, h2, h3, h4, p {
 .hist-arrow {
   color: var(--text-3, #64748B);
   font-size: 16px;
-  margin-left: 8px;
+  margin-inline-start: 8px;
 }
 .history-empty {
   padding: 24px;
@@ -816,4 +816,637 @@ h1, h2, h3, h4, p {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* ═══════════ View Details modal body (replaces former inline styles) ═══════════ */
+.appts-view-modal-body {
+  padding: 16px 22px;
+}
+.appts-view-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-lt);
+}
+.appts-view-detail-lbl {
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+.appts-view-detail-val {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: end;
+}
+.appts-view-notes-block {
+  padding: 12px 0;
+}
+.appts-view-notes-lbl {
+  display: block;
+  margin-bottom: 6px;
+}
+.appts-view-notes-text {
+  color: var(--text);
+  font-size: 14px;
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 8px;
+  margin: 0;
+}
+
+.appts-reminder-settings-title {
+  margin-bottom: 8px;
+}
+
+.appts-fab-spacer {
+  height: 80px;
+}
+
+.tl-meta-time-ico {
+  margin-inline-start: 8px;
+}
+
+/* ═══════════ RTL adjustments ═══════════ */
+/* Forward-navigation chevrons should mirror to point toward reading-end in RTL */
+html[dir="rtl"] .tl-arrow i,
+html[dir="rtl"] .hist-arrow i {
+  transform: scaleX(-1);
+}
+
+/* FAB should sit at the trailing edge of the screen in both directions */
+.fab-add {
+  inset-inline-end: 20px;
+  right: auto;
+}
+
+/* Directional arrows/chevrons mirror in RTL so they still read as "forward"/"back" */
+html[dir="rtl"] .stat-link i,
+html[dir="rtl"] .appts-page-prev i,
+html[dir="rtl"] .appts-page-next i,
+html[dir="rtl"] .appt-modal-card .modal-ftr .fa-arrow-right,
+html[dir="rtl"] .appt-modal-card .modal-ftr .fa-arrow-left {
+  transform: scaleX(-1);
+}
+
+/* ═══════════ appointments-content.html — replaces former inline styles ═══════════ */
+.appts-compact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.appts-compact-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+.appts-compact-subtitle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.appts-error-icon {
+  color: var(--red);
+}
+.appts-retry-btn {
+  margin-top: 14px;
+}
+.appts-td-date {
+  margin: 0 0 2px;
+  font-weight: 600;
+  color: var(--text);
+}
+.appts-td-time {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.appts-td-provider {
+  font-weight: 500;
+  color: var(--text-2);
+}
+.appts-td-reminder {
+  color: var(--text-3);
+  font-size: 12px;
+}
+.appts-td-reminder-ico {
+  margin-inline-end: 4px;
+  color: var(--blue);
+}
+.next-empty-small-title {
+  font-size: 20px;
+}
+.next-empty-title {
+  margin: 20px 0;
+}
+.appts-type-err {
+  margin-bottom: 12px;
+}
+.appts-custom-type-group {
+  margin-top: 16px;
+}
+.appts-optional-lbl {
+  color: var(--text-4);
+}
+
+/* ═══════════ appointments-content.html — Add/Edit/View/Delete/Cancel modals + toasts ═══════════ */
+/* These modals were previously unstyled because their class names (modal-overlay,
+   modal-card, field-*, type-*, step-*, reminder-chip, view-detail-*, confirm-*, toast*)
+   had no rules in this stylesheet. */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px;
+  animation: fadeIn .18s ease;
+}
+
+.modal-card {
+  background: var(--white, #fff);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 40px);
+  margin: auto;
+  animation: modal-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modal-enter {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-card-sm {
+  max-width: 420px;
+}
+
+.modal-card .modal-hdr-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text, #111827);
+  margin: 0;
+}
+
+.modal-hdr-sub {
+  font-size: 12px;
+  color: var(--text-3, #6B7280);
+  margin: 4px 0 0;
+}
+
+.modal-card .close-modal-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #F3F4F6;
+  border-radius: 8px;
+  color: #6B7280;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+.modal-card .close-modal-btn:hover {
+  background: #E5E7EB;
+  color: #111827;
+}
+
+.modal-card .modal-body {
+  padding: 20px 22px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.modal-card .modal-ftr {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--border-lt, #F3F4F6);
+  flex-shrink: 0;
+}
+
+.modal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s ease;
+  border: none;
+}
+.modal-btn:disabled {
+  cursor: not-allowed;
+  opacity: .65;
+}
+.modal-btn-secondary {
+  background: transparent;
+  border: 1px solid #E5E7EB;
+  color: #374151;
+}
+.modal-btn-secondary:hover:not(:disabled) {
+  background: #F3F4F6;
+}
+.modal-btn-primary {
+  background: linear-gradient(135deg, #0EAFD7, #0891B2);
+  color: #fff;
+}
+.modal-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.modal-btn-danger {
+  background: var(--red, #DC2626);
+  color: #fff;
+}
+.modal-btn-danger:hover:not(:disabled) {
+  background: #B91C1C;
+}
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin .7s linear infinite;
+  display: inline-block;
+}
+.btn-spinner--light {
+  border-color: rgba(255,255,255,.4);
+  border-top-color: #fff;
+}
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Step progress (Add appointment wizard) ── */
+.step-progress {
+  display: flex;
+  align-items: center;
+  padding: 16px 22px 0;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #F3F4F6;
+  color: var(--text-3, #6B7280);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: background .2s ease, color .2s ease;
+}
+.step-dot--active {
+  background: linear-gradient(135deg, #0EAFD7, #0891B2);
+  color: #fff;
+}
+.step-dot--done {
+  background: #0EAFD7;
+  color: #fff;
+}
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: #E5E7EB;
+  transition: background .2s ease;
+}
+.step-line--done {
+  background: #0EAFD7;
+}
+
+/* ── Type selection grid ── */
+.type-select-hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-3, #6B7280);
+}
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.type-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 10px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.type-card:hover {
+  border-color: #0EAFD7;
+}
+.type-card--selected {
+  border-color: #0EAFD7;
+  background: rgba(14, 175, 215, 0.06);
+}
+.type-card-ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(14, 175, 215, 0.1);
+  color: #0EAFD7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+.type-card-lbl {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text, #111827);
+  text-align: center;
+}
+.type-card-check {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0EAFD7;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+}
+
+/* ── Form fields ── */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.field-lbl {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2, #374151);
+}
+.field-inp {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text, #111827);
+  background: #fff;
+  transition: border-color .15s ease;
+}
+.field-inp:focus {
+  outline: none;
+  border-color: #0EAFD7;
+}
+.field-inp--err {
+  border-color: var(--red, #DC2626);
+}
+.field-textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+.field-err {
+  margin: 0;
+  font-size: 12px;
+  color: var(--red, #DC2626);
+}
+
+/* ── Reminder chips ── */
+.reminder-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reminder-chip {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid #E5E7EB;
+  background: #fff;
+  color: var(--text-2, #374151);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.reminder-chip--active {
+  background: linear-gradient(135deg, #0EAFD7, #0891B2);
+  border-color: transparent;
+  color: #fff;
+}
+.custom-reminder-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.custom-reminder-input {
+  width: 90px;
+}
+.custom-reminder-unit {
+  font-size: 13px;
+  color: var(--text-3, #6B7280);
+}
+
+/* ── View details modal ── */
+.view-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.view-detail-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text, #111827);
+}
+.view-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.view-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.view-detail-lbl {
+  font-size: 12px;
+  color: var(--text-3, #6B7280);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.view-detail-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text, #111827);
+}
+.view-notes-block {
+  padding-top: 4px;
+  border-top: 1px solid var(--border-lt, #F3F4F6);
+}
+.view-notes-text {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  color: var(--text-2, #374151);
+  line-height: 1.55;
+}
+
+/* ── Confirm dialogs (delete / cancel) ── */
+.confirm-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin: 0 auto 14px;
+}
+.confirm-icon--danger {
+  background: var(--red-lt, #FEE2E2);
+  color: var(--red, #DC2626);
+}
+.confirm-icon--warn {
+  background: #FFF7ED;
+  color: #EA580C;
+}
+.confirm-text {
+  text-align: center;
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-2, #374151);
+  line-height: 1.55;
+}
+
+/* ── Toasts ── */
+.toast-container {
+  position: fixed;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: auto;
+  right: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 9999;
+  pointer-events: none;
+  width: min(90vw, 480px);
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--white, #fff);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid var(--border, #E5E7EB);
+  width: 100%;
+  pointer-events: all;
+  animation: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)      scale(1); }
+}
+.toast--success { border-left: 4px solid var(--green, #16A34A); }
+.toast--error   { border-left: 4px solid var(--red, #DC2626); }
+.toast-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.toast--success .toast-icon { background: rgba(22,163,74,.12); color: var(--green, #16A34A); }
+.toast--error   .toast-icon { background: rgba(220,38,38,.12); color: var(--red, #DC2626); }
+.toast-msg {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text, #111827);
+  line-height: 1.45;
+}
+.toast-close {
+  background: transparent;
+  border: none;
+  color: var(--text-4, #9CA3AF);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: color .15s ease, background .15s ease;
+  flex-shrink: 0;
+}
+.toast-close:hover {
+  color: var(--text-2, #374151);
+  background: rgba(0,0,0,.05);
+}
+
+/* ── appt-type-ico (table rows / mobile cards / view modal) ── */
+.appt-type-ico {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(14, 175, 215, 0.1);
+  color: #0EAFD7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.appt-type-ico-lg {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+/* RTL: mirror the wizard "Next"/"Back" arrows so they still point toward reading-end */
+html[dir="rtl"] .modal-btn .fa-arrow-right,
+html[dir="rtl"] .modal-btn .fa-arrow-left {
+  transform: scaleX(-1);
 }

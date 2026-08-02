@@ -1,7 +1,7 @@
 {
 	"appId": "com.rafiq.mobile",
 	"appName": "Rafiq",
-	"webDir": "dist/RafiqAngular/browser",
+	"webDir": "dist/RafiqMobile/browser",
 	"plugins": {
 		"StatusBar": {
 			"overlaysWebView": false,

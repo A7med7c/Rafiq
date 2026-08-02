@@ -1,4 +1,6 @@
-const apiUrl ='https://localhost:7082/api';
+const apiUrl = 'https://localhost:7082/api';
+// const apiUrl = 'https://demise-valuables-turret.ngrok-free.dev/api';
+
 export const environment = {
 
     apiUrl,

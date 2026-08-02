@@ -39,13 +39,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  let authReq = req;
+  // ngrok's free-tier browser-warning interstitial intercepts XHR/fetch calls made
+  // from a different origin (e.g. localhost:4200) before they ever reach the API,
+  // returning an HTML page (ngrok-error-code: ERR_NGROK_6024) with no CORS headers —
+  // which the browser then reports as a CORS failure. This header bypasses it.
+  let authReq = req.clone({
+    setHeaders: { 'ngrok-skip-browser-warning': 'true' }
+  });
 
   if (shouldAttachToken(req.url)) {
     const token = tokenStorage.getAccessToken();
 
     if (token) {
-      authReq = req.clone({
+      authReq = authReq.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
         }
@@ -84,7 +90,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             }
 
             return next(
-              req.clone({
+              authReq.clone({
                 setHeaders: {
                   Authorization: `Bearer ${newToken}`
                 }
