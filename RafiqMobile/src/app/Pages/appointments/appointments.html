@@ -1,516 +1,297 @@
 <app-mobile-header
   [title]="t().sidebar.appointments"
   [showNotifications]="true"
-  [showAiButton]="true"
-  (notificationsClicked)="notifSvc.toggleNotificationCenter()"
-  (aiClicked)="aiChatService.openPanel()">
+  (notificationsClicked)="notifSvc.toggleNotificationCenter()">
 </app-mobile-header>
 
 <div class="m-page">
   <div class="m-body">
+    
+    <!-- ── Header ── -->
+    <div class="appts-header">
+      <h1 class="appts-title">{{ t().sidebar.appointments || 'Appointments' }}</h1>
+      <p class="appts-subtitle">Manage your upcoming appointments and reminders.</p>
+    </div>
 
-      <!-- ── Title Bar ── -->
-      <div class="appts-title-bar">
-        <div>
-          <h1 class="appts-title">{{ t().appointments.title }}</h1>
-          <p class="appts-subtitle">{{ t().appointments.subtitle }}</p>
+    <!-- ── Upcoming Appointment (Hero Card) ── -->
+    @if (nextAppointment(); as next) {
+      <div class="hero-card">
+        <div class="hero-hdr">
+          <div class="hero-info">
+            <h2 class="hero-doc">{{ next.provider }}</h2>
+            <p class="hero-spec">{{ getApptTypeLabel(next.appointmentType) }}</p>
+          </div>
+          <div class="hero-badge badge-upcoming">Upcoming</div>
         </div>
-        @if (fpReadOnly()) {
-        <span class="fp-readonly-badge">
-          <i class="fa-regular fa-eye"></i> {{ t().appointments.viewOnly }}
-        </span>
-        } @else {
-        <button assistantAnchor="add-appointment" type="button" class="add-appt-btn" (click)="openAdd()">
-          <i class="fa-solid fa-plus"></i>
-          {{ t().appointments.addAppointment }}
-        </button>
-        }
-      </div>
-
-      <!-- ── Family profile context banner ── -->
-      <app-family-profile-banner [profile]="viewingProfile()" [readOnly]="fpReadOnly()" />
-
-      <!-- ── Stat Cards ── -->
-      <div class="appointment-overview">
-
-        @if (nextAppointment(); as next) {
-        <div assistantAnchor="next-appointment-card" class="next-card">
-          <div class="next-card-content">
-            <div class="next-header">
-              <div class="next-icon"><i class="fa-regular fa-calendar"></i></div>
-              <div>
-                <p class="next-small-title">{{ t().appointments.nextAppointment }}</p>
-                <h2 class="next-title">{{ next.title }}</h2>
-                <p class="next-provider"><i class="fa-solid fa-user-doctor"></i> {{ next.provider }}</p>
-                <div class="next-meta">
-                  <span><i class="fa-regular fa-calendar"></i> {{ formatDate(next.appointmentDateTime) }}</span>
-                  <span><i class="fa-regular fa-clock"></i> {{ formatTime(next.appointmentDateTime) }}</span>
-                </div>
-                @if (next.reminderOffsetMinutes) {
-                <p class="next-reminder"><i class="fa-regular fa-bell"></i> {{ t().appointments.reminder }} {{ reminderLabel(next.reminderOffsetMinutes) }}</p>
-                }
-              </div>
-            </div>
-            <button class="next-btn" (click)="openView(next)">{{ t().appointments.viewDetails }}</button>
+        <div class="hero-body">
+          <div class="hero-row">
+            <i class="fa-regular fa-hospital hero-row-icon"></i>
+            <span>{{ next.title || 'Clinic / Hospital' }}</span>
           </div>
-          <div class="next-image"><img src="images/calender.png" alt="Appointment"></div>
+          <div class="hero-row">
+            <i class="fa-regular fa-calendar hero-row-icon"></i>
+            <span>{{ formatDate(next.appointmentDateTime) }} &bull; {{ formatTime(next.appointmentDateTime) }}</span>
+          </div>
+          <div class="hero-row">
+            <i class="fa-regular fa-bell hero-row-icon"></i>
+            <span>{{ reminderLabel(next.reminderOffsetMinutes) }}</span>
+          </div>
         </div>
-        }
-        @else {
-        <div class="next-card next-card-empty">
-          <div class="next-card-content">
-            <div class="next-header">
-              <div class="next-icon"><i class="fa-regular fa-calendar"></i></div>
-              <div>
-                <div class="next-small-title" style="font-size: 20px;">{{ t().appointments.nextAppointment }}</div>
-                <h2 class="next-title empty-title" style="margin:20px 0px;">{{ t().appointments.noUpcomingAppointment }}</h2>
-                <p class="empty-text">{{ t().appointments.noUpcomingText }}</p>
-                @if (!fpReadOnly()) {
-                <button class="next-btn" (click)="openAdd()"><i class="fa-solid fa-plus"></i> {{ t().appointments.addAppointment }}</button>
-                }
-              </div>
-            </div>
-          </div>
-          <div class="next-image"><img src="images/calender.png" alt="Calendar"></div>
-        </div>
-        }
-
-        <div class="stat-grid">
-          <div assistantAnchor="upcoming-stat-card" class="stat-card stat-card-blue" (click)="setTab('upcoming')">
-            <div class="stat-ico-wrap stat-ico-blue"><i class="fa-solid fa-clipboard-check" style="color: rgb(116, 192, 252);"></i></div>
-            <div class="stat-body">
-              <span class="stat-lbl">{{ t().appointments.upcoming }}</span>
-              <span class="stat-num">{{ upcomingCount() }}</span>
-              <span class="stat-sub">{{ t().appointments.appointmentsLabel }}</span>
-            </div>
-            <button type="button" class="stat-link" (click)="$event.stopPropagation(); setTab('upcoming')">{{ t().common.viewAll }} <i class="fa-solid fa-arrow-right"></i></button>
-          </div>
-          <div assistantAnchor="completed-stat-card" class="stat-card stat-card-green" (click)="setTab('completed')">
-            <div class="stat-ico-wrap stat-ico-green"><i class="fa-solid fa-circle-check" style="color: rgb(68, 239, 122);"></i></div>
-            <div class="stat-body">
-              <span class="stat-lbl">{{ t().appointments.completed }}</span>
-              <span class="stat-num">{{ completedCount() }}</span>
-              <span class="stat-sub">{{ t().appointments.appointmentsLabel }}</span>
-            </div>
-            <button type="button" class="stat-link" (click)="$event.stopPropagation(); setTab('completed')">{{ t().common.viewAll }} <i class="fa-solid fa-arrow-right"></i></button>
-          </div>
-          <div class="stat-card stat-card-red" (click)="setTab('cancelled')">
-            <div class="stat-ico-wrap stat-ico-red"><i class="fa-solid fa-circle-xmark" style="color: rgb(226, 26, 32);"></i></div>
-            <div class="stat-body">
-              <span class="stat-lbl">{{ t().appointments.cancelledMissed }}</span>
-              <span class="stat-num">{{ cancelledCount() }}</span>
-              <span class="stat-sub">{{ t().appointments.appointmentsLabel }}</span>
-            </div>
-            <button type="button" class="stat-link" (click)="$event.stopPropagation(); setTab('cancelled')">{{ t().common.viewAll }} <i class="fa-solid fa-arrow-right"></i></button>
-          </div>
-          <div class="stat-card stat-card-gray" (click)="setTab('all')">
-            <div class="stat-ico-wrap stat-ico-gray"><i class="fa-regular fa-calendar-days" style="color: rgb(116, 192, 252);"></i></div>
-            <div class="stat-body">
-              <span class="stat-lbl">{{ t().appointments.all }}</span>
-              <span class="stat-num">{{ totalCount() }}</span>
-              <span class="stat-sub">{{ t().appointments.appointmentsLabel }}</span>
-            </div>
-            <button type="button" class="stat-link" (click)="$event.stopPropagation(); setTab('all')">{{ t().common.viewAll }} <i class="fa-solid fa-arrow-right"></i></button>
-          </div>
+        <div class="hero-actions">
+          <button type="button" class="btn-primary" (click)="openView(next)">View Details</button>
+          <button type="button" class="btn-secondary" (click)="markAttended(next)">Mark as Attended</button>
         </div>
       </div>
+    }
 
-      <!-- ── Tab Bar ── -->
-      <div class="appts-toolbar">
-        <div class="appts-tab-bar">
-          <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'all'" (click)="setTab('all')">{{ t().appointments.all }}</button>
-          <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'upcoming'" (click)="setTab('upcoming')">{{ t().appointments.upcoming }}</button>
-          <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'completed'" (click)="setTab('completed')">{{ t().appointments.completed }}</button>
-          <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'cancelled'" (click)="setTab('cancelled')">{{ t().appointments.cancelledMissed }}</button>
+    <!-- ── Today's Reminder ── -->
+    @if (todaysReminder(); as reminder) {
+      <div class="reminder-card">
+        <div class="rem-icon-wrap">
+          <i class="fa-solid fa-bell rem-icon"></i>
         </div>
+        <div class="rem-content">
+          <h3 class="rem-title">Appointment Reminder</h3>
+          <p class="rem-sub">{{ getApptTypeLabel(reminder.appointmentType) }} &bull; Today &bull; {{ formatTime(reminder.appointmentDateTime) }}</p>
+          <p class="rem-text">Reminder: {{ reminderLabel(reminder.reminderOffsetMinutes) }}</p>
+          <p class="rem-status">Status: Reminder Scheduled</p>
+        </div>
+        <button type="button" class="btn-outline" (click)="openView(reminder)">View Reminder</button>
+      </div>
+    }
 
-        <div class="mobile-tab-select">
-          <button type="button" class="mobile-tab-trigger" [class.is-open]="mobileTabMenuOpen()" (click)="toggleMobileTabMenu()">
-            <i [class]="'fa-solid ' + activeTabIcon() + ' mtt-icon'"></i>
-            <span class="mtt-label">{{ activeTabLabel() }}</span>
-            <i class="fa-solid fa-chevron-down mtt-chevron"></i>
-          </button>
-          @if (mobileTabMenuOpen()) {
-            <div class="mobile-tab-backdrop" (click)="closeMobileTabMenu()"></div>
-            <div class="mobile-tab-dropdown">
-              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'all'" (click)="setTab('all')"><i class="fa-solid fa-layer-group"></i> {{ t().appointments.all }}</button>
-              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'upcoming'" (click)="setTab('upcoming')"><i class="fa-solid fa-calendar"></i> {{ t().appointments.upcoming }}</button>
-              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'completed'" (click)="setTab('completed')"><i class="fa-solid fa-circle-check"></i> {{ t().appointments.completed }}</button>
-              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'cancelled'" (click)="setTab('cancelled')"><i class="fa-solid fa-circle-xmark"></i> {{ t().appointments.cancelledMissed }}</button>
+    <!-- ── Quick Overview (Scrollable Chips) ── -->
+    <div class="summary-chips-wrap">
+      <div class="summary-chip chip-blue">
+        <span>Upcoming &bull; {{ upcomingCount() }}</span>
+      </div>
+      <div class="summary-chip chip-green">
+        <span>Completed &bull; {{ completedCount() }}</span>
+      </div>
+      <div class="summary-chip chip-red">
+        <span>Missed &bull; {{ missedCount() }}</span>
+      </div>
+      <div class="summary-chip chip-gray">
+        <span>Cancelled &bull; {{ cancelledCount() }}</span>
+      </div>
+    </div>
+
+    @if (upcomingAppointments().length === 0 && previousAppointments().length === 0 && !loading()) {
+      <!-- ── Empty State ── -->
+      <div class="empty-state">
+        <img src="images/calender.png" alt="No Appointments" class="empty-ill">
+        <h3 class="empty-title">No Appointments Yet</h3>
+        <p class="empty-desc">Your upcoming appointments will appear here once they are added by your healthcare provider or synced with your medical records.</p>
+        <button type="button" class="btn-primary" (click)="loadAppointments()">Refresh</button>
+      </div>
+    } @else {
+      <!-- ── Appointment Timeline (Upcoming) ── -->
+      @if (upcomingAppointments().length > 0) {
+        <section class="appt-section">
+          <h3 class="section-title">Upcoming Appointments</h3>
+          <div class="appt-list">
+            @for (appt of upcomingAppointments(); track appt.id) {
+              <div class="timeline-card" (click)="openView(appt)">
+                <div class="tl-content">
+                  <div class="tl-row-top">
+                    <span class="tl-doc">{{ appt.provider }}</span>
+                    <span class="tl-badge badge-upcoming">Upcoming</span>
+                  </div>
+                  <p class="tl-spec">{{ getApptTypeLabel(appt.appointmentType) }} &bull; {{ appt.title || 'Clinic' }}</p>
+                  <p class="tl-meta">
+                    <i class="fa-regular fa-calendar"></i> {{ formatDate(appt.appointmentDateTime) }} 
+                    <i class="fa-regular fa-clock" style="margin-left: 8px;"></i> {{ formatTime(appt.appointmentDateTime) }}
+                  </p>
+                </div>
+                <div class="tl-arrow">
+                  <i class="fa-solid fa-chevron-right"></i>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- ── Appointment History (Previous) ── -->
+      @if (groupedPreviousAppointments().length > 0) {
+        <section class="appt-section">
+          <div class="history-header">
+            <h3 class="section-title">Previous Appointments</h3>
+            <a routerLink="/appointments" class="view-all-link">View All</a>
+          </div>
+          
+          <div class="history-tabs">
+            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'This Month'" (click)="activeHistoryTab.set('This Month')">This Month</button>
+            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'Last Month'" (click)="activeHistoryTab.set('Last Month')">Last Month</button>
+            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'Earlier'" (click)="activeHistoryTab.set('Earlier')">Earlier</button>
+          </div>
+
+          <div class="history-list-card">
+            @for (appt of activeHistoryAppointments(); track appt.id; let last = $last) {
+              <div class="history-row" [class.no-border]="last" (click)="openView(appt)">
+                <div class="hist-main">
+                  <h4 class="hist-title">{{ appt.title || 'Clinic Visit' }}</h4>
+                  <p class="hist-doc-name">{{ appt.provider }}</p>
+                  <p class="hist-spec">{{ getApptTypeLabel(appt.appointmentType) }}</p>
+                  <p class="hist-loc">Medical Center</p>
+                </div>
+                <div class="hist-side">
+                  <div class="hist-datetime">
+                    <div class="hist-dt-row"><i class="fa-regular fa-calendar"></i> {{ formatDate(appt.appointmentDateTime) }}</div>
+                    <div class="hist-dt-row"><i class="fa-regular fa-clock"></i> {{ formatTime(appt.appointmentDateTime) }}</div>
+                  </div>
+                  <span class="tl-badge" [class.badge-completed]="appt.status === 'Completed'" [class.badge-missed]="appt.status === 'Missed'" [class.badge-cancelled]="appt.status === 'Cancelled'">
+                    {{ appt.status }}
+                  </span>
+                </div>
+                <div class="hist-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+              </div>
+            }
+            @if (activeHistoryAppointments().length === 0) {
+              <div class="history-empty">No appointments found.</div>
+            }
+          </div>
+        </section>
+      }
+    }
+
+    <!-- ── Reminder Settings Section ── -->
+    <h3 class="section-title" style="margin-bottom: 8px;">Reminder Settings</h3>
+    <div class="reminder-settings-card" [class.disabled-card]="!masterReminderEnabled()">
+      <div class="rem-set-header">
+        <div class="rem-set-icon-bg">
+          <i class="fa-solid fa-bell rem-set-bell-icon"></i>
+        </div>
+        <div class="rem-set-text">
+          <h4>Appointment Reminder</h4>
+          <p>You will receive a notification before your appointment.</p>
+        </div>
+        <div class="rem-set-toggle">
+          <label class="ios-toggle">
+            <input type="checkbox" [checked]="masterReminderEnabled()" (change)="toggleMasterReminder($event)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <hr class="rem-set-divider">
+
+      <div class="rem-set-list">
+        <div class="rem-time-pills-section">
+          <h5 class="rem-time-title">Reminder</h5>
+          <div class="rem-time-pills-container">
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === null" (click)="setReminderTime(null)">None</button>
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 15" (click)="setReminderTime(15)">15 minutes before</button>
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 30" (click)="setReminderTime(30)">30 minutes before</button>
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 60" (click)="setReminderTime(60)">1 hour before</button>
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 120" (click)="setReminderTime(120)">2 hours before</button>
+            <button type="button" class="time-pill" [class.active]="!isCustomTimeActive() && reminderTimeMins() === 1440" (click)="setReminderTime(1440)">1 day before</button>
+            <button type="button" class="time-pill" [class.active]="isCustomTimeActive()" (click)="enableCustomMode()">Custom</button>
+          </div>
+          @if (isCustomTimeActive()) {
+            <div class="rem-time-custom-wrap">
+              <input type="number" class="rem-time-input" [value]="reminderTimeMins()" (input)="updateCustomTime($event)">
+              <span class="rem-row-value">minutes before</span>
             </div>
           }
         </div>
-
-        <div class="appts-controls-row">
-          <div assistantAnchor="appointments-search" class="appts-search-wrap">
-            <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
-            <input type="text" class="appts-search-inp" [placeholder]="t().appointments.searchPlaceholder"
-              [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); onFilterChange()">
+        
+        <div class="rem-set-row">
+          <div class="rem-row-left">
+            <i class="fa-regular fa-bell rem-row-icon"></i>
+            <span class="rem-row-title">Notification</span>
           </div>
-          <div class="appts-date-wrap">
-            <i class="fa-regular fa-calendar appts-date-ico"></i>
-            <input type="date" class="appts-date-inp" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event); onFilterChange()">
-            <span class="appts-date-sep">—</span>
-            <input type="date" class="appts-date-inp" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event); onFilterChange()">
+          <div class="rem-row-right">
+            <label class="ios-toggle toggle-small">
+              <input type="checkbox" [checked]="notificationEnabled()" (change)="toggleNotification()">
+              <span class="toggle-slider"></span>
+            </label>
           </div>
-          @if (searchQuery() || dateFrom() || dateTo()) {
-          <button type="button" class="filter-btn" (click)="clearFilters()"><i class="fa-solid fa-sliders"></i> {{ t().common.clear }}</button>
-          }
-          <div class="appts-sort-wrap">
-            <i class="fa-solid fa-arrow-down-wide-short appts-sort-ico"></i>
-            <select class="appts-sort-sel" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event); currentPage.set(1)">
-              <option value="recent">{{ t().appointments.newestFirst }}</option>
-              <option value="oldest">{{ t().appointments.oldestFirst }}</option>
-              <option value="az">{{ t().appointments.aToZ }}</option>
-              <option value="za">{{ t().appointments.zToA }}</option>
-            </select>
+        </div>
+        
+        <div class="rem-set-row">
+          <div class="rem-row-left">
+            <i class="fa-solid fa-volume-high rem-row-icon"></i>
+            <span class="rem-row-title">Sound</span>
+          </div>
+          <div class="rem-row-right">
+            <label class="ios-toggle toggle-small">
+              <input type="checkbox" [checked]="soundEnabled()" (change)="toggleSound()">
+              <span class="toggle-slider"></span>
+            </label>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- ── Table ── -->
-      <div class="card appts-table-card" [class.tab-animating]="tabAnimating()" [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
-        @if (loading()) {
-        <div class="skl-list">
-          @for (s of [1,2,3,4]; track s) {
-          <div class="skl-row">
-            <div class="skl-sq"></div>
-            <div class="skl-lines" style="flex:1"><div class="skl-line skl-70"></div><div class="skl-line skl-45"></div></div>
-            <div class="skl-pill"></div><div class="skl-pill"></div>
-          </div>
-          }
-        </div>
-        } @else if (loadError()) {
-        <div class="empty-state">
-          <i class="fa-solid fa-triangle-exclamation empty-icon" style="color:var(--red)"></i>
-          <p class="empty-title">{{ t().appointments.couldNotLoad }}</p>
-          <p class="empty-sub">{{ loadError() }}</p>
-          <button type="button" class="add-appt-btn" style="margin-top:14px" (click)="loadAppointments()"><i class="fa-solid fa-rotate-right"></i> {{ t().appointments.retry }}</button>
-        </div>
-        } @else if (filtered().length === 0) {
-        <div class="empty-state">
-          <i class="fa-regular fa-calendar-xmark empty-icon"></i>
-          <p class="empty-title">{{ t().appointments.noAppointmentsFound }}</p>
-          <p class="empty-sub">@if (searchQuery() || dateFrom() || dateTo()) { {{ t().appointments.tryAdjusting }} } @else { {{ t().appointments.clickToAdd }} }</p>
-        </div>
-        } @else {
-        <div class="records-table-wrap appts-desktop-view">
-          <table class="records-table appts-table">
-            <thead>
-              <tr>
-                <th>{{ t().appointments.appointmentCol }}</th>
-                <th>{{ t().appointments.dateTime }}</th>
-                <th>{{ t().appointments.provider }}</th>
-                <th>{{ t().appointments.status }}</th>
-                <th>{{ t().appointments.reminder }}</th>
-                <th>{{ t().appointments.actions }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (a of paginated(); track a.id; let i = $index) {
-              <tr>
-                <td>
-                  <div class="table-name-wrap">
-                    <div class="appt-type-ico appt-type-ico-{{ a.appointmentType }}"><i class="fa-solid {{ typeIcon(a.appointmentType) }}"></i></div>
-                    <div><p class="rec-name" style="margin:0 0 2px">{{ a.title }}</p><span class="type-pill">{{ typeLabel(a) }}</span></div>
-                  </div>
-                </td>
-                <td [attr.data-label]="t().appointments.dateTime">
-                  <p style="margin:0 0 2px;font-weight:600;color:var(--text)">{{ formatDate(a.appointmentDateTime) }}</p>
-                  <p style="margin:0;font-size:12px;color:var(--text-3)">{{ formatTime(a.appointmentDateTime) }}</p>
-                </td>
-                <td style="font-weight:500;color:var(--text-2)" [attr.data-label]="t().appointments.provider">{{ a.provider }}</td>
-                <td [attr.data-label]="t().appointments.status"><span [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></td>
-                <td style="color:var(--text-3);font-size:12px" [attr.data-label]="t().appointments.reminder"><i class="fa-regular fa-bell" style="margin-right:4px;color:var(--blue)"></i>{{ reminderLabel(a.reminderOffsetMinutes) }}</td>
-                <td class="actions-cell">
-                  <div class="record-actions">
-                    <button type="button" class="rec-action-btn" [title]="t().appointments.viewDetailsAction" (click)="openView(a)"><i class="fa-regular fa-eye"></i></button>
-                    @if (!fpReadOnly() && a.status === AppointmentStatus.Upcoming) {
-                    <button type="button" class="rec-action-btn" [title]="t().appointments.editAction" (click)="openEdit(a)"><i class="fa-regular fa-pen-to-square"></i></button>
-                    }
-                    @if (!fpReadOnly()) {
-                    <button type="button" class="rec-action-btn rec-action-more" title="More options" (click)="toggleMenu(a.id, $event)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-                    @if (openMenuId() === a.id) {
-                    <div class="record-menu" [class.record-menu-up]="isLastRow(i)">
-                      @if (a.status === AppointmentStatus.Upcoming) {
-                      <button type="button" class="rec-menu-item" (click)="markComplete(a.id); openMenuId.set(null)"><i class="fa-solid fa-check"></i> {{ t().appointments.markComplete }}</button>
-                      <button type="button" class="rec-menu-item" (click)="confirmCancel(a.id); openMenuId.set(null)"><i class="fa-solid fa-ban"></i> {{ t().appointments.cancelAction }}</button>
-                      }
-                      <button type="button" class="rec-menu-item rec-menu-item--danger" (click)="confirmDelete(a.id); openMenuId.set(null)"><i class="fa-solid fa-trash"></i> {{ t().appointments.deleteAction }}</button>
-                    </div>
-                    }
-                    }
-                  </div>
-                </td>
-              </tr>
-              }
-            </tbody>
-          </table>
-        </div>
 
-        <div class="appts-mobile-view">
-          @for (a of paginated(); track a.id; let i = $index) {
-            <div class="appt-mobile-card">
-              <div class="appt-card-hdr">
-                <div class="appt-card-title-wrap">
-                  <div class="appt-type-ico appt-type-ico-{{ a.appointmentType }}"><i class="fa-solid {{ typeIcon(a.appointmentType) }}"></i></div>
-                  <div class="appt-card-title-info">
-                    <h4 class="appt-card-title" [attr.title]="a.title">{{ a.title }}</h4>
-                    <span class="type-pill type-{{ a.appointmentType }}">{{ typeLabel(a) }}</span>
-                  </div>
-                </div>
-                <div class="appt-card-actions">
-                  <button type="button" class="rec-action-btn" [title]="t().appointments.viewDetailsAction" (click)="openView(a)"><i class="fa-regular fa-eye"></i></button>
-                  @if (!fpReadOnly()) {
-                    <button type="button" class="rec-action-btn rec-action-more" title="More options" (click)="toggleMenu(a.id, $event)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-                    @if (openMenuId() === a.id) {
-                      <div class="record-menu record-menu-down" (click)="$event.stopPropagation()">
-                        <button type="button" class="rec-menu-item rec-menu-item--danger" (click)="confirmDelete(a.id); openMenuId.set(null)"><i class="fa-solid fa-trash"></i> {{ t().appointments.deleteAction }}</button>
-                      </div>
-                    }
-                  }
-                </div>
-              </div>
-              <div class="appt-card-body">
-                <div class="appt-info-row"><span class="appt-info-label"><i class="fa-regular fa-calendar"></i> {{ t().appointments.dateTime }}</span><span class="appt-info-value">{{ formatDate(a.appointmentDateTime) }} {{ formatTime(a.appointmentDateTime) }}</span></div>
-                <div class="appt-info-row"><span class="appt-info-label"><i class="fa-solid fa-user-doctor"></i> {{ t().appointments.provider }}</span><span class="appt-info-value">{{ a.provider }}</span></div>
-                <div class="appt-info-row"><span class="appt-info-label"><i class="fa-regular fa-bell"></i> {{ t().appointments.reminder }}</span><span class="appt-info-value">{{ reminderLabel(a.reminderOffsetMinutes) }}</span></div>
-                <div class="appt-info-row"><span class="appt-info-label"><i class="fa-solid fa-circle-info"></i> {{ t().appointments.status }}</span><span class="appt-info-value"><span [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></span></div>
-              </div>
-              @if (!fpReadOnly() && a.status === AppointmentStatus.Upcoming) {
-                <div class="appt-card-footer">
-                  <button type="button" class="appt-footer-btn appt-btn-complete" (click)="markComplete(a.id)"><i class="fa-solid fa-check"></i> {{ t().appointments.markComplete }}</button>
-                  <button type="button" class="appt-footer-btn appt-btn-edit" (click)="openEdit(a)"><i class="fa-regular fa-pen-to-square"></i> {{ t().appointments.editAction }}</button>
-                  <button type="button" class="appt-footer-btn appt-btn-cancel" (click)="confirmCancel(a.id)"><i class="fa-solid fa-ban"></i> {{ t().appointments.cancelAction }}</button>
-                </div>
-              }
-            </div>
-          }
-        </div>
-
-        @if (totalPages() > 1) {
-        <div class="pagination-bar">
-          <button type="button" class="page-btn" [disabled]="currentPage() === 1" (click)="prevPage()"><i class="fa-solid fa-chevron-left"></i></button>
-          @for (page of pageNumbers(); track $index) {
-            <button type="button" class="page-btn" [class.active]="page === currentPage()" [disabled]="page === '...'" (click)="goToPage(page)">{{ page }}</button>
-          }
-          <button type="button" class="page-btn" [disabled]="currentPage() === totalPages()" (click)="nextPage()"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-        }
-        }
-      </div><!-- /table card -->
-
-    <div style="height:16px"></div>
+    <div style="height:80px"></div> <!-- Extra padding for FAB -->
   </div><!-- /m-body -->
 
+  <!-- Floating Action Button -->
+  <button class="fab-add" (click)="addAppointment()" aria-label="Add Appointment">
+    <i class="fa-solid fa-plus"></i>
+  </button>
+
+  <app-appointments-content #apptContent [modalsOnly]="true"></app-appointments-content>
+
   <app-bottom-nav></app-bottom-nav>
-</div><!-- /m-page -->
+</div>
 
-<!-- ═══════════ ADD / EDIT MODAL ═══════════ -->
-@if (showAddModal()) {
-<div class="modal-overlay" (click)="closeAddModal()">
-  <div class="modal-card appt-modal-card" (click)="$event.stopPropagation()">
+<!-- ═══════════ APPOINTMENT DETAILS MODAL ═══════════ -->
+@if (viewingAppt(); as appt) {
+<div class="modal-backdrop" (click)="closeView()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
     <div class="modal-hdr">
-      <div>
-        <h2 class="modal-hdr-title">@if (editingId()) { {{ t().appointments.editAppointmentTitle }} } @else { {{ t().appointments.addAppointmentTitle }} }</h2>
-        @if (!editingId()) { <p class="modal-hdr-sub">{{ t().appointments.step }} {{ formStep() }} of 2</p> }
+      <div class="modal-hdr-left">
+        <div class="modal-ico-wrap"><i class="fa-solid fa-calendar-check"></i></div>
+        <div>
+          <h2 class="modal-title">Appointment Details</h2>
+          <p class="modal-subtitle">{{ appt.provider }}</p>
+        </div>
       </div>
-      <button type="button" class="close-modal-btn" (click)="closeAddModal()"><i class="fa-solid fa-xmark"></i></button>
+      <button type="button" class="modal-close-btn" (click)="closeView()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
     </div>
-    @if (!editingId()) {
-    <div class="step-progress">
-      <div class="step-dot" [class.step-dot--active]="formStep() >= 1" [class.step-dot--done]="formStep() > 1">@if (formStep() > 1) { <i class="fa-solid fa-check"></i> } @else { 1 }</div>
-      <div class="step-line" [class.step-line--done]="formStep() > 1"></div>
-      <div class="step-dot" [class.step-dot--active]="formStep() === 2">2</div>
+
+    <div class="modal-body" style="padding: 16px 22px;">
+      <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-lt);">
+        <span style="color: var(--text-2); font-size: 14px; font-weight: 500;">Type</span>
+        <span style="color: var(--text); font-size: 14px; font-weight: 600;">{{ getApptTypeLabel(appt.appointmentType) }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-lt);">
+        <span style="color: var(--text-2); font-size: 14px; font-weight: 500;">Date</span>
+        <span style="color: var(--text); font-size: 14px; font-weight: 600;">{{ formatDate(appt.appointmentDateTime) }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-lt);">
+        <span style="color: var(--text-2); font-size: 14px; font-weight: 500;">Time</span>
+        <span style="color: var(--text); font-size: 14px; font-weight: 600;">{{ formatTime(appt.appointmentDateTime) }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-lt);">
+        <span style="color: var(--text-2); font-size: 14px; font-weight: 500;">Reminder</span>
+        <span style="color: var(--text); font-size: 14px; font-weight: 600;">{{ reminderLabel(appt.reminderOffsetMinutes) }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-lt);">
+        <span style="color: var(--text-2); font-size: 14px; font-weight: 500;">Status</span>
+        <span style="color: var(--text); font-size: 14px; font-weight: 600;">{{ appt.status }}</span>
+      </div>
+      @if (appt.notes) {
+        <div style="padding: 12px 0;">
+          <span style="color: var(--text-2); font-size: 14px; font-weight: 500; display: block; margin-bottom: 6px;">Notes</span>
+          <p style="color: var(--text); font-size: 14px; background: var(--bg); padding: 12px; border-radius: 8px; margin: 0;">{{ appt.notes }}</p>
+        </div>
+      }
     </div>
-    }
-    @if (formStep() === 1) {
-    <div class="modal-body">
-      <p class="type-select-hint">{{ t().appointments.selectType }}</p>
-      @if (formErrors()['appointmentType']) { <p class="field-err" style="margin-bottom:12px">{{ formErrors()['appointmentType'] }}</p> }
-      <div class="type-grid">
-        @for (t of ALL_TYPES; track t) {
-        <button type="button" class="type-card" [class.type-card--selected]="fType() === t" (click)="selectType(t)">
-          <span class="type-card-ico"><i class="fa-solid {{ typeIcon(t) }}"></i></span>
-          <span class="type-card-lbl">{{ typeLabelForType(t) }}</span>
-          @if (fType() === t) { <span class="type-card-check"><i class="fa-solid fa-check"></i></span> }
+
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" (click)="closeView()">Close</button>
+      @if (appt.status === 'Upcoming') {
+        <button type="button" class="btn-primary" (click)="markAttended(appt); closeView()">
+          <i class="fa-solid fa-check"></i> Mark Attended
         </button>
-        }
-      </div>
-      @if (fType() === AppointmentType.Other) {
-      <div class="field-group" style="margin-top:16px">
-        <label class="field-lbl">{{ this.t().appointments.customType }} *</label>
-        <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['customType']" [placeholder]="this.t().appointments.customTypePlaceholder" [ngModel]="fCustomType()" (ngModelChange)="onCustomTypeChange($event)">
-        @if (formErrors()['customType']) { <p class="field-err">{{ formErrors()['customType'] }}</p> }
-      </div>
-      }
-    </div>
-    <div class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">{{ this.t().appointments.cancelBtn }}</button>
-      <button type="button" class="modal-btn modal-btn-primary" [disabled]="!canContinueType()" (click)="goStep2()">{{ this.t().appointments.nextBtn }} <i class="fa-solid fa-arrow-right"></i></button>
-    </div>
-    }
-    @if (formStep() === 2) {
-    <div class="modal-body">
-      @if (fType() === AppointmentType.Other) {
-      <div class="field-group">
-        <label class="field-lbl">{{ this.t().appointments.customType }} *</label>
-        <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['customType']" [placeholder]="this.t().appointments.customTypePlaceholder" [ngModel]="fCustomType()" (ngModelChange)="onCustomTypeChange($event)">
-        @if (formErrors()['customType']) { <p class="field-err">{{ formErrors()['customType'] }}</p> }
-      </div>
-      }
-      <div class="field-group">
-        <label class="field-lbl">{{ this.t().appointments.appointmentTitle }} *</label>
-        <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['title']" [placeholder]="this.t().appointments.appointmentTitlePlaceholder" [ngModel]="fTitle()" (ngModelChange)="fTitle.set($event)">
-        @if (formErrors()['title']) { <p class="field-err">{{ formErrors()['title'] }}</p> }
-      </div>
-      <div class="field-group">
-        <label class="field-lbl">{{ this.t().appointments.providerDoctor }} *</label>
-        <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['provider']" [placeholder]="this.t().appointments.providerPlaceholder" [ngModel]="fProvider()" (ngModelChange)="fProvider.set($event)">
-        @if (formErrors()['provider']) { <p class="field-err">{{ formErrors()['provider'] }}</p> }
-      </div>
-      <div class="field-row-2">
-        <div class="field-group">
-          <label class="field-lbl">{{ this.t().appointments.dateLbl }} *</label>
-          <input type="date" class="field-inp" [class.field-inp--err]="formErrors()['date']" [min]="minDate" [ngModel]="fDate()" (ngModelChange)="fDate.set($event)">
-          @if (formErrors()['date']) { <p class="field-err">{{ formErrors()['date'] }}</p> }
-        </div>
-        <div class="field-group">
-          <label class="field-lbl">{{ this.t().appointments.timeLbl }} *</label>
-          <input type="time" class="field-inp" [class.field-inp--err]="formErrors()['time']" [min]="minTime" [ngModel]="fTime()" (ngModelChange)="fTime.set($event)">
-          @if (formErrors()['time']) { <p class="field-err">{{ formErrors()['time'] }}</p> }
-        </div>
-      </div>
-      <div class="field-group">
-        <label class="field-lbl">{{ this.t().appointments.reminderLabel }}</label>
-        <div class="reminder-opts">
-          <button type="button" class="reminder-chip" [class.reminder-chip--active]="!customReminderSelected() && fReminder() === null" (click)="setPresetReminder(null)">{{ this.t().appointments.noneReminder }}</button>
-          @for (opt of REMINDER_OPTIONS; track opt.value) {
-          <button type="button" class="reminder-chip" [class.reminder-chip--active]="!customReminderSelected() && fReminder() === opt.value" (click)="setPresetReminder(opt.value)">{{ getReminderLabel(opt.value) }}</button>
-          }
-          <button type="button" class="reminder-chip" [class.reminder-chip--active]="customReminderSelected()" (click)="selectCustomReminder()">{{ this.t().appointments.customReminder }}</button>
-        </div>
-        @if (customReminderSelected()) {
-        <div class="custom-reminder-row">
-          <input type="number" class="field-inp custom-reminder-input" [class.field-inp--err]="formErrors()['reminder']" min="1" max="10080" step="1" [ngModel]="fCustomReminder()" (ngModelChange)="setCustomReminder($event)">
-          <span class="custom-reminder-unit">{{ this.t().appointments.minutesBefore }}</span>
-        </div>
-        }
-        @if (formErrors()['reminder']) { <p class="field-err">{{ formErrors()['reminder'] }}</p> }
-      </div>
-      <div class="field-group">
-        <label class="field-lbl">{{ this.t().appointments.notesLabel }} <span style="color:var(--text-4)">({{ this.t().common.optional }})</span></label>
-        <textarea class="field-inp field-textarea" [placeholder]="this.t().appointments.notesPlaceholder" rows="3" [ngModel]="fNotes()" (ngModelChange)="fNotes.set($event)"></textarea>
-      </div>
-    </div>
-    <div class="modal-ftr">
-      @if (!editingId()) {
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="goStep1()"><i class="fa-solid fa-arrow-left"></i> {{ this.t().appointments.backBtn }}</button>
-      } @else {
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">{{ this.t().appointments.cancelBtn }}</button>
-      }
-      <button type="button" class="modal-btn modal-btn-primary" [disabled]="submitting() || (fType() === AppointmentType.Other && !fCustomType().trim())" (click)="submitForm()">
-        @if (submitting()) { <span class="btn-spinner"></span> {{ this.t().appointments.savingBtn }} }
-        @else if (editingId()) { <i class="fa-regular fa-floppy-disk"></i> {{ this.t().appointments.saveChanges }} }
-        @else { <i class="fa-solid fa-calendar-plus"></i> {{ this.t().appointments.addAppointmentBtn }} }
-      </button>
-    </div>
-    }
-  </div>
-</div>
-}
-
-<!-- ═══════════ VIEW DETAILS MODAL ═══════════ -->
-@if (showViewModal() && viewingAppt(); as a) {
-<div class="modal-overlay" (click)="closeView()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
-    <div class="modal-hdr">
-      <h2 class="modal-hdr-title">{{ t().appointments.appointmentDetails }}</h2>
-      <button type="button" class="close-modal-btn" (click)="closeView()"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="view-detail-header">
-        <div class="appt-type-ico appt-type-ico-lg appt-type-ico-{{ a.appointmentType }}"><i class="fa-solid {{ typeIcon(a.appointmentType) }}"></i></div>
-        <div><h3 class="view-detail-title">{{ a.title }}</h3><span [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></div>
-      </div>
-      <div class="view-detail-grid">
-        <div class="view-detail-item"><span class="view-detail-lbl"><i class="fa-solid fa-tag"></i> {{ t().appointments.typeLabel }}</span><span class="view-detail-val">{{ typeLabel(a) }}</span></div>
-        <div class="view-detail-item"><span class="view-detail-lbl"><i class="fa-solid fa-user-doctor"></i> {{ t().appointments.provider }}</span><span class="view-detail-val">{{ a.provider }}</span></div>
-        <div class="view-detail-item"><span class="view-detail-lbl"><i class="fa-regular fa-calendar"></i> {{ t().appointments.dateLabel }}</span><span class="view-detail-val">{{ formatDate(a.appointmentDateTime) }}</span></div>
-        <div class="view-detail-item"><span class="view-detail-lbl"><i class="fa-regular fa-clock"></i> {{ t().appointments.timeLabel }}</span><span class="view-detail-val">{{ formatTime(a.appointmentDateTime) }}</span></div>
-        <div class="view-detail-item"><span class="view-detail-lbl"><i class="fa-regular fa-bell"></i> {{ t().appointments.reminder }}</span><span class="view-detail-val">{{ reminderLabel(a.reminderOffsetMinutes) }}</span></div>
-        <div class="view-detail-item"><span class="view-detail-lbl"><i class="fa-solid fa-calendar-day"></i> {{ t().appointments.whenLabel }}</span><span class="view-detail-val">{{ relativeDate(a.appointmentDateTime) }}</span></div>
-      </div>
-      @if (a.notes) {
-      <div class="view-notes-block">
-        <span class="view-detail-lbl"><i class="fa-regular fa-note-sticky"></i> {{ t().appointments.notesLabel }}</span>
-        <p class="view-notes-text">{{ a.notes }}</p>
-      </div>
-      }
-    </div>
-    <div class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeView()">{{ t().appointments.closeBtn }}</button>
-      @if (!fpReadOnly() && a.status === AppointmentStatus.Upcoming) {
-      <button type="button" class="modal-btn modal-btn-primary" (click)="closeView(); openEdit(a)"><i class="fa-regular fa-pen-to-square"></i> {{ t().appointments.editBtn }}</button>
       }
     </div>
   </div>
 </div>
 }
-
-<!-- ═══════════ DELETE CONFIRM MODAL ═══════════ -->
-@if (showDeleteModal()) {
-<div class="modal-overlay" (click)="closeDelete()">
-  <div class="modal-card modal-card-sm" (click)="$event.stopPropagation()">
-    <div class="modal-hdr">
-      <h2 class="modal-hdr-title">{{ t().appointments.deleteAppointment }}</h2>
-      <button type="button" class="close-modal-btn" (click)="closeDelete()"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="confirm-icon confirm-icon--danger"><i class="fa-solid fa-trash"></i></div>
-      <p class="confirm-text">{{ t().appointments.deleteConfirmText }}</p>
-    </div>
-    <div class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDelete()">{{ t().appointments.cancelBtn }}</button>
-      <button type="button" class="modal-btn modal-btn-danger" [disabled]="deleting()" (click)="executeDelete()">
-        @if (deleting()) { <span class="btn-spinner btn-spinner--light"></span> {{ t().appointments.deletingBtn }} }
-        @else { <i class="fa-solid fa-trash"></i> {{ t().appointments.deleteAction }} }
-      </button>
-    </div>
-  </div>
-</div>
-}
-
-<!-- ═══════════ CANCEL CONFIRM MODAL ═══════════ -->
-@if (showCancelModal()) {
-<div class="modal-overlay" (click)="closeCancel()">
-  <div class="modal-card modal-card-sm" (click)="$event.stopPropagation()">
-    <div class="modal-hdr">
-      <h2 class="modal-hdr-title">{{ t().appointments.cancelAppointmentTitle }}</h2>
-      <button type="button" class="close-modal-btn" (click)="closeCancel()"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="confirm-icon confirm-icon--warn"><i class="fa-solid fa-ban"></i></div>
-      <p class="confirm-text">{{ t().appointments.cancelConfirmText }}</p>
-    </div>
-    <div class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeCancel()">{{ t().appointments.keepIt }}</button>
-      <button type="button" class="modal-btn modal-btn-danger" [disabled]="cancelling()" (click)="executeCancel()">
-        @if (cancelling()) { <span class="btn-spinner btn-spinner--light"></span> {{ t().appointments.cancellingBtn }} }
-        @else { <i class="fa-solid fa-ban"></i> {{ t().appointments.cancelAppointmentBtn }} }
-      </button>
-    </div>
-  </div>
-</div>
-}
-
-<!-- ═══════════ TOASTS ═══════════ -->
-<div class="toast-container">
-  @for (t of toasts(); track t.id) {
-  <div class="toast" [class.toast--success]="t.type === 'success'" [class.toast--error]="t.type === 'error'">
-    <i class="toast-icon fa-solid" [class.fa-circle-check]="t.type === 'success'" [class.fa-circle-xmark]="t.type === 'error'"></i>
-    <span class="toast-msg">{{ t.message }}</span>
-    <button type="button" class="toast-close" (click)="dismissToast(t.id)"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  }
-</div>

@@ -46,6 +46,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   @Input() profileId: string | undefined;
   @Input() compact = false;
   @Input() readOnly = false;
+  @Input() modalsOnly = false;
 
   private readonly apptSvc = inject(AppointmentsService);
   private readonly notifSvc = inject(NotificationService);

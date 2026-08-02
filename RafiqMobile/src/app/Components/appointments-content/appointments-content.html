@@ -1,5 +1,5 @@
 <div class="appointments-content-host">
-
+  @if (!modalsOnly) {
   <!-- ── Title Bar (Only in non-compact mode) ── -->
   @if (!compact) {
     <div class="appts-title-bar">
@@ -424,7 +424,7 @@
       }
     }
   </div>
-
+  }
 </div>
 
 <!-- ═══════════ ADD / EDIT MODAL ═══════════ -->
