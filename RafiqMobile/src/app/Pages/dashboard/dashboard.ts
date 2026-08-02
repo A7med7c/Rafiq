@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit, OnDestroy, signal, computed, HostListener, ElementRef, ViewChild } from '@angular/core';
+import { Component, effect, inject, OnInit, OnDestroy, signal, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
@@ -18,12 +18,11 @@ import { AssistantAnchorDirective } from '../../core/assistant/directives/assist
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
-import { MobileHeader } from '../../shared/mobile-header/mobile-header';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, AssistantAnchorDirective, BottomNav, MobileHeader],
+  imports: [CommonModule, RouterLink, AssistantAnchorDirective, BottomNav],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -64,6 +63,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   // ── State signals ────────────────────────────────────────────────────────
   readonly records          = signal<MedicalRecord[]>([]);
+  readonly activeRecordMenuId = signal<string | null>(null);
   readonly reminders        = signal<ReminderDisplayItem[]>([]);
   readonly recordsLoading   = signal(true);
   readonly remindersLoading = signal(true);
@@ -153,6 +153,43 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly reportTargetProfileName = signal<string | null>(null);
   private _reportSub: Subscription | null = null;
 
+  // ── Bottom-sheet swipe-to-dismiss (shared across all dashboard modals) ─────
+  readonly sheetDragY = signal(0);
+  private sheetDragStartY: number | null = null;
+  private static readonly SHEET_DISMISS_THRESHOLD_PX = 90;
+
+  toggleRecordMenu(id: string, event: Event) {
+    event.stopPropagation();
+    if (this.activeRecordMenuId() === id) {
+      this.activeRecordMenuId.set(null);
+    } else {
+      this.activeRecordMenuId.set(id);
+    }
+  }
+
+  @HostListener('document:click')
+  onDocumentClickCloseRecordMenu() {
+    this.activeRecordMenuId.set(null);
+  }
+
+  onSheetTouchStart(event: TouchEvent): void {
+    this.sheetDragStartY = event.touches[0].clientY;
+  }
+
+  onSheetTouchMove(event: TouchEvent): void {
+    if (this.sheetDragStartY === null) return;
+    const delta = event.touches[0].clientY - this.sheetDragStartY;
+    if (delta > 0) this.sheetDragY.set(delta);
+  }
+
+  onSheetTouchEnd(closeFn: () => void): void {
+    if (this.sheetDragStartY === null) return;
+    const dragged = this.sheetDragY();
+    this.sheetDragStartY = null;
+    this.sheetDragY.set(0);
+    if (dragged > Dashboard.SHEET_DISMISS_THRESHOLD_PX) closeFn();
+  }
+
   // ── Robot speech bubble ───────────────────────────────────────────────────
   readonly robotBubbleVisible = signal(false);
   private _bubbleHideTimer:     ReturnType<typeof setTimeout> | null = null;
@@ -166,37 +203,46 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly familySummaryLoading = signal(false);
   readonly familySummaryData    = signal<HealthSummaryDto | null>(null);
 
-  // ── Today deck ───────────────────────────────────────────────────────────
-  @ViewChild('deckScroller') deckScrollerRef?: ElementRef<HTMLElement>;
-  readonly activeDeckIndex = signal(0);
-
-  readonly deckOrder = computed<Array<'ai' | 'appt' | 'tip'>>(() => {
-    const appt = this.nextAppointment();
-    if (appt) {
-      const daysUntil = Math.ceil((new Date(appt.appointmentDateTime).getTime() - Date.now()) / 86_400_000);
-      if (daysUntil <= 2) return ['appt', 'ai', 'tip'];
-    }
-    return ['ai', 'appt', 'tip'];
+  // ── AI health-ring (derived from qualitative overallStatus; no fabricated numeric score) ──
+  readonly healthRingPercent = computed(() => {
+    const status = this.healthSummary()?.overallStatus;
+    if (status === 'Stable') return 60;
+    if (status === 'NeedsAttention') return 32;
+    return 90;
   });
 
-  onDeckScroll(event: Event): void {
-    const el = event.target as HTMLElement;
-    const slideWidth = el.firstElementChild instanceof HTMLElement ? el.firstElementChild.offsetWidth + 12 : el.clientWidth;
-    const index = Math.round(el.scrollLeft / slideWidth);
-    this.activeDeckIndex.set(Math.max(0, Math.min(index, this.deckOrder().length - 1)));
-  }
+  readonly healthRingTone = computed<'good' | 'stable' | 'warn'>(() => {
+    const status = this.healthSummary()?.overallStatus;
+    if (status === 'Stable') return 'stable';
+    if (status === 'NeedsAttention') return 'warn';
+    return 'good';
+  });
+
+  readonly healthRingIcon = computed(() => {
+    const tone = this.healthRingTone();
+    return tone === 'good' ? 'fa-face-smile' : tone === 'stable' ? 'fa-face-meh' : 'fa-triangle-exclamation';
+  });
+
+  readonly healthRingLabel = computed(() => {
+    const s = this.healthSummary();
+    if (!s || !s.hasData) return '';
+    if (s.overallStatus === 'Stable') return this.t().dashboard.summaryStatusStable;
+    if (s.overallStatus === 'NeedsAttention') return this.t().dashboard.summaryStatusNeedsAttention;
+    return this.t().dashboard.summaryStatusGood;
+  });
+
+  // ── Medications today (soonest first) ───────────────────────────────────────
+  readonly todaysReminders = computed(() => {
+    return [...this.reminders()]
+      .filter(r => r.isEnabled)
+      .sort((a, b) => (a.reminderTime || '').localeCompare(b.reminderTime || ''))
+      .slice(0, 3);
+  });
+
+  readonly nextReminder = computed(() => this.todaysReminders()[0] ?? null);
 
   // ── Computed ─────────────────────────────────────────────────────────────
-  readonly familySlots = computed(() => {
-    const profiles = this.familyProfiles().slice(0, 4);
-    const slots: { type: 'profile' | 'add' | 'empty'; data: AccessibleProfileDto | null }[] = [];
-
-    profiles.forEach(p => slots.push({ type: 'profile', data: p }));
-    if (slots.length < 4) slots.push({ type: 'add', data: null });
-    while (slots.length < 4) slots.push({ type: 'empty', data: null });
-
-    return slots;
-  });
+  readonly familyAvatars = computed(() => this.familyProfiles().slice(0, 4));
 
   readonly nextAppointment = computed(() => {
     const now = Date.now();
@@ -580,6 +626,13 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   // ── Family summary methods ────────────────────────────────────────────────
+  openSelfSummary(): void {
+    this.familySummaryProfile.set(null);
+    this.familySummaryData.set(this.healthSummary());
+    this.familySummaryLoading.set(this.summaryLoading());
+    this.familySummaryOpen.set(true);
+  }
+
   openFamilySummary(profile: AccessibleProfileDto): void {
     this.familySummaryProfile.set(profile);
     this.familySummaryData.set(null);
@@ -617,5 +670,23 @@ export class Dashboard implements OnInit, OnDestroy {
     if (!gender) return '-';
     const key = gender.toLowerCase();
     return (this.t().common as any)[key] ?? gender;
+  }
+
+  getMedStatus(rem: ReminderDisplayItem): 'taken' | 'upcoming' {
+    const [h, m] = (rem.reminderTime || '08:00').split(':').map(Number);
+    const slot = new Date(); slot.setHours(h, m, 0, 0);
+    return slot.getTime() < Date.now() ? 'taken' : 'upcoming';
+  }
+
+  getRecordBadgeType(type: string): string {
+    if (type === 'imaging') return 'IMG';
+    if (type === 'lab') return 'LAB';
+    return 'PDF';
+  }
+
+  getRecordBadgeColor(type: string): string {
+    if (type === 'imaging') return 'blue';
+    if (type === 'lab') return 'teal';
+    return 'red';
   }
 }

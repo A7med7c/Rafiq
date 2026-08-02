@@ -64,6 +64,7 @@ export interface MedicalRecord {
   title: string;
   subtitle?: string;
   date: string;
+  fileSize?: string;
   source?: string;
   status: string;
   statusColor: 'success' | 'warning' | 'info' | 'danger';
