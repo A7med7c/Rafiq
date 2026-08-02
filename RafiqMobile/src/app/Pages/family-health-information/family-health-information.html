@@ -1,0 +1,177 @@
+<app-mobile-header
+  [title]="t().family.healthInfoTitle"
+  [showBack]="true"
+  (backClicked)="router.navigate(['/family-profiles', profileId()])"
+  [showNotifications]="true"
+  (notificationsClicked)="notifSvc.toggleNotificationCenter()">
+</app-mobile-header>
+
+<div class="m-page">
+  <div class="m-body fhi-enter">
+
+    @if (loading()) {
+    <div class="m-card" style="margin:16px">
+      <div class="skl-line skl-70" style="margin-bottom:10px"></div>
+      <div class="skl-line skl-45"></div>
+    </div>
+    } @else {
+
+    <!-- ══════════ Vitals ══════════ -->
+    <div class="m-section">
+      <div class="m-section__hdr">
+        <span class="m-section__title">{{ t().family.bloodType }}</span>
+      </div>
+      <div class="fhi-stats-row">
+        <div class="m-card fhi-stat">
+          <span class="fhi-stat-lbl">{{ t().family.bloodType }}</span>
+          <span class="fhi-stat-val">{{ formatBloodType(detail()?.bloodType) }}</span>
+        </div>
+        <div class="m-card fhi-stat">
+          <span class="fhi-stat-lbl">{{ t().family.heightLabel }}</span>
+          <span class="fhi-stat-val">{{ detail()?.height ? detail()!.height + ' ' + t().family.cm : t().family.noneLabel }}</span>
+        </div>
+        <div class="m-card fhi-stat">
+          <span class="fhi-stat-lbl">{{ t().family.weightLabel }}</span>
+          <span class="fhi-stat-val">{{ detail()?.weight ? detail()!.weight + ' ' + t().family.kg : t().family.noneLabel }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ Allergies ══════════ -->
+    <div class="m-section">
+      <div class="m-section__hdr">
+        <span class="m-section__title">{{ t().family.allergiesSection }}</span>
+      </div>
+      <div class="m-card">
+        @if (!detail()?.allergies?.length) {
+        <p class="fhi-empty-line">{{ t().family.noAllergiesRecorded }}</p>
+        } @else {
+        <div class="fhi-tag-list">
+          @for (a of detail()!.allergies; track a.id) {
+          <span class="fhi-pill fhi-pill--{{ a.severity.toLowerCase() }}">{{ a.name }} · {{ a.severity }}</span>
+          }
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- ══════════ Chronic Conditions ══════════ -->
+    <div class="m-section">
+      <div class="m-section__hdr">
+        <span class="m-section__title">{{ t().family.chronicConditions }}</span>
+      </div>
+      <div class="m-card">
+        @if (!detail()?.chronicDiseases?.length) {
+        <p class="fhi-empty-line">{{ t().family.noChronicRecorded }}</p>
+        } @else {
+        <div class="fhi-condition-list">
+          @for (d of detail()!.chronicDiseases; track d.id) {
+          <div class="fhi-condition-row">
+            <div class="fhi-condition-name">{{ d.name }}</div>
+            <div class="fhi-condition-meta">
+              <span class="fhi-pill fhi-pill--{{ d.status.toLowerCase() }}">{{ d.status }}</span>
+              @if (d.diagnosedAt) {
+              <span class="fhi-condition-date">{{ t().family.diagnosedOn }} {{ d.diagnosedAt | date:'MMM d, y' }}</span>
+              }
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="m-section">
+      <button type="button" class="fhi-btn-primary" (click)="openEditModal()">
+        <i class="fa-solid fa-pen"></i> {{ t().family.editHealthInfo }}
+      </button>
+    </div>
+
+    <div style="height:16px"></div>
+    }
+  </div>
+
+  <app-bottom-nav></app-bottom-nav>
+</div>
+
+
+@if (showEditModal()) {
+<div class="modal-backdrop" (click)="closeEditModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-sheet-handle"></div>
+
+    <div class="modal-hdr">
+      <div>
+        <h2 class="modal-title">{{ t().family.editHealthInfo }}</h2>
+      </div>
+      <button type="button" class="modal-close-btn" (click)="closeEditModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="fhi-modal-body">
+      @if (editError) {
+      <div class="fhi-form-error">{{ editError }}</div>
+      }
+
+      <div class="fhi-form-row">
+        <div class="fhi-form-group">
+          <label class="fhi-label">{{ t().family.bloodTypeLabel }}</label>
+          <select class="fhi-input fhi-select" [(ngModel)]="editForm.bloodType">
+            <option value="">{{ t().family.unknown }}</option>
+            @for (bt of bloodTypes; track bt.value) { <option [value]="bt.value">{{ bt.label }}</option> }
+          </select>
+        </div>
+        <div class="fhi-form-group">
+          <label class="fhi-label">{{ t().family.heightCmLabel }}</label>
+          <input class="fhi-input" type="number" min="0" max="300" [(ngModel)]="editForm.height">
+        </div>
+        <div class="fhi-form-group">
+          <label class="fhi-label">{{ t().family.weightKgLabel }}</label>
+          <input class="fhi-input" type="number" min="0" max="500" [(ngModel)]="editForm.weight">
+        </div>
+      </div>
+
+      <div class="fhi-section">
+        <div class="fhi-section-hdr">
+          <h4 class="fhi-section-title"><i class="fa-solid fa-triangle-exclamation"></i> {{ t().family.allergiesSection }}</h4>
+          <button type="button" class="fhi-add-row-btn" (click)="addAllergy()"><i class="fa-solid fa-plus"></i> {{ t().family.addBtn }}</button>
+        </div>
+        @if (editForm.allergies.length === 0) { <p class="fhi-empty-line">{{ t().family.noAllergiesRecorded }}</p> }
+        @for (a of editForm.allergies; track $index; let i = $index) {
+        <div class="fhi-allergy-row">
+          <input class="fhi-input" type="text" [placeholder]="t().family.allergyPlaceholder" [(ngModel)]="editForm.allergies[i].name">
+          <select class="fhi-input fhi-select fhi-select--sm" [(ngModel)]="editForm.allergies[i].severity">
+            @for (s of severityOptions; track s) { <option [value]="s">{{ s }}</option> }
+          </select>
+          <button type="button" class="fhi-remove-btn" (click)="removeAllergy(i)"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        }
+      </div>
+
+      <div class="fhi-section">
+        <div class="fhi-section-hdr">
+          <h4 class="fhi-section-title"><i class="fa-solid fa-heart-pulse"></i> {{ t().family.chronicSection2 }}</h4>
+          <button type="button" class="fhi-add-row-btn" (click)="addDisease()"><i class="fa-solid fa-plus"></i> {{ t().family.addBtn }}</button>
+        </div>
+        @if (editForm.chronicDiseases.length === 0) { <p class="fhi-empty-line">{{ t().family.noChronicRecorded }}</p> }
+        @for (d of editForm.chronicDiseases; track $index; let i = $index) {
+        <div class="fhi-allergy-row fhi-allergy-row--3">
+          <input class="fhi-input" type="text" [placeholder]="t().family.diseasePlaceholder" [(ngModel)]="editForm.chronicDiseases[i].name">
+          <select class="fhi-input fhi-select fhi-select--sm" [(ngModel)]="editForm.chronicDiseases[i].status">
+            @for (s of diseaseStatusOptions; track s) { <option [value]="s">{{ s }}</option> }
+          </select>
+          <input class="fhi-input fhi-select--sm" type="date" [(ngModel)]="editForm.chronicDiseases[i].diagnosedAt" [max]="todayStr">
+          <button type="button" class="fhi-remove-btn" (click)="removeDisease(i)"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" (click)="closeEditModal()">{{ t().family.cancelBtn }}</button>
+      <button type="button" class="btn-primary" [disabled]="editSubmitting()" (click)="submitEdit()">
+        @if (editSubmitting()) { <i class="fa-solid fa-spinner fa-spin"></i> } {{ t().family.saveChanges }}
+      </button>
+    </div>
+  </div>
+</div>
+}

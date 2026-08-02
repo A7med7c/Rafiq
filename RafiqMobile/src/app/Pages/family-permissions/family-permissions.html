@@ -1,0 +1,72 @@
+<app-mobile-header
+  [title]="t().family.permissionsTitle"
+  [showBack]="true"
+  (backClicked)="router.navigate(['/family-profiles', profileId()])"
+  [showNotifications]="true"
+  (notificationsClicked)="notifSvc.toggleNotificationCenter()">
+</app-mobile-header>
+
+<div class="m-page">
+  <div class="m-body fpm-enter">
+
+    @if (memberName()) {
+    <p class="fpm-context">{{ memberName() }}</p>
+    }
+
+    <div class="m-card fpm-card">
+
+      <div class="fpm-row">
+        <div class="fpm-row-text">
+          <p class="fpm-row-title">{{ t().family.permCanManageMeds }}</p>
+          <p class="fpm-row-desc">{{ t().family.permCanManageMedsDesc }}</p>
+        </div>
+        <div class="fpm-row-actions">
+          @if (savedTag() === 'canManageMedications') {
+          <span class="fpm-saved">{{ t().family.savedTag }}</span>
+          }
+          <label class="ios-toggle">
+            <input type="checkbox" [checked]="canManageMedications()" (change)="toggleCanManageMedications()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="fpm-row">
+        <div class="fpm-row-text">
+          <p class="fpm-row-title">{{ t().family.permReceiveReminders }}</p>
+          <p class="fpm-row-desc">{{ t().family.permReceiveRemindersDesc }}</p>
+        </div>
+        <div class="fpm-row-actions">
+          @if (savedTag() === 'receiveReminders') {
+          <span class="fpm-saved">{{ t().family.savedTag }}</span>
+          }
+          <label class="ios-toggle">
+            <input type="checkbox" [checked]="receiveReminders()" (change)="toggleReceiveReminders()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="fpm-row">
+        <div class="fpm-row-text">
+          <p class="fpm-row-title">{{ t().family.permEmergencyContact }}</p>
+          <p class="fpm-row-desc">{{ t().family.permEmergencyContactDesc }}</p>
+        </div>
+        <div class="fpm-row-actions">
+          @if (savedTag() === 'emergencyContactEnabled') {
+          <span class="fpm-saved">{{ t().family.savedTag }}</span>
+          }
+          <label class="ios-toggle">
+            <input type="checkbox" [checked]="emergencyContactEnabled()" (change)="toggleEmergencyContactEnabled()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="height:16px"></div>
+  </div>
+
+  <app-bottom-nav></app-bottom-nav>
+</div>

@@ -1,0 +1,110 @@
+@import "../dashboard/dashboard.css";
+
+:host {
+  font-family: var(--font-body, 'Inter', 'Outfit', sans-serif);
+  display: contents;
+}
+
+.m-body { display: flex; flex-direction: column; gap: 20px; padding: 16px 0 96px; }
+
+.fmd-enter { animation: fmdEnter .45s cubic-bezier(.16,1,.3,1) both; }
+@keyframes fmdEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .fmd-enter { animation: none; } }
+
+.fph-btn-primary {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 18px; border: none; border-radius: var(--r-sm);
+  background: linear-gradient(135deg, #0EAFD7 0%, #0891B2 100%);
+  color: var(--white); font-size: 14px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(14,175,215,.22); text-decoration: none;
+}
+.fph-btn-outline {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 11px 16px; border-radius: var(--r-sm); border: 1.5px solid var(--blue);
+  background: var(--white); color: var(--blue); font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none;
+}
+.fph-btn-outline:hover { background: var(--blue-lt); }
+.fph-btn-outline--block { width: 100%; margin-top: 12px; }
+
+/* ══════════ Profile card ══════════ */
+.fmd-card { margin: 0 16px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+.fmd-av {
+  width: 84px; height: 84px; border-radius: 50%; object-fit: cover;
+  border: 3px solid var(--white); box-shadow: 0 0 0 2px var(--border);
+}
+.fmd-av--fallback {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--blue); color: var(--white); font-size: 28px; font-weight: 800;
+}
+.fmd-name { margin: 6px 0 0; font-size: 19px; font-weight: 800; color: var(--text); font-family: 'Outfit', sans-serif; }
+.fmd-pill-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.fmd-pill-rel { background: var(--blue-lt); color: var(--blue); }
+.fmd-pill-role { background: var(--border-lt); color: var(--text-3); }
+
+.fmd-stats { display: flex; gap: 8px; width: 100%; margin: 4px 0; }
+.fmd-stat {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 10px 4px; background: var(--bg); border-radius: var(--r-sm);
+}
+.fmd-stat-lbl { font-size: 10px; font-weight: 600; color: var(--text-3); }
+.fmd-stat-val { font-size: 13px; font-weight: 800; color: var(--text); }
+
+/* ══════════ Not found ══════════ */
+.fmd-notfound { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 20px; gap: 8px; }
+.fmd-notfound__ico {
+  width: 64px; height: 64px; border-radius: 50%; background: var(--red-lt); color: var(--red);
+  display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 8px;
+}
+.fmd-notfound__title { font-size: 16px; font-weight: 700; color: var(--text); margin: 0; }
+.fmd-notfound__sub { font-size: 13px; color: var(--text-3); margin: 0 0 14px; }
+
+/* ══════════ Nav list ══════════ */
+.fmd-nav-list { display: flex; flex-direction: column; gap: 10px; }
+.fmd-nav-card {
+  display: flex; align-items: center; gap: 12px; background: var(--white); border-radius: var(--r);
+  box-shadow: var(--shadow); padding: 14px; text-decoration: none;
+}
+.fmd-nav-ico { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.fmd-nav-ico--red { background: var(--red-lt); color: var(--red); }
+.fmd-nav-ico--blue { background: var(--blue-lt); color: var(--blue); }
+.fmd-nav-ico--teal { background: var(--teal-lt); color: var(--teal); }
+.fmd-nav-ico--orange { background: var(--orange-lt); color: var(--orange); }
+.fmd-nav-ico--purple { background: var(--purple-lt); color: var(--purple); }
+.fmd-nav-ico--green { background: var(--green-lt); color: var(--green); }
+.fmd-nav-text { flex: 1; min-width: 0; }
+.fmd-nav-text h3 { margin: 0; font-size: 13.5px; font-weight: 700; color: var(--text); }
+.fmd-nav-text p { margin: 2px 0 0; font-size: 11.5px; color: var(--text-3); }
+.fmd-nav-arrow { color: var(--text-4); font-size: 12px; flex-shrink: 0; }
+
+/* ══════════ Permissions summary ══════════ */
+.fmd-perm-card { display: flex; flex-direction: column; gap: 12px; }
+.fmd-perm-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-2); }
+.fmd-perm-row i { font-size: 16px; }
+.fmd-perm-ico--on { color: var(--green); }
+.fmd-perm-ico--off { color: var(--text-4); }
+
+/* ══════════ Danger action ══════════ */
+.fmd-danger-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px; border-radius: var(--r-sm); border: 1.5px solid var(--red);
+  background: var(--white); color: var(--red); font-size: 13.5px; font-weight: 700; cursor: pointer;
+}
+.fmd-danger-btn:hover { background: var(--red-lt); }
+
+/* ══════════ Confirm modal ══════════ */
+.fmd-confirm-box { max-width: 420px; }
+.fmd-confirm-body { padding: 24px 22px; text-align: center; }
+.fmd-confirm-ico { width: 52px; height: 52px; border-radius: 50%; background: var(--red-lt); color: var(--red); display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 14px; }
+.fmd-confirm-title { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 8px; }
+.fmd-confirm-msg { font-size: 13px; color: var(--text-3); line-height: 1.5; margin: 0 0 12px; }
+.fmd-confirm-error { font-size: 12px; color: var(--red); margin: 0 0 12px; }
+.fmd-confirm-actions { display: flex; gap: 10px; }
+.fmd-confirm-actions .btn-ghost { flex: 1; }
+.fmd-remove-confirm-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; border-radius: var(--r-xs); background: var(--red); color: var(--white);
+  font-size: 13px; font-weight: 700; padding: 10px; cursor: pointer;
+}
+.fmd-remove-confirm-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+[dir="rtl"] .fmd-nav-arrow { transform: rotate(180deg); }

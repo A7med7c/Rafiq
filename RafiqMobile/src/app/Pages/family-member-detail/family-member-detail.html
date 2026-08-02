@@ -1,0 +1,180 @@
+<app-mobile-header
+  [title]="profile()?.firstName || t().family.title"
+  [showBack]="true"
+  (backClicked)="router.navigate(['/family-profiles'])"
+  [showNotifications]="true"
+  (notificationsClicked)="notifSvc.toggleNotificationCenter()">
+</app-mobile-header>
+
+<div class="m-page">
+  <div class="m-body fmd-enter">
+
+    @if (loading()) {
+    <div class="m-card fmd-card" style="margin:16px">
+      <div class="skl-sq" style="width:84px;height:84px;border-radius:50%;margin:0 auto 12px"></div>
+      <div class="skl-line skl-70" style="margin:0 auto 8px"></div>
+      <div class="skl-line skl-45" style="margin:0 auto"></div>
+    </div>
+    } @else if (notFound() || !profile()) {
+    <div class="m-card fmd-notfound" style="margin:16px">
+      <div class="fmd-notfound__ico"><i class="fa-solid fa-user-slash"></i></div>
+      <p class="fmd-notfound__title">{{ t().family.memberNotFound }}</p>
+      <p class="fmd-notfound__sub">{{ t().family.memberNotFoundSub }}</p>
+      <a class="fph-btn-primary" routerLink="/family-profiles">{{ t().family.backToFamily }}</a>
+    </div>
+    } @else {
+    <!-- ══════════ Profile Card ══════════ -->
+    <div class="m-card fmd-card">
+      @if (avatarUrl(); as avUrl) {
+      <img class="fmd-av" [src]="avUrl" [alt]="profile()!.firstName">
+      } @else {
+      <div class="fmd-av fmd-av--fallback">{{ profile()!.firstName[0].toUpperCase() }}</div>
+      }
+      <h1 class="fmd-name">{{ fullName() }}</h1>
+      <div class="fmd-pill-row">
+        <span class="pill fmd-pill-rel">{{ getRelLabel(profile()!) }}</span>
+        <span class="pill fmd-pill-role">{{ t().family.accessRolePill }}: {{ profile()!.accessRole }}</span>
+      </div>
+
+      <div class="fmd-stats">
+        <div class="fmd-stat">
+          <span class="fmd-stat-lbl">{{ t().family.ageLabel }}</span>
+          <span class="fmd-stat-val">{{ getAge(detail()?.dateOfBirth) ?? '—' }} {{ t().family.yrs }}</span>
+        </div>
+        <div class="fmd-stat">
+          <span class="fmd-stat-lbl">{{ t().family.statusLabel }}</span>
+          <span class="fmd-stat-val">{{ profile()!.isSelf ? t().family.self : 'Active' }}</span>
+        </div>
+      </div>
+
+      <button type="button" class="fph-btn-outline fph-btn-outline--block" (click)="editProfile()">
+        <i class="fa-solid fa-pen"></i> {{ t().family.editProfile }}
+      </button>
+    </div>
+
+    <!-- ══════════ Navigation sections ══════════ -->
+    <div class="m-section">
+      <div class="fmd-nav-list">
+        <a class="fmd-nav-card" [routerLink]="['/family-profiles', profileId(), 'health-information']">
+          <div class="fmd-nav-ico fmd-nav-ico--red"><i class="fa-solid fa-heart-pulse"></i></div>
+          <div class="fmd-nav-text">
+            <h3>{{ t().family.navHealthInfo }}</h3>
+            <p>{{ t().family.navHealthInfoSub }}</p>
+          </div>
+          <i class="fa-solid fa-chevron-right fmd-nav-arrow"></i>
+        </a>
+
+        <a class="fmd-nav-card" [routerLink]="['/medical-records']" [queryParams]="{ profileId: profileId() }">
+          <div class="fmd-nav-ico fmd-nav-ico--blue"><i class="fa-solid fa-folder-open"></i></div>
+          <div class="fmd-nav-text">
+            <h3>{{ t().family.navMedicalRecords }}</h3>
+            <p>{{ t().family.navMedicalRecordsSub }}</p>
+          </div>
+          <i class="fa-solid fa-chevron-right fmd-nav-arrow"></i>
+        </a>
+
+        <a class="fmd-nav-card" [routerLink]="['/appointments']" [queryParams]="{ profileId: profileId() }">
+          <div class="fmd-nav-ico fmd-nav-ico--teal"><i class="fa-solid fa-calendar-check"></i></div>
+          <div class="fmd-nav-text">
+            <h3>{{ t().family.navAppointments }}</h3>
+            <p>{{ t().family.navAppointmentsSub }}</p>
+          </div>
+          <i class="fa-solid fa-chevron-right fmd-nav-arrow"></i>
+        </a>
+
+        <a class="fmd-nav-card" [routerLink]="['/medications']"
+          [queryParams]="{ profileId: profileId(), readOnly: profile()!.accessRole === 'Viewer', name: fullName() }">
+          <div class="fmd-nav-ico fmd-nav-ico--orange"><i class="fa-solid fa-pills"></i></div>
+          <div class="fmd-nav-text">
+            <h3>{{ t().family.navMedications }}</h3>
+            <p>{{ t().family.navMedicationsSub }}</p>
+          </div>
+          <i class="fa-solid fa-chevron-right fmd-nav-arrow"></i>
+        </a>
+
+        <a class="fmd-nav-card" [routerLink]="['/family-profiles', profileId(), 'emergency-contacts']">
+          <div class="fmd-nav-ico fmd-nav-ico--purple"><i class="fa-solid fa-phone-volume"></i></div>
+          <div class="fmd-nav-text">
+            <h3>{{ t().family.navEmergencyContacts }}</h3>
+            <p>{{ t().family.navEmergencyContactsSub }}</p>
+          </div>
+          <i class="fa-solid fa-chevron-right fmd-nav-arrow"></i>
+        </a>
+
+        <a class="fmd-nav-card" [routerLink]="['/family-profiles', profileId(), 'permissions']">
+          <div class="fmd-nav-ico fmd-nav-ico--green"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="fmd-nav-text">
+            <h3>{{ t().family.navPermissions }}</h3>
+            <p>{{ t().family.navPermissionsSub }}</p>
+          </div>
+          <i class="fa-solid fa-chevron-right fmd-nav-arrow"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- ══════════ Permissions summary ══════════ -->
+    <div class="m-section">
+      <div class="m-section__hdr">
+        <span class="m-section__title">{{ t().family.permissionsSummary }}</span>
+      </div>
+      <div class="m-card fmd-perm-card">
+        <div class="fmd-perm-row">
+          <i class="fa-solid" [class.fa-circle-check]="permissions().canManageMedications" [class.fa-circle-xmark]="!permissions().canManageMedications"
+            [class.fmd-perm-ico--on]="permissions().canManageMedications" [class.fmd-perm-ico--off]="!permissions().canManageMedications"></i>
+          <span>{{ t().family.permCanManageMeds }}</span>
+        </div>
+        <div class="fmd-perm-row">
+          <i class="fa-solid" [class.fa-circle-check]="permissions().receiveReminders" [class.fa-circle-xmark]="!permissions().receiveReminders"
+            [class.fmd-perm-ico--on]="permissions().receiveReminders" [class.fmd-perm-ico--off]="!permissions().receiveReminders"></i>
+          <span>{{ t().family.permReceiveReminders }}</span>
+        </div>
+        <div class="fmd-perm-row">
+          <i class="fa-solid" [class.fa-circle-check]="permissions().emergencyContactEnabled" [class.fa-circle-xmark]="!permissions().emergencyContactEnabled"
+            [class.fmd-perm-ico--on]="permissions().emergencyContactEnabled" [class.fmd-perm-ico--off]="!permissions().emergencyContactEnabled"></i>
+          <span>{{ t().family.permEmergencyContact }}</span>
+        </div>
+        <a class="fph-btn-outline fph-btn-outline--block" [routerLink]="['/family-profiles', profileId(), 'permissions']">
+          {{ t().family.editPermissions }}
+        </a>
+      </div>
+    </div>
+
+    <!-- ══════════ Bottom actions ══════════ -->
+    @if (canRemove()) {
+    <div class="m-section">
+      <button type="button" class="fmd-danger-btn" (click)="openRemoveConfirm()">
+        <i class="fa-solid fa-user-minus"></i> {{ t().family.removeMember }}
+      </button>
+    </div>
+    }
+
+    <div style="height:16px"></div>
+    }
+  </div>
+
+  <app-bottom-nav></app-bottom-nav>
+</div>
+
+
+@if (showRemoveConfirm()) {
+<div class="modal-backdrop" (click)="closeRemoveConfirm()">
+  <div class="modal-box fmd-confirm-box" (click)="$event.stopPropagation()">
+    <div class="modal-sheet-handle"></div>
+    <div class="fmd-confirm-body">
+      <div class="fmd-confirm-ico"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <h3 class="fmd-confirm-title">{{ t().family.removeMemberTitle }}</h3>
+      <p class="fmd-confirm-msg">{{ t().family.removeMemberConfirm.replace('{name}', fullName()) }}</p>
+      @if (removeError()) {
+      <p class="fmd-confirm-error">{{ removeError() }}</p>
+      }
+      <div class="fmd-confirm-actions">
+        <button type="button" class="btn-ghost" (click)="closeRemoveConfirm()">{{ t().common.cancel }}</button>
+        <button type="button" class="fmd-remove-confirm-btn" [disabled]="removing()" (click)="confirmRemove()">
+          @if (removing()) { <i class="fa-solid fa-spinner fa-spin"></i> {{ t().family.removingMember }} }
+          @else { {{ t().family.removeMember }} }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}

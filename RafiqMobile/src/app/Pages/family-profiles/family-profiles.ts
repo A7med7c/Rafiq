@@ -1,18 +1,16 @@
 import {
-  ChangeDetectorRef, Component, ElementRef, HostListener, OnInit,
-  ViewChild, computed, inject, signal, WritableSignal
+  ChangeDetectorRef, Component, HostListener, OnInit,
+  computed, inject, signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { catchError, of, map, forkJoin } from 'rxjs';
 import { LocalizationService } from '../../Services/localization.service';
-import { AiChatService } from '../../Services/ai-chat.service';
 import { AuthService } from '../../Services/auth-service';
 import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { NotificationService } from '../../Services/notification.service';
-import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { environment } from '../../Environments/Environment';
 import {
@@ -23,7 +21,6 @@ import {
   ProfileMemberDto,
   SentInvitationDto,
 } from '../../Services/family-profiles.service';
-import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
 import { MobileHeader } from '../../shared/mobile-header/mobile-header';
@@ -47,31 +44,24 @@ interface SupervisionMemberEntry {
 @Component({
   selector: 'app-family-profiles',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, BottomNav, MobileHeader],
+  imports: [CommonModule, FormsModule, RouterLink, AssistantAnchorDirective, BottomNav, MobileHeader],
   templateUrl: './family-profiles.html',
   styleUrl: './family-profiles.css',
 })
 export class FamilyProfiles implements OnInit {
-  @ViewChild('carouselEl') carouselElRef?: ElementRef<HTMLDivElement>;
-
   protected readonly l10n = inject(LocalizationService);
-  protected readonly aiChatService = inject(AiChatService);
   protected readonly t = this.l10n.t;
-  private readonly authSvc        = inject(AuthService);
+  private readonly authSvc = inject(AuthService);
   protected readonly profileCache = inject(ProfileCacheService);
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   protected readonly notifSvc = inject(NotificationService); // template access
-  private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly http = inject(HttpClient);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly route = inject(ActivatedRoute);
   private readonly base = environment.apiUrl;
   readonly router = inject(Router);
 
-  // ─── Sidebar ────────────────────────────────────────────────
-  readonly sidebarCollapsed = signal(false);
-  readonly mobileSidebarOpen = signal(false);
-  readonly dropdownOpen = signal(false);
   // ─── Data ───────────────────────────────────────────────────
   readonly profiles = signal<AccessibleProfileDto[]>([]);
   readonly selectedProfile = signal<AccessibleProfileDto | null>(null);
@@ -84,9 +74,6 @@ export class FamilyProfiles implements OnInit {
   readonly submitting = signal(false);
 
   // ─── UI state ───────────────────────────────────────────────
-  readonly activeTab = signal<string>('overview');
-  readonly tabDirection = signal<'left' | 'right'>('left');
-  readonly tabAnimating = signal(false);
   readonly showAddModal = signal(false);
   readonly addStep = signal<AddStep>('choose');
   readonly showInvitationsPanel = signal(false);
@@ -111,11 +98,6 @@ export class FamilyProfiles implements OnInit {
   modifyNewRole = 'Viewer';
   removeTarget: { accessId: string; profileId: string; name: string; type: 'member' | 'self' | 'managed' } | null = null;
 
-  // ─── Three-dot menu / Delete profile ────────────────────────
-  readonly showProfileMenu = signal(false);
-  readonly showDeleteConfirm = signal(false);
-  readonly deletingProfile = signal(false);
-
   // ─── Sent Invitations ────────────────────────────────────────
   readonly sentInvitations = signal<SentInvitationDto[]>([]);
   readonly sentInvitationsLoading = signal(false);
@@ -126,68 +108,12 @@ export class FamilyProfiles implements OnInit {
   readonly supervisingPage = signal(0);
   readonly supervisedVisible = signal(true);
   readonly supervisingVisible = signal(true);
-  readonly mobileTabMenuOpen = signal(false);
-
-  // ─── Medications / Reminders tab ────────────────────────────
-  readonly fpMedicines = signal<any[]>([]);
-  readonly fpMedicinesLoading = signal(false);
 
   // ─── Computed ───────────────────────────────────────────────
   readonly pendingCount = computed(() =>
     this.receivedInvitations().filter(i => i.status === 'Pending').length
   );
-  //────── Health Summary ─────────────────────────────────────────
 
-  private readonly dashboardService = inject(DashboardService);
-
-  readonly healthSummary = signal<HealthSummaryDto | null>(null);
-  readonly summaryLoading = signal(false);
-  readonly summaryExpanded = signal(false);
-
-  readonly SUMMARY_CHAR_LIMIT = 260;
-
-  getTruncatedSummary(full: string): string {
-    if (this.summaryExpanded() || full.length <= this.SUMMARY_CHAR_LIMIT) return full;
-    return full.slice(0, this.SUMMARY_CHAR_LIMIT).trimEnd() + '…';
-  }
-
-  isSummaryTruncatable(full: string): boolean {
-    return full.length > this.SUMMARY_CHAR_LIMIT;
-  }
-
-
-
-  loadHealthSummary() {
-    const profileId = this.selectedProfile()?.userHealthProfileId;
-    this.summaryLoading.set(true);
-    this.summaryExpanded.set(false);
-    const obs$ = profileId
-      ? this.dashboardService.getHealthSummaryForProfile(profileId)
-      : this.dashboardService.getHealthSummary();
-
-    obs$.subscribe({
-      next: summary => {
-        this.healthSummary.set(summary);
-        this.summaryLoading.set(false);
-      },
-      error: () => {
-        this.healthSummary.set(null);
-        this.summaryLoading.set(false);
-      }
-    });
-  }
-  selectedTab = signal('overview');
-  selectTab(tab: string) {
-
-    this.selectedTab.set(tab);
-
-    if (tab === 'health-summary') {
-
-      this.loadHealthSummary();
-
-    }
-
-  }
   readonly ownerProfiles = computed(() =>
     this.profiles().filter(p => p.accessRole === 'Owner')
   );
@@ -232,6 +158,22 @@ export class FamilyProfiles implements OnInit {
   );
 
   readonly unreadNotifCount = this.notifSvc.unreadCount;
+
+  // ─── New: Family Hub overview ────────────────────────────────
+  readonly familyOverview = computed(() => ({
+    totalMembers: this.profiles().length,
+    activeProfiles: this.profiles().filter(p => p.userId !== null || p.isSelf).length,
+    pendingInvitations: this.pendingCount(),
+  }));
+
+  healthStatusFor(detail: PatientProfileDetailDto | null): { allClear: boolean; conditionCount: number } {
+    const allergyCount = detail?.allergies?.length ?? 0;
+    const diseaseCount = detail?.chronicDiseases?.length ?? 0;
+    return {
+      allClear: allergyCount === 0 && diseaseCount === 0,
+      conditionCount: allergyCount + diseaseCount,
+    };
+  }
 
   // ─── Create form ────────────────────────────────────────────
   createForm = {
@@ -303,9 +245,30 @@ export class FamilyProfiles implements OnInit {
   // ─── Lifecycle ──────────────────────────────────────────────
   ngOnInit(): void {
     this.profileCache.ensure();
-    this.applyResponsiveSidebar();
     this.loadProfiles();
     this.loadReceivedInvitations();
+
+    this.route.queryParamMap.subscribe(params => {
+      const editId = params.get('editId');
+      if (!editId) return;
+      this.tryConsumeEditId(editId);
+    });
+  }
+
+  private pendingEditId: string | null = null;
+
+  private tryConsumeEditId(editId: string): void {
+    if (this.profilesLoading()) {
+      // Profiles not loaded yet — loadProfiles() will call this again once they are.
+      this.pendingEditId = editId;
+      return;
+    }
+    const target = this.profiles().find(p => p.userHealthProfileId === editId);
+    if (target) {
+      this.selectProfile(target);
+      this.openEditModal();
+    }
+    this.router.navigate([], { queryParams: {}, replaceUrl: true });
   }
 
   private loadProfiles(): void {
@@ -317,6 +280,11 @@ export class FamilyProfiles implements OnInit {
         const storedId = this.profileSelectSvc.selectedProfileId;
         const restored = storedId ? list.find(p => p.userHealthProfileId === storedId) : null;
         this.selectProfile(restored ?? list[0]);
+      }
+      if (this.pendingEditId) {
+        const editId = this.pendingEditId;
+        this.pendingEditId = null;
+        this.tryConsumeEditId(editId);
       }
     });
   }
@@ -330,101 +298,13 @@ export class FamilyProfiles implements OnInit {
   // ─── Profile selection ──────────────────────────────────────
   selectProfile(p: AccessibleProfileDto): void {
     this.selectedProfile.set(p);
-    this.activeTab.set('overview');
     this.profileSelectSvc.select(p.userHealthProfileId);
-    this.fpMedicines.set([]);
     this.detailLoading.set(true);
     this.selectedDetail.set(null);
-    this.healthSummary.set(null);
     this.fpSvc.getById(p.userHealthProfileId).pipe(catchError(() => of(null))).subscribe(d => {
       this.selectedDetail.set(d);
       this.detailLoading.set(false);
     });
-  }
-
-  summaryText(s: HealthSummaryDto): string {
-    const parts: string[] = [`Status: ${s.overallStatus}${s.overallStatusNote ? ' — ' + s.overallStatusNote : ''}`];
-    if (s.conditions.length) parts.push(`Conditions: ${s.conditions.join(', ')}`);
-    if (s.allergies.length) parts.push(`Allergies: ${s.allergies.map(a => `${a.name} (${a.severity})`).join(', ')}`);
-    parts.push(`Medications: ${s.medications.count} active${s.medications.hasIssues && s.medications.issueNote ? ' — ' + s.medications.issueNote : ''}`);
-    parts.push(`Lab results: ${s.labResults.status}${s.labResults.abnormalCount > 0 ? ` (${s.labResults.abnormalCount} abnormal)` : ''}`);
-    if (s.insights.length) parts.push(`Insights: ${s.insights.join('; ')}`);
-    if (s.recommendations.length) parts.push(`Recommendations: ${s.recommendations.join('; ')}`);
-    return parts.join('\n');
-  }
-
-  navigateToRecords(): void {
-    const p = this.selectedProfile();
-    if (!p) return;
-    this.router.navigate(['/medical-records'], { queryParams: { profileId: p.userHealthProfileId } });
-  }
-
-  switchTab(tab: string): void {
-    if (tab === this.activeTab()) return;
-    const order = ['overview', 'records', 'appointments', 'medications', 'reminders', 'summary'];
-    const currentIndex = order.indexOf(this.activeTab());
-    const nextIndex = order.indexOf(tab);
-    this.animateTabContent(nextIndex >= currentIndex ? 'left' : 'right');
-
-    this.activeTab.set(tab);
-    if (tab === 'summary') {
-      this.loadHealthSummary();
-    }
-    this.mobileTabMenuOpen.set(false);
-  }
-
-  toggleMobileTabMenu(): void { this.mobileTabMenuOpen.update(v => !v); }
-  closeMobileTabMenu(): void  { this.mobileTabMenuOpen.set(false); }
-
-  activeTabLabel(): string {
-    const t = this.t().family;
-    const map: Record<string, string> = {
-      overview:     t.overviewTab || 'Overview',
-      records:      t.medicalRecordsTab || 'Medical Records',
-      appointments: t.appointmentsTab || 'Appointments',
-      medications:  t.medicationsTab || 'Medications',
-      reminders:    t.remindersTab || 'Reminders',
-      summary:      t.healthSummaryTab || 'Health Summary',
-    };
-    return map[this.activeTab()] ?? (t.overviewTab || 'Overview');
-  }
-
-  activeTabIcon(): string {
-    const map: Record<string, string> = {
-      overview: 'fa-house',
-      records: 'fa-folder-open',
-      appointments: 'fa-calendar-check',
-      medications: 'fa-pills',
-      reminders: 'fa-bell',
-      summary: 'fa-chart-simple',
-    };
-    return map[this.activeTab()] ?? 'fa-house';
-  }
-
-  private animateTabContent(direction: 'left' | 'right'): void {
-    this.tabDirection.set(direction);
-    this.tabAnimating.set(false);
-    setTimeout(() => this.tabAnimating.set(true));
-    setTimeout(() => this.tabAnimating.set(false), 260);
-  }
-
-  // ─── Medications / Reminders ────────────────────────────────
-  loadFpMedicines(): void {
-    const profileId = this.selectedProfile()?.userHealthProfileId;
-    if (!profileId) return;
-    this.fpMedicinesLoading.set(true);
-    this.http.get<any>(`${this.base}/user-medicines?profileId=${profileId}`).pipe(
-      map(r => r.data ?? []),
-      catchError(() => of([])),
-    ).subscribe(list => {
-      this.fpMedicines.set(list);
-      this.fpMedicinesLoading.set(false);
-    });
-  }
-
-  // ─── Carousel ───────────────────────────────────────────────
-  scrollCarousel(dir: -1 | 1): void {
-    this.carouselElRef?.nativeElement.scrollBy({ left: dir * 300, behavior: 'smooth' });
   }
 
   // ─── Add modal ──────────────────────────────────────────────
@@ -722,7 +602,7 @@ export class FamilyProfiles implements OnInit {
         // Helper: patch text fields (name etc.) that were also edited
         const patchTextFields = () => {
           const firstName = this.editForm.firstName.trim();
-          const lastName  = this.editForm.lastName.trim();
+          const lastName = this.editForm.lastName.trim();
           this.selectedProfile.update(p => p ? { ...p, firstName, lastName } : p);
           this.profiles.update(list =>
             list.map(p => p.userHealthProfileId === profileId ? { ...p, firstName, lastName } : p)
@@ -932,111 +812,22 @@ export class FamilyProfiles implements OnInit {
     });
   }
 
-  // ─── Three-dot menu ─────────────────────────────────────────
-  canShowProfileMenu(p: AccessibleProfileDto | null): boolean {
-    if (!p) return false;
-    return p.profileType === 'Managed' && p.userId === null && p.accessRole === 'Owner';
-  }
-
-  toggleProfileMenu(): void { this.showProfileMenu.update(v => !v); }
-  closeProfileMenu(): void { this.showProfileMenu.set(false); }
-
-  openDeleteProfileConfirm(): void {
-    this.showProfileMenu.set(false);
-    this.showDeleteConfirm.set(true);
-  }
-
-  closeDeleteConfirm(): void { this.showDeleteConfirm.set(false); }
-
-  confirmDeleteProfile(): void {
-    const profile = this.selectedProfile();
-    if (!profile) return;
-    this.deletingProfile.set(true);
-    this.fpSvc.deleteProfile(profile.userHealthProfileId)
-      .pipe(catchError(() => of(null)))
-      .subscribe(() => {
-        this.deletingProfile.set(false);
-        this.closeDeleteConfirm();
-        this.loadProfiles();
-      });
-  }
-
-  // ─── Sidebar boilerplate ────────────────────────────────────
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    if (this.showDeleteConfirm()) { this.closeDeleteConfirm(); return; }
-    if (this.showRemoveConfirm()) { this.closeRemoveConfirm(); return; }
-    if (this.showModifyModal()) { this.closeModifyModal(); return; }
-    if (this.showSupervisionModal()) { this.closeSupervisionModal(); return; }
-    if (this.showProfileMenu()) { this.closeProfileMenu(); return; }
-  }
-
-  @HostListener('window:resize')
-  onWindowResize(): void { this.applyResponsiveSidebar(); }
-
-  private applyResponsiveSidebar(): void {
-    this.sidebarCollapsed.set(window.innerWidth <= 1024);
-    if (window.innerWidth > 768) this.mobileSidebarOpen.set(false);
-  }
-
-  toggleSidebar(): void { this.sidebarCollapsed.update(v => !v); }
-  toggleMobileSidebar(): void { this.mobileSidebarOpen.update(v => !v); }
-  toggleDropdown(): void { this.dropdownOpen.update(v => !v); }
-
-  logout(): void { this.dropdownOpen.set(false); this.authSvc.logout().subscribe(); }
-
-  goToMyProfile(): void { this.dropdownOpen.set(false); this.router.navigate(['/my-profile']); }
-  openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(e: MouseEvent): void {
-    if (!(e.target as HTMLElement).closest('.hdr-user')) this.dropdownOpen.set(false);
-    if (!(e.target as HTMLElement).closest('.fp-menu-wrap')) this.showProfileMenu.set(false);
-  }
-
   // ─── Display helpers ────────────────────────────────────────
   get todayStr(): string {
     return new Date().toISOString().split('T')[0];
   }
 
-  get displayName(): string {
-    const u = this.authSvc.currentUser;
-    return u?.firstName?.trim() || u?.email || 'there';
-  }
-
-  get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
-
-  get avatarUrl(): string { return this.authSvc.avatarUrl; }
-
-  get hasProfileImage(): boolean { return !!this.authSvc.currentUser?.profileImageUrl; }
-
-  get userInitials(): string {
-    const u = this.authSvc.currentUser;
-    if (!u) return '?';
-    const f = (u.firstName ?? '')[0] ?? '';
-    const l = (u.lastName ?? '')[0] ?? '';
-    return (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
-  }
-
-  get avatarBgColor(): string {
-    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
-    const seed = this.displayName || this.userEmail || 'U';
-    let h = 0;
-    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
-    return palette[Math.abs(h) % palette.length];
-  }
-
   getAvatarColor(i: number): string { return this.avatarColors[i % this.avatarColors.length]; }
 
-getRelLabel(p: AccessibleProfileDto): string {
-  if (p.isSelf) {
-    return this.t().family.self;
+  getRelLabel(p: AccessibleProfileDto): string {
+    if (p.isSelf) {
+      return this.t().family.self;
+    }
+
+    const key = (p.relationship ?? 'member').toLowerCase();
+
+    return (this.t().family as any)[key] ?? this.t().family.member;
   }
-
-  const key = (p.relationship ?? 'member').toLowerCase();
-
-  return (this.t().family as any)[key] ?? this.t().family.member;
-}
 
   getRelBadgeClass(p: AccessibleProfileDto): string {
     if (p.isSelf) return 'fp-badge fp-badge--blue';
@@ -1050,11 +841,9 @@ getRelLabel(p: AccessibleProfileDto): string {
     return ['Husband', 'Wife'].includes(r) ? 'fa-solid fa-heart' : 'fa-solid fa-person';
   }
 
-  getStatusLabel(p: AccessibleProfileDto): string {   const key = (p.relationship ?? 'member').toLowerCase();
-return p.isSelf ? (this.t().family as any)[key] ?? this.t().family.member : 'Active'; }
-
-  getStatusBadgeClass(p: AccessibleProfileDto): string {
-    return p.isSelf ? 'fp-badge fp-badge--green' : 'fp-badge fp-badge--blue';
+  getStatusLabel(p: AccessibleProfileDto): string {
+    const key = (p.relationship ?? 'member').toLowerCase();
+    return p.isSelf ? (this.t().family as any)[key] ?? this.t().family.member : 'Active';
   }
 
   getDotClass(p: AccessibleProfileDto): string {
@@ -1070,7 +859,8 @@ return p.isSelf ? (this.t().family as any)[key] ?? this.t().family.member : 'Act
     return new Date(dob).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  getAge(dob: string): number {
+  getAge(dob: string | null | undefined): number | null {
+    if (!dob) return null;
     const b = new Date(dob);
     const n = new Date();
     let age = n.getFullYear() - b.getFullYear();
@@ -1110,12 +900,19 @@ return p.isSelf ? (this.t().family as any)[key] ?? this.t().family.member : 'Act
   }
 
   getGenderLabel(gender: string | null | undefined): string {
-  if (!gender) {
-    return '-';
+    if (!gender) {
+      return '-';
+    }
+
+    const key = gender.toLowerCase();
+
+    return (this.t().common as any)[key] ?? gender;
   }
 
-  const key = gender.toLowerCase();
-
-  return (this.t().common as any)[key] ?? gender;
-}
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.showRemoveConfirm()) { this.closeRemoveConfirm(); return; }
+    if (this.showModifyModal()) { this.closeModifyModal(); return; }
+    if (this.showSupervisionModal()) { this.closeSupervisionModal(); return; }
+  }
 }

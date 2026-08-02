@@ -1,0 +1,20 @@
+@import "../dashboard/dashboard.css";
+
+:host {
+  font-family: var(--font-body, 'Inter', 'Outfit', sans-serif);
+  display: contents;
+}
+
+.m-body { display: flex; flex-direction: column; padding: 16px 16px 96px; min-height: 60vh; justify-content: center; }
+
+.fec-enter { animation: fecEnter .45s cubic-bezier(.16,1,.3,1) both; }
+@keyframes fecEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .fec-enter { animation: none; } }
+
+.fec-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 20px; }
+.fec-empty__ico {
+  width: 76px; height: 76px; border-radius: 50%; background: var(--purple-lt); color: var(--purple);
+  display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 12px;
+}
+.fec-empty__title { font-size: 16px; font-weight: 700; color: var(--text); margin: 0; }
+.fec-empty__sub { font-size: 13px; color: var(--text-3); line-height: 1.55; max-width: 320px; margin: 0; }

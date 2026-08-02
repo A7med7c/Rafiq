@@ -18,6 +18,7 @@ import { AssistantAnchorDirective } from '../../core/assistant/directives/assist
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
+import { environment } from '../../Environments/Environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -267,11 +268,19 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   get avatarUrl(): string {
+    const cachedUrl = this.profileCache.profileImageUrl();
+    if (cachedUrl) return `${environment.fileBaseUrl}${cachedUrl}`;
     return this.authService.avatarUrl;
   }
 
+  resolveProfileImageUrl(path: string | null | undefined): string | null {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `${environment.fileBaseUrl}${path}`;
+  }
+
   get hasProfileImage(): boolean {
-    return !!this.authService.currentUser?.profileImageUrl;
+    return !!(this.profileCache.profileImageUrl() || this.authService.currentUser?.profileImageUrl);
   }
 
   get userInitials(): string {

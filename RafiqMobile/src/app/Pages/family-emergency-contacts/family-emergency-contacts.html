@@ -1,0 +1,21 @@
+<app-mobile-header
+  [title]="t().family.emergencyContactsTitle"
+  [showBack]="true"
+  (backClicked)="router.navigate(['/family-profiles', profileId()])"
+  [showNotifications]="true"
+  (notificationsClicked)="notifSvc.toggleNotificationCenter()">
+</app-mobile-header>
+
+<div class="m-page">
+  <div class="m-body fec-enter">
+
+    <div class="fec-empty">
+      <div class="fec-empty__ico"><i class="fa-solid fa-phone-volume"></i></div>
+      <p class="fec-empty__title">{{ t().family.noEmergencyContacts }}</p>
+      <p class="fec-empty__sub">{{ t().family.noEmergencyContactsSub.replace('{name}', memberName() || t().family.member) }}</p>
+    </div>
+
+  </div>
+
+  <app-bottom-nav></app-bottom-nav>
+</div>

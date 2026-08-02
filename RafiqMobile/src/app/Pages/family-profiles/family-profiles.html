@@ -1,499 +1,222 @@
 <app-mobile-header
   [title]="t().sidebar.familyProfiles"
   [showNotifications]="true"
-  [showAiButton]="true"
-  (notificationsClicked)="notifSvc.toggleNotificationCenter()"
-  (aiClicked)="aiChatService.openPanel()">
+  (notificationsClicked)="notifSvc.toggleNotificationCenter()">
 </app-mobile-header>
 
 <div class="m-page">
-  <div class="m-body">
+  <div class="m-body fph-enter">
 
-      <!-- ── Title bar ── -->
-      <div class="fp-title-bar">
-        <div class="fp-title-left">
-          <div class="fp-title-ico">
-            <i class="fa-solid fa-people-group"></i>
-          </div>
-          <div>
-            <h1 class="fp-h1">{{ t().family.title }}</h1>
-            <p class="fp-h1-sub">{{ t().family.subtitle }}</p>
-          </div>
+    <!-- ── Page header ── -->
+    <div class="fph-header">
+      <h1 class="fph-h1">{{ t().family.title }}</h1>
+      <p class="fph-sub">{{ t().family.subtitle }}</p>
+    </div>
+
+    @if (!profilesLoading() && profiles().length === 0) {
+
+    <!-- ══════════ EMPTY STATE ══════════ -->
+    <div class="fph-empty m-card">
+      <div class="fph-empty__ico"><i class="fa-solid fa-people-roof"></i></div>
+      <p class="fph-empty__title">{{ t().family.noProfilesYet }}</p>
+      <p class="fph-empty__sub">{{ t().family.noProfilesSub }}</p>
+      <button type="button" class="fph-btn-primary" (click)="openAddModal()">
+        <i class="fa-solid fa-plus"></i> {{ t().family.addFamilyMember }}
+      </button>
+    </div>
+
+    } @else {
+
+    <!-- ══════════ FAMILY MEMBERS STRIP ══════════ -->
+    <div class="fph-strip-wrap" assistantAnchor="family-profiles-list">
+      @if (profilesLoading()) {
+      <div class="fph-strip">
+        @for (s of [1,2,3,4]; track s) {
+        <div class="fph-mcard fph-mcard--skel">
+          <div class="skl-sq" style="width:52px;height:52px;border-radius:50%;margin:0 auto 8px"></div>
+          <div class="skl-line skl-70" style="margin:0 auto 4px"></div>
+          <div class="skl-line skl-45" style="margin:0 auto"></div>
         </div>
-        <div class="fp-title-actions">
-          <button type="button" class="fp-invitations-btn"
-            (click)="showInvitationsPanel.set(true); loadSentInvitations()">
-            <i class="fa-regular fa-envelope"></i>
-            {{ t().family.invitations }}
-            @if (pendingCount() > 0) {
-            <span class="fp-notif-badge">{{ pendingCount() }}</span>
-            }
-          </button>
-          <button type="button" class="fp-supervision-btn" (click)="openSupervisionModal()">
-            <i class="fa-solid fa-shield-halved"></i>
-            {{ t().family.supervisionSettings }}
-          </button>
-          <button type="button" class="fp-add-member-btn" (click)="openAddModal()" assistantAnchor="add-family-profile">
-            <i class="fa-solid fa-plus"></i>
-            {{ t().family.addFamilyMember }}
-          </button>
-        </div>
+        }
       </div>
-
-      <!-- ── Carousel ── -->
-      <div class="fp-carousel-section card">
-        <button type="button" class="fp-nav-btn fp-nav-btn--left" (click)="scrollCarousel(-1)">
-          <i class="fa-solid fa-chevron-left"></i>
-        </button>
-
-        @if (profilesLoading()) {
-        <div class="fp-carousel-inner fp-carousel-skeleton">
-          @for (s of [1,2,3,4]; track s) {
-          <div class="fp-profile-card">
-            <div class="fp-skl-av"></div>
-            <div class="fp-skl-line fp-skl-60"></div>
-            <div class="fp-skl-line fp-skl-40"></div>
-          </div>
-          }
-        </div>
-        } @else {
-        <div class="fp-carousel-inner" #carouselEl assistantAnchor="family-profiles-list">
-          @for (profile of profiles(); track profile.userHealthProfileId; let i = $index) {
-          <div class="fp-profile-card"
-            [class.fp-profile-card--selected]="selectedProfile()?.userHealthProfileId === profile.userHealthProfileId"
-            (click)="selectProfile(profile)">
-            <div class="fp-av-wrap">
+      } @else {
+      <div class="fph-strip">
+        @for (profile of profiles(); track profile.userHealthProfileId; let i = $index) {
+        <div class="fph-mcard" [class.fph-mcard--active]="selectedProfile()?.userHealthProfileId === profile.userHealthProfileId">
+          <div class="fph-mcard__tap" (click)="selectProfile(profile)">
+            <div class="fph-mcard__av-wrap">
               @if (profileAvatarUrl(profile); as avUrl) {
-              <img class="fp-av fp-av-img" [src]="avUrl" alt="{{ profile.firstName }}">
+              <img class="fph-mcard__av" [src]="avUrl" alt="{{ profile.firstName }}">
               } @else {
-              <div class="fp-av" [style.background]="getAvatarColor(i)">
+              <div class="fph-mcard__av" [style.background]="getAvatarColor(i)">
                 {{ profile.firstName[0].toUpperCase() }}
               </div>
               }
-              <span class="fp-dot" [class]="getDotClass(profile)"></span>
+              <span class="fph-mcard__dot" [class]="getDotClass(profile)"></span>
             </div>
-            <p class="fp-card-name">{{ profile.firstName }} {{ profile.lastName }}</p>
-            <div class="fp-badge-row">
-              <span [class]="getRelBadgeClass(profile)">
-                <i [class]="getRelIcon(profile)"></i>
-                {{ getRelLabel(profile) }}
-              </span>
-              <span [class]="getStatusBadgeClass(profile)">
-                {{ getStatusLabel(profile) }}
-              </span>
+            <p class="fph-mcard__name">{{ profile.firstName }}</p>
+            <div class="fph-mcard__meta">
+              <span class="fph-mcard__rel">{{ getRelLabel(profile) }}</span>
+              @if (profile.isSelf) {
+              <span class="fph-pill-you">{{ t().family.youBadge }}</span>
+              }
             </div>
           </div>
-          }
-
-          <!-- Add member tile -->
-          <div class="fp-profile-card fp-add-card" (click)="openAddModal()">
-            <div class="fp-av fp-av--add">
-              <i class="fa-solid fa-plus"></i>
-            </div>
-            <p class="fp-card-name fp-add-label">{{ t().family.addMember }}</p>
-          </div>
+          <a class="fph-mcard__chev" [routerLink]="['/family-profiles', profile.userHealthProfileId]">
+            <i class="fa-solid fa-chevron-right"></i>
+          </a>
         </div>
         }
 
-        <button type="button" class="fp-nav-btn fp-nav-btn--right" (click)="scrollCarousel(1)">
-          <i class="fa-solid fa-chevron-right"></i>
-        </button>
-      </div>
-
-      <!-- ── Profile Detail Panel ── -->
-      @if (selectedProfile()) {
-      <div class="fp-detail-card card">
-
-        <!-- Detail header -->
-        <div class="fp-detail-hdr">
-          <div class="fp-detail-av-wrap">
-            @if (profileAvatarUrl(selectedProfile()!); as avUrl) {
-            <img class="fp-detail-av fp-detail-av-img" [src]="avUrl" alt="{{ selectedProfile()!.firstName }}">
-            } @else {
-            <div class="fp-detail-av" [style.background]="getAvatarColor(profiles().indexOf(selectedProfile()!))">
-              {{ selectedProfile()!.firstName[0].toUpperCase() }}
-            </div>
-            }
-          </div>
-          <div class="fp-detail-info">
-            <div class="fp-detail-name-row">
-              <h2 class="fp-detail-name">
-                {{ selectedProfile()!.firstName }} {{ selectedProfile()!.lastName }}
-              </h2>
-              <span [class]="getStatusBadgeClass(selectedProfile()!)">
-                {{ getStatusLabel(selectedProfile()!) }}
-              </span>
-              @if (selectedProfile()!.accessRole === 'Viewer') {
-              <span class="pill pill-yellow-sm"
-                style="font-weight: 600; text-transform: uppercase; font-size: 11px; background-color: var(--yellow-bg, #fef3c7); color: var(--yellow-text, #d97706); border: 1px solid var(--yellow-border, #fcd34d); padding: 2px 8px; border-radius: 9999px;">
-                <i class="fa-solid fa-eye" style="margin-right: 4px;"></i> {{ t().family.viewerBadge }}
-              </span>
-              }
-            </div>
-            <div class="fp-detail-meta-row">
-              @if (selectedDetail()) {
-              <span class="fp-meta-item">
-                <i class="fa-regular fa-calendar"></i>
-                {{ formatDob(selectedDetail()!.dateOfBirth) }}
-                ({{ getAge(selectedDetail()!.dateOfBirth) }} {{ t().family.yrs }})
-              </span>
-              <span class="fp-meta-sep">·</span>
-              <span class="fp-meta-item">
-                <i class="fa-solid fa-person"></i>
-                {{ getGenderLabel(selectedDetail()!.gender) }}
-              </span>
-              <span class="fp-meta-sep">·</span>
-              <span class="fp-meta-item">
-                <i class="fa-solid fa-droplet"></i>
-                {{ formatBloodType(selectedDetail()!.bloodType) }}
-              </span>
-              }
-            </div>
-          </div>
-          <div class="fp-detail-actions">
-            @if (selectedProfile()!.accessRole !== 'Viewer') {
-            <button type="button" class="fp-edit-btn" (click)="openEditModal()">
-              <i class="fa-solid fa-pen"></i> {{ t().family.editProfile }}
-            </button>
-            }
-            @if (canShowProfileMenu(selectedProfile())) {
-            <div class="fp-menu-wrap">
-              <button type="button" class="fp-menu-btn" (click)="$event.stopPropagation(); toggleProfileMenu()">
-                <i class="fa-solid fa-ellipsis-vertical"></i>
-              </button>
-              @if (showProfileMenu()) {
-              <div class="fp-menu-dropdown">
-                @if (selectedProfile()?.profileType === 'Managed' && selectedProfile()?.accessRole === 'Owner') {
-                <button type="button" class="fp-menu-dropdown-item fp-menu-dropdown-item--danger"
-                  (click)="openDeleteProfileConfirm()">
-                  <i class="fa-solid fa-trash"></i>
-                  {{ t().family.deleteProfile }}
-                </button>
-                }
-              </div>
-              }
-            </div>
-            }
-          </div>
-        </div>
-
-        <!-- Stats row -->
-        @if (detailLoading()) {
-        <div class="fp-stats-row fp-stats-skeleton">
-          @for (s of [1,2,3,4,5]; track s) {
-          <div class="fp-stat-tile">
-            <div class="fp-skl-line fp-skl-60"></div>
-            <div class="fp-skl-line fp-skl-40"></div>
-          </div>
-          }
-        </div>
-        } @else if (selectedDetail()) {
-        <div class="fp-stats-row">
-          <div class="fp-stat-tile">
-            <div class="fp-stat-ico fp-stat-ico--blue"><i class="fa-solid fa-ruler-vertical"></i></div>
-            <div class="fp-stat-body">
-              <span class="fp-stat-lbl">{{ t().family.heightLabel }}</span>
-              <span class="fp-stat-val">{{ selectedDetail()!.height ? selectedDetail()!.height + ' ' + t().family.cm : 'N/A' }}</span>
-            </div>
-          </div>
-          <div class="fp-stat-tile">
-            <div class="fp-stat-ico fp-stat-ico--green"><i class="fa-solid fa-weight-scale"></i></div>
-            <div class="fp-stat-body">
-              <span class="fp-stat-lbl">{{ t().family.weightLabel }}</span>
-              <span class="fp-stat-val">{{ selectedDetail()!.weight ? selectedDetail()!.weight + ' ' + t().family.kg : 'N/A' }}</span>
-            </div>
-          </div>
-          <div class="fp-stat-tile">
-            <div class="fp-stat-ico fp-stat-ico--red"><i class="fa-solid fa-droplet"></i></div>
-            <div class="fp-stat-body">
-              <span class="fp-stat-lbl">{{ t().family.bloodType }}</span>
-              <span class="fp-stat-val">{{ formatBloodType(selectedDetail()!.bloodType) }}</span>
-            </div>
-          </div>
-          <div class="fp-stat-tile">
-            <div class="fp-stat-ico fp-stat-ico--orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <div class="fp-stat-body">
-              <span class="fp-stat-lbl">{{ t().family.allergies }}</span>
-              <span class="fp-stat-val">{{ selectedDetail()!.allergies.length || t().family.noneLabel }}</span>
-            </div>
-          </div>
-          <div class="fp-stat-tile">
-            <div class="fp-stat-ico fp-stat-ico--teal"><i class="fa-solid fa-heart-pulse"></i></div>
-            <div class="fp-stat-body">
-              <span class="fp-stat-lbl">{{ t().family.chronicConditions }}</span>
-              <span class="fp-stat-val">{{ selectedDetail()!.chronicDiseases.length || t().family.noneLabel }}</span>
-            </div>
-          </div>
-        </div>
-        }
-
-        <!-- Tabs -->
-        <div class="fp-tabs">
-          <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'overview'" (click)="switchTab('overview')">
-            <i class="fa-solid fa-house"></i> {{ t().family.overviewTab }}
-          </button>
-          <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'records'" (click)="switchTab('records')">
-            <i class="fa-regular fa-folder-open"></i> {{ t().family.medicalRecordsTab }}
-          </button>
-          <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'appointments'"
-            (click)="switchTab('appointments')">
-            <i class="fa-regular fa-calendar-check"></i> {{ t().family.appointmentsTab }}
-          </button>
-          <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'medications'"
-            (click)="switchTab('medications')">
-            <i class="fa-solid fa-pills"></i> {{ t().family.medicationsTab }}
-          </button>
-          <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'reminders'" (click)="switchTab('reminders')">
-            <i class="fa-regular fa-bell"></i> {{ t().family.remindersTab }}
-          </button>
-          <button class="fp-tab" [class.fp-tab--active]="activeTab() === 'summary'" (click)="switchTab('summary')">
-            <i class="fa-solid fa-chart-simple"></i> {{ t().family.healthSummaryTab }}
-          </button>
-        </div>
-
-        <!-- Mobile-only: collapsible tab selector -->
-        <div class="mobile-tab-select" style="margin-bottom: 12px;">
-          <button type="button" class="mobile-tab-trigger" [class.is-open]="mobileTabMenuOpen()" (click)="toggleMobileTabMenu()">
-            <i [class]="'fa-solid ' + activeTabIcon() + ' mtt-icon'"></i>
-            <span class="mtt-label">{{ activeTabLabel() }}</span>
-            <i class="fa-solid fa-chevron-down mtt-chevron"></i>
-          </button>
-          @if (mobileTabMenuOpen()) {
-            <div class="mobile-tab-backdrop" (click)="closeMobileTabMenu()"></div>
-            <div class="mobile-tab-dropdown">
-              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'overview'" (click)="switchTab('overview')">
-                <i class="fa-solid fa-house"></i> {{ t().family.overviewTab }}
-              </button>
-              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'records'" (click)="switchTab('records')">
-                <i class="fa-regular fa-folder-open"></i> {{ t().family.medicalRecordsTab }}
-              </button>
-              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'appointments'" (click)="switchTab('appointments')">
-                <i class="fa-regular fa-calendar-check"></i> {{ t().family.appointmentsTab }}
-              </button>
-              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'medications'" (click)="switchTab('medications')">
-                <i class="fa-solid fa-pills"></i> {{ t().family.medicationsTab }}
-              </button>
-              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'reminders'" (click)="switchTab('reminders')">
-                <i class="fa-regular fa-bell"></i> {{ t().family.remindersTab }}
-              </button>
-              <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'summary'" (click)="switchTab('summary')">
-                <i class="fa-solid fa-chart-simple"></i> {{ t().family.healthSummaryTab }}
-              </button>
-            </div>
-          }
-        </div>
-
-        <!-- ─── Tab content ─── -->
-        <div class="fp-tab-content" [class.tab-animating]="tabAnimating()"
-          [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
-
-          <!-- OVERVIEW -->
-          @if (activeTab() === 'overview') {
-          @if (detailLoading()) {
-          <div class="fp-empty-state">
-            <div class="fp-skl-line fp-skl-60" style="margin:0 auto 8px"></div>
-            <div class="fp-skl-line fp-skl-40" style="margin:0 auto"></div>
-          </div>
-          } @else if (selectedDetail()) {
-          <div class="fp-overview-grid">
-            @if (selectedDetail()!.allergies.length > 0) {
-            <div class="fp-overview-section">
-              <h4 class="fp-ov-title"><i class="fa-solid fa-triangle-exclamation"></i> {{ t().family.allergiesSection }}</h4>
-              <div class="fp-tag-list">
-                @for (a of selectedDetail()!.allergies; track a.id) {
-                <span class="fp-tag fp-tag--red">{{ a.name }} ({{ a.severity }})</span>
-                }
-              </div>
-            </div>
-            }
-            @if (selectedDetail()!.chronicDiseases.length > 0) {
-            <div class="fp-overview-section">
-              <h4 class="fp-ov-title"><i class="fa-solid fa-heart-pulse"></i> {{ t().family.chronicSection }}</h4>
-              <div class="fp-tag-list">
-                @for (d of selectedDetail()!.chronicDiseases; track d.id) {
-                <span class="fp-tag fp-tag--orange">{{ d.name }}</span>
-                }
-              </div>
-            </div>
-            }
-            @if (selectedDetail()!.allergies.length === 0 && selectedDetail()!.chronicDiseases.length === 0) {
-            <div class="fp-empty-state">
-              <i class="fa-solid fa-circle-check" style="font-size:32px;color:var(--green);margin-bottom:8px"></i>
-              <p style="font-weight:600;color:var(--text)">{{ t().family.allClear }}</p>
-              <p style="color:var(--text-3);font-size:13px">{{ t().family.allClearSub }}</p>
-            </div>
-            }
-          </div>
-          }
-          }
-
-          <!-- MEDICAL RECORDS -->
-          @else if (activeTab() === 'records') {
-          <div class="fp-manage-meds-cta">
-            <div class="fp-manage-meds-ico" style="background:rgba(79,70,229,.1);color:#4f46e5">
-              <i class="fa-regular fa-folder-open"></i>
-            </div>
-            <div class="fp-manage-meds-info">
-              <p class="fp-manage-meds-title">{{ t().family.medicalRecordsTab }}</p>
-              <p class="fp-manage-meds-sub">
-                @if (selectedProfile()!.accessRole === 'Viewer') {
-                  {{ t().family.viewMedicalRecords }} — {{ selectedProfile()!.firstName }}
-                } @else {
-                  {{ t().family.manageMedicalRecords }} — {{ selectedProfile()!.firstName }}
-                }
-              </p>
-            </div>
-            <a class="fp-manage-meds-btn"
-              [routerLink]="['/medical-records']"
-              [queryParams]="{ profileId: selectedProfile()!.userHealthProfileId }">
-              @if (selectedProfile()!.accessRole === 'Viewer') {
-                <i class="fa-regular fa-eye"></i> {{ t().family.viewMedicalRecords }}
-              } @else {
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ t().family.manageMedicalRecords }}
-              }
-            </a>
-          </div>
-          }
-
-          <!-- APPOINTMENTS -->
-          @else if (activeTab() === 'appointments') {
-          <div class="fp-manage-meds-cta">
-            <div class="fp-manage-meds-ico" style="background:rgba(14,175,215,.1);color:var(--blue)">
-              <i class="fa-regular fa-calendar-check"></i>
-            </div>
-            <div class="fp-manage-meds-info">
-              <p class="fp-manage-meds-title">{{ t().family.appointmentsTab }}</p>
-              <p class="fp-manage-meds-sub">
-                @if (selectedProfile()!.accessRole === 'Viewer') {
-                  {{ t().family.viewAppointments }} — {{ selectedProfile()!.firstName }}
-                } @else {
-                  {{ t().family.manageAppointments }} — {{ selectedProfile()!.firstName }}
-                }
-              </p>
-            </div>
-            <div class="fp-cta-btn-group">
-              @if (selectedProfile()!.accessRole !== 'Viewer') {
-              <a class="fp-manage-meds-btn" style="background:var(--blue);color:#fff;border-color:var(--blue)"
-                [routerLink]="['/appointments']"
-                [queryParams]="{
-                  profileId: selectedProfile()!.userHealthProfileId,
-                  openAdd: '1'
-                }">
-                <i class="fa-solid fa-plus"></i> {{ t().appointments.addAppointment }}
-              </a>
-              }
-              <a class="fp-manage-meds-btn"
-                [routerLink]="['/appointments']"
-                [queryParams]="{ profileId: selectedProfile()!.userHealthProfileId }">
-                @if (selectedProfile()!.accessRole === 'Viewer') {
-                  <i class="fa-regular fa-eye"></i> {{ t().family.viewAppointments }}
-                } @else {
-                  <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ t().family.manageAppointments }}
-                }
-              </a>
-            </div>
-          </div>
-          }
-
-          <!-- MEDICATIONS -->
-          @else if (activeTab() === 'medications') {
-          <div class="fp-manage-meds-cta">
-            <div class="fp-manage-meds-ico"><i class="fa-solid fa-pills"></i></div>
-            <div class="fp-manage-meds-info">
-              <p class="fp-manage-meds-title">{{ t().family.medicationsReminders }}</p>
-              <p class="fp-manage-meds-sub">
-                @if (selectedProfile()!.accessRole === 'Viewer') {
-                  {{ t().family.viewMedications }} {{ selectedProfile()!.firstName }}
-                } @else {
-                  {{ t().family.manageMedications }} {{ selectedProfile()!.firstName }}
-                }
-              </p>
-            </div>
-            <a class="fp-manage-meds-btn"
-              [routerLink]="['/medications']"
-              [queryParams]="{
-                profileId: selectedProfile()!.userHealthProfileId,
-                readOnly: selectedProfile()!.accessRole === 'Viewer',
-                name: selectedProfile()!.firstName + ' ' + selectedProfile()!.lastName
-              }">
-              @if (selectedProfile()!.accessRole === 'Viewer') {
-              <i class="fa-regular fa-eye"></i> {{ t().family.viewMedications }}
-              } @else {
-              <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ t().family.manageMedications }}
-              }
-            </a>
-          </div>
-          }
-
-          <!-- REMINDERS -->
-          @else if (activeTab() === 'reminders') {
-          <div class="fp-manage-meds-cta">
-            <div class="fp-manage-meds-ico" style="background:var(--teal-lt);color:var(--teal)"><i class="fa-regular fa-bell"></i></div>
-            <div class="fp-manage-meds-info">
-              <p class="fp-manage-meds-title">{{ t().family.medicationsReminders }}</p>
-              <p class="fp-manage-meds-sub">
-                @if (selectedProfile()!.accessRole === 'Viewer') {
-                  {{ t().family.viewReminders }} {{ selectedProfile()!.firstName }}
-                } @else {
-                  {{ t().family.manageReminders }} {{ selectedProfile()!.firstName }}
-                }
-              </p>
-            </div>
-            <a class="fp-manage-meds-btn"
-              [routerLink]="['/medications']"
-              [queryParams]="{
-                profileId: selectedProfile()!.userHealthProfileId,
-                readOnly: selectedProfile()!.accessRole === 'Viewer',
-                name: selectedProfile()!.firstName + ' ' + selectedProfile()!.lastName,
-                tab: 'medications'
-              }">
-              @if (selectedProfile()!.accessRole === 'Viewer') {
-              <i class="fa-regular fa-eye"></i> {{ t().family.viewReminders }}
-              } @else {
-              <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ t().family.manageReminders }}
-              }
-            </a>
-          </div>
-          }
-
-          <!-- HEALTH SUMMARY -->
-          @else {
-          <div class="fp-summary-scroll">
-            @if (summaryLoading()) {
-            <div class="ai-summary-loading">
-              <div class="ai-summary-spinner">
-                <i class="fa-solid fa-wand-magic-sparkles ai-summary-spinner-ico"></i>
-                <svg class="ai-summary-ring" viewBox="0 0 60 60">
-                  <circle cx="30" cy="30" r="26" fill="none" stroke-width="3"/>
-                </svg>
-              </div>
-              <p class="ai-summary-loading-text">{{ t().family.generatingAiSummary }}</p>
-            </div>
-            } @else if (!healthSummary()?.hasData) {
-            <p class="ai-body ai-body--empty">
-              {{ t().family.notEnoughInfo }}
-            </p>
-            } @else {
-            <p class="ai-body">{{ summaryText(healthSummary()!) }}</p>
-            }
-          </div>
-          }
-
-        </div><!-- /fp-tab-content -->
-
-      </div><!-- /fp-detail-card -->
-      } @else if (!profilesLoading()) {
-      <div class="card fp-empty-card">
-        <i class="fa-solid fa-people-group" style="font-size:48px;color:var(--text-4);margin-bottom:12px"></i>
-        <p style="font-weight:600;font-size:16px;color:var(--text);margin-bottom:6px">{{ t().family.noProfilesYet }}</p>
-        <p style="color:var(--text-3);font-size:13px;margin-bottom:16px">
-          {{ t().family.noProfilesSub }}
-        </p>
-        <button type="button" class="fp-add-member-btn" (click)="openAddModal()">
-          <i class="fa-solid fa-plus"></i> {{ t().family.addFamilyMember }}
+        <button type="button" class="fph-mcard fph-mcard--add" (click)="openAddModal()">
+          <div class="fph-mcard__av fph-mcard__av--add"><i class="fa-solid fa-plus"></i></div>
+          <p class="fph-mcard__name">{{ t().family.addMember }}</p>
         </button>
       </div>
       }
+    </div>
+
+    <!-- ══════════ QUICK ACTIONS ══════════ -->
+    <div class="fph-quick-row">
+      <button type="button" class="fph-quick-btn" (click)="showInvitationsPanel.set(true); invitationsTab.set('received'); loadSentInvitations()">
+        <i class="fa-regular fa-envelope"></i>
+        {{ t().family.invitations }}
+        @if (pendingCount() > 0) {
+        <span class="fph-quick-badge">{{ pendingCount() }}</span>
+        }
+      </button>
+      <button type="button" class="fph-quick-btn" (click)="openSupervisionModal()">
+        <i class="fa-solid fa-shield-halved"></i>
+        {{ t().family.supervisionSettings }}
+      </button>
+    </div>
+    <button type="button" class="fph-btn-primary fph-btn-primary--block" (click)="openAddModal()" assistantAnchor="add-family-profile">
+      <i class="fa-solid fa-plus"></i> {{ t().family.addFamilyMember }}
+    </button>
+
+    <!-- ══════════ SELECTED MEMBER HERO ══════════ -->
+    @if (selectedProfile(); as sp) {
+    <div class="fph-hero m-card">
+      <div class="fph-hero__top">
+        @if (profileAvatarUrl(sp); as avUrl) {
+        <img class="fph-hero__av" [src]="avUrl" alt="{{ sp.firstName }}">
+        } @else {
+        <div class="fph-hero__av" [style.background]="getAvatarColor(profiles().indexOf(sp))">
+          {{ sp.firstName[0].toUpperCase() }}
+        </div>
+        }
+        <h2 class="fph-hero__name">{{ sp.firstName }} {{ sp.lastName }}</h2>
+        <span [class]="getRelBadgeClass(sp)">
+          <i [class]="getRelIcon(sp)"></i> {{ getRelLabel(sp) }}
+        </span>
+      </div>
+
+      @if (detailLoading()) {
+      <div class="fph-hero__stats">
+        @for (s of [1,2,3]; track s) {
+        <div class="fph-hero__stat">
+          <div class="skl-line skl-45" style="margin:0 auto 6px"></div>
+          <div class="skl-line skl-70" style="margin:0 auto"></div>
+        </div>
+        }
+      </div>
+      } @else if (selectedDetail(); as sd) {
+      <div class="fph-hero__stats">
+        <div class="fph-hero__stat">
+          <span class="fph-hero__stat-lbl">{{ t().family.ageLabel }}</span>
+          <span class="fph-hero__stat-val">{{ getAge(sd.dateOfBirth) ?? '—' }} {{ t().family.yrs }}</span>
+        </div>
+        <div class="fph-hero__stat">
+          <span class="fph-hero__stat-lbl">{{ t().family.bloodType }}</span>
+          <span class="fph-hero__stat-val">{{ formatBloodType(sd.bloodType) }}</span>
+        </div>
+        <div class="fph-hero__stat">
+          <span class="fph-hero__stat-lbl">{{ t().family.statusLabel }}</span>
+          <span class="fph-hero__stat-val">{{ getStatusLabel(sp) }}</span>
+        </div>
+      </div>
+      }
+
+      <div class="fph-hero__actions">
+        <button type="button" class="fph-btn-primary" (click)="openEditModal()">
+          <i class="fa-solid fa-pen"></i> {{ t().family.editProfile }}
+        </button>
+        <a class="fph-btn-outline" [routerLink]="['/family-profiles', sp.userHealthProfileId]">
+          {{ t().family.viewHealthProfile }}
+        </a>
+      </div>
+    </div>
+    }
+
+    <!-- ══════════ FAMILY OVERVIEW ══════════ -->
+    <div class="m-section">
+      <div class="m-section__hdr">
+        <span class="m-section__title">{{ t().family.overviewTitle }}</span>
+      </div>
+      <div class="fph-overview-row">
+        <div class="fph-overview-tile">
+          <div class="fph-overview-ico fph-overview-ico--blue"><i class="fa-solid fa-people-group"></i></div>
+          <span class="fph-overview-val">{{ familyOverview().totalMembers }}</span>
+          <span class="fph-overview-lbl">{{ t().family.familyMembersLabel }}</span>
+        </div>
+        <div class="fph-overview-tile">
+          <div class="fph-overview-ico fph-overview-ico--green"><i class="fa-solid fa-circle-check"></i></div>
+          <span class="fph-overview-val">{{ familyOverview().activeProfiles }}</span>
+          <span class="fph-overview-lbl">{{ t().family.activeProfilesLabel }}</span>
+        </div>
+        <div class="fph-overview-tile">
+          <div class="fph-overview-ico fph-overview-ico--orange"><i class="fa-regular fa-envelope"></i></div>
+          <span class="fph-overview-val">{{ familyOverview().pendingInvitations }}</span>
+          <span class="fph-overview-lbl">{{ t().family.pendingInvitationsLabel }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ HEALTH STATUS ══════════ -->
+    <div class="m-section">
+      <div class="m-section__hdr">
+        <span class="m-section__title">{{ t().family.healthStatusTitle }}</span>
+      </div>
+      @if (selectedProfile(); as sp) {
+      <div class="m-card fph-health-card">
+        @if (healthStatusFor(selectedDetail()).allClear) {
+        <div class="fph-health-status fph-health-status--good">
+          <i class="fa-solid fa-circle-check"></i>
+          <div>
+            <p class="fph-health-status__title">{{ t().family.allClear }}</p>
+            <p class="fph-health-status__sub">{{ t().family.allClearSub }}</p>
+          </div>
+        </div>
+        } @else {
+        <div class="fph-health-status fph-health-status--warn">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <div>
+            <p class="fph-health-status__title">
+              {{ t().family.activeConditions.replace('{count}', healthStatusFor(selectedDetail()).conditionCount + '') }}
+            </p>
+          </div>
+        </div>
+        }
+        <a class="fph-btn-outline fph-btn-outline--block" [routerLink]="['/family-profiles', sp.userHealthProfileId, 'health-information']">
+          {{ t().family.viewHealthDetails }}
+        </a>
+      </div>
+      }
+    </div>
+
+    <!-- ══════════ RECENT ACTIVITY ══════════ -->
+    <div class="m-section">
+      <div class="m-section__hdr">
+        <span class="m-section__title">{{ t().family.recentActivity }}</span>
+      </div>
+      <div class="m-card m-empty">
+        <i class="fa-regular fa-clock m-empty__ico"></i>
+        <p class="m-empty__title">{{ t().family.noRecentActivity }}</p>
+        <p class="m-empty__sub">{{ t().family.noRecentActivitySub }}</p>
+      </div>
+    </div>
+
+    }
 
     <div style="height:16px"></div>
   </div><!-- /m-body -->
@@ -506,32 +229,36 @@
      ADD FAMILY MEMBER MODAL
 ══════════════════════════════════════════════════════ -->
 @if (showAddModal()) {
-<div class="fp-overlay" (click)="closeAddModal()">
-  <div class="fp-modal" (click)="$event.stopPropagation()">
+<div class="modal-backdrop" (click)="closeAddModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-sheet-handle"></div>
 
     <!-- Modal header -->
-    <div class="fp-modal-hdr">
-      @if (addStep() === 'choose') {
-      <h2 class="fp-modal-title">{{ t().family.addFamilyMemberTitle }}</h2>
-      <p class="fp-modal-sub">{{ t().family.chooseHowToAdd }}</p>
-      } @else if (addStep() === 'create') {
-      <button type="button" class="fp-back-btn" (click)="backToChoose()">
-        <i class="fa-solid fa-arrow-left"></i>
-      </button>
-      <h2 class="fp-modal-title">{{ t().family.createFamilyProfileTitle }}</h2>
-      <p class="fp-modal-sub">{{ t().family.addHealthProfileSub }}</p>
-      } @else if (addStep() === 'invite') {
-      <button type="button" class="fp-back-btn" (click)="backToChoose()">
-        <i class="fa-solid fa-arrow-left"></i>
-      </button>
-      <h2 class="fp-modal-title">{{ t().family.inviteExistingUserTitle }}</h2>
-      <p class="fp-modal-sub">{{ t().family.shareAccessTo }}</p>
-      } @else if (addStep() === 'invited') {
-      <h2 class="fp-modal-title">{{ t().family.invitationSent }}</h2>
-      }
-      <button type="button" class="fp-modal-close" (click)="closeAddModal()">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+    <div class="modal-hdr">
+      <div>
+        @if (addStep() === 'choose') {
+        <h2 class="modal-title">{{ t().family.addFamilyMemberTitle }}</h2>
+        <p class="modal-subtitle">{{ t().family.chooseHowToAdd }}</p>
+        } @else if (addStep() === 'create') {
+        <h2 class="modal-title">{{ t().family.createFamilyProfileTitle }}</h2>
+        <p class="modal-subtitle">{{ t().family.addHealthProfileSub }}</p>
+        } @else if (addStep() === 'invite') {
+        <h2 class="modal-title">{{ t().family.inviteExistingUserTitle }}</h2>
+        <p class="modal-subtitle">{{ t().family.shareAccessTo }}</p>
+        } @else {
+        <h2 class="modal-title">{{ t().family.invitationSent }}</h2>
+        }
+      </div>
+      <div class="fph-modal-hdr-actions">
+        @if (addStep() === 'create' || addStep() === 'invite') {
+        <button type="button" class="modal-close-btn" (click)="backToChoose()" aria-label="Back">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        }
+        <button type="button" class="modal-close-btn" (click)="closeAddModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
     </div>
 
     <!-- ─ Step: Choose ─ -->
@@ -566,6 +293,9 @@
       @if (errorMessage) {
       <div class="fp-form-error">{{ errorMessage }}</div>
       }
+
+      <p class="fp-group-title">{{ t().family.firstNameLabel }} &amp; {{ t().family.lastNameLabel }}</p>
+
       <div class="fp-form-group fp-img-field">
         <label class="fp-label">{{ t().family.profilePhotoOptional }}</label>
         <div class="fp-img-picker">
@@ -621,33 +351,35 @@
           </label>
         </div>
       </div>
-      <div class="fp-form-row fp-form-row--3">
-        <div class="fp-form-group">
-          <label class="fp-label">{{ t().family.bloodTypeLabel }}</label>
-          <select class="fp-input fp-select" [(ngModel)]="createForm.bloodType">
-            <option value="">{{ t().family.unknown }}</option>
-            @for (bt of bloodTypes; track bt.value) {
-            <option [value]="bt.value">{{ bt.label }}</option>
-            }
-          </select>
-        </div>
-        <div class="fp-form-group">
-          <label class="fp-label">{{ t().family.heightCmLabel }}</label>
-          <input class="fp-input" type="number" [placeholder]="t().family.heightPlaceholder" [(ngModel)]="createForm.height" min="0"
-            max="300">
-        </div>
-        <div class="fp-form-group">
-          <label class="fp-label">{{ t().family.weightKgLabel }}</label>
-          <input class="fp-input" type="number" [placeholder]="t().family.weightPlaceholder" [(ngModel)]="createForm.weight" min="0" max="500">
-        </div>
-      </div>
 
-      <!-- Optional Allergies -->
-      <div class="fp-optional-section">
+      <!-- Health Details (optional) -->
+      <div class="fp-optional-section fp-optional-section--group">
+        <p class="fp-group-title">{{ t().family.allergiesSection2 }} &amp; {{ t().family.chronicSection2 }} <span class="fp-optional-badge">{{ t().family.optionalBadge }}</span></p>
+        <div class="fp-form-row fp-form-row--3">
+          <div class="fp-form-group">
+            <label class="fp-label">{{ t().family.bloodTypeLabel }}</label>
+            <select class="fp-input fp-select" [(ngModel)]="createForm.bloodType">
+              <option value="">{{ t().family.unknown }}</option>
+              @for (bt of bloodTypes; track bt.value) {
+              <option [value]="bt.value">{{ bt.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="fp-form-group">
+            <label class="fp-label">{{ t().family.heightCmLabel }}</label>
+            <input class="fp-input" type="number" [placeholder]="t().family.heightPlaceholder" [(ngModel)]="createForm.height" min="0"
+              max="300">
+          </div>
+          <div class="fp-form-group">
+            <label class="fp-label">{{ t().family.weightKgLabel }}</label>
+            <input class="fp-input" type="number" [placeholder]="t().family.weightPlaceholder" [(ngModel)]="createForm.weight" min="0" max="500">
+          </div>
+        </div>
+
+        <!-- Optional Allergies -->
         <button type="button" class="fp-optional-toggle" (click)="createForm.showAllergies = !createForm.showAllergies">
           <i class="fa-solid fa-triangle-exclamation"></i>
           {{ t().family.allergiesSection2 }}
-          <span class="fp-optional-badge">{{ t().family.optionalBadge }}</span>
           <i class="fa-solid" [class.fa-chevron-down]="!createForm.showAllergies"
             [class.fa-chevron-up]="createForm.showAllergies" style="margin-left:auto"></i>
         </button>
@@ -669,14 +401,11 @@
           </button>
         </div>
         }
-      </div>
 
-      <!-- Optional Chronic Diseases -->
-      <div class="fp-optional-section">
+        <!-- Optional Chronic Diseases -->
         <button type="button" class="fp-optional-toggle" (click)="createForm.showDiseases = !createForm.showDiseases">
           <i class="fa-solid fa-heart-pulse"></i>
           {{ t().family.chronicSection2 }}
-          <span class="fp-optional-badge">{{ t().family.optionalBadge }}</span>
           <i class="fa-solid" [class.fa-chevron-down]="!createForm.showDiseases"
             [class.fa-chevron-up]="createForm.showDiseases" style="margin-left:auto"></i>
         </button>
@@ -704,9 +433,9 @@
       </div>
 
     </div>
-    <div class="fp-modal-ftr">
-      <button type="button" class="fp-btn-cancel" (click)="closeAddModal()">{{ t().family.cancelBtn }}</button>
-      <button type="button" class="fp-btn-primary" [disabled]="submitting()" (click)="submitCreateManaged()">
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" (click)="closeAddModal()">{{ t().family.cancelBtn }}</button>
+      <button type="button" class="btn-primary" [disabled]="submitting()" (click)="submitCreateManaged()">
         @if (submitting()) { <i class="fa-solid fa-spinner fa-spin"></i> } {{ t().family.createProfileBtn }}
       </button>
     </div>
@@ -761,9 +490,9 @@
         </div>
       </div>
     </div>
-    <div class="fp-modal-ftr">
-      <button type="button" class="fp-btn-cancel" (click)="closeAddModal()">{{ t().family.cancelBtn }}</button>
-      <button type="button" class="fp-btn-primary" [disabled]="submitting()" (click)="submitInvite()">
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" (click)="closeAddModal()">{{ t().family.cancelBtn }}</button>
+      <button type="button" class="btn-primary" [disabled]="submitting()" (click)="submitInvite()">
         @if (submitting()) { <i class="fa-solid fa-spinner fa-spin"></i> } {{ t().family.sendInvitation }}
       </button>
     </div>
@@ -779,7 +508,7 @@
       <p class="fp-success-sub">
         {{ inviteForm.email }} {{ t().family.invitationSentText }}
       </p>
-      <button type="button" class="fp-btn-primary" (click)="showInvitationsPanel.set(true); closeAddModal()">
+      <button type="button" class="btn-primary" (click)="showInvitationsPanel.set(true); closeAddModal()">
         {{ t().family.viewInvitations }}
       </button>
     </div>
@@ -794,13 +523,16 @@
      EDIT PROFILE MODAL
 ══════════════════════════════════════════════════════ -->
 @if (showEditModal()) {
-<div class="fp-overlay" (click)="closeEditModal()">
-  <div class="fp-modal fp-modal--wide" (click)="$event.stopPropagation()">
+<div class="modal-backdrop" (click)="closeEditModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-sheet-handle"></div>
 
-    <div class="fp-modal-hdr">
-      <h2 class="fp-modal-title">{{ t().family.editProfileTitle }}</h2>
-      <p class="fp-modal-sub">{{ t().family.updateHealthInfo }} {{ selectedProfile()?.firstName }}</p>
-      <button type="button" class="fp-modal-close" (click)="closeEditModal()">
+    <div class="modal-hdr">
+      <div>
+        <h2 class="modal-title">{{ t().family.editProfileTitle }}</h2>
+        <p class="modal-subtitle">{{ t().family.updateHealthInfo }} {{ selectedProfile()?.firstName }}</p>
+      </div>
+      <button type="button" class="modal-close-btn" (click)="closeEditModal()">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -940,9 +672,9 @@
 
     </div>
 
-    <div class="fp-modal-ftr">
-      <button type="button" class="fp-btn-cancel" (click)="closeEditModal()">{{ t().family.cancelBtn }}</button>
-      <button type="button" class="fp-btn-primary" [disabled]="editSubmitting()" (click)="submitEditProfile()">
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" (click)="closeEditModal()">{{ t().family.cancelBtn }}</button>
+      <button type="button" class="btn-primary" [disabled]="editSubmitting()" (click)="submitEditProfile()">
         @if (editSubmitting()) { <i class="fa-solid fa-spinner fa-spin"></i> } {{ t().family.saveChanges }}
       </button>
     </div>
@@ -955,12 +687,13 @@
      INVITATIONS PANEL
 ══════════════════════════════════════════════════════ -->
 @if (showInvitationsPanel()) {
-<div class="fp-overlay" (click)="showInvitationsPanel.set(false)">
-  <div class="fp-modal fp-modal--wide" (click)="$event.stopPropagation()">
+<div class="modal-backdrop" (click)="showInvitationsPanel.set(false)">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-sheet-handle"></div>
 
-    <div class="fp-modal-hdr">
-      <h2 class="fp-modal-title">{{ t().family.invitationsTitle }}</h2>
-      <button type="button" class="fp-modal-close" (click)="showInvitationsPanel.set(false)">
+    <div class="modal-hdr">
+      <h2 class="modal-title">{{ t().family.invitationsTitle }}</h2>
+      <button type="button" class="modal-close-btn" (click)="showInvitationsPanel.set(false)">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -1083,17 +816,20 @@
      SUPERVISION SETTINGS MODAL
 ══════════════════════════════════════════════════════ -->
 @if (showSupervisionModal()) {
-<div class="fp-sup-overlay" (click)="closeSupervisionModal()">
-  <div class="fp-sup-modal" (click)="$event.stopPropagation()">
+<div class="modal-backdrop" (click)="closeSupervisionModal()">
+  <div class="modal-box fp-sup-modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-sheet-handle"></div>
 
     <!-- Header -->
-    <div class="fp-modal-hdr">
-      <h2 class="fp-modal-title">
-        <i class="fa-solid fa-shield-halved" style="color:#0EAFD7;font-size:16px;margin-right:4px"></i>
-        {{ t().family.supervisionSettingsTitle }}
-      </h2>
-      <p class="fp-modal-sub">{{ t().family.supervisionSettingsSub }}</p>
-      <button type="button" class="fp-modal-close" (click)="closeSupervisionModal()">
+    <div class="modal-hdr">
+      <div>
+        <h2 class="modal-title">
+          <i class="fa-solid fa-shield-halved" style="color:var(--blue);font-size:16px;margin-right:4px"></i>
+          {{ t().family.supervisionSettingsTitle }}
+        </h2>
+        <p class="modal-subtitle">{{ t().family.supervisionSettingsSub }}</p>
+      </div>
+      <button type="button" class="modal-close-btn" (click)="closeSupervisionModal()">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -1287,15 +1023,18 @@
      MODIFY ACCESS SUB-MODAL
 ══════════════════════════════════════════════════════ -->
 @if (showModifyModal()) {
-<div class="fp-sup-overlay fp-sup-overlay--dim" (click)="closeModifyModal()">
-  <div class="fp-sup-sub-modal" (click)="$event.stopPropagation()">
+<div class="modal-backdrop" (click)="closeModifyModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-sheet-handle"></div>
 
-    <div class="fp-modal-hdr" style="padding:20px 20px 0">
-      <h2 class="fp-modal-title" style="font-size:15px">{{ t().family.modifyAccessTitle }}</h2>
-      <p class="fp-modal-sub">
-        {{ t().family.changeRoleFor }} <strong>{{ modifyTarget?.name }}</strong>
-      </p>
-      <button type="button" class="fp-modal-close" (click)="closeModifyModal()">
+    <div class="modal-hdr">
+      <div>
+        <h2 class="modal-title">{{ t().family.modifyAccessTitle }}</h2>
+        <p class="modal-subtitle">
+          {{ t().family.changeRoleFor }} <strong>{{ modifyTarget?.name }}</strong>
+        </p>
+      </div>
+      <button type="button" class="modal-close-btn" (click)="closeModifyModal()">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
@@ -1323,9 +1062,9 @@
       </div>
     </div>
 
-    <div class="fp-modal-ftr">
-      <button type="button" class="fp-btn-cancel" (click)="closeModifyModal()">{{ t().common.cancel }}</button>
-      <button type="button" class="fp-btn-primary" [disabled]="modifySubmitting()" (click)="saveModifyAccess()">
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" (click)="closeModifyModal()">{{ t().common.cancel }}</button>
+      <button type="button" class="btn-primary" [disabled]="modifySubmitting()" (click)="saveModifyAccess()">
         @if (modifySubmitting()) { <i class="fa-solid fa-spinner fa-spin"></i> }
         {{ t().family.saveChanges2 }}
       </button>
@@ -1340,61 +1079,35 @@
      REMOVE ACCESS CONFIRM MODAL
 ══════════════════════════════════════════════════════ -->
 @if (showRemoveConfirm()) {
-<div class="fp-sup-overlay fp-sup-overlay--dim" (click)="closeRemoveConfirm()">
-  <div class="fp-sup-confirm-modal" (click)="$event.stopPropagation()">
+<div class="modal-backdrop" (click)="closeRemoveConfirm()">
+  <div class="modal-box fp-sup-confirm-modal" (click)="$event.stopPropagation()">
+    <div class="modal-sheet-handle"></div>
 
-    <div class="fp-sup-confirm-ico">
-      <i class="fa-solid fa-triangle-exclamation"></i>
-    </div>
-    <h3 class="fp-sup-confirm-title">
-      @if (removeTarget?.type === 'managed') { {{ t().family.deleteProfileTitle }} }
-      @else if (removeTarget?.type === 'self') { {{ t().family.removeYourAccessTitle }} }
-      @else { {{ t().family.removeAccessTitle }} }
-    </h3>
-    <p class="fp-sup-confirm-msg">
-      @if (removeTarget?.type === 'managed') {
-      {{ t().family.deleteProfileConfirm.replace('{name}', removeTarget?.name ?? '') }}
-      } @else if (removeTarget?.type === 'self') {
-      {{ t().family.removeYourAccessConfirm.replace('{name}', removeTarget?.name ?? '') }}
-      } @else {
-      {{ t().family.removeAccessConfirm.replace('{name}', removeTarget?.name ?? '') }}
-      }
-    </p>
-    <div class="fp-sup-confirm-actions">
-      <button type="button" class="fp-btn-cancel" (click)="closeRemoveConfirm()">{{ t().common.cancel }}</button>
-      <button type="button" class="fp-sup-btn-remove-confirm" [disabled]="removing()" (click)="confirmRemove()">
-        @if (removing()) { <i class="fa-solid fa-spinner fa-spin"></i> }
-        @if (removeTarget?.type === 'managed') { {{ t().family.deleteProfileBtn }} } @else { {{ t().family.removeAccessBtn }} }
-      </button>
-    </div>
-
-  </div>
-</div>
-}
-
-
-<!-- ══════════════════════════════════════════════════════
-     DELETE FAMILY MEMBER CONFIRM MODAL (three-dot menu)
-══════════════════════════════════════════════════════ -->
-@if (showDeleteConfirm()) {
-<div class="fp-sup-overlay fp-sup-overlay--dim" (click)="closeDeleteConfirm()">
-  <div class="fp-sup-confirm-modal" (click)="$event.stopPropagation()">
-
-    <div class="fp-sup-confirm-ico">
-      <i class="fa-solid fa-trash"></i>
-    </div>
-    <h3 class="fp-sup-confirm-title">{{ t().family.deleteProfileTitle }}</h3>
-    <p class="fp-sup-confirm-msg">
-      {{ t().family.deleteProfileConfirm.replace('{name}', (selectedProfile()?.firstName ?? '') + ' ' + (selectedProfile()?.lastName ?? '')) }}
-      {{ t().family.cannotBeUndone }}
-    </p>
-    <div class="fp-sup-confirm-actions">
-      <button type="button" class="fp-btn-cancel" (click)="closeDeleteConfirm()">{{ t().common.cancel }}</button>
-      <button type="button" class="fp-sup-btn-remove-confirm" [disabled]="deletingProfile()"
-        (click)="confirmDeleteProfile()">
-        @if (deletingProfile()) { <i class="fa-solid fa-spinner fa-spin"></i> }
-        {{ t().family.deleteProfileBtn }}
-      </button>
+    <div class="fp-sup-confirm-body">
+      <div class="fp-sup-confirm-ico">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="fp-sup-confirm-title">
+        @if (removeTarget?.type === 'managed') { {{ t().family.deleteProfileTitle }} }
+        @else if (removeTarget?.type === 'self') { {{ t().family.removeYourAccessTitle }} }
+        @else { {{ t().family.removeAccessTitle }} }
+      </h3>
+      <p class="fp-sup-confirm-msg">
+        @if (removeTarget?.type === 'managed') {
+        {{ t().family.deleteProfileConfirm.replace('{name}', removeTarget?.name ?? '') }}
+        } @else if (removeTarget?.type === 'self') {
+        {{ t().family.removeYourAccessConfirm.replace('{name}', removeTarget?.name ?? '') }}
+        } @else {
+        {{ t().family.removeAccessConfirm.replace('{name}', removeTarget?.name ?? '') }}
+        }
+      </p>
+      <div class="fp-sup-confirm-actions">
+        <button type="button" class="btn-ghost" (click)="closeRemoveConfirm()">{{ t().common.cancel }}</button>
+        <button type="button" class="fp-sup-btn-remove-confirm" [disabled]="removing()" (click)="confirmRemove()">
+          @if (removing()) { <i class="fa-solid fa-spinner fa-spin"></i> }
+          @if (removeTarget?.type === 'managed') { {{ t().family.deleteProfileBtn }} } @else { {{ t().family.removeAccessBtn }} }
+        </button>
+      </div>
     </div>
 
   </div>
