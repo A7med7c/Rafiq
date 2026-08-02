@@ -35,6 +35,8 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<UserHealthProfile> UserHealthProfiles => Set<UserHealthProfile>();
 
+    public DbSet<HealthSummaryCache> HealthSummaryCaches => Set<HealthSummaryCache>();
+
     public DbSet<HealthProfileAccess> HealthProfileAccesses => Set<HealthProfileAccess>();
 
     public DbSet<Allergy> Allergies => Set<Allergy>();

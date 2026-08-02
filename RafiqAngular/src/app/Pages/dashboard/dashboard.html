@@ -187,27 +187,29 @@
 
         <!-- AI Health Summary -->
         <div assistantAnchor="ai-health-summary-card" class="card ai-card">
-          <div class="ai-hdr">
-            <div class="ai-hdr-left">
-              <i class="fa-solid fa-wand-magic-sparkles ai-ico"></i>
-              <span class="ai-title">{{ t().dashboard.aiHealthSummary }}</span>
-            </div>
-            <span class="pill pill-blue">
-              <i class="fa-solid fa-circle ai-dot"></i> {{ t().dashboard.aiActive }}
+          <div class="sys-hdr">
+            <span class="sys-title">
+              <i class="fa-solid fa-notes-medical" style="color:var(--blue);margin-inline-end:6px;font-size:13px;"></i>
+              {{ t().dashboard.aiHealthSummary }}
             </span>
+            @if (!summaryLoading() && healthSummary()?.hasData) {
+            <span class="pill"
+              [class.pill-green]="healthSummary()!.overallStatus === 'Good'"
+              [class.pill-blue]="healthSummary()!.overallStatus === 'Stable'"
+              [class.pill-yellow]="healthSummary()!.overallStatus !== 'Good' && healthSummary()!.overallStatus !== 'Stable'">
+              {{ healthSummary()!.overallStatus === 'Good' ? t().dashboard.summaryStatusGood :
+                 healthSummary()!.overallStatus === 'Stable' ? t().dashboard.summaryStatusStable :
+                 t().dashboard.summaryStatusNeedsAttention }}
+            </span>
+            }
           </div>
 
           <div class="dash-summary-scroll">
             @if (summaryLoading()) {
-            <div class="ai-summary-loading">
-              <div class="ai-summary-spinner">
-                <i class="fa-solid fa-wand-magic-sparkles ai-summary-spinner-ico"></i>
-                <svg class="ai-summary-ring" viewBox="0 0 60 60">
-                  <circle cx="30" cy="30" r="26" fill="none" stroke-width="3" />
-                </svg>
-              </div>
-              <p class="ai-summary-loading-text">{{ t().dashboard.generatingAiSummary }}<span
-                  class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
+            <div class="skl-list">
+              <div class="skl-row"><div class="skl-sq"></div><div class="skl-lines"><div class="skl-line skl-70"></div><div class="skl-line skl-45"></div></div></div>
+              <div class="skl-row"><div class="skl-sq"></div><div class="skl-lines"><div class="skl-line skl-70"></div><div class="skl-line skl-45"></div></div></div>
+              <div class="skl-row"><div class="skl-sq"></div><div class="skl-lines"><div class="skl-line skl-70"></div><div class="skl-line skl-45"></div></div></div>
             </div>
             } @else if (!healthSummary()?.hasData) {
             <p class="ai-body ai-body--empty">{{ t().dashboard.aiSummaryEmpty }}</p>
@@ -215,19 +217,9 @@
             <!-- ── Structured summary ── -->
             <div class="hs-grid">
 
-              <!-- Overall Status -->
-              <div class="hs-status-row">
-                <span class="hs-section-label">{{ t().dashboard.summaryOverallHealth }}</span>
-                <span class="hs-status-badge hs-status-badge--{{ healthSummary()!.overallStatus === 'Good' ? 'good' : healthSummary()!.overallStatus === 'Stable' ? 'stable' : 'warn' }}">
-                  <i class="fa-solid fa-circle-dot"></i>
-                  {{ healthSummary()!.overallStatus === 'Good' ? t().dashboard.summaryStatusGood :
-                     healthSummary()!.overallStatus === 'Stable' ? t().dashboard.summaryStatusStable :
-                     t().dashboard.summaryStatusNeedsAttention }}
-                </span>
-                @if (healthSummary()!.overallStatusNote) {
-                  <span class="hs-status-note">{{ healthSummary()!.overallStatusNote }}</span>
-                }
-              </div>
+              @if (healthSummary()!.overallStatusNote) {
+              <span class="hs-status-note">{{ healthSummary()!.overallStatusNote }}</span>
+              }
 
               <!-- Two-column grid: Conditions | Allergies -->
               <div class="hs-row2">
@@ -319,11 +311,9 @@
             }
           </div>
 
-          <div class="ai-tags">
-            <a href="javascript:void(0)" (click)="aiChatService.openPanel()" class="ai-tag ai-tag-teal">
-              <i class="fa-solid fa-robot"></i> {{ t().dashboard.summaryViewFull }}
-            </a>
-          </div>
+          <button class="bot-action-btn" (click)="aiChatService.openPanel()">
+            <i class="fa-solid fa-robot"></i> {{ t().dashboard.openAiAssistant }}
+          </button>
         </div>
 
         <!-- System Status -->

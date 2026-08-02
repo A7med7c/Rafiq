@@ -100,6 +100,7 @@ export const ar: Translations = {
     logIn: 'تسجيل الدخول',
     noAccount: 'معندكش حساب؟',
     signUp: 'سجل دلوقتي',
+    or: 'أو',
   },
 
   register: {

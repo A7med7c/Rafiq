@@ -10,7 +10,8 @@ using Rafiq.Domain.Repositories;
 public sealed class SaveGeneralDocumentCommandHandler(
     ICurrentUserService currentUserService,
     IGeneralDocumentRepository repository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<
         SaveGeneralDocumentCommand,
         ApiResponse<GeneralDocumentResponseDto>>
@@ -37,6 +38,7 @@ public sealed class SaveGeneralDocumentCommandHandler(
 
         await repository.AddAsync(document, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(request.ProfileId, cancellationToken);
 
         return ApiResponse<GeneralDocumentResponseDto>.SuccessResponse(
             new GeneralDocumentResponseDto

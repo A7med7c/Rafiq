@@ -14,7 +14,8 @@ public sealed class SaveLabReportCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     ILabReportRepository labReportRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<SaveLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
     public async Task<ApiResponse<LabReportResponseDto>> Handle(
@@ -67,6 +68,7 @@ public sealed class SaveLabReportCommandHandler(
 
         await labReportRepository.AddAsync(labReport, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(profileId, cancellationToken);
 
         var dto = new LabReportResponseDto
         {

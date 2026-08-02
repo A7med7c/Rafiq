@@ -14,7 +14,8 @@ public sealed class SavePrescriptionCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IPrescriptionRepository prescriptionRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<SavePrescriptionCommand, ApiResponse<PrescriptionResponseDto>>
 {
     public async Task<ApiResponse<PrescriptionResponseDto>> Handle(
@@ -70,6 +71,7 @@ public sealed class SavePrescriptionCommandHandler(
 
         await prescriptionRepository.AddAsync(prescription, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(profileId, cancellationToken);
 
         var dto = new PrescriptionResponseDto
         {

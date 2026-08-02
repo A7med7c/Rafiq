@@ -13,7 +13,8 @@ public sealed class DeleteUserMedicineCommandHandler(
     IMedicationReminderLogRepository logRepository,
     IMedicationReminderScheduler scheduler,
     IDateTimeProvider dateTimeProvider,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<DeleteUserMedicineCommand, ApiResponse<bool>>
 {
     public async Task<ApiResponse<bool>> Handle(
@@ -52,8 +53,10 @@ public sealed class DeleteUserMedicineCommandHandler(
             medicineReminderRepository.Delete(reminder);
         }
 
+        var profileId = userMedicine.UserHealthProfileId;
         userMedicineRepository.Delete(userMedicine);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(profileId, cancellationToken);
 
         return ApiResponse<bool>.SuccessResponse(true, "Medicine deleted successfully.");
     }

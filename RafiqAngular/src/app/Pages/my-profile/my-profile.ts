@@ -18,6 +18,7 @@ import { environment } from '../../Environments/Environment';
 import { ApiResponse } from '../../Modles/api-response';
 import { map, switchMap } from 'rxjs';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 
 interface UpdateProfileBody {
   patientProfileId: string;
@@ -47,6 +48,7 @@ export class MyProfile implements OnInit {
   protected readonly l10n             = inject(LocalizationService);
   readonly aiChatService              = inject(AiChatService);
   private readonly reviewTracking     = inject(ReviewTrackingService);
+  private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
   protected readonly t                = this.l10n.t;
   private readonly router             = inject(Router);
   private readonly elRef              = inject(ElementRef);
@@ -718,5 +720,10 @@ export class MyProfile implements OnInit {
     if (n === 'active'     || s === '1') return 'dot-active';
     if (n === 'controlled' || s === '2') return 'dot-controlled';
     return 'dot-resolved';
+  }
+
+  startWelcomeTour(): void {
+    if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
+    this.assistantOrchestrator.startTour('welcome-tour');
   }
 }

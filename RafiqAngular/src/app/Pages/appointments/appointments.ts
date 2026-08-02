@@ -16,6 +16,7 @@ import { AiChatService } from '../../Services/ai-chat.service';
 import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import {
   AppointmentDto, AppointmentStatus, AppointmentType,
   CreateAppointmentRequest, UpdateAppointmentRequest,
@@ -85,6 +86,7 @@ export class Appointments implements OnInit, OnDestroy {
   private readonly fpSvc      = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly reviewTracking   = inject(ReviewTrackingService);
+  private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
 
   // ── Family-profile read-only gate ────────────────────────────────────────
   // Uses profileId from query param when present (direct link from family-profiles),
@@ -853,4 +855,8 @@ nextPage() {
   return index === this.paginated().length - 1;
 }
 
+  startWelcomeTour(): void {
+    if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
+    this.assistantOrchestrator.startTour('welcome-tour');
+  }
 }

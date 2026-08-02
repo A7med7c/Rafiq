@@ -19,6 +19,7 @@ import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/fami
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
+import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 
 type MedTab = 'schedule' | 'medications';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -136,6 +137,7 @@ export class Medications implements OnInit, OnDestroy {
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly reviewTracking = inject(ReviewTrackingService);
+  private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {
@@ -1626,5 +1628,10 @@ export class Medications implements OnInit, OnDestroy {
         this.deletingMed.set(false);
       },
     });
+  }
+
+  startWelcomeTour(): void {
+    if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
+    this.assistantOrchestrator.startTour('welcome-tour');
   }
 }

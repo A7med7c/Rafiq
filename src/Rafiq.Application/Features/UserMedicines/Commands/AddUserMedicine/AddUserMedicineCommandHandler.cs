@@ -11,7 +11,8 @@ namespace Rafiq.Application.Features.UserMedicines.Commands.AddUserMedicine;
 public sealed class AddUserMedicineCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IUserMedicineRepository userMedicineRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<AddUserMedicineCommand, ApiResponse<UserMedicineResponseDto>>
 {
     public async Task<ApiResponse<UserMedicineResponseDto>> Handle(
@@ -40,6 +41,7 @@ public sealed class AddUserMedicineCommandHandler(
 
         await userMedicineRepository.AddAsync(userMedicine, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(request.ProfileId, cancellationToken);
 
         var dto = new UserMedicineResponseDto
         {

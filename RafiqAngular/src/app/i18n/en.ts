@@ -98,6 +98,7 @@ export const en = {
     logIn: 'Log In',
     noAccount: "Don't have an account?",
     signUp: 'Sign Up',
+    or: 'or',
   },
 
   register: {

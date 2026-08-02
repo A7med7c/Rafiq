@@ -14,7 +14,8 @@ public sealed class SaveImagingReportCommandHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
     IImagingReportRepository imagingReportRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<SaveImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
 {
     public async Task<ApiResponse<ImagingReportResponseDto>> Handle(
@@ -58,6 +59,7 @@ public sealed class SaveImagingReportCommandHandler(
 
         await imagingReportRepository.AddAsync(imagingReport, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(profileId, cancellationToken);
 
         var dto = new ImagingReportResponseDto
         {

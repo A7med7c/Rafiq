@@ -38,10 +38,6 @@ export class DashboardService {
   private readonly l10n = inject(LocalizationService);
   private readonly base = environment.apiUrl;
 
-  private _cachedSummary: HealthSummaryDto | null = null;
-  private _summaryProfileId: string | null = null;
-  private _summaryLanguage: string | null = null;
-
   private getCurrentProfileId(): Observable<string> {
     const stored = this.profileSelectSvc.selectedProfileId;
     if (stored) return of(stored);
@@ -165,20 +161,9 @@ export class DashboardService {
     return this.getCurrentProfileId().pipe(
       switchMap(profileId => {
         const lang = this.l10n.lang();
-        if (this._cachedSummary !== null && this._summaryProfileId === profileId && this._summaryLanguage === lang) {
-          return of(this._cachedSummary);
-        }
         return this.http
           .get<ApiResponse<HealthSummaryDto>>(`${this.base}/chat/health-summary/${profileId}?language=${lang}`)
-          .pipe(
-            map(r => {
-              const data = r.data ?? null;
-              this._cachedSummary = data;
-              this._summaryProfileId = profileId;
-              this._summaryLanguage = lang;
-              return data;
-            })
-          );
+          .pipe(map(r => r.data ?? null));
       }),
       catchError(() => of(null))
     );
