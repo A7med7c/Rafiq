@@ -61,7 +61,7 @@ export class AiPanel implements OnInit, OnDestroy {
   readonly sidebarCollapsed = signal(true);
 
   // ── Window state ──
-  readonly minimized          = signal(false);
+  readonly minimized          = signal(true);
   readonly maximized          = signal(false);
   readonly isDragging         = signal(false);
   readonly dragPos            = signal<{ top: number; left: number } | null>(null);
@@ -326,13 +326,13 @@ export class AiPanel implements OnInit, OnDestroy {
   }
 
   closePanel(): void {
-    this.minimized.set(false);
     this.maximized.set(false);
     this.dragPos.set(null);
     this._drag.active = false;
     this._drag.pending = false;
-    this._suppressAnimation.set(false); // allow slide-in on next open
-    this.aiChatService.closePanel();
+    this._suppressAnimation.set(false);
+    this.minimized.set(true);
+    // aiChatService.closePanel() intentionally NOT called — keeps hero icon mounted
   }
 
   toggleMinimize(): void {

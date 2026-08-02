@@ -3,7 +3,6 @@ import { Login } from './Pages/Auth/login/login';
 import { Register } from './Pages/Auth/register/register';
 import { ForgotPassword } from './Pages/Auth/forgot-password/forgot-password';
 import { VerifyAccount } from './Pages/Auth/verify-account/verify-account';
-import { Landing } from './Pages/landing/landing';
 import { Dashboard } from './Pages/dashboard/dashboard';
 import { MedicalRecords } from './Pages/medical-records/medical-records';
 import { Appointments } from './Pages/appointments/appointments';
@@ -22,7 +21,7 @@ import { FamilyProfiles } from './Pages/family-profiles/family-profiles';
 import { adminGuard } from './Guards/admin.guard';
 import { MyProfile } from './Pages/my-profile/my-profile';
 export const routes: Routes = [
-  { path: '', component: Landing },
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
   {
     path: 'admin',
     canActivate: [adminGuard],

@@ -22,6 +22,8 @@ import {
   APPOINTMENT_TYPE_LABELS, APPOINTMENT_TYPE_ICONS,
 } from '../../Modles/appointment.models';
 import { FamilyProfileBannerComponent } from '../../Components/family-profile-banner/family-profile-banner';
+import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
+import { MobileHeader } from '../../shared/mobile-header/mobile-header';
 
 /** Maps each AppointmentType enum value to its key path in the i18n objects */
 const APPT_TYPE_KEYS: Record<AppointmentType, string> = {
@@ -68,7 +70,7 @@ const blankForm = (): ApptForm => ({
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent, BottomNav, MobileHeader],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
 })

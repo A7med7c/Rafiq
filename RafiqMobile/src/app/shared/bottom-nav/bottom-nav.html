@@ -1,0 +1,22 @@
+<nav class="bottom-nav" role="navigation" [attr.aria-label]="t().sidebar.navigateTo">
+  <a class="bn-item" routerLink="/dashboard" routerLinkActive="bn-item--active" [routerLinkActiveOptions]="{exact:true}">
+    <i class="fa-solid fa-gauge-high bn-ico"></i>
+    <span class="bn-label">{{ t().sidebar.dashboard }}</span>
+  </a>
+  <a class="bn-item" routerLink="/medical-records" routerLinkActive="bn-item--active">
+    <i class="fa-regular fa-folder-open bn-ico"></i>
+    <span class="bn-label">{{ t().sidebar.medicalRecords }}</span>
+  </a>
+  <button type="button" class="bn-item bn-item--ai" (click)="aiChatService.openPanel()">
+    <i class="fa-solid fa-wand-magic-sparkles bn-ico"></i>
+    <span class="bn-label">{{ t().sidebar.aiAssistant }}</span>
+  </button>
+  <a class="bn-item" routerLink="/appointments" routerLinkActive="bn-item--active">
+    <i class="fa-regular fa-calendar-check bn-ico"></i>
+    <span class="bn-label">{{ t().sidebar.appointments }}</span>
+  </a>
+  <a class="bn-item" routerLink="/medications" routerLinkActive="bn-item--active">
+    <i class="fa-solid fa-pills bn-ico"></i>
+    <span class="bn-label">{{ t().sidebar.medications }}</span>
+  </a>
+</nav>

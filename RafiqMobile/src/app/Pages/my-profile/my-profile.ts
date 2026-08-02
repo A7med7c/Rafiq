@@ -18,6 +18,8 @@ import { environment } from '../../Environments/Environment';
 import { ApiResponse } from '../../Modles/api-response';
 import { map, switchMap } from 'rxjs';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
+import { MobileHeader } from '../../shared/mobile-header/mobile-header';
 
 interface UpdateProfileBody {
   patientProfileId: string;
@@ -34,7 +36,7 @@ interface UpdateProfileBody {
 @Component({
   selector: 'app-my-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, BottomNav, MobileHeader],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',
 })

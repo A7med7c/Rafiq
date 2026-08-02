@@ -1,5 +1,10 @@
 @import "../dashboard/dashboard.css";
 
+:host {
+  font-family: var(--font-body, 'Inter', 'Outfit', sans-serif);
+  display: contents;
+}
+
 /* ── Page title bar ──────────────────────────── */
 .appts-title-bar {
   display: flex;

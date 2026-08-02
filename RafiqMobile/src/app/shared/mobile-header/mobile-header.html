@@ -1,0 +1,33 @@
+<header class="mobile-header">
+  <div class="mobile-header__left">
+    @if (showBack) {
+      <button type="button" class="mobile-header__back" (click)="backClicked.emit()" [attr.aria-label]="t().common.back">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+    } @else {
+      <div class="mobile-header__logo">
+        <img src="images/RafiqLogo.png" alt="Rafiq" class="mobile-header__logo-img">
+      </div>
+    }
+  </div>
+
+  <h1 class="mobile-header__title">{{ title }}</h1>
+
+  <div class="mobile-header__right">
+    @if (showAiButton) {
+      <button type="button" class="mobile-header__btn" (click)="aiClicked.emit()" [attr.aria-label]="t().sidebar.aiAssistant">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+      </button>
+    }
+    @if (showNotifications) {
+      <button type="button" class="mobile-header__btn mobile-header__notif" (click)="notificationsClicked.emit()"
+        [attr.aria-label]="t().header.notifications"
+        [class.mobile-header__notif--active]="notifSvc.notificationCenterOpen()">
+        <i class="fa-regular fa-bell"></i>
+        @if (notifSvc.unreadCount() > 0) {
+          <span class="mobile-header__badge">{{ notifSvc.unreadCount() }}</span>
+        }
+      </button>
+    }
+  </div>
+</header>

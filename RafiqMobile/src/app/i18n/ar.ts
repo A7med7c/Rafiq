@@ -188,6 +188,7 @@ export const ar: Translations = {
   },
 
   dashboard: {
+    today: 'النهاردة',
     familyWell: 'كل أفراد العيلة كويسين النهارده',
     quickSOS: 'إسعاف سريع',
     emergencyHub: 'الطوارئ',

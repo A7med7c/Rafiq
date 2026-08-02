@@ -186,6 +186,7 @@ export const en = {
   },
 
   dashboard: {
+    today: 'Today',
     familyWell: 'All family members are doing well today',
     quickSOS: 'QUICK SOS',
     emergencyHub: 'Emergency Hub',

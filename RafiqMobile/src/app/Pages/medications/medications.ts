@@ -12,6 +12,8 @@ import { AiChatService } from '../../Services/ai-chat.service';
 import { NotificationService } from '../../Services/notification.service';
 import { AllergyCheckResult, MedicationRemindersService } from '../../Services/medication-reminders.service';
 import { FamilyProfileBannerComponent } from '../../Components/family-profile-banner/family-profile-banner';
+import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
+import { MobileHeader } from '../../shared/mobile-header/mobile-header';
 import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
 import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UpdateUserMedicinePayload, UserMedicine } from '../../Modles/dashboard.models';
 import { LocalizationService } from '../../Services/localization.service';
@@ -95,7 +97,7 @@ interface Dose {
 @Component({
   selector: 'app-medications',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent, BottomNav, MobileHeader],
   templateUrl: './medications.html',
   styleUrl: './medications.css',
 })

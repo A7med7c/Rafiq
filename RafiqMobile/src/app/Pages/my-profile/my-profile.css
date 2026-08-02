@@ -1,9 +1,12 @@
+@import "../dashboard/dashboard.css";
+
 /* ═══════════════════════════════════════════════
    My Profile — matches Rafiq design system
    ═══════════════════════════════════════════════ */
 
 /* ── CSS Variables (mirrors dashboard) ────── */
 :host {
+  display: contents;
   --blue:         #0EAFD7;
   --blue-lt:      #EEF3FF;
   --blue-mid:     #DBEAFE;

@@ -1,157 +1,23 @@
-<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
+<app-mobile-header
+  [title]="t().sidebar.medicalRecords"
+  [showNotifications]="true"
+  [showAiButton]="true"
+  (notificationsClicked)="notificationSvc.toggleNotificationCenter()"
+  (aiClicked)="aiChatService.openPanel()">
+</app-mobile-header>
 
-  @if (mobileSidebarOpen()) {
-  <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
-  }
+<div class="m-page">
+  <div class="m-body">
 
-  <!-- ═══════════ SIDEBAR ═══════════ -->
-  <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
-    <div class="sb-top">
-      <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
-        <div class="sb-logo-icon">
-          <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
-        </div>
-        <div class="sb-logo-text">
-          <span class="sb-logo-title">{{ t().sidebar.brandName }}</span>
-          <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
-        </div>
-      </button>
-      <button type="button" class="sb-toggle"
-        [attr.aria-label]="sidebarCollapsed() ? t().sidebar.expandSidebar : t().sidebar.collapseSidebar"
-        (click)="toggleSidebar()">
-        <i class="fa-solid fa-chevron-left"></i>
-      </button>
-      <button type="button" class="sb-mobile-close" [attr.aria-label]="t().sidebar.closeSidebar" (click)="toggleMobileSidebar()">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
+    <app-family-profile-banner [profile]="viewingProfile()" [readOnly]="contextReadOnly()" />
+    <app-records-content
+      [profileId]="contextProfileId()"
+      [readOnly]="contextReadOnly()"
+      assistantAnchor="medical-records-grid">
+    </app-records-content>
 
-    <nav class="sb-nav">
-      <a class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact:true}">
-        <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
-        <span>{{ t().sidebar.dashboard }}</span>
-      </a>
-      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
-        <span>{{ t().sidebar.medicalRecords }}</span>
-      </a>
-      <a class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
-        <span>{{ t().sidebar.appointments }}</span>
-      </a>
-      <a class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
-        <span>{{ t().sidebar.medications }}</span>
-      </a>
-
-
-      <!-- <a class="sb-link sb-sos" href="#">
-        <span class="sb-ico"><i class="fa-solid fa-circle-exclamation"></i></span>
-        <span>SOS &amp; Emergency</span>
-      </a> -->
-      <a class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
-        <span>{{ t().sidebar.familyProfiles }}</span>
-      </a>
-      <a class="sb-link" routerLink="/my-profile" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-regular fa-user"></i></span>
-        <span>{{ t().sidebar.myProfile }}</span>
-      </a>
-    </nav>
-
-    <div class="sb-help">
-      <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
-      <div class="sb-help-copy">
-        <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
-        <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
-      </div>
-      <button type="button" class="sb-help-btn" (click)="aiChatService.openPanel()">
-        <i class="fa-regular fa-comment-dots"></i>
-        {{ t().sidebar.askNow }}
-      </button>
-    </div>
-  </aside>
-
-  <!-- ═══════════ MAIN CONTENT ═══════════ -->
-  <div class="dsh-main">
-
-    <!-- HEADER -->
-    <header class="dsh-hdr">
-      <button type="button" class="sb-mobile-toggle" [attr.aria-label]="t().header.openSidebar" (click)="toggleMobileSidebar()">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <div class="hdr-search">
-        <i class="fa-solid fa-magnifying-glass hdr-search-ico"></i>
-        <input type="text" class="hdr-search-inp" [attr.placeholder]="t().header.searchPlaceholder" readonly>
-      </div>
-      <div class="hdr-right">
-        <button type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
-          <i class="fa-solid fa-wand-magic-sparkles"></i>
-          {{ t().header.askAI }}
-        </button>
-        <button type="button" class="hdr-bell" (click)="notificationSvc.toggleNotificationCenter()"
-          [class.hdr-bell--active]="notificationSvc.notificationCenterOpen()">
-          <i class="fa-regular fa-bell"></i>
-          @if (unreadCount() > 0) {
-          <span class="hdr-badge">{{ unreadCount() }}</span>
-          }
-        </button>
-        <div class="hdr-user" (click)="toggleDropdown()">
-          <img [src]="profileCache.resolveNavbarAvatar()" alt="user" class="hdr-avatar">
-          <span class="hdr-username">{{ displayName }}</span>
-          <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
-
-          @if (dropdownOpen()) {
-          <div class="user-dropdown" (click)="$event.stopPropagation()">
-            <div class="user-dropdown-hdr">
-              <div class="user-dropdown-av">
-                <img [src]="profileCache.resolveNavbarAvatar()" alt="avatar">
-              </div>
-              <div class="user-dropdown-info">
-                <span class="user-dropdown-name">{{ displayName }}</span>
-                <span class="user-dropdown-email">{{ userEmail }}</span>
-              </div>
-            </div>
-            <div class="user-dropdown-divider"></div>
-            <button type="button" class="user-dropdown-item" (click)="goToMyProfile()">
-              <i class="fa-regular fa-user"></i>
-              {{ t().header.myProfile }}
-            </button>
-            <button type="button" class="user-dropdown-item">
-              <i class="fa-solid fa-gear"></i>
-              {{ t().header.settings }}
-            </button>
-            <button type="button" class="user-dropdown-item" (click)="openRatingPopup()">
-              <i class="fa-regular fa-star"></i>
-              {{ t().ratingPopup.rateRafiq }}
-            </button>
-            <div class="user-dropdown-divider"></div>
-            <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i>
-              {{ t().header.logout }}
-            </button>
-          </div>
-          }
-        </div>
-      </div>
-    </header>
-
-    <!-- BODY -->
-    <div class="dsh-body">
-
-      <!-- TOP TITLE BAR -->
-      <section class="records-title-bar" assistantAnchor="upload-medical-record">
-        <div class="title-left" assistantAnchor="records-search">
-          <h1 class="records-h1">{{ t().medicalRecordsPage.title }}</h1>
-          <p class="records-sub">{{ t().medicalRecordsPage.subtitle }}</p>
-        </div>
-      </section>
-
-      <!-- RECORDS CONTENT (upload cards + table + modals) -->
-      <app-family-profile-banner [profile]="viewingProfile()" [readOnly]="contextReadOnly()" />
-      <app-records-content [profileId]="contextProfileId()" [readOnly]="contextReadOnly()" assistantAnchor="medical-records-grid"></app-records-content>
-
-    </div>
+    <div style="height:16px"></div>
   </div>
 
+  <app-bottom-nav></app-bottom-nav>
 </div>

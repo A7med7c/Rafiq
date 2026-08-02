@@ -29,6 +29,8 @@ import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/fami
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
+import { MobileHeader } from '../../shared/mobile-header/mobile-header';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -147,7 +149,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 @Component({
   selector: 'app-medical-records',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent, AssistantAnchorDirective, FamilyProfileBannerComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent, AssistantAnchorDirective, FamilyProfileBannerComponent, BottomNav, MobileHeader],
   templateUrl: './medical-records.html',
   styleUrl: './medical-records.css',
 })

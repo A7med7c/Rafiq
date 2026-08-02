@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit, OnDestroy, signal, computed, HostListener, ElementRef } from '@angular/core';
+import { Component, effect, inject, OnInit, OnDestroy, signal, computed, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
@@ -17,11 +17,13 @@ import { MedicalReportService, ReportType } from '../../Services/medical-report.
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
+import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
+import { MobileHeader } from '../../shared/mobile-header/mobile-header';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, AssistantAnchorDirective],
+  imports: [CommonModule, RouterLink, AssistantAnchorDirective, BottomNav, MobileHeader],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -163,6 +165,26 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly familySummaryProfile = signal<AccessibleProfileDto | null>(null);
   readonly familySummaryLoading = signal(false);
   readonly familySummaryData    = signal<HealthSummaryDto | null>(null);
+
+  // ── Today deck ───────────────────────────────────────────────────────────
+  @ViewChild('deckScroller') deckScrollerRef?: ElementRef<HTMLElement>;
+  readonly activeDeckIndex = signal(0);
+
+  readonly deckOrder = computed<Array<'ai' | 'appt' | 'tip'>>(() => {
+    const appt = this.nextAppointment();
+    if (appt) {
+      const daysUntil = Math.ceil((new Date(appt.appointmentDateTime).getTime() - Date.now()) / 86_400_000);
+      if (daysUntil <= 2) return ['appt', 'ai', 'tip'];
+    }
+    return ['ai', 'appt', 'tip'];
+  });
+
+  onDeckScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    const slideWidth = el.firstElementChild instanceof HTMLElement ? el.firstElementChild.offsetWidth + 12 : el.clientWidth;
+    const index = Math.round(el.scrollLeft / slideWidth);
+    this.activeDeckIndex.set(Math.max(0, Math.min(index, this.deckOrder().length - 1)));
+  }
 
   // ── Computed ─────────────────────────────────────────────────────────────
   readonly familySlots = computed(() => {

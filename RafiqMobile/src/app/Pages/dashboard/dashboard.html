@@ -1,847 +1,599 @@
-<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
+<app-mobile-header
+  [title]="t().sidebar.dashboard"
+  [showNotifications]="true"
+  [showAiButton]="true"
+  (notificationsClicked)="notifService.toggleNotificationCenter()"
+  (aiClicked)="aiChatService.openPanel()">
+</app-mobile-header>
 
-  @if (mobileSidebarOpen()) {
-  <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
-  }
+<div class="m-page">
+  <div class="m-body">
 
-  <!-- ═══════════ SIDEBAR ═══════════ -->
-  <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
-    <!-- Logo -->
-    <div class="sb-top">
-      <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
-        <div class="sb-logo-icon">
-          <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
+    <!-- ── GREETING CARD ── -->
+    <div class="greeting-card">
+      <div class="greeting-left">
+        <h1 class="greeting-h1">{{ greeting }}, {{ displayName }}! 👋</h1>
+        <p class="greeting-sub">
+          <i class="fa-solid fa-circle-check greeting-check"></i>
+          {{ t().dashboard.familyWell }}
+        </p>
+      </div>
+      <button assistantAnchor="medical-report-button" type="button" class="report-btn" (click)="openDownloadFlow()">
+        <div class="report-btn-ico-bg">
+          <i class="fa-solid fa-file-medical"></i>
         </div>
-        <div class="sb-logo-text">
-          <span class="sb-logo-title">{{ t().sidebar.brandName }}</span>
-          <span class="sb-logo-sub">{{ t().sidebar.tagline }}</span>
+        <div class="report-btn-text">
+          <span class="report-btn-title">{{ t().dashboard.medicalReport }}</span>
+          <span class="report-btn-sub">{{ t().dashboard.generateAndDown }}</span>
         </div>
-      </button>
-      <button type="button" class="sb-toggle"
-        [attr.aria-label]="sidebarCollapsed() ? t().sidebar.expandSidebar : t().sidebar.collapseSidebar"
-        (click)="toggleSidebar()">
-        <i class="fa-solid fa-chevron-left"></i>
-      </button>
-      <button type="button" class="sb-mobile-close" [attr.aria-label]="t().sidebar.closeSidebar"
-        (click)="toggleMobileSidebar()">
-        <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
 
-    <!-- Navigation -->
-    <nav class="sb-nav">
-      <a assistantAnchor="dashboard-nav" class="sb-link" routerLink="/dashboard" routerLinkActive="sb-active" [routerLinkActiveOptions]="{exact: true}">
-        <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
-        <span>{{ t().sidebar.dashboard }}</span>
-      </a>
-      <a assistantAnchor="medical-records-nav" class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
-        <span>{{ t().sidebar.medicalRecords }}</span>
-      </a>
-      <a assistantAnchor="appointments-nav" class="sb-link" routerLink="/appointments" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-regular fa-calendar-check"></i></span>
-        <span>{{ t().sidebar.appointments }}</span>
-      </a>
-      <a assistantAnchor="medications-nav" class="sb-link" routerLink="/medications" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-solid fa-pills"></i></span>
-        <span>{{ t().sidebar.medications }}</span>
-      </a>
-
-
-      <a assistantAnchor="family-profiles-nav" class="sb-link" routerLink="/family-profiles" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-solid fa-people-group"></i></span>
-        <span>{{ t().sidebar.familyProfiles }}</span>
-      </a>
-      <a assistantAnchor="profile-nav" class="sb-link" routerLink="/my-profile" routerLinkActive="sb-active">
-        <span class="sb-ico"><i class="fa-regular fa-user"></i></span>
-        <span>{{ t().sidebar.myProfile }}</span>
-      </a>
-    </nav>
-
-    <!-- Help Card -->
-    <div class="sb-help">
-      <!-- Greeting bubble — appears on load and after inactivity -->
-      @if (robotBubbleVisible()) {
-      <div class="sb-robot-bubble" role="status">
-        <i class="fa-solid fa-comment-dots sb-robot-bubble-ico"></i>
-        <span>{{ t().sidebar.robotGreeting }}</span>
-      </div>
-      }
-      <!-- Robot + copy row -->
-      <div class="sb-help-main">
-        <button type="button" class="sb-robot-btn"
-          (click)="openVoiceMode()"
-          [attr.aria-label]="t().sidebar.openVoice"
-          title="{{ t().sidebar.openVoice }}">
-          <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
-        </button>
-        <div class="sb-help-copy">
-          <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
-          <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
-        </div>
-      </div>
-      <!-- Text chat button -->
-      <button type="button" class="sb-help-btn" (click)="aiChatService.openPanel()">
-        <i class="fa-regular fa-comment-dots"></i>
-        {{ t().sidebar.askNow }}
-      </button>
-      <!-- Welcome tour trigger button -->
-      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startWelcomeTour()" title="ابدأ الجولة التعريفية">
-        <i class="fa-solid fa-compass"></i>
-        جولة تعريفية
-      </button>
-    </div>
-  </aside>
-
-  <!-- ═══════════ MAIN ═══════════ -->
-  <div class="dsh-main">
-
-    <!-- HEADER -->
-    <header class="dsh-hdr">
-      <button type="button" class="sb-mobile-toggle" [attr.aria-label]="t().header.openSidebar"
-        (click)="toggleMobileSidebar()">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <div class="hdr-search">
-        <i class="fa-solid fa-magnifying-glass hdr-search-ico"></i>
-        <input type="text" class="hdr-search-inp" [placeholder]="t().header.searchPlaceholder" readonly>
-      </div>
-      <div class="hdr-right">
-        <button assistantAnchor="ask-ai-button" type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
-          <i class="fa-solid fa-wand-magic-sparkles"></i>
-          {{ t().header.askAI }}
-        </button>
-        <button assistantAnchor="notifications-button" type="button" class="hdr-bell" (click)="notifService.toggleNotificationCenter()"
-          [attr.aria-label]="t().header.notifications" [class.hdr-bell--active]="notifService.notificationCenterOpen()">
-          <i class="fa-regular fa-bell"></i>
-          @if (unreadNotifCount() > 0) {
-          <span class="hdr-badge">{{ unreadNotifCount() }}</span>
-          }
-        </button>
-        <div assistantAnchor="user-menu" class="hdr-user" (click)="toggleDropdown()">
-          <img [src]="profileCache.resolveNavbarAvatar()" alt="user" class="hdr-avatar">
-          <span class="hdr-username">{{ displayName }}</span>
-          <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
-
-          <!-- Dropdown Menu -->
-          @if (dropdownOpen()) {
-          <div class="user-dropdown" (click)="$event.stopPropagation()">
-            <div class="user-dropdown-hdr">
-              <div class="user-dropdown-av">
-                <img [src]="profileCache.resolveNavbarAvatar()" alt="avatar">
-              </div>
-              <div class="user-dropdown-info">
-                <span class="user-dropdown-name">{{ displayName }}</span>
-                <span class="user-dropdown-email">{{ userEmail }}</span>
-              </div>
-            </div>
-            <div class="user-dropdown-divider"></div>
-            <button type="button" class="user-dropdown-item" (click)="goToMyProfile()">
-              <i class="fa-regular fa-user"></i>
-              {{ t().header.myProfile }}
-            </button>
-            <button type="button" class="user-dropdown-item">
-              <i class="fa-solid fa-gear"></i>
-              {{ t().header.settings }}
-            </button>
-            <button type="button" class="user-dropdown-item" (click)="openRatingPopup()">
-              <i class="fa-regular fa-star"></i>
-              {{ t().ratingPopup.rateRafiq }}
-            </button>
-            <div class="user-dropdown-divider"></div>
-            <button type="button" class="user-dropdown-item user-dropdown-item--danger" (click)="logout()">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i>
-              {{ t().header.logout }}
-            </button>
-          </div>
-          }
-        </div>
-      </div>
-    </header>
-
-    <!-- SCROLLABLE CONTENT -->
-    <div class="dsh-body">
-
-      <!-- ── GREETING ROW ── -->
-      <div class="greeting-row">
-        <div class="greeting-left">
-          <h1 class="greeting-h1">{{ greeting }}, {{ displayName }}! 👋</h1>
-          <p class="greeting-sub">
-            <i class="fa-solid fa-circle-check greeting-check"></i>
-            {{ t().dashboard.familyWell }}
-          </p>
-        </div>
-        <button assistantAnchor="medical-report-button" type="button" class="report-btn" (click)="openDownloadFlow()">
-          <div class="report-btn-ico-bg">
-            <i class="fa-solid fa-file-medical"></i>
-          </div>
-          <div class="report-btn-text">
-            <span class="report-btn-title">{{t().dashboard.medicalReport}}</span>
-            <span class="report-btn-sub">{{t().dashboard.generateAndDown}}</span>
-          </div>
-        </button>
+    <!-- ── TODAY DECK: AI summary / next appointment / health tip ── -->
+    <section class="m-section today-deck">
+      <div class="m-section__hdr">
+        <h3 class="m-section__title">{{ t().dashboard.today }}</h3>
       </div>
 
-      <!-- ── MIDDLE ROW: AI + STATUS + APPOINTMENT ── -->
-      <div class="mid-row">
+      <div class="today-deck__scroller" #deckScroller (scroll)="onDeckScroll($event)"
+        role="region" aria-roledescription="carousel" [attr.aria-label]="t().dashboard.today">
+        @for (slide of deckOrder(); track slide) {
+          <div class="deck-slide">
 
-        <!-- AI Health Summary -->
-        <div assistantAnchor="ai-health-summary-card" class="card ai-card">
-          <div class="ai-hdr">
-            <div class="ai-hdr-left">
-              <i class="fa-solid fa-wand-magic-sparkles ai-ico"></i>
-              <span class="ai-title">{{ t().dashboard.aiHealthSummary }}</span>
-            </div>
-            <span class="pill pill-blue">
-              <i class="fa-solid fa-circle ai-dot"></i> {{ t().dashboard.aiActive }}
-            </span>
-          </div>
+            @switch (slide) {
 
-          <div class="dash-summary-scroll">
-            @if (summaryLoading()) {
-            <div class="ai-summary-loading">
-              <div class="ai-summary-spinner">
-                <i class="fa-solid fa-wand-magic-sparkles ai-summary-spinner-ico"></i>
-                <svg class="ai-summary-ring" viewBox="0 0 60 60">
-                  <circle cx="30" cy="30" r="26" fill="none" stroke-width="3" />
-                </svg>
-              </div>
-              <p class="ai-summary-loading-text">{{ t().dashboard.generatingAiSummary }}<span
-                  class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
-            </div>
-            } @else if (!healthSummary()?.hasData) {
-            <p class="ai-body ai-body--empty">{{ t().dashboard.aiSummaryEmpty }}</p>
-            } @else {
-            <!-- ── Structured summary ── -->
-            <div class="hs-grid">
+              @case ('ai') {
+                <div assistantAnchor="ai-health-summary-card" class="m-card ai-card">
+                  <div class="deck-slide__hdr">
+                    <div class="ai-hdr-left">
+                      <i class="fa-solid fa-wand-magic-sparkles ai-ico"></i>
+                      <span class="ai-title">{{ t().dashboard.aiHealthSummary }}</span>
+                    </div>
+                    <span class="pill pill-blue">
+                      <i class="fa-solid fa-circle ai-dot"></i> {{ t().dashboard.aiActive }}
+                    </span>
+                  </div>
 
-              <!-- Overall Status -->
-              <div class="hs-status-row">
-                <span class="hs-section-label">{{ t().dashboard.summaryOverallHealth }}</span>
-                <span class="hs-status-badge hs-status-badge--{{ healthSummary()!.overallStatus === 'Good' ? 'good' : healthSummary()!.overallStatus === 'Stable' ? 'stable' : 'warn' }}">
-                  <i class="fa-solid fa-circle-dot"></i>
-                  {{ healthSummary()!.overallStatus === 'Good' ? t().dashboard.summaryStatusGood :
-                     healthSummary()!.overallStatus === 'Stable' ? t().dashboard.summaryStatusStable :
-                     t().dashboard.summaryStatusNeedsAttention }}
-                </span>
-                @if (healthSummary()!.overallStatusNote) {
-                  <span class="hs-status-note">{{ healthSummary()!.overallStatusNote }}</span>
-                }
-              </div>
+                  <div class="dash-summary-scroll">
+                    @if (summaryLoading()) {
+                      <div class="ai-summary-loading">
+                        <div class="ai-summary-spinner">
+                          <i class="fa-solid fa-wand-magic-sparkles ai-summary-spinner-ico"></i>
+                          <svg class="ai-summary-ring" viewBox="0 0 60 60">
+                            <circle cx="30" cy="30" r="26" fill="none" stroke-width="3" />
+                          </svg>
+                        </div>
+                        <p class="ai-summary-loading-text">{{ t().dashboard.generatingAiSummary }}<span
+                            class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
+                      </div>
+                    } @else if (!healthSummary()?.hasData) {
+                      <p class="ai-body ai-body--empty">{{ t().dashboard.aiSummaryEmpty }}</p>
+                    } @else {
+                      <div class="hs-grid">
+                        <div class="hs-status-row">
+                          <span class="hs-section-label">{{ t().dashboard.summaryOverallHealth }}</span>
+                          <span class="hs-status-badge hs-status-badge--{{ healthSummary()!.overallStatus === 'Good' ? 'good' : healthSummary()!.overallStatus === 'Stable' ? 'stable' : 'warn' }}">
+                            <i class="fa-solid fa-circle-dot"></i>
+                            {{ healthSummary()!.overallStatus === 'Good' ? t().dashboard.summaryStatusGood :
+                               healthSummary()!.overallStatus === 'Stable' ? t().dashboard.summaryStatusStable :
+                               t().dashboard.summaryStatusNeedsAttention }}
+                          </span>
+                          @if (healthSummary()!.overallStatusNote) {
+                            <span class="hs-status-note">{{ healthSummary()!.overallStatusNote }}</span>
+                          }
+                        </div>
+                        <div class="hs-row2">
+                          <div class="hs-cell">
+                            <span class="hs-section-label">
+                              <i class="fa-solid fa-heart-pulse"></i> {{ t().dashboard.summaryConditions }}
+                            </span>
+                            @if (healthSummary()!.conditions.length === 0) {
+                              <span class="hs-empty">{{ t().dashboard.summaryNoConditions }}</span>
+                            } @else {
+                              <ul class="hs-list">
+                                @for (c of healthSummary()!.conditions; track c) {
+                                  <li>{{ c }}</li>
+                                }
+                              </ul>
+                            }
+                          </div>
+                          <div class="hs-cell">
+                            <span class="hs-section-label">
+                              <i class="fa-solid fa-triangle-exclamation"></i> {{ t().dashboard.summaryAllergies }}
+                            </span>
+                            @if (healthSummary()!.allergies.length === 0) {
+                              <span class="hs-empty">{{ t().dashboard.summaryNoAllergies }}</span>
+                            } @else {
+                              <div class="hs-allergy-list">
+                                @for (a of healthSummary()!.allergies; track a.name) {
+                                  <span class="hs-allergy-pill hs-allergy-pill--{{ a.severity === 'Severe' ? 'severe' : a.severity === 'Moderate' ? 'moderate' : 'mild' }}">
+                                    {{ a.name }}
+                                  </span>
+                                }
+                              </div>
+                            }
+                          </div>
+                        </div>
+                        <div class="hs-row2">
+                          <div class="hs-cell">
+                            <span class="hs-section-label">
+                              <i class="fa-solid fa-pills"></i> {{ t().dashboard.summaryMedications }}
+                            </span>
+                            <span class="hs-stat">{{ healthSummary()!.medications.count }} {{ t().dashboard.summaryMedActive }}</span>
+                            @if (healthSummary()!.medications.hasIssues) {
+                              <span class="hs-warn-tag"><i class="fa-solid fa-circle-exclamation"></i> {{ t().dashboard.summaryMedIssues }}</span>
+                            }
+                          </div>
+                          <div class="hs-cell">
+                            <span class="hs-section-label">
+                              <i class="fa-solid fa-flask"></i> {{ t().dashboard.summaryLabResults }}
+                            </span>
+                            @if (healthSummary()!.labResults.status === 'Normal') {
+                              <span class="hs-lab-ok"><i class="fa-solid fa-check-circle"></i> {{ t().dashboard.summaryLabNormal }}</span>
+                            } @else if (healthSummary()!.labResults.status === 'HasAbnormal') {
+                              <span class="hs-lab-warn">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                                {{ healthSummary()!.labResults.abnormalCount }} {{ t().dashboard.summaryLabAbnormal }}
+                              </span>
+                            } @else {
+                              <span class="hs-lab-review"><i class="fa-solid fa-magnifying-glass"></i> {{ t().dashboard.summaryLabReview }}</span>
+                            }
+                          </div>
+                        </div>
+                        @if (healthSummary()!.insights.length > 0) {
+                          <div class="hs-section">
+                            <span class="hs-section-label"><i class="fa-solid fa-wand-magic-sparkles"></i> {{ t().dashboard.summaryInsights }}</span>
+                            <ul class="hs-bullets">
+                              @for (insight of healthSummary()!.insights; track insight) {
+                                <li>{{ insight }}</li>
+                              }
+                            </ul>
+                          </div>
+                        }
+                        @if (healthSummary()!.recommendations.length > 0) {
+                          <div class="hs-section">
+                            <span class="hs-section-label"><i class="fa-solid fa-lightbulb"></i> {{ t().dashboard.summaryRecommendations }}</span>
+                            <ul class="hs-bullets hs-bullets--rec">
+                              @for (rec of healthSummary()!.recommendations; track rec) {
+                                <li>{{ rec }}</li>
+                              }
+                            </ul>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
 
-              <!-- Two-column grid: Conditions | Allergies -->
-              <div class="hs-row2">
-                <div class="hs-cell">
-                  <span class="hs-section-label">
-                    <i class="fa-solid fa-heart-pulse"></i> {{ t().dashboard.summaryConditions }}
-                  </span>
-                  @if (healthSummary()!.conditions.length === 0) {
-                    <span class="hs-empty">{{ t().dashboard.summaryNoConditions }}</span>
-                  } @else {
-                    <ul class="hs-list">
-                      @for (c of healthSummary()!.conditions; track c) {
-                        <li>{{ c }}</li>
-                      }
-                    </ul>
-                  }
+                  <div class="ai-tags">
+                    <a href="javascript:void(0)" (click)="aiChatService.openPanel()" class="ai-tag ai-tag-teal">
+                      <i class="fa-solid fa-robot"></i> {{ t().dashboard.summaryViewFull }}
+                    </a>
+                  </div>
                 </div>
-                <div class="hs-cell">
-                  <span class="hs-section-label">
-                    <i class="fa-solid fa-triangle-exclamation"></i> {{ t().dashboard.summaryAllergies }}
-                  </span>
-                  @if (healthSummary()!.allergies.length === 0) {
-                    <span class="hs-empty">{{ t().dashboard.summaryNoAllergies }}</span>
+              }
+
+              @case ('appt') {
+                <div class="m-card" assistantAnchor="upcoming-appointment-card">
+                  <div class="deck-slide__hdr">
+                    <span class="deck-slide__label">{{ t().dashboard.upcomingAppointment }}</span>
+                    <a routerLink="/appointments" class="m-section__link">{{ t().dashboard.viewAll }}</a>
+                  </div>
+
+                  @if (apptLoading()) {
+                    <div class="skl-list" style="padding:12px 0">
+                      <div class="skl-row">
+                        <div class="skl-sq"></div>
+                        <div class="skl-lines" style="flex:1">
+                          <div class="skl-line skl-70"></div>
+                          <div class="skl-line skl-45"></div>
+                        </div>
+                      </div>
+                    </div>
+                  } @else if (nextAppointment()) {
+                    <div class="appt-body" assistantAnchor="upcoming-appointment-detail">
+                      <div class="appt-doc-wrap">
+                        <div class="appt-doc-ico">
+                          <i class="fa-solid fa-user-doctor"></i>
+                        </div>
+                      </div>
+                      <div class="appt-info">
+                        <p class="appt-name">{{ nextAppointment()!.provider }}</p>
+                        <p class="appt-spec">{{ nextAppointment()!.title }}</p>
+                        <div class="appt-meta">
+                          <span class="appt-meta-item">
+                            <i class="fa-regular fa-calendar"></i> {{ formatApptDate(nextAppointment()!.appointmentDateTime) }}
+                          </span>
+                          <span class="pill pill-green-sm">{{ formatApptRelative(nextAppointment()!.appointmentDateTime) }}</span>
+                        </div>
+                        <button type="button" class="appt-detail-btn" routerLink="/appointments">{{ t().common.viewDetails }}</button>
+                      </div>
+                    </div>
                   } @else {
-                    <div class="hs-allergy-list">
-                      @for (a of healthSummary()!.allergies; track a.name) {
-                        <span class="hs-allergy-pill hs-allergy-pill--{{ a.severity === 'Severe' ? 'severe' : a.severity === 'Moderate' ? 'moderate' : 'mild' }}">
-                          {{ a.name }}
-                        </span>
-                      }
+                    <div style="padding:16px 0;text-align:center;color:var(--text-3);font-size:13px">
+                      <i class="fa-regular fa-calendar" style="font-size:24px;display:block;margin-bottom:8px;color:var(--text-4)"></i>
+                      {{ t().dashboard.noUpcomingAppointments }}
                     </div>
                   }
-                </div>
-              </div>
 
-              <!-- Two-column grid: Medications | Lab Results -->
-              <div class="hs-row2">
-                <div class="hs-cell">
-                  <span class="hs-section-label">
-                    <i class="fa-solid fa-pills"></i> {{ t().dashboard.summaryMedications }}
-                  </span>
-                  <span class="hs-stat">{{ healthSummary()!.medications.count }} {{ t().dashboard.summaryMedActive }}</span>
-                  @if (healthSummary()!.medications.hasIssues) {
-                    <span class="hs-warn-tag"><i class="fa-solid fa-circle-exclamation"></i> {{ t().dashboard.summaryMedIssues }}</span>
-                  }
+                  <div class="appt-add-row">
+                    <span class="appt-add-lbl">{{ t().dashboard.addNewAppointment }}</span>
+                    <button assistantAnchor="add-appointment-button" type="button" class="appt-add-btn" (click)="goToAddAppointment()">
+                      <i class="fa-solid fa-plus"></i> {{ t().dashboard.add }}
+                    </button>
+                  </div>
                 </div>
-                <div class="hs-cell">
-                  <span class="hs-section-label">
-                    <i class="fa-solid fa-flask"></i> {{ t().dashboard.summaryLabResults }}
-                  </span>
-                  @if (healthSummary()!.labResults.status === 'Normal') {
-                    <span class="hs-lab-ok"><i class="fa-solid fa-check-circle"></i> {{ t().dashboard.summaryLabNormal }}</span>
-                  } @else if (healthSummary()!.labResults.status === 'HasAbnormal') {
-                    <span class="hs-lab-warn">
-                      <i class="fa-solid fa-circle-exclamation"></i>
-                      {{ healthSummary()!.labResults.abnormalCount }} {{ t().dashboard.summaryLabAbnormal }}
-                    </span>
-                  } @else {
-                    <span class="hs-lab-review"><i class="fa-solid fa-magnifying-glass"></i> {{ t().dashboard.summaryLabReview }}</span>
-                  }
-                </div>
-              </div>
-
-              <!-- AI Insights -->
-              @if (healthSummary()!.insights.length > 0) {
-              <div class="hs-section">
-                <span class="hs-section-label"><i class="fa-solid fa-wand-magic-sparkles"></i> {{ t().dashboard.summaryInsights }}</span>
-                <ul class="hs-bullets">
-                  @for (insight of healthSummary()!.insights; track insight) {
-                    <li>{{ insight }}</li>
-                  }
-                </ul>
-              </div>
               }
 
-              <!-- Recommendations -->
-              @if (healthSummary()!.recommendations.length > 0) {
-              <div class="hs-section">
-                <span class="hs-section-label"><i class="fa-solid fa-lightbulb"></i> {{ t().dashboard.summaryRecommendations }}</span>
-                <ul class="hs-bullets hs-bullets--rec">
-                  @for (rec of healthSummary()!.recommendations; track rec) {
-                    <li>{{ rec }}</li>
-                  }
-                </ul>
-              </div>
+              @case ('tip') {
+                <div class="tip-card tip-card--deck">
+                  <div class="tip-ico-wrap">
+                    <i class="fa-solid fa-lightbulb tip-ico"></i>
+                  </div>
+                  <div class="tip-card__body">
+                    <p class="tip-text">
+                      <strong>{{ t().dashboard.healthTip }}</strong>
+                      {{ t().dashboard.healthTipText }}
+                    </p>
+                    <a href="#" class="tip-link">{{ t().dashboard.learnMore }} →</a>
+                  </div>
+                </div>
               }
 
-            </div><!-- /hs-grid -->
             }
           </div>
-
-          <div class="ai-tags">
-            <a href="javascript:void(0)" (click)="aiChatService.openPanel()" class="ai-tag ai-tag-teal">
-              <i class="fa-solid fa-robot"></i> {{ t().dashboard.summaryViewFull }}
-            </a>
-          </div>
-        </div>
-
-        <!-- System Status -->
-        <div assistantAnchor="system-status-card" class="card sys-card">
-          <div class="sys-hdr">
-            <span class="sys-title">{{ t().dashboard.systemStatus }}</span>
-            <span class="pill" [class.pill-green]="systemOk()" [class.pill-yellow]="!systemOk()">
-              {{ systemOk() ? t().dashboard.allSystemsOptimal : t().dashboard.systemDegraded }}
-            </span>
-          </div>
-          <div class="sys-rows">
-            <div class="sys-row">
-              <div class="sys-row-l">
-                <i class="fa-solid fa-microchip sys-ico sys-ico-blue"></i>
-                <span>{{ t().dashboard.aiProcessing }}</span>
-              </div>
-              <span class="sys-val" [class.sys-green]="aiStatus() === 'Optimal'" [class.sys-warn]="aiStatus() === 'Unavailable'">
-                {{ aiStatus() === 'Optimal' ? t().dashboard.optimal : aiStatus() === 'Unavailable' ? t().dashboard.unavailable : t().common.loading }}
-              </span>
-            </div>
-            <div class="sys-row">
-              <div class="sys-row-l">
-                <i class="fa-solid fa-rotate sys-ico sys-ico-orange"></i>
-                <span>{{ t().dashboard.dataSync }}</span>
-              </div>
-              <span class="sys-val">{{ syncAgo() }}</span>
-            </div>
-            <div class="sys-row">
-              <div class="sys-row-l">
-                <i class="fa-solid fa-calendar-check sys-ico sys-ico-purple"></i>
-                <span>{{ t().dashboard.todayEvents }}</span>
-              </div>
-              <span class="sys-val sys-green">{{ todaySchedule().length }}</span>
-            </div>
-          </div>
-          <svg class="sys-spark" viewBox="0 0 220 44" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="spgrd" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#4A7CF7" stop-opacity="0.18" />
-                <stop offset="100%" stop-color="#4A7CF7" stop-opacity="0" />
-              </linearGradient>
-            </defs>
-            <path d="M0 34 C20 28, 40 38, 60 22 C80 8, 100 36, 120 14 C140 2, 160 30, 180 16 C195 6, 210 20, 220 12"
-              fill="url(#spgrd)" />
-            <path d="M0 34 C20 28, 40 38, 60 22 C80 8, 100 36, 120 14 C140 2, 160 30, 180 16 C195 6, 210 20, 220 12"
-              fill="none" stroke="#4A7CF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </div>
-
-        <!-- Upcoming Appointment -->
-        <div assistantAnchor="upcoming-appointment-card" class="card appt-card">
-          <div class="appt-hdr">
-            <span class="appt-title">{{ t().dashboard.upcomingAppointment }}</span>
-            <a routerLink="/appointments" class="link-sm">{{ t().dashboard.viewAll }}</a>
-          </div>
-
-          @if (apptLoading()) {
-          <div class="skl-list" style="padding:12px 0">
-            <div class="skl-row">
-              <div class="skl-sq"></div>
-              <div class="skl-lines" style="flex:1">
-                <div class="skl-line skl-70"></div>
-                <div class="skl-line skl-45"></div>
-              </div>
-            </div>
-          </div>
-          } @else if (nextAppointment()) {
-          <div class="appt-body" assistantAnchor="upcoming-appointment-detail">
-            <div class="appt-doc-wrap">
-              <div class="appt-doc-ico">
-                <i class="fa-solid fa-user-doctor"></i>
-              </div>
-            </div>
-            <div class="appt-info">
-              <p class="appt-name">{{ nextAppointment()!.provider }}</p>
-              <p class="appt-spec">{{ nextAppointment()!.title }}</p>
-              <div class="appt-meta">
-                <span class="appt-meta-item">
-                  <i class="fa-regular fa-calendar"></i> {{ formatApptDate(nextAppointment()!.appointmentDateTime) }}
-                </span>
-                <span class="pill pill-green-sm">{{ formatApptRelative(nextAppointment()!.appointmentDateTime) }}</span>
-              </div>
-              <button type="button" class="appt-detail-btn" routerLink="/appointments">{{ t().common.viewDetails
-                }}</button>
-            </div>
-          </div>
-          } @else {
-          <div style="padding:16px 0;text-align:center;color:var(--text-3);font-size:13px">
-            <i class="fa-regular fa-calendar"
-              style="font-size:24px;display:block;margin-bottom:8px;color:var(--text-4)"></i>
-            {{ t().dashboard.noUpcomingAppointments }}
-          </div>
-          }
-
-          <div class="appt-add-row">
-            <span class="appt-add-lbl">{{ t().dashboard.addNewAppointment }}</span>
-            <button assistantAnchor="add-appointment-button" type="button" class="appt-add-btn" (click)="goToAddAppointment()">
-              <i class="fa-solid fa-plus"></i> {{ t().dashboard.add }}
-            </button>
-          </div>
-        </div>
-
-      </div><!-- /mid-row -->
-
-      <!-- ── FAMILY OVERVIEW ── -->
-      <div assistantAnchor="family-overview-section" class="family-section">
-        <div class="section-hdr">
-          <span class="section-title">{{ t().dashboard.familyOverview }}</span>
-          <a routerLink="/family-profiles" class="link-sm">{{ t().dashboard.viewAllProfiles }}</a>
-        </div>
-        <div class="family-grid">
-
-          @if (familyLoading()) {
-          @for (s of [1,2,3,4]; track s) {
-          <div class="fam-card fam-card--skeleton">
-            <div class="skl-row">
-              <div class="skl-sq" style="border-radius:50%"></div>
-              <div class="skl-lines">
-                <div class="skl-line skl-70"></div>
-                <div class="skl-line skl-45"></div>
-              </div>
-            </div>
-            <div class="skl-list" style="margin:0">
-              <div class="skl-line"></div>
-              <div class="skl-line skl-70"></div>
-            </div>
-          </div>
-          }
-          } @else {
-          @for (slot of familySlots(); track $index) {
-          @if (slot.type === 'profile') {
-          <div class="fam-card" [assistantAnchor]="!slot.data!.isSelf ? 'family-member-card' : ''">
-            <div class="fam-top">
-              <div class="fam-av-wrap">
-                <div class="fam-av fam-av-letter">{{ getInitial(slot.data!.firstName) }}</div>
-              </div>
-              <div class="fam-id">
-                <p class="fam-name">
-                  {{ slot.data!.firstName }} {{ slot.data!.lastName }}
-                  @if (slot.data!.isSelf) { <span class="fam-you">({{ t().dashboard.you }})</span> }
-                </p>
-                <span class="pill pill-blue-sm" style="text-align: center;">{{
-                  getRelationshipLabel(slot.data!.relationship) || t().dashboard.self }}</span>
-              </div>
-            </div>
-            <div class="fam-vitals">
-              <div class="fam-v-row">
-                <span class="fam-v-lbl">{{ t().dashboard.gender }}</span>
-                <span class="fam-v-val">{{ getGenderLabel(slot.data!.gender )}}</span>
-              </div>
-              <div class="fam-v-row">
-                <span class="fam-v-lbl">{{ t().dashboard.age }}</span>
-                <span class="fam-v-val">{{ getAge(slot.data!.dateOfBirth) }} {{ t().dashboard.yrs }}</span>
-              </div>
-            </div>
-            <!-- <button type="button" class="fam-checkin-btn">
-                  <i class="fa-solid fa-person-walking"></i> {{ t().dashboard.checkIn }}
-                </button> -->
-            <button type="button" class="fam-summary-btn" (click)="openFamilySummary(slot.data!)">
-              <i class="fa-solid fa-wand-magic-sparkles"></i> {{t().dashboard.aiHealthSummary}}
-            </button>
-          </div>
-          } @else if (slot.type === 'add') {
-          <a assistantAnchor="add-family-member-button" class="fam-card fam-card--add" routerLink="/family-profiles">
-            <i class="fa-solid fa-plus fam-add-ico"></i>
-            <span class="fam-add-lbl">{{ t().dashboard.addFamilyMember }}</span>
-          </a>
-          } @else {
-          <div class="fam-card fam-card--empty"></div>
-          }
-          }
-          }
-
-
-        </div>
+        }
       </div>
 
-      <!-- ── BOTTOM ROW: Records + Meds + Schedule ── -->
-      <div class="bot-row">
+      <div class="today-deck__dots">
+        @for (slide of deckOrder(); track slide; let i = $index) {
+          <button type="button" class="today-deck__dot" [class.today-deck__dot--active]="activeDeckIndex() === i"
+            [attr.aria-label]="(i + 1) + ' / ' + deckOrder().length"
+            [attr.aria-current]="activeDeckIndex() === i ? 'true' : null"
+            (click)="scrollToSlide(i)"></button>
+        }
+      </div>
+    </section>
 
-        <!-- Recent Medical Records -->
-        <div assistantAnchor="recent-records-card" class="card">
-          <div class="bot-card-hdr">
-            <span class="bot-card-title">{{ t().dashboard.recentMedicalRecords }}</span>
-            <a href="#" class="link-sm">{{ t().dashboard.viewAll }}</a>
-          </div>
+    <!-- ── FAMILY OVERVIEW ── -->
+    <section assistantAnchor="family-overview-section" class="m-section">
+      <div class="m-section__hdr">
+        <h3 class="m-section__title">{{ t().dashboard.familyOverview }}</h3>
+        <a routerLink="/family-profiles" class="m-section__link">{{ t().dashboard.viewAllProfiles }}</a>
+      </div>
+      <div class="family-grid">
+        @if (familyLoading()) {
+          @for (s of [1,2]; track s) {
+            <div class="fam-card fam-card--skeleton">
+              <div class="skl-row">
+                <div class="skl-sq" style="border-radius:50%"></div>
+                <div class="skl-lines">
+                  <div class="skl-line skl-70"></div>
+                  <div class="skl-line skl-45"></div>
+                </div>
+              </div>
+              <div class="skl-list" style="margin:0">
+                <div class="skl-line"></div>
+                <div class="skl-line skl-70"></div>
+              </div>
+            </div>
+          }
+        } @else {
+          @for (slot of familySlots(); track $index) {
+            @if (slot.type === 'profile') {
+              <div class="fam-card" [assistantAnchor]="!slot.data!.isSelf ? 'family-member-card' : ''">
+                <div class="fam-top">
+                  <div class="fam-av-wrap">
+                    <div class="fam-av fam-av-letter">{{ getInitial(slot.data!.firstName) }}</div>
+                  </div>
+                  <div class="fam-id">
+                    <p class="fam-name">
+                      {{ slot.data!.firstName }} {{ slot.data!.lastName }}
+                      @if (slot.data!.isSelf) { <span class="fam-you">({{ t().dashboard.you }})</span> }
+                    </p>
+                    <span class="pill pill-blue-sm" style="text-align:center;">{{
+                      getRelationshipLabel(slot.data!.relationship) || t().dashboard.self }}</span>
+                  </div>
+                </div>
+                <div class="fam-vitals">
+                  <div class="fam-v-row">
+                    <span class="fam-v-lbl">{{ t().dashboard.gender }}</span>
+                    <span class="fam-v-val">{{ getGenderLabel(slot.data!.gender) }}</span>
+                  </div>
+                  <div class="fam-v-row">
+                    <span class="fam-v-lbl">{{ t().dashboard.age }}</span>
+                    <span class="fam-v-val">{{ getAge(slot.data!.dateOfBirth) }} {{ t().dashboard.yrs }}</span>
+                  </div>
+                </div>
+                <button type="button" class="fam-summary-btn" (click)="openFamilySummary(slot.data!)">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> {{ t().dashboard.aiHealthSummary }}
+                </button>
+              </div>
+            } @else if (slot.type === 'add') {
+              <a assistantAnchor="add-family-member-button" class="fam-card fam-card--add" routerLink="/family-profiles">
+                <i class="fa-solid fa-plus fam-add-ico"></i>
+                <span class="fam-add-lbl">{{ t().dashboard.addFamilyMember }}</span>
+              </a>
+            } @else {
+              <div class="fam-card fam-card--empty"></div>
+            }
+          }
+        }
+      </div>
+    </section>
 
-          @if (recordsLoading()) {
+    <!-- ── RECENT MEDICAL RECORDS ── -->
+    <section assistantAnchor="recent-records-card" class="m-section">
+      <div class="m-section__hdr">
+        <h3 class="m-section__title">{{ t().dashboard.recentMedicalRecords }}</h3>
+        <a routerLink="/medical-records" class="m-section__link">{{ t().dashboard.viewAll }}</a>
+      </div>
+      <div class="m-card">
+        @if (recordsLoading()) {
           <div class="skl-list">
             @for (s of [1,2,3]; track s) {
-            <div class="skl-row">
-              <div class="skl-sq"></div>
-              <div class="skl-lines">
-                <div class="skl-line skl-70"></div>
-                <div class="skl-line skl-45"></div>
+              <div class="skl-row">
+                <div class="skl-sq"></div>
+                <div class="skl-lines">
+                  <div class="skl-line skl-70"></div>
+                  <div class="skl-line skl-45"></div>
+                </div>
+                <div class="skl-pill"></div>
               </div>
-              <div class="skl-pill"></div>
-            </div>
             }
           </div>
-          } @else if (records().length === 0) {
-          <div class="empty-state">
-            <i class="fa-solid fa-folder-open empty-icon"></i>
-            <p class="empty-title">{{ t().dashboard.noRecordsFound }}</p>
-            <p class="empty-sub">{{ t().dashboard.noRecordsSub }}</p>
+        } @else if (records().length === 0) {
+          <div class="m-empty">
+            <i class="fa-solid fa-folder-open m-empty__ico"></i>
+            <p class="m-empty__title">{{ t().dashboard.noRecordsFound }}</p>
+            <p class="m-empty__sub">{{ t().dashboard.noRecordsSub }}</p>
           </div>
-          } @else {
+        } @else {
           <ul class="rec-list">
             @for (rec of records(); track rec.id; let i = $index) {
-            @if (i < 3) { <li class="rec-item">
-              <div class="rec-ico" [class]="getRecordIconClass(rec.type)">
-                <i [class]="'fa-solid ' + getRecordIcon(rec.type)"></i>
-              </div>
-              <div class="rec-info">
-                <p class="rec-name">{{ rec.title }}</p>
-                <p class="rec-meta">
-                  {{ rec.date }}
-                  @if (rec.source) { <span>· {{ rec.source }}</span> }
-                </p>
-              </div>
-              <span class="pill pill-green-sm rec-status">{{ rec.status }}</span>
-              </li>
+              @if (i < 3) {
+                <li class="rec-item">
+                  <div class="rec-ico" [class]="getRecordIconClass(rec.type)">
+                    <i [class]="'fa-solid ' + getRecordIcon(rec.type)"></i>
+                  </div>
+                  <div class="rec-info">
+                    <p class="rec-name">{{ rec.title }}</p>
+                    <p class="rec-meta">{{ rec.date }}@if (rec.source) { <span>· {{ rec.source }}</span> }</p>
+                  </div>
+                  <span class="pill pill-green-sm rec-status">{{ rec.status }}</span>
+                </li>
               }
-              }
+            }
           </ul>
-          }
+        }
+        <button assistantAnchor="upload-record-button" type="button" class="m-btn m-btn--secondary" routerLink="/medical-records">
+          <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().dashboard.uploadNewRecord }}
+        </button>
+      </div>
+    </section>
 
-          <button assistantAnchor="upload-record-button" type="button" class="bot-action-btn" routerLink="/medical-records">
-            <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().dashboard.uploadNewRecord }}
-          </button>
-        </div>
-
-        <!-- Medications & Reminders -->
-        <div assistantAnchor="medications-reminders-card" class="card">
-          <div class="bot-card-hdr">
-            <span class="bot-card-title">{{ t().dashboard.medicationsReminders }}</span>
-            <a routerLink="/medications" class="link-sm">{{ t().dashboard.viewAll }}</a>
-          </div>
-
-          @if (remindersLoading()) {
+    <!-- ── MEDICATIONS & REMINDERS ── -->
+    <section assistantAnchor="medications-reminders-card" class="m-section">
+      <div class="m-section__hdr">
+        <h3 class="m-section__title">{{ t().dashboard.medicationsReminders }}</h3>
+        <a routerLink="/medications" class="m-section__link">{{ t().dashboard.viewAll }}</a>
+      </div>
+      <div class="m-card">
+        @if (remindersLoading()) {
           <div class="skl-list">
             @for (s of [1,2,3]; track s) {
-            <div class="skl-row">
-              <div class="skl-sq"></div>
-              <div class="skl-lines">
-                <div class="skl-line skl-70"></div>
-                <div class="skl-line skl-45"></div>
+              <div class="skl-row">
+                <div class="skl-sq"></div>
+                <div class="skl-lines">
+                  <div class="skl-line skl-70"></div>
+                  <div class="skl-line skl-45"></div>
+                </div>
+                <div class="skl-pill"></div>
               </div>
-              <div class="skl-pill"></div>
-            </div>
             }
           </div>
-          }
-          @else if (reminders().length === 0) {
-          <div class="empty-state">
-            <i class="fa-solid fa-bell empty-icon"></i>
-            <p class="empty-title">{{ t().dashboard.noRemindersSet }}</p>
-            <p class="empty-sub">{{ t().dashboard.noRemindersSub }}</p>
+        } @else if (reminders().length === 0) {
+          <div class="m-empty">
+            <i class="fa-solid fa-bell m-empty__ico"></i>
+            <p class="m-empty__title">{{ t().dashboard.noRemindersSet }}</p>
+            <p class="m-empty__sub">{{ t().dashboard.noRemindersSub }}</p>
           </div>
-          }
-
-          @else {
+        } @else {
           <ul class="med-list">
             @for (rem of reminders(); track rem.id; let i = $index) {
-            @if (i < 3) { <li class="med-item">
-              <div class="med-ico" [class]="getMedIconClass(i)">
-                <i class="fa-solid fa-capsules"></i>
-              </div>
-              <div class="med-info">
-                <p class="med-name">{{ rem.medicineName }} <span class="med-dose">{{ rem.dosage }}</span></p>
-                <p class="med-freq">1 tablet · {{ rem.frequency }}</p>
-              </div>
-              <div class="med-next">
-                <i class="fa-regular fa-bell med-bell"></i>
-                <span class="med-next-time">{{ rem.reminderTime }}</span>
-              </div>
-              </li>
+              @if (i < 3) {
+                <li class="med-item">
+                  <div class="med-ico" [class]="getMedIconClass(i)">
+                    <i class="fa-solid fa-capsules"></i>
+                  </div>
+                  <div class="med-info">
+                    <p class="med-name">{{ rem.medicineName }} <span class="med-dose">{{ rem.dosage }}</span></p>
+                    <p class="med-freq">1 tablet · {{ rem.frequency }}</p>
+                  </div>
+                  <div class="med-next">
+                    <i class="fa-regular fa-bell med-bell"></i>
+                    <span class="med-next-time">{{ rem.reminderTime }}</span>
+                  </div>
+                </li>
               }
-              }
-          </ul>
-          }
-
-          <button assistantAnchor="add-reminder-button" type="button" routerLink="/medications" class="bot-action-btn bot-action-orange">
-            <i class="fa-regular fa-bell"></i> {{ t().dashboard.addReminder }}
-          </button>
-        </div>
-
-        <!-- Today's Schedule -->
-        <div class="card">
-          <div class="bot-card-hdr">
-            <span class="bot-card-title">{{ t().dashboard.todaySchedule }}</span>
-            <a routerLink="/appointments" class="link-sm">{{ t().dashboard.viewCalendar }}</a>
-          </div>
-
-          @if (apptLoading() || remindersLoading()) {
-          <div class="sched-empty">
-            <i class="fa-solid fa-spinner fa-spin" style="color:var(--text-3)"></i>
-          </div>
-          } @else if (todaySchedule().length === 0) {
-          <div class="sched-empty">
-            <i class="fa-regular fa-calendar-check" style="font-size:28px;color:var(--text-4);margin-bottom:8px"></i>
-            <p style="color:var(--text-3);font-size:13px">{{ t().dashboard.noEventsToday }}</p>
-          </div>
-          } @else {
-          <ul class="sched-list">
-            @for (item of todaySchedule(); track item.sortMs; let last = $last) {
-            <li class="sched-item" [class.sched-last]="last">
-              <span class="sched-time">{{ item.time }}</span>
-              <div class="sched-line-wrap">
-                <div class="sched-dot" [class.dot-blue]="item.type === 'appointment'" [class.dot-green]="item.type === 'medication'"></div>
-                @if (!last) { <div class="sched-line"></div> }
-              </div>
-              <div class="sched-info">
-                <p class="sched-title">{{ item.title }}</p>
-                <p class="sched-sub">{{ item.subtitle }}</p>
-              </div>
-            </li>
             }
           </ul>
-          }
-
-          <button type="button" class="bot-action-btn" [routerLink]="['/appointments']">
-            <i class="fa-regular fa-calendar"></i> {{ t().dashboard.viewCalendar }}
-          </button>
-        </div>
-
-      </div><!-- /bot-row -->
-
-      <!-- ── FOOTER HEALTH TIP ── -->
-      <div class="tip-bar">
-        <div class="tip-ico-wrap">
-          <i class="fa-solid fa-lightbulb tip-ico"></i>
-        </div>
-        <p class="tip-text">
-          <strong>{{ t().dashboard.healthTip }}</strong>
-          {{ t().dashboard.healthTipText }}
-        </p>
-        <a href="#" class="tip-link">{{ t().dashboard.learnMore }} →</a>
+        }
+        <button assistantAnchor="add-reminder-button" type="button" routerLink="/medications" class="m-btn m-btn--orange">
+          <i class="fa-regular fa-bell"></i> {{ t().dashboard.addReminder }}
+        </button>
       </div>
+    </section>
 
-    </div><!-- /dsh-body -->
-  </div><!-- /dsh-main -->
-</div><!-- /dsh -->
+    <div class="m-spacer"></div>
+  </div><!-- /m-body -->
+
+  <app-bottom-nav></app-bottom-nav>
+</div><!-- /m-page -->
 
 <!-- ═══════════ PROFILE PICKER DIALOG ═══════════ -->
 @if (profilePickerOpen()) {
-<div class="modal-backdrop" (click)="profilePickerOpen.set(false)">
-  <div class="modal-box" (click)="$event.stopPropagation()">
-    <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <div class="modal-ico-wrap">
-          <i class="fa-solid fa-users"></i>
-        </div>
-        <div>
-          <h2 class="modal-title">{{ t().dashboard.selectProfileTitle }}</h2>
-          <p class="modal-subtitle">{{ t().dashboard.selectProfileDesc }}</p>
-        </div>
-      </div>
-      <button type="button" class="modal-close-btn" (click)="profilePickerOpen.set(false)">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-    <div class="profile-picker-list">
-      @for (profile of familyProfiles(); track profile.userHealthProfileId) {
-        <button type="button" class="profile-picker-item"
-          (click)="selectProfileAndContinue(profile.userHealthProfileId)">
-          <div class="profile-picker-av" [style.background]="getProfileAvatarColor(profile.firstName)">
-            {{ getInitial(profile.firstName) }}
+  <div class="modal-backdrop" (click)="profilePickerOpen.set(false)">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-hdr">
+        <div class="modal-hdr-left">
+          <div class="modal-ico-wrap"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <h2 class="modal-title">{{ t().dashboard.selectProfileTitle }}</h2>
+            <p class="modal-subtitle">{{ t().dashboard.selectProfileDesc }}</p>
           </div>
-          <div class="profile-picker-info">
-            <span class="profile-picker-name">{{ profile.firstName }} {{ profile.lastName }}</span>
-            <span class="profile-picker-rel">
-              {{ profile.isSelf ? t().dashboard.you : getRelationshipLabel(profile.relationship) }}
-            </span>
-          </div>
-          <i class="fa-solid fa-chevron-right profile-picker-arrow"></i>
+        </div>
+        <button type="button" class="modal-close-btn" (click)="profilePickerOpen.set(false)">
+          <i class="fa-solid fa-xmark"></i>
         </button>
-      }
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn-ghost" (click)="profilePickerOpen.set(false)">
-        {{ t().records.cancelBtn }}
-      </button>
+      </div>
+      <div class="profile-picker-list">
+        @for (profile of familyProfiles(); track profile.userHealthProfileId) {
+          <button type="button" class="profile-picker-item"
+            (click)="selectProfileAndContinue(profile.userHealthProfileId)">
+            <div class="profile-picker-av" [style.background]="getProfileAvatarColor(profile.firstName)">
+              {{ getInitial(profile.firstName) }}
+            </div>
+            <div class="profile-picker-info">
+              <span class="profile-picker-name">{{ profile.firstName }} {{ profile.lastName }}</span>
+              <span class="profile-picker-rel">
+                {{ profile.isSelf ? t().dashboard.you : getRelationshipLabel(profile.relationship) }}
+              </span>
+            </div>
+            <i class="fa-solid fa-chevron-right profile-picker-arrow"></i>
+          </button>
+        }
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" (click)="profilePickerOpen.set(false)">
+          {{ t().records.cancelBtn }}
+        </button>
+      </div>
     </div>
   </div>
-</div>
 }
 
 <!-- ═══════════ MEDICAL REPORT DIALOG ═══════════ -->
 @if (reportDialogOpen()) {
-<div class="modal-backdrop" (click)="closeReportDialog()">
-  <div class="modal-box" (click)="$event.stopPropagation()">
-    <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        @if (reportCameFromPicker() && !reportGenerating()) {
-        <button type="button" class="modal-back-btn" (click)="backToProfilePicker()" [title]="t().common.back">
-          <i class="fa-solid fa-arrow-left"></i>
-          <span>{{t().common.back}}</span>
+  <div class="modal-backdrop" (click)="closeReportDialog()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-hdr">
+        <div class="modal-hdr-left">
+          @if (reportCameFromPicker() && !reportGenerating()) {
+            <button type="button" class="modal-back-btn" (click)="backToProfilePicker()" [title]="t().common.back">
+              <i class="fa-solid fa-arrow-left"></i>
+              <span>{{ t().common.back }}</span>
+            </button>
+          }
+          <div class="modal-ico-wrap"><i class="fa-solid fa-file-medical"></i></div>
+          <div>
+            <h2 class="modal-title">{{ t().dashboard.medicalReport }}</h2>
+            <p class="modal-subtitle">{{ t().dashboard.chooseMedicalType }}</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn"
+          (click)="reportGenerating() ? cancelReport() : closeReportDialog()">
+          <i class="fa-solid fa-xmark"></i>
         </button>
-        }
-        <div class="modal-ico-wrap">
-          <i class="fa-solid fa-file-medical"></i>
-        </div>
-        <div>
-          <h2 class="modal-title">{{t().dashboard.medicalReport}}</h2>
-          <p class="modal-subtitle">{{t().dashboard.chooseMedicalType}}</p>
-        </div>
       </div>
-      <button type="button" class="modal-close-btn"
-        (click)="reportGenerating() ? cancelReport() : closeReportDialog()">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
 
-    @if (!reportGenerating()) {
-    <div class="report-options">
-      <label class="report-option" [class.report-option--selected]="selectedReportType() === 'DoctorSummary'"
-        (click)="selectedReportType.set('DoctorSummary')">
-        <div class="report-option-radio">
-          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'DoctorSummary'">
-          </div>
+      @if (!reportGenerating()) {
+        <div class="report-options">
+          <label class="report-option" [class.report-option--selected]="selectedReportType() === 'DoctorSummary'"
+            (click)="selectedReportType.set('DoctorSummary')">
+            <div class="report-option-radio">
+              <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'DoctorSummary'"></div>
+            </div>
+            <div class="report-option-body">
+              <div class="report-option-title">
+                <i class="fa-solid fa-user-doctor"></i>
+                {{ t().dashboard.doctorSummary }}
+                <span class="report-option-badge">{{ t().dashboard.pagesRange }}</span>
+              </div>
+              <p class="report-option-desc">{{ t().dashboard.doctorSummaryDesc }}</p>
+            </div>
+          </label>
+          <label class="report-option" [class.report-option--selected]="selectedReportType() === 'CompleteHistory'"
+            (click)="selectedReportType.set('CompleteHistory')">
+            <div class="report-option-radio">
+              <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'CompleteHistory'"></div>
+            </div>
+            <div class="report-option-body">
+              <div class="report-option-title">
+                <i class="fa-solid fa-folder-open"></i>
+                {{ t().dashboard.completeHistory }}
+              </div>
+              <p class="report-option-desc">{{ t().dashboard.completeHistoryDesc }}</p>
+            </div>
+          </label>
         </div>
-        <div class="report-option-body">
-          <div class="report-option-title">
-            <i class="fa-solid fa-user-doctor"></i>
-            {{ t().dashboard.doctorSummary }}
-            <span class="report-option-badge">{{t().dashboard.pagesRange}}</span>
-          </div>
-          <p class="report-option-desc">{{t().dashboard.doctorSummaryDesc}}</p>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" (click)="closeReportDialog()">{{ t().records.cancelBtn }}</button>
+          <button type="button" class="btn-primary" (click)="generateReport()">
+            <i class="fa-solid fa-file-arrow-down"></i> {{ t().dashboard.generateAndDown }}
+          </button>
         </div>
-      </label>
-
-      <label class="report-option" [class.report-option--selected]="selectedReportType() === 'CompleteHistory'"
-        (click)="selectedReportType.set('CompleteHistory')">
-        <div class="report-option-radio">
-          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'CompleteHistory'">
+      } @else {
+        <div class="report-generating">
+          <div class="report-gen-spinner-wrap">
+            <i class="fa-solid fa-file-medical report-gen-ico"></i>
+            <svg class="report-gen-ring" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="26" fill="none" stroke-width="3" />
+            </svg>
           </div>
+          <p class="report-gen-text">{{ t().family.generatingAiSummary }}<span
+              class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
+          <p class="report-gen-sub">{{ t().dashboard.generatingReportSub }}</p>
         </div>
-        <div class="report-option-body">
-          <div class="report-option-title">
-            <i class="fa-solid fa-folder-open"></i>
-            {{ t().dashboard.completeHistory }}
-          </div>
-          <p class="report-option-desc">{{t().dashboard.completeHistoryDesc}}</p>
-        </div>
-      </label>
+      }
     </div>
-
-    <div class="modal-footer">
-      <button type="button" class="btn-ghost" (click)="closeReportDialog()">{{t().records.cancelBtn}}</button>
-      <button type="button" class="btn-primary" (click)="generateReport()">
-        <i class="fa-solid fa-file-arrow-down"></i> {{t().dashboard.generateAndDown}}
-      </button>
-    </div>
-    } @else {
-    <div class="report-generating">
-      <div class="report-gen-spinner-wrap">
-        <i class="fa-solid fa-file-medical report-gen-ico"></i>
-        <svg class="report-gen-ring" viewBox="0 0 60 60">
-          <circle cx="30" cy="30" r="26" fill="none" stroke-width="3" />
-        </svg>
-      </div>
-      <p class="report-gen-text">{{t().family.generatingAiSummary}}<span
-          class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
-      <p class="report-gen-sub">{{t().dashboard.generatingReportSub}}</p>
-    </div>
-    }
   </div>
-</div>
 }
 
 <!-- ═══════════ FAMILY SUMMARY MODAL ═══════════ -->
 @if (familySummaryOpen()) {
-<div class="modal-backdrop" (click)="closeFamilySummary()">
-  <div class="modal-box" (click)="$event.stopPropagation()">
-    <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <div class="modal-ico-wrap">
-          <i class="fa-solid fa-wand-magic-sparkles"></i>
+  <div class="modal-backdrop" (click)="closeFamilySummary()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-hdr">
+        <div class="modal-hdr-left">
+          <div class="modal-ico-wrap"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+          <div>
+            <h2 class="modal-title">AI Health Summary</h2>
+            <p class="modal-subtitle">{{ familySummaryProfile()?.firstName }} {{ familySummaryProfile()?.lastName }}</p>
+          </div>
         </div>
-        <div>
-          <h2 class="modal-title">AI Health Summary</h2>
-          <p class="modal-subtitle">{{ familySummaryProfile()?.firstName }} {{ familySummaryProfile()?.lastName }}</p>
+        <button type="button" class="modal-close-btn" (click)="closeFamilySummary()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      @if (familySummaryLoading()) {
+        <div class="family-summary-loading">
+          <div class="ai-summary-spinner">
+            <i class="fa-solid fa-wand-magic-sparkles ai-summary-spinner-ico"></i>
+            <svg class="ai-summary-ring" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="26" fill="none" stroke-width="3" />
+            </svg>
+          </div>
+          <p class="ai-summary-loading-text">Generating AI Summary<span
+              class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
         </div>
-      </div>
-      <button type="button" class="modal-close-btn" (click)="closeFamilySummary()">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
+      } @else if (!familySummaryData()?.hasData) {
+        <div class="family-summary-empty">
+          <i class="fa-solid fa-folder-open family-summary-empty-ico"></i>
+          <p>Not enough health data available yet for {{ familySummaryProfile()?.firstName }}.</p>
+          <p class="family-summary-empty-sub">Upload medical records to generate an AI summary.</p>
+        </div>
+      } @else {
+        <p class="family-summary-text">{{ summaryText(familySummaryData()!) }}</p>
+      }
 
-    @if (familySummaryLoading()) {
-    <div class="family-summary-loading">
-      <div class="ai-summary-spinner">
-        <i class="fa-solid fa-wand-magic-sparkles ai-summary-spinner-ico"></i>
-        <svg class="ai-summary-ring" viewBox="0 0 60 60">
-          <circle cx="30" cy="30" r="26" fill="none" stroke-width="3" />
-        </svg>
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" (click)="closeFamilySummary()">Close</button>
+        <button type="button" class="btn-primary"
+          (click)="closeFamilySummary(); selectedReportType.set('DoctorSummary'); openReportDialog(familySummaryProfile()!.userHealthProfileId)">
+          <i class="fa-solid fa-file-medical"></i> Generate Report
+        </button>
       </div>
-      <p class="ai-summary-loading-text">Generating AI Summary<span
-          class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
-    </div>
-    } @else if (!familySummaryData()?.hasData) {
-    <div class="family-summary-empty">
-      <i class="fa-solid fa-folder-open family-summary-empty-ico"></i>
-      <p>Not enough health data available yet for {{ familySummaryProfile()?.firstName }}.</p>
-      <p class="family-summary-empty-sub">Upload medical records to generate an AI summary.</p>
-    </div>
-    } @else {
-    <p class="family-summary-text">{{ summaryText(familySummaryData()!) }}</p>
-    }
-
-    <div class="modal-footer">
-      <button type="button" class="btn-ghost" (click)="closeFamilySummary()">Close</button>
-      <button type="button" class="btn-primary"
-        (click)="closeFamilySummary(); selectedReportType.set('DoctorSummary'); openReportDialog(familySummaryProfile()!.userHealthProfileId)">
-        <i class="fa-solid fa-file-medical"></i> Generate Report
-      </button>
     </div>
   </div>
-</div>
 }
