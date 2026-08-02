@@ -26,6 +26,7 @@
                 <label for="loginIdentifier">{{ t().login.emailOrPhone }}</label>
 
                 <div class="input-shell" [class.invalid]="isInvalid('loginIdentifier')">
+                    <i class="fa-regular fa-envelope field-icon"></i>
                     <input id="loginIdentifier" type="text" formControlName="loginIdentifier"
                         [placeholder]="t().login.emailPlaceholder" autocomplete="username">
                 </div>
@@ -47,7 +48,7 @@
                 <label for="password">{{ t().login.password }}</label>
 
                 <div class="input-shell" [class.invalid]="isInvalid('password')">
-
+                    <i class="fa-solid fa-lock field-icon"></i>
                     <input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
                         [placeholder]="t().login.passwordPlaceholder" autocomplete="current-password">
 
@@ -103,6 +104,8 @@
                     }
                 </span>
             </button>
+
+            <div class="auth-divider">{{ $any(t().login).or ?? 'أو' }}</div>
 
             <div id="google-button" lang="en"></div>
 

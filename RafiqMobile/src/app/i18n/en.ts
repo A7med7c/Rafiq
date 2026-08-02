@@ -1399,6 +1399,29 @@ export const en = {
     analysisFailedBody: 'could not be analyzed.',
   },
 
+  settings: {
+    // Notifications group
+    notificationsGroup: 'Notifications',
+    medicationReminders: 'Medication Reminders',
+    medicationRemindersSub: 'Push notifications for doses',
+    appointmentReminders: 'Appointment Reminders',
+    appointmentRemindersSub: 'Push notifications for visits',
+    // Privacy group
+    privacyGroup: 'Privacy & Security',
+    biometricLogin: 'Biometric Login',
+    biometricLoginSub: 'Face ID or Touch ID',
+    changePassword: 'Change Password',
+    // About group
+    aboutGroup: 'About',
+    helpSupport: 'Help & Support',
+    privacyPolicy: 'Privacy Policy',
+    termsOfService: 'Terms of Service',
+    appVersion: 'App Version',
+    versionNumber: '1.0.0',
+    // Logout
+    logoutBtn: 'Log Out',
+  },
+
   bottomNav: {
     home:         'Home',
     records:      'Records',

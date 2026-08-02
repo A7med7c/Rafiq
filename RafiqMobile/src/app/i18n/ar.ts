@@ -1401,6 +1401,29 @@ export const ar: Translations = {
     analysisFailedBody: 'تعذّر تحليله.',
   },
 
+  settings: {
+    // Notifications group
+    notificationsGroup: 'الإشعارات',
+    medicationReminders: 'تذكيرات الدواء',
+    medicationRemindersSub: 'إشعارات الجرعات',
+    appointmentReminders: 'تذكيرات المواعيد',
+    appointmentRemindersSub: 'إشعارات الزيارات',
+    // Privacy group
+    privacyGroup: 'الخصوصية والأمان',
+    biometricLogin: 'تسجيل بصمة الوجه أو الإصبع',
+    biometricLoginSub: 'Face ID أو Touch ID',
+    changePassword: 'تغيير كلمة المرور',
+    // About group
+    aboutGroup: 'عن التطبيق',
+    helpSupport: 'المساعدة والدعم',
+    privacyPolicy: 'سياسة الخصوصية',
+    termsOfService: 'شروط الاستخدام',
+    appVersion: 'إصدار التطبيق',
+    versionNumber: '1.0.0',
+    // Logout
+    logoutBtn: 'تسجيل الخروج',
+  },
+
   bottomNav: {
     home:         'الرئيسية',
     records:      'السجلات',

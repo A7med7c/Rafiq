@@ -1,599 +1,681 @@
-<div class="mp-container">
+<div class="mp-page" dir="rtl">
+
+  <!-- ══════════════ MAIN PROFILE VIEW ══════════════ -->
   @if (activeView() === 'main') {
-    <!-- ════════════ MAIN PROFILE VIEW ════════════ -->
-    <header class="mp-header-minimal">
-      <div class="mp-header-minimal-left">
-        <div class="mp-header-minimal-av" (click)="openPhotoModal()">
-          @if (hasProfileImage()) {
-            <img [src]="heroAvatarUrl()" alt="Avatar">
-          } @else {
-            <div class="mp-header-minimal-av-initials" [style.background]="avatarBgColor">{{ userInitials }}</div>
-          }
-          <div class="mp-header-minimal-av-edit"><i class="fa-solid fa-camera"></i></div>
-        </div>
-        <div>
-          <h1 class="mp-header-title">{{ t().myProfile.pageTitle }}</h1>
-          <p class="mp-header-subtitle">Manage your account and healthcare information.</p>
-        </div>
-      </div>
-      <div class="mp-header-minimal-right">
-        <button class="mp-icon-btn" (click)="notifService.openNotificationCenter()">
+
+    <header class="mp-header">
+      <h1 class="mp-header-title">{{ t().myProfile.pageTitle }}</h1>
+      <div class="mp-header-actions">
+        <button class="mp-icon-btn" (click)="notifService.openNotificationCenter()" [attr.aria-label]="t().header.notifications">
           <i class="fa-regular fa-bell"></i>
           @if (unreadNotifCount() > 0) {
-            <span class="mp-notif-badge"></span>
+            <span class="mp-notif-dot"></span>
           }
-        </button>
-        <button class="mp-icon-btn mp-icon-btn--danger" (click)="logout()" aria-label="Logout">
-          <i class="fa-solid fa-arrow-right-from-bracket"></i>
         </button>
       </div>
     </header>
 
     @if (profileLoading()) {
-      <div class="mp-loading-state">
-        <span class="mp-spinner mp-spinner--lg"></span>
+      <div class="mp-loading-center">
+        <span class="mp-spinner"></span>
       </div>
     } @else if (profile()) {
-      <div class="mp-content-padded">
-        <!-- PROFILE CARD -->
-        <div class="mp-profile-card">
-          <div class="mp-profile-card-top">
-            @if (hasProfileImage()) {
-              <img [src]="heroAvatarUrl()" alt="User Avatar" class="mp-profile-card-img" (click)="openPhotoModal()">
-            } @else {
-              <div class="mp-profile-card-initials" [style.background]="avatarBgColor" (click)="openPhotoModal()">{{ userInitials }}</div>
-            }
-            <div class="mp-profile-card-info">
-              <h2 class="mp-profile-card-name">{{ displayName }}</h2>
-              <p class="mp-profile-card-email">{{ userEmail }}</p>
-              <p class="mp-profile-card-phone">{{ authService.currentUser?.phoneNumber || 'No phone number' }}</p>
-              <span class="mp-badge mp-badge--primary">Self Profile</span>
-            </div>
-          </div>
-          <div class="mp-profile-card-stats">
-            <div class="mp-profile-stat">
-              <span class="mp-stat-label">Member Since</span>
-              <span class="mp-stat-value">{{ profile()?.createdAt | date:'yyyy' }}</span>
-            </div>
-            <div class="mp-profile-stat">
-              <span class="mp-stat-label">Family Account</span>
-              <span class="mp-stat-value">Active</span>
-            </div>
-            <div class="mp-profile-stat">
-              <span class="mp-stat-label">Role</span>
-              <span class="mp-stat-value">Owner</span>
-            </div>
-          </div>
+
+      <!-- ── Avatar + Name Card ── -->
+      <div class="mp-hero-card">
+        <div class="mp-avatar-wrap" (click)="openPhotoModal()">
+          @if (hasProfileImage()) {
+            <img [src]="heroAvatarUrl()" alt="Avatar" class="mp-avatar-img">
+          } @else {
+            <div class="mp-avatar-initials" [style.background]="avatarBgColor">{{ userInitials }}</div>
+          }
+          <div class="mp-avatar-camera"><i class="fa-solid fa-camera"></i></div>
         </div>
 
-        <!-- NAVIGATION CARDS -->
-        <div class="mp-nav-grid">
-          <button class="mp-nav-card" (click)="activeView.set('personal'); scrollToTop()">
-            <div class="mp-nav-card-icon"><i class="fa-solid fa-user"></i></div>
-            <div class="mp-nav-card-text">
-              <h3>Personal Information</h3>
-              <p>Name, email, phone, address</p>
-            </div>
-            <i class="fa-solid fa-chevron-right mp-nav-card-arrow"></i>
-          </button>
-          
-          <button class="mp-nav-card" (click)="activeView.set('health'); scrollToTop()">
-            <div class="mp-nav-card-icon"><i class="fa-solid fa-heart-pulse"></i></div>
-            <div class="mp-nav-card-text">
-              <h3>Health Information</h3>
-              <p>Vitals, allergies, conditions</p>
-            </div>
-            <i class="fa-solid fa-chevron-right mp-nav-card-arrow"></i>
-          </button>
-          
-          <button class="mp-nav-card" (click)="activeView.set('emergency'); scrollToTop()">
-            <div class="mp-nav-card-icon"><i class="fa-solid fa-phone-volume"></i></div>
-            <div class="mp-nav-card-text">
-              <h3>Emergency Contacts</h3>
-              <p>Primary and backup contacts</p>
-            </div>
-            <i class="fa-solid fa-chevron-right mp-nav-card-arrow"></i>
-          </button>
-          
-          <button class="mp-nav-card" routerLink="/family-profiles">
-            <div class="mp-nav-card-icon"><i class="fa-solid fa-users"></i></div>
-            <div class="mp-nav-card-text">
-              <h3>Family Members</h3>
-              <p>Manage linked accounts</p>
-            </div>
-            <i class="fa-solid fa-chevron-right mp-nav-card-arrow"></i>
-          </button>
-          
-          <button class="mp-nav-card" (click)="activeView.set('settings'); scrollToTop()">
-            <div class="mp-nav-card-icon"><i class="fa-solid fa-gear"></i></div>
-            <div class="mp-nav-card-text">
-              <h3>Settings</h3>
-              <p>App preferences and options</p>
-            </div>
-            <i class="fa-solid fa-chevron-right mp-nav-card-arrow"></i>
-          </button>
-          
-          <button class="mp-nav-card" (click)="activeView.set('settings'); scrollToTop()">
-            <div class="mp-nav-card-icon"><i class="fa-solid fa-shield-halved"></i></div>
-            <div class="mp-nav-card-text">
-              <h3>Privacy & Security</h3>
-              <p>Data sharing and password</p>
-            </div>
-            <i class="fa-solid fa-chevron-right mp-nav-card-arrow"></i>
-          </button>
-        </div>
+        <h2 class="mp-hero-name">{{ displayName }}</h2>
+        <p class="mp-hero-email">{{ userEmail }}</p>
+        @if (authService.currentUser?.phoneNumber) {
+          <p class="mp-hero-phone">{{ authService.currentUser?.phoneNumber }}</p>
+        }
+        <span class="mp-badge-pill">{{ t().myProfile.selfBadge }}</span>
 
-        <!-- BOTTOM SECTION -->
-        <div class="mp-danger-zone-minimal">
-          <button class="mp-btn-delete-account" (click)="openDeleteModal()">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            Delete Account
-          </button>
-          <div class="mp-secure-info">
-            <i class="fa-solid fa-lock"></i>
-            <p>Your data is securely encrypted and HIPAA compliant.</p>
+        <div class="mp-stats-row">
+          <div class="mp-stat-cell">
+            <span class="mp-stat-val">{{ profile()?.createdAt | date:'yyyy' }}</span>
+            <span class="mp-stat-lbl">{{ t().myProfile.memberSince }}</span>
+          </div>
+          <div class="mp-stat-divider"></div>
+          <div class="mp-stat-cell">
+            <span class="mp-stat-val">{{ t().myProfile.profileTypeSelf }}</span>
+            <span class="mp-stat-lbl">{{ t().myProfile.profileType }}</span>
+          </div>
+          <div class="mp-stat-divider"></div>
+          <div class="mp-stat-cell">
+            <span class="mp-stat-val">{{ t().myProfile.accessRoleOwner }}</span>
+            <span class="mp-stat-lbl">{{ t().myProfile.accessRole }}</span>
           </div>
         </div>
       </div>
+
+      <!-- ── Navigation List ── -->
+      <div class="mp-section-card">
+        <button class="mp-row" (click)="activeView.set('personal'); scrollToTop()">
+          <div class="mp-row-icon" style="background:#EBF5FF; color:#1A7FD4;">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <div class="mp-row-text">
+            <span class="mp-row-title">{{ t().myProfile.personalInfo }}</span>
+            <span class="mp-row-sub">{{ t().myProfile.personalInfoSub }}</span>
+          </div>
+          <i class="fa-solid fa-chevron-left mp-row-chevron"></i>
+        </button>
+
+        <div class="mp-row-sep"></div>
+
+        <button class="mp-row" (click)="activeView.set('health'); scrollToTop()">
+          <div class="mp-row-icon" style="background:#EDFBF3; color:#16A34A;">
+            <i class="fa-solid fa-heart-pulse"></i>
+          </div>
+          <div class="mp-row-text">
+            <span class="mp-row-title">{{ t().myProfile.healthInfo }}</span>
+            <span class="mp-row-sub">{{ t().myProfile.healthInfoSub }}</span>
+          </div>
+          <i class="fa-solid fa-chevron-left mp-row-chevron"></i>
+        </button>
+
+        <div class="mp-row-sep"></div>
+
+        <button class="mp-row" (click)="activeView.set('emergency'); scrollToTop()">
+          <div class="mp-row-icon" style="background:#FFF3ED; color:#EA580C;">
+            <i class="fa-solid fa-phone-volume"></i>
+          </div>
+          <div class="mp-row-text">
+            <span class="mp-row-title">{{ t().myProfile.emergencyContacts }}</span>
+            <span class="mp-row-sub">{{ t().myProfile.emergencyContactsSub }}</span>
+          </div>
+          <i class="fa-solid fa-chevron-left mp-row-chevron"></i>
+        </button>
+
+        <div class="mp-row-sep"></div>
+
+        <button class="mp-row" routerLink="/family-profiles">
+          <div class="mp-row-icon" style="background:#F3EEFF; color:#7C3AED;">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div class="mp-row-text">
+            <span class="mp-row-title">{{ t().sidebar.familyProfiles }}</span>
+            <span class="mp-row-sub">{{ t().myProfile.dangerZoneSub }}</span>
+          </div>
+          <i class="fa-solid fa-chevron-left mp-row-chevron"></i>
+        </button>
+
+        <div class="mp-row-sep"></div>
+
+        <button class="mp-row" (click)="activeView.set('settings'); scrollToTop()">
+          <div class="mp-row-icon" style="background:#F1F5F9; color:#475569;">
+            <i class="fa-solid fa-gear"></i>
+          </div>
+          <div class="mp-row-text">
+            <span class="mp-row-title">{{ t().header.settings }}</span>
+            <span class="mp-row-sub">{{ t().myProfile.dangerZoneSub }}</span>
+          </div>
+          <i class="fa-solid fa-chevron-left mp-row-chevron"></i>
+        </button>
+      </div>
+
+      <!-- ── Logout + Delete ── -->
+      <div class="mp-bottom-actions">
+        <button class="mp-logout-btn" (click)="logout()">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          <span>{{ t().settings.logoutBtn }}</span>
+        </button>
+        <button class="mp-delete-text-btn" (click)="openDeleteModal()">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          {{ t().myProfile.deleteAccountBtn }}
+        </button>
+        <p class="mp-trust-line">
+          <i class="fa-solid fa-lock"></i>
+          {{ t().myProfile.trustText }}
+        </p>
+      </div>
     }
+
     <app-bottom-nav></app-bottom-nav>
 
+  <!-- ══════════════ PERSONAL INFO VIEW ══════════════ -->
   } @else if (activeView() === 'personal') {
-    <!-- ════════════ PERSONAL INFORMATION VIEW ════════════ -->
+
     <header class="mp-sub-header">
-      <button class="mp-back-btn" (click)="activeView.set('main'); scrollToTop()"><i class="fa-solid fa-arrow-left"></i></button>
-      <h2>Personal Information</h2>
+      <button class="mp-back-btn" (click)="activeView.set('main'); scrollToTop()">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+      <h2 class="mp-sub-title">{{ t().myProfile.personalInfo }}</h2>
       @if (!editingPersonal() && !verifyingEmail()) {
-        <button class="mp-icon-btn" (click)="openEditPersonal()"><i class="fa-solid fa-pen"></i></button>
+        <button class="mp-edit-btn" (click)="openEditPersonal()">
+          <i class="fa-solid fa-pen"></i>
+          {{ t().myProfile.editBtn }}
+        </button>
+      } @else {
+        <div style="width:64px"></div>
       }
     </header>
-    <div class="mp-sub-content">
+
+    <div class="mp-sub-body">
+
       @if (verifyingEmail()) {
-        <!-- Email OTP verification step -->
-        <div class="mp-verify-email-box">
-          <h4>{{ t().myProfile.verifyEmailTitle }}</h4>
-          <p class="mp-verify-email-sub">
-            {{ t().myProfile.verifyEmailSub }} <strong>{{ pendingEmail() }}</strong>{{ t().myProfile.verifyEmailSub2 }}
-          </p>
-          <div class="mp-form-field mp-verify-email-input">
-            <label>{{ t().myProfile.verificationCode }}</label>
-            <input type="text" [(ngModel)]="emailOtpCode" [placeholder]="t().myProfile.verificationCodePlaceholder" maxlength="6" autocomplete="one-time-code">
+        <!-- Email OTP step -->
+        <div class="mp-verify-card">
+          <div class="mp-verify-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
+          <h4 class="mp-verify-title">{{ t().myProfile.verifyEmailTitle }}</h4>
+          <p class="mp-verify-sub">{{ t().myProfile.verifyEmailSub }} <strong>{{ pendingEmail() }}</strong>{{ t().myProfile.verifyEmailSub2 }}</p>
+          <div class="mp-field">
+            <label class="mp-field-label">{{ t().myProfile.verificationCode }}</label>
+            <input class="mp-field-input" type="text" [(ngModel)]="emailOtpCode" [placeholder]="t().myProfile.verificationCodePlaceholder" maxlength="6" autocomplete="one-time-code">
           </div>
           @if (emailOtpError()) {
-            <div class="mp-error-alert">
-              <i class="fa-solid fa-circle-exclamation"></i>
-              <span>{{ emailOtpError() }}</span>
-            </div>
+            <div class="mp-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ emailOtpError() }}</div>
           }
           <div class="mp-form-actions">
-            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEmailVerification()" [disabled]="emailOtpSaving()">{{ t().myProfile.cancelBtn }}</button>
-            <button type="button" class="mp-btn mp-btn-ghost" (click)="resendEmailOtp()" [disabled]="emailOtpResending() || emailOtpSaving()">
-              @if (emailOtpResending()) { <span class="mp-btn-spinner"></span> } {{ t().myProfile.resendCodeBtn }}
+            <button class="mp-btn-ghost" (click)="cancelEmailVerification()" [disabled]="emailOtpSaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button class="mp-btn-outline-primary" (click)="resendEmailOtp()" [disabled]="emailOtpResending() || emailOtpSaving()">
+              @if (emailOtpResending()) { <span class="mp-btn-spinner"></span> }
+              {{ t().myProfile.resendCodeBtn }}
             </button>
-            <button type="button" class="mp-btn mp-btn-primary" (click)="verifyEmailOtp()" [disabled]="emailOtpSaving() || !emailOtpCode.trim()">
-              @if (emailOtpSaving()) { <span class="mp-btn-spinner"></span> } {{ t().myProfile.verifyBtn }}
+            <button class="mp-btn-primary" (click)="verifyEmailOtp()" [disabled]="emailOtpSaving() || !emailOtpCode.trim()">
+              @if (emailOtpSaving()) { <span class="mp-btn-spinner"></span> }
+              {{ t().myProfile.verifyBtn }}
             </button>
           </div>
         </div>
+
       } @else if (editingPersonal()) {
+        <!-- Edit form -->
         <form class="mp-form" (ngSubmit)="savePersonal()">
           <div class="mp-form-row">
-            <div class="mp-form-field">
-              <label>{{ t().myProfile.firstName }}</label>
-              <input type="text" [(ngModel)]="personalForm.firstName" name="firstName" required>
+            <div class="mp-field">
+              <label class="mp-field-label">{{ t().myProfile.firstName }}</label>
+              <input class="mp-field-input" type="text" [(ngModel)]="personalForm.firstName" name="firstName" required>
             </div>
-            <div class="mp-form-field">
-              <label>{{ t().myProfile.lastName }}</label>
-              <input type="text" [(ngModel)]="personalForm.lastName" name="lastName" required>
+            <div class="mp-field">
+              <label class="mp-field-label">{{ t().myProfile.lastName }}</label>
+              <input class="mp-field-input" type="text" [(ngModel)]="personalForm.lastName" name="lastName" required>
             </div>
           </div>
-          <div class="mp-form-field">
-            <label>{{ t().myProfile.emailAddress }}</label>
-            <input type="email" [(ngModel)]="personalForm.email" name="newEmail" required>
-            <span class="mp-form-hint">{{ t().myProfile.emailHint }}</span>
+          <div class="mp-field">
+            <label class="mp-field-label">{{ t().myProfile.emailAddress }}</label>
+            <input class="mp-field-input" type="email" [(ngModel)]="personalForm.email" name="newEmail" required>
+            <span class="mp-field-hint">{{ t().myProfile.emailHint }}</span>
           </div>
-          <div class="mp-form-field">
-            <label>{{ t().myProfile.phoneNumber }}</label>
-            <input type="tel" [(ngModel)]="personalForm.phoneNumber" name="phoneNumber">
+          <div class="mp-field">
+            <label class="mp-field-label">{{ t().myProfile.phoneNumber }}</label>
+            <input class="mp-field-input" type="tel" [(ngModel)]="personalForm.phoneNumber" name="phoneNumber">
           </div>
-          <div class="mp-form-field">
-            <label>{{ t().myProfile.dateOfBirthLabel }}</label>
-            <input type="date" [(ngModel)]="personalForm.dateOfBirth" name="dob" required>
+          <div class="mp-field">
+            <label class="mp-field-label">{{ t().myProfile.dateOfBirthLabel }}</label>
+            <input class="mp-field-input" type="date" [(ngModel)]="personalForm.dateOfBirth" name="dob" required>
           </div>
-          <div class="mp-form-field">
-            <label>{{ t().myProfile.genderLabel }}</label>
-            <select [(ngModel)]="personalForm.gender" name="gender">
+          <div class="mp-field">
+            <label class="mp-field-label">{{ t().myProfile.genderLabel }}</label>
+            <select class="mp-field-input" [(ngModel)]="personalForm.gender" name="gender">
+              <option value="">{{ t().myProfile.selectGender }}</option>
               <option value="Male">{{ t().myProfile.male }}</option>
               <option value="Female">{{ t().myProfile.female }}</option>
-              <option value="Unknown">Unknown</option>
             </select>
           </div>
           @if (personalFormError()) {
-            <div class="mp-error-alert"><i class="fa-solid fa-circle-exclamation"></i> <span>{{ personalFormError() }}</span></div>
+            <div class="mp-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ personalFormError() }}</div>
           }
           <div class="mp-form-actions">
-            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEditPersonal()" [disabled]="personalSaving()">{{ t().myProfile.cancelBtn }}</button>
-            <button type="submit" class="mp-btn mp-btn-primary" [disabled]="personalSaving()">
-              @if (personalSaving()) { <span class="mp-btn-spinner"></span> } {{ t().myProfile.saveChanges }}
+            <button type="button" class="mp-btn-ghost" (click)="cancelEditPersonal()" [disabled]="personalSaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button type="submit" class="mp-btn-primary" [disabled]="personalSaving()">
+              @if (personalSaving()) { <span class="mp-btn-spinner"></span> }
+              {{ t().myProfile.saveChanges }}
             </button>
           </div>
         </form>
+
       } @else {
-        <div class="mp-info-list">
-          <div class="mp-info-list-item">
-            <span class="mp-info-list-lbl">{{ t().myProfile.fullName }}</span>
-            <span class="mp-info-list-val">{{ displayName }}</span>
+        <!-- Read view -->
+        <div class="mp-info-card">
+          <div class="mp-info-row">
+            <span class="mp-info-lbl">{{ t().myProfile.fullName }}</span>
+            <span class="mp-info-val">{{ displayName }}</span>
           </div>
-          <div class="mp-info-list-item">
-            <span class="mp-info-list-lbl">{{ t().myProfile.email }}</span>
-            <span class="mp-info-list-val">{{ userEmail }} @if (authService.currentUser?.emailConfirmed === false) { <span class="mp-badge mp-badge--warn">Unverified</span> }</span>
+          <div class="mp-info-sep"></div>
+          <div class="mp-info-row">
+            <span class="mp-info-lbl">{{ t().myProfile.email }}</span>
+            <span class="mp-info-val">
+              {{ userEmail }}
+              @if (authService.currentUser?.emailConfirmed === false) {
+                <span class="mp-pill mp-pill--warn">{{ t().myProfile.unverified }}</span>
+              }
+            </span>
           </div>
-          <div class="mp-info-list-item">
-            <span class="mp-info-list-lbl">{{ t().myProfile.phone }}</span>
-            <span class="mp-info-list-val">{{ authService.currentUser?.phoneNumber || '-' }}</span>
+          <div class="mp-info-sep"></div>
+          <div class="mp-info-row">
+            <span class="mp-info-lbl">{{ t().myProfile.phone }}</span>
+            <span class="mp-info-val">{{ authService.currentUser?.phoneNumber || '-' }}</span>
           </div>
-          <div class="mp-info-list-item">
-            <span class="mp-info-list-lbl">{{ t().myProfile.dateOfBirth }}</span>
-            <span class="mp-info-list-val">{{ formatDob(profile()?.dateOfBirth) }}</span>
+          <div class="mp-info-sep"></div>
+          <div class="mp-info-row">
+            <span class="mp-info-lbl">{{ t().myProfile.dateOfBirth }}</span>
+            <span class="mp-info-val">{{ formatDob(profile()?.dateOfBirth) }}</span>
           </div>
-          <div class="mp-info-list-item">
-            <span class="mp-info-list-lbl">{{ t().myProfile.gender }}</span>
-            <span class="mp-info-list-val">{{ profile()?.gender }}</span>
+          <div class="mp-info-sep"></div>
+          <div class="mp-info-row">
+            <span class="mp-info-lbl">{{ t().myProfile.gender }}</span>
+            <span class="mp-info-val">{{ genderLabel() }}</span>
           </div>
         </div>
       }
     </div>
 
+  <!-- ══════════════ HEALTH INFO VIEW ══════════════ -->
   } @else if (activeView() === 'health') {
-    <!-- ════════════ HEALTH INFORMATION VIEW ════════════ -->
+
     <header class="mp-sub-header">
-      <button class="mp-back-btn" (click)="activeView.set('main'); scrollToTop()"><i class="fa-solid fa-arrow-left"></i></button>
-      <h2>Health Information</h2>
+      <button class="mp-back-btn" (click)="activeView.set('main'); scrollToTop()">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+      <h2 class="mp-sub-title">{{ t().myProfile.healthInfo }}</h2>
       @if (!editingHealth()) {
-        <button class="mp-icon-btn" (click)="openEditHealth()"><i class="fa-solid fa-pen"></i></button>
+        <button class="mp-edit-btn" (click)="openEditHealth()">
+          <i class="fa-solid fa-pen"></i>
+          {{ t().myProfile.editBtn }}
+        </button>
+      } @else {
+        <div style="width:64px"></div>
       }
     </header>
-    <div class="mp-sub-content">
-      
-      <!-- Basic Health Form/View -->
-      <h3 class="mp-section-title">Basic Health</h3>
+
+    <div class="mp-sub-body">
+
+      <!-- Basic vitals -->
       @if (editingHealth()) {
         <form class="mp-form" (ngSubmit)="saveHealth()">
           <div class="mp-form-row">
-            <div class="mp-form-field">
-              <label>{{ t().myProfile.bloodType }}</label>
-              <select [(ngModel)]="healthForm.bloodType" name="bloodType">
-                <option value="Unknown">Unknown</option>
-                <option value="A+">A+</option><option value="A-">A-</option>
-                <option value="B+">B+</option><option value="B-">B-</option>
-                <option value="AB+">AB+</option><option value="AB-">AB-</option>
-                <option value="O+">O+</option><option value="O-">O-</option>
+            <div class="mp-field">
+              <label class="mp-field-label">{{ t().myProfile.bloodType }}</label>
+              <select class="mp-field-input" [(ngModel)]="healthForm.bloodType" name="bloodType">
+                <option value="">{{ t().myProfile.selectBloodType }}</option>
+                <option value="APositive">A+</option>
+                <option value="ANegative">A-</option>
+                <option value="BPositive">B+</option>
+                <option value="BNegative">B-</option>
+                <option value="ABPositive">AB+</option>
+                <option value="ABNegative">AB-</option>
+                <option value="OPositive">O+</option>
+                <option value="ONegative">O-</option>
               </select>
             </div>
-            <div class="mp-form-field">
-              <label>{{ t().myProfile.heightCm }}</label>
-              <input type="number" [(ngModel)]="healthForm.height" name="height" min="0" max="300">
+          </div>
+          <div class="mp-form-row">
+            <div class="mp-field">
+              <label class="mp-field-label">{{ t().myProfile.heightCm }}</label>
+              <input class="mp-field-input" type="number" [(ngModel)]="healthForm.height" name="height" min="0" max="300">
             </div>
-            <div class="mp-form-field">
-              <label>{{ t().myProfile.weightKg }}</label>
-              <input type="number" [(ngModel)]="healthForm.weight" name="weight" min="0" max="500">
+            <div class="mp-field">
+              <label class="mp-field-label">{{ t().myProfile.weightKg }}</label>
+              <input class="mp-field-input" type="number" [(ngModel)]="healthForm.weight" name="weight" min="0" max="500">
             </div>
           </div>
           <div class="mp-form-actions">
-            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEditHealth()" [disabled]="healthSaving()">{{ t().myProfile.cancelBtn }}</button>
-            <button type="submit" class="mp-btn mp-btn-primary" [disabled]="healthSaving()">
-              @if (healthSaving()) { <span class="mp-btn-spinner"></span> } {{ t().myProfile.saveChanges }}
+            <button type="button" class="mp-btn-ghost" (click)="cancelEditHealth()" [disabled]="healthSaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button type="submit" class="mp-btn-primary" [disabled]="healthSaving()">
+              @if (healthSaving()) { <span class="mp-btn-spinner"></span> }
+              {{ t().myProfile.saveChanges }}
             </button>
           </div>
         </form>
       } @else {
-        <div class="mp-info-list">
-          <div class="mp-info-list-item">
-            <span class="mp-info-list-lbl">{{ t().myProfile.bloodType }}</span>
-            <span class="mp-info-list-val"><span class="mp-badge mp-badge--red">{{ profile()?.bloodType || 'Unknown' }}</span></span>
+        <div class="mp-info-card">
+          <div class="mp-info-row">
+            <span class="mp-info-lbl">{{ t().myProfile.bloodType }}</span>
+            <span class="mp-info-val">
+              <span class="mp-pill mp-pill--red">{{ bloodTypeLabel() }}</span>
+            </span>
           </div>
-          <div class="mp-info-list-item">
-            <span class="mp-info-list-lbl">{{ t().myProfile.height }}</span>
-            <span class="mp-info-list-val">{{ profile()?.height || '-' }} cm</span>
+          <div class="mp-info-sep"></div>
+          <div class="mp-info-row">
+            <span class="mp-info-lbl">{{ t().myProfile.height }}</span>
+            <span class="mp-info-val">{{ profile()?.height || '-' }} {{ profile()?.height ? 'cm' : '' }}</span>
           </div>
-          <div class="mp-info-list-item">
-            <span class="mp-info-list-lbl">{{ t().myProfile.weight }}</span>
-            <span class="mp-info-list-val">{{ profile()?.weight || '-' }} kg</span>
+          <div class="mp-info-sep"></div>
+          <div class="mp-info-row">
+            <span class="mp-info-lbl">{{ t().myProfile.weight }}</span>
+            <span class="mp-info-val">{{ profile()?.weight || '-' }} {{ profile()?.weight ? 'kg' : '' }}</span>
           </div>
         </div>
       }
 
-      <hr class="mp-divider">
-
-      <!-- Allergies Section -->
+      <!-- Allergies -->
       <div class="mp-section-header">
-        <h3 class="mp-section-title">Allergies</h3>
+        <h3 class="mp-section-label">{{ t().myProfile.allergies }}</h3>
         @if (!addingAllergy()) {
-          <button class="mp-btn-sm mp-btn-outline" (click)="addingAllergy.set(true)">
-            <i class="fa-solid fa-plus"></i> Add
+          <button class="mp-add-btn" (click)="addingAllergy.set(true)">
+            <i class="fa-solid fa-plus"></i> {{ t().common.add }}
           </button>
         }
       </div>
+
       @if (addingAllergy()) {
-        <form class="mp-form mp-inline-form" (ngSubmit)="saveAllergy()">
-          <div class="mp-form-field">
-            <label>{{ t().myProfile.allergyName }}</label>
-            <input type="text" [(ngModel)]="newAllergy.name" name="allergyName" required>
+        <form class="mp-form mp-form--compact" (ngSubmit)="saveAllergy()">
+          <div class="mp-field">
+            <label class="mp-field-label">{{ t().myProfile.allergyName }}</label>
+            <input class="mp-field-input" type="text" [(ngModel)]="newAllergy.name" name="allergyName" required>
           </div>
-          <div class="mp-form-row">
-            <div class="mp-form-field">
-              <label>{{ t().myProfile.severity }}</label>
-              <select [(ngModel)]="newAllergy.severity" name="allergySeverity">
-                <option value="Mild">{{ t().myProfile.mild }}</option>
-                <option value="Moderate">{{ t().myProfile.moderate }}</option>
-                <option value="Severe">{{ t().myProfile.severe }}</option>
-              </select>
-            </div>
+          <div class="mp-field">
+            <label class="mp-field-label">{{ t().myProfile.severity }}</label>
+            <select class="mp-field-input" [(ngModel)]="newAllergy.severity" name="allergySeverity">
+              <option value="Mild">{{ t().myProfile.mild }}</option>
+              <option value="Moderate">{{ t().myProfile.moderate }}</option>
+              <option value="Severe">{{ t().myProfile.severe }}</option>
+            </select>
           </div>
           <div class="mp-form-actions">
-            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelAddAllergy()" [disabled]="allergySaving()">{{ t().myProfile.cancelBtn }}</button>
-            <button type="submit" class="mp-btn mp-btn-primary" [disabled]="allergySaving() || !newAllergy.name.trim()">
-              @if (allergySaving()) { <span class="mp-btn-spinner"></span> } {{ t().myProfile.saveChanges }}
+            <button type="button" class="mp-btn-ghost" (click)="cancelAddAllergy()" [disabled]="allergySaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button type="submit" class="mp-btn-primary" [disabled]="allergySaving() || !newAllergy.name.trim()">
+              @if (allergySaving()) { <span class="mp-btn-spinner"></span> }
+              {{ t().myProfile.saveChanges }}
             </button>
           </div>
         </form>
       }
-      <div class="mp-card-list">
+
+      <div class="mp-item-list">
         @for (a of profile()?.allergies; track a.id) {
-          <div class="mp-card-item">
-            <div class="mp-card-item-icon mp-ico-orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <div class="mp-card-item-content">
-              <h4>{{ a.name }}</h4>
+          <div class="mp-item-row">
+            <div class="mp-item-icon" style="background:#FFF3ED; color:#EA580C;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="mp-item-text">
+              <span class="mp-item-title">{{ a.name }}</span>
             </div>
-            <div class="mp-card-item-badge">
-              <span class="mp-badge" [class.mp-badge--warn]="a.severity==='Moderate'" [class.mp-badge--red]="a.severity==='Severe'">{{ a.severity }}</span>
-            </div>
-            <button class="mp-icon-btn mp-btn-danger-text" (click)="deleteAllergy(a.id)"><i class="fa-solid fa-trash"></i></button>
+            <span class="mp-pill" [class.mp-pill--warn]="a.severity==='Moderate'" [class.mp-pill--red]="a.severity==='Severe'">{{ a.severity }}</span>
+            <button class="mp-icon-danger" (click)="deleteAllergy(a.id)"><i class="fa-solid fa-trash"></i></button>
           </div>
         } @empty {
-          <p class="mp-empty-text">{{ t().myProfile.noAllergies }}</p>
+          <p class="mp-empty">{{ t().myProfile.noAllergies }}</p>
         }
       </div>
 
-      <hr class="mp-divider">
-
-      <!-- Chronic Diseases Section -->
+      <!-- Chronic Diseases -->
       <div class="mp-section-header">
-        <h3 class="mp-section-title">Chronic Conditions</h3>
+        <h3 class="mp-section-label">{{ t().myProfile.chronicDiseases }}</h3>
         @if (!addingDisease()) {
-          <button class="mp-btn-sm mp-btn-outline" (click)="addingDisease.set(true)">
-            <i class="fa-solid fa-plus"></i> Add
+          <button class="mp-add-btn" (click)="addingDisease.set(true)">
+            <i class="fa-solid fa-plus"></i> {{ t().common.add }}
           </button>
         }
       </div>
+
       @if (addingDisease()) {
-        <form class="mp-form mp-inline-form" (ngSubmit)="saveDisease()">
+        <form class="mp-form mp-form--compact" (ngSubmit)="saveDisease()">
+          <div class="mp-field">
+            <label class="mp-field-label">{{ t().myProfile.conditionName }}</label>
+            <input class="mp-field-input" type="text" [(ngModel)]="newDisease.name" name="newDisease.name" required>
+          </div>
           <div class="mp-form-row">
-            <div class="mp-form-field">
-              <label>{{ t().myProfile.conditionName }}</label>
-              <input type="text" [(ngModel)]="newDisease.name" name="newDisease.name" required>
-            </div>
-            <div class="mp-form-field">
-              <label>{{ t().myProfile.status }}</label>
-              <select [(ngModel)]="newDisease.status" name="newDisease.status">
+            <div class="mp-field">
+              <label class="mp-field-label">{{ t().myProfile.status }}</label>
+              <select class="mp-field-input" [(ngModel)]="newDisease.status" name="newDisease.status">
                 <option value="Active">{{ t().myProfile.active }}</option>
                 <option value="Controlled">{{ t().myProfile.controlled }}</option>
                 <option value="Resolved">{{ t().myProfile.resolved }}</option>
               </select>
             </div>
-          </div>
-          <div class="mp-form-field">
-            <label>{{ t().myProfile.diagnosedAt }}</label>
-            <input type="text" [(ngModel)]="newDisease.diagnosedAt" name="newDisease.diagnosedAt">
+            <div class="mp-field">
+              <label class="mp-field-label">{{ t().myProfile.diagnosedAt }}</label>
+              <input class="mp-field-input" type="date" [(ngModel)]="newDisease.diagnosedAt" name="newDisease.diagnosedAt">
+            </div>
           </div>
           <div class="mp-form-actions">
-            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelAddDisease()" [disabled]="diseaseSaving()">{{ t().myProfile.cancelBtn }}</button>
-            <button type="submit" class="mp-btn mp-btn-primary" [disabled]="diseaseSaving() || !newDisease.name.trim()">
-              @if (diseaseSaving()) { <span class="mp-btn-spinner"></span> } {{ t().myProfile.saveChanges }}
+            <button type="button" class="mp-btn-ghost" (click)="cancelAddDisease()" [disabled]="diseaseSaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button type="submit" class="mp-btn-primary" [disabled]="diseaseSaving() || !newDisease.name.trim()">
+              @if (diseaseSaving()) { <span class="mp-btn-spinner"></span> }
+              {{ t().myProfile.saveChanges }}
             </button>
           </div>
         </form>
       }
-      <div class="mp-card-list">
+
+      <div class="mp-item-list">
         @for (d of profile()?.chronicDiseases; track d.id) {
-          <div class="mp-card-item">
-            <div class="mp-card-item-icon mp-ico-blue"><i class="fa-solid fa-stethoscope"></i></div>
-            <div class="mp-card-item-content">
-              <h4>{{ d.name }}</h4>
-              <p>{{ d.diagnosedAt || 'No notes' }}</p>
+          <div class="mp-item-row">
+            <div class="mp-item-icon" style="background:#EBF5FF; color:#1A7FD4;"><i class="fa-solid fa-stethoscope"></i></div>
+            <div class="mp-item-text">
+              <span class="mp-item-title">{{ d.name }}</span>
+              @if (d.diagnosedAt) {
+                <span class="mp-item-sub">{{ d.diagnosedAt }}</span>
+              }
             </div>
-            <div class="mp-card-item-badge">
-              <span class="mp-badge">{{ d.status }}</span>
-            </div>
-            <button class="mp-icon-btn mp-btn-danger-text" (click)="deleteDisease(d.id)"><i class="fa-solid fa-trash"></i></button>
+            <span class="mp-pill">{{ d.status }}</span>
+            <button class="mp-icon-danger" (click)="deleteDisease(d.id)"><i class="fa-solid fa-trash"></i></button>
           </div>
         } @empty {
-          <p class="mp-empty-text">{{ t().myProfile.noChronicDiseases }}</p>
+          <p class="mp-empty">{{ t().myProfile.noChronicDiseases }}</p>
         }
       </div>
 
     </div>
 
+  <!-- ══════════════ EMERGENCY CONTACTS VIEW ══════════════ -->
   } @else if (activeView() === 'emergency') {
-    <!-- ════════════ EMERGENCY CONTACTS VIEW ════════════ -->
+
     <header class="mp-sub-header">
-      <button class="mp-back-btn" (click)="activeView.set('main'); scrollToTop()"><i class="fa-solid fa-arrow-left"></i></button>
-      <h2>Emergency Contacts</h2>
+      <button class="mp-back-btn" (click)="activeView.set('main'); scrollToTop()">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+      <h2 class="mp-sub-title">{{ t().myProfile.emergencyContacts }}</h2>
+      @if (!addingContact()) {
+        <button class="mp-edit-btn" (click)="openAddContact()">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      } @else {
+        <div style="width:64px"></div>
+      }
     </header>
-    <div class="mp-sub-content">
+
+    <div class="mp-sub-body">
+
       @if (addingContact()) {
-        <form class="mp-form mp-inline-form" (ngSubmit)="saveContact()">
+        <form class="mp-form" (ngSubmit)="saveContact()">
           <div class="mp-form-row">
-            <div class="mp-form-field">
-              <label>{{ t().myProfile.contactName }}</label>
-              <input type="text" [(ngModel)]="newContact.name" name="newContact.name" required>
+            <div class="mp-field">
+              <label class="mp-field-label">{{ t().myProfile.contactName }}</label>
+              <input class="mp-field-input" type="text" [(ngModel)]="newContact.name" name="newContact.name" required>
             </div>
-            <div class="mp-form-field">
-              <label>{{ t().myProfile.relationship }}</label>
-              <input type="text" [(ngModel)]="newContact.relation" name="newContact.relation" required>
+            <div class="mp-field">
+              <label class="mp-field-label">{{ t().myProfile.relationship }}</label>
+              <input class="mp-field-input" type="text" [(ngModel)]="newContact.relation" name="newContact.relation" required>
             </div>
           </div>
-          <div class="mp-form-row">
-            <div class="mp-form-field">
-              <label>{{ t().myProfile.contactPhone }}</label>
-              <input type="tel" [(ngModel)]="newContact.phoneNumber" name="newContact.phoneNumber" required>
-            </div>
+          <div class="mp-field">
+            <label class="mp-field-label">{{ t().myProfile.contactPhone }}</label>
+            <input class="mp-field-input" type="tel" [(ngModel)]="newContact.phoneNumber" name="newContact.phoneNumber" required>
           </div>
           @if (contactFormError()) {
-            <div class="mp-error-alert"><i class="fa-solid fa-circle-exclamation"></i> <span>{{ contactFormError() }}</span></div>
+            <div class="mp-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ contactFormError() }}</div>
           }
           <div class="mp-form-actions">
-            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelAddContact()" [disabled]="contactSaving()">{{ t().myProfile.cancelBtn }}</button>
-            <button type="submit" class="mp-btn mp-btn-primary" [disabled]="contactSaving() || !newContact.name.trim() || !newContact.phoneNumber.trim()">
-              @if (contactSaving()) { <span class="mp-btn-spinner"></span> } {{ t().myProfile.saveChanges }}
+            <button type="button" class="mp-btn-ghost" (click)="cancelAddContact()" [disabled]="contactSaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button type="submit" class="mp-btn-primary" [disabled]="contactSaving() || !newContact.name.trim() || !newContact.phoneNumber.trim()">
+              @if (contactSaving()) { <span class="mp-btn-spinner"></span> }
+              {{ t().myProfile.saveChanges }}
             </button>
           </div>
         </form>
       }
 
       @if (contactsLoading()) {
-        <div class="mp-loading-state"><span class="mp-spinner mp-spinner--md"></span></div>
+        <div class="mp-loading-center"><span class="mp-spinner"></span></div>
       } @else {
-        <div class="mp-card-list">
+        <div class="mp-item-list">
           @for (c of contacts(); track c.id) {
-            <div class="mp-contact-card">
-              <div class="mp-contact-card-av">{{ c.name.charAt(0).toUpperCase() }}</div>
-              <div class="mp-contact-card-info">
-                <h4>{{ c.name }} <span class="mp-badge mp-badge--primary">Primary</span></h4>
-                <p>{{ c.relation }}</p>
-                <p class="mp-contact-phone"><i class="fa-solid fa-phone"></i> {{ c.phoneNumber }}</p>
+            <div class="mp-contact-row">
+              <div class="mp-contact-av">{{ c.name.charAt(0).toUpperCase() }}</div>
+              <div class="mp-contact-info">
+                <span class="mp-contact-name">{{ c.name }}</span>
+                <span class="mp-contact-rel">{{ c.relation }}</span>
+                <span class="mp-contact-phone"><i class="fa-solid fa-phone"></i> {{ c.phoneNumber }}</span>
               </div>
-              <div class="mp-contact-card-actions">
-                <a [href]="'tel:' + c.phoneNumber" class="mp-icon-btn mp-btn-success-text"><i class="fa-solid fa-phone"></i></a>
-                <button class="mp-icon-btn mp-btn-danger-text" (click)="deleteContact(c.id)"><i class="fa-solid fa-trash"></i></button>
+              <div class="mp-contact-acts">
+                <a [href]="'tel:' + c.phoneNumber" class="mp-icon-success"><i class="fa-solid fa-phone"></i></a>
+                <button class="mp-icon-danger" (click)="deleteContact(c.id)"><i class="fa-solid fa-trash"></i></button>
               </div>
             </div>
           } @empty {
-            <p class="mp-empty-text">{{ t().myProfile.noContacts }}</p>
+            <p class="mp-empty">{{ t().myProfile.noContacts }}</p>
           }
         </div>
       }
-
-      @if (!addingContact()) {
-        <button class="mp-fab-btn" (click)="addingContact.set(true)">
-          <i class="fa-solid fa-plus"></i> Add Contact
-        </button>
-      }
     </div>
-    
+
+  <!-- ══════════════ SETTINGS VIEW ══════════════ -->
   } @else if (activeView() === 'settings') {
-    <!-- ════════════ SETTINGS VIEW ════════════ -->
+
     <header class="mp-sub-header">
-      <button class="mp-back-btn" (click)="activeView.set('main'); scrollToTop()"><i class="fa-solid fa-arrow-left"></i></button>
-      <h2>Settings</h2>
-    </header>
-    <div class="mp-sub-content">
-      <div class="mp-settings-group">
-        <h3>Notifications</h3>
-        <div class="mp-setting-item">
-          <div class="mp-setting-item-text">
-            <h4>Medication Reminders</h4>
-            <p>Push notifications for doses</p>
-          </div>
-          <label class="mp-switch"><input type="checkbox" checked><span class="mp-slider round"></span></label>
-        </div>
-        <div class="mp-setting-item">
-          <div class="mp-setting-item-text">
-            <h4>Appointment Reminders</h4>
-            <p>Push notifications for visits</p>
-          </div>
-          <label class="mp-switch"><input type="checkbox" checked><span class="mp-slider round"></span></label>
-        </div>
-      </div>
-      
-      <div class="mp-settings-group">
-        <h3>Privacy & Security</h3>
-        <div class="mp-setting-item">
-          <div class="mp-setting-item-text">
-            <h4>Biometric Login</h4>
-            <p>FaceID or TouchID</p>
-          </div>
-          <label class="mp-switch"><input type="checkbox" checked><span class="mp-slider round"></span></label>
-        </div>
-        <button class="mp-setting-btn">
-            <span>Change Password</span>
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-      </div>
-      
-      <div class="mp-settings-group">
-        <h3>About</h3>
-        <button class="mp-setting-btn">
-            <span>Help & Support</span>
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-        <button class="mp-setting-btn">
-            <span>Privacy Policy</span>
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-        <button class="mp-setting-btn">
-            <span>Terms of Service</span>
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-      </div>
-      
-      <button class="mp-btn-logout" (click)="logout()">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        Logout
+      <button class="mp-back-btn" (click)="activeView.set('main'); scrollToTop()">
+        <i class="fa-solid fa-chevron-right"></i>
       </button>
+      <h2 class="mp-sub-title">{{ t().header.settings }}</h2>
+      <div style="width:64px"></div>
+    </header>
+
+    <div class="mp-sub-body">
+
+      <!-- Notifications group -->
+      <div class="mp-settings-label">{{ t().settings.notificationsGroup }}</div>
+      <div class="mp-section-card mp-section-card--tight">
+        <div class="mp-setting-row">
+          <div class="mp-setting-row-text">
+            <span class="mp-setting-title">{{ t().settings.medicationReminders }}</span>
+            <span class="mp-setting-sub">{{ t().settings.medicationRemindersSub }}</span>
+          </div>
+          <label class="mp-toggle">
+            <input type="checkbox" checked>
+            <span class="mp-toggle-track"><span class="mp-toggle-thumb"></span></span>
+          </label>
+        </div>
+        <div class="mp-row-sep"></div>
+        <div class="mp-setting-row">
+          <div class="mp-setting-row-text">
+            <span class="mp-setting-title">{{ t().settings.appointmentReminders }}</span>
+            <span class="mp-setting-sub">{{ t().settings.appointmentRemindersSub }}</span>
+          </div>
+          <label class="mp-toggle">
+            <input type="checkbox" checked>
+            <span class="mp-toggle-track"><span class="mp-toggle-thumb"></span></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Privacy group -->
+      <div class="mp-settings-label">{{ t().settings.privacyGroup }}</div>
+      <div class="mp-section-card mp-section-card--tight">
+        <div class="mp-setting-row">
+          <div class="mp-setting-row-text">
+            <span class="mp-setting-title">{{ t().settings.biometricLogin }}</span>
+            <span class="mp-setting-sub">{{ t().settings.biometricLoginSub }}</span>
+          </div>
+          <label class="mp-toggle">
+            <input type="checkbox" checked>
+            <span class="mp-toggle-track"><span class="mp-toggle-thumb"></span></span>
+          </label>
+        </div>
+        <div class="mp-row-sep"></div>
+        <button class="mp-row mp-row--tight">
+          <div class="mp-row-text">
+            <span class="mp-row-title">{{ t().settings.changePassword }}</span>
+          </div>
+          <i class="fa-solid fa-chevron-left mp-row-chevron"></i>
+        </button>
+      </div>
+
+      <!-- About group -->
+      <div class="mp-settings-label">{{ t().settings.aboutGroup }}</div>
+      <div class="mp-section-card mp-section-card--tight">
+        <button class="mp-row mp-row--tight">
+          <div class="mp-row-text">
+            <span class="mp-row-title">{{ t().settings.helpSupport }}</span>
+          </div>
+          <i class="fa-solid fa-chevron-left mp-row-chevron"></i>
+        </button>
+        <div class="mp-row-sep"></div>
+        <button class="mp-row mp-row--tight">
+          <div class="mp-row-text">
+            <span class="mp-row-title">{{ t().settings.privacyPolicy }}</span>
+          </div>
+          <i class="fa-solid fa-chevron-left mp-row-chevron"></i>
+        </button>
+        <div class="mp-row-sep"></div>
+        <button class="mp-row mp-row--tight">
+          <div class="mp-row-text">
+            <span class="mp-row-title">{{ t().settings.termsOfService }}</span>
+          </div>
+          <i class="fa-solid fa-chevron-left mp-row-chevron"></i>
+        </button>
+        <div class="mp-row-sep"></div>
+        <div class="mp-row mp-row--tight mp-row--no-hover">
+          <div class="mp-row-text">
+            <span class="mp-row-title">{{ t().settings.appVersion }}</span>
+          </div>
+          <span class="mp-row-chevron" style="color:#94A3B8;">{{ t().settings.versionNumber }}</span>
+        </div>
+      </div>
+
+      <button class="mp-logout-btn" (click)="logout()">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        <span>{{ t().settings.logoutBtn }}</span>
+      </button>
+
     </div>
   }
 </div>
 
-<!-- ════════════ PHOTO MODAL ════════════ -->
+<!-- ══════════════ PHOTO MODAL ══════════════ -->
 @if (photoModalOpen()) {
-<div class="photo-modal-overlay" (click)="closePhotoModal()">
-  <div class="photo-modal" (click)="$event.stopPropagation()">
-    <button type="button" class="photo-modal-close" (click)="closePhotoModal()">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-    <h3 class="photo-modal-title">{{ t().myProfile.photoModalTitle }}</h3>
-    <div class="photo-modal-preview">
+<div class="mp-modal-overlay" (click)="closePhotoModal()">
+  <div class="mp-modal" (click)="$event.stopPropagation()">
+    <button class="mp-modal-close" (click)="closePhotoModal()"><i class="fa-solid fa-xmark"></i></button>
+    <input #photoInput type="file" accept="image/*" style="display:none" (change)="onPhotoSelected($event)">
+    <h3 class="mp-modal-title">{{ t().myProfile.photoModalTitle }}</h3>
+    <div class="mp-modal-preview">
       @if (hasProfileImage()) {
-        <img [src]="heroAvatarUrl()" alt="profile" class="photo-modal-img" [class.photo-modal-img--busy]="photoUploading() || deletingPhoto()">
+        <img [src]="heroAvatarUrl()" alt="profile" class="mp-modal-img" [class.mp-modal-img--busy]="photoUploading() || deletingPhoto()">
       } @else {
-        <div class="photo-modal-initials" [style.background]="avatarBgColor" [class.photo-modal-img--busy]="photoUploading() || deletingPhoto()">{{ userInitials }}</div>
+        <div class="mp-modal-initials" [style.background]="avatarBgColor" [class.mp-modal-img--busy]="photoUploading() || deletingPhoto()">{{ userInitials }}</div>
       }
       @if (photoUploading() || deletingPhoto()) {
-      <div class="photo-modal-spinner"><span class="mp-spinner mp-spinner--lg"></span></div>
+        <div class="mp-modal-spinner"><span class="mp-spinner"></span></div>
       }
     </div>
-    <div class="photo-modal-actions">
-      <button type="button" class="photo-modal-btn photo-modal-btn--update"
-        (click)="triggerPhotoUpload()" [disabled]="photoUploading() || deletingPhoto()">
+    <div class="mp-modal-actions">
+      <button class="mp-modal-btn mp-modal-btn--primary" (click)="triggerPhotoUpload()" [disabled]="photoUploading() || deletingPhoto()">
         <i class="fa-solid fa-camera"></i>
         {{ photoUploading() ? t().myProfile.photoUploadingBtn : t().myProfile.photoUpdateBtn }}
       </button>
       @if (profileCache.profileImageUrl()) {
-      <button type="button" class="photo-modal-btn photo-modal-btn--delete"
-        (click)="deleteProfilePhoto()" [disabled]="photoUploading() || deletingPhoto()">
-        <i class="fa-solid fa-trash"></i>
-        {{ deletingPhoto() ? t().myProfile.photoRemovingBtn : t().myProfile.photoDeleteBtn }}
-      </button>
+        <button class="mp-modal-btn mp-modal-btn--danger" (click)="deleteProfilePhoto()" [disabled]="photoUploading() || deletingPhoto()">
+          <i class="fa-solid fa-trash"></i>
+          {{ deletingPhoto() ? t().myProfile.photoRemovingBtn : t().myProfile.photoDeleteBtn }}
+        </button>
       }
     </div>
   </div>
 </div>
 }
 
-<!-- ════════════ DELETE ACCOUNT MODAL ════════════ -->
+<!-- ══════════════ DELETE ACCOUNT MODAL ══════════════ -->
 @if (deleteModalOpen()) {
-<div class="delete-modal-overlay" (click)="closeDeleteModal()">
-  <div class="delete-modal" (click)="$event.stopPropagation()">
-    <div class="delete-modal-icon">
-      <i class="fa-solid fa-triangle-exclamation"></i>
-    </div>
-    <h3 class="delete-modal-title">{{ t().myProfile.deleteAccountTitle }}</h3>
-    <p class="delete-modal-text">{{ t().myProfile.deleteAccountDesc }}</p>
-    <div class="delete-modal-actions">
-      <button type="button" class="mp-btn mp-btn-ghost" (click)="closeDeleteModal()" [disabled]="deleteLoading()">{{ t().myProfile.cancelBtn }}</button>
-      <button type="button" class="mp-btn mp-btn-danger" (click)="confirmDeleteAccount()" [disabled]="deleteLoading()">
-        @if (deleteLoading()) { <span class="mp-btn-spinner"></span> } {{ t().myProfile.deleteAccountBtn }}
+<div class="mp-modal-overlay" (click)="closeDeleteModal()">
+  <div class="mp-modal" (click)="$event.stopPropagation()">
+    <div class="mp-modal-warn-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h3 class="mp-modal-title">{{ t().myProfile.deleteAccountTitle }}</h3>
+    <p class="mp-modal-body">{{ t().myProfile.deleteAccountDesc }}</p>
+    <div class="mp-modal-actions">
+      <button class="mp-btn-ghost" (click)="closeDeleteModal()" [disabled]="deleteLoading()">{{ t().myProfile.cancelBtn }}</button>
+      <button class="mp-btn-danger" (click)="confirmDeleteAccount()" [disabled]="deleteLoading()">
+        @if (deleteLoading()) { <span class="mp-btn-spinner"></span> }
+        {{ t().myProfile.deleteAccountBtn }}
       </button>
     </div>
   </div>

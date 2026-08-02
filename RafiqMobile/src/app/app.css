@@ -160,6 +160,7 @@
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   animation: nc-pop 180ms ease-out;
+  direction: rtl;
 }
 
 /* ── Header ── */
@@ -336,7 +337,7 @@
   border-radius: var(--r-sm);
   padding: 14px 12px 14px 14px;
   background: transparent;
-  text-align: left;
+  text-align: right;
   font: inherit;
   cursor: pointer;
   transition: background-color .16s ease;
@@ -353,11 +354,11 @@
 .notification-item--unread::before {
   content: '';
   position: absolute;
-  left: 0;
+  right: 0;
   top: 10px;
   bottom: 10px;
   width: 3px;
-  border-radius: 0 2px 2px 0;
+  border-radius: 2px 0 0 2px;
   background: var(--blue);
 }
 
