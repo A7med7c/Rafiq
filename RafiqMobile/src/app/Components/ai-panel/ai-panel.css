@@ -44,12 +44,17 @@
   to   { opacity: 1; transform: translateY(-50%) scale(1); }
 }
 
-/* ── Minimized state — shows only the header bar ── */
+/* ── Minimized state — shows only the floating FAB icon ── */
 .ai-panel--minimized {
-  height: auto;
-  max-height: none;
-  border-radius: 14px;
-  width: min(320px, calc(100vw - 48px));
+  height: 64px;
+  max-height: 64px;
+  border-radius: 50%;
+  width: 64px;
+  background: transparent;
+  box-shadow: none;
+  top: auto;
+  bottom: 140px;
+  transform: none;
 }
 
 .ai-panel--minimized .ai-sidebar,
@@ -58,8 +63,46 @@
   display: none;
 }
 
-.ai-panel--minimized .ai-main-hdr {
-  border-radius: 14px;
+.ai-panel--minimized .ai-main {
+  background: transparent;
+}
+
+@keyframes floatUpDown {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.ai-fab-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  animation: floatUpDown 3s ease-in-out infinite;
+}
+
+.ai-fab-btn .ai-avatar-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+}
+
+.ai-fab-btn .ai-badge-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.ai-fab-btn .online-dot {
+  display: none;
 }
 
 /* ── Maximized state — grows right→left, stays inside the content area ── */
@@ -1122,10 +1165,19 @@
     border-radius: 20px 20px 0 0;
   }
 
+  /* Float the FAB above the bottom nav instead of hiding it */
   .ai-panel--minimized,
   .ai-panel--minimized[dir="rtl"] {
-    height: auto !important;
-    border-radius: 20px 20px 0 0;
+    display: flex !important;
+    bottom: calc(56px + env(safe-area-inset-bottom) + 12px) !important;
+    right: 16px !important;
+    left: auto !important;
+    top: auto !important;
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
 
   /* Maximized on mobile = same as full bottom-sheet */

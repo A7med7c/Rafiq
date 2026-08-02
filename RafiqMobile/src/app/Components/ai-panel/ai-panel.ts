@@ -336,6 +336,7 @@ export class AiPanel implements OnInit, OnDestroy {
   }
 
   toggleMinimize(): void {
+    if (this._drag.active || this.isDragging()) return;
     this._suppressAnimation.set(true);
     if (this.minimized()) {
       this.dragPos.set(null);

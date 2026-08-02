@@ -107,6 +107,18 @@
     <div class="ai-main">
 
       <!-- Header -->
+      @if (minimized()) {
+        <!-- FAB popup icon -->
+        <div class="ai-fab-btn" role="button" tabindex="0"
+          (click)="toggleMinimize()" 
+          (mousedown)="onHeaderPointerDown($event)" 
+          (touchstart)="onHeaderPointerDown($event)">
+          <div class="ai-avatar-badge">
+            <img src="images/RafiqLogo.png" alt="Rafiq" class="ai-badge-logo">
+            <span class="online-dot"></span>
+          </div>
+        </div>
+      } @else {
       <header class="ai-main-hdr"
         (mousedown)="onHeaderPointerDown($event)"
         (touchstart)="onHeaderPointerDown($event)">
@@ -156,6 +168,7 @@
           </button>
         </div>
       </header>
+      }
 
       <!-- Messages Area — always visible in both chat and voice modes -->
       <div class="ai-messages-wrap">
