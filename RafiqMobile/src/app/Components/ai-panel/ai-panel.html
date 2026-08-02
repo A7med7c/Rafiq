@@ -17,12 +17,16 @@
     @if (activeMode() === 'chat') {
     <aside class="ai-sidebar" [class.ai-sidebar--collapsed]="sidebarCollapsed()">
       <div class="ai-sb-header">
-        <button type="button" class="ai-sb-new" (click)="startNewConversation()"
+        <span class="ai-sb-header-title">{{ t().aiAssistant.conversationHistory }}</span>
+        <button type="button" class="ai-sb-new" (click)="startNewConversation(); closeMobileHistory()"
           [title]="t().aiAssistant.newChat">
           <i class="fa-solid fa-pen-to-square"></i>
           @if (!sidebarCollapsed()) {
             <span>{{ t().aiAssistant.newChat }}</span>
           }
+        </button>
+        <button type="button" class="ai-sb-close-mobile" (click)="toggleSidebar()" [title]="t().common.close">
+          <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
@@ -45,7 +49,7 @@
                   class="ai-sb-item"
                   [class.ai-sb-item--active]="conv.id === selectedConversationId()"
                   [class.ai-sb-item--pinned]="pinnedIds().has(conv.id)"
-                  (click)="selectConversation(conv)"
+                  (click)="selectConversation(conv); closeMobileHistory()"
                 >
                   @if (pinnedIds().has(conv.id)) {
                     <i class="fa-solid fa-thumbtack ai-sb-ico ai-sb-ico--pin"></i>
@@ -124,6 +128,11 @@
         (mousedown)="onHeaderPointerDown($event)"
         (touchstart)="onHeaderPointerDown($event)">
         <div class="ai-main-hdr-left">
+          <button type="button" class="ai-hdr-btn ai-hdr-btn--home"
+            (click)="goHome()"
+            [title]="t().aiAssistant.backToHome">
+            <i class="fa-solid fa-house"></i>
+          </button>
           <div class="ai-avatar-badge">
             <img src="/images/RafiqLogo.png" alt="Rafiq" class="ai-badge-logo">
             <span class="online-dot"></span>
@@ -149,7 +158,7 @@
               <button type="button" class="ai-hdr-btn ai-hdr-btn--sidebar"
                 (click)="toggleSidebar()"
                 [title]="sidebarCollapsed() ? t().aiAssistant.showSidebar : t().aiAssistant.hideSidebar">
-                <i class="fa-solid fa-bars"></i>
+                <i class="fa-solid fa-clock-rotate-left"></i>
               </button>
             }
             <button type="button" class="ai-hdr-btn ai-hdr-btn--maximize"

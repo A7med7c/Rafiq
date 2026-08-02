@@ -80,6 +80,11 @@ export class AiPanel implements OnInit, OnDestroy {
     panelW: 0, panelH: 0,
   };
 
+  /** On mobile, the sidebar is a full-screen "History" view — return to the chat after picking/starting a conversation there. */
+  closeMobileHistory(): void {
+    if (window.innerWidth <= 780) this.sidebarCollapsed.set(true);
+  }
+
   toggleSidebar(): void {
     this.sidebarCollapsed.update(v => !v);
   }
@@ -358,6 +363,11 @@ export class AiPanel implements OnInit, OnDestroy {
     // aiChatService.closePanel() intentionally NOT called — keeps hero icon mounted
   }
 
+  goHome(): void {
+    this.closePanel();
+    this.router.navigate(['/dashboard']);
+  }
+
   toggleMinimize(): void {
     if (this._drag.active || this.isDragging()) return;
     this._suppressAnimation.set(true);
@@ -383,6 +393,8 @@ export class AiPanel implements OnInit, OnDestroy {
   // Buttons/anchors inside the header are excluded from drag.
   // A 5px movement threshold distinguishes drag from a click.
   onHeaderPointerDown(event: MouseEvent | TouchEvent): void {
+    // The panel is a fixed full-screen surface on mobile — nothing to drag.
+    if (window.innerWidth <= 780) return;
     if ((event.target as Element).closest('button, a')) return;
     const clientX = event instanceof TouchEvent ? event.touches[0].clientX : (event as MouseEvent).clientX;
     const clientY = event instanceof TouchEvent ? event.touches[0].clientY : (event as MouseEvent).clientY;

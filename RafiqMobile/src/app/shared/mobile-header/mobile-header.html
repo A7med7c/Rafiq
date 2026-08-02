@@ -21,7 +21,7 @@
         [class.mobile-header__notif--active]="notifSvc.notificationCenterOpen()">
         <i class="fa-regular fa-bell"></i>
         @if (notifSvc.unreadCount() > 0) {
-          <span class="mobile-header__badge">{{ notifSvc.unreadCount() }}</span>
+          <span class="mobile-header__badge"></span>
         }
       </button>
     }

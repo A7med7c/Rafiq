@@ -456,6 +456,8 @@ export const en = {
     newChat: 'New chat',
     showSidebar: 'Show conversations',
     hideSidebar: 'Hide conversations',
+    conversationHistory: 'History',
+    backToHome: 'Back to Home',
     expandFullscreen: 'Open full screen',
     restoreWindow: 'Restore window',
     onlineStatus: 'Online',

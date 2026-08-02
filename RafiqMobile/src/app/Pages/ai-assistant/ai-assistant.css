@@ -243,23 +243,42 @@ a { text-decoration: none; }
 }
 
 .hdr-bell {
-  position: relative; background: none; border: 1px solid var(--border); border-radius: 50%;
-  width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: var(--text-3); font-size: 16px; transition: background .15s;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--border, #E8EEF7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary, #0EAFD7);
+  font-size: 20px;
+  cursor: pointer;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.hdr-bell:hover { background: var(--border-lt); }
+.hdr-bell:active {
+  transform: scale(0.95);
+  background: #f1f5f9;
+}
 
 .hdr-bell--active {
-  background: rgba(14, 175, 215, 0.10);
-  color: var(--blue);
-  border-color: rgba(14, 175, 215, 0.22);
+  background: #f1f5f9;
+  color: var(--primary, #0EAFD7);
 }
 
 .hdr-badge {
-  position: absolute; top: -2px; right: -2px; background: var(--red); color: var(--white);
-  font-size: 9px; font-weight: 800; width: 16px; height: 16px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; border: 2px solid var(--white);
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  background-color: var(--danger, #EF4444);
+  border-radius: 50%;
+  border: 2px solid #fff;
 }
 
 .hdr-user {

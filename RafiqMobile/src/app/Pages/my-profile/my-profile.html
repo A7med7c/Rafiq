@@ -20,7 +20,7 @@
         <button class="mp-icon-btn" (click)="notifService.openNotificationCenter()">
           <i class="fa-regular fa-bell"></i>
           @if (unreadNotifCount() > 0) {
-            <span class="mp-notif-badge">{{ unreadNotifCount() }}</span>
+            <span class="mp-notif-badge"></span>
           }
         </button>
         <button class="mp-icon-btn mp-icon-btn--danger" (click)="logout()" aria-label="Logout">

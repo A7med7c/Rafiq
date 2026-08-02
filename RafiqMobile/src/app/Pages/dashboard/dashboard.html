@@ -20,7 +20,7 @@
       (click)="notifService.toggleNotificationCenter()" [attr.aria-label]="t().header.notifications">
       <i class="fa-regular fa-bell"></i>
       @if (unreadNotifCount() > 0) {
-        <span class="dash-header__badge">{{ unreadNotifCount() }}</span>
+        <span class="dash-header__badge"></span>
       }
     </button>
   </header>

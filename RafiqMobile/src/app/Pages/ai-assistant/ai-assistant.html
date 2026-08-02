@@ -92,7 +92,7 @@
           [class.hdr-bell--active]="notifService.notificationCenterOpen()">
           <i class="fa-regular fa-bell"></i>
           @if (unreadNotifCount() > 0) {
-          <span class="hdr-badge">{{ unreadNotifCount() }}</span>
+          <span class="hdr-badge"></span>
           }
         </button>
         <div class="hdr-user" (click)="toggleDropdown()">

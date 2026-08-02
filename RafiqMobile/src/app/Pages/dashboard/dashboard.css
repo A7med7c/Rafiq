@@ -118,44 +118,35 @@ a {
 }
 
 .dash-header__bell {
-  position: relative;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--white);
-  border: 1px solid var(--border);
-  color: var(--blue);
+  background: #fff;
+  border: 1px solid var(--border, #E8EEF7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary, #0EAFD7);
+  font-size: 20px;
   cursor: pointer;
-  font-size: 18px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .02);
-  transition: transform .15s ease, background .15s ease;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .dash-header__bell:active {
-  transform: scale(.95);
-  background: #F1F5F9;
+  transform: scale(0.95);
+  background: #f1f5f9;
 }
 
 .dash-header__bell--active {
-  background: var(--blue-lt);
-  color: var(--blue);
+  background: #f1f5f9;
+  color: var(--primary, #0EAFD7);
 }
 
 .dash-header__badge {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  min-width: 16px;
-  height: 16px;
-  border-radius: 99px;
-  background: var(--red);
-  color: var(--white);
-  font-size: 9px;
-  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;

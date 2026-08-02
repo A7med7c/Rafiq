@@ -458,6 +458,8 @@ export const ar: Translations = {
     newChat: 'محادثة جديدة',
     showSidebar: 'اظهر المحادثات',
     hideSidebar: 'اخفي المحادثات',
+    conversationHistory: 'السجل',
+    backToHome: 'رجوع للرئيسية',
     expandFullscreen: 'افتح بالشاشة الكاملة',
     restoreWindow: 'استعادة النافذة',
     onlineStatus: 'متصل',

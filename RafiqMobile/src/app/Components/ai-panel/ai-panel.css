@@ -156,6 +156,17 @@
 .ai-sb-header {
   padding: 14px 10px 10px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-sb-header-title {
+  display: none;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  flex: 1;
 }
 
 .ai-sb-new {
@@ -179,6 +190,21 @@
 
 .ai-sb-new:hover { background: #0c97ba; }
 .ai-sb-new i { font-size: 14px; flex-shrink: 0; }
+
+.ai-sb-close-mobile {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: #F3F4F6;
+  color: #6B7280;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
 
 /* Sidebar Body */
 .ai-sb-body {
@@ -489,6 +515,14 @@
 
 .ai-hdr-btn--close {
   color: #9CA3AF;
+}
+
+/* Mobile-only "back to home" — hidden on the desktop widget, shown at
+   ≤780px alongside the full-screen layout. */
+.ai-hdr-btn--home {
+  display: none;
+  color: #6B7280;
+  margin-inline-end: 2px;
 }
 
 .ai-error-retry:hover {
@@ -1147,50 +1181,115 @@
   left: 24px;
 }
 
-/* ── Responsive ── */
+/* ── Responsive ──
+   Below 780px this stops being "the desktop widget, shrunk" and becomes
+   its own full-screen mobile chat surface: no floating card, no rounded
+   sheet corners, no desktop-only controls (drag-to-move, maximize). */
+@keyframes panelSlideInMobile {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 780px) {
   /* Override inline drag styles and RTL rule with !important so the
-     bottom-sheet layout always wins on small screens */
+     full-screen layout always wins on small screens */
   .ai-panel,
   .ai-panel[dir="rtl"] {
-    top: auto !important;
+    top: 0 !important;
     right: 0 !important;
     left: 0 !important;
     bottom: 0 !important;
     transform: none !important;
-    animation: none !important;
+    animation: panelSlideInMobile 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     width: 100% !important;
-    height: 90dvh;
+    height: 100dvh;
     max-height: none;
-    border-radius: 20px 20px 0 0;
+    border-radius: 0;
   }
 
   /* Float the FAB above the bottom nav instead of hiding it */
   .ai-panel--minimized,
   .ai-panel--minimized[dir="rtl"] {
     display: flex !important;
+    top: auto !important;
     bottom: calc(56px + env(safe-area-inset-bottom) + 12px) !important;
     right: 16px !important;
     left: auto !important;
-    top: auto !important;
     width: 64px !important;
     height: 64px !important;
     border-radius: 50% !important;
     background: transparent !important;
     box-shadow: none !important;
+    animation: none !important;
   }
 
-  /* Maximized on mobile = same as full bottom-sheet */
+  /* Maximized on mobile = same as the full-screen default, nothing to grow into */
   .ai-panel--maximized,
   .ai-panel--maximized[dir="rtl"] {
     width: 100% !important;
-    height: 90dvh !important;
+    height: 100dvh !important;
     max-height: none !important;
+  }
+
+  /* Conversation sidebar becomes a full-screen "History" view you switch
+     into, rather than a side column squeezed next to the chat. */
+  .ai-sidebar {
+    display: none;
+  }
+
+  .ai-sidebar:not(.ai-sidebar--collapsed) {
+    display: flex;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    animation: panelSlideInMobile 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .ai-sb-header {
+    padding: 14px 14px 10px;
+    padding-top: max(14px, env(safe-area-inset-top));
+  }
+
+  .ai-sb-header-title {
+    display: flex;
+  }
+
+  .ai-sb-new {
+    width: auto;
+  }
+
+  .ai-sb-close-mobile {
+    display: flex;
+  }
+
+  .ai-main-hdr {
+    padding-top: max(11px, env(safe-area-inset-top));
+  }
+
+  /* Home is a mobile-only affordance — the desktop widget already floats
+     over the page, so returning "home" isn't a distinct action there. */
+  .ai-hdr-btn--home {
+    display: flex;
+  }
+
+  /* Maximize is a no-op once the panel is already full-screen. */
+  .ai-hdr-btn--maximize {
+    display: none !important;
+  }
+
+  /* Let the welcome hero sit near the top instead of dead-centering in a
+     100dvh column, which reads as a mostly-empty screen. */
+  .ai-welcome {
+    justify-content: flex-start;
+    padding-top: 15dvh;
   }
 }
 
 @media (max-width: 500px) {
-  .ai-sidebar { display: none; }
+  .ai-sidebar.ai-sidebar--collapsed { display: none; }
 }
 
 
