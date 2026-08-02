@@ -229,11 +229,13 @@
 @media (max-width: 960px) {
     :host {
         min-height: 0;
+        flex-shrink: 0;
     }
 
     .auth-hero {
-        min-height: 220px;
-        padding: 8px 0 10px;
+        min-height: 0;
+        height: 100%;
+        padding: 6px 0 8px;
     }
 
     .brand{
@@ -241,42 +243,90 @@
         top:auto;
         left:auto;
         margin:0 auto;
+        flex-shrink: 0;
     }
 
     .brand img{
-        width:40px;
-        height:40px;
+        width:34px;
+        height:34px;
+    }
+
+    .brand strong{
+        font-size: 20px;
     }
 
     .hero-copy {
-        margin-top: 10px;
+        margin-top: 6px;
     }
 
     .hero-main{
-        gap:8px;
-        padding-top: 18px;
+        gap:clamp(4px, 1.4vh, 10px);
+        padding-top: clamp(8px, 2.2vh, 16px);
     }
 
     .hero-copy h1{
-        font-size:28px;
+        font-size:clamp(19px, 5.4vh, 26px);
+        line-height: 1.15;
     }
 
     .hero-copy p{
-        font-size:15px;
+        font-size:clamp(12px, 2.6vh, 14px);
     }
 
     .robot-stage {
         right: auto;
         left: auto;
         bottom: auto;
-        width: min(180px, 44vw);
-        height: min(180px, 44vw);
+        width: min(clamp(84px, 22vh, 160px), 40vw);
+        height: min(clamp(84px, 22vh, 160px), 40vw);
         transform: none;
+        margin-top: 2px;
     }
 
     .platform {
-        height: 24px;
+        height: 18px;
         bottom: 6%;
     }
 
+}
+
+/* Compact variant: register carries too many fields to spare hero real estate on mobile */
+@media (max-width: 960px) {
+    .auth-hero.compact {
+        padding: 4px 0 6px;
+    }
+
+    .auth-hero.compact .hero-main{
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        padding-top: 4px;
+    }
+
+    .auth-hero.compact .hero-copy{
+        max-width: none;
+    }
+
+    .auth-hero.compact .hero-copy h1{
+        font-size: 15px;
+        line-height: 1.2;
+    }
+
+    .auth-hero.compact .hero-copy p{
+        display: none;
+    }
+
+    .auth-hero.compact .robot-stage{
+        width: 40px;
+        height: 40px;
+        margin-top: 0;
+    }
+
+    .auth-hero.compact .platform,
+    .auth-hero.compact .pulse,
+    .auth-hero.compact .orb,
+    .auth-hero.compact .plus{
+        display: none;
+    }
 }

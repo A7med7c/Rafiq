@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { LocalizationService } from '../../../Services/localization.service';
 
 @Component({
@@ -8,6 +8,8 @@ import { LocalizationService } from '../../../Services/localization.service';
   styleUrls: ['./auth-hero.css']
 })
 export class AuthHero {
+  @Input() compact = false;
+
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 }

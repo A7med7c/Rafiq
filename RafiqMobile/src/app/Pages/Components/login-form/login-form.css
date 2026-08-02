@@ -303,22 +303,81 @@ input::placeholder{
     }
 }
 
+@media(max-width:960px){
+    :host{
+        height:100%;
+        min-height:0;
+    }
+
+    .login-container{
+        height:100%;
+        align-items:center;
+    }
+
+    .login-card{
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        height:100%;
+        max-height:100%;
+        overflow:hidden;
+        gap:0;
+    }
+
+    form{
+        gap:clamp(8px, 2.2vh, 14px);
+    }
+}
+
 @media(max-width:576px){
     .login-card{
-        padding:28px 18px;
+        padding:clamp(14px, 3vh, 22px) 18px;
+        border-radius:18px;
+    }
+
+    .card-header{
+        margin-bottom:clamp(8px, 2vh, 16px);
     }
 
     .card-header h2{
-        font-size:30px;
+        font-size:clamp(22px, 6vh, 28px);
+    }
+
+    .card-header p{
+        font-size:13px;
+        margin-top:4px;
+    }
+
+    .field{
+        gap:5px;
+    }
+
+    .field label{
+        font-size:13px;
+    }
+
+    .input-shell{
+        height:clamp(42px, 6.4vh, 48px);
+        border-radius:12px;
+    }
+
+    .forgot{
+        font-size:13px;
     }
 
     .submit-button{
-        min-height:52px;
-        font-size:16px;
+        min-height:clamp(42px, 6.4vh, 48px);
+        font-size:15px;
+        margin-top:2px;
+    }
+
+    .register{
+        margin-top:clamp(10px, 2vh, 16px);
+        font-size:13px;
     }
 
     #google-button,
     #google-button iframe{
-        min-height:52px !important;
+        min-height:clamp(40px, 6vh, 46px) !important;
     }
 }

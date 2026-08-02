@@ -290,30 +290,132 @@ input::placeholder {
     }
 }
 
-@media(max-width: 640px) {
-    .register-form {
+@media(max-width: 960px){
+    :host{
+        height: 100%;
+        min-height: 0;
+    }
+
+    .login-container{
+        height: 100%;
+        align-items: center;
+    }
+
+    .login-card{
         display: flex;
         flex-direction: column;
+        justify-content: center;
+        height: 100%;
+        max-height: 100%;
+        overflow: hidden;
     }
+}
 
-    /* Stack the input fields in the groups vertically on mobile */
-    .field-group {
-        flex-direction: column;
-        gap: 12px;
-    }
-
+@media(max-width: 640px) {
+    /* Fields stay two-up on mobile too: stacking them would blow the no-scroll budget */
     .login-card {
-        padding: 28px 18px;
+        padding: clamp(10px, 2.4vh, 18px) 14px;
+        border-radius: 16px;
+        gap: clamp(6px, 1.6vh, 10px);
+    }
+
+    .card-header {
+        margin-bottom: clamp(4px, 1vh, 8px);
     }
 
     .card-header h2 {
-        font-size: 30px;
+        font-size: clamp(17px, 4.6vh, 22px);
+    }
+
+    .card-header p {
+        font-size: 11px;
+        margin-top: 2px;
+    }
+
+    form,
+    .verification-panel {
+        gap: clamp(6px, 1.4vh, 10px);
+    }
+
+    .register-form {
+        gap: clamp(6px, 1.4vh, 10px) 10px;
+    }
+
+    .field-group {
+        gap: 10px;
+    }
+
+    .field {
+        gap: 3px;
+    }
+
+    .field label {
+        font-size: 11px;
+    }
+
+    .input-shell {
+        height: clamp(34px, 5.2vh, 42px);
+        padding: 0 10px;
+        border-radius: 10px;
+    }
+
+    input,
+    select {
+        font-size: 13px;
+        min-width: 0;
+        text-overflow: ellipsis;
+    }
+
+    .icon-button {
+        width: 26px;
+        height: 26px;
+    }
+
+    .eye-icon {
+        width: 17px;
+        height: 17px;
+    }
+
+    .field-error {
+        font-size: 10px;
+    }
+
+    .profile-image-field {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .profile-image-picker {
+        gap: 10px;
+    }
+
+    .profile-image-preview {
+        width: 34px;
+        height: 34px;
+    }
+
+    input[type="file"]::file-selector-button {
+        height: 28px;
+        padding: 0 10px;
+        font-size: 11px;
+        margin-right: 8px;
+    }
+
+    input[type="file"] {
+        font-size: 11px;
     }
 
     .submit-button,
     .secondary-button {
-        height: 52px;
-        font-size: 16px;
+        height: clamp(36px, 5.6vh, 44px);
+        font-size: 14px;
+        margin-top: 0;
+    }
+
+    .register {
+        margin-top: clamp(6px, 1.2vh, 10px);
+        font-size: 12px;
     }
 }
 /* Styling the text next to the button (e.g., "No file chosen") */
