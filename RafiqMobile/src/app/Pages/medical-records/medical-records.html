@@ -1,9 +1,7 @@
 <app-mobile-header
   [title]="t().sidebar.medicalRecords"
   [showNotifications]="true"
-  [showAiButton]="true"
-  (notificationsClicked)="notificationSvc.toggleNotificationCenter()"
-  (aiClicked)="aiChatService.openPanel()">
+  (notificationsClicked)="notificationSvc.toggleNotificationCenter()">
 </app-mobile-header>
 
 <div class="m-page">

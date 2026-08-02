@@ -4,6 +4,7 @@
   <div class="ai-panel"
     [attr.dir]="l10n.dir()"
     [class.ai-panel--minimized]="minimized()"
+    [class.ai-panel--hidden]="minimized() && !isHomePage()"
     [class.ai-panel--maximized]="maximized()"
     [class.ai-panel--dragging]="isDragging()"
     [style.animation]="_suppressAnimation() ? 'none' : null"
@@ -114,7 +115,7 @@
           (mousedown)="onHeaderPointerDown($event)" 
           (touchstart)="onHeaderPointerDown($event)">
           <div class="ai-avatar-badge">
-            <img src="images/RafiqLogo.png" alt="Rafiq" class="ai-badge-logo">
+            <img src="/images/RafiqLogo.png" alt="Rafiq" class="ai-badge-logo">
             <span class="online-dot"></span>
           </div>
         </div>
@@ -124,7 +125,7 @@
         (touchstart)="onHeaderPointerDown($event)">
         <div class="ai-main-hdr-left">
           <div class="ai-avatar-badge">
-            <img src="images/RafiqLogo.png" alt="Rafiq" class="ai-badge-logo">
+            <img src="/images/RafiqLogo.png" alt="Rafiq" class="ai-badge-logo">
             <span class="online-dot"></span>
           </div>
           <div class="ai-hdr-info">
@@ -186,7 +187,7 @@
           <!-- Welcome / Idle State -->
           <div class="ai-welcome">
             <div class="ai-welcome-icon">
-              <img src="images/RafiqLogo.png" alt="Rafiq" class="ai-welcome-logo">
+              <img src="/images/RafiqLogo.png" alt="Rafiq" class="ai-welcome-logo">
             </div>
             <h2 class="ai-welcome-title">{{ t().aiAssistant.askRafiqAI }}</h2>
             <p class="ai-welcome-sub">{{ t().aiAssistant.aiEmptyText }}</p>
@@ -217,7 +218,7 @@
                 </div>
               } @else {
                 <div class="ai-msg ai-msg--ai">
-                  <div class="ai-msg-avatar"><img src="images/RafiqLogo.png" alt="Rafiq" class="ai-msg-logo"></div>
+                  <div class="ai-msg-avatar"><img src="/images/RafiqLogo.png" alt="Rafiq" class="ai-msg-logo"></div>
                   <div class="ai-msg-col">
                     @if (msg.status === 'Pending' || msg.status === 'Processing') {
                       <div class="ai-bubble ai-bubble--ai ai-typing">
@@ -261,7 +262,7 @@
             }
             @if (sending()) {
               <div class="ai-msg ai-msg--ai">
-                <div class="ai-msg-avatar"><img src="images/RafiqLogo.png" alt="Rafiq" class="ai-msg-logo"></div>
+                <div class="ai-msg-avatar"><img src="/images/RafiqLogo.png" alt="Rafiq" class="ai-msg-logo"></div>
                 <div class="ai-msg-col">
                   <div class="ai-bubble ai-bubble--ai ai-typing">
                     <span class="ai-dot"></span>

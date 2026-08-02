@@ -36,51 +36,50 @@ interface UpdateProfileBody {
 @Component({
   selector: 'app-my-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, BottomNav],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, BottomNav, MobileHeader],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',
 })
 export class MyProfile implements OnInit {
-  protected readonly authService = inject(AuthService);
-  protected readonly profileCache = inject(ProfileCacheService);
-  private readonly healthSvc = inject(HealthProfileService);
-  private readonly emergencySvc = inject(EmergencyContactService);
-  protected readonly notifService = inject(NotificationService);
-  protected readonly l10n = inject(LocalizationService);
-  readonly aiChatService = inject(AiChatService);
-  private readonly reviewTracking = inject(ReviewTrackingService);
-  protected readonly t = this.l10n.t;
-  private readonly router = inject(Router);
-  private readonly elRef = inject(ElementRef);
-  private readonly http = inject(HttpClient);
+  protected readonly authService      = inject(AuthService);
+  protected readonly profileCache     = inject(ProfileCacheService);
+  private readonly healthSvc          = inject(HealthProfileService);
+  private readonly emergencySvc       = inject(EmergencyContactService);
+  protected readonly notifService     = inject(NotificationService);
+  protected readonly l10n             = inject(LocalizationService);
+  readonly aiChatService              = inject(AiChatService);
+  private readonly reviewTracking     = inject(ReviewTrackingService);
+  protected readonly t                = this.l10n.t;
+  private readonly router             = inject(Router);
+  private readonly elRef              = inject(ElementRef);
+  private readonly http               = inject(HttpClient);
 
   // ── Sidebar / Header state ────────────────────────────────────────────────
-  readonly sidebarCollapsed = signal(false);
+  readonly sidebarCollapsed  = signal(false);
   readonly mobileSidebarOpen = signal(false);
-  readonly dropdownOpen = signal(false);
-  readonly unreadNotifCount = this.notifService.unreadCount;
+  readonly dropdownOpen      = signal(false);
+  readonly unreadNotifCount  = this.notifService.unreadCount;
 
-  // ── Main Data Signals ──
-  readonly activeView = signal<'main' | 'personal' | 'health' | 'emergency' | 'settings'>('main');
-  readonly profile = signal<PatientProfileResponse | null>(null);
+  // ── Profile data ─────────────────────────────────────────────────────────
+  readonly profile        = signal<PatientProfileResponse | null>(null);
   readonly profileLoading = signal(true);
-  readonly profileId = signal<string | null>(null);
+  readonly profileId      = signal<string | null>(null);
 
   // ── Emergency contacts ────────────────────────────────────────────────────
-  readonly contacts = signal<EmergencyContactResponse[]>([]);
+  readonly contacts        = signal<EmergencyContactResponse[]>([]);
   readonly contactsLoading = signal(true);
 
   // ── Edit: Personal Info ───────────────────────────────────────────────────
-  readonly editingPersonal = signal(false);
-  readonly verifyingEmail = signal(false);
-  readonly pendingEmail = signal('');
-  readonly emailOtpSaving = signal(false);
+  readonly editingPersonal   = signal(false);
+  readonly verifyingEmail    = signal(false);
+  readonly pendingEmail      = signal('');
+  readonly emailOtpSaving    = signal(false);
   readonly emailOtpResending = signal(false);
   personalForm = { firstName: '', lastName: '', dateOfBirth: '', gender: '', phoneNumber: '', email: '' };
   emailOtpCode = '';
   readonly personalSaving = signal(false);
   readonly personalFormError = signal<string | null>(null);
-  readonly emailOtpError = signal<string | null>(null);
+  readonly emailOtpError     = signal<string | null>(null);
 
   // ── Edit: Health Info ─────────────────────────────────────────────────────
   readonly editingHealth = signal(false);
@@ -88,30 +87,30 @@ export class MyProfile implements OnInit {
   readonly healthSaving = signal(false);
 
   // ── Allergies ────────────────────────────────────────────────────────────
-  readonly addingAllergy = signal(false);
+  readonly addingAllergy    = signal(false);
   newAllergy = { name: '', severity: 'Mild' };
-  readonly allergySaving = signal(false);
+  readonly allergySaving    = signal(false);
 
   // ── Chronic Diseases ──────────────────────────────────────────────────────
-  readonly addingDisease = signal(false);
+  readonly addingDisease    = signal(false);
   newDisease = { name: '', status: 'Active', diagnosedAt: '' };
-  readonly diseaseSaving = signal(false);
+  readonly diseaseSaving    = signal(false);
 
   // ── Emergency Contact form ────────────────────────────────────────────────
-  readonly addingContact = signal(false);
+  readonly addingContact    = signal(false);
   newContact = { name: '', phoneNumber: '', relation: '' };
-  readonly contactSaving = signal(false);
+  readonly contactSaving    = signal(false);
   readonly contactFormError = signal<string | null>(null);
 
   // ── Delete account modal ──────────────────────────────────────────────────
-  readonly deleteModalOpen = signal(false);
-  readonly deleteLoading = signal(false);
+  readonly deleteModalOpen  = signal(false);
+  readonly deleteLoading    = signal(false);
 
   // ── Profile photo upload ──────────────────────────────────────────────────
   readonly photoInput = viewChild<ElementRef<HTMLInputElement>>('photoInput');
-  readonly photoUploading = signal(false);
-  readonly photoModalOpen = signal(false);
-  readonly deletingPhoto = signal(false);
+  readonly photoUploading  = signal(false);
+  readonly photoModalOpen  = signal(false);
+  readonly deletingPhoto   = signal(false);
 
   readonly heroAvatarUrl = computed(() => {
     const profileImageUrl = this.profile()?.profileImageUrl;
@@ -257,12 +256,12 @@ export class MyProfile implements OnInit {
     const p = this.profile();
     const u = this.authService.currentUser;
     this.personalForm = {
-      firstName: u?.firstName ?? '',
-      lastName: u?.lastName ?? '',
+      firstName:   u?.firstName ?? '',
+      lastName:    u?.lastName ?? '',
       dateOfBirth: p?.dateOfBirth ? p.dateOfBirth.slice(0, 10) : '',
-      gender: p?.gender ?? '',
+      gender:      p?.gender ?? '',
       phoneNumber: u?.phoneNumber ?? '',
-      email: u?.email ?? '',
+      email:       u?.email ?? '',
     };
     this.editingPersonal.set(true);
   }
@@ -284,18 +283,18 @@ export class MyProfile implements OnInit {
     const emailChanged = this.personalForm.email.trim().toLowerCase() !== currentEmail.toLowerCase();
     const phoneOrNameChanged =
       this.personalForm.firstName.trim() !== (u?.firstName ?? '') ||
-      this.personalForm.lastName.trim() !== (u?.lastName ?? '') ||
+      this.personalForm.lastName.trim()  !== (u?.lastName ?? '')  ||
       this.personalForm.phoneNumber.trim() !== currentPhone;
 
     const profileBody: UpdateProfileBody = {
       patientProfileId: id,
-      firstName: this.personalForm.firstName,
-      lastName: this.personalForm.lastName,
-      dateOfBirth: this.personalForm.dateOfBirth,
-      gender: this.personalForm.gender,
-      bloodType: this.profile()?.bloodType ?? null,
-      height: this.profile()?.height ?? null,
-      weight: this.profile()?.weight ?? null,
+      firstName:    this.personalForm.firstName,
+      lastName:     this.personalForm.lastName,
+      dateOfBirth:  this.personalForm.dateOfBirth,
+      gender:       this.personalForm.gender,
+      bloodType:    this.profile()?.bloodType ?? null,
+      height:       this.profile()?.height ?? null,
+      weight:       this.profile()?.weight ?? null,
       relationship: null,
     };
 
@@ -303,17 +302,17 @@ export class MyProfile implements OnInit {
     // then update patient profile. Otherwise just update patient profile directly.
     const base$ = phoneOrNameChanged
       ? this.authService.updateAccount(
-        this.personalForm.firstName,
-        this.personalForm.lastName,
-        this.personalForm.phoneNumber
-      ).pipe(
-        switchMap(() => this.http.put<ApiResponse<PatientProfileResponse>>(
-          `${environment.apiUrl}/patient-profiles/${id}`, profileBody
-        ))
-      )
+          this.personalForm.firstName,
+          this.personalForm.lastName,
+          this.personalForm.phoneNumber
+        ).pipe(
+          switchMap(() => this.http.put<ApiResponse<PatientProfileResponse>>(
+            `${environment.apiUrl}/patient-profiles/${id}`, profileBody
+          ))
+        )
       : this.http.put<ApiResponse<PatientProfileResponse>>(
-        `${environment.apiUrl}/patient-profiles/${id}`, profileBody
-      );
+          `${environment.apiUrl}/patient-profiles/${id}`, profileBody
+        );
 
     base$.subscribe({
       next: (res) => {
@@ -418,8 +417,8 @@ export class MyProfile implements OnInit {
     const p = this.profile();
     this.healthForm = {
       bloodType: p?.bloodType ?? '',
-      height: p?.height ?? null,
-      weight: p?.weight ?? null,
+      height:    p?.height ?? null,
+      weight:    p?.weight ?? null,
     };
     this.editingHealth.set(true);
   }
@@ -435,13 +434,13 @@ export class MyProfile implements OnInit {
     const u = this.authService.currentUser;
     const body: UpdateProfileBody = {
       patientProfileId: id,
-      firstName: u?.firstName ?? '',
-      lastName: u?.lastName ?? '',
+      firstName:  u?.firstName ?? '',
+      lastName:   u?.lastName ?? '',
       dateOfBirth: p?.dateOfBirth ? p.dateOfBirth.slice(0, 10) : '',
-      gender: p?.gender ?? '',
-      bloodType: this.healthForm.bloodType || null,
-      height: this.healthForm.height,
-      weight: this.healthForm.weight,
+      gender:     p?.gender ?? '',
+      bloodType:  this.healthForm.bloodType || null,
+      height:     this.healthForm.height,
+      weight:     this.healthForm.weight,
       relationship: null,
     };
 
@@ -491,7 +490,7 @@ export class MyProfile implements OnInit {
       next: () => {
         this.profile.update(p => p ? { ...p, allergies: (p.allergies ?? []).filter(a => a.id !== allergyId) } : p);
       },
-      error: () => { }
+      error: () => {}
     });
   }
 
@@ -534,7 +533,7 @@ export class MyProfile implements OnInit {
       next: () => {
         this.profile.update(p => p ? { ...p, chronicDiseases: (p.chronicDiseases ?? []).filter(d => d.id !== diseaseId) } : p);
       },
-      error: () => { }
+      error: () => {}
     });
   }
 
@@ -582,7 +581,7 @@ export class MyProfile implements OnInit {
       next: () => {
         this.contacts.update(list => list.filter(c => c.id !== contactId));
       },
-      error: () => { }
+      error: () => {}
     });
   }
 
@@ -681,7 +680,7 @@ export class MyProfile implements OnInit {
   // ── Severity / Status labels ──────────────────────────────────────────────
   severityLabel(s: string): string {
     const normalized = s?.toLowerCase();
-    if (normalized === 'mild' || s === '1') return this.t().myProfile.mild;
+    if (normalized === 'mild'   || s === '1') return this.t().myProfile.mild;
     if (normalized === 'moderate' || s === '2') return this.t().myProfile.moderate;
     if (normalized === 'severe' || s === '3') return this.t().myProfile.severe;
     return s;
@@ -689,51 +688,36 @@ export class MyProfile implements OnInit {
 
   severityClass(s: string): string {
     const n = s?.toLowerCase();
-    if (n === 'mild' || s === '1') return 'tag-mild';
+    if (n === 'mild'     || s === '1') return 'tag-mild';
     if (n === 'moderate' || s === '2') return 'tag-moderate';
     return 'tag-severe';
   }
 
   severityDotClass(s: string): string {
     const n = s?.toLowerCase();
-    if (n === 'mild' || s === '1') return 'dot-mild';
+    if (n === 'mild'     || s === '1') return 'dot-mild';
     if (n === 'moderate' || s === '2') return 'dot-moderate';
     return 'dot-severe';
   }
 
-  get diseaseStatusLabel(): (status: number) => string {
-    return (status: number) => {
-      switch (status) {
-        case 0: return this.t().myProfile.active;
-        case 1: return this.t().myProfile.controlled;
-        case 2: return this.t().myProfile.resolved;
-        default: return this.t().myProfile.active;
-      }
-    };
-  }
-
-  scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   statusLabel(s: string): string {
     const normalized = s?.toLowerCase();
-    if (normalized === 'active' || s === '1') return this.t().myProfile.active;
+    if (normalized === 'active'     || s === '1') return this.t().myProfile.active;
     if (normalized === 'controlled' || s === '2') return this.t().myProfile.controlled;
-    if (normalized === 'resolved' || s === '3') return this.t().myProfile.resolved;
+    if (normalized === 'resolved'   || s === '3') return this.t().myProfile.resolved;
     return s;
   }
 
   statusClass(s: string): string {
     const n = s?.toLowerCase();
-    if (n === 'active' || s === '1') return 'tag-active';
+    if (n === 'active'     || s === '1') return 'tag-active';
     if (n === 'controlled' || s === '2') return 'tag-controlled';
     return 'tag-resolved';
   }
 
   statusDotClass(s: string): string {
     const n = s?.toLowerCase();
-    if (n === 'active' || s === '1') return 'dot-active';
+    if (n === 'active'     || s === '1') return 'dot-active';
     if (n === 'controlled' || s === '2') return 'dot-controlled';
     return 'dot-resolved';
   }

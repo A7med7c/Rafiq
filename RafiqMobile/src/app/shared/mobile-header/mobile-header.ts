@@ -12,11 +12,11 @@ import { LocalizationService } from '../../Services/localization.service';
 export class MobileHeader {
   @Input() title = '';
   @Input() showNotifications = true;
-  @Input() showAiButton = true;
+
   @Input() showBack = false;
 
   @Output() notificationsClicked = new EventEmitter<void>();
-  @Output() aiClicked = new EventEmitter<void>();
+
   @Output() backClicked = new EventEmitter<void>();
 
   protected readonly notifSvc = inject(NotificationService);

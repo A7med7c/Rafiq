@@ -6,7 +6,7 @@
       </button>
     } @else {
       <div class="mobile-header__logo">
-        <img src="images/RafiqLogo.png" alt="Rafiq" class="mobile-header__logo-img">
+        <img src="/images/RafiqLogo.png" alt="Rafiq" class="mobile-header__logo-img">
       </div>
     }
   </div>
@@ -14,11 +14,7 @@
   <h1 class="mobile-header__title">{{ title }}</h1>
 
   <div class="mobile-header__right">
-    @if (showAiButton) {
-      <button type="button" class="mobile-header__btn" (click)="aiClicked.emit()" [attr.aria-label]="t().sidebar.aiAssistant">
-        <i class="fa-solid fa-wand-magic-sparkles"></i>
-      </button>
-    }
+
     @if (showNotifications) {
       <button type="button" class="mobile-header__btn mobile-header__notif" (click)="notificationsClicked.emit()"
         [attr.aria-label]="t().header.notifications"

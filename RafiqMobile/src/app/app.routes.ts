@@ -18,6 +18,10 @@ import { OnboardingEmergency } from './Pages/onboarding/onboarding-emergency/onb
 import { authGuard } from './Guards/auth.guard';
 import { guestGuard } from './Guards/guest.guard';
 import { FamilyProfiles } from './Pages/family-profiles/family-profiles';
+import { FamilyMemberDetail } from './Pages/family-member-detail/family-member-detail';
+import { FamilyHealthInformation } from './Pages/family-health-information/family-health-information';
+import { FamilyEmergencyContacts } from './Pages/family-emergency-contacts/family-emergency-contacts';
+import { FamilyPermissions } from './Pages/family-permissions/family-permissions';
 import { adminGuard } from './Guards/admin.guard';
 import { MyProfile } from './Pages/my-profile/my-profile';
 export const routes: Routes = [
@@ -39,6 +43,10 @@ export const routes: Routes = [
   { path: 'forgot-password', component: ForgotPassword, canActivate: [guestGuard] },
   { path: 'verify-account', component: VerifyAccount, canActivate: [guestGuard] },
   { path: 'family-profiles', component: FamilyProfiles, canActivate: [authGuard] },
+  { path: 'family-profiles/:id', component: FamilyMemberDetail, canActivate: [authGuard] },
+  { path: 'family-profiles/:id/health-information', component: FamilyHealthInformation, canActivate: [authGuard] },
+  { path: 'family-profiles/:id/emergency-contacts', component: FamilyEmergencyContacts, canActivate: [authGuard] },
+  { path: 'family-profiles/:id/permissions', component: FamilyPermissions, canActivate: [authGuard] },
   { path: 'my-profile', component: MyProfile, canActivate: [authGuard] },
   { path: 'onboarding/welcome', component: OnboardingWelcome, canActivate: [authGuard] },
   { path: 'onboarding/step1', component: OnboardingStep1, canActivate: [authGuard] },

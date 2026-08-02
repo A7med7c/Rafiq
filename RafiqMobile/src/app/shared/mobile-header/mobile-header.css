@@ -16,7 +16,7 @@
 }
 
 .mobile-header__left {
-  flex: 0 0 36px;
+  flex: 0 0 44px;
   display: flex;
   align-items: center;
 }
@@ -36,8 +36,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--r-xs);
   background: var(--border-lt);
   border: 1px solid var(--border);
@@ -70,20 +70,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r-xs);
-  background: var(--border-lt);
-  border: none;
-  color: var(--text-3);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1px solid var(--border);
+  color: var(--blue);
   cursor: pointer;
-  font-size: 16px;
-  transition: background .15s ease, color .15s ease;
+  font-size: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .02);
+  transition: transform .15s ease, background .15s ease;
 }
 
 .mobile-header__btn:active {
-  background: var(--blue-lt);
-  color: var(--blue);
+  transform: scale(.95);
+  background: #F1F5F9;
 }
 
 .mobile-header__notif--active {

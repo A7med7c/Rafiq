@@ -149,7 +149,7 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 @Component({
   selector: 'app-medical-records',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent, AssistantAnchorDirective, FamilyProfileBannerComponent, BottomNav, MobileHeader],
+  imports: [CommonModule, RecordsContentComponent, AssistantAnchorDirective, FamilyProfileBannerComponent, BottomNav, MobileHeader],
   templateUrl: './medical-records.html',
   styleUrl: './medical-records.css',
 })
@@ -158,7 +158,7 @@ export class MedicalRecords implements OnInit {
   protected readonly aiChatService = inject(AiChatService);
   protected readonly t = this.l10n.t;
 
-  private readonly authService    = inject(AuthService);
+  private readonly authService = inject(AuthService);
   protected readonly profileCache = inject(ProfileCacheService);
   private readonly recordsService = inject(MedicalRecordsService);
   private readonly reminderSvc = inject(MedicationRemindersService);

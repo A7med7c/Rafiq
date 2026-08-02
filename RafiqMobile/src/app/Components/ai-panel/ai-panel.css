@@ -1192,3 +1192,8 @@
 @media (max-width: 500px) {
   .ai-sidebar { display: none; }
 }
+
+
+/* Hidden state for non-home pages */
+.ai-panel--hidden { display: none !important; }
+

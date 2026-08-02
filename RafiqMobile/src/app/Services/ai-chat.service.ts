@@ -27,6 +27,7 @@ export class AiChatService {
   // switches to voice mode. Using a counter (not boolean) ensures the effect
   // fires even when the panel is already open.
   readonly voiceModeRequest = signal(0);
+  readonly chatModeRequest = signal(0);
 
   // ── Session-scoped image cache ───────────────────────────
   // Key: `${conversationId}:${sequenceNumber}` → data-URL
@@ -76,6 +77,7 @@ export class AiChatService {
 
   openPanel(): void {
     this.isPanelOpen.set(true);
+    this.chatModeRequest.update(v => v + 1);
   }
 
   openPanelInVoiceMode(): void {

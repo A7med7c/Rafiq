@@ -79,7 +79,7 @@
     @if (upcomingAppointments().length === 0 && previousAppointments().length === 0 && !loading()) {
       <!-- ── Empty State ── -->
       <div class="empty-state">
-        <img src="images/calender.png" alt="No Appointments" class="empty-ill">
+        <img src="/images/calender.png" alt="No Appointments" class="empty-ill">
         <h3 class="empty-title">No Appointments Yet</h3>
         <p class="empty-desc">Your upcoming appointments will appear here once they are added by your healthcare provider or synced with your medical records.</p>
         <button type="button" class="btn-primary" (click)="loadAppointments()">Refresh</button>

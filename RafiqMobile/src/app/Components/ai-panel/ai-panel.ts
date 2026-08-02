@@ -1,6 +1,6 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, computed, inject, signal, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, NavigationStart } from '@angular/router';
+import { Router, NavigationStart, NavigationEnd } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
 import { AuthService } from '../../Services/auth-service';
 import { HealthProfileService } from '../../Services/health-profile.service';
@@ -56,6 +56,8 @@ export class AiPanel implements OnInit, OnDestroy {
   toggleMode(): void {
     this.activeMode.update(m => m === 'chat' ? 'voice' : 'chat');
   }
+
+  readonly isHomePage = signal(true);
 
   // ── Sidebar collapse — hidden by default ──
   readonly sidebarCollapsed = signal(true);
@@ -201,7 +203,13 @@ export class AiPanel implements OnInit, OnDestroy {
   private static readonly PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/verify-account'];
 
   constructor() {
+    this.isHomePage.set(this.router.url.includes('/dashboard') || this.router.url === '/');
+
     this._routerSub = this.router.events.subscribe(e => {
+      if (e instanceof NavigationEnd) {
+        const url = e.urlAfterRedirects || e.url;
+        this.isHomePage.set(url.includes('/dashboard') || url === '/');
+      }
       if (e instanceof NavigationStart && AiPanel.PUBLIC_ROUTES.some(r => e.url === r || e.url.startsWith(r + '?'))) {
         this.aiChatService.closePanel();
       }
@@ -223,7 +231,20 @@ export class AiPanel implements OnInit, OnDestroy {
     effect(() => {
       const req = this.aiChatService.voiceModeRequest();
       if (req > 0) {
-        this.activeMode.set('voice');
+        untracked(() => {
+          if (this.minimized()) this.minimized.set(false);
+          if (this.activeMode() !== 'voice') this.activeMode.set('voice');
+        });
+      }
+    });
+
+    effect(() => {
+      const req = this.aiChatService.chatModeRequest();
+      if (req > 0) {
+        untracked(() => {
+          if (this.minimized()) this.minimized.set(false);
+          if (this.activeMode() !== 'chat') this.activeMode.set('chat');
+        });
       }
     });
 
@@ -318,6 +339,8 @@ export class AiPanel implements OnInit, OnDestroy {
       });
     });
   }
+
+
 
   ngOnInit(): void {}
 

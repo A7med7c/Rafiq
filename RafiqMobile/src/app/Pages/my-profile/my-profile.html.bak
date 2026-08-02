@@ -1,0 +1,600 @@
+<app-mobile-header
+  [title]="t().myProfile.pageTitle"
+  [showNotifications]="true"
+  (notificationsClicked)="notifService.toggleNotificationCenter()">
+</app-mobile-header>
+
+<div class="m-page">
+  <div class="m-body">
+
+    @if (profileLoading()) {
+    <div class="mp-loading">
+      <div class="mp-spinner"></div>
+      <p>{{ t().myProfile.loading }}</p>
+    </div>
+    } @else {
+
+    <div class="mp-grid">
+
+      <!-- ══ Hero Card ══════════════════════════════════════════════════════ -->
+      <div class="mp-hero-card">
+        <div class="mp-hero-main">
+          <div class="mp-hero-avatar">
+            <img [src]="profileCache.resolveNavbarAvatar()" alt="avatar" class="mp-hero-img"
+              [class.mp-hero-img--uploading]="photoUploading() || deletingPhoto()"
+              (click)="openPhotoModal()" style="cursor:pointer">
+            @if (photoUploading() || deletingPhoto()) {
+            <div class="mp-hero-img-spinner"><span class="mp-spinner mp-spinner--sm"></span></div>
+            }
+            <button type="button" class="mp-hero-cam" [title]="t().myProfile.photoUpdateBtn"
+              (click)="openPhotoModal()" [disabled]="photoUploading() || deletingPhoto()">
+              <i class="fa-solid fa-camera"></i>
+            </button>
+            <input #photoInput type="file" accept="image/*" class="mp-hero-file-input" (change)="onPhotoSelected($event)">
+          </div>
+          <div class="mp-hero-info">
+            <h2 class="mp-hero-name">
+              {{ displayName }}
+              <span class="mp-self-badge"><i class="fa-solid fa-user"></i> {{ t().myProfile.selfBadge }}</span>
+            </h2>
+            <p class="mp-hero-email">
+              <i class="fa-regular fa-envelope"></i> {{ userEmail }}
+            </p>
+            <p class="mp-hero-meta">
+              @if (profile()?.dateOfBirth) {
+              <span><i class="fa-regular fa-calendar"></i> {{ formatDob(profile()!.dateOfBirth) }} ({{ getAge(profile()!.dateOfBirth) }} {{ t().myProfile.yearsOld }})</span>
+              }
+              <span><i class="fa-solid fa-venus-mars"></i> {{ genderLabel() }}</span>
+            </p>
+          </div>
+        </div>
+        <div class="mp-hero-divider"></div>
+        <div class="mp-hero-side">
+          <div class="mp-side-row">
+            <div class="mp-side-ico mp-ico-blue"><i class="fa-regular fa-id-card"></i></div>
+            <div class="mp-side-text">
+              <span class="mp-side-lbl">{{ t().myProfile.profileType }}</span>
+              <span class="mp-side-val">{{ t().myProfile.profileTypeSelf }}</span>
+            </div>
+          </div>
+          <div class="mp-side-row">
+            <div class="mp-side-ico mp-ico-green"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="mp-side-text">
+              <span class="mp-side-lbl">{{ t().myProfile.accessRole }}</span>
+              <span class="mp-side-val">{{ t().myProfile.accessRoleOwner }}</span>
+            </div>
+          </div>
+          <div class="mp-side-row">
+            <div class="mp-side-ico mp-ico-orange"><i class="fa-regular fa-calendar-check"></i></div>
+            <div class="mp-side-text">
+              <span class="mp-side-lbl">{{ t().myProfile.memberSince }}</span>
+              <span class="mp-side-val">{{ formatDob(profile()?.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mp-row">
+      <!-- ══ Personal Information ═══════════════════════════════════════════ -->
+      <div class="mp-card" assistantAnchor="profile-personal-info">
+        <div class="mp-card-head">
+          <div class="mp-card-ico mp-ico-blue">
+            <i class="fa-regular fa-user"></i>
+          </div>
+          <div>
+            <h3 class="mp-card-title">{{ t().myProfile.personalInfo }}</h3>
+            <p class="mp-card-sub">{{ t().myProfile.personalInfoSub }}</p>
+          </div>
+          @if (!editingPersonal() && !verifyingEmail()) {
+          <button type="button" class="mp-edit-btn" (click)="openEditPersonal()">
+            <i class="fa-solid fa-pen"></i> {{ t().myProfile.editBtn }}
+          </button>
+          }
+        </div>
+
+        @if (verifyingEmail()) {
+        <!-- Email OTP verification step -->
+        <div class="mp-verify-email">
+          <div class="mp-verify-email-icon"><i class="fa-regular fa-envelope"></i></div>
+          <h4 class="mp-verify-email-title">{{ t().myProfile.verifyEmailTitle }}</h4>
+          <p class="mp-verify-email-sub">
+            {{ t().myProfile.verifyEmailSub }} <strong>{{ pendingEmail() }}</strong>{{ t().myProfile.verifyEmailSub2 }}
+          </p>
+          <div class="mp-form-field mp-verify-email-input">
+            <label>{{ t().myProfile.verificationCode }}</label>
+            <input type="text" [(ngModel)]="emailOtpCode" [placeholder]="t().myProfile.verificationCodePlaceholder" maxlength="6" autocomplete="one-time-code">
+          </div>
+          @if (emailOtpError()) {
+          <div class="mp-error-alert">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>{{ emailOtpError() }}</span>
+          </div>
+          }
+          <div class="mp-form-actions">
+            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEmailVerification()" [disabled]="emailOtpSaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button type="button" class="mp-btn mp-btn-ghost" (click)="resendEmailOtp()" [disabled]="emailOtpResending() || emailOtpSaving()">
+              @if (emailOtpResending()) { <span class="mp-btn-spinner"></span> {{ t().myProfile.sendingBtn }} } @else { {{ t().myProfile.resendCodeBtn }} }
+            </button>
+            <button type="button" class="mp-btn mp-btn-primary" (click)="verifyEmailOtp()" [disabled]="emailOtpSaving() || !emailOtpCode.trim()">
+              @if (emailOtpSaving()) { <span class="mp-btn-spinner"></span> {{ t().myProfile.verifyingBtn }} } @else { {{ t().myProfile.verifyBtn }} }
+            </button>
+          </div>
+        </div>
+        } @else if (!editingPersonal()) {
+        <div class="mp-info-rows">
+          <div class="mp-info-row">
+            <span class="mp-info-lbl"><span class="mp-info-ico mp-ico-blue"><i class="fa-regular fa-user"></i></span> {{ t().myProfile.fullName }}</span>
+            <span class="mp-info-val">{{ displayName }}</span>
+          </div>
+          <div class="mp-info-row">
+            <span class="mp-info-lbl"><span class="mp-info-ico mp-ico-blue"><i class="fa-regular fa-calendar"></i></span> {{ t().myProfile.dateOfBirth }}</span>
+            <span class="mp-info-val">{{ formatDob(profile()?.dateOfBirth) }}</span>
+          </div>
+          <div class="mp-info-row">
+            <span class="mp-info-lbl"><span class="mp-info-ico mp-ico-blue"><i class="fa-solid fa-venus-mars"></i></span> {{ t().myProfile.gender }}</span>
+            <span class="mp-info-val">{{ genderLabel() }}</span>
+          </div>
+          <div class="mp-info-row">
+            <span class="mp-info-lbl"><span class="mp-info-ico mp-ico-blue"><i class="fa-regular fa-envelope"></i></span> {{ t().myProfile.email }}</span>
+            <span class="mp-info-val">
+              {{ userEmail }}
+              @if (authService.currentUser?.emailConfirmed === false) {
+              <span class="mp-badge mp-badge--warn"><i class="fa-solid fa-triangle-exclamation"></i> {{ t().myProfile.unverified }}</span>
+              }
+            </span>
+          </div>
+          <div class="mp-info-row">
+            <span class="mp-info-lbl"><span class="mp-info-ico mp-ico-blue"><i class="fa-solid fa-phone"></i></span> {{ t().myProfile.phone }}</span>
+            <span class="mp-info-val">{{ authService.currentUser?.phoneNumber || '—' }}</span>
+          </div>
+        </div>
+        } @else {
+        <!-- Edit form -->
+        <form class="mp-form" (ngSubmit)="savePersonal()">
+          <div class="mp-form-row">
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.firstName }}</label>
+              <input type="text" [(ngModel)]="personalForm.firstName" name="firstName" [placeholder]="t().myProfile.firstNamePlaceholder">
+            </div>
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.lastName }}</label>
+              <input type="text" [(ngModel)]="personalForm.lastName" name="lastName" [placeholder]="t().myProfile.lastNamePlaceholder">
+            </div>
+          </div>
+          <div class="mp-form-row">
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.dateOfBirthLabel }}</label>
+              <input type="date" [(ngModel)]="personalForm.dateOfBirth" name="dateOfBirth">
+            </div>
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.genderLabel }}</label>
+              <select [(ngModel)]="personalForm.gender" name="gender">
+                <option value="">{{ t().myProfile.selectGender }}</option>
+                <option value="Male">{{ t().myProfile.male }}</option>
+                <option value="Female">{{ t().myProfile.female }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="mp-form-row">
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.phoneNumber }}</label>
+              <input type="tel" [(ngModel)]="personalForm.phoneNumber" name="phoneNumber" [placeholder]="t().myProfile.phonePlaceholder" pattern="^01[0125][0-9]{8}$">
+              <span class="mp-field-hint">{{ t().myProfile.phoneHint }}</span>
+            </div>
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.emailAddress }}</label>
+              <input type="email" [(ngModel)]="personalForm.email" name="email" [placeholder]="t().myProfile.emailPlaceholder">
+              <span class="mp-field-hint">{{ t().myProfile.emailHint }}</span>
+            </div>
+          </div>
+          @if (personalFormError()) {
+          <div class="mp-error-alert">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>{{ personalFormError() }}</span>
+          </div>
+          }
+          <div class="mp-form-actions">
+            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEditPersonal()" [disabled]="personalSaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button type="submit" class="mp-btn mp-btn-primary" [disabled]="personalSaving()" assistantAnchor="save-profile">
+              @if (personalSaving()) { <span class="mp-btn-spinner"></span> {{ t().myProfile.savingBtn }} } @else { {{ t().myProfile.saveChanges }} }
+            </button>
+          </div>
+        </form>
+        }
+      </div>
+
+      <!-- ══ Health Information ══════════════════════════════════════════════ -->
+      <div class="mp-card" assistantAnchor="profile-health-info">
+        <div class="mp-card-head">
+          <div class="mp-card-ico mp-ico-teal">
+            <i class="fa-solid fa-heartbeat"></i>
+          </div>
+          <div>
+            <h3 class="mp-card-title">{{ t().myProfile.healthInfo }}</h3>
+            <p class="mp-card-sub">{{ t().myProfile.healthInfoSub }}</p>
+          </div>
+          @if (!editingHealth()) {
+          <button type="button" class="mp-edit-btn" (click)="openEditHealth()">
+            <i class="fa-solid fa-pen"></i> {{ t().myProfile.editBtn }}
+          </button>
+          }
+        </div>
+
+        @if (!editingHealth()) {
+        <div class="mp-info-rows mp-info-rows--grid">
+          <div class="mp-info-row mp-info-row--stack">
+            <span class="mp-info-ico mp-info-ico--lg mp-ico-teal"><i class="fa-solid fa-droplet"></i></span>
+            <span class="mp-info-lbl-stack">{{ t().myProfile.bloodType }}</span>
+            <span class="mp-info-val mp-info-val--lg">{{ bloodTypeLabel() }}</span>
+          </div>
+          <div class="mp-info-row mp-info-row--stack">
+            <span class="mp-info-ico mp-info-ico--lg mp-ico-teal"><i class="fa-solid fa-ruler-vertical"></i></span>
+            <span class="mp-info-lbl-stack">{{ t().myProfile.height }}</span>
+            <span class="mp-info-val mp-info-val--lg">{{ profile()?.height ? profile()!.height + ' cm' : '—' }}</span>
+          </div>
+          <div class="mp-info-row mp-info-row--stack">
+            <span class="mp-info-ico mp-info-ico--lg mp-ico-teal"><i class="fa-solid fa-weight-scale"></i></span>
+            <span class="mp-info-lbl-stack">{{ t().myProfile.weight }}</span>
+            <span class="mp-info-val mp-info-val--lg">{{ profile()?.weight ? profile()!.weight + ' kg' : '—' }}</span>
+          </div>
+        </div>
+        } @else {
+        <form class="mp-form" (ngSubmit)="saveHealth()">
+          <div class="mp-form-row mp-form-row--3">
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.bloodType }}</label>
+              <select [(ngModel)]="healthForm.bloodType" name="bloodType">
+                <option value="">{{ t().myProfile.selectBloodType }}</option>
+                <option value="APositive">A+</option>
+                <option value="ANegative">A-</option>
+                <option value="BPositive">B+</option>
+                <option value="BNegative">B-</option>
+                <option value="ABPositive">AB+</option>
+                <option value="ABNegative">AB-</option>
+                <option value="OPositive">O+</option>
+                <option value="ONegative">O-</option>
+              </select>
+            </div>
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.heightCm }}</label>
+              <input type="number" [(ngModel)]="healthForm.height" name="height" min="1" max="300" placeholder="cm">
+            </div>
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.weightKg }}</label>
+              <input type="number" [(ngModel)]="healthForm.weight" name="weight" min="1" max="500" placeholder="kg">
+            </div>
+          </div>
+          <div class="mp-form-actions">
+            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelEditHealth()" [disabled]="healthSaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button type="submit" class="mp-btn mp-btn-primary" [disabled]="healthSaving()">
+              @if (healthSaving()) { <span class="mp-btn-spinner"></span> {{ t().myProfile.savingBtn }} } @else { {{ t().myProfile.saveChanges }} }
+            </button>
+          </div>
+        </form>
+        }
+      </div>
+      </div><!-- end mp-row: Personal + Health -->
+
+      <!-- ══ Allergies + Chronic Diseases ═════════════════════════════════════ -->
+      <div class="mp-row">
+      <div class="mp-card" assistantAnchor="profile-allergies">
+        <div class="mp-card-head">
+          <div class="mp-card-ico mp-ico-purple">
+            <i class="fa-solid fa-hand-dots"></i>
+          </div>
+          <div>
+            <h3 class="mp-card-title">{{ t().myProfile.allergies }}</h3>
+          </div>
+          <span class="mp-count-badge mp-count-badge--purple">{{ profile()?.allergies?.length ?? 0 }}</span>
+        </div>
+
+        @if ((profile()?.allergies?.length ?? 0) === 0 && !addingAllergy()) {
+        <div class="mp-empty">
+          <i class="fa-solid fa-hand-dots mp-empty-ico"></i>
+          <p>{{ t().myProfile.noAllergies }}</p>
+        </div>
+        } @else {
+        <div class="mp-dot-list">
+          @for (a of profile()?.allergies ?? []; track a.id) {
+          <div class="mp-dot-row">
+            <span class="mp-dot" [class]="severityDotClass(a.severity)"></span>
+            <div class="mp-dot-text">
+              <span class="mp-dot-name">{{ a.name }}</span>
+              <span class="mp-dot-sub" [class]="severityClass(a.severity)">{{ severityLabel(a.severity) }}</span>
+            </div>
+            <button type="button" class="mp-tag-del" (click)="deleteAllergy(a.id)" [title]="t().common.remove">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          }
+        </div>
+        }
+
+        @if (!addingAllergy()) {
+        <button type="button" class="mp-add-block-btn" (click)="openAddAllergy()">
+          <i class="fa-solid fa-plus"></i> {{ t().myProfile.addAllergyBtn }}
+        </button>
+        }
+
+        @if (addingAllergy()) {
+        <div class="mp-inline-form">
+          <div class="mp-form-row">
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.allergyName }}</label>
+              <input type="text" [(ngModel)]="newAllergy.name" [placeholder]="t().myProfile.allergyPlaceholder" autofocus>
+            </div>
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.severity }}</label>
+              <select [(ngModel)]="newAllergy.severity">
+                <option value="Mild">{{ t().myProfile.mild }}</option>
+                <option value="Moderate">{{ t().myProfile.moderate }}</option>
+                <option value="Severe">{{ t().myProfile.severe }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="mp-form-actions">
+            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelAddAllergy()" [disabled]="allergySaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button type="button" class="mp-btn mp-btn-primary" (click)="saveAllergy()" [disabled]="allergySaving() || !newAllergy.name.trim()">
+              @if (allergySaving()) { <span class="mp-btn-spinner"></span> {{ t().myProfile.addingBtn }} } @else { {{ t().myProfile.addAllergy }} }
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- ══ Chronic Diseases ═══════════════════════════════════════════════ -->
+      <div class="mp-card" assistantAnchor="profile-chronic-diseases">
+        <div class="mp-card-head">
+          <div class="mp-card-ico mp-ico-green">
+            <i class="fa-solid fa-heart-pulse"></i>
+          </div>
+          <div>
+            <h3 class="mp-card-title">{{ t().myProfile.chronicDiseases }}</h3>
+          </div>
+          <span class="mp-count-badge mp-count-badge--green">{{ profile()?.chronicDiseases?.length ?? 0 }}</span>
+        </div>
+
+        @if ((profile()?.chronicDiseases?.length ?? 0) === 0 && !addingDisease()) {
+        <div class="mp-empty-success">
+          <div class="mp-empty-success-ico"><i class="fa-solid fa-check"></i></div>
+          <p class="mp-empty-success-title">{{ t().myProfile.noChronicDiseases }}</p>
+          <p class="mp-empty-success-sub">{{ t().myProfile.noChronicDiseasesSub }}</p>
+        </div>
+        } @else {
+        <div class="mp-dot-list">
+          @for (d of profile()?.chronicDiseases ?? []; track d.id) {
+          <div class="mp-dot-row">
+            <span class="mp-dot" [class]="statusDotClass(d.status)"></span>
+            <div class="mp-dot-text">
+              <span class="mp-dot-name">{{ d.name }}</span>
+              <span class="mp-dot-sub" [class]="statusClass(d.status)">{{ statusLabel(d.status) }}</span>
+            </div>
+            <button type="button" class="mp-tag-del" (click)="deleteDisease(d.id)" [title]="t().common.remove">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          }
+        </div>
+        }
+
+        @if (!addingDisease()) {
+        <button type="button" class="mp-add-block-btn" (click)="openAddDisease()">
+          <i class="fa-solid fa-plus"></i> {{ t().myProfile.addConditionBtn }}
+        </button>
+        }
+
+        @if (addingDisease()) {
+        <div class="mp-inline-form">
+          <div class="mp-form-row">
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.conditionName }}</label>
+              <input type="text" [(ngModel)]="newDisease.name" [placeholder]="t().myProfile.conditionPlaceholder" autofocus>
+            </div>
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.status }}</label>
+              <select [(ngModel)]="newDisease.status">
+                <option value="Active">{{ t().myProfile.active }}</option>
+                <option value="Controlled">{{ t().myProfile.controlled }}</option>
+                <option value="Resolved">{{ t().myProfile.resolved }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="mp-form-row">
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.diagnosedAt }}</label>
+              <input type="date" [(ngModel)]="newDisease.diagnosedAt">
+            </div>
+          </div>
+          <div class="mp-form-actions">
+            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelAddDisease()" [disabled]="diseaseSaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button type="button" class="mp-btn mp-btn-primary" (click)="saveDisease()" [disabled]="diseaseSaving() || !newDisease.name.trim()">
+              @if (diseaseSaving()) { <span class="mp-btn-spinner"></span> {{ t().myProfile.addingBtn }} } @else { {{ t().myProfile.addCondition }} }
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+      </div><!-- end mp-row: Allergies + Chronic -->
+
+      <div class="mp-row">
+      <!-- ══ Emergency Contacts ═════════════════════════════════════════════ -->
+      <div class="mp-card" assistantAnchor="profile-emergency-contacts">
+        <div class="mp-card-head">
+          <div class="mp-card-ico mp-ico-teal">
+            <i class="fa-solid fa-phone-volume"></i>
+          </div>
+          <div>
+            <h3 class="mp-card-title">{{ t().myProfile.emergencyContacts }}</h3>
+            <p class="mp-card-sub">{{ t().myProfile.emergencyContactsSub }}</p>
+          </div>
+          <span class="mp-count-badge mp-count-badge--teal">{{ contacts().length }}</span>
+        </div>
+
+        @if (contactsLoading()) {
+        <div class="mp-empty">
+          <div class="mp-spinner mp-spinner--sm"></div>
+        </div>
+        } @else if (contacts().length === 0 && !addingContact()) {
+        <div class="mp-empty">
+          <i class="fa-solid fa-phone-volume mp-empty-ico"></i>
+          <p>{{ t().myProfile.noContacts }}</p>
+        </div>
+        } @else {
+        <div class="mp-contacts-list">
+          @for (c of contacts(); track c.id) {
+          <div class="mp-contact-row">
+            <div class="mp-contact-av">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="mp-contact-info">
+              <span class="mp-contact-name">{{ c.name }}</span>
+              <span class="mp-contact-rel">{{ c.relation }}</span>
+            </div>
+            <a [href]="'tel:' + c.phoneNumber" class="mp-contact-phone">
+              <i class="fa-solid fa-phone"></i> {{ c.phoneNumber }}
+            </a>
+            <button type="button" class="mp-tag-del" (click)="deleteContact(c.id)" [title]="t().common.remove">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          }
+        </div>
+        }
+
+        @if (!addingContact()) {
+        <button type="button" class="mp-add-block-btn" (click)="openAddContact()" assistantAnchor="add-emergency-contact">
+          <i class="fa-solid fa-plus"></i> {{ t().myProfile.addContactBtn }}
+        </button>
+        }
+
+        @if (addingContact()) {
+        <div class="mp-inline-form">
+          <div class="mp-form-row mp-form-row--3">
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.contactName }}</label>
+              <input type="text" [(ngModel)]="newContact.name" [placeholder]="t().myProfile.contactNamePlaceholder" autofocus>
+            </div>
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.contactPhone }}</label>
+              <input type="tel" [(ngModel)]="newContact.phoneNumber" [placeholder]="t().myProfile.contactPhonePlaceholder">
+            </div>
+            <div class="mp-form-field">
+              <label>{{ t().myProfile.relationship }}</label>
+              <input type="text" [(ngModel)]="newContact.relation" [placeholder]="t().myProfile.relationshipPlaceholder">
+            </div>
+          </div>
+          @if (contactFormError()) {
+          <div class="mp-error-alert">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>{{ contactFormError() }}</span>
+          </div>
+          }
+          <div class="mp-form-actions">
+            <button type="button" class="mp-btn mp-btn-ghost" (click)="cancelAddContact()" [disabled]="contactSaving()">{{ t().myProfile.cancelBtn }}</button>
+            <button type="button" class="mp-btn mp-btn-primary" (click)="saveContact()"
+              [disabled]="contactSaving() || !newContact.name.trim() || !newContact.phoneNumber.trim()">
+              @if (contactSaving()) { <span class="mp-btn-spinner"></span> {{ t().myProfile.addingBtn }} } @else { {{ t().myProfile.addContact }} }
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- ══ Danger Zone ════════════════════════════════════════════════════ -->
+      <div class="mp-card mp-card--danger">
+        <div class="mp-card-head">
+          <div class="mp-card-ico mp-ico-red">
+            <i class="fa-solid fa-skull-crossbones"></i>
+          </div>
+          <div>
+            <h3 class="mp-card-title">{{ t().myProfile.dangerZone }}</h3>
+            <p class="mp-card-sub">{{ t().myProfile.dangerZoneSub }}</p>
+          </div>
+        </div>
+        <div class="mp-danger-content">
+          <div class="mp-danger-info">
+            <strong>{{ t().myProfile.deleteAccountTitle }}</strong>
+            <p>{{ t().myProfile.deleteAccountDesc }}</p>
+          </div>
+          <button type="button" class="mp-btn mp-btn-danger" (click)="openDeleteModal()">
+            <i class="fa-solid fa-trash"></i> {{ t().myProfile.deleteAccountBtn }}
+          </button>
+        </div>
+      </div>
+      </div><!-- end mp-row: Emergency + Danger -->
+
+      <!-- ══ Trust Footer ═══════════════════════════════════════════════════ -->
+      <div class="mp-trust-bar">
+        <div class="mp-trust-left">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>{{ t().myProfile.trustText }}</span>
+        </div>
+        <a href="#" class="mp-trust-link">{{ t().myProfile.trustLink }} <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+      </div>
+
+    </div><!-- end mp-grid -->
+
+    } <!-- end @else profileLoading -->
+
+    <div style="height:16px"></div>
+  </div><!-- /m-body -->
+
+  <app-bottom-nav></app-bottom-nav>
+</div><!-- /m-page -->
+
+
+<!-- ════════════ PHOTO MODAL ════════════ -->
+@if (photoModalOpen()) {
+<div class="photo-modal-backdrop" (click)="closePhotoModal()">
+  <div class="photo-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <button type="button" class="photo-modal-close" (click)="closePhotoModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <h3 class="photo-modal-title">{{ t().myProfile.photoModalTitle }}</h3>
+    <div class="photo-modal-preview">
+      <img [src]="profileCache.resolveNavbarAvatar()" alt="profile" class="photo-modal-img"
+        [class.photo-modal-img--busy]="photoUploading() || deletingPhoto()">
+      @if (photoUploading() || deletingPhoto()) {
+      <div class="photo-modal-spinner"><span class="mp-spinner mp-spinner--lg"></span></div>
+      }
+    </div>
+    <div class="photo-modal-actions">
+      <button type="button" class="photo-modal-btn photo-modal-btn--update"
+        (click)="triggerPhotoUpload()" [disabled]="photoUploading() || deletingPhoto()">
+        <i class="fa-solid fa-camera"></i>
+        {{ photoUploading() ? t().myProfile.photoUploadingBtn : t().myProfile.photoUpdateBtn }}
+      </button>
+      @if (profileCache.profileImageUrl()) {
+      <button type="button" class="photo-modal-btn photo-modal-btn--delete"
+        (click)="deleteProfilePhoto()" [disabled]="photoUploading() || deletingPhoto()">
+        <i class="fa-solid fa-trash"></i>
+        {{ deletingPhoto() ? t().myProfile.photoRemovingBtn : t().myProfile.photoDeleteBtn }}
+      </button>
+      }
+    </div>
+  </div>
+</div>
+}
+
+<!-- ════════════ DELETE ACCOUNT MODAL ════════════ -->
+@if (deleteModalOpen()) {
+<div class="mp-modal-backdrop" (click)="closeDeleteModal()">
+  <div class="mp-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <div class="mp-modal-ico">
+      <i class="fa-solid fa-trash"></i>
+    </div>
+    <h2 class="mp-modal-title">{{ t().myProfile.deleteModalTitle }}</h2>
+    <p class="mp-modal-body">
+      {{ t().myProfile.deleteModalBody }} <strong>{{ t().myProfile.deleteModalBodyPermanent }}</strong> {{ t().myProfile.deleteModalBodyEnd }}
+    </p>
+    <div class="mp-modal-actions">
+      <button type="button" class="mp-btn mp-btn-ghost" (click)="closeDeleteModal()" [disabled]="deleteLoading()">
+        {{ t().myProfile.cancelBtn }}
+      </button>
+      <button type="button" class="mp-btn mp-btn-danger" (click)="confirmDeleteAccount()" [disabled]="deleteLoading()">
+        @if (deleteLoading()) { <span class="mp-btn-spinner"></span> {{ t().myProfile.deletingBtn }} } @else { {{ t().myProfile.yesDeleteBtn }} }
+      </button>
+    </div>
+  </div>
+</div>
+}

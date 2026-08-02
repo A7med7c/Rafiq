@@ -125,13 +125,19 @@ a {
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: var(--r-xs);
-  background: var(--border-lt);
-  border: none;
-  color: var(--text-3);
+  border-radius: 50%;
+  background: var(--white);
+  border: 1px solid var(--border);
+  color: var(--blue);
   cursor: pointer;
-  font-size: 16px;
-  transition: background .15s ease, color .15s ease;
+  font-size: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .02);
+  transition: transform .15s ease, background .15s ease;
+}
+
+.dash-header__bell:active {
+  transform: scale(.95);
+  background: #F1F5F9;
 }
 
 .dash-header__bell--active {
@@ -791,6 +797,37 @@ a {
   background: var(--border);
   margin: 10px auto 0;
   touch-action: none;
+}
+
+/* AI Health Summary: a centered popup, not a bottom sheet */
+.ai-summary-modal-backdrop {
+  align-items: center;
+  padding: 20px;
+}
+
+.ai-summary-modal-box {
+  border-radius: var(--r);
+  width: 100%;
+  max-width: 420px;
+  max-height: 80svh;
+  animation: modalPopIn .2s cubic-bezier(.32, .72, 0, 1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .22);
+}
+
+@keyframes modalPopIn {
+  from {
+    opacity: 0;
+    transform: scale(.94) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-summary-modal-box { animation: none; }
 }
 
 .modal-hdr {

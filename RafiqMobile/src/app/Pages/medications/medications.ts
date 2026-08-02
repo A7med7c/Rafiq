@@ -97,7 +97,7 @@ interface Dose {
 @Component({
   selector: 'app-medications',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent, BottomNav, MobileHeader],
+  imports: [CommonModule, FormsModule, AssistantAnchorDirective, FamilyProfileBannerComponent, BottomNav, MobileHeader],
   templateUrl: './medications.html',
   styleUrl: './medications.css',
 })
@@ -126,7 +126,7 @@ export class Medications implements OnInit, OnDestroy {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-  private readonly authSvc        = inject(AuthService);
+  private readonly authSvc = inject(AuthService);
   protected readonly profileCache = inject(ProfileCacheService);
   protected readonly notifSvc = inject(NotificationService);
   private readonly medSvc = inject(MedicationRemindersService);
@@ -1361,15 +1361,15 @@ export class Medications implements OnInit, OnDestroy {
   }
 
   toggleMobileTabMenu(): void { this.mobileTabMenuOpen.update(v => !v); }
-  closeMobileTabMenu(): void  { this.mobileTabMenuOpen.set(false); }
+  closeMobileTabMenu(): void { this.mobileTabMenuOpen.set(false); }
 
   activeTabLabel(): string {
     const t = this.t().medications;
     const map: Record<string, string> = {
-      all:              t.allTab || 'All',
-      'with-reminder':  t.withReminderTab || 'With Reminder',
-      'no-reminder':    t.noReminderTab || 'No Reminder',
-      paused:           t.pausedTab || 'Paused',
+      all: t.allTab || 'All',
+      'with-reminder': t.withReminderTab || 'With Reminder',
+      'no-reminder': t.noReminderTab || 'No Reminder',
+      paused: t.pausedTab || 'Paused',
     };
     return map[this.medSubTab()] ?? (t.allTab || 'All');
   }
@@ -1407,6 +1407,12 @@ export class Medications implements OnInit, OnDestroy {
   openMedView(med: UserMedicine): void {
     this.viewingMed.set(med);
     this.openMedMenuId.set(null);
+  }
+
+  /** "View Details" on the Next Dose card — reuses the same medicine-detail modal as the My Medications list. */
+  viewDoseDetails(dose: Dose): void {
+    const med = this.medicines().find(m => m.medicineName === dose.medicineName);
+    if (med) this.openMedView(med);
   }
 
   closeMedView(): void { this.viewingMed.set(null); }

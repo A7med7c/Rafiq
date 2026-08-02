@@ -9,7 +9,7 @@
     <div class="sb-top">
       <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
         <div class="sb-logo-icon">
-          <img src="images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
+          <img src="/images/RafiqLogo.png" alt="Rafiq" class="sb-logo-img">
         </div>
         <div class="sb-logo-text">
           <span class="sb-logo-title">{{ t().sidebar.brandName }}</span>
@@ -58,7 +58,7 @@
     </nav>
 
     <div class="sb-help">
-      <img src="images/rafiq-robot.png" alt="" class="sb-help-robot">
+      <img src="/images/rafiq-robot.png" alt="" class="sb-help-robot">
       <div class="sb-help-copy">
         <p class="sb-help-title">{{ t().sidebar.askRafiqAI }}</p>
         <p class="sb-help-sub">{{ t().sidebar.askAIHint }}</p>
@@ -230,7 +230,7 @@
         @if (!selectedConversationId()) {
         <div class="chat-empty-state">
           <div class="chat-empty-avatar">
-            <img src="images/RafiqLogo.png" alt="Rafiq" class="chat-empty-logo">
+            <img src="/images/RafiqLogo.png" alt="Rafiq" class="chat-empty-logo">
           </div>
           <h2>{{ t().aiAssistant.askRafiqAI }}</h2>
           <p>{{ t().aiAssistant.aiEmptyText }}</p>
@@ -240,7 +240,7 @@
         <div class="chat-main-hdr">
           <div class="chat-main-hdr-left">
             <span class="chat-avatar-sm">
-              <img src="images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo">
+              <img src="/images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo">
             </span>
             <div class="chat-main-hdr-title">
               @if (!renaming()) {
@@ -310,7 +310,7 @@
           </div>
           } @else {
           <div class="chat-msg chat-msg--ai">
-            <span class="chat-avatar-sm chat-avatar-sm--msg"><img src="images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo"></span>
+            <span class="chat-avatar-sm chat-avatar-sm--msg"><img src="/images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo"></span>
             <div class="chat-bubble-col">
               <div class="chat-bubble chat-bubble--ai">
                 <markdown [data]="msg.content"></markdown>
@@ -341,7 +341,7 @@
 
           @if (sending()) {
           <div class="chat-msg chat-msg--ai">
-            <span class="chat-avatar-sm chat-avatar-sm--msg"><img src="images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo"></span>
+            <span class="chat-avatar-sm chat-avatar-sm--msg"><img src="/images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo"></span>
             <div class="chat-bubble-col">
               <div class="chat-bubble chat-bubble--ai chat-typing">
                 <span class="chat-typing-dot"></span>

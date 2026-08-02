@@ -1,9 +1,7 @@
 <app-mobile-header
   [title]="t().sidebar.medications"
   [showNotifications]="true"
-  [showAiButton]="true"
-  (notificationsClicked)="notifSvc.toggleNotificationCenter()"
-  (aiClicked)="aiChatService.openPanel()">
+  (notificationsClicked)="notifSvc.toggleNotificationCenter()">
 </app-mobile-header>
 
 <div class="m-page">
@@ -33,6 +31,12 @@
         <div class="rail-head" assistantAnchor="med-next-dose-card">
           @if (nextDose(); as dose) {
           <div class="rail-next">
+            <div class="rail-mobile-row">
+              <span class="rail-status-ico" [class]="'rail-status-ico--' + doseState(dose)">
+                <i class="fa-solid" [class]="'fa-' + statusIcon(dose.status)"></i>
+              </span>
+              <span class="rail-mobile-pill" [class]="statusClass(dose.status)">{{ statusLabel(dose.status) }}</span>
+            </div>
             <span class="rail-eyebrow">
               {{ isOverdue(dose) ? t().medications.overdue : t().medications.nextDose }}
             </span>
@@ -45,6 +49,17 @@
               <span class="rail-sep" aria-hidden="true">·</span>
               <span class="rail-countdown">{{ countdownLabel(dose) }}</span>
             </p>
+
+            <div class="rail-next-reminder">
+              <span class="rail-next-reminder-text">
+                <i class="fa-regular fa-bell"></i>
+                {{ countdownLabel(dose) }}
+              </span>
+              <button type="button" class="rail-view-details" (click)="viewDoseDetails(dose)">
+                {{ t().medications.viewDetails }}
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
 
             <div class="sched-attempts-row rail-attempts-row" role="list" aria-label="Reminder attempts">
               @for (attempt of dose.attemptStates; track attempt.reminderNumber) {
@@ -114,6 +129,8 @@
       }
 
       <!-- ── Overview Stats ── -->
+      <div class="med-glance-card">
+      <h3 class="med-glance-title">{{ t().medications.todayAtGlance }}</h3>
       <div class="med-stat-grid">
         <div class="med-stat-card med-stat-green">
           <div class="med-stat-ico">
@@ -154,6 +171,7 @@
           </div>
         </div>
       </div>
+      </div><!-- /med-glance-card -->
 
       <!-- ── Tab Bar ── -->
       <div class="med-tabs" assistantAnchor="medications-list">
@@ -327,7 +345,9 @@
                        [class]="'dose-timeline__entry--' + attempt.state.toLowerCase()"
                        role="listitem">
                     <div class="dose-timeline__track">
-                      <div class="dose-timeline__dot"></div>
+                      <div class="dose-timeline__dot">
+                        <i class="fa-solid" [class]="attemptIcon(attempt.state)"></i>
+                      </div>
                       @if (!last) { <div class="dose-timeline__line"></div> }
                     </div>
                     <span class="dose-timeline__time">

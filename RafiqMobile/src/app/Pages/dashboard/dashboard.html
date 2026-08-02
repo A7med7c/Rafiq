@@ -100,14 +100,13 @@
               <span class="health-stat__val text-teal">{{ healthSummary()!.medications.count }} Active</span>
             </div>
           </div>
-
-          <div class="ai-hero__actions" style="margin-top: 16px;">
-            <button type="button" class="ai-hero__btn ai-hero__btn--outline" routerLink="/ai-assistant" style="width: 100%;">
-              <i class="fa-solid fa-robot"></i> Ask AI for details
-            </button>
-          </div>
-
         }
+
+        <div class="ai-hero__actions" style="margin-top: 16px;">
+          <button type="button" class="ai-hero__btn ai-hero__btn--outline" (click)="aiChatService.openPanel()" style="width: 100%;">
+            <i class="fa-solid fa-robot"></i> Ask AI for details
+          </button>
+        </div>
       </div>
     </section>
 
@@ -192,7 +191,7 @@
           <span class="quick-action-box__circle bg-orange-light"><i class="fa-regular fa-bell txt-orange"></i></span>
           <span class="quick-action-box__lbl">{{ t().dashboard.reminders }}</span>
         </a>
-        <a routerLink="/ai-assistant" class="quick-action-box">
+        <a href="javascript:void(0)" (click)="aiChatService.openPanel()" class="quick-action-box" style="cursor: pointer;">
           <span class="quick-action-box__circle bg-teal-light"><i class="fa-solid fa-robot txt-teal"></i></span>
           <span class="quick-action-box__lbl">{{ t().dashboard.aiChat }}</span>
         </a>
@@ -309,7 +308,7 @@
               (click)="openFamilySummary(profile)">
               <span class="family-card__av" [style.background]="getProfileAvatarColor(profile.firstName)">
                 @if (profile.profileImageUrl) {
-                  <img [src]="profile.profileImageUrl" alt="">
+                  <img [src]="resolveProfileImageUrl(profile.profileImageUrl)" alt="">
                 } @else {
                   {{ getInitial(profile.firstName) }}
                 }
@@ -451,7 +450,11 @@
           <button type="button" class="profile-picker-item"
             (click)="selectProfileAndContinue(profile.userHealthProfileId)">
             <div class="profile-picker-av" [style.background]="getProfileAvatarColor(profile.firstName)">
-              {{ getInitial(profile.firstName) }}
+              @if (profile.profileImageUrl) {
+                <img [src]="resolveProfileImageUrl(profile.profileImageUrl)" alt="">
+              } @else {
+                {{ getInitial(profile.firstName) }}
+              }
             </div>
             <div class="profile-picker-info">
               <span class="profile-picker-name">{{ profile.firstName }} {{ profile.lastName }}</span>
@@ -554,11 +557,8 @@
 
 <!-- ═══════════ FAMILY SUMMARY MODAL ═══════════ -->
 @if (familySummaryOpen()) {
-  <div class="modal-backdrop" (click)="closeFamilySummary()">
-    <div class="modal-box" [style.transform]="sheetDragY() ? 'translateY(' + sheetDragY() + 'px)' : null"
-      (click)="$event.stopPropagation()">
-      <div class="modal-sheet-handle" (touchstart)="onSheetTouchStart($event)" (touchmove)="onSheetTouchMove($event)"
-        (touchend)="onSheetTouchEnd(closeFamilySummary.bind(this))"></div>
+  <div class="modal-backdrop ai-summary-modal-backdrop" (click)="closeFamilySummary()">
+    <div class="modal-box ai-summary-modal-box" (click)="$event.stopPropagation()">
       <div class="modal-hdr">
         <div class="modal-hdr-left">
           <div class="modal-ico-wrap"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
