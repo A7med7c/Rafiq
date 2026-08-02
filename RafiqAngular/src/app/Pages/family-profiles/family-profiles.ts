@@ -25,6 +25,7 @@ import {
 } from '../../Services/family-profiles.service';
 import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 
 type AddStep = 'choose' | 'create' | 'invite' | 'invited';
 
@@ -61,6 +62,7 @@ export class FamilyProfiles implements OnInit {
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   protected readonly notifSvc = inject(NotificationService); // template access
   private readonly reviewTracking = inject(ReviewTrackingService);
+  private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
   private readonly http = inject(HttpClient);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly base = environment.apiUrl;
@@ -1116,4 +1118,9 @@ return p.isSelf ? (this.t().family as any)[key] ?? this.t().family.member : 'Act
 
   return (this.t().common as any)[key] ?? gender;
 }
+
+  startWelcomeTour(): void {
+    if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
+    this.assistantOrchestrator.startTour('welcome-tour');
+  }
 }

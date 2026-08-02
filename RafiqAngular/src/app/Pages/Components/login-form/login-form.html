@@ -1,122 +1,102 @@
 <section class="login-container" [dir]="l10n.dir()">
-    <div class="login-card">
+  <div class="login-card">
 
-        <div class="card-header">
-            <h2>{{ t().login.title }}</h2>
-            <p>{{ t().login.subtitle }}</p>
-        </div>
+    @if (successMessage) {
+    <div class="alert alert-success" role="status">{{ successMessage }}</div>
+    }
 
-        @if (successMessage) {
-        <div class="alert alert-success" role="status">
-            {{ successMessage }}
-        </div>
-        }
-
-        @if (apiErrors.length) {
-        <div class="alert alert-error" role="alert">
-            @for (error of apiErrors; track error) {
-            <p>{{ error }}</p>
-            }
-        </div>
-        }
-
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-
-            <div class="field">
-                <label for="loginIdentifier">{{ t().login.emailOrPhone }}</label>
-
-                <div class="input-shell" [class.invalid]="isInvalid('loginIdentifier')">
-                    <input id="loginIdentifier" type="text" formControlName="loginIdentifier"
-                        [placeholder]="t().login.emailPlaceholder" autocomplete="username">
-                </div>
-
-                @if (isInvalid('loginIdentifier')) {
-                <p class="field-error">
-                    @if (loginForm.controls.loginIdentifier.errors?.['required']) {
-                    {{ t().login.emailRequired }}
-                    } @else {
-                    {{ t().login.emailInvalid }}
-                    }
-                </p>
-                }
-            </div>
-
-
-            <div class="field">
-
-                <label for="password">{{ t().login.password }}</label>
-
-                <div class="input-shell" [class.invalid]="isInvalid('password')">
-
-                    <input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
-                        [placeholder]="t().login.passwordPlaceholder" autocomplete="current-password">
-
-                    <button type="button" class="icon-button" (click)="togglePasswordVisibility()"
-                        [attr.aria-label]="showPassword ? t().login.hidePassword : t().login.showPassword">
-
-                        @if (showPassword) {
-                        <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                        } @else {
-                        <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M3 3l18 18"></path>
-                            <path d="M10.7 5.2A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17.5 17.5 0 0 1-3.2 4.2"></path>
-                            <path d="M15 15.8A4 4 0 0 1 8.2 9"></path>
-                            <path d="M6.6 6.6A17.2 17.2 0 0 0 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.4-1"></path>
-                        </svg>
-                        }
-
-                    </button>
-
-                </div>
-
-                @if (isInvalid('password')) {
-                <p class="field-error">
-                    @if (loginForm.controls.password.errors?.['required']) {
-                    {{ t().login.passwordRequired }}
-                    } @else {
-                    {{ t().login.passwordMinLength }}
-                    }
-                </p>
-                }
-
-            </div>
-
-
-            <a assistantAnchor="forgot-password-link" class="forgot" routerLink="/forgot-password">
-                {{ t().login.forgotPassword }}
-            </a>
-
-
-            <button assistantAnchor="login-submit" class="submit-button" type="submit" [attr.aria-busy]="isSubmitting" [disabled]="isSubmitting || loginForm.invalid">
-                <span class="button-content">
-                    @if (isSubmitting) {
-                    <span class="button-spinner" aria-hidden="true"></span>
-                    }
-
-                    @if (isSubmitting) {
-                    {{ t().login.loggingIn }}
-                    } @else {
-                    {{ t().login.logIn }}
-                    }
-                </span>
-            </button>
-
-            <div id="google-button" lang="en"></div>
-
-        </form>
-
-
-        <p class="register">
-
-            {{ t().login.noAccount }}
-
-            <a routerLink="/register">{{ t().login.signUp }}</a>
-
-        </p>
-
+    @if (apiErrors.length) {
+    <div class="alert alert-error" role="alert">
+      @for (error of apiErrors; track error) {
+      <p>{{ error }}</p>
+      }
     </div>
+    }
 
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+
+      <!-- Email / Phone -->
+      <div class="field">
+        <label for="loginIdentifier">{{ t().login.emailOrPhone }}</label>
+        <div class="input-shell" [class.invalid]="isInvalid('loginIdentifier')">
+          <i class="fa-regular fa-envelope field-icon"></i>
+          <input id="loginIdentifier" type="text" formControlName="loginIdentifier"
+            [placeholder]="t().login.emailPlaceholder" autocomplete="username">
+        </div>
+        @if (isInvalid('loginIdentifier')) {
+        <p class="field-error">
+          @if (loginForm.controls.loginIdentifier.errors?.['required']) {
+          {{ t().login.emailRequired }}
+          } @else {
+          {{ t().login.emailInvalid }}
+          }
+        </p>
+        }
+      </div>
+
+      <!-- Password -->
+      <div class="field">
+        <label for="password">{{ t().login.password }}</label>
+        <div class="input-shell" [class.invalid]="isInvalid('password')">
+          <i class="fa-solid fa-lock field-icon"></i>
+          <input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
+            [placeholder]="t().login.passwordPlaceholder" autocomplete="current-password">
+          <button type="button" class="icon-button" (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword ? t().login.hidePassword : t().login.showPassword">
+            @if (showPassword) {
+            <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            } @else {
+            <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 3l18 18"></path>
+              <path d="M10.7 5.2A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17.5 17.5 0 0 1-3.2 4.2"></path>
+              <path d="M15 15.8A4 4 0 0 1 8.2 9"></path>
+              <path d="M6.6 6.6A17.2 17.2 0 0 0 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.4-1"></path>
+            </svg>
+            }
+          </button>
+        </div>
+        @if (isInvalid('password')) {
+        <p class="field-error">
+          @if (loginForm.controls.password.errors?.['required']) {
+          {{ t().login.passwordRequired }}
+          } @else {
+          {{ t().login.passwordMinLength }}
+          }
+        </p>
+        }
+      </div>
+
+      <!-- Forgot password -->
+      <a assistantAnchor="forgot-password-link" class="forgot" routerLink="/forgot-password">
+        {{ t().login.forgotPassword }}
+      </a>
+
+      <!-- Submit -->
+      <button assistantAnchor="login-submit" class="submit-button" type="submit"
+        [attr.aria-busy]="isSubmitting" [disabled]="isSubmitting || loginForm.invalid">
+        <span class="button-content">
+          @if (isSubmitting) {
+          <span class="button-spinner" aria-hidden="true"></span>
+          }
+          {{ isSubmitting ? t().login.loggingIn : t().login.logIn }}
+        </span>
+      </button>
+
+      <!-- Divider -->
+      <div class="auth-divider">{{ t().login.or }}</div>
+
+      <!-- Google -->
+      <div id="google-button" lang="en"></div>
+
+    </form>
+
+    <p class="register">
+      {{ t().login.noAccount }}
+      <a routerLink="/register">{{ t().login.signUp }}</a>
+    </p>
+
+  </div>
 </section>

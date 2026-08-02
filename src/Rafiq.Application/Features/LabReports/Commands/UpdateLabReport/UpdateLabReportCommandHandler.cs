@@ -12,7 +12,8 @@ namespace Rafiq.Application.Features.LabReports.Commands.UpdateLabReport;
 public sealed class UpdateLabReportCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     ILabReportRepository labReportRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<UpdateLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
     public async Task<ApiResponse<LabReportResponseDto>> Handle(
@@ -53,6 +54,7 @@ public sealed class UpdateLabReportCommandHandler(
         labReport.SyncResults(newResults);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(labReport.UserHealthProfileId, cancellationToken);
 
         var dto = new LabReportResponseDto
         {

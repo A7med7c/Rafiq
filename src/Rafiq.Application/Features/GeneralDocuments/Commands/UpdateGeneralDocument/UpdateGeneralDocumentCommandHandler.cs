@@ -11,7 +11,8 @@ public sealed class UpdateGeneralDocumentCommandHandler(
     ICurrentUserService currentUserService,
     IPatientProfileRepository patientProfileRepository,
     IGeneralDocumentRepository repository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<UpdateGeneralDocumentCommand, ApiResponse<GeneralDocumentResponseDto>>
 {
     public async Task<ApiResponse<GeneralDocumentResponseDto>> Handle(
@@ -39,6 +40,7 @@ public sealed class UpdateGeneralDocumentCommandHandler(
             request.OcrText);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(profileId, cancellationToken);
 
         var dto = new GeneralDocumentResponseDto
         {

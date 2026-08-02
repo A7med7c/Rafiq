@@ -9,7 +9,8 @@ namespace Rafiq.Application.Features.PatientProfiles.Commands.ChronicDiseases.De
 public sealed class DeleteChronicDiseaseCommandHandler(
     IChronicDiseaseRepository chronicDiseaseRepository,
     IHealthProfileAuthorizationService authorizationService,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<DeleteChronicDiseaseCommand, ApiResponse<object>>
 {
     public async Task<ApiResponse<object>> Handle(
@@ -26,6 +27,7 @@ public sealed class DeleteChronicDiseaseCommandHandler(
 
         chronicDiseaseRepository.Remove(disease);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(request.PatientProfileId, cancellationToken);
 
         return ApiResponse<object>.SuccessResponse(null, "Chronic disease deleted successfully.");
     }

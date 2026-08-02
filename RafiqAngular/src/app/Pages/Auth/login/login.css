@@ -1,32 +1,201 @@
-.login-page{
-    width:100%;
-    min-height:100svh;
-    display:grid;
-    grid-template-columns:minmax(0, 1fr) minmax(340px, 440px);
-    gap:clamp(24px, 4vw, 42px);
-    align-items:center;
-    padding:clamp(20px, 4vh, 34px) 7vw;
-    overflow-y:auto;
-    background:
-        radial-gradient(circle at 18% 72%, rgba(75, 219, 255, .24), transparent 24%),
-        radial-gradient(circle at 80% 12%, rgba(255, 255, 255, .95), transparent 18%),
-        linear-gradient(135deg, #eef8ff 0%, #dff5ff 44%, #f7fcff 100%);
-    color:#08264a;
-    font-family:"Inter", "Segoe UI", Tahoma, Arial, sans-serif;
+.login-page {
+  width: 100%;
+  min-height: 100svh;
+  display: flex;
 }
 
-@media (max-width: 960px){
-    .login-page{
-        grid-template-columns:1fr;
-        grid-template-rows:auto 1fr;
-        gap:16px;
-        padding:18px;
-    }
+/* ── Left panel ─────────────────────────────── */
+.lp-left {
+  flex: 0 0 50%;
+  min-height: 100svh;
+  background: linear-gradient(155deg, #c8ecf9 0%, #d9f3fd 45%, #aaddf0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
 }
 
-@media (max-height: 760px) and (min-width: 961px){
-    .login-page{
-        padding-top:18px;
-        padding-bottom:18px;
-    }
+.lp-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.lp-glow--top {
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(255,255,255,.55) 0%, transparent 70%);
+  top: -160px;
+  left: -160px;
+}
+
+.lp-glow--bottom {
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(14,175,215,.18) 0%, transparent 70%);
+  bottom: -100px;
+  right: -80px;
+}
+
+/* ── Decorations ────────────────────────────── */
+.lp-deco { position: absolute; pointer-events: none; }
+
+/* Floating bubbles */
+.lp-bubble {
+  border-radius: 50%;
+  background: rgba(255,255,255,.32);
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255,255,255,.5);
+}
+.lp-bubble--lg { width: 100px; height: 100px; top: 12%; left: 8%;  animation: bubbleFloat 6s ease-in-out infinite; }
+.lp-bubble--md { width:  56px; height:  56px; bottom: 22%; right: 10%; animation: bubbleFloat 5s ease-in-out infinite .8s; }
+.lp-bubble--sm { width:  32px; height:  32px; top: 58%; left: 14%;  animation: bubbleFloat 4.5s ease-in-out infinite 1.6s; }
+.lp-bubble--xs { width:  18px; height:  18px; top: 28%; right: 18%; animation: bubbleFloat 4s ease-in-out infinite .4s; }
+
+@keyframes bubbleFloat {
+  0%, 100% { transform: translateY(0) scale(1); opacity: .7; }
+  50%       { transform: translateY(-14px) scale(1.04); opacity: 1; }
+}
+
+/* Plus signs */
+.lp-plus {
+  width: 18px; height: 18px;
+}
+.lp-plus::before,
+.lp-plus::after {
+  content: '';
+  position: absolute;
+  background: rgba(255,255,255,.75);
+  border-radius: 2px;
+}
+.lp-plus::before { width: 2px; height: 100%; top: 0; left: 50%; transform: translateX(-50%); }
+.lp-plus::after  { width: 100%; height: 2px; top: 50%; left: 0; transform: translateY(-50%); }
+
+.lp-plus--1 { width: 16px; height: 16px; top: 20%; left: 20%;  animation: plusFloat 5s ease-in-out infinite; }
+.lp-plus--2 { width: 22px; height: 22px; top: 42%; right: 12%; animation: plusFloat 4s ease-in-out infinite 1.2s; }
+
+@keyframes plusFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg);   opacity: .6; }
+  50%       { transform: translateY(-10px) rotate(20deg); opacity: 1; }
+}
+
+/* Robot floor shadow */
+.lp-robot-shadow {
+  position: absolute;
+  width: 150px; height: 24px;
+  bottom: calc(50% - 215px);
+  left: 50%; transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(14,175,215,.30) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: 0;
+  animation: shadowPulse 3.6s ease-in-out infinite;
+}
+
+@keyframes shadowPulse {
+  0%, 100% { transform: translateX(-50%) scaleX(1);    opacity: .7; }
+  50%       { transform: translateX(-50%) scaleX(.75);  opacity: .35; }
+}
+
+.lp-robot {
+  width: 380px;
+  max-width: 72%;
+  object-fit: contain;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 24px 64px rgba(14, 175, 215, .38));
+  animation: robotFloat 3.6s ease-in-out infinite;
+}
+
+@keyframes robotFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-14px); }
+}
+
+/* ── Right panel ────────────────────────────── */
+.lp-right {
+  flex: 0 0 50%;
+  min-height: 100svh;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  overflow-y: auto;
+}
+
+.lp-right-inner {
+  width: 100%;
+  max-width: 340px;
+}
+
+/* ── Back button ────────────────────────────── */
+.lp-back {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 10;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(14,175,215,.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0EAFD7;
+  font-size: 14px;
+  text-decoration: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,.10);
+  transition: background .2s, box-shadow .2s, transform .15s;
+}
+
+.lp-back:hover {
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(14,175,215,.22);
+  transform: translateX(-2px);
+}
+
+/* ── Responsive ─────────────────────────────── */
+
+/* Tablet: hide left panel, form takes full width */
+@media (max-width: 900px) {
+  .login-page { display: block; }
+
+  .lp-left { display: none; }
+
+  .lp-right {
+    flex: unset;
+    width: 100%;
+    min-height: 100svh;
+    padding: 60px 40px 48px;
+    justify-content: flex-start;
+    padding-top: 80px;
+  }
+
+  .lp-right-inner {
+    max-width: 460px;
+    margin: 0 auto;
+  }
+
+  /* Back button on white bg needs stronger border */
+  .lp-back {
+    background: #fff;
+    border-color: rgba(14,175,215,.3);
+  }
+}
+
+/* Large phone */
+@media (max-width: 640px) {
+  .lp-right {
+    padding: 72px 24px 40px;
+  }
+
+  .lp-right-inner { max-width: 100%; }
+}
+
+/* Small phone */
+@media (max-width: 400px) {
+  .lp-right { padding: 64px 16px 32px; }
 }

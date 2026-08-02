@@ -12,7 +12,8 @@ public sealed class UpdateAllergyCommandHandler(
     IAllergyRepository allergyRepository,
     IHealthProfileAuthorizationService authorizationService,
     IUnitOfWork unitOfWork,
-    IMapper mapper)
+    IMapper mapper,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<UpdateAllergyCommand, ApiResponse<AllergyDto>>
 {
     public async Task<ApiResponse<AllergyDto>> Handle(
@@ -36,6 +37,7 @@ public sealed class UpdateAllergyCommandHandler(
         allergy.Update(request.Name, request.Severity);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(request.PatientProfileId, cancellationToken);
 
         return ApiResponse<AllergyDto>.SuccessResponse(
             mapper.Map<AllergyDto>(allergy),

@@ -29,6 +29,7 @@ import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/fami
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -168,6 +169,7 @@ export class MedicalRecords implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
+  private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
   private readonly base = environment.apiUrl;
 
   readonly viewingProfile = toSignal<AccessibleProfileDto | null>(
@@ -1288,4 +1290,9 @@ export class MedicalRecords implements OnInit {
   }
 
   readonly RING_CIRCUMFERENCE = 2 * Math.PI * 14;
+
+  startWelcomeTour(): void {
+    if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
+    this.assistantOrchestrator.startTour('welcome-tour');
+  }
 }

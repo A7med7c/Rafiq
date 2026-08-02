@@ -1,24 +1,8 @@
-<section class="auth-hero" aria-label="Rafiq health assistant">
-    <a class="brand" href="/" aria-label="Rafiq">
-        <img src="images/RafiqLogo.png" alt="">
-        <strong>Rafiq</strong>
-    </a>
-
-    <div class="hero-main">
-        <div class="hero-copy">
-            <h1>{{ t().authHero.welcomeTitle }}</h1>
-            <p>{{ t().authHero.welcomeSubtitle }}</p>
-        </div>
-
-        <div class="robot-stage" aria-hidden="true">
-            <span class="pulse pulse-one"></span>
-            <span class="pulse pulse-two"></span>
-            <span class="orb orb-one"></span>
-            <span class="orb orb-two"></span>
-            <span class="plus plus-one">+</span>
-            <span class="plus plus-two">+</span>
-            <img src="images/RafiqLogo.png" class="robot" alt="">
-            <span class="platform"></span>
-        </div>
-    </div>   
-</section>
+<div class="auth-top" [dir]="l10n.dir()">
+  <div class="auth-brand">
+    <img src="images/RafiqLogo.png" alt="Rafiq" class="auth-logo-sm">
+    <span class="auth-brand-name">Rafiq <span class="auth-brand-sep">|</span> <span class="auth-brand-ar">رفيق</span></span>
+  </div>
+  <h1 class="auth-title">{{ t().authHero.welcomeTitle }}</h1>
+  <p class="auth-sub">{{ t().authHero.welcomeSubtitle }}</p>
+</div>

@@ -1,7 +1,35 @@
 <div class="login-page">
 
-    <app-auth-hero></app-auth-hero>
+  <!-- Back to landing -->
+  <a routerLink="/" class="lp-back" [dir]="'ltr'" aria-label="Back to home">
+    <i class="fa-solid fa-arrow-left"></i>
+  </a>
 
-    <app-login-form></app-login-form>
+  <!-- Left: blue hero panel with robot -->
+  <div class="lp-left">
+    <div class="lp-glow lp-glow--top"></div>
+    <div class="lp-glow lp-glow--bottom"></div>
+
+    <!-- Decorations -->
+    <div class="lp-deco lp-bubble lp-bubble--lg"></div>
+    <div class="lp-deco lp-bubble lp-bubble--md"></div>
+    <div class="lp-deco lp-bubble lp-bubble--sm"></div>
+    <div class="lp-deco lp-bubble lp-bubble--xs"></div>
+    <span class="lp-deco lp-plus lp-plus--1" aria-hidden="true"></span>
+    <span class="lp-deco lp-plus lp-plus--2" aria-hidden="true"></span>
+
+    <img src="images/RafiqLogo.png" alt="" class="lp-robot" aria-hidden="true">
+
+    <!-- Shadow under robot -->
+    <div class="lp-robot-shadow"></div>
+  </div>
+
+  <!-- Right: white form panel -->
+  <div class="lp-right">
+    <div class="lp-right-inner">
+      <app-auth-hero></app-auth-hero>
+      <app-login-form></app-login-form>
+    </div>
+  </div>
 
 </div>

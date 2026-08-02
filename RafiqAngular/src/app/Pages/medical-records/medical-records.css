@@ -2123,6 +2123,22 @@ html[dir="rtl"] .user-dropdown {
     visibility 250ms ease-in-out;
 }
 
+.sb-help-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  gap: 7px; padding: 10px 12px; border: 1px solid rgba(14,175,215,.25); border-radius: var(--r-xs);
+  background: linear-gradient(135deg, #20C5E1 0%, #0EAFD7 100%); color: var(--white); font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.sb-help-btn:hover { background: linear-gradient(135deg, #24CAE6 0%, #0C9FCA 100%); }
+
+.sb-help-btn--tour {
+  margin-top: 8px;
+  background: #E0F7FC;
+  border-color: #0EAFD7;
+  color: #0EAFD7;
+  direction: rtl;
+}
+.sb-help-btn--tour:hover { background: #C8F0F8; }
+
 .sb-logo-icon {
   width: 52px;
   height: 52px;

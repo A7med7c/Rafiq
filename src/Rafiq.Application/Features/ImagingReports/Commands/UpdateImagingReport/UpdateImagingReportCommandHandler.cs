@@ -12,7 +12,8 @@ namespace Rafiq.Application.Features.ImagingReports.Commands.UpdateImagingReport
 public sealed class UpdateImagingReportCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IImagingReportRepository imagingReportRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<UpdateImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
 {
     public async Task<ApiResponse<ImagingReportResponseDto>> Handle(
@@ -45,6 +46,7 @@ public sealed class UpdateImagingReportCommandHandler(
             request.OcrText);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(imagingReport.UserHealthProfileId, cancellationToken);
 
         var dto = new ImagingReportResponseDto
         {

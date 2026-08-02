@@ -12,7 +12,8 @@ public sealed class UpdateChronicDiseaseCommandHandler(
     IChronicDiseaseRepository chronicDiseaseRepository,
     IHealthProfileAuthorizationService authorizationService,
     IUnitOfWork unitOfWork,
-    IMapper mapper)
+    IMapper mapper,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<UpdateChronicDiseaseCommand, ApiResponse<ChronicDiseaseDto>>
 {
     public async Task<ApiResponse<ChronicDiseaseDto>> Handle(
@@ -36,6 +37,7 @@ public sealed class UpdateChronicDiseaseCommandHandler(
         disease.Update(request.Name, request.DiagnosedAt, request.Status);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(request.PatientProfileId, cancellationToken);
 
         return ApiResponse<ChronicDiseaseDto>.SuccessResponse(
             mapper.Map<ChronicDiseaseDto>(disease),

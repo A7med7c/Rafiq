@@ -11,7 +11,8 @@ namespace Rafiq.Application.Features.Prescriptions.Commands.UpdatePrescription;
 public sealed class UpdatePrescriptionCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IPrescriptionRepository prescriptionRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<UpdatePrescriptionCommand, ApiResponse<PrescriptionResponseDto>>
 {
     public async Task<ApiResponse<PrescriptionResponseDto>> Handle(
@@ -39,6 +40,7 @@ public sealed class UpdatePrescriptionCommandHandler(
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(prescription.UserHealthProfileId, cancellationToken);
 
         var dto = new PrescriptionResponseDto
         {

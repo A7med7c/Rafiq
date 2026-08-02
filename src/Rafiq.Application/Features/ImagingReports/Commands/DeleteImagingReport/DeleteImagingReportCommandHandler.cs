@@ -10,7 +10,8 @@ namespace Rafiq.Application.Features.ImagingReports.Commands.DeleteImagingReport
 public sealed class DeleteImagingReportCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IImagingReportRepository imagingReportRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<DeleteImagingReportCommand, ApiResponse<bool>>
 {
     public async Task<ApiResponse<bool>> Handle(
@@ -22,8 +23,10 @@ public sealed class DeleteImagingReportCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(imagingReport.UserHealthProfileId, cancellationToken);
 
+        var profileId = imagingReport.UserHealthProfileId;
         imagingReportRepository.Remove(imagingReport);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(profileId, cancellationToken);
 
         return ApiResponse<bool>.SuccessResponse(true, "Imaging report deleted successfully.");
     }

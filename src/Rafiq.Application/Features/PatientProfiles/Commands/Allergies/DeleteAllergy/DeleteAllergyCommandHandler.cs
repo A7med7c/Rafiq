@@ -9,7 +9,8 @@ namespace Rafiq.Application.Features.PatientProfiles.Commands.Allergies.DeleteAl
 public sealed class DeleteAllergyCommandHandler(
     IAllergyRepository allergyRepository,
     IHealthProfileAuthorizationService authorizationService,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<DeleteAllergyCommand, ApiResponse<object>>
 {
     public async Task<ApiResponse<object>> Handle(
@@ -26,6 +27,7 @@ public sealed class DeleteAllergyCommandHandler(
 
         allergyRepository.Remove(allergy);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(request.PatientProfileId, cancellationToken);
 
         return ApiResponse<object>.SuccessResponse(null, "Allergy deleted successfully.");
     }

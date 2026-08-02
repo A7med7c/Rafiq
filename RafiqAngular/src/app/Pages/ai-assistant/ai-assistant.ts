@@ -12,6 +12,7 @@ import { AiMessageValidatorService } from '../../Services/ai-message-validator.s
 import { LocalizationService } from '../../Services/localization.service';
 import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-chat.models';
 import { catchError, of } from 'rxjs';
+import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 
 /** Local-only chat message shape: adds an optional client-side image preview
  * for the current session (the backend does not persist/return image bytes on
@@ -44,6 +45,7 @@ export class AiAssistant implements OnInit {
   private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
+  private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
@@ -637,4 +639,9 @@ export class AiAssistant implements OnInit {
     this.authService.logout().subscribe();
   }
   openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
+
+  startWelcomeTour(): void {
+    if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
+    this.assistantOrchestrator.startTour('welcome-tour');
+  }
 }

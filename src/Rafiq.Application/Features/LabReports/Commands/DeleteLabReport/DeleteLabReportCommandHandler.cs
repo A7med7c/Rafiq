@@ -10,7 +10,8 @@ namespace Rafiq.Application.Features.LabReports.Commands.DeleteLabReport;
 public sealed class DeleteLabReportCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     ILabReportRepository labReportRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<DeleteLabReportCommand, ApiResponse<bool>>
 {
     public async Task<ApiResponse<bool>> Handle(
@@ -22,8 +23,10 @@ public sealed class DeleteLabReportCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(labReport.UserHealthProfileId, cancellationToken);
 
+        var profileId = labReport.UserHealthProfileId;
         labReportRepository.Remove(labReport);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(profileId, cancellationToken);
 
         return ApiResponse<bool>.SuccessResponse(true, "Lab report deleted successfully.");
     }

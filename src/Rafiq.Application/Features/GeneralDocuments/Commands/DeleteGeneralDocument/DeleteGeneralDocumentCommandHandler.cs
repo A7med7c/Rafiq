@@ -10,7 +10,8 @@ public sealed class DeleteGeneralDocumentCommandHandler(
     ICurrentUserService currentUserService,
     IPatientProfileRepository patientProfileRepository,
     IGeneralDocumentRepository repository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<DeleteGeneralDocumentCommand, ApiResponse<bool>>
 {
     public async Task<ApiResponse<bool>> Handle(
@@ -28,6 +29,7 @@ public sealed class DeleteGeneralDocumentCommandHandler(
 
         repository.Remove(document);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(profileId, cancellationToken);
 
         return ApiResponse<bool>.SuccessResponse(true, "General document deleted successfully.");
     }

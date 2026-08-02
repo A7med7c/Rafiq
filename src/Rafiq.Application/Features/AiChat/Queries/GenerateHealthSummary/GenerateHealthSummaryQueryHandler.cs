@@ -5,13 +5,16 @@ using Rafiq.Application.AI.Models;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.AiChat.DTOs;
+using Rafiq.Domain.Entities.User;
+using Rafiq.Domain.Repositories;
 
 namespace Rafiq.Application.Features.AiChat.Queries.GenerateHealthSummary;
 
 public sealed class GenerateHealthSummaryQueryHandler(
     IHealthProfileAuthorizationService healthProfileAuthService,
     IHealthQueryContextBuilder healthQueryContextBuilder,
-    IAiChatService aiChatService)
+    IAiChatService aiChatService,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<GenerateHealthSummaryQuery, ApiResponse<HealthSummaryDto>>
 {
     private const int SummaryMaxTokens = 700;
@@ -73,6 +76,18 @@ public sealed class GenerateHealthSummaryQueryHandler(
     {
         await healthProfileAuthService.EnsureCanReadAsync(request.UserHealthProfileId, cancellationToken);
 
+        var lang = request.Language.ToLowerInvariant().StartsWith("ar") ? "ar" : "en";
+
+        // Return the cached summary when it is still valid.
+        var cached = await summaryCache.GetAsync(request.UserHealthProfileId, lang, cancellationToken);
+        if (cached is not null && !cached.NeedsRefresh)
+        {
+            var cachedDto = DeserializeSummary(cached.SummaryJson);
+            if (cachedDto is not null)
+                return ApiResponse<HealthSummaryDto>.SuccessResponse(cachedDto);
+        }
+
+        // Cache is missing or stale — generate a fresh summary.
         var intent = new ParsedHealthQueryIntent(
             AllCategories,
             HealthQueryOperation.List,
@@ -83,9 +98,18 @@ public sealed class GenerateHealthSummaryQueryHandler(
             intent, new SingleProfileScope(request.UserHealthProfileId), cancellationToken);
 
         if (!HasMeaningfulData(healthContext))
+        {
+            // No meaningful data — persist the empty result to avoid re-calling AI on every refresh.
+            var emptyJson = SerializeSummary(EmptyDto);
+            var emptyEntry = cached is null
+                ? HealthSummaryCache.Create(request.UserHealthProfileId, lang, emptyJson)
+                : cached;
+            if (cached is not null) cached.Refresh(emptyJson);
+            await summaryCache.SaveAsync(emptyEntry, cancellationToken);
             return ApiResponse<HealthSummaryDto>.SuccessResponse(EmptyDto);
+        }
 
-        bool isArabic = request.Language.StartsWith("ar", StringComparison.OrdinalIgnoreCase);
+        bool isArabic = lang == "ar";
 
         string userMessage = isArabic
             ? "حلل بيانات المريض وأنشئ ملخص الصحة بتنسيق JSON المطلوب."
@@ -102,7 +126,24 @@ public sealed class GenerateHealthSummaryQueryHandler(
         var response = await aiChatService.GenerateResponseAsync(aiRequest, cancellationToken);
         var dto = ParseSummaryJson(response.Content, isArabic);
 
+        // Persist to cache.
+        var summaryJson = SerializeSummary(dto);
+        var entry = cached is null
+            ? HealthSummaryCache.Create(request.UserHealthProfileId, lang, summaryJson)
+            : cached;
+        if (cached is not null) cached.Refresh(summaryJson);
+        await summaryCache.SaveAsync(entry, cancellationToken);
+
         return ApiResponse<HealthSummaryDto>.SuccessResponse(dto);
+    }
+
+    private static string SerializeSummary(HealthSummaryDto dto)
+        => JsonSerializer.Serialize(dto);
+
+    private static HealthSummaryDto? DeserializeSummary(string json)
+    {
+        try { return JsonSerializer.Deserialize<HealthSummaryDto>(json); }
+        catch { return null; }
     }
 
     private static HealthSummaryDto ParseSummaryJson(string raw, bool isArabic)

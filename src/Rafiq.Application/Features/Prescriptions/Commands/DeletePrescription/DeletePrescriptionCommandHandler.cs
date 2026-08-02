@@ -9,7 +9,8 @@ namespace Rafiq.Application.Features.Prescriptions.Commands.DeletePrescription;
 public sealed class DeletePrescriptionCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IPrescriptionRepository prescriptionRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IHealthSummaryCacheRepository summaryCache)
     : IRequestHandler<DeletePrescriptionCommand, ApiResponse<bool>>
 {
     public async Task<ApiResponse<bool>> Handle(
@@ -22,8 +23,10 @@ public sealed class DeletePrescriptionCommandHandler(
 
         await authorizationService.EnsureCanWriteAsync(prescription.UserHealthProfileId, cancellationToken);
 
+        var profileId = prescription.UserHealthProfileId;
         prescriptionRepository.Delete(prescription);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await summaryCache.MarkNeedsRefreshAsync(profileId, cancellationToken);
 
         return ApiResponse<bool>.SuccessResponse(true, "Prescription deleted successfully.");
     }
