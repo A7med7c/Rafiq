@@ -1,11 +1,14 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { DownloadService } from './download.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PdfService {
+  private readonly downloadSvc = inject(DownloadService);
+
   private async loadFonts(doc: jsPDF): Promise<void> {
     if (doc.getFontList()['Amiri']) {
       return;
@@ -306,7 +309,7 @@ private async generateLabPdf(doc: jsPDF, record: any) {
 
     this.addFooter(doc);
 
-    doc.save(`${record.labName ?? 'lab-report'}.pdf`);
+    await this.downloadSvc.download(doc.output('blob') as Blob, `${record.labName ?? 'lab-report'}.pdf`);
 
 }
 private async generateImagingPdf(doc: jsPDF, record: any) {
@@ -359,7 +362,8 @@ private async generateImagingPdf(doc: jsPDF, record: any) {
 
   this.addFooter(doc);
 
-  doc.save(
+  await this.downloadSvc.download(
+    doc.output('blob') as Blob,
     `ImagingReport-${record.rawRecord.imagingType ?? "Report"}.pdf`
   );
 }
@@ -420,7 +424,8 @@ private async generateImagingPdf(doc: jsPDF, record: any) {
 
   this.addFooter(doc);
 
-  doc.save(
+  await this.downloadSvc.download(
+    doc.output('blob') as Blob,
     `Prescription-${record.rawRecord.patientName ?? "Report"}.pdf`
   );
 }
@@ -458,7 +463,8 @@ private async generateMedicineBoxPdf(doc: jsPDF, record: any) {
 
   this.addFooter(doc);
 
-  doc.save(
+  await this.downloadSvc.download(
+    doc.output('blob') as Blob,
     `Medicine-${record.rawRecord.medicineName ?? "Record"}.pdf`
   );
 }
@@ -502,7 +508,8 @@ private async generateGeneralDocumentPdf(doc: jsPDF, record: any) {
 
   this.addFooter(doc);
 
-  doc.save(
+  await this.downloadSvc.download(
+    doc.output('blob') as Blob,
     `Document-${record.rawRecord.title ?? "Record"}.pdf`
   );
 }
