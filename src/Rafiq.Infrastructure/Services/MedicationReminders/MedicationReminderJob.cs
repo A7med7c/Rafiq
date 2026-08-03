@@ -77,6 +77,15 @@ public sealed class MedicationReminderJob(
             return;
         }
 
+        // Snoozed logs are re-queued by the snooze handler to fire after a delay.
+        // When this job fires for a Snoozed log, treat it like a normal delivery:
+        // the notification re-alerts the patient and the status moves back to Sent.
+        if (log.Status == MedicationReminderStatus.Snoozed)
+        {
+            logger.LogInformation(
+                "MedicationReminderLog {LogId} is being re-delivered after snooze.", logId);
+        }
+
         logger.LogInformation("Before SendNotificationAsync for log {LogId}.", logId);
         await SendNotificationAsync(log);
         logger.LogInformation("After SendNotificationAsync for log {LogId}.", logId);

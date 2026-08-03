@@ -18,6 +18,8 @@ export class AppointmentsService {
   private readonly profileSelectSvc   = inject(ProfileSelectionService);
   private readonly base               = `${environment.apiUrl}/appointments`;
 
+  public lastHistoryTab: string = 'thisMonth';
+
   private getCurrentProfileId(): Observable<string> {
     const stored = this.profileSelectSvc.selectedProfileId;
     if (stored) return of(stored);

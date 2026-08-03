@@ -22,8 +22,9 @@ import { ProfileSelectionService } from '../../Services/profile-selection.servic
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 
-type MedTab = 'schedule' | 'medications';
+type MedTab = 'schedule' | 'medications' | 'history';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
+type SnoozeOption = 15 | 30 | 60;
 type RepeatOption = 'Once' | 'Daily' | 'Weekly' | 'Monthly';
 
 interface ReminderForm {
@@ -59,7 +60,7 @@ interface AddMedForm {
  * Completed  — user confirmed this occurrence
  * Cancelled  — attempt cancelled (dose confirmed via a different attempt)
  */
-type AttemptState = 'Upcoming' | 'Sent' | 'Overdue' | 'NoResponse' | 'Completed' | 'Cancelled';
+type AttemptState = 'Upcoming' | 'Sent' | 'Overdue' | 'NoResponse' | 'Completed' | 'Cancelled' | 'Skipped' | 'Missed' | 'Snoozed';
 
 interface AttemptView {
   reminderNumber: number;
@@ -244,9 +245,27 @@ export class Medications implements OnInit, OnDestroy {
   readonly showConfirmModal = signal(false);
   readonly confirmingLog = signal<MedicationReminderLogDto | null>(null);
   readonly confirming = signal(false);
+  readonly skipping = signal(false);
+  readonly snoozing = signal(false);
+  readonly showSnoozePicker = signal(false);
+  readonly selectedSnooze = signal<SnoozeOption>(15);
   readonly pendingReminderId = signal<string | null>(null);
   readonly highlightReminderId = signal<string | null>(null);
   readonly pendingReminderMedicineId = signal<string | null>(null);
+
+  // ── Reminder created confirmation ────────────────────────────────────────
+  readonly showReminderConfirmation = signal(false);
+  readonly confirmedReminderMedName = signal('');
+  readonly confirmedReminderTimes = signal<string[]>([]);
+  readonly confirmedReminderRepeat = signal('');
+  readonly confirmedReminderStart = signal('');
+  readonly confirmedReminderEnd = signal('');
+
+  // ── Dose history ──────────────────────────────────────────────────────────
+  readonly historyDate = signal(Medications.localToday());
+  readonly historyLogs = signal<MedicationReminderLogDto[]>([]);
+  readonly historyLoading = signal(false);
+  readonly historyError = signal<string | null>(null);
 
   // ── Add Medicine modal ────────────────────────────────────────────────────
   readonly showAddMedModal = signal(false);
@@ -297,16 +316,21 @@ export class Medications implements OnInit, OnDestroy {
   readonly doses = computed<Dose[]>(() => {
     const today = Medications.localToday();
     this.nowMinutes(); // read so computed re-evaluates on clock ticks
+    const filtered = this.todayLogs().filter(l => l.scheduledDate === today);
+    return this.foldLogsIntoDoses(filtered, true);
+  });
 
+  /**
+   * Folds a flat list of reminder logs (potentially from multiple occurrences) into
+   * one Dose per (medicineReminderId, scheduledDate) pair.
+   *
+   * @param isToday When true, applies the today safety-date-filter and clock-aware
+   *                sorting.  When false (history), every log is included as-is.
+   */
+  private foldLogsIntoDoses(logs: MedicationReminderLogDto[], isToday: boolean): Dose[] {
     const groups = new Map<string, MedicationReminderLogDto[]>();
 
-    for (const log of this.todayLogs()) {
-      // Safety-filter: backend /today endpoint scopes by the reminder timezone's "today",
-      // but the client may be in a different timezone; only show logs whose date matches.
-      if (log.scheduledDate !== today) continue;
-
-      // Group by (medicineReminderId, scheduledDate) — the same key the unique filtered
-      // index guarantees maps to exactly one dose occurrence.
+    for (const log of logs) {
       const key = `${log.medicineReminderId}|${log.scheduledDate}`;
       const bucket = groups.get(key);
       if (bucket) bucket.push(log);
@@ -315,51 +339,47 @@ export class Medications implements OnInit, OnDestroy {
 
     const doses: Dose[] = [];
 
-    for (const [key, logs] of groups) {
-      const ordered = [...logs].sort((a, b) => a.reminderNumber - b.reminderNumber);
-
-      // All logs in the group share the same MedicineReminder.ReminderTime — the user's
-      // configured dose time.  Use it directly instead of inferring from ReminderNumber.
+    for (const [key, bucket] of groups) {
+      const ordered = [...bucket].sort((a, b) => a.reminderNumber - b.reminderNumber);
       const anyLog = ordered[0];
-      const doseTime = anyLog.reminderTime;   // e.g. "20:00:00"
+      const doseTime = anyLog.reminderTime;
 
-      // The actionable log is determined by the backend (IsActionable flag).
-      // At most one log per occurrence has it set.  Do not re-derive it here.
       const actionable = ordered.find(l => l.isActionable) ?? null;
       const confirmed = ordered.find(l => l.status === 'Confirmed') ?? null;
+      const skipped = ordered.find(l => l.status === 'Skipped') ?? null;
+      const missed = ordered.find(l => l.status === 'Missed') ?? null;
+      const snoozed = ordered.find(l => l.status === 'Snoozed') ?? null;
 
       let status: MedicationReminderStatus;
       if (confirmed) status = 'Confirmed';
+      else if (skipped) status = 'Skipped';
+      else if (missed) status = 'Missed';
+      else if (snoozed && !actionable) status = 'Snoozed';
       else if (actionable) status = actionable.status;
       else if (ordered.every(l => l.status === 'Cancelled')) status = 'Cancelled';
       else status = anyLog.status;
 
-      // Map each log to its display chip.
-      //
-      // Attempt statuses are kept strictly separate from the dose-level status:
-      //   • NoResponse — earlier reminder fired (Sent) or was skipped (Overdue) but user
-      //                  didn't respond; the dose cycle moved to the next attempt.
-      //   • Overdue    — the actionable attempt whose configured time has already passed
-      //                  (no notification was sent because scheduling was late).
-      //   • Sent       — the current actionable attempt; notification was delivered, awaiting
-      //                  confirmation.
-      //   • Upcoming   — a future Pending attempt not yet fired.
       const attemptStates: AttemptView[] = ordered.map(l => {
         let state: AttemptState;
         if (confirmed) {
           state = l.status === 'Confirmed' ? 'Completed' : 'Cancelled';
+        } else if (skipped) {
+          state = l.status === 'Skipped' ? 'Skipped' : 'Cancelled';
         } else if (l.status === 'Confirmed') {
           state = 'Completed';
+        } else if (l.status === 'Skipped') {
+          state = 'Skipped';
+        } else if (l.status === 'Missed') {
+          state = 'Missed';
+        } else if (l.status === 'Snoozed') {
+          state = 'Snoozed';
         } else if (l.status === 'Cancelled') {
           state = 'Cancelled';
         } else if (l.isActionable) {
-          // This is the one attempt the user should act on right now.
           state = l.status === 'Sent' ? 'Sent'
             : l.status === 'Overdue' ? 'Overdue'
               : 'Upcoming';
         } else if (l.status === 'Sent' || l.status === 'Overdue') {
-          // Earlier attempt passed without user response — label it accordingly,
-          // not as "Missed" (the dose is still active and can still be confirmed).
           state = 'NoResponse';
         } else {
           state = 'Upcoming';
@@ -383,7 +403,7 @@ export class Medications implements OnInit, OnDestroy {
     }
 
     return doses.sort((a, b) => a.minutes - b.minutes);
-  });
+  }
 
   /**
    * Reactive display order for Today's Schedule.
@@ -410,7 +430,48 @@ export class Medications implements OnInit, OnDestroy {
     });
   });
 
+  readonly historyDoses = computed<Dose[]>(() => this.foldLogsIntoDoses(this.historyLogs(), false));
+
+  readonly historyDosesGrouped = computed<{ medicineName: string; dosage: string; doses: Dose[] }[]>(() => {
+    const doses = this.historyDoses();
+    const map = new Map<string, { medicineName: string; dosage: string; doses: Dose[] }>();
+    for (const d of doses) {
+      if (!map.has(d.medicineName)) {
+        map.set(d.medicineName, { medicineName: d.medicineName, dosage: d.dosage, doses: [] });
+      }
+      map.get(d.medicineName)!.doses.push(d);
+    }
+    return Array.from(map.values());
+  });
+
+  readonly historyWeekDays = computed<{ dateStr: string; dayName: string; dayNum: number; isSelected: boolean }[]>(() => {
+    const currentStr = this.historyDate();
+    const d = new Date(currentStr);
+    const day = d.getDay(); // 0 (Sun) to 6 (Sat)
+    const sunday = new Date(d);
+    sunday.setDate(d.getDate() - day);
+    
+    const week = [];
+    const arDays = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    for (let i = 0; i < 7; i++) {
+      const iterDate = new Date(sunday);
+      iterDate.setDate(sunday.getDate() + i);
+      const m = String(iterDate.getMonth() + 1).padStart(2, '0');
+      const dNum = String(iterDate.getDate()).padStart(2, '0');
+      const dateStr = `${iterDate.getFullYear()}-${m}-${dNum}`;
+      week.push({
+        dateStr,
+        dayName: arDays[i],
+        dayNum: iterDate.getDate(),
+        isSelected: dateStr === currentStr
+      });
+    }
+    return week;
+  });
+
   readonly takenCount = computed(() => this.doses().filter(d => d.status === 'Confirmed').length);
+  readonly skippedCount = computed(() => this.doses().filter(d => d.status === 'Skipped').length);
+  readonly missedCount = computed(() => this.doses().filter(d => d.status === 'Missed').length);
 
   /** All doses that still need a confirmation (both upcoming and overdue-but-still-active). */
   readonly dueCount = computed(() => this.doses().filter(d => !!d.actionable).length);
@@ -436,9 +497,9 @@ export class Medications implements OnInit, OnDestroy {
     this.doses().filter(d => d.status === 'Cancelled').length
   );
 
-  /** Share of non-cancelled doses that were actually taken. */
+  /** Share of non-cancelled doses that were actually taken (Confirmed / all non-Cancelled). */
   readonly adherencePct = computed(() => {
-    const nonCancelled = this.doses().filter(d => d.status !== 'Cancelled');
+    const nonCancelled = this.doses().filter(d => d.status !== 'Cancelled' && d.status !== 'Snoozed');
     if (nonCancelled.length === 0) return null;
     const taken = nonCancelled.filter(d => d.status === 'Confirmed').length;
     return Math.round((taken / nonCancelled.length) * 100);
@@ -664,7 +725,19 @@ export class Medications implements OnInit, OnDestroy {
     if (this.showAddReminderModal()) { this.closeAddReminder(); return; }
     if (this.showDeleteReminderModal()) { this.closeDeleteReminder(); return; }
     if (this.viewingMed()) { this.closeMedView(); return; }
-    if (this.showConfirmModal()) { this.closeConfirm(); }
+    if (this.showConfirmModal()) { this.closeConfirm(); return; }
+    if (this.showReminderConfirmation()) { this.closeReminderConfirmation(); }
+  }
+
+  closeReminderConfirmation(): void { this.showReminderConfirmation.set(false); }
+
+  addAnotherReminder(): void {
+    this.showReminderConfirmation.set(false);
+    // Re-open Add Reminder modal for the same medicine if it's still in view.
+    const meds = this.medicines();
+    const medName = this.confirmedReminderMedName();
+    const med = meds.find(m => m.medicineName === medName);
+    if (med) this.openAddReminder(med);
   }
 
   @HostListener('document:click', ['$event'])
@@ -692,6 +765,9 @@ export class Medications implements OnInit, OnDestroy {
     this.activeTab.set(tab);
     if (tab === 'medications' && this.medicines().length === 0 && !this.medsLoading()) {
       this.loadMedicines();
+    }
+    if (tab === 'history' && this.historyLogs().length === 0 && !this.historyLoading()) {
+      this.loadHistory();
     }
   }
 
@@ -768,6 +844,9 @@ export class Medications implements OnInit, OnDestroy {
   doseState(dose: Dose): string {
     if (dose.status === 'Confirmed') return 'confirmed';
     if (dose.status === 'Cancelled') return 'cancelled';
+    if (dose.status === 'Skipped') return 'skipped';
+    if (dose.status === 'Missed') return 'missed';
+    if (dose.status === 'Snoozed') return 'snoozed';
     return this.isOverdue(dose) ? 'overdue' : dose.status.toLowerCase();
   }
 
@@ -775,6 +854,9 @@ export class Medications implements OnInit, OnDestroy {
   countdownLabel(dose: Dose): string {
     if (dose.status === 'Confirmed') return 'Taken';
     if (dose.status === 'Cancelled') return 'Cancelled';
+    if (dose.status === 'Skipped') return 'Skipped';
+    if (dose.status === 'Missed') return 'Missed';
+    if (dose.status === 'Snoozed') return 'Snoozed';
 
     const diff = dose.minutes - this.nowMinutes();
     if (diff <= 0) return `Overdue by ${this.durationLabel(-diff)}`;
@@ -798,8 +880,11 @@ export class Medications implements OnInit, OnDestroy {
       NoResponse: 'pill pill-gray-sm',
       Completed: 'pill pill-green-sm',
       Cancelled: 'pill pill-gray-sm',
+      Skipped: 'pill pill-orange-sm',
+      Missed: 'pill pill-red-sm',
+      Snoozed: 'pill pill-blue-sm',
     };
-    return map[state];
+    return map[state] ?? 'pill';
   }
 
   attemptIcon(state: AttemptState): string {
@@ -810,8 +895,11 @@ export class Medications implements OnInit, OnDestroy {
       NoResponse: 'fa-minus-circle',
       Completed: 'fa-circle-check',
       Cancelled: 'fa-ban',
+      Skipped: 'fa-forward',
+      Missed: 'fa-circle-xmark',
+      Snoozed: 'fa-clock-rotate-left',
     };
-    return map[state];
+    return map[state] ?? 'fa-circle';
   }
 
   attemptLabel(state: AttemptState): string {
@@ -822,8 +910,11 @@ export class Medications implements OnInit, OnDestroy {
       NoResponse: 'No Response',
       Completed: 'Completed',
       Cancelled: 'Cancelled',
+      Skipped: 'Skipped',
+      Missed: 'Missed',
+      Snoozed: 'Snoozed',
     };
-    return map[state];
+    return map[state] ?? state;
   }
 
   /**
@@ -887,9 +978,148 @@ export class Medications implements OnInit, OnDestroy {
   }
 
   closeConfirm(): void {
-    if (this.confirming()) return;
+    if (this.confirming() || this.skipping() || this.snoozing()) return;
     this.showConfirmModal.set(false);
     this.confirmingLog.set(null);
+    this.showSnoozePicker.set(false);
+  }
+
+  // ── Skip dose ─────────────────────────────────────────────────────────────
+  skipDose(): void {
+    const log = this.confirmingLog();
+    if (!log || this.skipping() || this.confirming() || this.snoozing()) return;
+
+    this.skipping.set(true);
+    this.medSvc.skip(log.id).subscribe({
+      next: res => {
+        this.skipping.set(false);
+        this.showConfirmModal.set(false);
+        this.confirmingLog.set(null);
+        this.showSnoozePicker.set(false);
+
+        if (!res.success) {
+          this.toast(res.message || `${log.medicineName} has already been updated.`, 'success');
+          this.loadSchedule();
+          return;
+        }
+
+        // Optimistic update — mark the skipped log and cancel its siblings.
+        this.todayLogs.update(list =>
+          list.map(l => {
+            if (l.id === log.id)
+              return { ...l, status: 'Skipped' as MedicationReminderStatus, isActionable: false };
+            if (l.medicineReminderId === log.medicineReminderId && l.scheduledDate === log.scheduledDate)
+              return { ...l, status: 'Cancelled' as MedicationReminderStatus, isActionable: false };
+            return l;
+          })
+        );
+
+        this.toast(`${log.medicineName} dose skipped.`, 'success');
+        this.notifSvc.notifyReminderChanged();
+        this.loadSchedule();
+      },
+      error: err => {
+        this.toast(err?.error?.message ?? 'Could not skip dose.', 'error');
+        this.skipping.set(false);
+      },
+    });
+  }
+
+  // ── Snooze dose ───────────────────────────────────────────────────────────
+  toggleSnoozePicker(): void {
+    if (this.confirming() || this.skipping() || this.snoozing()) return;
+    this.showSnoozePicker.update(v => !v);
+  }
+
+  submitSnooze(): void {
+    const log = this.confirmingLog();
+    if (!log || this.snoozing() || this.confirming() || this.skipping()) return;
+
+    this.snoozing.set(true);
+    const minutes = this.selectedSnooze();
+    this.medSvc.snooze(log.id, minutes).subscribe({
+      next: res => {
+        this.snoozing.set(false);
+        this.showConfirmModal.set(false);
+        this.confirmingLog.set(null);
+        this.showSnoozePicker.set(false);
+
+        if (!res.success) {
+          this.toast(res.message || `${log.medicineName} could not be snoozed.`, 'success');
+          this.loadSchedule();
+          return;
+        }
+
+        // Optimistic update — mark log as Snoozed so it leaves the actionable state.
+        this.todayLogs.update(list =>
+          list.map(l =>
+            l.id === log.id
+              ? { ...l, status: 'Snoozed' as MedicationReminderStatus, isActionable: false }
+              : l
+          )
+        );
+
+        this.toast(`${log.medicineName} reminder snoozed for ${minutes} minutes.`, 'success');
+        this.notifSvc.notifyReminderChanged();
+        this.loadSchedule();
+      },
+      error: err => {
+        this.toast(err?.error?.message ?? 'Could not snooze reminder.', 'error');
+        this.snoozing.set(false);
+      },
+    });
+  }
+
+  // ── Dose History ──────────────────────────────────────────────────────────
+  loadHistory(): void {
+    this.historyLoading.set(true);
+    this.historyError.set(null);
+    this.medSvc.getHistory(this.historyDate(), this.fpProfileId() ?? undefined).subscribe({
+      next: data => {
+        this.historyLogs.set(data);
+        this.historyLoading.set(false);
+      },
+      error: err => {
+        this.historyError.set(err?.error?.message ?? 'Could not load history.');
+        this.historyLoading.set(false);
+      },
+    });
+  }
+
+  prevHistoryDay(): void {
+    const d = new Date(this.historyDate());
+    d.setDate(d.getDate() - 1);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    this.historyDate.set(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+    this.loadHistory();
+  }
+
+  nextHistoryDay(): void {
+    const today = Medications.localToday();
+    const d = new Date(this.historyDate());
+    d.setDate(d.getDate() + 1);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const next = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    if (next > today) return; // can't navigate to the future
+    this.historyDate.set(next);
+    this.loadHistory();
+  }
+
+  isHistoryToday(): boolean { return this.historyDate() === Medications.localToday(); }
+
+  formatHistoryDate(dateStr: string): string {
+    const today = Medications.localToday();
+    if (dateStr === today) return 'Today';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+
+  historyAdherencePct(): number | null {
+    const doses = this.historyDoses();
+    const nonCancelled = doses.filter(d => d.status !== 'Cancelled' && d.status !== 'Snoozed');
+    if (nonCancelled.length === 0) return null;
+    const taken = nonCancelled.filter(d => d.status === 'Confirmed').length;
+    return Math.round((taken / nonCancelled.length) * 100);
   }
 
   submitConfirm(): void {
@@ -1004,6 +1234,9 @@ export class Medications implements OnInit, OnDestroy {
       Confirmed: 'Completed',
       Cancelled: 'Cancelled',
       Overdue: 'Overdue',
+      Missed: 'Missed',
+      Skipped: 'Skipped',
+      Snoozed: 'Snoozed',
     };
     return map[status] ?? status;
   }
@@ -1013,8 +1246,11 @@ export class Medications implements OnInit, OnDestroy {
       Pending: 'pill pill-yellow-sm',
       Sent: 'pill pill-blue-sm',
       Confirmed: 'pill pill-green-sm',
-      Cancelled: 'pill pill-red-sm',
+      Cancelled: 'pill pill-gray-sm',
       Overdue: 'pill pill-red-sm',
+      Missed: 'pill pill-red-sm',
+      Skipped: 'pill pill-orange-sm',
+      Snoozed: 'pill pill-blue-sm',
     };
     return map[status] ?? 'pill';
   }
@@ -1026,6 +1262,9 @@ export class Medications implements OnInit, OnDestroy {
       Confirmed: 'fa-circle-check',
       Cancelled: 'fa-ban',
       Overdue: 'fa-triangle-exclamation',
+      Missed: 'fa-circle-xmark',
+      Skipped: 'fa-forward',
+      Snoozed: 'fa-clock-rotate-left',
     };
     return map[status] ?? 'fa-circle';
   }
@@ -1177,7 +1416,14 @@ export class Medications implements OnInit, OnDestroy {
           this.closeAddReminder();
           this.notifSvc.notifyReminderChanged();
           this.reviewTracking.trackAction();
-          this.toast(`Reminder set for ${medName}.`, 'success');
+          this.loadAllMedicineReminders();
+          // Show confirmation screen instead of just a toast.
+          this.confirmedReminderMedName.set(medName);
+          this.confirmedReminderTimes.set(f.reminderTimes.filter(t => t.trim()).map(t => this.formatTime(t + ':00')));
+          this.confirmedReminderRepeat.set(f.repeatType);
+          this.confirmedReminderStart.set(f.startDate);
+          this.confirmedReminderEnd.set(f.repeatType === 'Once' ? '' : f.endDate);
+          this.showReminderConfirmation.set(true);
         },
         error: err => {
           this.toast(err?.error?.message ?? 'Could not save reminder.', 'error');

@@ -1,6 +1,14 @@
 import { UserMedicine } from './dashboard.models';
 
-export type MedicationReminderStatus = 'Pending' | 'Sent' | 'Confirmed' | 'Cancelled' | 'Overdue';
+export type MedicationReminderStatus =
+  | 'Pending'
+  | 'Sent'
+  | 'Confirmed'
+  | 'Cancelled'
+  | 'Overdue'
+  | 'Missed'
+  | 'Skipped'
+  | 'Snoozed';
 
 export interface MedicationReminderLogDto {
   id: string;

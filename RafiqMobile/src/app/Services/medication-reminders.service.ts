@@ -50,6 +50,26 @@ export class MedicationRemindersService {
     return this.http.post<ApiResponseBase>(`${this.base}/${id}/confirm`, {});
   }
 
+  skip(id: string): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(`${this.base}/${id}/skip`, {});
+  }
+
+  snooze(id: string, snoozeMinutes: number): Observable<ApiResponseBase> {
+    return this.http.post<ApiResponseBase>(`${this.base}/${id}/snooze`, { snoozeMinutes });
+  }
+
+  getHistory(date: string, profileId?: string): Observable<MedicationReminderLogDto[]> {
+    const pid$ = profileId ? of(profileId) : this.profileId$;
+    return pid$.pipe(
+      switchMap(pid =>
+        this.http.get<ApiResponse<MedicationReminderLogDto[]>>(
+          `${this.base}/history?profileId=${pid}&date=${date}`
+        )
+      ),
+      map(r => r.data ?? []),
+    );
+  }
+
   getUserMedicines(profileId?: string): Observable<UserMedicine[]> {
     const pid$ = profileId ? of(profileId) : this.profileId$;
     return pid$.pipe(
