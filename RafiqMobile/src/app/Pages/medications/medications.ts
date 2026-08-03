@@ -98,7 +98,7 @@ interface Dose {
 @Component({
   selector: 'app-medications',
   standalone: true,
-  imports: [CommonModule, FormsModule, AssistantAnchorDirective, FamilyProfileBannerComponent, BottomNav, MobileHeader],
+  imports: [CommonModule, FormsModule, FamilyProfileBannerComponent, BottomNav, MobileHeader],
   templateUrl: './medications.html',
   styleUrl: './medications.css',
 })

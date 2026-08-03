@@ -7,6 +7,7 @@ import { AppointmentReminderNotificationPayload, DocumentAnalysisCompletedPayloa
 import { NotificationSoundService } from './notification-sound.service';
 import { PersistedNotificationsService } from './persisted-notifications.service';
 import { LocalizationService } from './localization.service';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 export interface AppNotification {
   id: string;
@@ -22,15 +23,7 @@ export interface AppNotification {
   serverId?: string;
 }
 
-export interface NotificationToast {
-  id: string;
-  title: string;
-  body: string;
-  type: 'success' | 'error' | 'info';
-  createdAt: Date;
-  sourceId?: string;
-  action?: 'open-reminder' | 'open-appointment';
-}
+
 
 export interface BrowserNotificationItem {
   id: string;
@@ -73,7 +66,6 @@ export class NotificationService {
 
   private readonly _notifications = signal<AppNotification[]>([]);
   private readonly _reminderQueue = signal<MedicationReminderNotificationPayload[]>([]);
-  private readonly _toasts = signal<NotificationToast[]>([]);
   private readonly _browserNotifications = signal<BrowserNotificationItem[]>([]);
   private readonly _reminderModalOpen = signal(false);
   private readonly _notificationCenterOpen = signal(false);
@@ -85,7 +77,6 @@ export class NotificationService {
   private readonly _appointmentReminderModalOpen = signal(false);
   private readonly _appointmentDataRefreshTick = signal(0);
 
-  private readonly toastTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly snoozeTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly browserNotificationKeys = new Set<string>();
   private readonly processedReminderIds = new Set<string>();
@@ -107,7 +98,6 @@ export class NotificationService {
   readonly reminderModalOpen = this._reminderModalOpen.asReadonly();
   readonly confirmingReminder = this._confirmingReminder.asReadonly();
   readonly confirmingAppointment = this._confirmingAppointment.asReadonly();
-  readonly toasts = this._toasts.asReadonly();
   readonly browserNotifications = this._browserNotifications.asReadonly();
   readonly notificationCenterOpen = this._notificationCenterOpen.asReadonly();
   readonly browserNotificationPermission = this._browserNotificationPermission.asReadonly();
@@ -139,7 +129,21 @@ export class NotificationService {
     }
   });
 
+  private readonly _initLocalNotifications = () => {
+    LocalNotifications.addListener('localNotificationActionPerformed', (notificationAction) => {
+      this.ngZone.run(() => {
+        const payload = notificationAction.notification.extra;
+        if (payload && payload.action === 'open-reminder' && payload.sourceId) {
+          this.openReminderFromToast(payload.sourceId);
+        } else if (payload && payload.action === 'open-appointment' && payload.sourceId) {
+          // You could open the appointment directly, for now we let the app handle it
+        }
+      });
+    });
+  };
+
   constructor() {
+    this._initLocalNotifications();
     this.authService.currentUser$.subscribe((user) => {
       const nextUserId = user?.userId ?? null;
 
@@ -201,7 +205,12 @@ export class NotificationService {
         const events = this.signalr.drainDocumentAnalysisCompletedEvents();
         const t = this.localization.t().documentAnalysis;
         events.forEach(e => {
-          this.showToast(`${t.analysisComplete}: ${e.title}`, t.analysisCompleteBody, 'success');
+          this.emitNativeNotification({
+            id: crypto.randomUUID(),
+            title: `${t.analysisComplete}: ${e.title}`,
+            body: t.analysisCompleteBody,
+            createdAt: new Date(),
+          });
         });
       }
 
@@ -209,7 +218,12 @@ export class NotificationService {
         const events = this.signalr.drainDocumentAnalysisFailedEvents();
         const t = this.localization.t().documentAnalysis;
         events.forEach(e => {
-          this.showToast(`${t.analysisFailed}: ${e.title}`, e.failureReason || t.analysisFailedBody, 'error');
+          this.emitNativeNotification({
+            id: crypto.randomUUID(),
+            title: `${t.analysisFailed}: ${e.title}`,
+            body: e.failureReason || t.analysisFailedBody,
+            createdAt: new Date(),
+          });
         });
       }
     });
@@ -315,12 +329,7 @@ export class NotificationService {
 
         if (!res.success) {
           const nc = this.localization.t().notifications;
-          this.showToast(
-            nc.alreadyUpToDate,
-            res.message || `${reminder.medicineName} has already been updated.`,
-            'info'
-          );
-        } else {
+                  } else {
           const nc = this.localization.t().notifications;
           this.pushDerivedNotification({
             title: nc.medicationConfirmed,
@@ -329,12 +338,7 @@ export class NotificationService {
             sourceId: reminder.reminderId,
           });
           const ncAfter = this.localization.t().notifications;
-          this.showToast(
-            ncAfter.medicationConfirmed,
-            ncAfter.medicationConfirmedBody.replace('{name}', reminder.medicineName),
-            'success'
-          );
-        }
+                  }
 
         this.notifyReminderChanged();
         this._confirmingReminder.set(false);
@@ -343,12 +347,7 @@ export class NotificationService {
       error: err => {
         this._confirmingReminder.set(false);
         const nc = this.localization.t().notifications;
-        this.showToast(
-          nc.couldNotConfirmMedication,
-          err?.error?.message || nc.couldNotConfirmMedBody.replace('{name}', reminder.medicineName),
-          'error'
-        );
-      },
+              },
     });
   }
 
@@ -364,51 +363,7 @@ export class NotificationService {
     this.closeReminderModalIfEmpty();
   }
 
-  showToast(
-    title: string,
-    body: string,
-    type: NotificationToast['type'] = 'info',
-    options?: { sourceId?: string; action?: NotificationToast['action'] }
-  ): string {
-    const entry: NotificationToast = {
-      id: crypto.randomUUID(),
-      title,
-      body,
-      type,
-      createdAt: new Date(),
-      sourceId: options?.sourceId,
-      action: options?.action,
-    };
 
-    this._toasts.update(list => [entry, ...list]);
-
-    const timer = setTimeout(() => {
-      this.dismissToast(entry.id);
-    }, 4500);
-
-    this.toastTimers.set(entry.id, timer);
-
-    return entry.id;
-  }
-
-  dismissToast(id: string): void {
-    const timer = this.toastTimers.get(id);
-    if (timer) {
-      clearTimeout(timer);
-      this.toastTimers.delete(id);
-    }
-
-    this._toasts.update(list => list.filter(toast => toast.id !== id));
-  }
-
-  clearToasts(): void {
-    for (const timer of this.toastTimers.values()) {
-      clearTimeout(timer);
-    }
-
-    this.toastTimers.clear();
-    this._toasts.set([]);
-  }
 
   requestBrowserNotificationPermission(): Promise<NotificationPermission> {
     if (typeof window === 'undefined' || !('Notification' in window)) {
@@ -489,12 +444,16 @@ export class NotificationService {
 
     this._reminderQueue.update(queue => [...queue, reminder]);
     this._reminderModalOpen.set(true);
-    this.showToast(
-      this.localization.t().notifications.medicationReminderToast,
-      `${reminder.medicineName} • ${reminder.reminderTime}`,
-      'info',
-      { sourceId: reminder.reminderId, action: 'open-reminder' }
-    );
+
+    this.emitNativeNotification({
+      id: crypto.randomUUID(),
+      title: this.localization.t().notifications.medicationReminderToast,
+      body: `${reminder.medicineName} • ${reminder.reminderTime}`,
+      createdAt: new Date(),
+      sourceId: reminder.reminderId,
+      action: 'open-reminder'
+    });
+
     this.showBrowserReminderNotification(reminder);
     this.notificationSoundService.play();
 
@@ -521,7 +480,13 @@ export class NotificationService {
 
     const displayTitle = isAr ? (event.titleAr ?? notification.title) : notification.title;
     const displayBody  = isAr ? (event.bodyAr  ?? notification.body)  : notification.body;
-    this.showToast(displayTitle, displayBody, 'info');
+    
+    this.emitNativeNotification({
+      id: crypto.randomUUID(),
+      title: displayTitle,
+      body: displayBody,
+      createdAt: new Date()
+    });
   }
 
   private recordAppointmentReminder(event: AppointmentReminderNotificationPayload): void {
@@ -542,18 +507,16 @@ export class NotificationService {
 
     this._appointmentReminderQueue.update(q => [...q, event]);
 
-    // Create a persistent toast (no auto-dismiss timer) so the "Confirm Attendance"
-    // button remains visible until the user acts or explicitly closes it.
-    const persistentToast: NotificationToast = {
+    this.emitNativeNotification({
       id: crypto.randomUUID(),
       title: event.title,
       body: event.notificationText || `${event.title} with ${event.provider}`,
-      type: 'info',
       createdAt: new Date(),
       sourceId: event.appointmentId,
-      action: 'open-appointment',
-    };
-    this._toasts.update(list => [persistentToast, ...list]);
+      action: 'open-appointment'
+    });
+
+
 
     this.notificationSoundService.play();
 
@@ -603,6 +566,24 @@ export class NotificationService {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       void this.requestBrowserNotificationPermission();
     }
+  }
+
+  private emitNativeNotification(notification: BrowserNotificationItem & { action?: string }): void {
+    const idNum = Math.floor(Math.random() * 2000000000);
+    
+    LocalNotifications.schedule({
+      notifications: [
+        {
+          id: idNum,
+          title: notification.title,
+          body: notification.body,
+          extra: {
+            sourceId: notification.sourceId,
+            action: notification.action
+          }
+        }
+      ]
+    });
   }
 
   private emitBrowserNotification(notification: BrowserNotificationItem): void {
@@ -783,7 +764,6 @@ export class NotificationService {
         this.clearSnoozeTimer(appointmentId);
         this._appointmentReminderQueue.update(q => q.filter(r => r.appointmentId !== appointmentId));
         this.markReadBySourceId(appointmentId);
-        this.dismissAppointmentToast(appointmentId);
 
         const nc = this.localization.t().notifications;
         this.pushDerivedNotification({
@@ -795,30 +775,23 @@ export class NotificationService {
           sourceId: appointmentId,
         });
 
-        this.showToast(
-          nc.appointmentConfirmed,
-          nc.appointmentConfirmedBody.replace('{title}', reminder.title),
-          'success'
-        );
-        this._confirmingAppointment.set(false);
+                this._confirmingAppointment.set(false);
         this.notifyAppointmentChanged();
       },
       error: err => {
         this._confirmingAppointment.set(false);
         const nc = this.localization.t().notifications;
-        this.showToast(
-          nc.couldNotConfirmAppointment,
-          err?.error?.message || nc.couldNotConfirmApptBody.replace('{title}', reminder.title),
-          'error'
-        );
+        this.emitNativeNotification({
+          id: crypto.randomUUID(),
+          title: 'Error',
+          body: 'Failed to confirm attendance. Please try again later.',
+          createdAt: new Date(),
+        });
       },
     });
   }
 
-  private dismissAppointmentToast(appointmentId: string): void {
-    const toast = this._toasts().find(t => t.action === 'open-appointment' && t.sourceId === appointmentId);
-    if (toast) this.dismissToast(toast.id);
-  }
+
 
   /** "Remind Me Later" — snooze and re-show the reminder after 10 minutes. */
   remindAppointmentLater(): void {
@@ -973,7 +946,6 @@ export class NotificationService {
   private resetSessionState(): void {
     this.suppressPersistence = true;
     this._reminderQueue.set([]);
-    this._toasts.set([]);
     this._browserNotifications.set([]);
     this._reminderModalOpen.set(false);
     this._notificationCenterOpen.set(false);
@@ -981,8 +953,6 @@ export class NotificationService {
     this._confirmingAppointment.set(false);
     this._appointmentReminderQueue.set([]);
     this._appointmentReminderModalOpen.set(false);
-    this.toastTimers.forEach(timer => clearTimeout(timer));
-    this.toastTimers.clear();
     this.snoozeTimers.forEach(timer => clearTimeout(timer));
     this.snoozeTimers.clear();
     this.browserNotificationKeys.clear();

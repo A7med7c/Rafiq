@@ -12,7 +12,7 @@ import { catchError, of } from 'rxjs';
 @Component({
   selector: 'app-appointments-history',
   standalone: true,
-  imports: [CommonModule, RouterLink, MobileHeader, AppointmentsContentComponent],
+  imports: [CommonModule, MobileHeader, AppointmentsContentComponent],
   templateUrl: './appointments-history.html',
   styleUrl: './appointments-history.css',
 })

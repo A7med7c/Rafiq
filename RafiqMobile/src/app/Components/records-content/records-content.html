@@ -1193,18 +1193,4 @@
 </div>
 }
 
-<!-- ═══════════ TOASTS ═══════════ -->
-<div class="toast-container">
-  @for (toast of toasts(); track toast.id) {
-  <div class="toast" [class.toast--success]="toast.type === 'success'" [class.toast--error]="toast.type === 'error'">
-    <span class="toast-icon">
-      @if (toast.type === 'success') { <i class="fa-solid fa-circle-check"></i> }
-      @else { <i class="fa-solid fa-circle-xmark"></i> }
-    </span>
-    <span class="toast-msg">{{ toast.message }}</span>
-    <button type="button" class="toast-close" (click)="removeToast(toast.id)">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-  </div>
-  }
-</div>
+

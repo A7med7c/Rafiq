@@ -337,8 +337,7 @@ export class MyProfile implements OnInit {
         } else {
           this.personalSaving.set(false);
           this.editingPersonal.set(false);
-          this.notifService.showToast(this.t().myProfile.toastSavedTitle, this.t().myProfile.toastSavedBody, 'success');
-        }
+                  }
       },
       error: (err) => {
         this.personalSaving.set(false);
@@ -360,8 +359,7 @@ export class MyProfile implements OnInit {
           next: () => {
             this.emailOtpSaving.set(false);
             this.verifyingEmail.set(false);
-            this.notifService.showToast(this.t().myProfile.toastEmailUpdatedTitle, this.t().myProfile.toastEmailUpdatedBody, 'success');
-          },
+                      },
           error: () => {
             this.emailOtpSaving.set(false);
             this.verifyingEmail.set(false);
@@ -611,13 +609,11 @@ export class MyProfile implements OnInit {
         this.profileCache.setImageUrl(null);
         this.deletingPhoto.set(false);
         this.photoModalOpen.set(false);
-        this.notifService.showToast(this.t().myProfile.toastPhotoRemovedTitle, this.t().myProfile.toastPhotoRemovedBody, 'success');
-      },
+              },
       error: (err) => {
         this.deletingPhoto.set(false);
         const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
-        this.notifService.showToast(this.t().myProfile.toastErrorTitle, msg, 'error');
-      }
+              }
     });
   }
 
@@ -631,12 +627,10 @@ export class MyProfile implements OnInit {
     if (!id) return;
 
     if (!file.type.startsWith('image/')) {
-      this.notifService.showToast(this.t().myProfile.toastInvalidFileTitle, this.t().myProfile.toastInvalidFileBody, 'error');
-      return;
+            return;
     }
     if (file.size > 6 * 1024 * 1024) {
-      this.notifService.showToast(this.t().myProfile.toastFileTooLargeTitle, this.t().myProfile.toastFileTooLargeBody, 'error');
-      return;
+            return;
     }
 
     this.photoUploading.set(true);
@@ -646,13 +640,11 @@ export class MyProfile implements OnInit {
         this.profileCache.setImageUrl(res.data?.profileImageUrl ?? null);
         this.photoUploading.set(false);
         this.photoModalOpen.set(false);
-        this.notifService.showToast(this.t().myProfile.toastPhotoUpdatedTitle, this.t().myProfile.toastPhotoUpdatedBody, 'success');
-      },
+              },
       error: (err) => {
         this.photoUploading.set(false);
         const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
-        this.notifService.showToast(this.t().myProfile.toastErrorTitle, msg, 'error');
-      }
+              }
     });
   }
 
@@ -673,8 +665,7 @@ export class MyProfile implements OnInit {
       error: () => {
         this.deleteLoading.set(false);
         this.closeDeleteModal();
-        this.notifService.showToast(this.t().myProfile.toastErrorTitle, this.t().myProfile.toastDeleteErrorBody, 'error');
-      }
+              }
     });
   }
 

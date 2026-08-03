@@ -36,8 +36,7 @@ export class DialogTool implements AssistantTool<DialogToolParams, boolean> {
       type === 'warning' ? 'info' : (type as 'info' | 'success' | 'error');
 
     if (this.notifService) {
-      this.notifService.showToast(title, params.message, toastType);
-    } else {
+          } else {
       console.log(`[DialogTool] ${title}: ${params.message}`);
     }
 
