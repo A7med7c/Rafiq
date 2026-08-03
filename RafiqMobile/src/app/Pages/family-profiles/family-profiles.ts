@@ -11,6 +11,7 @@ import { LocalizationService } from '../../Services/localization.service';
 import { AuthService } from '../../Services/auth-service';
 import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { NotificationService } from '../../Services/notification.service';
+import { MediaPickerService } from '../../Services/media-picker.service';
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { environment } from '../../Environments/Environment';
 import {
@@ -55,6 +56,7 @@ export class FamilyProfiles implements OnInit {
   protected readonly profileCache = inject(ProfileCacheService);
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
+  private readonly mediaPicker = inject(MediaPickerService);
   protected readonly notifSvc = inject(NotificationService); // template access
   private readonly http = inject(HttpClient);
   private readonly changeDetector = inject(ChangeDetectorRef);
@@ -362,30 +364,27 @@ export class FamilyProfiles implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  onCreateImageSelected(event: Event): void {
+  async selectCreateImage(): Promise<void> {
     this.errorMessage = '';
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    if (!file) { return; }
+    const file = await this.mediaPicker.selectMedia({ accept: 'image/*' });
+    if (!file) return;
 
     this.validateAndPreviewImage(
       file,
       (f, preview) => { this.createForm.profileImage = f; this.createForm.profileImagePreview = preview; },
-      (message) => { this.errorMessage = message; input.value = ''; }
+      (message) => { this.errorMessage = message; }
     );
   }
 
-  removeCreateImage(input: HTMLInputElement): void {
+  removeCreateImage(): void {
     this.createForm.profileImage = null;
     this.createForm.profileImagePreview = null;
-    input.value = '';
   }
 
-  onEditImageSelected(event: Event): void {
+  async selectEditImage(): Promise<void> {
     this.editError = '';
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    if (!file) { return; }
+    const file = await this.mediaPicker.selectMedia({ accept: 'image/*' });
+    if (!file) return;
 
     this.validateAndPreviewImage(
       file,
@@ -394,15 +393,14 @@ export class FamilyProfiles implements OnInit {
         this.editForm.profileImagePreview = preview;
         this.editForm.removeImage = false;
       },
-      (message) => { this.editError = message; input.value = ''; }
+      (message) => { this.editError = message; }
     );
   }
 
-  removeEditImage(input: HTMLInputElement): void {
+  removeEditImage(): void {
     this.editForm.profileImage = null;
     this.editForm.profileImagePreview = null;
     this.editForm.removeImage = true;
-    input.value = '';
   }
 
   submitCreateManaged(): void {

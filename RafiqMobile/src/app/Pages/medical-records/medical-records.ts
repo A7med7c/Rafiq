@@ -20,6 +20,7 @@ import { ScanMedicineBoxResponse, AddUserMedicinePayload, CreateReminderPayload 
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
 import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
+import { MediaPickerService } from '../../Services/media-picker.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { NotificationService } from '../../Services/notification.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
@@ -159,6 +160,7 @@ export class MedicalRecords implements OnInit {
   private readonly recordsService = inject(MedicalRecordsService);
   private readonly reminderSvc = inject(MedicationRemindersService);
   private readonly healthProfileSvc = inject(HealthProfileService);
+  private readonly mediaPicker = inject(MediaPickerService);
   readonly notificationSvc = inject(NotificationService);
   private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly http = inject(HttpClient);
@@ -755,46 +757,30 @@ export class MedicalRecords implements OnInit {
   openLightbox(url: string): void { this.lightboxUrl.set(url); }
   closeLightbox(): void { this.lightboxUrl.set(null); }
 
-  triggerUpload(type: string): void {
+  async triggerUpload(type: string): Promise<void> {
     if (type === 'General Medical Document') {
       this.openGeneralUploadForm();
       return;
     }
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (!file) return;
 
-    const map: Record<string, ElementRef<HTMLInputElement> | undefined> = {
-      'Lab Analysis': this.labInput,
-      'Prescription': this.prescriptionInput,
-      'X-Ray & Imaging': this.imagingInput,
-      'Medicine Box': this.medicineInput,
-    };
-    (map[type] ?? this.labInput)?.nativeElement.click();
+    if (type === 'Lab Analysis') {
+      this.uploadAndReview('lab', file);
+    } else if (type === 'Prescription') {
+      this.uploadAndReview('prescription', file);
+    } else if (type === 'X-Ray & Imaging') {
+      this.uploadAndReview('imaging', file);
+    } else if (type === 'Medicine Box') {
+      this.startMedicineScan(file);
+    }
   }
 
-  onLabFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadAndReview('lab', f);
-  }
-
-  onPrescriptionFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadAndReview('prescription', f);
-  }
-
-  onImagingFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadAndReview('imaging', f);
-  }
-
-  onMedicineFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.startMedicineScan(f);
-  }
-
-  onGeneralFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (!f) return;
-    this.generalUploadForm.file = f;
-    this.generalUploadForm.fileName = f.name;
+  async onGeneralFileSelected(): Promise<void> {
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (!file) return;
+    this.generalUploadForm.file = file;
+    this.generalUploadForm.fileName = file.name;
   }
 
   openGeneralUploadForm(): void {
@@ -814,13 +800,6 @@ export class MedicalRecords implements OnInit {
             return;
     }
     this.uploadAndReview('general', file, this.generalUploadForm.description);
-  }
-
-  private extractFile(event: Event): File | null {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    input.value = '';
-    return file;
   }
 
   private uploadAndReview(type: 'lab' | 'imaging' | 'prescription' | 'general', file: File, description = ''): void {
