@@ -1,5 +1,5 @@
 import {
-  Component, Input, OnInit, OnChanges, SimpleChanges, OnDestroy,
+  Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, OnDestroy,
   inject, signal, computed, HostListener, ViewEncapsulation
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -35,6 +35,8 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   @Input() compact = false;
   @Input() readOnly = false;
   @Input() modalsOnly = false;
+
+  @Output() appointmentChanged = new EventEmitter<void>();
 
   private readonly apptSvc = inject(AppointmentsService);
   private readonly notifSvc = inject(NotificationService);
@@ -355,8 +357,9 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     this.fCustomType.set(a.customType ?? '');
     this.fTitle.set(a.title);
     this.fProvider.set(a.provider);
-    this.fDate.set(dt.toISOString().slice(0, 10));
-    this.fTime.set(dt.toTimeString().slice(0, 5));
+    const pad = (n: number) => String(n).padStart(2, '0');
+    this.fDate.set(`${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`);
+    this.fTime.set(`${pad(dt.getHours())}:${pad(dt.getMinutes())}`);
     this.applyReminderValue(a.reminderOffsetMinutes ?? null);
     this.fNotes.set(a.notes ?? '');
     this.formErrors.set({});
@@ -508,7 +511,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
       customType: this.fType() === AppointmentType.Other ? this.fCustomType().trim() : undefined,
       title: this.fTitle().trim(),
       provider: this.fProvider().trim(),
-      appointmentDateTime: `${this.fDate()}T${this.fTime()}:00`,
+      appointmentDateTime: new Date(`${this.fDate()}T${this.fTime()}`).toISOString(),
       reminderOffsetMinutes: this.getReminderOffset() ?? undefined,
       notes: this.fNotes().trim() || undefined,
     };
@@ -531,6 +534,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
         }
         this.submitting.set(false);
         this.closeAddModal();
+        this.appointmentChanged.emit();
       },
       error: err => {
         this.toast(err?.error?.message ?? this.t().appointments.failedSave, 'error');
@@ -558,7 +562,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     if (!id) return;
     this.deleting.set(true);
     this.apptSvc.delete(id).subscribe({
-      next: () => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast(this.t().appointments.appointmentDeleted, 'success'); this.deleting.set(false); this.closeDelete(); },
+      next: () => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast(this.t().appointments.appointmentDeleted, 'success'); this.deleting.set(false); this.closeDelete(); this.appointmentChanged.emit(); },
       error: err => { this.toast(err?.error?.message ?? this.t().appointments.deleteFailed, 'error'); this.deleting.set(false); this.closeDelete(); },
     });
   }
@@ -571,7 +575,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     if (!id) return;
     this.cancelling.set(true);
     this.apptSvc.cancel(id).subscribe({
-      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.appointmentCancelled, 'success'); this.cancelling.set(false); this.closeCancel(); },
+      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.appointmentCancelled, 'success'); this.cancelling.set(false); this.closeCancel(); this.appointmentChanged.emit(); },
       error: err => { this.toast(err?.error?.message ?? this.t().appointments.cancelFailed, 'error'); this.cancelling.set(false); this.closeCancel(); },
     });
   }
@@ -579,7 +583,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   // ── Complete ──────────────────────────────────────────────────────────────
   markComplete(id: string): void {
     this.apptSvc.complete(id).subscribe({
-      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.markedCompleted, 'success'); },
+      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.markedCompleted, 'success'); this.appointmentChanged.emit(); },
       error: err => { this.toast(err?.error?.message ?? this.t().appointments.genericFailed, 'error'); },
     });
   }

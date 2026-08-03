@@ -117,7 +117,6 @@
         <section class="appt-section">
           <div class="history-header">
             <h3 class="section-title">{{ t().appointments.previousAppointmentsSection }}</h3>
-            <a routerLink="/appointments" class="view-all-link">{{ t().appointments.viewAllLink }}</a>
           </div>
 
           <div class="history-tabs">
@@ -127,8 +126,8 @@
           </div>
 
           <div class="history-list-card">
-            @for (appt of activeHistoryAppointments(); track appt.id; let last = $last) {
-              <div class="history-row" [class.no-border]="last" (click)="openView(appt)">
+            @for (appt of activeHistoryAppointmentsPreview(); track appt.id; let last = $last) {
+              <div class="history-row" [class.no-border]="last && !hasMoreHistory()" (click)="openView(appt)">
                 <div class="hist-main">
                   <h4 class="hist-title">{{ appt.title || t().appointments.clinicVisitFallback }}</h4>
                   <p class="hist-doc-name">{{ appt.provider }}</p>
@@ -147,8 +146,15 @@
                 <div class="hist-arrow"><i class="fa-solid fa-chevron-right"></i></div>
               </div>
             }
-            @if (activeHistoryAppointments().length === 0) {
+            @if (activeHistoryAppointmentsPreview().length === 0) {
               <div class="history-empty">{{ t().appointments.noAppointmentsFound }}</div>
+            }
+            @if (hasMoreHistory()) {
+              <div class="history-view-all-wrap">
+                <a [routerLink]="['/appointments-history']" [queryParams]="{tab: activeHistoryTab()}" class="btn-outline history-view-all-btn">
+                  {{ t().appointments.viewAllLink }}
+                </a>
+              </div>
             }
           </div>
         </section>
@@ -233,7 +239,7 @@
     <i class="fa-solid fa-plus"></i>
   </button>
 
-  <app-appointments-content #apptContent [modalsOnly]="true"></app-appointments-content>
+  <app-appointments-content #apptContent [modalsOnly]="true" (appointmentChanged)="loadAppointments()"></app-appointments-content>
 
   <app-bottom-nav></app-bottom-nav>
 </div>
