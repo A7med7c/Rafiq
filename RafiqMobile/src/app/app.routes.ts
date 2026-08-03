@@ -6,6 +6,7 @@ import { VerifyAccount } from './Pages/Auth/verify-account/verify-account';
 import { Dashboard } from './Pages/dashboard/dashboard';
 import { MedicalRecords } from './Pages/medical-records/medical-records';
 import { Appointments } from './Pages/appointments/appointments';
+import { AppointmentsHistory } from './Pages/appointments-history/appointments-history';
 import { AiAssistant } from './Pages/ai-assistant/ai-assistant';
 import { Medications } from './Pages/medications/medications';
 import { OnboardingWelcome } from './Pages/onboarding/onboarding-welcome/onboarding-welcome';
@@ -35,6 +36,7 @@ export const routes: Routes = [
   { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
   { path: 'medical-records', component: MedicalRecords, canActivate: [authGuard] },
   { path: 'appointments', component: Appointments, canActivate: [authGuard] },
+  { path: 'appointments-history', component: AppointmentsHistory, canActivate: [authGuard] },
   { path: 'medications', component: Medications, canActivate: [authGuard] },
   { path: 'ai-assistant', component: AiAssistant, canActivate: [authGuard] },
 

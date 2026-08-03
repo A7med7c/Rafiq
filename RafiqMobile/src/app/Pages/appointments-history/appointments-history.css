@@ -1,0 +1,270 @@
+.m-page {
+  background-color: #F8FAFC;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 80px; /* space for bottom nav if any */
+}
+
+.m-body {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.history-tab-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 24px;
+  border: none;
+  background-color: #F1F5F9;
+  color: #1E293B;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.history-tab-btn.active {
+  background-color: var(--blue, #0EAFD7);
+  color: white;
+}
+
+.history-list-card {
+  background-color: white;
+  border-radius: 24px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #F1F5F9;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.history-row.no-border {
+  border-bottom: none;
+}
+
+.hist-main {
+  flex: 1;
+  text-align: right;
+}
+
+.hist-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #000000;
+  margin: 0 0 6px 0;
+}
+
+.hist-doc-name {
+  font-size: 14px;
+  color: var(--blue, #0EAFD7);
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.hist-spec {
+  font-size: 14px;
+  font-weight: 800;
+  color: #000000;
+  margin: 0 0 2px 0;
+}
+
+.hist-loc {
+  font-size: 12px;
+  color: #64748B;
+  margin: 0;
+}
+
+.hist-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: 16px;
+  margin-right: 16px;
+}
+
+.hist-dt-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #475569;
+  margin-bottom: 6px;
+  font-weight: 600;
+  direction: rtl;
+}
+
+.hist-dt-row i {
+  color: #94A3B8;
+  font-size: 14px;
+}
+
+.tl-badge {
+  padding: 4px 16px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.badge-completed {
+  background-color: #D1FAE5;
+  color: #10B981;
+}
+
+.badge-missed {
+  background-color: #FEE2E2;
+  color: #EF4444;
+}
+
+.badge-cancelled {
+  background-color: #F1F5F9;
+  color: #64748B;
+}
+
+.hist-arrow {
+  color: #94A3B8;
+  font-size: 16px;
+  margin-right: auto; /* Push to far left in RTL */
+}
+
+/* Empty State Styles */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  text-align: center;
+}
+
+.empty-ill {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 16px;
+}
+
+.empty-title {
+  font-size: 16px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 20px;
+  color: #64748B;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Modals */
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background-color: white;
+  width: 90%;
+  max-width: 400px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.modal-hdr-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-ico-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #E0F2FE;
+  color: var(--blue, #0EAFD7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0 0 2px 0;
+}
+
+.modal-subtitle {
+  font-size: 12px;
+  color: #64748B;
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: #94A3B8;
+  font-size: 20px;
+}
+
+.modal-footer {
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.btn-ghost {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: white;
+  border: 1px solid #E2E8F0;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: var(--blue, #0EAFD7);
+  border: none;
+  color: white;
+  font-weight: 600;
+}

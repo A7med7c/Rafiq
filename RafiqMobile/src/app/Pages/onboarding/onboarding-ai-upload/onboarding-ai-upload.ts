@@ -1,8 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { HealthProfileService } from '../../../Services/health-profile.service';
 import { LocalizationService } from '../../../Services/localization.service';
+import { MediaPickerService } from '../../../Services/media-picker.service';
 import { Gender, BloodType, AllergySeverity, DiseaseStatus } from '../../../Modles/health-profile-enums';
 import { CreatePatientProfileRequest } from '../../../Modles/health-profile-request';
 
@@ -45,7 +47,9 @@ interface Step3Data {
 export class OnboardingAiUpload implements OnInit {
   private readonly router        = inject(Router);
   private readonly healthProfile = inject(HealthProfileService);
-  protected readonly l10n = inject(LocalizationService);
+  private readonly http          = inject(HttpClient);
+  protected readonly l10n        = inject(LocalizationService);
+  private readonly mediaPicker   = inject(MediaPickerService);
   protected readonly t = this.l10n.t;
 
   readonly docTypes = [
@@ -131,15 +135,10 @@ export class OnboardingAiUpload implements OnInit {
     this.router.navigate(['/onboarding/step4']);
   }
 
-  triggerUpload(docId: string): void {
-    const el = document.getElementById('file-' + docId) as HTMLInputElement;
-    el?.click();
-  }
-
-  onFileSelected(event: Event, docId: string): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files?.[0]) {
-      this.uploadedFiles[docId] = input.files[0];
+  async triggerUpload(docId: string): Promise<void> {
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (file) {
+      this.uploadedFiles[docId] = file;
     }
   }
 

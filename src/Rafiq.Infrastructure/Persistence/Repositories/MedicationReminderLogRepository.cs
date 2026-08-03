@@ -97,7 +97,40 @@ public sealed class MedicationReminderLogRepository(RafiqDbContext context) : IM
                         && !context.MedicationReminderLogs.Any(other =>
                             other.MedicineReminderId == x.MedicineReminderId
                             && other.ScheduledDate == x.ScheduledDate
-                            && other.Status == MedicationReminderStatus.Confirmed))
+                            && (other.Status == MedicationReminderStatus.Confirmed
+                                || other.Status == MedicationReminderStatus.Skipped)))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<MedicationReminderLog>> GetActiveOtherLogsForSkipAsync(
+        Guid medicineReminderId,
+        DateOnly date,
+        Guid skippedLogId,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .Where(x => x.MedicineReminderId == medicineReminderId
+                        && x.ScheduledDate == date
+                        && x.Id != skippedLogId
+                        && (x.Status == MedicationReminderStatus.Pending
+                            || x.Status == MedicationReminderStatus.Snoozed))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<MedicationReminderLog>> GetByDateAndProfileIdAsync(
+        Guid userHealthProfileId,
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .Include(x => x.MedicineReminder)
+                .ThenInclude(r => r.UserMedicine)
+            .Where(x => x.UserHealthProfileId == userHealthProfileId
+                        && x.ScheduledDate == date
+                        && !x.IsDeleted
+                        && x.Status != MedicationReminderStatus.Cancelled)
+            .OrderBy(x => x.ScheduledTime)
+            .ThenBy(x => x.ReminderNumber)
             .ToListAsync(cancellationToken);
     }
 

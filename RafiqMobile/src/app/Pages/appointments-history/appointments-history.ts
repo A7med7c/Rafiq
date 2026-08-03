@@ -1,30 +1,29 @@
 import { Component, inject, OnInit, signal, computed, ViewChild, effect, untracked } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
+import { CommonModule, Location } from '@angular/common';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { NotificationService } from '../../Services/notification.service';
-import { AiChatService } from '../../Services/ai-chat.service';
 import { AppointmentDto, AppointmentStatus, AppointmentType, APPOINTMENT_TYPE_LABELS, APPT_TYPE_KEYS } from '../../Modles/appointment.models';
-import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
 import { MobileHeader } from '../../shared/mobile-header/mobile-header';
 import { AppointmentsContentComponent } from '../../Components/appointments-content/appointments-content';
 import { catchError, of } from 'rxjs';
 
 @Component({
-  selector: 'app-appointments',
+  selector: 'app-appointments-history',
   standalone: true,
-  imports: [CommonModule, RouterLink, BottomNav, MobileHeader, AppointmentsContentComponent],
-  templateUrl: './appointments.html',
-  styleUrl: './appointments.css',
+  imports: [CommonModule, MobileHeader, AppointmentsContentComponent],
+  templateUrl: './appointments-history.html',
+  styleUrl: './appointments-history.css',
 })
-export class Appointments implements OnInit {
+export class AppointmentsHistory implements OnInit {
   @ViewChild('apptContent') apptContent!: AppointmentsContentComponent;
   private readonly apptSvc = inject(AppointmentsService);
   protected readonly notifSvc = inject(NotificationService);
   protected readonly l10n = inject(LocalizationService);
-  protected readonly aiChatService = inject(AiChatService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly location = inject(Location);
 
   protected readonly t = this.l10n.t;
 
@@ -37,24 +36,38 @@ export class Appointments implements OnInit {
 
   constructor() {
     effect(() => {
-      // Re-fetch when appointment data is refreshed via push notifications / reminder confirmations
       this.notifSvc.appointmentDataRefreshTick();
-      
       untracked(() => {
-        // We don't want to fetch if we haven't loaded initially (ngOnInit does the first load)
         if (this.appointments().length > 0) {
           this.loadAppointments();
         }
       });
     });
-
-    effect(() => {
-      this.apptSvc.lastHistoryTab = this.activeHistoryTab();
-    });
   }
 
   ngOnInit(): void {
+    // Read the filter from query params, otherwise default to what's in the service
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.activeHistoryTab.set(params['tab']);
+        this.apptSvc.lastHistoryTab = params['tab'];
+      }
+    });
+
     this.loadAppointments();
+  }
+
+  setFilter(filter: string) {
+    this.activeHistoryTab.set(filter);
+    this.apptSvc.lastHistoryTab = filter;
+    
+    // Update the URL without reloading the page, so back button returns to this page with the right filter
+    const url = this.router.createUrlTree([], {
+      relativeTo: this.route,
+      queryParams: { tab: filter },
+      queryParamsHandling: 'merge'
+    }).toString();
+    this.location.replaceState(url);
   }
 
   loadAppointments(): void {
@@ -66,12 +79,6 @@ export class Appointments implements OnInit {
       this.loading.set(false);
     });
   }
-
-  readonly upcomingAppointments = computed(() => {
-    return this.appointments()
-      .filter(a => a.status === AppointmentStatus.Upcoming)
-      .sort((a, b) => new Date(a.appointmentDateTime).getTime() - new Date(b.appointmentDateTime).getTime());
-  });
 
   readonly previousAppointments = computed(() => {
     return this.appointments()
@@ -113,37 +120,6 @@ export class Appointments implements OnInit {
     const activeGroup = groups.find(g => g.title === this.activeHistoryTab());
     return activeGroup ? activeGroup.appointments : [];
   });
-
-  readonly activeHistoryAppointmentsPreview = computed(() => {
-    return this.activeHistoryAppointments().slice(0, 5);
-  });
-
-  readonly hasMoreHistory = computed(() => {
-    return this.activeHistoryAppointments().length > 5;
-  });
-
-  readonly nextAppointment = computed(() => {
-    const upcoming = this.upcomingAppointments();
-    return upcoming.length > 0 ? upcoming[0] : null;
-  });
-
-  readonly todaysReminder = computed(() => {
-    // Return an appointment for today if one exists and has a reminder set
-    const today = new Date();
-    const upcoming = this.upcomingAppointments();
-    return upcoming.find(a => {
-      const apptDate = new Date(a.appointmentDateTime);
-      return apptDate.getFullYear() === today.getFullYear() &&
-        apptDate.getMonth() === today.getMonth() &&
-        apptDate.getDate() === today.getDate() &&
-        a.reminderOffsetMinutes !== null;
-    }) || null;
-  });
-
-  readonly upcomingCount = computed(() => this.upcomingAppointments().length);
-  readonly completedCount = computed(() => this.appointments().filter(a => a.status === AppointmentStatus.Completed).length);
-  readonly missedCount = computed(() => this.appointments().filter(a => a.status === AppointmentStatus.Missed).length);
-  readonly cancelledCount = computed(() => this.appointments().filter(a => a.status === AppointmentStatus.Cancelled).length);
 
   private get locale(): string {
     return this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US';
@@ -212,48 +188,7 @@ export class Appointments implements OnInit {
     });
   }
 
-  // ── Reminder Settings State ──
-  readonly masterReminderEnabled = signal(true);
-  readonly notificationEnabled = signal(true);
-  readonly soundEnabled = signal(true);
-  readonly reminderTimeMins = signal<number | null>(30);
-
-  toggleMasterReminder(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.masterReminderEnabled.set(input.checked);
-  }
-
-  toggleNotification(): void {
-    if (!this.masterReminderEnabled()) return;
-    this.notificationEnabled.set(!this.notificationEnabled());
-  }
-
-  toggleSound(): void {
-    if (!this.masterReminderEnabled()) return;
-    this.soundEnabled.set(!this.soundEnabled());
-  }
-
-  readonly isCustomTimeActive = signal(false);
-
-  setReminderTime(mins: number | null): void {
-    if (!this.masterReminderEnabled()) return;
-    this.isCustomTimeActive.set(false);
-    this.reminderTimeMins.set(mins);
-  }
-
-  enableCustomMode(): void {
-    if (!this.masterReminderEnabled()) return;
-    this.isCustomTimeActive.set(true);
-  }
-
-  updateCustomTime(event: Event): void {
-    if (!this.masterReminderEnabled()) return;
-    const input = event.target as HTMLInputElement;
-    const val = parseInt(input.value, 10);
-    if (!isNaN(val) && val > 0) {
-      this.reminderTimeMins.set(val);
-    }
-  }
+  goBack(): void { this.location.back(); }
 
   addAppointment(): void {
     if (this.apptContent) {

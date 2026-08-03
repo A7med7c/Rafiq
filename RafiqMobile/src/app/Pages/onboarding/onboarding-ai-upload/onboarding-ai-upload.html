@@ -36,8 +36,6 @@
         <button class="doc-upload-btn" (click)="triggerUpload('lab')">
           @if (hasUpload('lab')) { {{ t().onboarding.aiUpload.uploaded }} } @else { {{ t().onboarding.aiUpload.upload }} }
         </button>
-        <input type="file" id="file-lab" accept=".pdf,.jpg,.jpeg,.png" style="display:none"
-               (change)="onFileSelected($event, 'lab')">
       </div>
 
       <!-- Prescription -->
@@ -54,8 +52,6 @@
         <button class="doc-upload-btn" (click)="triggerUpload('prescription')">
           @if (hasUpload('prescription')) { {{ t().onboarding.aiUpload.uploaded }} } @else { {{ t().onboarding.aiUpload.upload }} }
         </button>
-        <input type="file" id="file-prescription" accept=".pdf,.jpg,.jpeg,.png" style="display:none"
-               (change)="onFileSelected($event, 'prescription')">
       </div>
 
       <!-- Radiology -->
@@ -74,8 +70,6 @@
         <button class="doc-upload-btn" (click)="triggerUpload('radiology')">
           @if (hasUpload('radiology')) { {{ t().onboarding.aiUpload.uploaded }} } @else { {{ t().onboarding.aiUpload.upload }} }
         </button>
-        <input type="file" id="file-radiology" accept=".pdf,.jpg,.jpeg,.png" style="display:none"
-               (change)="onFileSelected($event, 'radiology')">
       </div>
 
       <!-- Medical Report -->
@@ -92,8 +86,6 @@
         <button class="doc-upload-btn" (click)="triggerUpload('medical')">
           @if (hasUpload('medical')) { {{ t().onboarding.aiUpload.uploaded }} } @else { {{ t().onboarding.aiUpload.upload }} }
         </button>
-        <input type="file" id="file-medical" accept=".pdf,.jpg,.jpeg,.png" style="display:none"
-               (change)="onFileSelected($event, 'medical')">
       </div>
 
       <!-- Other -->
@@ -110,8 +102,6 @@
         <button class="doc-upload-btn" (click)="triggerUpload('other')">
           @if (hasUpload('other')) { {{ t().onboarding.aiUpload.uploaded }} } @else { {{ t().onboarding.aiUpload.upload }} }
         </button>
-        <input type="file" id="file-other" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none"
-               (change)="onFileSelected($event, 'other')">
       </div>
 
     </div><!-- /doc-type-grid -->

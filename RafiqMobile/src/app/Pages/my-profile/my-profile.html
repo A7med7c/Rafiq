@@ -636,7 +636,7 @@
 <div class="mp-modal-overlay" (click)="closePhotoModal()">
   <div class="mp-modal" (click)="$event.stopPropagation()">
     <button class="mp-modal-close" (click)="closePhotoModal()"><i class="fa-solid fa-xmark"></i></button>
-    <input #photoInput type="file" accept="image/*" style="display:none" (change)="onPhotoSelected($event)">
+
     <h3 class="mp-modal-title">{{ t().myProfile.photoModalTitle }}</h3>
     <div class="mp-modal-preview">
       @if (hasProfileImage()) {

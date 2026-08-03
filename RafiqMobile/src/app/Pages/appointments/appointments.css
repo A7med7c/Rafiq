@@ -411,6 +411,15 @@ h1, h2, h3, h4, p {
   color: var(--text-3, #64748B);
   font-size: 14px;
 }
+.history-view-all-wrap {
+  padding: 12px 0 4px 0;
+}
+.history-view-all-btn {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
 
 /* Reminder Settings */
 .reminder-settings-card {
@@ -631,7 +640,7 @@ h1, h2, h3, h4, p {
 /* Floating Action Button */
 .fab-add {
   position: fixed;
-  bottom: 84px; /* Just above the bottom nav */
+  bottom: calc(76px + env(safe-area-inset-bottom));
   right: 20px;
   width: 56px;
   height: 56px;
@@ -1358,7 +1367,7 @@ html[dir="rtl"] .appt-modal-card .modal-ftr .fa-arrow-left {
 /* ── Toasts ── */
 .toast-container {
   position: fixed;
-  top: 84px;
+  top: calc(76px + env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
   bottom: auto;

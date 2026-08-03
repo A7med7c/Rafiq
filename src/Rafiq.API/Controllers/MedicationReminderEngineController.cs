@@ -2,7 +2,10 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rafiq.Application.Features.MedicationReminderEngine.Commands.ConfirmMedicationReminder;
+using Rafiq.Application.Features.MedicationReminderEngine.Commands.SkipMedicationReminder;
+using Rafiq.Application.Features.MedicationReminderEngine.Commands.SnoozeMedicationReminder;
 using Rafiq.Application.Features.MedicationReminderEngine.Queries.GetMedicationReminderById;
+using Rafiq.Application.Features.MedicationReminderEngine.Queries.GetMedicationReminderHistory;
 using Rafiq.Application.Features.MedicationReminderEngine.Queries.GetTodaysMedicationReminders;
 
 namespace Rafiq.API.Controllers;
@@ -19,6 +22,19 @@ public sealed class MedicationReminderEngineController(IMediator mediator) : Con
     {
         var result = await mediator.Send(
             new GetTodaysMedicationRemindersQuery(profileId),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpGet("history")]
+    public async Task<IActionResult> GetHistory(
+        [FromQuery] Guid profileId,
+        [FromQuery] DateOnly date,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new GetMedicationReminderHistoryQuery(profileId, date),
             cancellationToken);
 
         return Ok(result);
@@ -43,4 +59,29 @@ public sealed class MedicationReminderEngineController(IMediator mediator) : Con
 
         return Ok(result);
     }
+
+    [HttpPost("{id:guid}/skip")]
+    public async Task<IActionResult> Skip(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new SkipMedicationReminderCommand(id),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpPost("{id:guid}/snooze")]
+    public async Task<IActionResult> Snooze(
+        Guid id,
+        [FromBody] SnoozeRequest body,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new SnoozeMedicationReminderCommand(id, body.SnoozeMinutes),
+            cancellationToken);
+
+        return Ok(result);
+    }
 }
+
+public sealed record SnoozeRequest(int SnoozeMinutes);

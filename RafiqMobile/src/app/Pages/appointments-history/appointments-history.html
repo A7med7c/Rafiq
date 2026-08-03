@@ -1,0 +1,142 @@
+<div class="m-page">
+  <app-mobile-header [title]="t().appointments.previousAppointmentsSection" [showBack]="true" (backClicked)="goBack()"></app-mobile-header>
+
+  <div class="m-body">
+    @if (loading()) {
+      <div class="empty-state">
+        <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--blue, #0EAFD7)"></i>
+      </div>
+    } @else {
+      @if (groupedPreviousAppointments().length > 0) {
+        <section class="appt-section">
+          <div class="history-tabs">
+            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'thisMonth'" (click)="setFilter('thisMonth')">{{ t().appointments.thisMonthTab || 'الشهر ده' }}</button>
+            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'lastMonth'" (click)="setFilter('lastMonth')">{{ t().appointments.lastMonthTab || 'الشهر اللي فات' }}</button>
+            <button type="button" class="history-tab-btn" [class.active]="activeHistoryTab() === 'earlier'" (click)="setFilter('earlier')">{{ t().appointments.earlierTab || 'قبل كده' }}</button>
+          </div>
+
+          <div class="history-list-card">
+            @for (appt of activeHistoryAppointments(); track appt.id; let last = $last) {
+              <div class="history-row" [class.no-border]="last" (click)="openView(appt)">
+                
+                <div class="hist-main">
+                  <h4 class="hist-title">{{ appt.title || t().appointments.clinicVisitFallback }}</h4>
+                  <p class="hist-doc-name">{{ appt.provider }}</p>
+                  <p class="hist-spec">موعد</p>
+                  <p class="hist-loc">{{ t().appointments.medicalCenterFallback || 'مركز طبي' }}</p>
+                </div>
+                
+                <div class="hist-side">
+                  <div class="hist-dt-row">
+                    <i class="fa-regular fa-calendar"></i> 
+                    <span dir="rtl">{{ formatDate(appt.appointmentDateTime) }}</span>
+                  </div>
+                  <div class="hist-dt-row">
+                    <i class="fa-regular fa-clock"></i> 
+                    <span dir="rtl">{{ formatTime(appt.appointmentDateTime) }}</span>
+                  </div>
+                  <span class="tl-badge" [class.badge-completed]="appt.status === 'Completed'" [class.badge-missed]="appt.status === 'Missed'" [class.badge-cancelled]="appt.status === 'Cancelled'">
+                    {{ statusLabel(appt.status) }}
+                  </span>
+                </div>
+                
+                <div class="hist-arrow"><i class="fa-solid fa-chevron-left"></i></div>
+              </div>
+            }
+            @if (activeHistoryAppointments().length === 0) {
+              <div class="history-empty">{{ t().appointments.noAppointmentsFound }}</div>
+            }
+          </div>
+        </section>
+      } @else {
+        <div class="empty-state">
+          <img src="/assets/illustrations/no-appointments.svg" alt="No history" class="empty-ill" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 120 120\'><rect width=\'120\' height=\'120\' fill=\'%23F1F5F9\' rx=\'20\'/><circle cx=\'60\' cy=\'50\' r=\'24\' fill=\'%23CBD5E1\'/><path d=\'M30 100 Q60 60 90 100\' stroke=\'%23CBD5E1\' stroke-width=\'12\' stroke-linecap=\'round\' fill=\'none\'/></svg>'">
+          <h4 class="empty-title">{{ t().appointments.noAppointmentsFound }}</h4>
+        </div>
+      }
+    }
+  </div>
+
+  <app-appointments-content #apptContent [modalsOnly]="true" (appointmentChanged)="loadAppointments()"></app-appointments-content>
+
+  <!-- ── Appointment Details Modal ── -->
+  @if (viewingAppt()) {
+    <div class="modal-backdrop" (click)="closeView()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-hdr">
+          <div class="modal-hdr-left">
+            <div class="modal-ico-wrap"><i class="fa-solid fa-stethoscope"></i></div>
+            <div>
+              <h4 class="modal-title">{{ viewingAppt()?.title || t().appointments.clinicVisitFallback }}</h4>
+              <p class="modal-subtitle">{{ getApptTypeLabel(viewingAppt()!.appointmentType) }}</p>
+            </div>
+          </div>
+          <button type="button" class="modal-close-btn" (click)="closeView()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="modal-body p-4 flex flex-col gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-8 text-center text-[var(--blue)]"><i class="fa-solid fa-user-doctor"></i></div>
+            <div class="flex-1">
+              <p class="text-xs text-gray-500 font-semibold uppercase">{{ t().appointments.provider }}</p>
+              <p class="text-sm font-bold text-gray-900">{{ viewingAppt()?.provider }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-8 text-center text-[var(--blue)]"><i class="fa-solid fa-calendar-day"></i></div>
+            <div class="flex-1">
+              <p class="text-xs text-gray-500 font-semibold uppercase">{{ t().appointments.dateLabel }}</p>
+              <p class="text-sm font-bold text-gray-900">{{ formatDate(viewingAppt()!.appointmentDateTime) }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-8 text-center text-[var(--blue)]"><i class="fa-solid fa-clock"></i></div>
+            <div class="flex-1">
+              <p class="text-xs text-gray-500 font-semibold uppercase">{{ t().appointments.timeLabel }}</p>
+              <p class="text-sm font-bold text-gray-900">{{ formatTime(viewingAppt()!.appointmentDateTime) }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-8 text-center text-[var(--blue)]"><i class="fa-solid fa-bell"></i></div>
+            <div class="flex-1">
+              <p class="text-xs text-gray-500 font-semibold uppercase">{{ t().appointments.reminderLabel }}</p>
+              <p class="text-sm font-bold text-gray-900">{{ reminderLabel(viewingAppt()?.reminderOffsetMinutes) }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-8 text-center text-[var(--blue)]"><i class="fa-solid fa-circle-info"></i></div>
+            <div class="flex-1">
+              <p class="text-xs text-gray-500 font-semibold uppercase">{{ t().appointments.status }}</p>
+              <p class="text-sm font-bold mt-1 inline-block px-2 py-0.5 rounded-full text-[11px]" 
+                 [class.bg-blue-100]="viewingAppt()?.status === 'Upcoming'"
+                 [class.text-blue-600]="viewingAppt()?.status === 'Upcoming'"
+                 [class.bg-green-100]="viewingAppt()?.status === 'Completed'"
+                 [class.text-green-600]="viewingAppt()?.status === 'Completed'"
+                 [class.bg-red-100]="viewingAppt()?.status === 'Missed'"
+                 [class.text-red-600]="viewingAppt()?.status === 'Missed'"
+                 [class.bg-gray-100]="viewingAppt()?.status === 'Cancelled'"
+                 [class.text-gray-600]="viewingAppt()?.status === 'Cancelled'">
+                {{ statusLabel(viewingAppt()!.status) }}
+              </p>
+            </div>
+          </div>
+          @if (viewingAppt()?.notes) {
+            <div class="mt-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
+              <p class="text-xs text-gray-500 font-semibold uppercase mb-1">{{ t().appointments.notesLabel }}</p>
+              <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ viewingAppt()?.notes }}</p>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          @if (viewingAppt()?.status === 'Upcoming') {
+            <button type="button" class="btn-ghost" (click)="closeView()">{{ t().common.close }}</button>
+            <button type="button" class="btn-primary" (click)="markAttended(viewingAppt()!); closeView()">{{ t().appointments.markAttendedBtn }}</button>
+          } @else {
+            <button type="button" class="btn-primary" (click)="closeView()">{{ t().common.close }}</button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

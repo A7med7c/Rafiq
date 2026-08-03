@@ -135,12 +135,7 @@ export class DocumentAnalysisCardComponent {
         },
         error: () => {
           this.retrying.update(s => { const n = new Set(s); n.delete(doc.documentId); return n; });
-          this.notif.showToast(
-            this.l10n.t().documentAnalysis.retryFailed,
-            this.l10n.t().documentAnalysis.retryFailedBody,
-            'error'
-          );
-        },
+                  },
       });
   }
 

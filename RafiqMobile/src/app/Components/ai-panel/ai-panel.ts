@@ -12,6 +12,7 @@ import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-
 import { catchError, of, Subscription } from 'rxjs';
 import { VoiceAgentPanel } from '../voice-agent-panel/voice-agent-panel';
 import { SignalRService } from '../../Services/signalr.service';
+import { MediaPickerService } from '../../Services/media-picker.service';
 
 type ChatMessage = ConversationMessageDto & { imagePreviewUrl?: string };
 
@@ -39,6 +40,7 @@ export class AiPanel implements OnInit, OnDestroy {
   protected readonly l10n = inject(LocalizationService);
   private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly signalRService = inject(SignalRService);
+  private readonly mediaPicker = inject(MediaPickerService);
   protected readonly t = this.l10n.t;
 
   private readonly _routerSub: Subscription;
@@ -564,16 +566,10 @@ export class AiPanel implements OnInit, OnDestroy {
     });
   }
 
-  triggerFileSelect(): void {
+  async triggerFileSelect(): Promise<void> {
     if (this.sending()) return;
-    this.fileInputRef?.nativeElement.click();
-  }
-
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    input.value = ''; 
-
+    
+    const file = await this.mediaPicker.selectMedia({ accept: 'image/jpeg,image/png,image/webp' });
     if (!file) return;
 
     this.attachError.set(null);

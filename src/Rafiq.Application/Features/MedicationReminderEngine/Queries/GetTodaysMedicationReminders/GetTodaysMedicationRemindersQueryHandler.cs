@@ -57,9 +57,13 @@ public sealed class GetTodaysMedicationRemindersQueryHandler(
     /// </summary>
     private static Guid? DetermineActionableLogId(List<MedicationReminderLog> logs)
     {
-        if (logs.Any(l => l.Status == MedicationReminderStatus.Confirmed))
+        // Occurrence is done — no log should be actionable.
+        if (logs.Any(l => l.Status is MedicationReminderStatus.Confirmed
+                              or MedicationReminderStatus.Skipped))
             return null;
 
+        // Snoozed logs are intentionally waiting — not actionable until the snooze fires
+        // and transitions them back to Sent.
         var sent = logs.LastOrDefault(l => l.Status == MedicationReminderStatus.Sent);
         if (sent is not null) return sent.Id;
 

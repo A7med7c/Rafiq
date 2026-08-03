@@ -18,5 +18,18 @@ public enum MedicationReminderStatus
     /// Stage 3 reminder was sent but the patient did not confirm within 15 minutes.
     /// An escalation alert was dispatched to the patient and their emergency contacts.
     /// </summary>
-    Missed = 6
+    Missed = 6,
+
+    /// <summary>
+    /// The patient explicitly chose to skip this dose. Counts against adherence.
+    /// This is a terminal state — the occurrence will not reappear as active.
+    /// </summary>
+    Skipped = 7,
+
+    /// <summary>
+    /// The patient postponed this dose reminder. A new notification will fire after
+    /// the configured snooze interval. This is NOT a terminal state — the log will
+    /// transition back to Sent when the snooze job fires.
+    /// </summary>
+    Snoozed = 8
 }

@@ -13,6 +13,7 @@ import { AuthService } from '../../../Services/auth-service';
 import { LocalizationService } from '../../../Services/localization.service';
 import { getApiErrorMessages } from '../../../Utils/api-error.util';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
+import { MediaPickerService } from '../../../Services/media-picker.service';
 
 const EGYPTIAN_PHONE_PATTERN = /^01[0125][0-9]{8}$/;
 const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
@@ -38,6 +39,7 @@ export class RegisterFormComponent {
   private readonly router = inject(Router);
   private readonly changeDetector = inject(ChangeDetectorRef);
   protected readonly l10n = inject(LocalizationService);
+  private readonly mediaPicker = inject(MediaPickerService);
   protected readonly t = this.l10n.t;
 
   isSubmitting = false;
@@ -73,26 +75,18 @@ export class RegisterFormComponent {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  onProfileImageSelected(event: Event): void {
+  async selectProfileImage(): Promise<void> {
     this.apiErrors = [];
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-
-    if (!file) {
-      this.profileImage = null;
-      this.profileImagePreview = null;
-      return;
-    }
+    const file = await this.mediaPicker.selectMedia({ accept: 'image/jpeg,image/png,image/webp,image/gif' });
+    if (!file) return;
 
     if (!RegisterFormComponent.ALLOWED_IMAGE_TYPES.includes(file.type)) {
       this.apiErrors = ['Profile image must be a JPEG, PNG, WEBP, or GIF file.'];
-      input.value = '';
       return;
     }
 
     if (file.size > RegisterFormComponent.MAX_IMAGE_SIZE_BYTES) {
       this.apiErrors = ['Profile image must not exceed 5 MB.'];
-      input.value = '';
       return;
     }
 
@@ -106,10 +100,10 @@ export class RegisterFormComponent {
     reader.readAsDataURL(file);
   }
 
-  removeProfileImage(input: HTMLInputElement): void {
+  removeProfileImage(): void {
     this.profileImage = null;
     this.profileImagePreview = null;
-    input.value = '';
+    this.changeDetector.detectChanges();
   }
 
   onSubmit(): void {

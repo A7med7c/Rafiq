@@ -10,4 +10,11 @@ public sealed class MedicationReminderScheduler(IBackgroundJobClient backgroundJ
     {
         backgroundJobClient.Delete(jobId);
     }
+
+    public string ScheduleDelayedReminderJob(Guid logId, TimeSpan delay)
+    {
+        return backgroundJobClient.Schedule<MedicationReminderJob>(
+            job => job.ExecuteAsync(logId),
+            delay);
+    }
 }

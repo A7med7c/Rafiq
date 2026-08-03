@@ -2,6 +2,11 @@ import type { Translations } from './en';
 
 export const ar: Translations = {
   common: {
+    mediaPickerTitle: 'اختر المصدر',
+    mediaPickerTakePhoto: 'التقط صورة',
+    mediaPickerChooseGallery: 'اختر من المعرض',
+    mediaPickerChooseFile: 'اختر ملف',
+    mediaPickerCancel: 'إلغاء',
     save: 'احفظ',
     saving: 'جاري الحفظ...',
     cancel: 'إلغاء',

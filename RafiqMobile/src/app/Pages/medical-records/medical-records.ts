@@ -20,6 +20,7 @@ import { ScanMedicineBoxResponse, AddUserMedicinePayload, CreateReminderPayload 
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
 import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
+import { MediaPickerService } from '../../Services/media-picker.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
 import { NotificationService } from '../../Services/notification.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
@@ -128,11 +129,7 @@ interface GeneralUploadForm {
   fileName: string;
 }
 
-export interface Toast {
-  id: number;
-  message: string;
-  type: 'success' | 'error';
-}
+
 
 const PAGE_SIZE = 5;
 const FILTER_SORT_STORAGE_KEY = 'rafiq-medical-records-sort';
@@ -163,6 +160,7 @@ export class MedicalRecords implements OnInit {
   private readonly recordsService = inject(MedicalRecordsService);
   private readonly reminderSvc = inject(MedicationRemindersService);
   private readonly healthProfileSvc = inject(HealthProfileService);
+  private readonly mediaPicker = inject(MediaPickerService);
   readonly notificationSvc = inject(NotificationService);
   private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly http = inject(HttpClient);
@@ -316,8 +314,7 @@ export class MedicalRecords implements OnInit {
   readonly currentPage = signal(1);
   readonly pageSize = PAGE_SIZE;
 
-  readonly toasts = signal<Toast[]>([]);
-  private toastCounter = 0;
+
 
   private _searchQuery = '';
   get searchQueryValue(): string { return this._searchQuery; }
@@ -703,13 +700,11 @@ export class MedicalRecords implements OnInit {
       next: () => {
         this.deleting.set(false);
         this.deleteTarget.set(null);
-        this.showToast('Record deleted successfully.', 'success');
-        this.loadData();
+                this.loadData();
       },
       error: err => {
         this.deleting.set(false);
-        this.showToast(err?.error?.message || 'Failed to delete record. Please try again.', 'error');
-      },
+              },
     });
   }
 
@@ -762,46 +757,30 @@ export class MedicalRecords implements OnInit {
   openLightbox(url: string): void { this.lightboxUrl.set(url); }
   closeLightbox(): void { this.lightboxUrl.set(null); }
 
-  triggerUpload(type: string): void {
+  async triggerUpload(type: string): Promise<void> {
     if (type === 'General Medical Document') {
       this.openGeneralUploadForm();
       return;
     }
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (!file) return;
 
-    const map: Record<string, ElementRef<HTMLInputElement> | undefined> = {
-      'Lab Analysis': this.labInput,
-      'Prescription': this.prescriptionInput,
-      'X-Ray & Imaging': this.imagingInput,
-      'Medicine Box': this.medicineInput,
-    };
-    (map[type] ?? this.labInput)?.nativeElement.click();
+    if (type === 'Lab Analysis') {
+      this.uploadAndReview('lab', file);
+    } else if (type === 'Prescription') {
+      this.uploadAndReview('prescription', file);
+    } else if (type === 'X-Ray & Imaging') {
+      this.uploadAndReview('imaging', file);
+    } else if (type === 'Medicine Box') {
+      this.startMedicineScan(file);
+    }
   }
 
-  onLabFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadAndReview('lab', f);
-  }
-
-  onPrescriptionFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadAndReview('prescription', f);
-  }
-
-  onImagingFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadAndReview('imaging', f);
-  }
-
-  onMedicineFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.startMedicineScan(f);
-  }
-
-  onGeneralFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (!f) return;
-    this.generalUploadForm.file = f;
-    this.generalUploadForm.fileName = f.name;
+  async onGeneralFileSelected(): Promise<void> {
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (!file) return;
+    this.generalUploadForm.file = file;
+    this.generalUploadForm.fileName = file.name;
   }
 
   openGeneralUploadForm(): void {
@@ -818,17 +797,9 @@ export class MedicalRecords implements OnInit {
   submitGeneralUpload(): void {
     const file = this.generalUploadForm.file;
     if (!file) {
-      this.showToast('Please choose an image before uploading.', 'error');
-      return;
+            return;
     }
     this.uploadAndReview('general', file, this.generalUploadForm.description);
-  }
-
-  private extractFile(event: Event): File | null {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    input.value = '';
-    return file;
   }
 
   private uploadAndReview(type: 'lab' | 'imaging' | 'prescription' | 'general', file: File, description = ''): void {
@@ -873,20 +844,13 @@ export class MedicalRecords implements OnInit {
         const errCode = err?.error?.errorCode as string | undefined;
         const v = this.t().uploadValidation;
         if (errCode === 'WRONG_DOCUMENT_TYPE_LAB_REPORT') {
-          this.showToast(v.lab, 'error');
-        } else if (errCode === 'UNREADABLE_DOCUMENT_LAB_REPORT') {
-          this.showToast(v.labUnreadable, 'error');
-        } else if (errCode === 'WRONG_DOCUMENT_TYPE_IMAGING_REPORT') {
-          this.showToast(v.imaging, 'error');
-        } else if (errCode === 'UNREADABLE_DOCUMENT_IMAGING_REPORT') {
-          this.showToast(v.imagingUnreadable, 'error');
-        } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
-          this.showToast(v.prescription, 'error');
-        } else if (errCode === 'UNREADABLE_DOCUMENT_PRESCRIPTION') {
-          this.showToast(v.prescriptionUnreadable, 'error');
-        } else {
-          this.showToast(err?.error?.message || 'Upload failed. Please try again.', 'error');
-        }
+                  } else if (errCode === 'UNREADABLE_DOCUMENT_LAB_REPORT') {
+                  } else if (errCode === 'WRONG_DOCUMENT_TYPE_IMAGING_REPORT') {
+                  } else if (errCode === 'UNREADABLE_DOCUMENT_IMAGING_REPORT') {
+                  } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
+                  } else if (errCode === 'UNREADABLE_DOCUMENT_PRESCRIPTION') {
+                  } else {
+                  }
       },
     });
   }
@@ -1051,13 +1015,11 @@ export class MedicalRecords implements OnInit {
       next: () => {
         this.reviewSaving.set(false);
         this.reviewForm.set(null);
-        this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : 'Record confirmed and saved.', 'success');
-        this.loadData();
+                this.loadData();
       },
       error: err => {
         this.reviewSaving.set(false);
-        this.showToast(err?.error?.message || 'Failed to save record. Please try again.', 'error');
-      },
+              },
     });
   }
 
@@ -1093,12 +1055,9 @@ export class MedicalRecords implements OnInit {
         const errCode = err?.error?.errorCode as string | undefined;
         const v = this.t().uploadValidation;
         if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
-          this.showToast(v.medicine, 'error');
-        } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
-          this.showToast(v.medicineUnreadable, 'error');
-        } else {
-          this.showToast(err?.error?.message || 'Scan failed. Please try again.', 'error');
-        }
+                  } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
+                  } else {
+                  }
       },
     });
   }
@@ -1156,13 +1115,11 @@ export class MedicalRecords implements OnInit {
       next: () => {
         this.reminderSaving.set(false);
         this.closeReminderModal();
-        this.showToast('Reminder set successfully.', 'success');
-        this.router.navigate(['/medications'], { queryParams: { tab: 'medications' } });
+                this.router.navigate(['/medications'], { queryParams: { tab: 'medications' } });
       },
       error: err => {
         this.reminderSaving.set(false);
-        this.showToast(err?.error?.message || 'Failed to set reminder. Please try again.', 'error');
-      },
+              },
     });
   }
 
@@ -1193,8 +1150,7 @@ export class MedicalRecords implements OnInit {
         this.scanSaving.set(false);
         if (mode === 'edit') {
           this.resetScanState();
-          this.showToast('Medicine record updated successfully.', 'success');
-          this.loadData();
+                    this.loadData();
         } else {
           const savedId = res?.data?.id ?? null;
           const savedName = this.scanForm.medicineName.trim();
@@ -1205,8 +1161,7 @@ export class MedicalRecords implements OnInit {
       },
       error: err => {
         this.scanSaving.set(false);
-        this.showToast(err?.error?.message || 'Failed to save medicine.', 'error');
-      },
+              },
     });
   }
 
@@ -1274,15 +1229,7 @@ export class MedicalRecords implements OnInit {
     return this.uploadState()[key];
   }
 
-  private showToast(message: string, type: 'success' | 'error'): void {
-    const id = ++this.toastCounter;
-    this.toasts.update(t => [...t, { id, message, type }]);
-    setTimeout(() => this.removeToast(id), 4500);
-  }
 
-  removeToast(id: number): void {
-    this.toasts.update(t => t.filter(x => x.id !== id));
-  }
 
   progressOffset(pct: number): number {
     const c = 2 * Math.PI * 14;

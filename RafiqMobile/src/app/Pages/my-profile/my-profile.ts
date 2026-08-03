@@ -20,6 +20,7 @@ import { map, switchMap } from 'rxjs';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
 import { MobileHeader } from '../../shared/mobile-header/mobile-header';
+import { MediaPickerService } from '../../Services/media-picker.service';
 
 interface UpdateProfileBody {
   patientProfileId: string;
@@ -53,6 +54,7 @@ export class MyProfile implements OnInit {
   private readonly router = inject(Router);
   private readonly elRef = inject(ElementRef);
   private readonly http = inject(HttpClient);
+  private readonly mediaPicker = inject(MediaPickerService);
 
   // ── Sidebar / Header state ────────────────────────────────────────────────
   readonly sidebarCollapsed = signal(false);
@@ -108,7 +110,6 @@ export class MyProfile implements OnInit {
   readonly deleteLoading = signal(false);
 
   // ── Profile photo upload ──────────────────────────────────────────────────
-  readonly photoInput = viewChild<ElementRef<HTMLInputElement>>('photoInput');
   readonly photoUploading = signal(false);
   readonly photoModalOpen = signal(false);
   readonly deletingPhoto = signal(false);
@@ -337,8 +338,7 @@ export class MyProfile implements OnInit {
         } else {
           this.personalSaving.set(false);
           this.editingPersonal.set(false);
-          this.notifService.showToast(this.t().myProfile.toastSavedTitle, this.t().myProfile.toastSavedBody, 'success');
-        }
+                  }
       },
       error: (err) => {
         this.personalSaving.set(false);
@@ -360,8 +360,7 @@ export class MyProfile implements OnInit {
           next: () => {
             this.emailOtpSaving.set(false);
             this.verifyingEmail.set(false);
-            this.notifService.showToast(this.t().myProfile.toastEmailUpdatedTitle, this.t().myProfile.toastEmailUpdatedBody, 'success');
-          },
+                      },
           error: () => {
             this.emailOtpSaving.set(false);
             this.verifyingEmail.set(false);
@@ -597,46 +596,18 @@ export class MyProfile implements OnInit {
     this.photoModalOpen.set(false);
   }
 
-  triggerPhotoUpload(): void {
-    this.photoInput()?.nativeElement.click();
-  }
-
-  deleteProfilePhoto(): void {
-    const id = this.profileId();
-    if (!id) return;
-    this.deletingPhoto.set(true);
-    this.healthSvc.deleteProfileImage(id).subscribe({
-      next: (res) => {
-        this.profile.set(res.data);
-        this.profileCache.setImageUrl(null);
-        this.deletingPhoto.set(false);
-        this.photoModalOpen.set(false);
-        this.notifService.showToast(this.t().myProfile.toastPhotoRemovedTitle, this.t().myProfile.toastPhotoRemovedBody, 'success');
-      },
-      error: (err) => {
-        this.deletingPhoto.set(false);
-        const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
-        this.notifService.showToast(this.t().myProfile.toastErrorTitle, msg, 'error');
-      }
-    });
-  }
-
-  onPhotoSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
+  async triggerPhotoUpload(): Promise<void> {
+    const file = await this.mediaPicker.selectMedia({ accept: 'image/*' });
     if (!file) return;
 
     const id = this.profileId();
     if (!id) return;
-
+    
     if (!file.type.startsWith('image/')) {
-      this.notifService.showToast(this.t().myProfile.toastInvalidFileTitle, this.t().myProfile.toastInvalidFileBody, 'error');
-      return;
+        return;
     }
     if (file.size > 6 * 1024 * 1024) {
-      this.notifService.showToast(this.t().myProfile.toastFileTooLargeTitle, this.t().myProfile.toastFileTooLargeBody, 'error');
-      return;
+        return;
     }
 
     this.photoUploading.set(true);
@@ -646,12 +617,29 @@ export class MyProfile implements OnInit {
         this.profileCache.setImageUrl(res.data?.profileImageUrl ?? null);
         this.photoUploading.set(false);
         this.photoModalOpen.set(false);
-        this.notifService.showToast(this.t().myProfile.toastPhotoUpdatedTitle, this.t().myProfile.toastPhotoUpdatedBody, 'success');
       },
       error: (err) => {
         this.photoUploading.set(false);
         const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
-        this.notifService.showToast(this.t().myProfile.toastErrorTitle, msg, 'error');
+      }
+    });
+  }
+
+  deleteProfilePhoto(): void {
+    const id = this.profileId();
+    if (!id) return;
+
+    this.deletingPhoto.set(true);
+    this.healthSvc.deleteProfileImage(id).subscribe({
+      next: (res) => {
+        this.profile.set(res.data);
+        this.profileCache.setImageUrl(null);
+        this.deletingPhoto.set(false);
+        this.photoModalOpen.set(false);
+      },
+      error: (err) => {
+        this.deletingPhoto.set(false);
+        const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
       }
     });
   }
@@ -673,8 +661,7 @@ export class MyProfile implements OnInit {
       error: () => {
         this.deleteLoading.set(false);
         this.closeDeleteModal();
-        this.notifService.showToast(this.t().myProfile.toastErrorTitle, this.t().myProfile.toastDeleteErrorBody, 'error');
-      }
+              }
     });
   }
 

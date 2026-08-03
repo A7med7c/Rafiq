@@ -40,7 +40,9 @@ public class MedicationReminderLog : BaseEntity
     public virtual UserHealthProfile UserHealthProfile { get; private set; } = null!;
 
     public bool IsCompleted =>
-        Status is MedicationReminderStatus.Confirmed or MedicationReminderStatus.Cancelled;
+        Status is MedicationReminderStatus.Confirmed
+            or MedicationReminderStatus.Cancelled
+            or MedicationReminderStatus.Skipped;
 
     public void MarkAsSent()
     {
@@ -69,6 +71,18 @@ public class MedicationReminderLog : BaseEntity
     public void MarkAsMissed()
     {
         Status = MedicationReminderStatus.Missed;
+        MarkUpdated();
+    }
+
+    public void MarkAsSkipped()
+    {
+        Status = MedicationReminderStatus.Skipped;
+        MarkUpdated();
+    }
+
+    public void MarkAsSnoozed()
+    {
+        Status = MedicationReminderStatus.Snoozed;
         MarkUpdated();
     }
 

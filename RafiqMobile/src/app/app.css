@@ -38,99 +38,7 @@
   font-family: 'Inter', 'Outfit', sans-serif;
 }
 
-.toast-container {
-  position: fixed;
-  right: 20px;
-  bottom: calc(76px + env(safe-area-inset-bottom));
-  z-index: 80;
-  display: grid;
-  gap: 12px;
-  width: min(100%, 380px);
-  pointer-events: none;
-}
 
-.toast {
-  pointer-events: auto;
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  width: 100%;
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--blue);
-  border-radius: var(--r-sm);
-  padding: 13px 12px 13px 14px;
-  background: var(--white);
-  box-shadow: var(--shadow-lg);
-  animation: toast-pop 180ms ease-out;
-}
-
-.toast--clickable {
-  cursor: pointer;
-  text-align: left;
-}
-
-.toast--success { border-left-color: var(--green); }
-.toast--error   { border-left-color: var(--red); }
-
-.toast__icon {
-  flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-xs);
-  display: grid;
-  place-items: center;
-  font-size: 13px;
-  background: var(--blue-lt);
-  color: var(--blue);
-}
-
-.toast--success .toast__icon {
-  background: var(--green-lt);
-  color: var(--green);
-}
-
-.toast--error .toast__icon {
-  background: var(--red-lt);
-  color: var(--red);
-}
-
-.toast__body {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.toast__title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.toast__message {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--text-3);
-}
-
-.toast-close {
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  border: 0;
-  border-radius: var(--r-xs);
-  background: transparent;
-  color: var(--text-4);
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color .16s ease, color .16s ease;
-}
-
-.toast-close:hover {
-  background: var(--border-lt);
-  color: var(--text);
-}
 
 /* ═══════════════════════════════════════════════
    NOTIFICATION CENTER — centred pop-up.
@@ -483,9 +391,7 @@
 .notification-center__mark-read:focus-visible,
 .notification-center__close:focus-visible,
 .reminder-btn:focus-visible,
-.reminder-modal__close:focus-visible,
-.toast--clickable:focus-visible,
-.toast-close:focus-visible {
+.reminder-modal__close:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
@@ -710,24 +616,7 @@
     transform: translateY(0) scale(1);
     opacity: 1;
   }
-}
-
-@keyframes toast-pop {
-  from {
-    transform: translateY(8px) scale(0.98);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .toast {
-    animation: none;
-  }
-
+}@media (prefers-reduced-motion: reduce) {
   .notification-center,
   .notification-center-overlay,
   .reminder-modal {
@@ -744,13 +633,6 @@
 }
 
 @media (max-width: 760px) {
-  .toast-container {
-    right: 14px;
-    left: 14px;
-    bottom: 14px;
-    width: auto;
-  }
-
   .notification-center-overlay {
     padding: 14px;
   }

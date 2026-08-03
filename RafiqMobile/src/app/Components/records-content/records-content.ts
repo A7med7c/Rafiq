@@ -1,13 +1,14 @@
 import {
   Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges,
   inject, signal, computed, effect,
-  ElementRef, ViewChild, HostListener, ViewEncapsulation,
+  ElementRef, ViewChild, HostListener, ViewEncapsulation, ChangeDetectorRef,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { MediaPickerService } from '../../Services/media-picker.service';
 import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medical-records.service';
 import { ScanMedicineBoxResponse, AddUserMedicinePayload } from '../../Modles/dashboard.models';
 import { environment } from '../../Environments/Environment';
@@ -104,11 +105,7 @@ interface GeneralUploadForm {
   fileName: string;
 }
 
-export interface Toast {
-  id: number;
-  message: string;
-  type: 'success' | 'error';
-}
+
 
 const PAGE_SIZE = 2;
 const FILTER_SORT_STORAGE_KEY = 'rafiq-medical-records-sort';
@@ -151,6 +148,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   private readonly healthProfileSvc = inject(HealthProfileService);
   private readonly pdfService = inject(PdfService);
   private readonly http = inject(HttpClient);
+  private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly mediaPicker = inject(MediaPickerService);
   private readonly router = inject(Router);
   private readonly documentAnalysisState = inject(DocumentAnalysisStateService);
   private readonly base = environment.apiUrl;
@@ -263,8 +262,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   readonly currentPage = signal(1);
   readonly pageSize = PAGE_SIZE;
-  readonly toasts = signal<Toast[]>([]);
-  private toastCounter = 0;
+
 
   // Manual entry mode (lab / imaging / prescription / general)
   readonly isManualMode = signal(false);
@@ -680,13 +678,11 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       next: () => {
         this.deleting.set(false);
         this.deleteTarget.set(null);
-        this.showToast('Record deleted successfully.', 'success');
-        this.loadData();
+                this.loadData();
       },
       error: err => {
         this.deleting.set(false);
-        this.showToast(err?.error?.message || 'Failed to delete record. Please try again.', 'error');
-      },
+              },
     });
   }
 
@@ -741,25 +737,22 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   openLightbox(url: string): void { this.lightboxUrl.set(url); }
   closeLightbox(): void { this.lightboxUrl.set(null); }
 
-  triggerUpload(type: string): void {
+  async triggerUpload(type: string): Promise<void> {
     if (this.readOnly) return;
-    const map: Record<string, ElementRef<HTMLInputElement> | undefined> = {
-      'Lab Analysis': this.labInput,
-      'Prescription': this.prescriptionInput,
-      'X-Ray & Imaging': this.imagingInput,
-      'Medicine Box': this.medicineInput,
-      'General Medical Document': this.generalInput,
-    };
-    (map[type] ?? this.labInput)?.nativeElement.click();
-  }
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (!file) return;
 
-  onLabFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.uploadAndReview('lab', f); }
-  onPrescriptionFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.uploadAndReview('prescription', f); }
-  onImagingFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.uploadAndReview('imaging', f); }
-  onMedicineFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.startMedicineScan(f); }
-  onGeneralFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadGeneralAsync(f, '');
+    if (type === 'Lab Analysis') {
+      this.uploadAndReview('lab', file);
+    } else if (type === 'Prescription') {
+      this.uploadAndReview('prescription', file);
+    } else if (type === 'X-Ray & Imaging') {
+      this.uploadAndReview('imaging', file);
+    } else if (type === 'Medicine Box') {
+      this.startMedicineScan(file);
+    } else if (type === 'General Medical Document') {
+      this.uploadGeneralAsync(file, '');
+    }
   }
 
   openGeneralUploadForm(): void {
@@ -775,7 +768,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   submitGeneralUpload(): void {
     const file = this.generalUploadForm.file;
-    if (!file) { this.showToast('Please choose an image before uploading.', 'error'); return; }
+    if (!file) { return; }
     this.uploadGeneralAsync(file, this.generalUploadForm.description);
   }
 
@@ -806,16 +799,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       error: err => {
         this.uploadLoading.set(false);
         this.setUploading('general', false);
-        this.showToast(err?.error?.message || 'Upload failed. Please try again.', 'error');
-      },
+              },
     });
-  }
-
-  private extractFile(event: Event): File | null {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    input.value = '';
-    return file;
   }
 
   private uploadAndReview(type: 'lab' | 'imaging' | 'prescription', file: File): void {
@@ -853,14 +838,11 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
         if (errCode === 'WRONG_DOCUMENT_TYPE_LAB_REPORT') {
           this.documentAnalysisState.failSyncUpload(tempId, v.lab);
-          this.showToast(v.lab, 'error');
-        } else if (errCode === 'WRONG_DOCUMENT_TYPE_IMAGING_REPORT') {
+                  } else if (errCode === 'WRONG_DOCUMENT_TYPE_IMAGING_REPORT') {
           this.documentAnalysisState.failSyncUpload(tempId, v.imaging);
-          this.showToast(v.imaging, 'error');
-        } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
+                  } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
           this.documentAnalysisState.failSyncUpload(tempId, v.prescription);
-          this.showToast(v.prescription, 'error');
-        } else if (errCode?.startsWith('UNREADABLE_DOCUMENT_')) {
+                  } else if (errCode?.startsWith('UNREADABLE_DOCUMENT_')) {
           this.documentAnalysisState.failSyncUpload(tempId, 'Document unreadable — enter manually.');
           this._failedFile = file;
           this._failedType = type;
@@ -984,8 +966,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
     if (rf.mode === 'edit' && this._reviewFormSnapshot !== null &&
         this.snapshotReviewForm(rf) === this._reviewFormSnapshot) {
-      this.showToast('No changes detected. Please edit at least one field before saving.', 'error');
-      return;
+            return;
     }
 
     this.reviewSaving.set(true);
@@ -1045,8 +1026,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.manualReviewMode.set(false);
         this.manualImageUploading.set(false);
         this.reviewDateError.set(null);
-        this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : 'Record saved successfully.', 'success');
-        this.loadData();
+                this.loadData();
 
         if (rf.type === 'prescription' && rf.mode !== 'edit') {
           this.openReminderPrompt('multi');
@@ -1054,8 +1034,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       },
       error: err => {
         this.reviewSaving.set(false);
-        this.showToast(err?.error?.message || 'Failed to save record. Please try again.', 'error');
-      },
+              },
     });
   }
 
@@ -1089,8 +1068,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.setUploading('medicine', false);
         const errCode = err?.error?.errorCode as string | undefined;
         if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
-          this.showToast(this.t().uploadValidation.medicine, 'error');
-        } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
+                  } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
           this._failedFile = file;
           this._failedType = 'medicine';
           this._failedDesc = '';
@@ -1118,14 +1096,23 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.manualImageUploading.set(false);
   }
 
-  onManualImageSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadManualImage(f, 'review');
+  removeReviewImage(): void {
+    const rf = this.reviewForm();
+    if (rf) this.reviewForm.set({ ...rf, imagePath: '' });
   }
 
-  onManualMedImageSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadManualImage(f, 'medicine');
+  removeMedicineImage(): void {
+    this.scanForm.imagePath = '';
+  }
+
+  async triggerManualReviewImage(): Promise<void> {
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (file) this.uploadManualImage(file, 'review');
+  }
+
+  async triggerManualMedImage(): Promise<void> {
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (file) this.uploadManualImage(file, 'medicine');
   }
 
   private uploadManualImage(file: File, target: 'review' | 'medicine'): void {
@@ -1143,11 +1130,11 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
           this.scanForm.imagePath = path;
           this.scanImageFailed.set(false);
         }
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.manualImageUploading.set(false);
-        this.showToast('Failed to upload image. Please try again.', 'error');
-      },
+              },
     });
   }
 
@@ -1194,8 +1181,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
     if (this.scanMode() === 'edit' && this._scanFormSnapshot !== null &&
         this.snapshotScanForm(this.scanForm) === this._scanFormSnapshot) {
-      this.showToast('No changes detected. Please edit at least one field before saving.', 'error');
-      return;
+            return;
     }
 
     this.scanSaving.set(true);
@@ -1233,8 +1219,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this._scanFormSnapshot = null;
         this.manualMedicineMode.set(false);
         this.scanSource.set(3);
-        this.showToast(mode === 'edit' ? 'Medicine record updated successfully.' : 'Medicine saved to your records.', 'success');
-        this.loadData();
+                this.loadData();
 
         const savedMedicineId = res?.data?.id ?? null;
         if (mode !== 'edit' && savedMedicineId) {
@@ -1243,8 +1228,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       },
       error: err => {
         this.scanSaving.set(false);
-        this.showToast(err?.error?.message || 'Failed to save medicine.', 'error');
-      },
+              },
     });
   }
 
@@ -1333,12 +1317,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       next: () => {
         this.addingMedIndex.set(null);
         this.addedMedIndices.update(s => new Set([...s, index]));
-        this.showToast(`${med.medicineName} added to your medications.`, 'success');
-      },
+              },
       error: err => {
         this.addingMedIndex.set(null);
-        this.showToast(err?.error?.message || 'Failed to add medicine.', 'error');
-      },
+              },
     });
   }
 
@@ -1374,12 +1356,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       next: () => {
         this.addingAllMeds.set(false);
         this.addedMedIndices.update(s => new Set([...s, ...notYetAdded.map(({ i }) => i)]));
-        this.showToast('All medicines added to your medications.', 'success');
-      },
+              },
       error: err => {
         this.addingAllMeds.set(false);
-        this.showToast(err?.error?.message || 'Failed to add medicines.', 'error');
-      },
+              },
     });
   }
 
@@ -1397,13 +1377,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   getUploadState(key: UploadCardKey): UploadState { return this.uploadState()[key]; }
 
-  showToast(message: string, type: 'success' | 'error'): void {
-    const id = ++this.toastCounter;
-    this.toasts.update(t => [...t, { id, message, type }]);
-    setTimeout(() => this.removeToast(id), 4500);
-  }
 
-  removeToast(id: number): void { this.toasts.update(t => t.filter(x => x.id !== id)); }
 
   progressOffset(pct: number): number {
     const c = 2 * Math.PI * 14;
