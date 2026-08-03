@@ -20,6 +20,8 @@ import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
 import { LanguageSwitcher } from '../../shared/language-switcher/language-switcher';
 import { environment } from '../../Environments/Environment';
+import { MedicationRemindersService } from '../../Services/medication-reminders.service';
+import { MedicationReminderLogDto } from '../../Modles/medication-reminder.models';
 
 @Component({
   selector: 'app-dashboard',
@@ -42,6 +44,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private readonly medicalReportSvc   = inject(MedicalReportService);
   private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
   private readonly reviewTracking      = inject(ReviewTrackingService);
+  private readonly medRemindersSvc     = inject(MedicationRemindersService);
 
   // ── Reactive effects ─────────────────────────────────────────────────────
   private readonly dashboardRefreshEffect = effect(() => {
@@ -66,7 +69,7 @@ export class Dashboard implements OnInit, OnDestroy {
   // ── State signals ────────────────────────────────────────────────────────
   readonly records          = signal<MedicalRecord[]>([]);
   readonly activeRecordMenuId = signal<string | null>(null);
-  readonly reminders        = signal<ReminderDisplayItem[]>([]);
+  readonly reminders        = signal<MedicationReminderLogDto[]>([]);
   readonly recordsLoading   = signal(true);
   readonly remindersLoading = signal(true);
   readonly sidebarCollapsed  = signal(false);
@@ -122,11 +125,11 @@ export class Dashboard implements OnInit, OnDestroy {
     }
 
     for (const r of this.reminders()) {
-      if (!r.isEnabled) continue;
-      const [h, m]  = (r.reminderTime || '08:00').split(':').map(Number);
+      if (r.status === 'Cancelled' || r.status === 'Skipped') continue;
+      const [h, m]  = (r.scheduledTime || '08:00').split(':').map(Number);
       const timeDate = new Date(); timeDate.setHours(h, m, 0, 0);
       items.push({
-        time:    timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time:    this.formatTime(r.scheduledTime),
         sortMs:  timeDate.getTime(),
         title:   r.medicineName + (r.dosage ? ` ${r.dosage}` : ''),
         subtitle: this.t().dashboard.medicationReminder,
@@ -236,8 +239,8 @@ export class Dashboard implements OnInit, OnDestroy {
   // ── Medications today (soonest first) ───────────────────────────────────────
   readonly todaysReminders = computed(() => {
     return [...this.reminders()]
-      .filter(r => r.isEnabled)
-      .sort((a, b) => (a.reminderTime || '').localeCompare(b.reminderTime || ''))
+      .filter(r => r.status !== 'Cancelled' && r.status !== 'Skipped')
+      .sort((a, b) => (a.scheduledTime || '').localeCompare(b.scheduledTime || ''))
       .slice(0, 3);
   });
 
@@ -377,7 +380,7 @@ export class Dashboard implements OnInit, OnDestroy {
       error: () => { this.records.set([]); this.recordsLoading.set(false); this.hasLoadError.set(true); },
     });
 
-    this.dashboardService.getMedicinesForSelf().subscribe({
+    this.medRemindersSvc.getHistory(this.localToday()).subscribe({
       next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
       error: () => { this.reminders.set([]); this.remindersLoading.set(false); this.hasLoadError.set(true); },
     });
@@ -402,7 +405,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   private loadReminderData(): void {
     this.remindersLoading.set(true);
-    this.dashboardService.getMedicinesForSelf().subscribe({
+    this.medRemindersSvc.getHistory(this.localToday()).subscribe({
       next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
       error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
     });
@@ -682,10 +685,36 @@ export class Dashboard implements OnInit, OnDestroy {
     return (this.t().common as any)[key] ?? gender;
   }
 
-  getMedStatus(rem: ReminderDisplayItem): 'taken' | 'upcoming' {
-    const [h, m] = (rem.reminderTime || '08:00').split(':').map(Number);
-    const slot = new Date(); slot.setHours(h, m, 0, 0);
-    return slot.getTime() < Date.now() ? 'taken' : 'upcoming';
+  getMedStatus(rem: MedicationReminderLogDto): 'taken' | 'upcoming' | 'missed' {
+    if (rem.status === 'Confirmed') return 'taken';
+    if (rem.status === 'Missed') return 'missed';
+    return 'upcoming';
+  }
+
+  getMedStatusText(rem: MedicationReminderLogDto): string {
+    const isAr = this.l10n.lang() === 'ar';
+    if (rem.status === 'Confirmed') return isAr ? 'تم التناول' : 'Taken';
+    if (rem.status === 'Missed') return isAr ? 'لم يتم' : 'Missed';
+    return isAr ? 'قادم' : 'Upcoming';
+  }
+
+  formatTime(timeStr: string): string {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    const date = new Date();
+    date.setHours(Number(parts[0]), Number(parts[1]));
+    return date.toLocaleTimeString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  private localToday(): string {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
   getRecordBadgeType(type: string): string {

@@ -669,27 +669,20 @@
 
 <!-- ═══ REVIEW MODAL ═══ -->
 @if (reviewForm(); as rf) {
-<div class="modal-overlay" (click)="cancelReview()">
-  <div class="modal-card review-modal" (click)="$event.stopPropagation()">
-    <header class="modal-hdr">
-      <div class="modal-hdr-left">
-        <div class="modal-ico" [class]="getRecordIconClass(rf.type)">
-          <i [class]="'fa-solid ' + getRecordIcon(rf.type)"></i>
-        </div>
-        <div>
-          <h3 class="modal-title">
-            {{ rf.mode === 'edit' ? t().records.editRecord : manualReviewMode() ? t().records.addRecordManually : t().records.reviewExtractedData }}
-          </h3>
-          <p class="modal-sub">
-            {{ manualReviewMode() ? t().records.fillAndSave : t().records.editBeforeSaving }}
-          </p>
-        </div>
-      </div>
-      <button type="button" class="close-modal-btn" [disabled]="reviewSaving()" (click)="cancelReview()">
-        <i class="fa-solid fa-xmark"></i>
+<div class="modal-overlay" style="background-color: white; z-index: 1000;" (click)="cancelReview()">
+  <div style="width: 100%; min-height: 100vh; background-color: #F8FAFC; display: flex; flex-direction: column;" (click)="$event.stopPropagation()">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 16px; background: white;">
+      <button type="button" (click)="cancelReview()" style="background: none; border: none; font-size: 20px; color: #1E293B; width: 40px; display: flex; align-items: center;">
+        <i class="fa-solid fa-chevron-right"></i>
       </button>
-    </header>
-    <div class="modal-body scan-form-body">
+      <div style="flex: 1; text-align: center;">
+        <h2 style="font-size: 18px; font-weight: 700; color: #1E293B; margin: 0;">
+          {{ rf.mode === 'edit' ? t().records.editRecord : manualReviewMode() ? t().records.addRecordManually : t().records.reviewExtractedData }}
+        </h2>
+      </div>
+      <div style="width: 40px;"></div>
+    </div>
+    <div style="flex: 1; padding: 24px 16px; overflow-y: auto;">
       <div class="review-image-pad">
         <!-- Image: server image in AI/edit mode; upload pad in manual mode -->
         @if (getImageUrl(rf.imagePath); as imageUrl) {
@@ -946,24 +939,20 @@
       </div>
       }
     </div>
-    <footer class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="reviewSaving()" (click)="cancelReview()">{{ t().records.cancelBtn }}</button>
-      <button type="button" class="modal-btn modal-btn-primary" [disabled]="reviewSaving()"
-        [class.modal-btn--saving]="reviewSaving()" (click)="confirmAndSave()">
+    <div style="padding: 24px 16px; background: white; border-top: 1px solid #E2E8F0; display: flex; gap: 12px;">
+      <button type="button" (click)="cancelReview()" [disabled]="reviewSaving()" style="flex: 1; padding: 16px; background: white; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit;">
+        {{ t().records.cancelBtn }}
+      </button>
+      <button type="button" (click)="confirmAndSave()" [disabled]="reviewSaving()"
+        style="flex: 2; padding: 16px; background: var(--blue, #0EAFD7); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px;">
         @if (reviewSaving()) {
-        <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
-            [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
-            stroke-linecap="round" transform="rotate(-90 18 18)" />
-        </svg>
-        {{ t().records.savingBtn }}
+          <i class="fa-solid fa-spinner fa-spin"></i> {{ t().records.savingBtn }}
         } @else {
-        <i class="fa-solid fa-floppy-disk"></i>
-        @if (rf.mode === 'edit') { {{ t().records.saveChanges }} } @else { {{ t().records.confirmSave }} }
+          <i class="fa-solid fa-floppy-disk"></i>
+          @if (rf.mode === 'edit') { {{ t().records.saveChanges }} } @else { {{ t().records.confirmSave }} }
         }
       </button>
-    </footer>
+    </div>
   </div>
 </div>
 }
@@ -989,25 +978,20 @@
 
 <!-- ═══ MEDICINE SCAN REVIEW MODAL ═══ -->
 @if (scanResult()) {
-<div class="modal-overlay" (click)="cancelScanReview()">
-  <div class="modal-card scan-review-modal" (click)="$event.stopPropagation()">
-    <header class="modal-hdr">
-      <div class="modal-hdr-left">
-        <div class="modal-ico rec-ico-orange"><i class="fa-solid fa-pills"></i></div>
-        <div>
-          <h3 class="modal-title">
-            {{ scanMode() === 'edit' ? t().records.editMedicineRecord : manualMedicineMode() ? t().records.addMedicineManually : t().records.reviewScannedMedicine }}
-          </h3>
-          <p class="modal-sub">
-            {{ manualMedicineMode() ? t().records.fillMedicineSave : t().records.editMedicineBeforeSave }}
-          </p>
-        </div>
-      </div>
-      <button type="button" class="close-modal-btn" [disabled]="scanSaving()" (click)="cancelScanReview()">
-        <i class="fa-solid fa-xmark"></i>
+<div class="modal-overlay" style="background-color: white; z-index: 1000;" (click)="cancelScanReview()">
+  <div style="width: 100%; min-height: 100vh; background-color: #F8FAFC; display: flex; flex-direction: column;" (click)="$event.stopPropagation()">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 16px; background: white;">
+      <button type="button" (click)="cancelScanReview()" style="background: none; border: none; font-size: 20px; color: #1E293B; width: 40px; display: flex; align-items: center;">
+        <i class="fa-solid fa-chevron-right"></i>
       </button>
-    </header>
-    <div class="modal-body scan-form-body">
+      <div style="flex: 1; text-align: center;">
+        <h2 style="font-size: 18px; font-weight: 700; color: #1E293B; margin: 0;">
+          {{ scanMode() === 'edit' ? t().records.editMedicineRecord : manualMedicineMode() ? t().records.addMedicineManually : t().records.reviewScannedMedicine }}
+        </h2>
+      </div>
+      <div style="width: 40px;"></div>
+    </div>
+    <div style="flex: 1; padding: 24px 16px; overflow-y: auto;">
       <div class="review-image-pad">
         @if (isMedicineManualMode()) {
         <!-- Manual mode: local file picker + preview, same as other manual record forms -->
@@ -1112,27 +1096,21 @@
       <p class="scan-validation"><i class="fa-solid fa-triangle-exclamation"></i> {{ t().records.medNameRequired }}</p>
       }
     </div>
-    <footer class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary"
-        [disabled]="scanSaving() || manualMedicineImageUploading()" (click)="cancelScanReview()">{{ t().records.cancelBtn }}</button>
-      <button type="button" class="modal-btn modal-btn-primary"
-        [disabled]="scanSaving() || manualMedicineImageUploading() || scanForm.medicineName.trim() === ''"
-        [class.modal-btn--saving]="scanSaving() || manualMedicineImageUploading()"
-        (click)="saveScanResult()">
+    <div style="padding: 24px 16px; background: white; border-top: 1px solid #E2E8F0; display: flex; gap: 12px;">
+      <button type="button" (click)="cancelScanReview()" [disabled]="scanSaving() || manualMedicineImageUploading()" style="flex: 1; padding: 16px; background: white; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit;">
+        {{ t().records.cancelBtn }}
+      </button>
+      <button type="button" (click)="saveScanResult()" [disabled]="scanSaving() || manualMedicineImageUploading() || scanForm.medicineName.trim() === ''"
+        style="flex: 2; padding: 16px; background: var(--blue, #0EAFD7); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px;">
         @if (scanSaving() || manualMedicineImageUploading()) {
-        <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
-          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
-            [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
-            stroke-linecap="round" transform="rotate(-90 18 18)" />
-        </svg>
-        {{ manualMedicineImageUploading() ? t().records.uploadingImageBtn : t().records.savingBtn }}
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          {{ manualMedicineImageUploading() ? t().records.uploadingImageBtn : t().records.savingBtn }}
         } @else {
-        <i class="fa-solid fa-floppy-disk"></i>
-        @if (scanMode() === 'edit') { {{ t().records.saveChanges }} } @else { {{ t().records.saveMedicine }} }
+          <i class="fa-solid fa-floppy-disk"></i>
+          @if (scanMode() === 'edit') { {{ t().records.saveChanges }} } @else { {{ t().records.saveMedicine }} }
         }
       </button>
-    </footer>
+    </div>
   </div>
 </div>
 }

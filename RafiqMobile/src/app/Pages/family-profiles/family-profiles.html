@@ -229,60 +229,56 @@
      ADD FAMILY MEMBER MODAL
 ══════════════════════════════════════════════════════ -->
 @if (showAddModal()) {
-<div class="modal-backdrop" (click)="closeAddModal()">
-  <div class="modal-box" (click)="$event.stopPropagation()">
-    <div class="modal-sheet-handle"></div>
-
+<div class="modal-overlay" style="background-color: white; z-index: 1000;" (click)="closeAddModal()">
+  <div style="width: 100%; min-height: 100vh; background-color: #F8FAFC; display: flex; flex-direction: column;" (click)="$event.stopPropagation()">
     <!-- Modal header -->
-    <div class="modal-hdr">
-      <div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 16px; background: white;">
+      @if (addStep() === 'create' || addStep() === 'invite') {
+        <button type="button" (click)="backToChoose()" style="background: none; border: none; font-size: 20px; color: #1E293B; width: 40px; display: flex; align-items: center;">
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      } @else {
+        <button type="button" (click)="closeAddModal()" style="background: none; border: none; font-size: 20px; color: #1E293B; width: 40px; display: flex; align-items: center;">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      }
+      <div style="flex: 1; text-align: center;">
         @if (addStep() === 'choose') {
-        <h2 class="modal-title">{{ t().family.addFamilyMemberTitle }}</h2>
-        <p class="modal-subtitle">{{ t().family.chooseHowToAdd }}</p>
+        <h2 style="font-size: 18px; font-weight: 700; color: #1E293B; margin: 0;">{{ t().family.addFamilyMemberTitle }}</h2>
         } @else if (addStep() === 'create') {
-        <h2 class="modal-title">{{ t().family.createFamilyProfileTitle }}</h2>
-        <p class="modal-subtitle">{{ t().family.addHealthProfileSub }}</p>
+        <h2 style="font-size: 18px; font-weight: 700; color: #1E293B; margin: 0;">{{ t().family.createFamilyProfileTitle }}</h2>
         } @else if (addStep() === 'invite') {
-        <h2 class="modal-title">{{ t().family.inviteExistingUserTitle }}</h2>
-        <p class="modal-subtitle">{{ t().family.shareAccessTo }}</p>
+        <h2 style="font-size: 18px; font-weight: 700; color: #1E293B; margin: 0;">{{ t().family.inviteExistingUserTitle }}</h2>
         } @else {
-        <h2 class="modal-title">{{ t().family.invitationSent }}</h2>
+        <h2 style="font-size: 18px; font-weight: 700; color: #1E293B; margin: 0;">{{ t().family.invitationSent }}</h2>
         }
       </div>
-      <div class="fph-modal-hdr-actions">
-        @if (addStep() === 'create' || addStep() === 'invite') {
-        <button type="button" class="modal-close-btn" (click)="backToChoose()" aria-label="Back">
-          <i class="fa-solid fa-arrow-left"></i>
-        </button>
-        }
-        <button type="button" class="modal-close-btn" (click)="closeAddModal()">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
+      <div style="width: 40px;"></div>
     </div>
 
     <!-- ─ Step: Choose ─ -->
     @if (addStep() === 'choose') {
-    <div class="fp-modal-body fp-choose-body">
-      <div class="fp-choose-card" (click)="goToCreate()">
-        <div class="fp-choose-ico fp-choose-ico--blue">
+    <div style="flex: 1; padding: 24px 16px; overflow-y: auto;">
+      <p style="text-align: center; color: #64748B; font-size: 14px; margin-bottom: 24px;">{{ t().family.chooseHowToAdd }}</p>
+      <div (click)="goToCreate()" style="display: flex; align-items: center; padding: 20px 16px; background: white; border: 1px solid #E2E8F0; border-radius: 16px; margin-bottom: 12px; cursor: pointer;">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: #E0F2FE; color: var(--blue, #0EAFD7); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-left: 16px;">
           <i class="fa-solid fa-user-plus"></i>
         </div>
-        <div class="fp-choose-text">
-          <span class="fp-choose-title">{{ t().family.createFamilyProfile }}</span>
-          <span class="fp-choose-desc">{{ t().family.createProfileDesc }}</span>
+        <div style="flex: 1;">
+          <div style="font-weight: 700; color: #1E293B; font-size: 16px; margin-bottom: 4px;">{{ t().family.createFamilyProfile }}</div>
+          <div style="font-size: 13px; color: #64748B;">{{ t().family.createProfileDesc }}</div>
         </div>
-        <i class="fa-solid fa-chevron-right fp-choose-arrow"></i>
+        <i class="fa-solid fa-chevron-left" style="color: #94A3B8;"></i>
       </div>
-      <div class="fp-choose-card fp-choose-card--highlighted" (click)="goToInvite()">
-        <div class="fp-choose-ico fp-choose-ico--teal">
+      <div (click)="goToInvite()" style="display: flex; align-items: center; padding: 20px 16px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 16px; cursor: pointer;">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: #DCFCE7; color: #22C55E; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-left: 16px;">
           <i class="fa-regular fa-envelope"></i>
         </div>
-        <div class="fp-choose-text">
-          <span class="fp-choose-title">{{ t().family.inviteExistingUser }}</span>
-          <span class="fp-choose-desc">{{ t().family.inviteUserDesc }}</span>
+        <div style="flex: 1;">
+          <div style="font-weight: 700; color: #1E293B; font-size: 16px; margin-bottom: 4px;">{{ t().family.inviteExistingUser }}</div>
+          <div style="font-size: 13px; color: #64748B;">{{ t().family.inviteUserDesc }}</div>
         </div>
-        <i class="fa-solid fa-chevron-right fp-choose-arrow"></i>
+        <i class="fa-solid fa-chevron-left" style="color: #94A3B8;"></i>
       </div>
     </div>
     }
@@ -433,12 +429,13 @@
       </div>
 
     </div>
-    <div class="modal-footer">
-      <button type="button" class="btn-ghost" (click)="closeAddModal()">{{ t().family.cancelBtn }}</button>
-      <button type="button" class="btn-primary" [disabled]="submitting()" (click)="submitCreateManaged()">
-        @if (submitting()) { <i class="fa-solid fa-spinner fa-spin"></i> } {{ t().family.createProfileBtn }}
-      </button>
-    </div>
+      <div style="padding: 24px 16px; background: white; border-top: 1px solid #E2E8F0; display: flex; gap: 12px;">
+        <button type="button" (click)="closeAddModal()" style="flex: 1; padding: 16px; background: white; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit;">{{ t().family.cancelBtn }}</button>
+        <button type="button" (click)="submitCreateManaged()" [disabled]="submitting()"
+          style="flex: 2; padding: 16px; background: var(--blue, #0EAFD7); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          @if (submitting()) { <i class="fa-solid fa-spinner fa-spin"></i> } {{ t().family.createProfileBtn }}
+        </button>
+      </div>
     }
 
     <!-- ─ Step: Invite ─ -->
@@ -490,12 +487,13 @@
         </div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button type="button" class="btn-ghost" (click)="closeAddModal()">{{ t().family.cancelBtn }}</button>
-      <button type="button" class="btn-primary" [disabled]="submitting()" (click)="submitInvite()">
-        @if (submitting()) { <i class="fa-solid fa-spinner fa-spin"></i> } {{ t().family.sendInvitation }}
-      </button>
-    </div>
+      <div style="padding: 24px 16px; background: white; border-top: 1px solid #E2E8F0; display: flex; gap: 12px;">
+        <button type="button" (click)="closeAddModal()" style="flex: 1; padding: 16px; background: white; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit;">{{ t().family.cancelBtn }}</button>
+        <button type="button" (click)="submitInvite()" [disabled]="submitting() || !inviteForm.email || !inviteForm.profileId"
+          style="flex: 2; padding: 16px; background: var(--blue, #0EAFD7); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          @if (submitting()) { <i class="fa-solid fa-spinner fa-spin"></i> } {{ t().family.sendInvitation }}
+        </button>
+      </div>
     }
 
     <!-- ─ Step: Invited (success) ─ -->
@@ -508,10 +506,14 @@
       <p class="fp-success-sub">
         {{ inviteForm.email }} {{ t().family.invitationSentText }}
       </p>
-      <button type="button" class="btn-primary" (click)="showInvitationsPanel.set(true); closeAddModal()">
-        {{ t().family.viewInvitations }}
-      </button>
     </div>
+      <div style="padding: 24px 16px; background: white; border-top: 1px solid #E2E8F0; display: flex; gap: 12px;">
+        <button type="button" (click)="closeAddModal()" style="flex: 1; padding: 16px; background: white; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit;">{{ t().family.cancelBtn }}</button>
+        <button type="button" (click)="showInvitationsPanel.set(true); closeAddModal()"
+          style="flex: 2; padding: 16px; background: var(--blue, #0EAFD7); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          {{ t().family.viewInvitations }}
+        </button>
+      </div>
     }
 
   </div>
@@ -523,21 +525,20 @@
      EDIT PROFILE MODAL
 ══════════════════════════════════════════════════════ -->
 @if (showEditModal()) {
-<div class="modal-backdrop" (click)="closeEditModal()">
-  <div class="modal-box" (click)="$event.stopPropagation()">
-    <div class="modal-sheet-handle"></div>
-
-    <div class="modal-hdr">
-      <div>
-        <h2 class="modal-title">{{ t().family.editProfileTitle }}</h2>
-        <p class="modal-subtitle">{{ t().family.updateHealthInfo }} {{ selectedProfile()?.firstName }}</p>
-      </div>
-      <button type="button" class="modal-close-btn" (click)="closeEditModal()">
-        <i class="fa-solid fa-xmark"></i>
+<div class="modal-overlay" style="background-color: white; z-index: 1000;" (click)="closeEditModal()">
+  <div style="width: 100%; min-height: 100vh; background-color: #F8FAFC; display: flex; flex-direction: column;" (click)="$event.stopPropagation()">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 16px; background: white;">
+      <button type="button" (click)="closeEditModal()" style="background: none; border: none; font-size: 20px; color: #1E293B; width: 40px; display: flex; align-items: center;">
+        <i class="fa-solid fa-chevron-right"></i>
       </button>
+      <div style="flex: 1; text-align: center;">
+        <h2 style="font-size: 18px; font-weight: 700; color: #1E293B; margin: 0;">{{ t().family.editProfileTitle }}</h2>
+      </div>
+      <div style="width: 40px;"></div>
     </div>
 
-    <div class="fp-modal-body">
+    <div style="flex: 1; padding: 24px 16px; overflow-y: auto;">
       @if (editError) {
       <div class="fp-form-error">{{ editError }}</div>
       }

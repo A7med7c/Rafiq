@@ -428,173 +428,211 @@
 
 <!-- ═══════════ ADD / EDIT MODAL ═══════════ -->
 @if (showAddModal()) {
-<div class="modal-overlay" (click)="closeAddModal()">
-  <div class="modal-card appt-modal-card" (click)="$event.stopPropagation()">
+<div class="modal-overlay" style="background-color: white; z-index: 1000;" (click)="closeAddModal()">
+  <div style="width: 100%; min-height: 100vh; background-color: #F8FAFC; display: flex; flex-direction: column;" (click)="$event.stopPropagation()">
     <!-- Header -->
-    <div class="modal-hdr">
-      <div>
-        <h2 class="modal-hdr-title">
-          @if (editingId()) { {{ t().appointments.editAppointmentTitle }} } @else { {{ t().appointments.addAppointmentTitle }} }
-        </h2>
-        @if (!editingId()) {
-          <p class="modal-hdr-sub">{{ t().appointments.step }} {{ formStep() }} {{ t().appointments.stepOf }} 2</p>
-        }
-      </div>
-      <button type="button" class="close-modal-btn" (click)="closeAddModal()">
-        <i class="fa-solid fa-xmark"></i>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 16px; background: white;">
+      <button type="button" (click)="closeAddModal()" style="background: none; border: none; font-size: 20px; color: #1E293B; width: 40px; display: flex; align-items: center;">
+        <i class="fa-solid fa-chevron-right"></i>
       </button>
+      <h2 style="font-size: 18px; font-weight: 700; color: #1E293B; margin: 0; text-align: center; flex: 1;">
+        @if (editingId()) { {{ t().appointments.editAppointmentTitle }} } @else { {{ t().appointments.addAppointmentTitle }} }
+      </h2>
+      <div style="width: 40px;"></div>
     </div>
 
     <!-- Step progress (only for new appointments) -->
     @if (!editingId()) {
-      <div class="step-progress">
-        <div class="step-dot" [class.step-dot--active]="formStep() >= 1" [class.step-dot--done]="formStep() > 1">
-          @if (formStep() > 1) { <i class="fa-solid fa-check"></i> } @else { 1 }
+      <div style="background: white; padding: 10px 0 30px; display: flex; justify-content: center;">
+        <div style="display: flex; align-items: center; width: 200px; justify-content: space-between; position: relative;" dir="rtl">
+          <!-- Line -->
+          <div style="position: absolute; top: 12px; left: 10%; right: 10%; height: 2px; border-top: 2px dashed #CBD5E1; z-index: 1;"></div>
+          
+          <div style="display: flex; flex-direction: column; align-items: center; z-index: 2; gap: 8px;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;"
+                 [style.background-color]="formStep() === 2 ? 'var(--blue, #0EAFD7)' : 'white'"
+                 [style.color]="formStep() === 2 ? 'white' : '#64748B'"
+                 [style.border]="formStep() === 2 ? 'none' : '1px solid #CBD5E1'">2</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; z-index: 2; gap: 8px;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;"
+                 [style.background-color]="formStep() >= 1 ? 'var(--blue, #0EAFD7)' : 'white'"
+                 [style.color]="formStep() >= 1 ? 'white' : '#64748B'"
+                 [style.border]="formStep() >= 1 ? 'none' : '1px solid #CBD5E1'">
+              @if (formStep() > 1) { <i class="fa-solid fa-check"></i> } @else { 1 }
+            </div>
+          </div>
         </div>
-        <div class="step-line" [class.step-line--done]="formStep() > 1"></div>
-        <div class="step-dot" [class.step-dot--active]="formStep() === 2">2</div>
       </div>
     }
 
     <!-- ── STEP 1: Type Selection ── -->
     @if (formStep() === 1) {
-      <div class="modal-body">
-        <p class="type-select-hint">{{ t().appointments.selectType }}</p>
+      <div style="flex: 1; padding: 24px 16px; overflow-y: auto;">
+        <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 16px; text-align: center;">{{ t().appointments.selectType }}</h3>
         @if (formErrors()['appointmentType']) {
-          <p class="field-err appts-type-err">{{ formErrors()['appointmentType'] }}</p>
+          <p style="color: #EF4444; font-size: 13px; text-align: center; margin-bottom: 12px;">{{ formErrors()['appointmentType'] }}</p>
         }
-        <div class="type-grid">
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px;">
           @for (ty of ALL_TYPES; track ty) {
-            <button type="button" class="type-card" [class.type-card--selected]="fType() === ty" (click)="selectType(ty)">
-              <span class="type-card-ico">
-                <i class="fa-solid {{ typeIcon(ty) }}"></i>
-              </span>
-              <span class="type-card-lbl">{{ typeLabelForType(ty) }}</span>
+            <button type="button" (click)="selectType(ty)"
+              [style]="fType() === ty ? 'display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; background: #E0F2FE; border: 2px solid var(--blue, #0EAFD7); border-radius: 16px; color: var(--blue, #0EAFD7); position: relative;' : 'display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; background: white; border: 1px solid #E2E8F0; border-radius: 16px; color: #64748B; position: relative;'">
+              <i class="fa-solid {{ typeIcon(ty) }}" style="font-size: 24px;"></i>
+              <span style="font-weight: 600; font-size: 14px;">{{ typeLabelForType(ty) }}</span>
               @if (fType() === ty) {
-                <span class="type-card-check"><i class="fa-solid fa-check"></i></span>
+                <div style="position: absolute; top: 8px; right: 8px; color: var(--blue, #0EAFD7); font-size: 14px;">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
               }
             </button>
           }
         </div>
 
         @if (fType() === AppointmentType.Other) {
-          <div class="field-group appts-custom-type-group">
-            <label class="field-lbl">{{ t().appointments.customType }} *</label>
-            <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['customType']"
-              [placeholder]="t().appointments.customTypePlaceholder" [ngModel]="fCustomType()" (ngModelChange)="onCustomTypeChange($event)">
+          <div style="margin-bottom: 24px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 12px;">{{ t().appointments.customType }} *</h3>
+            <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px;">
+              <input type="text"
+                style="border: none; background: transparent; font-size: 16px; font-weight: 600; color: #1E293B; width: 100%; outline: none; font-family: inherit;"
+                [placeholder]="t().appointments.customTypePlaceholder" [ngModel]="fCustomType()" (ngModelChange)="onCustomTypeChange($event)" />
+            </div>
             @if (formErrors()['customType']) {
-              <p class="field-err">{{ formErrors()['customType'] }}</p>
+              <p style="color: #EF4444; font-size: 13px; margin-top: 4px;">{{ formErrors()['customType'] }}</p>
             }
           </div>
         }
       </div>
-      <div class="modal-ftr">
-        <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">{{ t().appointments.cancelBtn }}</button>
-        <button type="button" class="modal-btn modal-btn-primary" [disabled]="!canContinueType()" (click)="goStep2()">
-          {{ t().appointments.nextBtn }} <i class="fa-solid fa-arrow-right"></i>
+      <div style="padding: 24px 16px; background: white; border-top: 1px solid #E2E8F0; display: flex; gap: 12px;">
+        <button type="button" (click)="closeAddModal()" style="flex: 1; padding: 16px; background: white; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit;">
+          {{ t().appointments.cancelBtn }}
+        </button>
+        <button type="button" [disabled]="!canContinueType()" (click)="goStep2()" style="flex: 2; padding: 16px; background: var(--blue, #0EAFD7); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          {{ t().appointments.nextBtn }} <i class="fa-solid fa-arrow-left"></i>
         </button>
       </div>
     }
 
     <!-- ── STEP 2: Details ── -->
     @if (formStep() === 2) {
-      <div class="modal-body">
+      <div style="flex: 1; padding: 24px 16px; overflow-y: auto;">
+        
+        <!-- Custom Type inside Step 2 if Other -->
         @if (fType() === AppointmentType.Other) {
-          <div class="field-group">
-            <label class="field-lbl">{{ t().appointments.customType }} *</label>
-            <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['customType']"
-              [placeholder]="t().appointments.customTypePlaceholder" [ngModel]="fCustomType()" (ngModelChange)="onCustomTypeChange($event)">
+          <div style="margin-bottom: 24px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 12px;">{{ t().appointments.customType }} *</h3>
+            <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px;">
+              <input type="text"
+                style="border: none; background: transparent; font-size: 16px; font-weight: 600; color: #1E293B; width: 100%; outline: none; font-family: inherit;"
+                [placeholder]="t().appointments.customTypePlaceholder" [ngModel]="fCustomType()" (ngModelChange)="onCustomTypeChange($event)" />
+            </div>
             @if (formErrors()['customType']) {
-              <p class="field-err">{{ formErrors()['customType'] }}</p>
+              <p style="color: #EF4444; font-size: 13px; margin-top: 4px;">{{ formErrors()['customType'] }}</p>
             }
           </div>
         }
 
-        <div class="field-group">
-          <label class="field-lbl">{{ t().appointments.appointmentTitle }} *</label>
-          <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['title']"
-            [placeholder]="t().appointments.appointmentTitlePlaceholder" [ngModel]="fTitle()" (ngModelChange)="fTitle.set($event)">
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 12px;">{{ t().appointments.appointmentTitle }} *</h3>
+          <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px;">
+            <input type="text"
+              style="border: none; background: transparent; font-size: 16px; font-weight: 600; color: #1E293B; width: 100%; outline: none; font-family: inherit;"
+              [placeholder]="t().appointments.appointmentTitlePlaceholder" [ngModel]="fTitle()" (ngModelChange)="fTitle.set($event)" />
+          </div>
           @if (formErrors()['title']) {
-            <p class="field-err">{{ formErrors()['title'] }}</p>
+            <p style="color: #EF4444; font-size: 13px; margin-top: 4px;">{{ formErrors()['title'] }}</p>
           }
         </div>
 
-        <div class="field-group">
-          <label class="field-lbl">{{ t().appointments.providerDoctor }} *</label>
-          <input type="text" class="field-inp" [class.field-inp--err]="formErrors()['provider']"
-            [placeholder]="t().appointments.providerPlaceholder" [ngModel]="fProvider()" (ngModelChange)="fProvider.set($event)">
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 12px;">{{ t().appointments.providerDoctor }} *</h3>
+          <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px;">
+            <input type="text"
+              style="border: none; background: transparent; font-size: 16px; font-weight: 600; color: #1E293B; width: 100%; outline: none; font-family: inherit;"
+              [placeholder]="t().appointments.providerPlaceholder" [ngModel]="fProvider()" (ngModelChange)="fProvider.set($event)" />
+          </div>
           @if (formErrors()['provider']) {
-            <p class="field-err">{{ formErrors()['provider'] }}</p>
+            <p style="color: #EF4444; font-size: 13px; margin-top: 4px;">{{ formErrors()['provider'] }}</p>
           }
         </div>
 
-        <div class="field-row-2">
-          <div class="field-group">
-            <label class="field-lbl">{{ t().appointments.dateLbl }} *</label>
-            <input type="date" class="field-inp" [class.field-inp--err]="formErrors()['date']" [min]="minDate"
-              [ngModel]="fDate()" (ngModelChange)="fDate.set($event)">
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+          <div style="flex: 1;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 12px;">{{ t().appointments.dateLbl }} *</h3>
+            <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px;">
+              <input type="date"
+                style="border: none; background: transparent; font-size: 16px; font-weight: 600; color: #1E293B; width: 100%; outline: none; font-family: inherit;"
+                [min]="minDate" [ngModel]="fDate()" (ngModelChange)="fDate.set($event)" />
+            </div>
             @if (formErrors()['date']) {
-              <p class="field-err">{{ formErrors()['date'] }}</p>
+              <p style="color: #EF4444; font-size: 13px; margin-top: 4px;">{{ formErrors()['date'] }}</p>
             }
           </div>
-          <div class="field-group">
-            <label class="field-lbl">{{ t().appointments.timeLbl }} *</label>
-            <input type="time" class="field-inp" [class.field-inp--err]="formErrors()['time']" [min]="minTime"
-              [ngModel]="fTime()" (ngModelChange)="fTime.set($event)">
+          <div style="flex: 1;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 12px;">{{ t().appointments.timeLbl }} *</h3>
+            <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px;">
+              <input type="time"
+                style="border: none; background: transparent; font-size: 16px; font-weight: 600; color: #1E293B; width: 100%; outline: none; font-family: inherit;"
+                [min]="minTime" [ngModel]="fTime()" (ngModelChange)="fTime.set($event)" />
+            </div>
             @if (formErrors()['time']) {
-              <p class="field-err">{{ formErrors()['time'] }}</p>
+              <p style="color: #EF4444; font-size: 13px; margin-top: 4px;">{{ formErrors()['time'] }}</p>
             }
           </div>
         </div>
 
-        <div class="field-group">
-          <label class="field-lbl">{{ t().appointments.reminderLabel }}</label>
-          <div class="reminder-opts">
-            <button type="button" class="reminder-chip" [class.reminder-chip--active]="!customReminderSelected() && fReminder() === null"
-              (click)="setPresetReminder(null)">
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 12px;">{{ t().appointments.reminderLabel }}</h3>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+            <button type="button" (click)="setPresetReminder(null)"
+              [style]="!customReminderSelected() && fReminder() === null ? 'flex: 1; padding: 8px 12px; background: var(--blue, #0EAFD7); color: white; border: none; border-radius: 12px; font-weight: 600; font-family: inherit;' : 'flex: 1; padding: 8px 12px; background: white; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-weight: 600; font-family: inherit;'">
               {{ t().appointments.noneReminder }}
             </button>
             @for (opt of REMINDER_OPTIONS; track opt.value) {
-              <button type="button" class="reminder-chip" [class.reminder-chip--active]="!customReminderSelected() && fReminder() === opt.value"
-                (click)="setPresetReminder(opt.value)">
+              <button type="button" (click)="setPresetReminder(opt.value)"
+                [style]="!customReminderSelected() && fReminder() === opt.value ? 'flex: 1; padding: 8px 12px; background: var(--blue, #0EAFD7); color: white; border: none; border-radius: 12px; font-weight: 600; font-family: inherit;' : 'flex: 1; padding: 8px 12px; background: white; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-weight: 600; font-family: inherit;'">
                 {{ reminderOptionLabel(opt.value) }}
               </button>
             }
-            <button type="button" class="reminder-chip" [class.reminder-chip--active]="customReminderSelected()"
-              (click)="selectCustomReminder()">
+            <button type="button" (click)="selectCustomReminder()"
+              [style]="customReminderSelected() ? 'flex: 1; padding: 8px 12px; background: var(--blue, #0EAFD7); color: white; border: none; border-radius: 12px; font-weight: 600; font-family: inherit;' : 'flex: 1; padding: 8px 12px; background: white; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-weight: 600; font-family: inherit;'">
               {{ t().appointments.customReminder }}
             </button>
           </div>
           @if (customReminderSelected()) {
-            <div class="custom-reminder-row">
-              <input type="number" class="field-inp custom-reminder-input" [class.field-inp--err]="formErrors()['reminder']"
-                min="1" max="10080" step="1" [ngModel]="fCustomReminder()" (ngModelChange)="setCustomReminder($event)">
-              <span class="custom-reminder-unit">{{ t().appointments.minutesBefore }}</span>
+            <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 8px;">
+              <input type="number" style="flex: 1; border: none; background: transparent; font-size: 16px; font-weight: 600; color: #1E293B; outline: none; font-family: inherit;"
+                min="1" max="10080" step="1" [ngModel]="fCustomReminder()" (ngModelChange)="setCustomReminder($event)" />
+              <span style="color: #64748B; font-weight: 600;">{{ t().appointments.minutesBefore }}</span>
             </div>
           }
           @if (formErrors()['reminder']) {
-            <p class="field-err">{{ formErrors()['reminder'] }}</p>
+            <p style="color: #EF4444; font-size: 13px; margin-top: 4px;">{{ formErrors()['reminder'] }}</p>
           }
         </div>
 
-        <div class="field-group">
-          <label class="field-lbl">{{ t().appointments.notesLabel }} <span class="appts-optional-lbl">{{ t().appointments.optionalLabel }}</span></label>
-          <textarea class="field-inp field-textarea" [placeholder]="t().appointments.notesPlaceholder"
-            rows="3" [ngModel]="fNotes()" (ngModelChange)="fNotes.set($event)"></textarea>
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 12px;">{{ t().appointments.notesLabel }} <span style="font-size: 12px; color: #94A3B8; font-weight: normal;">{{ t().appointments.optionalLabel }}</span></h3>
+          <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px;">
+            <textarea
+              style="border: none; background: transparent; font-size: 16px; font-weight: 600; color: #1E293B; width: 100%; outline: none; font-family: inherit; resize: none;"
+              [placeholder]="t().appointments.notesPlaceholder" rows="3" [ngModel]="fNotes()" (ngModelChange)="fNotes.set($event)"></textarea>
+          </div>
         </div>
       </div>
-      <div class="modal-ftr">
+      <div style="padding: 24px 16px; background: white; border-top: 1px solid #E2E8F0; display: flex; gap: 12px;">
         @if (!editingId()) {
-          <button type="button" class="modal-btn modal-btn-secondary" (click)="goStep1()">
-            <i class="fa-solid fa-arrow-left"></i> {{ t().appointments.backBtn }}
+          <button type="button" (click)="goStep1()" style="flex: 1; padding: 16px; background: white; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-arrow-right"></i> {{ t().appointments.backBtn }}
           </button>
         } @else {
-          <button type="button" class="modal-btn modal-btn-secondary" (click)="closeAddModal()">{{ t().appointments.cancelBtn }}</button>
+          <button type="button" (click)="closeAddModal()" style="flex: 1; padding: 16px; background: white; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit;">
+            {{ t().appointments.cancelBtn }}
+          </button>
         }
-        <button type="button" class="modal-btn modal-btn-primary"
-          [disabled]="submitting() || (fType() === AppointmentType.Other && !fCustomType().trim())" (click)="submitForm()">
+        <button type="button" [disabled]="submitting() || (fType() === AppointmentType.Other && !fCustomType().trim())" (click)="submitForm()"
+          style="flex: 2; padding: 16px; background: var(--blue, #0EAFD7); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px;">
           @if (submitting()) {
-            <span class="btn-spinner"></span> {{ t().appointments.savingBtn }}
+            <i class="fa-solid fa-circle-notch fa-spin"></i> {{ t().appointments.savingBtn }}
           } @else if (editingId()) {
             <i class="fa-regular fa-floppy-disk"></i> {{ t().appointments.saveChanges }}
           } @else {

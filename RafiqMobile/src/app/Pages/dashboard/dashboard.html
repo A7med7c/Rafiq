@@ -146,7 +146,7 @@
               <div class="today-row__ico today-row__ico--green"><i class="fa-solid fa-capsules"></i></div>
               <div class="today-row__info">
                 <p class="today-row__title">{{ t().dashboard.nextMedication }}</p>
-                <p class="today-row__sub">{{ rem.medicineName }} · {{ rem.reminderTime }}</p>
+                <p class="today-row__sub">{{ rem.medicineName }} · {{ formatTime(rem.scheduledTime) }}</p>
               </div>
               @if (getMedStatus(rem) === 'taken') {
                 <span class="today-badge today-badge--taken">Taken</span>
@@ -274,14 +274,14 @@
           <ul class="med-timeline">
             @for (rem of todaysReminders(); track rem.id; let last = $last) {
               <li class="med-tl-item">
-                <span class="med-tl-time">{{ rem.reminderTime }}</span>
+                <span class="med-tl-time">{{ formatTime(rem.scheduledTime) }}</span>
                 <div class="med-tl-col">
                   <div class="med-tl-dot med-tl-dot--{{ getMedStatus(rem) }}"></div>
                   @if (!last) { <div class="med-tl-line"></div> }
                 </div>
                 <div class="med-tl-body">
                   <span class="med-tl-name">{{ rem.medicineName }}</span>
-                  <span class="med-tl-badge med-tl-badge--{{ getMedStatus(rem) }}">{{ getMedStatus(rem) === 'taken' ? 'Taken' : 'Upcoming' }}</span>
+                  <span class="med-tl-badge med-tl-badge--{{ getMedStatus(rem) }}">{{ getMedStatusText(rem) }}</span>
                 </div>
               </li>
             }
