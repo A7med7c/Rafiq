@@ -48,5 +48,24 @@ public interface IMedicationReminderLogRepository
         DateTime cutoff,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns all Pending and Snoozed logs for a dose occurrence, excluding the
+    /// specified log. Used when skipping a dose so all sibling active logs are cancelled.
+    /// </summary>
+    Task<List<MedicationReminderLog>> GetActiveOtherLogsForSkipAsync(
+        Guid medicineReminderId,
+        DateOnly date,
+        Guid skippedLogId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns all logs for a given profile and date, including historical dates.
+    /// Excludes soft-deleted records.
+    /// </summary>
+    Task<List<MedicationReminderLog>> GetByDateAndProfileIdAsync(
+        Guid userHealthProfileId,
+        DateOnly date,
+        CancellationToken cancellationToken = default);
+
     void Update(MedicationReminderLog log);
 }

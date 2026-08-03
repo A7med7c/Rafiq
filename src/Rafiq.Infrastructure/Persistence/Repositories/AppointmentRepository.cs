@@ -97,7 +97,7 @@ public sealed class AppointmentRepository(RafiqDbContext context) : IAppointment
     {
 
 
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
         Console.WriteLine($"UTC NOW = {now}");
 
