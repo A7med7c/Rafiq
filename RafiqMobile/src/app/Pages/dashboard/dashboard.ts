@@ -22,6 +22,7 @@ import { LanguageSwitcher } from '../../shared/language-switcher/language-switch
 import { environment } from '../../Environments/Environment';
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
 import { MedicationReminderLogDto } from '../../Modles/medication-reminder.models';
+import { DownloadService } from '../../Services/download.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -42,6 +43,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private readonly router             = inject(Router);
   private readonly elRef              = inject(ElementRef);
   private readonly medicalReportSvc   = inject(MedicalReportService);
+  private readonly downloadSvc        = inject(DownloadService);
   private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
   private readonly reviewTracking      = inject(ReviewTrackingService);
   private readonly medRemindersSvc     = inject(MedicationRemindersService);
@@ -621,12 +623,8 @@ export class Dashboard implements OnInit, OnDestroy {
           ? '_' + name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_؀-ۿ-]/g, '')
           : '';
         const typeLabel = this.selectedReportType() === 'DoctorSummary' ? 'Medical_Summary' : 'Medical_Record';
-        const url = URL.createObjectURL(blob);
-        const a   = document.createElement('a');
-        a.href     = url;
-        a.download = `${typeLabel}${safeName}.pdf`;
-        a.click();
-        URL.revokeObjectURL(url);
+        this.downloadSvc.download(blob, `${typeLabel}${safeName}.pdf`)
+          .catch(err => console.error('Download failed', err));
         this._reportSub = null;
         this.reportGenerating.set(false);
         this.reportDialogOpen.set(false);
