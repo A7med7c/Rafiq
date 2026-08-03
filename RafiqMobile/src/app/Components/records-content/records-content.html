@@ -1,20 +1,7 @@
 <div class="records-content-host">
 
   <!-- ═══ HIDDEN FILE INPUTS ═══ -->
-  <input #labInput type="file" accept=".jpg,.jpeg,.png,.pdf,.webp" style="display:none"
-    (change)="onLabFileSelected($event)">
-  <input #prescriptionInput type="file" accept=".jpg,.jpeg,.png,.pdf,.webp" style="display:none"
-    (change)="onPrescriptionFileSelected($event)">
-  <input #imagingInput type="file" accept=".jpg,.jpeg,.png,.pdf,.dcm,.webp" style="display:none"
-    (change)="onImagingFileSelected($event)">
-  <input #medicineInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
-    (change)="onMedicineFileSelected($event)">
-  <input #generalInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
-    (change)="onGeneralFileSelected($event)">
-  <input #manualImageInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
-    (change)="onManualImageSelected($event)">
-  <input #manualMedImageInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
-    (change)="onManualMedImageSelected($event)">
+
 
   <!-- UPLOAD CARDS GRID (hidden in compact mode and for read-only profiles) -->
   @if (!compact && !readOnly) {
@@ -633,8 +620,9 @@
       <div class="scan-form-grid">
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.documentImage }} <span class="scan-required">*</span></label>
-          <input type="file" class="scan-input" accept=".jpg,.jpeg,.png,.webp"
-            [disabled]="uploadLoading()" (change)="onGeneralFileSelected($event)">
+          <button type="button" class="fp-btn-primary" style="padding: 8px 16px; font-size: 14px; border-radius: 8px;" (click)="triggerUpload('General Medical Document')">
+            <i class="fa-solid fa-camera"></i> {{ t().common.mediaPickerTitle }}
+          </button>
           @if (generalUploadForm.fileName) {
           <p class="scan-file-name"><i class="fa-regular fa-file-image"></i> {{ generalUploadForm.fileName }}</p>
           }
@@ -714,9 +702,8 @@
             <span>{{ t().records.uploadingImage }}</span>
           </div>
           } @else {
-          <button type="button" class="manual-img-choose-btn" [disabled]="reviewSaving()"
-            (click)="manualImageInput.click()">
-            <i class="fa-solid fa-image"></i> {{ t().records.chooseImageOptional }}
+          <button type="button" class="fp-btn-primary" style="padding: 8px 16px; font-size: 14px; border-radius: 8px; align-self: flex-start; margin-bottom: 24px;" (click)="triggerManualReviewImage()">
+            <i class="fa-solid fa-camera"></i> {{ t().common.mediaPickerTitle }}
           </button>
           }
         </div>
@@ -995,8 +982,7 @@
       <div class="review-image-pad">
         @if (isMedicineManualMode()) {
         <!-- Manual mode: local file picker + preview, same as other manual record forms -->
-        <input #manualMedImgInput type="file" accept=".jpg,.jpeg,.png,.webp,.gif" style="display:none"
-          (change)="onManualMedImageSelected($event)">
+
         @if (manualMedicineImagePreviewUrl()) {
         <div class="manual-img-wrap">
           <img [src]="manualMedicineImagePreviewUrl()" class="modal-image" alt="Selected medicine box image">
@@ -1014,7 +1000,7 @@
         </div>
         }
         <button type="button" class="manual-img-upload-btn" [disabled]="manualMedicineImageUploading()"
-          (click)="manualMedImgInput.click()">
+          (click)="triggerManualMedImage()">
           <i class="fa-solid fa-image"></i>
           {{ manualMedicineImagePreviewUrl() ? 'Change Image' : 'Attach Image (optional)' }}
         </button>
@@ -1049,9 +1035,8 @@
             <span>{{ t().records.uploadingImage }}</span>
           </div>
           } @else {
-          <button type="button" class="manual-img-choose-btn" [disabled]="scanSaving()"
-            (click)="manualMedImageInput.click()">
-            <i class="fa-solid fa-image"></i> {{ t().records.chooseImageOptional }}
+          <button type="button" class="fp-btn-primary" style="padding: 8px 16px; font-size: 14px; border-radius: 8px;" (click)="triggerManualMedImage()">
+            <i class="fa-solid fa-camera"></i> {{ t().common.mediaPickerTitle }}
           </button>
           }
         </div>

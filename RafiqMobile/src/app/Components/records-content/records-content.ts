@@ -1,13 +1,14 @@
 import {
   Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges,
   inject, signal, computed, effect,
-  ElementRef, ViewChild, HostListener, ViewEncapsulation,
+  ElementRef, ViewChild, HostListener, ViewEncapsulation, ChangeDetectorRef,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { MediaPickerService } from '../../Services/media-picker.service';
 import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medical-records.service';
 import { ScanMedicineBoxResponse, AddUserMedicinePayload } from '../../Modles/dashboard.models';
 import { environment } from '../../Environments/Environment';
@@ -147,6 +148,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   private readonly healthProfileSvc = inject(HealthProfileService);
   private readonly pdfService = inject(PdfService);
   private readonly http = inject(HttpClient);
+  private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly mediaPicker = inject(MediaPickerService);
   private readonly router = inject(Router);
   private readonly documentAnalysisState = inject(DocumentAnalysisStateService);
   private readonly base = environment.apiUrl;
@@ -734,25 +737,22 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   openLightbox(url: string): void { this.lightboxUrl.set(url); }
   closeLightbox(): void { this.lightboxUrl.set(null); }
 
-  triggerUpload(type: string): void {
+  async triggerUpload(type: string): Promise<void> {
     if (this.readOnly) return;
-    const map: Record<string, ElementRef<HTMLInputElement> | undefined> = {
-      'Lab Analysis': this.labInput,
-      'Prescription': this.prescriptionInput,
-      'X-Ray & Imaging': this.imagingInput,
-      'Medicine Box': this.medicineInput,
-      'General Medical Document': this.generalInput,
-    };
-    (map[type] ?? this.labInput)?.nativeElement.click();
-  }
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (!file) return;
 
-  onLabFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.uploadAndReview('lab', f); }
-  onPrescriptionFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.uploadAndReview('prescription', f); }
-  onImagingFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.uploadAndReview('imaging', f); }
-  onMedicineFileSelected(e: Event): void { const f = this.extractFile(e); if (f) this.startMedicineScan(f); }
-  onGeneralFileSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadGeneralAsync(f, '');
+    if (type === 'Lab Analysis') {
+      this.uploadAndReview('lab', file);
+    } else if (type === 'Prescription') {
+      this.uploadAndReview('prescription', file);
+    } else if (type === 'X-Ray & Imaging') {
+      this.uploadAndReview('imaging', file);
+    } else if (type === 'Medicine Box') {
+      this.startMedicineScan(file);
+    } else if (type === 'General Medical Document') {
+      this.uploadGeneralAsync(file, '');
+    }
   }
 
   openGeneralUploadForm(): void {
@@ -801,13 +801,6 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.setUploading('general', false);
               },
     });
-  }
-
-  private extractFile(event: Event): File | null {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    input.value = '';
-    return file;
   }
 
   private uploadAndReview(type: 'lab' | 'imaging' | 'prescription', file: File): void {
@@ -1103,14 +1096,23 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.manualImageUploading.set(false);
   }
 
-  onManualImageSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadManualImage(f, 'review');
+  removeReviewImage(): void {
+    const rf = this.reviewForm();
+    if (rf) this.reviewForm.set({ ...rf, imagePath: '' });
   }
 
-  onManualMedImageSelected(e: Event): void {
-    const f = this.extractFile(e);
-    if (f) this.uploadManualImage(f, 'medicine');
+  removeMedicineImage(): void {
+    this.scanForm.imagePath = '';
+  }
+
+  async triggerManualReviewImage(): Promise<void> {
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (file) this.uploadManualImage(file, 'review');
+  }
+
+  async triggerManualMedImage(): Promise<void> {
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (file) this.uploadManualImage(file, 'medicine');
   }
 
   private uploadManualImage(file: File, target: 'review' | 'medicine'): void {
@@ -1128,6 +1130,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
           this.scanForm.imagePath = path;
           this.scanImageFailed.set(false);
         }
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.manualImageUploading.set(false);

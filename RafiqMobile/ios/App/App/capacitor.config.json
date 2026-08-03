@@ -1,7 +1,7 @@
 {
 	"appId": "com.rafiq.mobile",
 	"appName": "Rafiq",
-	"webDir": "dist/RafiqAngular/browser",
+	"webDir": "dist/RafiqMobile/browser",
 	"plugins": {
 		"StatusBar": {
 			"overlaysWebView": false,
@@ -23,8 +23,7 @@
 		}
 	},
 	"packageClassList": [
-		"BiometricAuthNative",
-		"SecureStorage",
+		"ActionSheetPlugin",
 		"AppPlugin",
 		"CAPCameraPlugin",
 		"FilesystemPlugin",
@@ -33,6 +32,8 @@
 		"SharePlugin",
 		"SplashScreenPlugin",
 		"StatusBarPlugin",
-		"FilePickerPlugin"
+		"FilePickerPlugin",
+		"BiometricAuthPlugin",
+		"SecureStoragePlugin"
 	]
 }

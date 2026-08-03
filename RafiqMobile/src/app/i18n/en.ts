@@ -1,5 +1,10 @@
 export const en = {
   common: {
+    mediaPickerTitle: 'Select Source',
+    mediaPickerTakePhoto: 'Take Photo',
+    mediaPickerChooseGallery: 'Choose from Gallery',
+    mediaPickerChooseFile: 'Choose File',
+    mediaPickerCancel: 'Cancel',
     save: 'Save',
     saving: 'Saving...',
     cancel: 'Cancel',
@@ -1416,6 +1421,7 @@ export const en = {
     toastFileTooLargeTitle: 'File Too Large',
     toastFileTooLargeBody: 'Please choose an image under 6 MB.',
     toastOwnPhoneError: 'You cannot add your own phone number as an emergency contact.',
+
   },
 
   ratingPopup: {

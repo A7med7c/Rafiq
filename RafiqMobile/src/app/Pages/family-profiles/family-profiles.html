@@ -303,10 +303,11 @@
             }
           </div>
           <div class="fp-img-actions">
-            <input #createImageInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              (change)="onCreateImageSelected($event)">
+            <button type="button" class="fp-btn-primary" style="padding: 8px 16px; font-size: 14px;" (click)="selectCreateImage()">
+              <i class="fa-solid fa-camera"></i> {{ t().common.mediaPickerTitle }}
+            </button>
             @if (createForm.profileImage) {
-            <button type="button" class="fp-remove-btn" (click)="removeCreateImage(createImageInput)">{{ t().common.remove }}</button>
+            <button type="button" class="fp-remove-btn" (click)="removeCreateImage()">{{ t().common.remove }}</button>
             }
           </div>
         </div>
@@ -555,10 +556,11 @@
             }
           </div>
           <div class="fp-img-actions">
-            <input #editImageInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
-              (change)="onEditImageSelected($event)">
+            <button type="button" class="fp-btn-primary" style="padding: 8px 16px; font-size: 14px;" (click)="selectEditImage()">
+              <i class="fa-solid fa-camera"></i> {{ t().common.mediaPickerTitle }}
+            </button>
             @if (editForm.profileImage || (editForm.existingImageUrl && !editForm.removeImage)) {
-            <button type="button" class="fp-remove-btn" (click)="removeEditImage(editImageInput)">{{ t().common.remove }}</button>
+            <button type="button" class="fp-remove-btn" (click)="removeEditImage()">{{ t().common.remove }}</button>
             }
           </div>
         </div>

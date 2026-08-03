@@ -139,6 +139,9 @@
                     <div class="profile-image-preview">
                         @if (profileImagePreview) {
                         <img [src]="profileImagePreview" [alt]="t().register.profilePreview">
+                        <button type="button" class="icon-button" style="margin-left: 8px;" (click)="removeProfileImage()">
+                            <i class="fa-solid fa-times"></i> {{ t().common.remove }}
+                        </button>
                         } @else {
                         <div class="image-placeholder" style="display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; background-color: #f3f4f6; border-radius: 50%; color: #9ca3af;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="32" height="32">
@@ -149,14 +152,9 @@
                         }
                     </div>
                     <div class="profile-image-actions">
-                        <input id="profileImage" #profileImageInput type="file"
-                            accept="image/jpeg,image/png,image/webp,image/gif"
-                            (change)="onProfileImageSelected($event)">
-                        @if (profileImage) {
-                        <button type="button" class="icon-button" (click)="removeProfileImage(profileImageInput)">
-                            {{ t().register.remove }}
+                        <button type="button" class="fp-btn-primary" style="padding: 8px 16px; font-size: 14px; border-radius: 8px; margin-top: 8px;" (click)="selectProfileImage()">
+                          <i class="fa-solid fa-camera"></i> {{ t().common.mediaPickerTitle }}
                         </button>
-                        }
                     </div>
                 </div>
             </div>

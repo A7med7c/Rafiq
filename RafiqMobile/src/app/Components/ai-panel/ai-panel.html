@@ -332,8 +332,6 @@
           </div>
         } @else {
           <div class="ai-composer">
-            <input #fileInput type="file" accept="image/jpeg,image/jpg,image/png,image/webp"
-              class="ai-file-input" (change)="onFileSelected($event)">
             <button type="button" class="ai-composer-ico"
               [disabled]="sending()"
               [title]="t().aiAssistant.attachImage"

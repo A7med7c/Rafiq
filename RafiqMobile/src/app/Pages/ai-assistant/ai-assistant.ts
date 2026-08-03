@@ -10,6 +10,7 @@ import { HealthProfileService } from '../../Services/health-profile.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { AiMessageValidatorService } from '../../Services/ai-message-validator.service';
 import { LocalizationService } from '../../Services/localization.service';
+import { MediaPickerService } from '../../Services/media-picker.service';
 import { ConversationMessageDto, ConversationSummaryDto } from '../../Modles/ai-chat.models';
 import { catchError, of } from 'rxjs';
 
@@ -45,11 +46,11 @@ export class AiAssistant implements OnInit {
   private readonly router = inject(Router);
   private readonly location = inject(Location);
   protected readonly l10n = inject(LocalizationService);
+  private readonly mediaPicker = inject(MediaPickerService);
   protected readonly t = this.l10n.t;
 
   @ViewChild('messagesEnd') private messagesEnd?: ElementRef<HTMLDivElement>;
   @ViewChild('messageInput') private messageInputRef?: ElementRef<HTMLTextAreaElement>;
-  @ViewChild('fileInput') private fileInputRef?: ElementRef<HTMLInputElement>;
 
   // ── Sidebar / header (shared shell state, same as other pages) ──
   readonly sidebarCollapsed = signal(false);
@@ -276,26 +277,17 @@ export class AiAssistant implements OnInit {
 
   // ── Image attachment ──
 
-  triggerFileSelect(): void {
+  async triggerFileSelect(): Promise<void> {
     if (this.sending()) return;
-    this.fileInputRef?.nativeElement.click();
-  }
-
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    input.value = ''; // allow re-selecting the same file later
-
+    const file = await this.mediaPicker.selectMedia({ accept: 'image/jpeg,image/png,image/webp' });
     if (!file) return;
 
     this.attachError.set(null);
-
     const format = ACCEPTED_IMAGE_TYPES[file.type];
     if (!format) {
       this.attachError.set(this.t().aiAssistant.unsupportedFormat);
       return;
     }
-
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
       this.attachError.set(this.t().aiAssistant.imageTooLarge);
       return;
