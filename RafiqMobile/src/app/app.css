@@ -747,7 +747,7 @@
   .toast-container {
     right: 14px;
     left: 14px;
-    bottom: 14px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
     width: auto;
   }
 
