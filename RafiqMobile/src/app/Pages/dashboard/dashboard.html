@@ -105,7 +105,7 @@
 
         <div class="ai-hero__actions" style="margin-top: 16px;">
           <button type="button" class="ai-hero__btn ai-hero__btn--outline" (click)="aiChatService.openPanel()" style="width: 100%;">
-            <i class="fa-solid fa-robot"></i> Ask AI for details
+            <i class="fa-solid fa-robot"></i> {{ t().dashboard.summaryViewFull }}
           </button>
         </div>
       </div>
@@ -115,7 +115,7 @@
     <section class="m-section">
       <div class="m-section__hdr">
         <h3 class="m-section__title">{{ t().dashboard.today }}</h3>
-        <a routerLink="/appointments" class="m-section__link">View all</a>
+        <a routerLink="/appointments" class="m-section__link">{{ t().dashboard.viewAll }}</a>
       </div>
       @if (apptLoading() || remindersLoading()) {
         <div class="skl-list" style="margin:0">
@@ -325,8 +325,8 @@
           }
           <a assistantAnchor="add-family-member-button" class="family-card family-card--add" routerLink="/family-profiles">
             <span class="family-card__av family-card__av--add"><i class="fa-solid fa-plus"></i></span>
-            <span class="family-card__name" style="color: var(--blue);">Add</span>
-            <span class="family-card__sub" style="color: var(--blue);">Member</span>
+            <span class="family-card__name" style="color: var(--blue);">{{ t().dashboard.add }}</span>
+            <span class="family-card__sub" style="color: var(--blue);">{{ t().dashboard.member }}</span>
           </a>
         </div>
       }
@@ -382,10 +382,10 @@
                   @if (activeRecordMenuId() === rec.id) {
                     <div class="rec-popover-menu">
                       <button type="button" class="rec-popover-item edit">
-                        <i class="fa-regular fa-pen-to-square"></i> Edit
+                        <i class="fa-regular fa-pen-to-square"></i> {{ t().common.edit }}
                       </button>
                       <button type="button" class="rec-popover-item delete">
-                        <i class="fa-regular fa-trash-can"></i> Delete
+                        <i class="fa-regular fa-trash-can"></i> {{ t().common.delete }}
                       </button>
                     </div>
                   }

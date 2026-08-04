@@ -834,6 +834,10 @@ export class FamilyProfiles implements OnInit {
 
   getAvatarColor(i: number): string { return this.avatarColors[i % this.avatarColors.length]; }
 
+  getRelationTranslation(r: string): string {
+    return (this.t().family as any)[r.toLowerCase()] ?? r;
+  }
+
   getRelLabel(p: AccessibleProfileDto): string {
     if (p.isSelf) {
       return this.t().family.self;

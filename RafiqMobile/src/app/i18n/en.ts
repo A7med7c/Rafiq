@@ -356,6 +356,8 @@ export const en = {
     menu: 'Menu',
     editAction: 'Edit',
     deleteAction: 'Delete',
+    shareAction: 'Share',
+    patientName: 'Patient Name',
     viewOriginalDoc: 'View Original Document',
     clickToPreview: 'Click to preview the uploaded image',
     noImageAttached: 'No image attached',
@@ -1031,6 +1033,7 @@ export const en = {
     member: 'Member',
     grandfather: 'Grandfather',
     grandmother: 'Grandmother',
+    other: 'Other',
 
     // ── Family Hub redesign (new) ──
     overviewTitle: 'Family Overview',

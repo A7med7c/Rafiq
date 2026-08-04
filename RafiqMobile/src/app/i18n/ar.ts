@@ -358,6 +358,8 @@ export const ar: Translations = {
     menu: 'قائمة',
     editAction: 'عدل',
     deleteAction: 'امسح',
+    shareAction: 'شير',
+    patientName: 'اسم المريض',
     viewOriginalDoc: 'شوف الوثيقة الأصلية',
     clickToPreview: 'اضغط لمعاينة الصورة',
     noImageAttached: 'مفيش صورة',
@@ -1033,6 +1035,7 @@ export const ar: Translations = {
     member: 'عضو',
     grandfather: 'الجد',
     grandmother: 'الجدة',
+    other: 'أخرى',
 
     // ── واجهة أفراد العيلة الجديدة ──
     overviewTitle: 'نظرة عامة على العيلة',

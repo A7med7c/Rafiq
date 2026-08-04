@@ -304,7 +304,7 @@
             }
           </div>
           <div class="fp-img-actions">
-            <button type="button" class="fp-btn-primary" style="padding: 8px 16px; font-size: 14px;" (click)="selectCreateImage()">
+            <button type="button" class="fp-btn-outline" (click)="selectCreateImage()">
               <i class="fa-solid fa-camera"></i> {{ t().common.mediaPickerTitle }}
             </button>
             @if (createForm.profileImage) {
@@ -333,7 +333,7 @@
           <select class="fp-input fp-select" [(ngModel)]="createForm.relationship">
             <option value="">{{ t().family.selectRelationship }}</option>
             @for (r of relationships; track r) {
-            <option [value]="r">{{ r }}</option>
+            <option [value]="r">{{ getRelationTranslation(r) }}</option>
             }
           </select>
         </div>
@@ -528,7 +528,7 @@
 ══════════════════════════════════════════════════════ -->
 @if (showEditModal()) {
 <div class="modal-overlay" style="background-color: white; z-index: 1000;" (click)="closeEditModal()">
-  <div style="width: 100%; min-height: 100vh; background-color: #F8FAFC; display: flex; flex-direction: column;" (click)="$event.stopPropagation()">
+  <div style="width: 100%; min-height: 100vh; display: flex; flex-direction: column;">
     
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 16px; background: white;">
       <button type="button" (click)="closeEditModal()" style="background: none; border: none; font-size: 20px; color: #1E293B; width: 40px; display: flex; align-items: center;">
@@ -557,7 +557,7 @@
             }
           </div>
           <div class="fp-img-actions">
-            <button type="button" class="fp-btn-primary" style="padding: 8px 16px; font-size: 14px;" (click)="selectEditImage()">
+            <button type="button" class="fp-btn-outline" (click)="selectEditImage()">
               <i class="fa-solid fa-camera"></i> {{ t().common.mediaPickerTitle }}
             </button>
             @if (editForm.profileImage || (editForm.existingImageUrl && !editForm.removeImage)) {
@@ -587,7 +587,7 @@
           <select class="fp-input fp-select" [(ngModel)]="editForm.relationship">
             <option value="">{{ t().family.selectRelationship }}</option>
             @for (r of relationships; track r) {
-            <option [value]="r">{{ r }}</option>
+            <option [value]="r">{{ getRelationTranslation(r) }}</option>
             }
           </select>
         </div>
