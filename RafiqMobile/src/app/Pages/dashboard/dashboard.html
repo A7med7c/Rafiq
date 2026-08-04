@@ -338,61 +338,61 @@
         <h3 class="m-section__title">{{ t().dashboard.recentMedicalRecords }}</h3>
         <a routerLink="/medical-records" class="m-section__link">{{ t().dashboard.viewAll }}</a>
       </div>
-      <div class="m-card">
+      <div class="fp-records-list">
         @if (recordsLoading()) {
-          <div class="skl-list">
-            @for (s of [1,2,3]; track s) {
-              <div class="skl-row">
-                <div class="skl-sq"></div>
-                <div class="skl-lines">
-                  <div class="skl-line skl-70"></div>
-                  <div class="skl-line skl-45"></div>
+          <div class="m-card">
+            <div class="skl-list">
+              @for (s of [1,2,3]; track s) {
+                <div class="skl-row">
+                  <div class="skl-sq"></div>
+                  <div class="skl-lines">
+                    <div class="skl-line skl-70"></div>
+                    <div class="skl-line skl-45"></div>
+                  </div>
+                  <div class="skl-pill"></div>
                 </div>
-                <div class="skl-pill"></div>
-              </div>
-            }
+              }
+            </div>
           </div>
         } @else if (records().length === 0) {
-          <div class="m-empty">
-            <i class="fa-solid fa-folder-open m-empty__ico"></i>
-            <p class="m-empty__title">{{ t().dashboard.noRecordsFound }}</p>
-            <p class="m-empty__sub">{{ t().dashboard.noRecordsSub }}</p>
+          <div class="m-card">
+            <div class="m-empty">
+              <i class="fa-solid fa-folder-open m-empty__ico"></i>
+              <p class="m-empty__title">{{ t().dashboard.noRecordsFound }}</p>
+              <p class="m-empty__sub">{{ t().dashboard.noRecordsSub }}</p>
+            </div>
           </div>
         } @else {
-          <ul class="rec-list">
-            @for (rec of records(); track rec.id; let i = $index) {
-              @if (i < 3) {
-                <li class="rec-item">
-                  <div class="rec-file-ico rec-file-ico--{{ getRecordBadgeColor(rec.type) }}">
-                    <i class="fa-solid fa-file-{{ getRecordBadgeType(rec.type) === 'PDF' ? 'pdf' : 'image' }}"></i>
-                    <span class="rec-file-lbl">{{ getRecordBadgeType(rec.type) }}</span>
-                  </div>
-                  <div class="rec-info">
-                    <p class="rec-name">{{ rec.title }}</p>
-                    <p class="rec-meta">
-                      {{ rec.date }}
-                      @if (rec.fileSize) {
-                        &bull; {{ rec.fileSize }}
-                      }
-                    </p>
-                  </div>
-                  <button type="button" class="rec-dots-btn" aria-label="Options" (click)="toggleRecordMenu(rec.id, $event)">
-                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                  </button>
+          @for (rec of records(); track rec.id; let i = $index) {
+            @if (i < 3) {
+              <div class="fp-record-item" routerLink="/medical-records">
+                <div class="fp-record-file-icon">
+                   <div class="fp-file-badge" [class.is-pdf]="rec.type === 'general' || rec.type === 'lab' || rec.type === 'prescription'">
+                     <i class="fa-solid" [class.fa-file-pdf]="rec.type === 'general' || rec.type === 'lab' || rec.type === 'prescription'" [class.fa-file-image]="rec.type === 'imaging'" [class.fa-file-lines]="rec.type === 'medicine'"></i>
+                     <span>{{ (rec.type === 'general' || rec.type === 'lab' || rec.type === 'prescription') ? 'PDF' : (rec.type === 'imaging' ? 'JPG' : 'DOC') }}</span>
+                   </div>
+                </div>
+                <div class="fp-record-info">
+                  <h4>{{ rec.title }}</h4>
+                  <p>{{ rec.source || '-' }}</p>
+                  <span>{{ rec.date }}</span>
+                </div>
+                <div class="fp-record-menu" (click)="$event.stopPropagation(); toggleRecordMenu(rec.id, $event)">
+                  <i class="fa-solid fa-ellipsis-vertical"></i>
                   @if (activeRecordMenuId() === rec.id) {
-                    <div class="rec-popover-menu">
-                      <button type="button" class="rec-popover-item edit">
-                        <i class="fa-regular fa-pen-to-square"></i> {{ t().common.edit }}
-                      </button>
-                      <button type="button" class="rec-popover-item delete">
-                        <i class="fa-regular fa-trash-can"></i> {{ t().common.delete }}
-                      </button>
-                    </div>
+                     <div class="rec-popover-menu">
+                        <button type="button" class="rec-popover-item edit">
+                          <i class="fa-regular fa-pen-to-square"></i> {{ t().common.edit }}
+                        </button>
+                        <button type="button" class="rec-popover-item delete">
+                          <i class="fa-regular fa-trash-can"></i> {{ t().common.delete }}
+                        </button>
+                     </div>
                   }
-                </li>
-              }
+                </div>
+              </div>
             }
-          </ul>
+          }
         }
       </div>
     </section>

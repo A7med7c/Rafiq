@@ -1953,3 +1953,97 @@ a {
 .today-row__sub { margin: 2px 0 0; font-size: 12px; color: var(--text-3); }
 .today-row__chev { color: var(--text-4); margin-left: auto; }
 .today-badge--taken { background: #DCFCE7; color: #16A34A; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; margin-left: auto; }
+
+/* ── RECENT MEDICAL RECORDS (Like records-content.html) ── */
+.fp-records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fp-record-item {
+  display: flex;
+  align-items: center;
+  background: var(--white);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  cursor: pointer;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.fp-record-menu {
+  padding: 8px;
+  margin-inline-start: -8px;
+  margin-inline-end: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  position: relative;
+}
+
+.fp-record-info {
+  flex: 1;
+  text-align: start;
+  min-width: 0;
+}
+
+.fp-record-info h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 4px 0;
+}
+
+.fp-record-info p {
+  font-size: 12px;
+  color: var(--text-3);
+  margin: 0 0 6px 0;
+}
+
+.fp-record-info span {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.fp-record-file-icon {
+  margin-inline-end: 12px;
+}
+
+.fp-file-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 56px;
+  border-radius: 8px;
+  background-color: var(--blue-lt);
+  color: var(--blue);
+  border: 1px solid var(--border-lt);
+}
+
+.fp-file-badge i {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.fp-file-badge span {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--blue);
+  color: var(--white);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.fp-file-badge.is-pdf {
+  background-color: #FFF0F0;
+  color: #E53E3E;
+  border-color: #FED7D7;
+}
+
+.fp-file-badge.is-pdf span {
+  background-color: #E53E3E;
+}

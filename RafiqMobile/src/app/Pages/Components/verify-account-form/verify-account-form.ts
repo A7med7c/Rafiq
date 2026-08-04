@@ -65,7 +65,7 @@ export class VerifyAccountFormComponent implements OnInit, OnDestroy {
         setTimeout(() => this.router.navigate(['/login']), 1500);
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error, this.t());
         this.isVerifying = false;
         this.changeDetector.detectChanges();
       },
@@ -90,7 +90,7 @@ export class VerifyAccountFormComponent implements OnInit, OnDestroy {
         this.startCooldown();
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error, this.t());
         this.isResending = false;
         this.changeDetector.detectChanges();
       },

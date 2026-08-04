@@ -56,7 +56,7 @@ export interface Prescription {
 }
 
 // ===== Unified Medical Record (for display) =====
-export type MedicalRecordType = 'lab' | 'imaging' | 'prescription';
+export type MedicalRecordType = 'lab' | 'imaging' | 'prescription' | 'medicine' | 'general';
 
 export interface MedicalRecord {
   id: string;
