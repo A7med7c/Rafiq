@@ -6,7 +6,7 @@ import {
 import { DOCUMENT } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MediaPickerService } from '../../Services/media-picker.service';
 import { MedicalRecordsService, UnifiedMedicalRecord } from '../../Services/medical-records.service';
@@ -107,7 +107,7 @@ interface GeneralUploadForm {
 
 
 
-const PAGE_SIZE = 2;
+const DEFAULT_PAGE_SIZE = 4;
 const FILTER_SORT_STORAGE_KEY = 'rafiq-medical-records-sort';
 
 const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
@@ -151,6 +151,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly mediaPicker = inject(MediaPickerService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly documentAnalysisState = inject(DocumentAnalysisStateService);
   private readonly base = environment.apiUrl;
 
@@ -158,6 +159,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly loading = signal(true);
   readonly searchQuery = signal('');
   readonly activeTab = signal<RecordTab>('all');
+  readonly uploadFlowType = signal<string | null>(null);
   readonly selectedRecord = signal<UnifiedMedicalRecord | null>(null);
   readonly dropdownOpen = signal(false);
   readonly addRecordMenuOpen = signal(false);
@@ -220,7 +222,6 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly generalUploadFormOpen = signal(false);
   generalUploadForm: GeneralUploadForm = this.emptyGeneralUploadForm();
 
-  readonly scanLoading = signal(false);
   readonly scanResult = signal<ScanMedicineBoxResponse | null>(null);
   readonly scanSaving = signal(false);
   readonly scanMode = signal<'create' | 'edit'>('create');
@@ -243,6 +244,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly manualReviewMode = signal(false);
   readonly manualMedicineMode = signal(false);
   readonly scanSource = signal<1 | 3>(3);
+  readonly moreMedDataExpanded = signal(false);
 
   readonly reviewDateError = signal<string | null>(null);
 
@@ -260,8 +262,13 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly reminderPromptMode = signal<'single' | 'multi'>('single');
   readonly reminderPromptMedicineId = signal<string | null>(null);
 
+  /** "Record saved successfully" screen shown right after a record is saved. */
+  readonly showScanSuccessScreen = signal(false);
+  readonly savedRecordId = signal<string | null>(null);
+
   readonly currentPage = signal(1);
-  readonly pageSize = PAGE_SIZE;
+  readonly showAllRecords = signal(false);
+  readonly pageSize = computed(() => this.showAllRecords() ? 9999 : DEFAULT_PAGE_SIZE);
 
 
   // Manual entry mode (lab / imaging / prescription / general)
@@ -283,16 +290,20 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     effect(() => {
       const review = this.documentAnalysisState.pendingReview();
       if (!review) return;
-      this.openReviewModal(review.uploadType as any, review.data);
+      if (review.uploadType === 'medicine') {
+        this.openMedicineReviewModal(review.data as ScanMedicineBoxResponse);
+      } else {
+        this.openReviewModal(review.uploadType as any, review.data);
+      }
       this.documentAnalysisState.clearPendingReview();
     });
 
     effect(() => {
       const open = !!(
         this.selectedRecord() || this.deleteTarget() || this.reviewForm() ||
-        this.generalUploadFormOpen() || this.scanLoading() ||
+        this.generalUploadFormOpen() ||
         this.scanResult() || this.showReminderPromptModal() || this.lightboxUrl() ||
-        this.showAiFailDialog()
+        this.showAiFailDialog() || this.showScanSuccessScreen()
       );
       const container = this._doc.querySelector('.dsh-body') as HTMLElement | null;
       if (container) {
@@ -362,12 +373,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   readonly pagedRecords = computed(() => {
     const all = this.filteredRecords();
-    const start = (this.currentPage() - 1) * this.pageSize;
-    return all.slice(start, start + this.pageSize);
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return all.slice(start, start + this.pageSize());
   });
 
   readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.filteredRecords().length / this.pageSize))
+    Math.max(1, Math.ceil(this.filteredRecords().length / this.pageSize()))
   );
 
   readonly pageNumbers = computed(() => {
@@ -431,7 +442,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   selectUploadType(type: 'Lab Analysis' | 'Prescription' | 'X-Ray & Imaging' | 'Medicine Box' | 'General Medical Document'): void {
     this.addRecordMenuOpen.set(false);
-    this.triggerUpload(type);
+    this.startUploadFlow(type);
   }
 
   toggleFilterMenu(event: MouseEvent): void {
@@ -487,11 +498,26 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.allRecords.set(this.recordsService.toUnifiedRecords(res));
         this.currentPage.set(Math.min(this.currentPage(), this.totalPages()));
         this.loading.set(false);
+        this.openEditFromQueryParam();
       },
       error: () => {
         this.allRecords.set([]);
         this.loading.set(false);
       },
+    });
+  }
+
+  /** Lets the Record Details page hand off to the existing edit flow via ?editId=<recordId>. */
+  private openEditFromQueryParam(): void {
+    const editId = this.route.snapshot.queryParamMap.get('editId');
+    if (!editId) return;
+    const record = this.allRecords().find(r => r.id === editId);
+    if (record) this.editRecord(record);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { editId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   }
 
@@ -601,6 +627,14 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.mobileTabMenuOpen.set(false);
   }
 
+  toggleTab(tab: RecordTab): void {
+    if (this.activeTab() === tab) {
+      this.setTab('all');
+    } else {
+      this.setTab(tab);
+    }
+  }
+
   toggleMobileTabMenu(): void { this.mobileTabMenuOpen.update(v => !v); }
   closeMobileTabMenu(): void  { this.mobileTabMenuOpen.set(false); }
 
@@ -650,8 +684,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   viewDetails(record: UnifiedMedicalRecord): void {
-    this.detailImageFailed.set(false);
-    this.selectedRecord.set(record);
+    this.router.navigate(['/medical-records', record.id], {
+      queryParams: this.profileId ? { profileId: this.profileId } : undefined,
+    });
   }
 
   toggleActionMenu(recordId: string, event: MouseEvent): void {
@@ -704,6 +739,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       this.scanMode.set('edit');
       this.scanRecordId.set(record.id);
       this.isMedicineManualMode.set(false);
+      this.moreMedDataExpanded.set(!!(this.scanForm.frequency || this.scanForm.duration || this.scanForm.notes));
       this.clearManualImage('medicine');
       this._scanFormSnapshot = this.snapshotScanForm(this.scanForm);
       this.scanResult.set({
@@ -736,6 +772,50 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   openLightbox(url: string): void { this.lightboxUrl.set(url); }
   closeLightbox(): void { this.lightboxUrl.set(null); }
+
+  startUploadFlow(type: string): void {
+    if (this.readOnly) return;
+    this.uploadFlowType.set(type);
+  }
+
+  getUploadFlowTitle(): string {
+    const type = this.uploadFlowType();
+    if (type === 'Lab Analysis') return this.t().records.labAnalysis;
+    if (type === 'Prescription') return this.t().records.prescription;
+    if (type === 'X-Ray & Imaging') return this.t().records.xrayImaging;
+    if (type === 'Medicine Box') return this.t().records.medicineBox;
+    if (type === 'General Medical Document') return this.t().records.generalDocument;
+    return '';
+  }
+
+  async triggerUploadMethod(method: 'camera' | 'scan' | 'file'): Promise<void> {
+    const type = this.uploadFlowType();
+    if (!type) return;
+    
+    const file = await this.mediaPicker.selectMedia({ allowDocuments: true });
+    if (!file) return;
+
+    if (type === 'Lab Analysis') this.uploadAndReview('lab', file);
+    else if (type === 'Prescription') this.uploadAndReview('prescription', file);
+    else if (type === 'X-Ray & Imaging') this.uploadAndReview('imaging', file);
+    else if (type === 'Medicine Box') this.startMedicineScan(file);
+    else if (type === 'General Medical Document') {
+      this.generalUploadForm.file = file;
+      this.generalUploadForm.fileName = file.name;
+      this.generalUploadFormOpen.set(true);
+    }
+  }
+
+  triggerManualEntry(): void {
+    const type = this.uploadFlowType();
+    if (!type) return;
+    
+    if (type === 'Lab Analysis') this.openManualEntry('lab');
+    else if (type === 'Prescription') this.openManualEntry('prescription');
+    else if (type === 'X-Ray & Imaging') this.openManualEntry('imaging');
+    else if (type === 'Medicine Box') this.openManualEntry('medicine');
+    else if (type === 'General Medical Document') this.openManualEntry('general');
+  }
 
   async triggerUpload(type: string): Promise<void> {
     if (this.readOnly) return;
@@ -1016,7 +1096,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     request$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.reviewSaving.set(false);
         this.reviewForm.set(null);
         this._reviewFormSnapshot = null;
@@ -1030,6 +1110,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
         if (rf.type === 'prescription' && rf.mode !== 'edit') {
           this.openReminderPrompt('multi');
+        } else if (rf.mode !== 'edit') {
+          const savedId = res?.data?.id ?? null;
+          if (savedId) {
+            this.savedRecordId.set(savedId);
+            this.showScanSuccessScreen.set(true);
+          }
         }
       },
       error: err => {
@@ -1038,43 +1124,40 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
+  /** Fires the medicine-box AI scan in the background — tracked by the floating
+   *  analysis card, exactly like uploadAndReview() does for lab/imaging/prescription.
+   *  The user is free to navigate away; a "Ready to Review" notification appears when done. */
   private startMedicineScan(file: File): void {
-    this.scanLoading.set(true);
+    const tempId = crypto.randomUUID();
+    this.documentAnalysisState.trackSyncUpload(tempId, this.t().records.scanningMedicineBox, 'medicine');
     this.setUploading('medicine', true);
+
     const form = new FormData();
     form.append('image', file);
 
     this.http.post<{ data: ScanMedicineBoxResponse }>(`${this.base}/user-medicines/scan-box`, form).subscribe({
       next: res => {
-        this.scanLoading.set(false);
         this.setUploading('medicine', false);
         const data = res?.data ?? (res as unknown as ScanMedicineBoxResponse);
-        this.scanForm = {
-          medicineName: data.medicineName ?? '',
-          dosage: data.strength ?? '',
-          dosageForm: data.dosageForm ?? '',
-          manufacturer: data.manufacturer ?? '',
-          frequency: '', duration: '', notes: '',
-          imagePath: data.imagePath ?? '',
-        };
-        this.scanImageFailed.set(false);
-        this.scanMode.set('create');
-        this.scanRecordId.set(null);
-        this.scanResult.set(data);
-        this._scanFormSnapshot = this.snapshotScanForm(this.scanForm);
+        this.documentAnalysisState.completeWithReviewData(tempId, data);
       },
       error: err => {
-        this.scanLoading.set(false);
         this.setUploading('medicine', false);
         const errCode = err?.error?.errorCode as string | undefined;
+        const v = this.t().uploadValidation;
+
         if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
-                  } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
+          this.documentAnalysisState.failSyncUpload(tempId, v.medicine);
+        } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
+          this.documentAnalysisState.failSyncUpload(tempId, v.medicineUnreadable);
           this._failedFile = file;
           this._failedType = 'medicine';
           this._failedDesc = '';
           this.aiFailIsUnreadable.set(true);
           this.showAiFailDialog.set(true);
         } else {
+          const reason = err?.error?.message || 'Analysis failed. Please try again.';
+          this.documentAnalysisState.failSyncUpload(tempId, reason);
           this._failedFile = file;
           this._failedType = 'medicine';
           this._failedDesc = '';
@@ -1085,11 +1168,31 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
+  /** Opens the medicine review UI (scanForm/scanResult) from AI-extracted data. */
+  private openMedicineReviewModal(data: ScanMedicineBoxResponse): void {
+    this.scanForm = {
+      medicineName: data.medicineName ?? '',
+      dosage: data.strength ?? '',
+      dosageForm: data.dosageForm ?? '',
+      manufacturer: data.manufacturer ?? '',
+      frequency: '', duration: '', notes: '',
+      imagePath: data.imagePath ?? '',
+    };
+    this.scanImageFailed.set(false);
+    this.scanMode.set('create');
+    this.scanRecordId.set(null);
+    this.moreMedDataExpanded.set(false);
+    this.manualMedicineMode.set(false);
+    this.scanResult.set(data);
+    this._scanFormSnapshot = this.snapshotScanForm(this.scanForm);
+  }
+
   cancelScanReview(): void {
     this.scanResult.set(null);
     this.scanMode.set('create');
     this.scanRecordId.set(null);
     this.scanForm = this.emptyScanForm();
+    this.moreMedDataExpanded.set(false);
     this._scanFormSnapshot = null;
     this.manualMedicineMode.set(false);
     this.scanSource.set(3);
@@ -1156,6 +1259,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       this.scanSource.set(1);
       this.scanMode.set('create');
       this.scanRecordId.set(null);
+      this.moreMedDataExpanded.set(false);
       this._scanFormSnapshot = null;
       this.scanResult.set({ medicineName: '', strength: '', dosageForm: '', manufacturer: '', imagePath: '' });
       return;
@@ -1223,13 +1327,35 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
         const savedMedicineId = res?.data?.id ?? null;
         if (mode !== 'edit' && savedMedicineId) {
-          this.openReminderPrompt('single', savedMedicineId);
+          this.savedRecordId.set(savedMedicineId);
+          this.showScanSuccessScreen.set(true);
         }
       },
       error: err => {
         this.scanSaving.set(false);
               },
     });
+  }
+
+  // ── Post-save "record saved successfully" screen ─────────────────────────
+  /** "View Record" — dismiss the success screen and open the new record's details page. */
+  viewSavedScanRecord(): void {
+    const medicineId = this.savedRecordId();
+    this.showScanSuccessScreen.set(false);
+    this.savedRecordId.set(null);
+    this.uploadFlowType.set(null);
+    if (medicineId) {
+      this.router.navigate(['/medical-records', medicineId], {
+        queryParams: this.profileId ? { profileId: this.profileId } : undefined,
+      });
+    }
+  }
+
+  /** "Add Another Record" — dismiss the success screen and return to the record-type picker. */
+  addAnotherScanRecord(): void {
+    this.showScanSuccessScreen.set(false);
+    this.savedRecordId.set(null);
+    this.uploadFlowType.set(null);
   }
 
   // ── Post-success reminder prompt ─────────────────────────────────────────
