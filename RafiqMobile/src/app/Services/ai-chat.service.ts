@@ -89,6 +89,11 @@ export class AiChatService {
     this.isPanelOpen.set(false);
   }
 
+  /** Mounts the panel (so its minimized hero/FAB is visible) without expanding it. */
+  ensurePanelMounted(): void {
+    this.isPanelOpen.set(true);
+  }
+
   togglePanel(): void {
     this.isPanelOpen.update(v => !v);
   }

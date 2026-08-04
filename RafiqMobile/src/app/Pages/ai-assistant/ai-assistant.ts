@@ -194,6 +194,7 @@ export class AiAssistant implements OnInit {
     this.sendError.set(null);
     this.messageText.set('');
     this.clearAttachedImage();
+    this.adjustTextareaHeight(true);
     this.focusInput();
   }
 
@@ -323,6 +324,19 @@ export class AiAssistant implements OnInit {
   onMessageInput(value: string): void {
     this.messageText.set(value);
     if (this.validationError()) this.validationError.set(null);
+    this.adjustTextareaHeight();
+  }
+
+  private adjustTextareaHeight(reset = false): void {
+    const el = this.messageInputRef?.nativeElement;
+    if (el) {
+      if (reset) {
+        el.style.height = 'auto';
+      } else {
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+      }
+    }
   }
 
   sendMessage(): void {
@@ -356,6 +370,7 @@ export class AiAssistant implements OnInit {
     this.sendError.set(null);
     this.sending.set(true);
     this.messageText.set('');
+    this.adjustTextareaHeight(true);
 
     const imagePreviewUrl = this.attachedImagePreviewUrl() ?? undefined;
     this.clearAttachedImage();
