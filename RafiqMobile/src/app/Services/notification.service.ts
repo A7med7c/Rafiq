@@ -333,7 +333,7 @@ export class NotificationService {
           const nc = this.localization.t().notifications;
           this.pushDerivedNotification({
             title: nc.medicationConfirmed,
-            body: reminder.notificationText || `You confirmed taking ${reminder.medicineName}.`,
+            body: reminder.notificationText || nc.confirmedTakingBody.replace('{name}', reminder.medicineName),
             type: 'confirmation',
             sourceId: reminder.reminderId,
           });
@@ -435,9 +435,10 @@ export class NotificationService {
 
     this.processedReminderIds.add(reminder.reminderId);
 
+    const nc = this.localization.t().notifications;
     const notification = this.pushDerivedNotification({
       title: reminder.medicineName,
-      body: reminder.notificationText || `Medication reminder for ${reminder.medicineName}`,
+      body: reminder.notificationText || nc.medicationReminderBody.replace('{name}', reminder.medicineName),
       type: 'reminder',
       sourceId: reminder.reminderId,
     });
@@ -499,7 +500,7 @@ export class NotificationService {
     const nc = this.localization.t().notifications;
     this.pushDerivedNotification({
       title: nc.appointmentReminder,
-      body: event.notificationText || `Upcoming appointment: ${event.title} with ${event.provider}`,
+      body: event.notificationText || nc.upcomingAppointmentBody.replace('{title}', event.title).replace('{provider}', event.provider),
       titleAr: nc.appointmentReminder,
       type: 'appointment',
       sourceId: event.appointmentId,
@@ -510,7 +511,7 @@ export class NotificationService {
     this.emitNativeNotification({
       id: crypto.randomUUID(),
       title: event.title,
-      body: event.notificationText || `${event.title} with ${event.provider}`,
+      body: event.notificationText || nc.appointmentWithProviderBody.replace('{title}', event.title).replace('{provider}', event.provider),
       createdAt: new Date(),
       sourceId: event.appointmentId,
       action: 'open-appointment'
@@ -544,10 +545,11 @@ export class NotificationService {
       return;
     }
 
+    const nc = this.localization.t().notifications;
     const entry: BrowserNotificationItem = {
       id: crypto.randomUUID(),
       title: reminder.medicineName,
-      body: reminder.notificationText || `Medication reminder for ${reminder.medicineName}`,
+      body: reminder.notificationText || nc.medicationReminderBody.replace('{name}', reminder.medicineName),
       createdAt: new Date(),
       sourceId: reminder.reminderId,
     };
@@ -783,8 +785,8 @@ export class NotificationService {
         const nc = this.localization.t().notifications;
         this.emitNativeNotification({
           id: crypto.randomUUID(),
-          title: 'Error',
-          body: 'Failed to confirm attendance. Please try again later.',
+          title: nc.errorTitle,
+          body: nc.failedToConfirmAttendanceBody,
           createdAt: new Date(),
         });
       },

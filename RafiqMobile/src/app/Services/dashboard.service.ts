@@ -59,14 +59,18 @@ export class DashboardService {
 
   // ─── Medical Records ──────────────────────────────────────────────────────
   getMedicalRecords(): Observable<MedicalRecord[]> {
-    const labs$ = this.http.get<ApiResponse<LabReport[]>>(`${this.base}/documents/labs`).pipe(
-      map(r => r.data ?? []), catchError(() => of([] as LabReport[]))
-    );
-    const imaging$ = this.http.get<ApiResponse<ImagingReport[]>>(`${this.base}/documents/imaging`).pipe(
-      map(r => r.data ?? []), catchError(() => of([] as ImagingReport[]))
-    );
+    return this.getCurrentProfileId().pipe(
+      switchMap(profileId => {
+        const pid = `?profileId=${profileId}`;
+        const labs$ = this.http.get<ApiResponse<LabReport[]>>(`${this.base}/documents/labs${pid}`).pipe(
+          map(r => r.data ?? []), catchError(() => of([] as LabReport[]))
+        );
+        const imaging$ = this.http.get<ApiResponse<ImagingReport[]>>(`${this.base}/documents/imaging${pid}`).pipe(
+          map(r => r.data ?? []), catchError(() => of([] as ImagingReport[]))
+        );
 
-    return forkJoin([labs$, imaging$]).pipe(
+        return forkJoin([labs$, imaging$]);
+      }),
       map(([labs, imaging]) => {
         const labRecs: MedicalRecord[] = labs.map(l => ({
           id: l.id, type: 'lab' as const,
