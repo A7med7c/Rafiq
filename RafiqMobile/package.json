@@ -49,6 +49,7 @@
     "@angular/build": "^21.2.1",
     "@angular/cli": "^21.2.1",
     "@angular/compiler-cli": "^21.2.0",
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "8.4.2",
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
