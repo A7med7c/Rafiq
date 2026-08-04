@@ -45,6 +45,7 @@ export const routes: Routes = [
   { path: 'forgot-password', component: ForgotPassword, canActivate: [guestGuard] },
   { path: 'verify-account', component: VerifyAccount, canActivate: [guestGuard] },
   { path: 'family-profiles', component: FamilyProfiles, canActivate: [authGuard] },
+  { path: 'family-profiles/add', component: FamilyProfiles, canActivate: [authGuard] },
   { path: 'family-profiles/:id', component: FamilyMemberDetail, canActivate: [authGuard] },
   { path: 'family-profiles/:id/health-information', component: FamilyHealthInformation, canActivate: [authGuard] },
   { path: 'family-profiles/:id/emergency-contacts', component: FamilyEmergencyContacts, canActivate: [authGuard] },

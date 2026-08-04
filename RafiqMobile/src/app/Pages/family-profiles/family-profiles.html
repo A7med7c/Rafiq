@@ -4,6 +4,7 @@
   (notificationsClicked)="notifSvc.toggleNotificationCenter()">
 </app-mobile-header>
 
+@if (!showAddModal()) {
 <div class="m-page">
   <div class="m-body fph-enter">
 
@@ -20,7 +21,7 @@
       <div class="fph-empty__ico"><i class="fa-solid fa-people-roof"></i></div>
       <p class="fph-empty__title">{{ t().family.noProfilesYet }}</p>
       <p class="fph-empty__sub">{{ t().family.noProfilesSub }}</p>
-      <button type="button" class="fph-btn-primary" (click)="openAddModal()">
+      <button type="button" class="fph-btn-primary" [routerLink]="['/family-profiles/add']">
         <i class="fa-solid fa-plus"></i> {{ t().family.addFamilyMember }}
       </button>
     </div>
@@ -223,14 +224,14 @@
 
   <app-bottom-nav></app-bottom-nav>
 </div><!-- /m-page -->
-
+}
 
 <!-- ══════════════════════════════════════════════════════
      ADD FAMILY MEMBER MODAL
 ══════════════════════════════════════════════════════ -->
 @if (showAddModal()) {
-<div class="modal-overlay" style="background-color: white; z-index: 1000;" (click)="closeAddModal()">
-  <div style="width: 100%; min-height: 100vh; background-color: #F8FAFC; display: flex; flex-direction: column;" (click)="$event.stopPropagation()">
+<div class="m-page" style="background-color: #F8FAFC;">
+  <div style="width: 100%; min-height: 100vh; display: flex; flex-direction: column;">
     <!-- Modal header -->
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 16px; background: white;">
       @if (addStep() === 'create' || addStep() === 'invite') {
@@ -517,10 +518,10 @@
       </div>
     }
 
+    <app-bottom-nav></app-bottom-nav>
   </div>
 </div>
 }
-
 
 <!-- ══════════════════════════════════════════════════════
      EDIT PROFILE MODAL
