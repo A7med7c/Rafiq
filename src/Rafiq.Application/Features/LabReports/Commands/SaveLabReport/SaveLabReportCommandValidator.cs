@@ -11,7 +11,7 @@ internal sealed class SaveLabReportCommandValidator : AbstractValidator<SaveLabR
         {
             RuleFor(x => x.ReportDate)
                 .Must(NotBeInFuture)
-                .WithMessage("Date cannot be later than today.");
+                .WithMessage("Validation.DateCannotBeLaterThanToday");
         });
     }
 

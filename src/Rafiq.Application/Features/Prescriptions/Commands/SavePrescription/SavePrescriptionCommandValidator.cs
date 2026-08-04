@@ -11,7 +11,7 @@ internal sealed class SavePrescriptionCommandValidator : AbstractValidator<SaveP
         {
             RuleFor(x => x.PrescriptionDate)
                 .Must(NotBeInFuture)
-                .WithMessage("Date cannot be later than today.");
+                .WithMessage("Validation.DateCannotBeLaterThanToday");
         });
     }
 

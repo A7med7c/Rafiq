@@ -21,7 +21,7 @@ internal sealed class UpdateChronicDiseaseCommandValidator : AbstractValidator<U
 
         RuleFor(x => x.DiagnosedAt)
             .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
-            .WithMessage("Diagnosed date cannot be in the future.")
+            .WithMessage("Validation.DiagnosedDateCannotBeInTheFutu")
             .When(x => x.DiagnosedAt.HasValue);
     }
 }

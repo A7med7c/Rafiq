@@ -16,7 +16,7 @@ namespace Rafiq.Application.Features.Auth.Commands.ChangePassword
 
             RuleFor(x => x.ConfirmPassword)
                 .Equal(x => x.NewPassword)
-                .WithMessage("Passwords do not match.");
+                .WithMessage("Validation.PasswordsDoNotMatch");
         }
     }
 }

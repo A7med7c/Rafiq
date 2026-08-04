@@ -8,31 +8,31 @@ internal sealed class UpdateAppointmentCommandValidator : AbstractValidator<Upda
     public UpdateAppointmentCommandValidator()
     {
         RuleFor(x => x.Id)
-            .NotEmpty().WithMessage("Appointment Id is required.");
+            .NotEmpty().WithMessage("Validation.AppointmentIdIsRequired");
 
         RuleFor(x => x.AppointmentDateTime)
-            .NotEmpty().WithMessage("AppointmentDateTime is required.")
-            .Must(x => x > DateTime.UtcNow).WithMessage("AppointmentDateTime cannot be in the past.");
+            .NotEmpty().WithMessage("Validation.AppointmentDateTimeIsRequired")
+            .Must(x => x > DateTime.UtcNow).WithMessage("Validation.AppointmentDateTimeCannotBeInT");
 
         RuleFor(x => x.AppointmentType)
-            .IsInEnum().WithMessage("AppointmentType must be a valid value.");
+            .IsInEnum().WithMessage("Validation.AppointmentTypeMustBeAValidVal");
 
         RuleFor(x => x.CustomType)
-            .NotEmpty().WithMessage("CustomType is required when AppointmentType is Other.")
+            .NotEmpty().WithMessage("Validation.CustomTypeIsRequiredWhenAppoin")
             .When(x => x.AppointmentType == AppointmentType.Other);
 
         RuleFor(x => x.CustomType)
-            .Must(string.IsNullOrWhiteSpace).WithMessage("CustomType must be null when AppointmentType is not Other.")
+            .Must(string.IsNullOrWhiteSpace).WithMessage("Validation.CustomTypeMustBeNullWhenAppoin")
             .When(x => x.AppointmentType != AppointmentType.Other);
 
         RuleFor(x => x.Title)
-            .NotEmpty().WithMessage("Title is required.");
+            .NotEmpty().WithMessage("Validation.TitleIsRequired");
 
         RuleFor(x => x.Provider)
-            .NotEmpty().WithMessage("Provider is required.");
+            .NotEmpty().WithMessage("Validation.ProviderIsRequired");
 
         RuleFor(x => x.ReminderOffsetMinutes)
-            .GreaterThanOrEqualTo(0).WithMessage("ReminderOffsetMinutes cannot be negative.")
+            .GreaterThanOrEqualTo(0).WithMessage("Validation.ReminderOffsetMinutesCannotBeN")
             .When(x => x.ReminderOffsetMinutes.HasValue);
     }
 }

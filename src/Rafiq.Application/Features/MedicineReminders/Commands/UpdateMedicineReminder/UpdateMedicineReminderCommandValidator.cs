@@ -8,24 +8,24 @@ public class UpdateMedicineReminderCommandValidator : AbstractValidator<UpdateMe
     public UpdateMedicineReminderCommandValidator()
     {
         RuleFor(v => v.Id)
-            .NotEmpty().WithMessage("Id is required.");
+            .NotEmpty().WithMessage("Validation.IdIsRequired");
 
         RuleFor(v => v.StartDate)
-            .NotEmpty().WithMessage("StartDate is required.");
+            .NotEmpty().WithMessage("Validation.StartDateIsRequired");
 
         RuleFor(v => v.EndDate)
-            .NotEmpty().WithMessage("EndDate is required.")
+            .NotEmpty().WithMessage("Validation.EndDateIsRequired")
             .GreaterThanOrEqualTo(v => v.StartDate)
-            .WithMessage("EndDate must be greater than or equal to StartDate.");
+            .WithMessage("Validation.EndDateMustBeGreaterThanOrEqua");
 
         RuleFor(v => v.RepeatType)
-            .IsInEnum().WithMessage("RepeatType must be a valid value.");
+            .IsInEnum().WithMessage("Validation.RepeatTypeMustBeAValidValue");
 
         When(v => v.RepeatType == RepeatType.Once, () =>
         {
             RuleFor(v => v.EndDate)
                 .Equal(v => v.StartDate)
-                .WithMessage("For 'Once' reminders, EndDate must be equal to StartDate.");
+                .WithMessage("Validation.ForOnceRemindersEndDateMustBeE");
         });
     }
 }

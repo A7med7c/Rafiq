@@ -15,7 +15,7 @@ internal sealed class UpdateChronicDiseaseDtoValidator
 
         RuleFor(x => x.DiagnosedAt)
             .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
-            .WithMessage("Chronic disease diagnosis date cannot be in the future.")
+            .WithMessage("Validation.ChronicDiseaseDiagnosisDateCan")
             .When(x => x.DiagnosedAt.HasValue);
 
         RuleFor(x => x.Notes)

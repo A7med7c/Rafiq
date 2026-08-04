@@ -17,6 +17,6 @@ internal sealed class RequestHealthProfileAccessCommandValidator
 
         RuleFor(x => x.Role)
             .Must(role => role is AccessRole.Manager or AccessRole.Viewer)
-            .WithMessage("Only Manager or Viewer access can be requested for a Self Profile.");
+            .WithMessage("Validation.OnlyManagerOrViewerAccessCanBe");
     }
 }

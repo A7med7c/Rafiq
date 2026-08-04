@@ -7,6 +7,6 @@ internal sealed class ConfirmMedicationReminderCommandValidator : AbstractValida
     public ConfirmMedicationReminderCommandValidator()
     {
         RuleFor(x => x.ReminderLogId)
-            .NotEmpty().WithMessage("ReminderLogId is required.");
+            .NotEmpty().WithMessage("Validation.ReminderLogIdIsRequired");
     }
 }

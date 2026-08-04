@@ -13,35 +13,35 @@ public class CreateMedicineRemindersCommandValidator : AbstractValidator<CreateM
         _dateTimeProvider = dateTimeProvider;
 
         RuleFor(v => v.UserMedicineId)
-            .NotEmpty().WithMessage("UserMedicineId is required.");
+            .NotEmpty().WithMessage("Validation.UserMedicineIdIsRequired");
 
         RuleFor(v => v.StartDate)
-            .NotEmpty().WithMessage("StartDate is required.")
+            .NotEmpty().WithMessage("Validation.StartDateIsRequired")
             .GreaterThanOrEqualTo(_ => _dateTimeProvider.Today)
-            .WithMessage("StartDate cannot be before today's date.");
+            .WithMessage("Validation.StartDateCannotBeBeforeTodaysD");
 
         RuleFor(v => v.EndDate)
-            .NotEmpty().WithMessage("EndDate is required.")
+            .NotEmpty().WithMessage("Validation.EndDateIsRequired")
             .GreaterThanOrEqualTo(v => v.StartDate)
-            .WithMessage("EndDate must be greater than or equal to StartDate.");
+            .WithMessage("Validation.EndDateMustBeGreaterThanOrEqua");
 
         RuleFor(v => v.RepeatType)
-            .IsInEnum().WithMessage("RepeatType must be a valid value.");
+            .IsInEnum().WithMessage("Validation.RepeatTypeMustBeAValidValue");
 
         RuleFor(v => v.Times)
-            .NotEmpty().WithMessage("At least one reminder time is required.")
-            .Must(BeValidTimes).WithMessage("One or more reminder times have an invalid format.")
-            .Must(NotContainDuplicates).WithMessage("Duplicate reminder times are not allowed within the same request.");
+            .NotEmpty().WithMessage("Validation.AtLeastOneReminderTimeIsRequir")
+            .Must(BeValidTimes).WithMessage("Validation.OneOrMoreReminderTimesHaveAnIn")
+            .Must(NotContainDuplicates).WithMessage("Validation.DuplicateReminderTimesAreNotAl");
 
         When(v => v.RepeatType == RepeatType.Once, () =>
         {
             RuleFor(v => v.EndDate)
                 .Equal(v => v.StartDate)
-                .WithMessage("For 'Once' reminders, EndDate must be equal to StartDate.");
+                .WithMessage("Validation.ForOnceRemindersEndDateMustBeE");
 
             RuleFor(v => v.Times)
                 .Must((command, times) => BeFutureTimesIfToday(command.StartDate, times))
-                .WithMessage("For 'Once' reminders starting today, the time must be in the future.");
+                .WithMessage("Validation.ForOnceRemindersStartingTodayT");
         });
     }
 
