@@ -122,6 +122,34 @@ export class AvatarPositionService {
   }
 
   /**
+   * Positions the bubble against a fixed point relative to the bottom of the viewport.
+   * Dynamically re-evaluates y = window.innerHeight - yFromBottom on resize/recompute.
+   */
+  async positionFixedFromBottom(x?: number, yFromBottom: number = 140, preferredSide: 'top' | 'bottom' | 'left' | 'right' = 'top'): Promise<void> {
+    this.referenceEl = {
+      getBoundingClientRect: () => {
+        const vw = typeof window !== 'undefined' ? window.innerWidth : 390;
+        const vh = typeof window !== 'undefined' ? window.innerHeight : 840;
+        const targetX = x ?? (vw / 2);
+        const y = vh - yFromBottom;
+        return {
+          width: 0,
+          height: 0,
+          x: targetX,
+          y,
+          top: y,
+          left: targetX,
+          right: targetX,
+          bottom: y,
+        } as DOMRect;
+      },
+    };
+    this.preferredSide = preferredSide;
+    this.bindListeners();
+    await this.recompute();
+  }
+
+  /**
    * Recomputes the bubble position against the CURRENTLY cached reference — used on
    * resize/scroll/route-change while a step is active. Never re-resolves the anchor.
    */

@@ -722,8 +722,8 @@ export class MyProfile implements OnInit {
     return 'dot-resolved';
   }
 
-  startWelcomeTour(): void {
+  startPageTour(): void {
     if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
-    this.assistantOrchestrator.startTour('welcome-tour');
+    this.assistantOrchestrator.startTour('my-profile-tour');
   }
 }

@@ -72,6 +72,79 @@
 .mascot-chip--bottom-left  { bottom: calc(var(--mascot-size) / -2); left: calc(var(--mascot-size) / -2); }
 .mascot-chip--bottom-right { bottom: calc(var(--mascot-size) / -2); right: calc(var(--mascot-size) / -2); }
 
+/* ══ Onboarding Variant ══════════════════════════════════════ */
+.tour-bubble--onboarding {
+  background: #ffffff;
+  border: 1.5px solid rgba(73, 215, 255, 0.35);
+  box-shadow:
+    0 8px 30px rgba(73, 215, 255, 0.18),
+    0 4px 18px rgba(8, 38, 74, 0.08);
+  border-radius: 18px;
+  padding: 14px 18px 16px;
+}
+
+.mascot-chip--onboarding {
+  --mascot-size: 88px;
+  top: 50%;
+  left: calc(var(--mascot-size) / -2 - 12px);
+  transform: translateY(-50%);
+}
+
+.tour-bubble__onboarding-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.tour-bubble__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tour-bubble__brand-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #08264a;
+}
+
+.tour-bubble__brand-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4E89B8;
+  background: rgba(73, 215, 255, 0.12);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+.tour-bubble__close-btn {
+  background: none;
+  border: none;
+  color: #b0c4d8;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.18s ease, background 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tour-bubble__close-btn:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.tour-bubble__message--onboarding {
+  font-size: 13.5px;
+  color: #5b738e;
+  line-height: 1.55;
+  margin: 0;
+}
+
 /* ══ Header ══════════════════════════════════════════════════ */
 .tour-bubble__progress {
   display: flex;

@@ -288,6 +288,145 @@
   color: #e03b5a;
 }
 
+/* ===== Mascot tip bubble ===== */
+.mascot-tip {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  margin: 16px 0 8px;
+  position: relative;
+}
+
+.mascot-tip-avatar {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 10px rgba(21, 146, 211, 0.2));
+  transform: translateY(4px);
+  position: relative;
+  z-index: 2;
+}
+
+.mascot-tip-bubble {
+  flex: 1;
+  background: #fff;
+  border: 1.5px solid rgba(73, 215, 255, 0.3);
+  border-radius: 14px 14px 14px 4px;
+  padding: 10px 14px 12px;
+  box-shadow: 0 4px 18px rgba(8, 38, 74, 0.07);
+  position: relative;
+}
+
+.mascot-tip-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.mascot-tip-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #08264a;
+}
+
+.mascot-tip-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #4E89B8;
+  background: rgba(73, 215, 255, 0.12);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.mascot-tip-close {
+  margin-inline-start: auto;
+  color: #b0c4d8;
+  display: flex;
+  align-items: center;
+  cursor: default;
+}
+
+.mascot-tip-text {
+  margin: 0;
+  font-size: 12.5px;
+  color: #5b738e;
+  line-height: 1.55;
+  direction: rtl;
+  text-align: right;
+}
+
+/* ===== In-Form Mascot Tip (Image 2 style) ===== */
+.in-form-mascot-tip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 16px;
+  position: relative;
+}
+
+.mascot-avatar-wrapper {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mascot-speech-bubble {
+  flex: 1;
+  background: #f0fafe;
+  border: 1.5px solid #d4eefc;
+  border-radius: 16px;
+  padding: 14px 18px;
+  position: relative;
+  box-shadow: 0 4px 14px rgba(73, 215, 255, 0.08);
+}
+
+.mascot-speech-bubble::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -7px;
+  transform: translateY(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: #f0fafe;
+  border-left: 1.5px solid #d4eefc;
+  border-bottom: 1.5px solid #d4eefc;
+}
+
+.mascot-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #7b9bb6;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.18s ease;
+}
+
+.mascot-close-btn:hover {
+  color: #08264a;
+}
+
+.mascot-speech-text {
+  margin: 0;
+  font-size: 13.5px;
+  color: #1e3a5f;
+  line-height: 1.6;
+  text-align: center;
+  direction: rtl;
+  padding-right: 16px;
+}
+
 .divider {
   height: 1px;
   background: rgba(78, 137, 184, 0.15);

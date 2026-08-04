@@ -1291,8 +1291,8 @@ export class MedicalRecords implements OnInit {
 
   readonly RING_CIRCUMFERENCE = 2 * Math.PI * 14;
 
-  startWelcomeTour(): void {
+  startPageTour(): void {
     if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
-    this.assistantOrchestrator.startTour('welcome-tour');
+    this.assistantOrchestrator.startTour('medical-records-tour');
   }
 }

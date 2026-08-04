@@ -64,6 +64,14 @@ export interface TourStepScenario {
   fixedPosition?: { x: number; y: number };
 
   /**
+   * Like fixedPosition but with y measured from the BOTTOM of the viewport.
+   * The position service computes y = window.innerHeight - fixedPositionFromBottom.yFromBottom
+   * at render time, so the bubble always sits a constant distance above the bottom edge
+   * regardless of screen height — ideal for placing the bubble just above action buttons.
+   */
+  fixedPositionFromBottom?: { x?: number; yFromBottom: number };
+
+  /**
    * Highlighting configuration using Driver.js spotlight.
    * If boolean true, highlights anchor element.
    * Can also pass custom Driver.js options.

@@ -1119,8 +1119,8 @@ return p.isSelf ? (this.t().family as any)[key] ?? this.t().family.member : 'Act
   return (this.t().common as any)[key] ?? gender;
 }
 
-  startWelcomeTour(): void {
+  startPageTour(): void {
     if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
-    this.assistantOrchestrator.startTour('welcome-tour');
+    this.assistantOrchestrator.startTour('family-profiles-tour');
   }
 }

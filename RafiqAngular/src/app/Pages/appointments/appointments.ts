@@ -855,8 +855,8 @@ nextPage() {
   return index === this.paginated().length - 1;
 }
 
-  startWelcomeTour(): void {
+  startPageTour(): void {
     if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
-    this.assistantOrchestrator.startTour('welcome-tour');
+    this.assistantOrchestrator.startTour('appointments-tour');
   }
 }

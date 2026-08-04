@@ -42,7 +42,7 @@ export class CommandService {
   processUserText(text: string, context?: ToolContext): Observable<CommandResult> {
     console.log('[Assistant] heard:', text);
 
-    const command = this.parseCommand(text);
+    const command = this.parseCommand(text, context);
 
     if (!command) {
       console.log('No command matched.');
@@ -60,10 +60,20 @@ export class CommandService {
     return this.execute(command, context);
   }
 
+  private tourIdForRoute(route?: string): string {
+    const r = route ?? (typeof window !== 'undefined' ? window.location.pathname : '');
+    if (r.includes('/medical-records'))  return 'medical-records-tour';
+    if (r.includes('/appointments'))     return 'appointments-tour';
+    if (r.includes('/medications'))      return 'medications-tour';
+    if (r.includes('/family-profiles'))  return 'family-profiles-tour';
+    if (r.includes('/my-profile'))       return 'my-profile-tour';
+    return 'dashboard-tour';
+  }
+
   /**
    * Parses text input into an AssistantCommand object.
    */
-  parseCommand(text: string): AssistantCommand | null {
+  parseCommand(text: string, context?: ToolContext): AssistantCommand | null {
     if (!text || typeof text !== 'string') {
       return null;
     }
@@ -116,14 +126,14 @@ export class CommandService {
       }
     }
 
-    // Tour initiation matching rules
+    // Tour initiation matching rules — pick the tour for the current page
     const tourKeywords = ['tour', 'walkthrough', 'جولة', 'الرباط'];
     if (tourKeywords.some(kw => normalized.includes(kw))) {
       return {
         id: `cmd-${Date.now()}`,
         type: 'startTour',
         toolName: 'tour',
-        payload: { tourId: 'dashboard-tour' },
+        payload: { tourId: this.tourIdForRoute(context?.currentRoute) },
         timestamp: Date.now(),
       };
     }
