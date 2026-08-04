@@ -411,7 +411,7 @@ export const DASHBOARD_TOUR: TourScenario = {
   steps: [
     {
       id: 'dash-welcome',
-      anchor: 'dashboard-nav',
+      anchor: 'sidebar-panel',
       route: '/dashboard',
       speech: 'أَهْلًا بِكَ يا {{userName}}. هَذِهِ القائِمَة الجانِبِيَّة لِلتَّنَقُّل بَيْن أَقْسام المِنَصَّة.',
       speechLanguage: 'ar-EG',
@@ -448,6 +448,30 @@ export const DASHBOARD_TOUR: TourScenario = {
       speech: 'وهُنا نَظْرَة سَرِيعَة عَلَى الحالَة الصِّحِّيَّة لِأَفْراد عائِلَتِكَ.',
       speechLanguage: 'ar-EG',
       avatarState: 'celebrate',
+      highlight: true,
+    },
+    {
+      id: 'dash-recent-records',
+      anchor: 'recent-records-card',
+      speech: 'هُنا آخِر السِّجِلَّات الطِّبِّيَّة المُضافَة، يُمْكِنُكَ الاطِّلَاع عَلَيْها أَو رَفْع سِجِلَّات جَدِيدَة.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'thinking',
+      highlight: true,
+    },
+    {
+      id: 'dash-medications',
+      anchor: 'medications-reminders-card',
+      speech: 'وهُنا أَدوِيَتُكَ وتَذْكِيراتُها حَتَّى لا تَفُوتَكَ جُرْعَة.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'pointLeft',
+      highlight: true,
+    },
+    {
+      id: 'dash-schedule',
+      anchor: 'today-schedule-card',
+      speech: 'وهُنا جَدْوَلُ يَوْمِكَ: المَواعِيد والتَّذْكِيرات مُرَتَّبَة بِالتَّسَلْسُل الزَّمَنِي.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'wave',
       highlight: true,
     },
     {

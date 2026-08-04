@@ -5,7 +5,7 @@
   }
 
   <!-- ═══════════ SIDEBAR ═══════════ -->
-  <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
+  <aside assistantAnchor="sidebar-panel" class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <!-- Logo -->
     <div class="sb-top">
       <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
@@ -601,7 +601,7 @@
         </div>
 
         <!-- Today's Schedule -->
-        <div class="card">
+        <div assistantAnchor="today-schedule-card" class="card">
           <div class="bot-card-hdr">
             <span class="bot-card-title">{{ t().dashboard.todaySchedule }}</span>
             <a routerLink="/appointments" class="link-sm">{{ t().dashboard.viewCalendar }}</a>

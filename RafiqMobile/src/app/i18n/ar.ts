@@ -1193,6 +1193,7 @@ export const ar: Translations = {
       heightError: 'اكتب طول صح (50–300 سم)',
       weightError: 'اكتب وزن صح (1–500 كجم)',
       bloodTypeError: 'فصيلة الدم مطلوبة',
+      mascotTip: 'ادخل معلوماتك الأساسية عشان أقدر أديلك رعاية مخصصة! 💙',
       continueBtn: 'كمل',
     },
     step2: {
@@ -1210,6 +1211,7 @@ export const ar: Translations = {
       addAllergyBtn: 'أضف حساسية تانية',
       backBtn: 'رجوع',
       skipBtn: 'تخطى',
+      mascotTip: 'لما أعرف حساسيتك، أقدر أحميك من الأدوية الضارة! 🛡️',
       continueBtn: 'كمل',
     },
     step3: {
@@ -1228,6 +1230,7 @@ export const ar: Translations = {
       addConditionBtn: 'أضف مرض تاني',
       backBtn: 'رجوع',
       skipBtn: 'تخطى',
+      mascotTip: 'متابعة أمراضك المزمنة تساعدني أذكرك بدواك في وقته! ⏰',
       continueBtn: 'كمل',
     },
     step4: {
@@ -1253,6 +1256,7 @@ export const ar: Translations = {
       aiDesc: 'ارفع تقاريرك الطبية وخلي الذكاء الاصطناعي يستخرج المعلومات المهمة تلقائياً.',
       aiBtn: 'استخدم الذكاء الاصطناعي لتكميل المعلومات',
       saving: 'جاري الحفظ...',
+      mascotTip: 'كل حاجة تمام! راجع معلوماتك وأكمل ملفك. 🎉',
       completeProfile: 'اكمل ملفي',
     },
     emergency: {
@@ -1271,6 +1275,7 @@ export const ar: Translations = {
       adding: 'جاري الإضافة...',
       addContact: 'أضف جهة طوارئ',
       addedContacts: 'جهات الطوارئ اللي اتضافت',
+      mascotTip: 'أضف جهة طوارئ واحدة على الأقل عشان أنبههم لو احتجت مساعدة! 🆘',
       continueBtn: 'كمل',
     },
     aiUpload: {
