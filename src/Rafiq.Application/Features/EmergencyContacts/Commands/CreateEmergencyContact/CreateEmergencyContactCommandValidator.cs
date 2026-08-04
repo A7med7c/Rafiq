@@ -7,15 +7,15 @@ internal sealed class CreateEmergencyContactCommandValidator : AbstractValidator
     public CreateEmergencyContactCommandValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Name is required.")
-            .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.");
+            .NotEmpty().WithMessage("Validation.NameIsRequired")
+            .MaximumLength(100).WithMessage("Validation.NameCannotExceed100Characters");
 
         RuleFor(x => x.PhoneNumber)
-            .NotEmpty().WithMessage("Phone number is required.")
-            .Matches(@"^01[0125][0-9]{8}$").WithMessage("Phone number must be a valid Egyptian mobile number (e.g. 01012345678).");
+            .NotEmpty().WithMessage("Validation.PhoneNumberIsRequired")
+            .Matches(@"^01[0125][0-9]{8}$").WithMessage("Validation.PhoneNumberMustBeAValidEgyptia");
 
         RuleFor(x => x.Relation)
-            .NotEmpty().WithMessage("Relation is required.")
-            .MaximumLength(100).WithMessage("Relation cannot exceed 100 characters.");
+            .NotEmpty().WithMessage("Validation.RelationIsRequired")
+            .MaximumLength(100).WithMessage("Validation.RelationCannotExceed100Charact");
     }
 }

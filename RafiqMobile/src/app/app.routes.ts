@@ -5,6 +5,7 @@ import { ForgotPassword } from './Pages/Auth/forgot-password/forgot-password';
 import { VerifyAccount } from './Pages/Auth/verify-account/verify-account';
 import { Dashboard } from './Pages/dashboard/dashboard';
 import { MedicalRecords } from './Pages/medical-records/medical-records';
+import { RecordDetail } from './Pages/record-detail/record-detail';
 import { Appointments } from './Pages/appointments/appointments';
 import { AppointmentsHistory } from './Pages/appointments-history/appointments-history';
 import { AiAssistant } from './Pages/ai-assistant/ai-assistant';
@@ -35,6 +36,7 @@ export const routes: Routes = [
   },
   { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
   { path: 'medical-records', component: MedicalRecords, canActivate: [authGuard] },
+  { path: 'medical-records/:id', component: RecordDetail, canActivate: [authGuard] },
   { path: 'appointments', component: Appointments, canActivate: [authGuard] },
   { path: 'appointments-history', component: AppointmentsHistory, canActivate: [authGuard] },
   { path: 'medications', component: Medications, canActivate: [authGuard] },
@@ -45,6 +47,7 @@ export const routes: Routes = [
   { path: 'forgot-password', component: ForgotPassword, canActivate: [guestGuard] },
   { path: 'verify-account', component: VerifyAccount, canActivate: [guestGuard] },
   { path: 'family-profiles', component: FamilyProfiles, canActivate: [authGuard] },
+  { path: 'family-profiles/add', component: FamilyProfiles, canActivate: [authGuard] },
   { path: 'family-profiles/:id', component: FamilyMemberDetail, canActivate: [authGuard] },
   { path: 'family-profiles/:id/health-information', component: FamilyHealthInformation, canActivate: [authGuard] },
   { path: 'family-profiles/:id/emergency-contacts', component: FamilyEmergencyContacts, canActivate: [authGuard] },

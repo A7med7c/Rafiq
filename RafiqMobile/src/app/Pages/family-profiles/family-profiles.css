@@ -195,11 +195,26 @@
 .fp-radio-lbl { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); cursor: pointer; }
 
 .fp-img-picker { display: flex; align-items: center; gap: 12px; }
-.fp-img-preview { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: var(--bg); flex-shrink: 0; }
+.fp-img-preview { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: transparent; flex-shrink: 0; }
 .fp-img-preview img { width: 100%; height: 100%; object-fit: cover; }
-.fp-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-4); font-size: 20px; }
+.fp-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94A3B8; font-size: 32px; }
 .fp-img-actions { display: flex; flex-direction: column; gap: 4px; }
 .fp-remove-btn { border: none; background: transparent; color: var(--red); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0; text-align: start; }
+
+.fp-btn-outline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  color: #1E293B;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.fp-btn-outline:hover { background-color: #E2E8F0; }
+
 
 .fp-optional-toggle {
   display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; border: 1px solid var(--border);

@@ -10,7 +10,7 @@ internal sealed class RenameConversationCommandValidator : AbstractValidator<Ren
             .NotEmpty();
 
         RuleFor(x => x.Title)
-            .NotEmpty().WithMessage("Title cannot be empty.")
-            .MaximumLength(255).WithMessage("Title cannot exceed 255 characters.");
+            .NotEmpty().WithMessage("Validation.TitleCannotBeEmpty")
+            .MaximumLength(255).WithMessage("Validation.TitleCannotExceed255Characters");
     }
 }

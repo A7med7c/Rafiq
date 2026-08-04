@@ -13,25 +13,25 @@ internal sealed class RegisterCommandValidator : AbstractValidator<RegisterComma
         {
             RuleFor(x => x.ProfileImage!.ContentType)
                 .Must(contentType => AllowedContentTypes.Contains(contentType.ToLowerInvariant()))
-                .WithMessage("Profile image must be a JPEG, PNG, WEBP, or GIF file.");
+                .WithMessage("Validation.ProfileImageMustBeAJPEGPNGWEBP");
 
             RuleFor(x => x.ProfileImage!.Length)
                 .LessThanOrEqualTo(MaxProfileImageSizeBytes)
-                .WithMessage("Profile image must not exceed 5 MB.");
+                .WithMessage("Validation.ProfileImageMustNotExceed5MB");
         });
 
         RuleFor(x => x.FirstName).NotEmpty().MaximumLength(100);
         RuleFor(x => x.LastName).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
-        RuleFor(x => x.PhoneNumber).NotEmpty().Matches(@"^01[0125][0-9]{8}$").WithMessage("Phone number must be a valid Egyptian mobile number.");
+        RuleFor(x => x.PhoneNumber).NotEmpty().Matches(@"^01[0125][0-9]{8}$").WithMessage("Validation.PhoneNumberMustBeAValidEgyptia2");
 
         RuleFor(x => x.Password)
             .NotEmpty()
             .MinimumLength(8)
-            .Matches("[A-Z]").WithMessage("Password must contain at least one uppercase letter.")
-            .Matches("[a-z]").WithMessage("Password must contain at least one lowercase letter.")
-            .Matches(@"\d").WithMessage("Password must contain at least one digit.")
-            .Matches(@"[^\da-zA-Z]").WithMessage("Password must contain at least one special character.");
-        RuleFor(x => x.ConfirmPassword).Equal(x => x.Password).WithMessage("Confirm password must match password.");
+            .Matches("[A-Z]").WithMessage("Validation.PasswordMustContainAtLeastOneU")
+            .Matches("[a-z]").WithMessage("Validation.PasswordMustContainAtLeastOneL")
+            .Matches(@"\d").WithMessage("Validation.PasswordMustContainAtLeastOneD")
+            .Matches(@"[^\da-zA-Z]").WithMessage("Validation.PasswordMustContainAtLeastOneS");
+        RuleFor(x => x.ConfirmPassword).Equal(x => x.Password).WithMessage("Validation.ConfirmPasswordMustMatchPasswo");
     }
 }

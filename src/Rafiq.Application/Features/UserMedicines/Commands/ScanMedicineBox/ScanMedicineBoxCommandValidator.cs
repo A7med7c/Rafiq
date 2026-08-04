@@ -14,7 +14,7 @@ internal sealed class ScanMedicineBoxCommandValidator
     {
         RuleFor(x => x.Image)
             .NotNull()
-            .WithMessage("An image file is required.");
+            .WithMessage("Validation.AnImageFileIsRequired");
 
         RuleFor(x => x.Image.Length)
             .LessThanOrEqualTo(MaxFileSizeBytes)

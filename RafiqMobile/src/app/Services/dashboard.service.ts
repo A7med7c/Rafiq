@@ -10,6 +10,7 @@ import {
   MedicalRecord,
   UserMedicine,
   ReminderDisplayItem,
+  GeneralMedicalDocument
 } from '../Modles/dashboard.models';
 import { HealthProfileService } from './health-profile.service';
 import { ProfileSelectionService } from './profile-selection.service';
@@ -59,15 +60,28 @@ export class DashboardService {
 
   // ─── Medical Records ──────────────────────────────────────────────────────
   getMedicalRecords(): Observable<MedicalRecord[]> {
-    const labs$ = this.http.get<ApiResponse<LabReport[]>>(`${this.base}/documents/labs`).pipe(
-      map(r => r.data ?? []), catchError(() => of([] as LabReport[]))
-    );
-    const imaging$ = this.http.get<ApiResponse<ImagingReport[]>>(`${this.base}/documents/imaging`).pipe(
-      map(r => r.data ?? []), catchError(() => of([] as ImagingReport[]))
-    );
+    return this.getCurrentProfileId().pipe(
+      switchMap(profileId => {
+        const pid = `?profileId=${profileId}`;
+        const labs$ = this.http.get<ApiResponse<LabReport[]>>(`${this.base}/documents/labs${pid}`).pipe(
+          map(r => r.data ?? []), catchError(() => of([] as LabReport[]))
+        );
+        const imaging$ = this.http.get<ApiResponse<ImagingReport[]>>(`${this.base}/documents/imaging${pid}`).pipe(
+          map(r => r.data ?? []), catchError(() => of([] as ImagingReport[]))
+        );
+        const prescriptions$ = this.http.get<ApiResponse<Prescription[]>>(`${this.base}/prescriptions${pid}`).pipe(
+          map(r => r.data ?? []), catchError(() => of([] as Prescription[]))
+        );
+        const medicines$ = this.http.get<ApiResponse<UserMedicine[]>>(`${this.base}/user-medicines${pid}`).pipe(
+          map(r => r.data ?? []), catchError(() => of([] as UserMedicine[]))
+        );
+        const generalDocuments$ = this.http.get<ApiResponse<GeneralMedicalDocument[]>>(`${this.base}/documents/general${pid}`).pipe(
+          map(r => r.data ?? []), catchError(() => of([] as GeneralMedicalDocument[]))
+        );
 
-    return forkJoin([labs$, imaging$]).pipe(
-      map(([labs, imaging]) => {
+        return forkJoin([labs$, imaging$, prescriptions$, medicines$, generalDocuments$]);
+      }),
+      map(([labs, imaging, prescriptions, medicines, generalDocuments]) => {
         const labRecs: MedicalRecord[] = labs.map(l => ({
           id: l.id, type: 'lab' as const,
           title: l.labName || 'Lab Report',
@@ -84,8 +98,32 @@ export class DashboardService {
           source: im.imagingType,
           status: 'Processed', statusColor: 'success' as const,
         }));
+        const presRecs: MedicalRecord[] = prescriptions.map(p => ({
+          id: p.id, type: 'prescription' as const,
+          title: p.doctorName ? `Prescription — Dr. ${p.doctorName}` : 'Prescription',
+          subtitle: p.patientName,
+          date: p.prescriptionDate || new Date(p.createdAt).toLocaleDateString(),
+          source: p.doctorName,
+          status: 'Processed', statusColor: 'success' as const,
+        }));
+        const medRecs: MedicalRecord[] = medicines.map(m => ({
+          id: m.id, type: 'medicine' as const,
+          title: m.medicineName || 'Medicine Box',
+          subtitle: m.dosage ? `${m.dosage} - ${m.frequency || ''}` : undefined,
+          date: new Date(m.createdAt).toLocaleDateString(),
+          source: m.source,
+          status: 'Processed', statusColor: 'success' as const,
+        }));
+        const genRecs: MedicalRecord[] = generalDocuments.map(g => ({
+          id: g.id, type: 'general' as const,
+          title: g.title || 'Other Medical Document',
+          subtitle: g.doctorName ? `Dr. ${g.doctorName}` : undefined,
+          date: g.documentDate || (g.createdAt ? new Date(g.createdAt).toLocaleDateString() : ''),
+          source: g.hospitalOrClinic || g.doctorName || undefined,
+          status: 'Processed', statusColor: 'success' as const,
+        }));
 
-        return [...labRecs, ...imgRecs]
+        return [...labRecs, ...imgRecs, ...presRecs, ...medRecs, ...genRecs]
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
           .slice(0, 5);
       })

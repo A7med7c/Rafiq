@@ -11,6 +11,6 @@ public sealed class UpdateMyAccountCommandValidator : AbstractValidator<UpdateMy
         RuleFor(x => x.PhoneNumber)
             .NotEmpty()
             .Matches(@"^01[0125][0-9]{8}$")
-            .WithMessage("Phone number must be a valid Egyptian mobile number (e.g. 01012345678).");
+            .WithMessage("Validation.PhoneNumberMustBeAValidEgyptia");
     }
 }

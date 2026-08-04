@@ -245,9 +245,13 @@ export class FamilyProfiles implements OnInit {
   }
 
   // ─── Lifecycle ──────────────────────────────────────────────
+  
   ngOnInit(): void {
     this.profileCache.ensure();
     this.loadProfiles();
+    this.checkAddRoute();
+    this.router.events.subscribe(() => this.checkAddRoute());
+
     this.loadReceivedInvitations();
 
     this.route.queryParamMap.subscribe(params => {
@@ -310,6 +314,19 @@ export class FamilyProfiles implements OnInit {
   }
 
   // ─── Add modal ──────────────────────────────────────────────
+  
+  checkAddRoute() {
+    if (this.router.url.endsWith('/family-profiles/add')) {
+      if (!this.showAddModal()) {
+        this.openAddModal();
+      }
+    } else {
+      if (this.showAddModal()) {
+        this.showAddModal.set(false);
+      }
+    }
+  }
+
   openAddModal(): void {
     this.createForm = {
       firstName: '', lastName: '', dateOfBirth: '', gender: '', bloodType: '',
@@ -325,7 +342,7 @@ export class FamilyProfiles implements OnInit {
     this.showAddModal.set(true);
   }
 
-  closeAddModal(): void { this.showAddModal.set(false); }
+  closeAddModal(): void { this.router.navigate(['/family-profiles']); }
   goToCreate(): void { this.addStep.set('create'); this.errorMessage = ''; }
   goToInvite(): void { this.addStep.set('invite'); this.errorMessage = ''; }
   backToChoose(): void { this.addStep.set('choose'); this.errorMessage = ''; }
@@ -816,6 +833,10 @@ export class FamilyProfiles implements OnInit {
   }
 
   getAvatarColor(i: number): string { return this.avatarColors[i % this.avatarColors.length]; }
+
+  getRelationTranslation(r: string): string {
+    return (this.t().family as any)[r.toLowerCase()] ?? r;
+  }
 
   getRelLabel(p: AccessibleProfileDto): string {
     if (p.isSelf) {

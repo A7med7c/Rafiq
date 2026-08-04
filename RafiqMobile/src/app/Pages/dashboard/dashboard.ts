@@ -718,12 +718,17 @@ export class Dashboard implements OnInit, OnDestroy {
   getRecordBadgeType(type: string): string {
     if (type === 'imaging') return 'IMG';
     if (type === 'lab') return 'LAB';
-    return 'PDF';
+    if (type === 'prescription') return 'RX';
+    if (type === 'medicine') return 'MED';
+    return 'DOC';
   }
 
   getRecordBadgeColor(type: string): string {
     if (type === 'imaging') return 'blue';
     if (type === 'lab') return 'teal';
+    if (type === 'prescription') return 'purple';
+    if (type === 'medicine') return 'orange';
+    if (type === 'general') return 'cyan';
     return 'red';
   }
 }

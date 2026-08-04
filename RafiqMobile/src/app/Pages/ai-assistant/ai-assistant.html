@@ -227,64 +227,37 @@
       <!-- RIGHT: active chat -->
       <section class="chat-main-panel">
 
+        <div class="chat-main-hdr chat-main-hdr--centered">
+          <button type="button" class="chat-icon-btn chat-back-btn" [attr.aria-label]="'Back'" (click)="rightPanelCollapsed.set(false)" [class.hidden]="!rightPanelCollapsed()">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <div class="chat-main-hdr-center">
+            <h1 class="chat-main-title">Rafiq <span class="text-blue">AI</span></h1>
+            <p class="chat-main-subtitle">Your AI Healthcare Companion</p>
+          </div>
+          <button type="button" class="chat-icon-btn chat-history-btn" [attr.aria-label]="'History'" (click)="rightPanelCollapsed.set(!rightPanelCollapsed())">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </button>
+        </div>
+
         @if (!selectedConversationId()) {
         <div class="chat-empty-state">
-          <div class="chat-empty-avatar">
-            <img src="/images/RafiqLogo.png" alt="Rafiq" class="chat-empty-logo">
-          </div>
-          <h2>{{ t().aiAssistant.askRafiqAI }}</h2>
-          <p>{{ t().aiAssistant.aiEmptyText }}</p>
-        </div>
-        } @else {
-
-        <div class="chat-main-hdr">
-          <div class="chat-main-hdr-left">
-            <span class="chat-avatar-sm">
-              <img src="/images/RafiqLogo.png" alt="Rafiq" class="chat-ai-logo">
-            </span>
-            <div class="chat-main-hdr-title">
-              @if (!renaming()) {
-              <div class="chat-title-row">
-                <h2>{{ selectedConversation()?.title }}</h2>
-                <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.rename" (click)="startRename()">
-                  <i class="fa-solid fa-pen"></i>
-                </button>
-              </div>
-              } @else {
-              <div class="chat-rename-row">
-                <input
-                  type="text"
-                  class="chat-rename-input"
-                  [value]="renameDraft()"
-                  (input)="renameDraft.set($any($event.target).value)"
-                  (keydown.enter)="confirmRename()"
-                  (keydown.escape)="cancelRename()"
-                  maxlength="255"
-                  autofocus
-                >
-                <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.saveRename" (click)="confirmRename()">
-                  <i class="fa-solid fa-check"></i>
-                </button>
-                <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.cancelRename" (click)="cancelRename()">
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-              </div>
-              }
-              <span class="chat-main-hdr-sub">{{ t().aiAssistant.lastUpdated }} {{ formatHeaderLastUpdated() }}</span>
+          <div class="chat-welcome-card">
+            <div class="chat-welcome-robot-wrapper">
+              <img src="/images/rafiq-robot.png" alt="Rafiq AI" class="chat-welcome-robot">
+            </div>
+            <div class="chat-welcome-content">
+              <h2>Hello {{ displayName }} 👋</h2>
+              <p>I’m Rafiq AI, here to help you understand your health better.</p>
+            </div>
+            <div class="chat-welcome-shield">
+              <i class="fa-solid fa-shield-halved chat-shield-icon"></i>
+              <i class="fa-solid fa-sparkles chat-shield-sparkle-1"></i>
+              <i class="fa-solid fa-sparkles chat-shield-sparkle-2"></i>
             </div>
           </div>
-          <div class="chat-main-hdr-actions">
-            <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.archiveConversation" (click)="archiveConversation()">
-              <i class="fa-regular fa-trash-can"></i>
-            </button>
-            <button type="button" class="chat-icon-btn" [attr.aria-label]="t().aiAssistant.share">
-              <i class="fa-solid fa-share-nodes"></i>
-            </button>
-            <button type="button" class="chat-icon-btn chat-icon-btn--minimize" title="Minimize" (click)="minimizeChat()">
-              <i class="fa-solid fa-compress"></i>
-            </button>
-          </div>
         </div>
+        } @else {
 
         <div class="chat-messages">
           @if (messagesLoading()) {
@@ -398,39 +371,63 @@
           </div>
         </div>
         } @else {
-        <div class="chat-composer">
+        <div class="chat-bottom-section">
+          <div class="chat-pills">
+            <button type="button" class="chat-pill-btn">
+              <img src="/assets/icons/pill-icon.svg" alt="Pill" class="chat-pill-img" onerror="this.src=''; this.className='fa-solid fa-pills chat-pill-icon chat-pill-icon--yellow'">
+              <span>My Medications</span>
+            </button>
+            <button type="button" class="chat-pill-btn">
+              <i class="fa-regular fa-calendar-check chat-pill-icon chat-pill-icon--blue"></i>
+              <span>Upcoming Appointments</span>
+            </button>
+            <button type="button" class="chat-pill-btn">
+              <i class="fa-regular fa-file-lines chat-pill-icon chat-pill-icon--blue"></i>
+              <span>My Records</span>
+            </button>
+          </div>
 
-          <button
-            type="button"
-            class="chat-icon-btn chat-attach-btn"
-            [attr.aria-label]="t().aiAssistant.attachImage"
-            [disabled]="sending()"
-            (click)="triggerFileSelect()"
-          >
-            <i class="fa-solid fa-paperclip"></i>
-          </button>
-          <textarea
-            #messageInput
-            class="chat-composer-input"
-            rows="1"
-            [attr.placeholder]="t().aiAssistant.typePlaceholder"
-            [value]="messageText()"
-            (input)="onMessageInput($any($event.target).value)"
-            (keydown)="onComposerKeydown($event)"
-          ></textarea>
-          <button
-            type="button"
-            class="chat-send-btn"
-            [disabled]="(!messageText().trim() && !attachedImageBase64()) || sending()"
-            (click)="sendMessage()"
-          >
-            <i class="fa-solid fa-paper-plane"></i>
-          </button>
+          <div class="chat-composer-wrapper" style="display: flex; gap: 12px; align-items: flex-end;">
+            <div class="chat-composer" style="flex: 1;">
+              <button
+                type="button"
+                class="chat-icon-btn chat-attach-btn"
+                [attr.aria-label]="t().aiAssistant.attachImage"
+                [disabled]="sending()"
+                (click)="triggerFileSelect()"
+              >
+                <i class="fa-solid fa-paperclip"></i>
+              </button>
+              <textarea
+                #messageInput
+                class="chat-composer-input"
+                rows="1"
+                placeholder="Ask anything about your health..."
+                [value]="messageText()"
+                (input)="onMessageInput($any($event.target).value)"
+                (keydown)="onComposerKeydown($event)"
+              ></textarea>
+              
+              <button
+                type="button"
+                class="chat-send-btn"
+                [disabled]="(!messageText().trim() && !attachedImageBase64()) || sending()"
+                (click)="sendMessage()"
+              >
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <p class="chat-composer-hint" style="margin: 0; padding: 0;">
+              <i class="fa-regular fa-image"></i>
+              {{ t().aiAssistant.composerHint }}
+            </p>
+            <button type="button" class="chat-icon-btn chat-mic-btn-bottom" style="border: none; background: transparent; color: var(--blue); font-size: 20px;">
+              <i class="fa-solid fa-microphone"></i>
+            </button>
+          </div>
         </div>
-        <p class="chat-composer-hint">
-          <i class="fa-regular fa-image"></i>
-          {{ t().aiAssistant.composerHint }}
-        </p>
         }
       </section>
       }

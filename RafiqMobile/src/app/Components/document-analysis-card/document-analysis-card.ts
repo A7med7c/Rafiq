@@ -140,7 +140,7 @@ export class DocumentAnalysisCardComponent {
   }
 
   typeIcon(type: string): string {
-    return ({ lab: 'fa-flask', imaging: 'fa-x-ray', prescription: 'fa-prescription-bottle-medical', general: 'fa-file-medical' })[type] ?? 'fa-file-medical';
+    return ({ lab: 'fa-flask', imaging: 'fa-x-ray', prescription: 'fa-prescription-bottle-medical', general: 'fa-file-medical', medicine: 'fa-pills' })[type] ?? 'fa-file-medical';
   }
 
   statusLabel(doc: TrackedDocument): string {

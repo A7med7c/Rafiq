@@ -129,7 +129,7 @@ export class RegisterFormComponent {
         }, 1200);
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error, this.t());
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       }

@@ -86,7 +86,7 @@ export class LoginFormComponent implements OnInit {
         this.navigateAfterLogin();
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error, this.t());
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       },
@@ -112,7 +112,7 @@ export class LoginFormComponent implements OnInit {
         this.navigateAfterLogin();
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error, this.t());
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       },

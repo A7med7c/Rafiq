@@ -1,0 +1,216 @@
+<app-mobile-header
+  [title]="record()?.name || t().records.recordName"
+  [showBack]="true"
+  (backClicked)="goBack()"
+  [showNotifications]="true"
+  (notificationsClicked)="notifSvc.toggleNotificationCenter()">
+</app-mobile-header>
+
+<div class="m-page">
+  <div class="m-body rd-enter">
+
+    @if (loading()) {
+    <div class="m-card rd-card" style="margin:16px">
+      <div class="skl-sq" style="width:100%;height:160px;border-radius:12px;margin:0 0 12px"></div>
+      <div class="skl-line skl-70" style="margin:0 0 8px"></div>
+      <div class="skl-line skl-45"></div>
+    </div>
+    } @else if (notFound() || !record()) {
+    <div class="m-card rd-notfound" style="margin:16px">
+      <div class="rd-notfound__ico"><i class="fa-solid fa-file-circle-xmark"></i></div>
+      <p class="rd-notfound__title">{{ t().records.noRecordsFound }}</p>
+      <button type="button" class="fph-btn-primary" (click)="goBack()">{{ t().records.closeBtn }}</button>
+    </div>
+    } @else {
+    @let rec = record()!;
+
+    <!-- ══════════ Header card ══════════ -->
+    <div class="m-card rd-card">
+      <div class="rd-hdr">
+        <div class="modal-ico" [class]="getRecordIconClass(rec.type)">
+          <i [class]="'fa-solid ' + getRecordIcon(rec.type)"></i>
+        </div>
+        <div class="rd-hdr-text">
+          <h1 class="rd-title">{{ rec.name }}</h1>
+          <p class="rd-sub">{{ rec.typeLabel }} · {{ rec.date }}</p>
+        </div>
+      </div>
+
+      <!-- ══════════ Preview ══════════ -->
+      @if (getRecordImageUrl(rec); as imageUrl) {
+      <button type="button" class="view-document-card view-document-card--with-image" (click)="openLightbox(imageUrl)">
+        @if (!imageFailed()) {
+        <img [src]="imageUrl" alt="Original uploaded record" class="view-document-thumb"
+          (error)="imageFailed.set(true)">
+        } @else {
+        <div class="view-document-icon"><i class="fa-regular fa-file-image"></i></div>
+        }
+        <div class="view-document-content">
+          <h4>{{ t().records.viewOriginalDoc }}</h4>
+          <p>{{ t().records.clickToPreview }}</p>
+        </div>
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      </button>
+      } @else {
+      <div class="modal-image-placeholder">
+        <i class="fa-regular fa-image"></i><span>{{ t().records.noImageAttached }}</span>
+      </div>
+      }
+
+      <!-- ══════════ Extracted information ══════════ -->
+      @if (rec.type === 'lab') {
+      <div class="detail-info-grid">
+        <div><span>{{ t().records.labName }}</span><strong>{{ rec.rawRecord.labName || '-' }}</strong></div>
+        <div><span>{{ t().records.doctorName }}</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
+        <div><span>{{ t().records.reportDate }}</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong></div>
+      </div>
+      }
+      @if (rec.type === 'imaging') {
+      <div class="detail-info-grid">
+        <div><span>{{ t().records.imagingType }}</span><strong>{{ rec.rawRecord.imagingType || '-' }}</strong></div>
+        <div><span>{{ t().records.bodyPart }}</span><strong>{{ rec.rawRecord.bodyPart || '-' }}</strong></div>
+        <div><span>{{ t().records.doctorName }}</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
+        <div><span>{{ t().records.reportDate }}</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong></div>
+      </div>
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-magnifying-glass-chart"></i> {{ t().records.findings }}</h4>
+        <p class="detail-summary-text">{{ rec.rawRecord.findings || '-' }}</p>
+      </div>
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-clipboard-check"></i> {{ t().records.impression }}</h4>
+        <p class="detail-summary-text">{{ rec.rawRecord.impression || '-' }}</p>
+      </div>
+      }
+      @if (rec.type === 'medicine') {
+      <div class="detail-info-grid">
+        <div><span>{{ t().records.medicineName }}</span><strong>{{ rec.rawRecord.medicineName || '-' }}</strong></div>
+        <div><span>{{ t().records.manufacturer }}</span><strong>{{ rec.rawRecord.manufacturer || '-' }}</strong></div>
+        <div><span>{{ t().records.dosageForm }}</span><strong>{{ rec.rawRecord.dosageForm || '-' }}</strong></div>
+        <div><span>{{ t().records.strengthDosage }}</span><strong>{{ rec.rawRecord.dosage || '-' }}</strong></div>
+        <div><span>{{ t().records.frequency }}</span><strong>{{ rec.rawRecord.frequency || '-' }}</strong></div>
+        <div><span>{{ t().records.duration }}</span><strong>{{ rec.rawRecord.duration || '-' }}</strong></div>
+      </div>
+      @if (rec.rawRecord.notes) {
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-note-sticky"></i> {{ t().records.notesOptional }}</h4>
+        <p class="detail-summary-text">{{ rec.rawRecord.notes }}</p>
+      </div>
+      }
+      }
+      @if (rec.type === 'prescription') {
+      <div class="detail-info-grid">
+        <div><span>{{ t().records.doctorName }}</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
+        <div><span>{{ t().records.patientName }}</span><strong>{{ rec.rawRecord.patientName || '-' }}</strong></div>
+        <div><span>{{ t().records.reportDate }}</span><strong>{{ rec.rawRecord.prescriptionDate || rec.date || '-' }}</strong></div>
+      </div>
+      }
+      @if (rec.type === 'general') {
+      <div class="detail-info-grid">
+        <div><span>{{ t().records.documentType }}</span><strong>{{ rec.rawRecord.documentType || '-' }}</strong></div>
+        <div><span>{{ t().records.doctorName }}</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
+        <div><span>{{ t().records.hospitalClinic }}</span><strong>{{ rec.rawRecord.hospitalOrClinic || '-' }}</strong></div>
+        <div><span>{{ t().records.documentDate }}</span><strong>{{ rec.rawRecord.documentDate || rec.date || '-' }}</strong></div>
+      </div>
+      @if (rec.rawRecord.description) {
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-align-left"></i> {{ t().records.description }}</h4>
+        <p class="detail-summary-text">{{ rec.rawRecord.description }}</p>
+      </div>
+      }
+      }
+
+      <!-- ══════════ AI Summary ══════════ -->
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> {{ t().records.aiSummary }}</h4>
+        <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
+      </div>
+
+      @if (rec.type === 'lab' && rec.rawRecord.results && rec.rawRecord.results.length > 0) {
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> {{ t().records.completeLabResults }}</h4>
+        <ul class="labs-list">
+          @for (res of rec.rawRecord.results; track res.id) {
+          <li class="lab-result-item">
+            <div class="lab-result-l">
+              <span class="lab-test-name">{{ res.testName }}</span>
+              <span class="lab-normal-range">{{ t().records.normalPrefix }} {{ res.normalRange }}</span>
+            </div>
+            <div class="lab-result-r">
+              <span class="lab-val">{{ res.value }} {{ res.unit }}</span>
+              <span class="pill" [class]="res.status === 'Normal' ? 'pill-green-sm' : 'pill-red-sm'">{{ res.status }}</span>
+            </div>
+          </li>
+          }
+        </ul>
+      </div>
+      }
+      @if (rec.type === 'prescription' && rec.rawRecord.medicines && rec.rawRecord.medicines.length > 0) {
+      <div class="detail-section">
+        <h4 class="detail-h4"><i class="fa-solid fa-capsules"></i> {{ t().records.prescribedMedications }}</h4>
+        <ul class="pres-meds-list">
+          @for (med of rec.rawRecord.medicines; track med.id) {
+          <li class="pres-med-item">
+            <span class="pres-med-name">{{ med.medicineName }}</span>
+            <span class="pres-med-dose">{{ med.dosage }} — {{ med.frequency }} · {{ med.duration }}</span>
+          </li>
+          }
+        </ul>
+      </div>
+      }
+    </div>
+
+    <!-- ══════════ Actions ══════════ -->
+    <div class="m-section rd-actions-section">
+      <div class="rd-actions-grid">
+        <button type="button" class="rd-action-btn" (click)="downloadRecord()">
+          <i class="fa-solid fa-arrow-down-to-bracket"></i> {{ t().records.downloadFile }}
+        </button>
+        <button type="button" class="rd-action-btn" (click)="shareRecord()">
+          <i class="fa-solid fa-share-nodes"></i> {{ t().records.shareAction }}
+        </button>
+        <button type="button" class="rd-action-btn" (click)="editRecord()">
+          <i class="fa-solid fa-pen-to-square"></i> {{ t().records.editAction }}
+        </button>
+        <button type="button" class="rd-action-btn rd-action-btn--danger" (click)="openDeleteConfirm()">
+          <i class="fa-solid fa-trash-can"></i> {{ t().records.deleteAction }}
+        </button>
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+    }
+  </div>
+
+  <app-bottom-nav></app-bottom-nav>
+</div>
+
+@if (lightboxUrl(); as imageUrl) {
+<div class="lightbox-overlay" (click)="closeLightbox()">
+  <img [src]="imageUrl" class="lightbox-image" alt="Record preview" (click)="$event.stopPropagation()">
+  <button type="button" class="lightbox-close" (click)="closeLightbox()"><i class="fa-solid fa-xmark"></i></button>
+</div>
+}
+
+@if (showDeleteConfirm()) {
+<div class="modal-backdrop" (click)="closeDeleteConfirm()">
+  <div class="modal-box rd-confirm-box" (click)="$event.stopPropagation()">
+    <div class="modal-sheet-handle"></div>
+    <div class="rd-confirm-body">
+      <div class="rd-confirm-ico"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <h3 class="rd-confirm-title">{{ t().records.deleteRecord }}</h3>
+      <p class="rd-confirm-msg">{{ t().records.deleteConfirm }}</p>
+      <p class="rd-confirm-msg">{{ t().records.cannotBeUndone }}</p>
+      @if (deleteError()) {
+      <p class="rd-confirm-error">{{ deleteError() }}</p>
+      }
+      <div class="rd-confirm-actions">
+        <button type="button" class="btn-ghost" [disabled]="deleting()" (click)="closeDeleteConfirm()">{{ t().records.cancelBtn }}</button>
+        <button type="button" class="rd-confirm-delete-btn" [disabled]="deleting()" (click)="confirmDelete()">
+          @if (deleting()) { <i class="fa-solid fa-spinner fa-spin"></i> {{ t().common.deleting }} }
+          @else { {{ t().records.deleteAction }} }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}

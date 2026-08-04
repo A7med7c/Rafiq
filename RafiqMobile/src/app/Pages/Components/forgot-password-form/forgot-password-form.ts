@@ -107,7 +107,7 @@ export class ForgotPasswordFormComponent {
         this.step = 'otp';
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error, this.t());
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       },
@@ -135,7 +135,7 @@ export class ForgotPasswordFormComponent {
         this.step = 'password';
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error, this.t());
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       },
@@ -155,7 +155,7 @@ export class ForgotPasswordFormComponent {
         this.successMessage = response.message;
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error, this.t());
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       },
@@ -183,7 +183,7 @@ export class ForgotPasswordFormComponent {
         setTimeout(() => this.router.navigate(['/login']), 1500);
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error, this.t());
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       },

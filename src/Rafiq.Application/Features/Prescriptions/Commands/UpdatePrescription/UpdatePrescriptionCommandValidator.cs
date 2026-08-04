@@ -10,27 +10,27 @@ internal sealed class UpdatePrescriptionCommandValidator
     {
         RuleFor(x => x.Id)
             .NotEmpty()
-            .WithMessage("Prescription Id is required.");
+            .WithMessage("Validation.PrescriptionIdIsRequired");
 
         RuleFor(x => x.DoctorName)
             .NotEmpty()
-            .WithMessage("Doctor name is required.")
+            .WithMessage("Validation.DoctorNameIsRequired")
             .MaximumLength(150)
-            .WithMessage("Doctor name must not exceed 150 characters.");
+            .WithMessage("Validation.DoctorNameMustNotExceed150Char");
 
         RuleFor(x => x.PatientName)
             .NotEmpty()
-            .WithMessage("Patient name is required.")
+            .WithMessage("Validation.PatientNameIsRequired")
             .MaximumLength(200)
-            .WithMessage("Patient name must not exceed 200 characters.");
+            .WithMessage("Validation.PatientNameMustNotExceed200Cha");
 
         RuleFor(x => x.PrescriptionDate)
             .NotEmpty()
-            .WithMessage("Prescription date is required.")
+            .WithMessage("Validation.PrescriptionDateIsRequired")
             .Matches(@"^\d{4}-\d{2}-\d{2}$")
-            .WithMessage("Prescription date must be in yyyy-MM-dd format.")
+            .WithMessage("Validation.PrescriptionDateMustBeInYyyyMM")
             .Must(NotBeInFuture)
-            .WithMessage("Date cannot be later than today.");
+            .WithMessage("Validation.DateCannotBeLaterThanToday");
     }
 
     private static bool NotBeInFuture(string date)

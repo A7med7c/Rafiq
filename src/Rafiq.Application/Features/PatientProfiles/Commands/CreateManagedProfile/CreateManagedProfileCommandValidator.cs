@@ -18,7 +18,7 @@ internal sealed class CreateManagedProfileCommandValidator
 
         RuleFor(x => x.DateOfBirth)
             .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
-            .WithMessage("Date of birth cannot be in the future.");
+            .WithMessage("Validation.DateOfBirthCannotBeInTheFuture");
 
         RuleFor(x => x.Gender)
             .IsInEnum();
@@ -36,8 +36,8 @@ internal sealed class CreateManagedProfileCommandValidator
             .When(x => x.Weight.HasValue);
 
         RuleFor(x => x.Relationship)
-            .IsInEnum().WithMessage("Relationship is required for a managed profile.")
-            .NotEqual(RelationshipType.Self).WithMessage("Self cannot be used as the relationship for a managed profile.");
+            .IsInEnum().WithMessage("Validation.RelationshipIsRequiredForAMana")
+            .NotEqual(RelationshipType.Self).WithMessage("Validation.SelfCannotBeUsedAsTheRelations");
 
         RuleForEach(x => x.Allergies)
             .SetValidator(new CreateAllergyDtoValidator());

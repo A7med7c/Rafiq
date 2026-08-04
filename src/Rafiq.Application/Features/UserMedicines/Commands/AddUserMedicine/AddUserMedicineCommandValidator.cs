@@ -8,23 +8,23 @@ internal sealed class AddUserMedicineCommandValidator
     public AddUserMedicineCommandValidator()
     {
         RuleFor(x => x.MedicineName)
-            .NotEmpty().WithMessage("Medicine name is required.")
-            .MaximumLength(300).WithMessage("Medicine name must not exceed 300 characters.");
+            .NotEmpty().WithMessage("Validation.MedicineNameIsRequired")
+            .MaximumLength(300).WithMessage("Validation.MedicineNameMustNotExceed300Ch");
 
         // Dosage is intentionally optional: many users don't know the exact dosage.
         // A blank string is stored and shown as "Not specified" in the UI.
         RuleFor(x => x.Dosage)
-            .MaximumLength(200).WithMessage("Dosage must not exceed 200 characters.");
+            .MaximumLength(200).WithMessage("Validation.DosageMustNotExceed200Characte");
 
         RuleFor(x => x.Frequency)
-            .NotEmpty().WithMessage("Frequency is required.")
-            .MaximumLength(200).WithMessage("Frequency must not exceed 200 characters.");
+            .NotEmpty().WithMessage("Validation.FrequencyIsRequired")
+            .MaximumLength(200).WithMessage("Validation.FrequencyMustNotExceed200Chara");
 
         RuleFor(x => x.Duration)
-            .NotEmpty().WithMessage("Duration is required.")
-            .MaximumLength(200).WithMessage("Duration must not exceed 200 characters.");
+            .NotEmpty().WithMessage("Validation.DurationIsRequired")
+            .MaximumLength(200).WithMessage("Validation.DurationMustNotExceed200Charac");
 
         RuleFor(x => x.Source)
-            .IsInEnum().WithMessage("Invalid source type.");
+            .IsInEnum().WithMessage("Validation.InvalidSourceType");
     }
 }

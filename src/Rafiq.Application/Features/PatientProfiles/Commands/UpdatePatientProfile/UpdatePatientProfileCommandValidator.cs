@@ -20,7 +20,7 @@ internal sealed class UpdatePatientProfileCommandValidator
 
         RuleFor(x => x.DateOfBirth)
             .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
-            .WithMessage("Date of birth cannot be in the future.");
+            .WithMessage("Validation.DateOfBirthCannotBeInTheFuture");
 
         RuleFor(x => x.Gender)
             .IsInEnum();

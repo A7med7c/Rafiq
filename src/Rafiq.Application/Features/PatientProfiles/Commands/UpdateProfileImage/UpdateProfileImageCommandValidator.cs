@@ -14,11 +14,11 @@ internal sealed class UpdateProfileImageCommandValidator
         {
             RuleFor(x => x.ProfileImage!.ContentType)
                 .Must(contentType => AllowedContentTypes.Contains(contentType.ToLowerInvariant()))
-                .WithMessage("Profile image must be a JPEG, PNG, WEBP, or GIF file.");
+                .WithMessage("Validation.ProfileImageMustBeAJPEGPNGWEBP");
 
             RuleFor(x => x.ProfileImage!.Length)
                 .LessThanOrEqualTo(MaxProfileImageSizeBytes)
-                .WithMessage("Profile image must not exceed 5 MB.");
+                .WithMessage("Validation.ProfileImageMustNotExceed5MB");
         });
     }
 }

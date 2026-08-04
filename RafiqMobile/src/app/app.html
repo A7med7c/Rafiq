@@ -143,9 +143,9 @@
       </div>
 
       <!-- Text -->
-      <h3 style="font-size: 16px; color: #64748B; margin: 0 0 8px 0; font-weight: 600;">{{ l10n.t().notifications.medicationReminder || 'حان وقت دوائك' }}</h3>
+      <h3 style="font-size: 16px; color: #64748B; margin: 0 0 8px 0; font-weight: 600;">{{ l10n.t().notifications.medicationReminder }}</h3>
       <h1 style="font-size: 28px; font-weight: 700; color: #1E293B; margin: 0 0 8px 0; text-align: center;">{{ notificationService.activeReminder()!.medicineName }}</h1>
-      <p style="font-size: 16px; color: #64748B; margin: 0 0 24px 0; text-align: center;">{{ notificationService.activeReminder()!.strength || l10n.t().notifications.notSpecified || 'N/A' }}</p>
+      <p style="font-size: 16px; color: #64748B; margin: 0 0 24px 0; text-align: center;">{{ notificationService.activeReminder()!.strength || l10n.t().notifications.notSpecified }}</p>
 
       <!-- Time Pill -->
       <div style="background-color: #E0F2FE; color: var(--blue, #0EAFD7); padding: 8px 24px; border-radius: 24px; font-size: 18px; font-weight: 700; margin-bottom: 12px;" dir="ltr">
@@ -166,7 +166,7 @@
           <button type="button" (click)="notificationService.dismissReminder()" [disabled]="notificationService.confirmingReminder()" style="width: 56px; height: 56px; border-radius: 50%; background: white; border: 2px solid #E2E8F0; color: #94A3B8; font-size: 20px; display: flex; justify-content: center; align-items: center; font-family: inherit;">
             <i class="fa-solid fa-xmark"></i>
           </button>
-          <span style="font-size: 14px; color: #64748B; font-weight: 600;">تخطي</span>
+          <span style="font-size: 14px; color: #64748B; font-weight: 600;">{{ l10n.t().notifications.skip }}</span>
         </div>
 
         <!-- Taken (Primary) -->
@@ -178,7 +178,7 @@
               <i class="fa-solid fa-check"></i>
             }
           </button>
-          <span style="font-size: 14px; color: #1E293B; font-weight: 700;">{{ l10n.t().notifications.iTookIt || 'تم التناول' }}</span>
+          <span style="font-size: 14px; color: #1E293B; font-weight: 700;">{{ l10n.t().notifications.iTookIt }}</span>
         </div>
 
         <!-- Snooze -->
@@ -186,14 +186,14 @@
           <button type="button" (click)="notificationService.remindMeLater()" [disabled]="notificationService.confirmingReminder()" style="width: 56px; height: 56px; border-radius: 50%; background: white; border: 2px solid #FED7AA; color: #F97316; font-size: 20px; display: flex; justify-content: center; align-items: center; font-family: inherit;">
             <i class="fa-regular fa-clock"></i>
           </button>
-          <span style="font-size: 14px; color: #64748B; font-weight: 600;">{{ l10n.t().notifications.remindMeLater || 'ذكرني لاحقاً' }}</span>
+          <span style="font-size: 14px; color: #64748B; font-weight: 600;">{{ l10n.t().notifications.remindMeLater }}</span>
         </div>
 
       </div>
 
       <!-- Don't remind again -->
       <button type="button" (click)="notificationService.dismissReminder()" style="background: none; border: none; font-size: 12px; color: #94A3B8; text-decoration: underline; font-family: inherit;">
-        لا تتذكر هذا التذكير مرة أخرى
+        {{ l10n.t().notifications.dontRemindAgain }}
       </button>
 
     </div>

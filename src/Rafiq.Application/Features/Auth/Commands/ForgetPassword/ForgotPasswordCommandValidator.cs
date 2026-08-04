@@ -10,7 +10,7 @@ namespace Rafiq.Application.Features.Auth.Commands.ForgetPassword
             RuleFor(x => x.Email)
                 .NotEmpty()
                 .EmailAddress()
-                .WithMessage("Invalid email address.");
+                .WithMessage("Validation.InvalidEmailAddress");
         }
     }
 }

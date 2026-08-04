@@ -68,7 +68,6 @@
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   animation: nc-pop 180ms ease-out;
-  direction: rtl;
 }
 
 /* ── Header ── */
@@ -243,9 +242,10 @@
   width: 100%;
   border: 0;
   border-radius: var(--r-sm);
-  padding: 14px 12px 14px 14px;
+  padding-block: 14px;
+  padding-inline: 12px 14px;
   background: transparent;
-  text-align: right;
+  text-align: start;
   font: inherit;
   cursor: pointer;
   transition: background-color .16s ease;
@@ -262,11 +262,12 @@
 .notification-item--unread::before {
   content: '';
   position: absolute;
-  right: 0;
+  inset-inline-end: 0;
   top: 10px;
   bottom: 10px;
   width: 3px;
-  border-radius: 2px 0 0 2px;
+  border-start-start-radius: 2px;
+  border-end-start-radius: 2px;
   background: var(--blue);
 }
 
@@ -522,7 +523,7 @@
   font-size: 13px;
   color: var(--text);
   font-weight: 600;
-  text-align: right;
+  text-align: end;
 }
 
 .reminder-modal__message {

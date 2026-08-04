@@ -1,0 +1,67 @@
+@import "../dashboard/dashboard.css";
+@import "../medical-records/medical-records.css";
+
+:host {
+  font-family: var(--font-body, 'Inter', 'Outfit', sans-serif);
+  display: contents;
+}
+
+.m-body { display: flex; flex-direction: column; gap: 16px; padding: 16px 0 96px; }
+
+.rd-enter { animation: rdEnter .35s cubic-bezier(.16,1,.3,1) both; }
+@keyframes rdEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .rd-enter { animation: none; } }
+
+.rd-card { margin: 0 16px; display: flex; flex-direction: column; gap: 14px; }
+
+.rd-hdr { display: flex; align-items: center; gap: 12px; }
+.rd-hdr-text { flex: 1; min-width: 0; }
+.rd-title { margin: 0; font-size: 18px; font-weight: 800; color: var(--text); font-family: 'Outfit', sans-serif; }
+.rd-sub { margin: 2px 0 0; font-size: 12.5px; color: var(--text-3); }
+
+.fph-btn-primary {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 18px; border: none; border-radius: var(--r-sm);
+  background: linear-gradient(135deg, #0EAFD7 0%, #0891B2 100%);
+  color: var(--white); font-size: 14px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(14,175,215,.22); text-decoration: none;
+}
+
+.rd-notfound { margin: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 20px; gap: 8px; }
+.rd-notfound__ico {
+  width: 64px; height: 64px; border-radius: 50%; background: var(--border-lt); color: var(--text-4);
+  display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 8px;
+}
+.rd-notfound__title { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 14px; }
+
+/* ══════════ Actions ══════════ */
+.rd-actions-section { padding: 0 16px; }
+.rd-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rd-action-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px; border-radius: var(--r-sm); border: 1px solid var(--border);
+  background: var(--white); color: var(--text-2); font-size: 13.5px; font-weight: 700;
+  cursor: pointer; box-shadow: var(--shadow-sm);
+}
+.rd-action-btn:hover { background: var(--bg); }
+.rd-action-btn--danger { color: var(--red); border-color: var(--red-lt); }
+.rd-action-btn--danger:hover { background: var(--red-lt); }
+
+/* ══════════ Delete confirm ══════════ */
+.rd-confirm-box { padding: 8px 20px 20px; }
+.rd-confirm-body { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding-top: 8px; }
+.rd-confirm-ico {
+  width: 56px; height: 56px; border-radius: 50%; background: var(--red-lt); color: var(--red);
+  display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 6px;
+}
+.rd-confirm-title { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); }
+.rd-confirm-msg { margin: 0; font-size: 13px; color: var(--text-3); line-height: 1.5; }
+.rd-confirm-error { margin: 4px 0 0; font-size: 12.5px; color: var(--red); }
+.rd-confirm-actions { display: flex; gap: 10px; width: 100%; margin-top: 16px; }
+.rd-confirm-actions .btn-ghost { flex: 1; }
+.rd-confirm-delete-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px; border-radius: var(--r-sm); border: none;
+  background: var(--red); color: var(--white); font-size: 13.5px; font-weight: 700; cursor: pointer;
+}
+.rd-confirm-delete-btn:disabled { opacity: .6; cursor: not-allowed; }
