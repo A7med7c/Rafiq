@@ -549,7 +549,7 @@
 .finish-btn {
   flex: 1;
   height: 52px;
-  background: linear-gradient(135deg, #49d7ff 0%, #10a8ff 100%);
+  background: #0EAFD7;
   border: none;
   border-radius: 14px;
   color: #fff;
@@ -560,13 +560,13 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 8px 24px rgba(16, 168, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(14, 175, 215, 0.25);
   transition: all 0.25s ease;
 }
 
 .finish-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(16, 168, 255, 0.35);
+  box-shadow: 0 12px 28px rgba(14, 175, 215, 0.35);
 }
 
 .finish-btn:active:not(:disabled) {

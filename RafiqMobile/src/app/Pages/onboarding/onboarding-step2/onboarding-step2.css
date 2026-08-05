@@ -642,7 +642,7 @@
   min-height: 52px;
   border: none;
   border-radius: 14px;
-  background: #49d7ff;
+  background: #0EAFD7;
   color: #fff;
   font-family: 'Inter', sans-serif;
   font-size: 15px;
@@ -652,19 +652,19 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 12px 22px rgba(78, 137, 184, .24);
+  box-shadow: 0 12px 22px rgba(14, 175, 215, .24);
   transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
 
 .btn-continue:hover {
-  background: linear-gradient(135deg, #467fae 0%, #356f9a 100%);
-  box-shadow: 0 16px 28px rgba(78, 137, 184, .30);
+  background: #0a9abf;
+  box-shadow: 0 16px 28px rgba(14, 175, 215, .35);
   transform: translateY(-1px);
 }
 
 .btn-continue:active {
   transform: translateY(0);
-  box-shadow: 0 9px 18px rgba(78, 137, 184, .22);
+  box-shadow: 0 9px 18px rgba(14, 175, 215, .22);
 }
 
 .btn-continue svg {

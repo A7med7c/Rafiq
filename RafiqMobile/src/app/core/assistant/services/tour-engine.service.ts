@@ -416,7 +416,7 @@ export class TourEngineService {
       this.enterTimer = null;
     }
 
-    const enterDelay = targetEl ? STEP_ENTER_HIGHLIGHT_MS : 0;
+    const enterDelay = targetEl ? STEP_ENTER_HIGHLIGHT_MS : 100;
     this.enterTimer = setTimeout(() => {
       if (!this._isPlaying() || this._isPaused()) return;
 

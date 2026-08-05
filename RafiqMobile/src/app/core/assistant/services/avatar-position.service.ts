@@ -60,6 +60,9 @@ export class AvatarPositionService {
   /** Registers the bubble DOM element that floating-ui measures against. Called once by the component. */
   setFloatingElement(el: HTMLElement | null): void {
     this.floatingEl = el;
+    if (el && this.referenceEl) {
+      void this.recompute();
+    }
   }
 
   /**
