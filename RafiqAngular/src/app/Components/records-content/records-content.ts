@@ -18,6 +18,7 @@ import { LocalizationService } from '../../Services/localization.service';
 import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 import { switchMap, map } from 'rxjs';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+import { localizeKnownApiMessage } from '../../Utils/api-error.util';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -178,31 +179,39 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly appliedFilters = signal<RecordFilters>(defaultFilters(this.getSavedSortOption()));
   readonly draftFilters = signal<RecordFilters>(defaultFilters(this.getSavedSortOption()));
 
-  readonly recordTypeOptions: Array<{ value: RecordTab; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'lab', label: 'Lab Analysis' },
-    { value: 'prescription', label: 'Prescription' },
-    { value: 'imaging', label: 'X-Ray & Imaging' },
-    { value: 'medicine', label: 'Medicine Box' },
-    { value: 'general', label: 'Other Medical Document' },
-  ];
-  readonly aiStatusOptions: Array<{ value: AiStatusFilter; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'processed', label: 'Processed' },
-    { value: 'pending', label: 'Pending' },
-  ];
-  readonly uploadedByOptions: Array<{ value: UploadedByFilter; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'self', label: 'Self' },
-    { value: 'manual', label: 'Manual' },
-    { value: 'medicine', label: 'Medicine Box' },
-  ];
-  readonly sortOptions: Array<{ value: SortOption; label: string }> = [
-    { value: 'newest', label: 'Newest First' },
-    { value: 'oldest', label: 'Oldest First' },
-    { value: 'az', label: 'A-Z' },
-    { value: 'za', label: 'Z-A' },
-  ];
+  get recordTypeOptions(): Array<{ value: RecordTab; label: string }> {
+    return [
+      { value: 'all', label: this.t().appointments.all },
+      { value: 'lab', label: this.t().records.labAnalysisItem },
+      { value: 'prescription', label: this.t().records.prescriptionItem },
+      { value: 'imaging', label: this.t().records.xrayImagingItem },
+      { value: 'medicine', label: this.t().records.medicineBoxItem },
+      { value: 'general', label: this.t().records.otherMedicalDoc },
+    ];
+  }
+  get aiStatusOptions(): Array<{ value: AiStatusFilter; label: string }> {
+    return [
+      { value: 'all', label: this.t().appointments.all },
+      { value: 'processed', label: this.t().records.processed },
+      { value: 'pending', label: this.t().records.pending },
+    ];
+  }
+  get uploadedByOptions(): Array<{ value: UploadedByFilter; label: string }> {
+    return [
+      { value: 'all', label: this.t().appointments.all },
+      { value: 'self', label: this.t().dashboard.self },
+      { value: 'manual', label: this.t().medications.manual },
+      { value: 'medicine', label: this.t().records.medicineBoxItem },
+    ];
+  }
+  get sortOptions(): Array<{ value: SortOption; label: string }> {
+    return [
+      { value: 'newest', label: this.t().appointments.newestFirst },
+      { value: 'oldest', label: this.t().appointments.oldestFirst },
+      { value: 'az', label: this.t().appointments.aToZ },
+      { value: 'za', label: this.t().appointments.zToA },
+    ];
+  }
 
   readonly uploadState = signal<Record<UploadCardKey, UploadState>>({
     lab: defaultUploadState(),
@@ -551,25 +560,18 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   typeLabel(type: RecordTab): string {
-    const labels: Record<RecordTab, string> = {
-      all: 'All', lab: 'Lab Analysis', prescription: 'Prescription',
-      imaging: 'X-Ray & Imaging', medicine: 'Medicine Box', general: 'Other Medical Document',
-    };
-    return labels[type];
+    const opt = this.recordTypeOptions.find(o => o.value === type);
+    return opt ? opt.label : '';
   }
 
   uploadedByLabel(uploadedBy: UploadedByFilter): string {
-    const labels: Record<UploadedByFilter, string> = {
-      all: 'All', self: 'Self', manual: 'Manual', medicine: 'Medicine Box',
-    };
-    return labels[uploadedBy];
+    const opt = this.uploadedByOptions.find(o => o.value === uploadedBy);
+    return opt ? opt.label : '';
   }
 
   sortLabel(sortBy: SortOption): string {
-    const labels: Record<SortOption, string> = {
-      newest: 'Newest First', oldest: 'Oldest First', az: 'A-Z', za: 'Z-A',
-    };
-    return labels[sortBy];
+    const opt = this.sortOptions.find(o => o.value === sortBy);
+    return opt ? opt.label : '';
   }
 
   goToPage(p: number | '...'): void {
@@ -680,12 +682,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       next: () => {
         this.deleting.set(false);
         this.deleteTarget.set(null);
-        this.showToast('Record deleted successfully.', 'success');
+        this.showToast(this.t().records.recordDeletedSuccessfully, 'success');
         this.loadData();
       },
       error: err => {
         this.deleting.set(false);
-        this.showToast(err?.error?.message || 'Failed to delete record. Please try again.', 'error');
+        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.deleteFailed), 'error');
       },
     });
   }
@@ -806,7 +808,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       error: err => {
         this.uploadLoading.set(false);
         this.setUploading('general', false);
-        this.showToast(err?.error?.message || 'Upload failed. Please try again.', 'error');
+        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.uploadFailed), 'error');
       },
     });
   }
@@ -868,7 +870,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
           this.aiFailIsUnreadable.set(true);
           this.showAiFailDialog.set(true);
         } else {
-          const reason = err?.error?.message || 'Analysis failed. Please try again.';
+          const reason = localizeKnownApiMessage(err?.error?.message ?? this.t().records.aiAnalysisFailed, this.t());
           this.documentAnalysisState.failSyncUpload(tempId, reason);
           this._failedFile = file;
           this._failedType = type;
@@ -977,14 +979,14 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
     const dateStr = rf.type === 'prescription' ? rf.prescriptionDate : rf.reportDate;
     if (dateStr && dateStr > this.todayStr) {
-      this.reviewDateError.set('Date cannot be later than today.');
+      this.reviewDateError.set(this.t().records.dateCannotBeLater);
       return;
     }
     this.reviewDateError.set(null);
 
-    if (rf.mode === 'edit' && this._reviewFormSnapshot !== null &&
+      if (rf.mode === 'edit' && this._reviewFormSnapshot !== null &&
         this.snapshotReviewForm(rf) === this._reviewFormSnapshot) {
-      this.showToast('No changes detected. Please edit at least one field before saving.', 'error');
+      this.showToast(this.t().records.editBeforeSaving, 'error');
       return;
     }
 
@@ -1045,7 +1047,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.manualReviewMode.set(false);
         this.manualImageUploading.set(false);
         this.reviewDateError.set(null);
-        this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : 'Record saved successfully.', 'success');
+        this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : this.t().records.recordSavedSuccessfully, 'success');
         this.loadData();
 
         if (rf.type === 'prescription' && rf.mode !== 'edit') {
@@ -1054,7 +1056,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       },
       error: err => {
         this.reviewSaving.set(false);
-        this.showToast(err?.error?.message || 'Failed to save record. Please try again.', 'error');
+        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.saveFailed), 'error');
       },
     });
   }
@@ -1146,7 +1148,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       },
       error: () => {
         this.manualImageUploading.set(false);
-        this.showToast('Failed to upload image. Please try again.', 'error');
+        this.showToast(this.t().records.uploadFailed, 'error');
       },
     });
   }
@@ -1194,7 +1196,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
     if (this.scanMode() === 'edit' && this._scanFormSnapshot !== null &&
         this.snapshotScanForm(this.scanForm) === this._scanFormSnapshot) {
-      this.showToast('No changes detected. Please edit at least one field before saving.', 'error');
+      this.showToast(this.t().records.editBeforeSaving, 'error');
       return;
     }
 
@@ -1233,7 +1235,6 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this._scanFormSnapshot = null;
         this.manualMedicineMode.set(false);
         this.scanSource.set(3);
-        this.showToast(mode === 'edit' ? 'Medicine record updated successfully.' : 'Medicine saved to your records.', 'success');
         this.loadData();
 
         const savedMedicineId = res?.data?.id ?? null;
@@ -1243,7 +1244,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       },
       error: err => {
         this.scanSaving.set(false);
-        this.showToast(err?.error?.message || 'Failed to save medicine.', 'error');
+        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.saveMedicineFailed), 'error');
       },
     });
   }
@@ -1337,7 +1338,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       },
       error: err => {
         this.addingMedIndex.set(null);
-        this.showToast(err?.error?.message || 'Failed to add medicine.', 'error');
+        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.addMedicineFailed), 'error');
       },
     });
   }
@@ -1378,7 +1379,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       },
       error: err => {
         this.addingAllMeds.set(false);
-        this.showToast(err?.error?.message || 'Failed to add medicines.', 'error');
+        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.addMedicinesFailed), 'error');
       },
     });
   }
@@ -1404,6 +1405,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   removeToast(id: number): void { this.toasts.update(t => t.filter(x => x.id !== id)); }
+
+  private localizeApiMessage(message: string): string {
+    return localizeKnownApiMessage(message, this.t());
+  }
 
   progressOffset(pct: number): number {
     const c = 2 * Math.PI * 14;

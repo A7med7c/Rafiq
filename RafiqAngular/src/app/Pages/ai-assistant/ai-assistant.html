@@ -459,8 +459,8 @@
       <i class="fa-regular fa-thumbs-down"></i>
     </div>
     <div>
-      <h3 class="dislike-dialog-title">What went wrong?</h3>
-      <p class="dislike-dialog-sub">Help us improve Rafiq AI</p>
+      <h3 class="dislike-dialog-title">{{ t().aiAssistant.feedbackTitle }}</h3>
+      <p class="dislike-dialog-sub">{{ t().aiAssistant.feedbackSub }}</p>
     </div>
     <button type="button" class="dislike-close" (click)="cancelDislikeDialog()">
       <i class="fa-solid fa-xmark"></i>
@@ -482,21 +482,21 @@
 
   <textarea
     class="dislike-textarea"
-    placeholder="Tell us more (optional)..."
+    [placeholder]="t().aiAssistant.feedbackTextPlaceholder"
     [value]="dislikeReason() === 'Other' ? dislikeReason() : ''"
     (input)="dislikeReason.set($any($event.target).value)"
     rows="3"
   ></textarea>
 
   <div class="dislike-dialog-footer">
-    <button type="button" class="dislike-btn-cancel" (click)="cancelDislikeDialog()">Cancel</button>
+    <button type="button" class="dislike-btn-cancel" (click)="cancelDislikeDialog()">{{ t().aiAssistant.feedbackCancel }}</button>
     <button
       type="button"
       class="dislike-btn-submit"
       (click)="submitDislikeReason()"
     >
       <i class="fa-regular fa-thumbs-down"></i>
-      Submit Feedback
+      {{ t().aiAssistant.feedbackSubmit }}
     </button>
   </div>
 </div>

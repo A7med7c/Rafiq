@@ -14,6 +14,7 @@ import { RegisterResponse } from '../Modles/register-response';
 import { environment } from '../Environments/Environment';
 import { TokenStorageService } from './token-storage-service';
 import { ProfileSelectionService } from './profile-selection.service';
+import { ProfileCacheService } from './profile-cache.service';
 
 @Injectable({
   providedIn: 'root'
@@ -24,6 +25,7 @@ export class AuthService {
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly router = inject(Router);
   private readonly profileSelectionSvc = inject(ProfileSelectionService);
+  private readonly profileCache = inject(ProfileCacheService);
 
   private readonly currentUserSubject = new BehaviorSubject<Account | null>(
     this.tokenStorage.getUser()
@@ -268,6 +270,8 @@ export class AuthService {
       tap((user) => {
         this.tokenStorage.setUser(user);
         this.currentUserSubject.next(user);
+        // Propagate profile image to ProfileCache and ensure cache-busted URL
+        try { this.updateProfileImageUrl(user.profileImageUrl ?? null); } catch {}
       })
     );
   }
@@ -343,5 +347,27 @@ export class AuthService {
     this.tokenStorage.clear();
     this.profileSelectionSvc.clear();
     this.currentUserSubject.next(null);
+  }
+
+  /**
+   * Updates the stored current user with a new profile image URL and notifies
+   * all subscribers. Also updates the `ProfileCacheService` so navbar/avatar
+   * helpers stay in sync. Appends a cache-busting query to force browser reload.
+   */
+  updateProfileImageUrl(profileImageUrl: string | null): void {
+    const user = this.currentUserSubject.value;
+    if (!user) return;
+
+    const newUrl = profileImageUrl ? `${profileImageUrl}${profileImageUrl.includes('?') ? '&' : '?'}v=${Date.now()}` : null;
+
+    const updated: Account = { ...user, profileImageUrl: newUrl };
+    this.tokenStorage.setUser(updated);
+    this.currentUserSubject.next(updated);
+
+    try {
+      this.profileCache.setImageUrl(newUrl ?? null);
+    } catch {
+      // ignore if profileCache isn't available for some reason
+    }
   }
 }

@@ -20,6 +20,7 @@ import { ProfileSelectionService } from '../../Services/profile-selection.servic
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
+import { localizeKnownApiMessage } from '../../Utils/api-error.util';
 
 type MedTab = 'schedule' | 'medications';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -557,7 +558,7 @@ export class Medications implements OnInit, OnDestroy {
       if (isToday) {
         const [h, m] = t.split(':').map(Number);
         if (h * 60 + m < nowMins) {
-          result[i] = 'The selected time has already passed.';
+          result[i] = this.t().validation.selectedTimePassed;
         }
       }
     });
@@ -606,10 +607,10 @@ export class Medications implements OnInit, OnDestroy {
   get addMedErrors(): string[] {
     const f = this.addMedForm;
     const errs: string[] = [];
-    if (!f.medicineName.trim()) errs.push('Medicine name is required.');
-    if (!f.dosage.trim()) errs.push('Dosage is required.');
-    if (!f.frequency.trim()) errs.push('Frequency is required.');
-    if (!f.duration.trim()) errs.push('Duration is required.');
+    if (!f.medicineName.trim()) errs.push(this.t().validation.medicineNameRequired);
+    if (!f.dosage.trim()) errs.push(this.t().validation.dosageRequired);
+    if (!f.frequency.trim()) errs.push(this.t().validation.frequencyRequired);
+    if (!f.duration.trim()) errs.push(this.t().validation.durationRequired);
     return errs;
   }
 
@@ -712,7 +713,7 @@ export class Medications implements OnInit, OnDestroy {
         this.tryOpenReminderDetails();
       },
       error: err => {
-        this.scheduleError.set(err?.error?.message ?? 'Could not load today\'s schedule.');
+        this.scheduleError.set(this.localizeApiMessage(err?.error?.message ?? this.t().medications.couldNotLoadSchedule));
         this.scheduleLoading.set(false);
       },
     });
@@ -729,7 +730,7 @@ export class Medications implements OnInit, OnDestroy {
         this.tryOpenAddReminderForMedicine();
       },
       error: err => {
-        this.medsError.set(err?.error?.message ?? 'Could not load medications.');
+        this.medsError.set(this.localizeApiMessage(err?.error?.message ?? this.t().medications.couldNotLoadMeds));
         this.medsLoading.set(false);
       },
     });
@@ -958,7 +959,7 @@ export class Medications implements OnInit, OnDestroy {
         this.loadSchedule();
       },
       error: err => {
-        this.toast(err?.error?.message ?? 'Could not confirm medication.', 'error');
+        this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().medications.couldNotConfirmMedication), 'error');
         this.confirming.set(false);
       },
     });
@@ -995,6 +996,10 @@ export class Medications implements OnInit, OnDestroy {
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  private localizeApiMessage(message: string): string {
+    return localizeKnownApiMessage(message, this.t());
   }
 
   statusLabel(status: MedicationReminderStatus): string {
@@ -1180,7 +1185,7 @@ export class Medications implements OnInit, OnDestroy {
           this.toast(`Reminder set for ${medName}.`, 'success');
         },
         error: err => {
-          this.toast(err?.error?.message ?? 'Could not save reminder.', 'error');
+          this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().medications.couldNotSaveReminder), 'error');
           this.addReminderSaving.set(false);
         },
       });
@@ -1230,7 +1235,7 @@ export class Medications implements OnInit, OnDestroy {
             this.toast(`Reminder updated for ${medName}.`, 'success');
           },
           error: err => {
-            this.toast(err?.error?.message ?? 'Could not update reminder.', 'error');
+            this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().medications.couldNotUpdateReminder), 'error');
             this.addReminderSaving.set(false);
           },
         });
@@ -1268,7 +1273,7 @@ export class Medications implements OnInit, OnDestroy {
           ...rec,
           [medId]: oldReminders,
         }));
-        this.toast(err?.error?.message ?? 'Could not toggle reminders.', 'error');
+        this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().medications.couldNotToggleReminders), 'error');
       },
     });
   }
@@ -1310,7 +1315,7 @@ export class Medications implements OnInit, OnDestroy {
       error: err => {
         // Revert on error
         this.medicineReminders.update(rec => ({ ...rec, [medId]: oldReminders }));
-        this.toast(err?.error?.message ?? 'Could not delete reminders.', 'error');
+        this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().medications.couldNotDeleteReminders), 'error');
         this.deletingReminder.set(false);
       },
     });
@@ -1495,7 +1500,7 @@ export class Medications implements OnInit, OnDestroy {
       next: res => {
         this.addMedSaving.set(false);
         this.showAddMedModal.set(false);
-        this.toast(`${payload.medicineName} added successfully.`, 'success');
+        this.toast(this.t().medications.medicationAddedSuccessfully, 'success');
         this.reviewTracking.trackAction();
         this.loadMedicines();
         if (res.data?.id) {
@@ -1503,7 +1508,7 @@ export class Medications implements OnInit, OnDestroy {
         }
       },
       error: err => {
-        const msg = err?.error?.errors?.[0] ?? err?.error?.message ?? 'Could not add medication.';
+        const msg = this.localizeApiMessage(err?.error?.errors?.[0] ?? err?.error?.message ?? this.t().medications.couldNotAddMedication);
         this.toast(msg, 'error');
         this.addMedSaving.set(false);
       },
@@ -1517,10 +1522,10 @@ export class Medications implements OnInit, OnDestroy {
   get editMedErrors(): string[] {
     const f = this.editMedForm;
     const errs: string[] = [];
-    if (!f.medicineName.trim()) errs.push('Medicine name is required.');
-    if (!f.dosage.trim()) errs.push('Dosage is required.');
-    if (!f.frequency.trim()) errs.push('Frequency is required.');
-    if (!f.duration.trim()) errs.push('Duration is required.');
+    if (!f.medicineName.trim()) errs.push(this.t().validation.medicineNameRequired);
+    if (!f.dosage.trim()) errs.push(this.t().validation.dosageRequired);
+    if (!f.frequency.trim()) errs.push(this.t().validation.frequencyRequired);
+    if (!f.duration.trim()) errs.push(this.t().validation.durationRequired);
     return errs;
   }
 
@@ -1578,7 +1583,7 @@ export class Medications implements OnInit, OnDestroy {
         }
       },
       error: err => {
-        const msg = err?.error?.errors?.[0] ?? err?.error?.message ?? 'Could not update medication.';
+        const msg = this.localizeApiMessage(err?.error?.errors?.[0] ?? err?.error?.message ?? this.t().medications.couldNotUpdateMedication);
         this.toast(msg, 'error');
         this.editMedSaving.set(false);
       },
@@ -1624,7 +1629,7 @@ export class Medications implements OnInit, OnDestroy {
         this.loadSchedule();
       },
       error: err => {
-        this.toast(err?.error?.message ?? 'Could not delete medication.', 'error');
+        this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().medications.couldNotDeleteMedication), 'error');
         this.deletingMed.set(false);
       },
     });

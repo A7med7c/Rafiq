@@ -30,6 +30,8 @@ export class RafiqAssistantComponent implements OnDestroy {
   readonly tourEngine = inject(TourEngineService);
   readonly l10n = inject(LocalizationService);
   private readonly router = inject(Router);
+  readonly t = this.l10n.t;
+  readonly dir = this.l10n.dir;
 
   readonly bubbleEl = viewChild<ElementRef<HTMLElement>>('bubbleEl');
 

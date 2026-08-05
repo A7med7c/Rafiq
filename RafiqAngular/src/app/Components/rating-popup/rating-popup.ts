@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ReviewService } from '../../Services/review.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { LocalizationService } from '../../Services/localization.service';
+import { localizeKnownApiMessage } from '../../Utils/api-error.util';
 
 @Component({
   selector: 'app-rating-popup',
@@ -68,7 +69,8 @@ export class RatingPopup {
       },
       error: err => {
         this.submitting.set(false);
-        const msg = err?.error?.message ?? err?.error?.title ?? null;
+        const raw = err?.error?.message ?? err?.error?.title ?? null;
+        const msg = raw ? localizeKnownApiMessage(raw, this.t()) : null;
         this.error.set(msg ?? this.t().ratingPopup.submitError);
       },
     });
