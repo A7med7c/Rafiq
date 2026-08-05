@@ -1,5 +1,5 @@
 import {
-  Component, OnDestroy, inject, signal, effect, untracked,
+  Component, OnDestroy, OnInit, inject, signal, effect, untracked,
   input, output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -31,7 +31,7 @@ const PROCESSING_TIMEOUT_MS = 90_000;
   templateUrl: './voice-agent-panel.html',
   styleUrl: './voice-agent-panel.css',
 })
-export class VoiceAgentPanel implements OnDestroy {
+export class VoiceAgentPanel implements OnInit, OnDestroy {
   private readonly voiceAgentSvc  = inject(VoiceAgentService);
   private readonly voiceCapture   = inject(VoiceCaptureService);
   private readonly voiceSynthesis = inject(VoiceSynthesisService);
@@ -114,6 +114,15 @@ export class VoiceAgentPanel implements OnDestroy {
         this.state.set('error');
       }
     });
+  }
+
+  ngOnInit(): void {
+    // Automatically start the voice session when the panel opens
+    setTimeout(() => {
+      if (!this.isSessionActive()) {
+        this.startSession();
+      }
+    }, 300); // small delay to let UI animations finish
   }
 
   ngOnDestroy(): void {

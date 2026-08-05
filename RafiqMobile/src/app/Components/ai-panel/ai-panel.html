@@ -124,57 +124,33 @@
           </div>
         </div>
       } @else {
-      <header class="ai-main-hdr"
+      <header class="ai-main-hdr ai-main-hdr--new"
         (mousedown)="onHeaderPointerDown($event)"
         (touchstart)="onHeaderPointerDown($event)">
-        <div class="ai-main-hdr-left">
-          <button type="button" class="ai-hdr-btn ai-hdr-btn--home"
-            (click)="goHome()"
-            [title]="t().aiAssistant.backToHome">
-            <i class="fa-solid fa-house"></i>
+        
+        <div class="ai-hdr-left-icons">
+          <button type="button" class="ai-hdr-btn-clean"
+            (click)="toggleSidebar()"
+            [title]="t().aiAssistant.showSidebar">
+            <i class="fa-solid fa-bars"></i>
           </button>
-          <div class="ai-avatar-badge">
-            <img src="/images/RafiqLogo.png" alt="Rafiq" class="ai-badge-logo">
-            <span class="online-dot"></span>
+        </div>
+
+        <div class="ai-main-hdr-center">
+          <div class="ai-title-col">
+            <h1 class="ai-main-title">Rafiq AI</h1>
+            <p class="ai-main-subtitle">مساعدك الصحي الذكي</p>
           </div>
-          <div class="ai-hdr-info">
-            <h3 class="ai-main-title">Rafiq AI</h3>
-            @if (selectedConversation()) {
-              <p class="ai-main-sub">{{ selectedConversation()!.title }}</p>
-            } @else {
-              <p class="ai-main-sub online-text">{{ t().aiAssistant.onlineStatus }}</p>
-            }
+          <div class="ai-header-avatar-box">
+            <img src="/images/RafiqLogo.png" alt="Rafiq AI" class="ai-header-logo">
           </div>
         </div>
-        <div class="ai-main-hdr-right">
-          @if (!minimized()) {
-            <!-- Voice / Chat toggle -->
-            <button type="button" class="ai-hdr-btn ai-hdr-btn--mode"
-              (click)="toggleMode()"
-              [title]="activeMode() === 'chat' ? t().voiceAgent.switchToVoice : t().voiceAgent.switchToChat">
-              <i class="fa-solid" [class.fa-microphone]="activeMode() === 'chat'" [class.fa-comment-dots]="activeMode() === 'voice'"></i>
-            </button>
-            @if (activeMode() === 'chat') {
-              <button type="button" class="ai-hdr-btn ai-hdr-btn--sidebar"
-                (click)="toggleSidebar()"
-                [title]="sidebarCollapsed() ? t().aiAssistant.showSidebar : t().aiAssistant.hideSidebar">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-              </button>
-            }
-            <button type="button" class="ai-hdr-btn ai-hdr-btn--maximize"
-              (click)="toggleMaximize()"
-              [title]="maximized() ? t().aiAssistant.restoreWindow : t().aiAssistant.expandFullscreen">
-              <i class="fa-solid" [class.fa-expand]="!maximized()" [class.fa-compress]="maximized()"></i>
-            </button>
-          }
-          <button type="button" class="ai-hdr-btn ai-hdr-btn--minimize"
-            (click)="toggleMinimize()"
-            [title]="minimized() ? t().aiAssistant.onlineStatus : t().common.close">
-            <i class="fa-solid" [class.fa-chevron-down]="!minimized()" [class.fa-chevron-up]="minimized()"></i>
-          </button>
-          <button type="button" class="ai-hdr-btn ai-hdr-btn--close" (click)="closePanel()"
-            [title]="t().common.close">
-            <i class="fa-solid fa-xmark"></i>
+
+        <div class="ai-hdr-right-icons">
+          <button type="button" class="ai-hdr-btn-clean"
+            (click)="startNewConversation()"
+            [title]="t().aiAssistant.newConversation">
+            <i class="fa-solid fa-pen-to-square"></i>
           </button>
         </div>
       </header>
@@ -296,6 +272,8 @@
           (conversationCreated)="onVoiceConversationCreated($event)"
           (messageStarted)="onVoiceMessageStarted($event)"
           (responseReceived)="onVoiceResponseReceived($event)"
+          (switchToChat)="toggleMode()"
+          (closeRequested)="closePanel()"
         ></app-voice-agent-panel>
       }
 
@@ -331,29 +309,47 @@
             </div>
           </div>
         } @else {
-          <div class="ai-composer">
-            <button type="button" class="ai-composer-ico"
+          <div class="ai-composer-new">
+            <button
+              type="button"
+              class="ai-action-btn ai-plus-btn"
               [disabled]="sending()"
               [title]="t().aiAssistant.attachImage"
-              (click)="triggerFileSelect()">
-              <i class="fa-solid fa-paperclip"></i>
+              (click)="triggerFileSelect()"
+            >
+              <i class="fa-solid fa-plus"></i>
             </button>
-            <textarea
-              #messageInput
-              class="ai-composer-input"
-              rows="1"
-              [attr.placeholder]="t().aiAssistant.typePlaceholder"
-              [value]="messageText()"
-              (input)="onMessageInput($any($event.target).value)"
-              (keydown)="onComposerKeydown($event)"
-            ></textarea>
-            <button type="button" class="ai-send-btn"
+
+            <div class="ai-composer-input-wrapper">
+              <button
+                type="button"
+                class="ai-mic-btn-inside"
+                (click)="toggleMode()"
+              >
+                <i class="fa-solid fa-microphone"></i>
+              </button>
+
+              <textarea
+                #messageInput
+                class="ai-composer-input ai-composer-input--new"
+                rows="1"
+                placeholder="اكتب رسالتك هنا..."
+                [value]="messageText()"
+                (input)="onMessageInput($any($event.target).value)"
+                (keydown)="onComposerKeydown($event)"
+              ></textarea>
+            </div>
+
+            <button
+              type="button"
+              class="ai-action-btn ai-send-btn-new"
               [disabled]="(!messageText().trim() && !attachedImageBase64()) || sending()"
-              (click)="sendMessage()">
+              (click)="sendMessage()"
+            >
               <i class="fa-solid fa-paper-plane"></i>
             </button>
           </div>
-          <p class="ai-composer-hint">{{ t().aiAssistant.composerHintPanel }}</p>
+          <p class="ai-composer-hint-new">Enter للإرسال • Shift+Enter لسطر جديد</p>
         }
       </div>
       }
