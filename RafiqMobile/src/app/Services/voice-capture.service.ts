@@ -12,6 +12,7 @@ export class VoiceCaptureService {
   readonly isSupported: boolean;
   private recognition: any = null;
   private silenceTimer: ReturnType<typeof setTimeout> | null = null;
+  private _activeResolve: ((text: string) => void) | null = null;
 
   /** ms of silence after the last word before we finalize the transcript */
   private readonly SILENCE_MS = 2000;
@@ -59,19 +60,20 @@ export class VoiceCaptureService {
       let finalText     = '';
       let interimText   = '';
 
-      const finish = (transcript: string) => {
+      this._activeResolve = (text: string) => {
         if (settled) return;
         settled = true;
         this.clearSilenceTimer();
-        try { rec.stop(); } catch { /* already stopped */ }
-        this.recognition = null;
-        resolve(transcript.trim());
+        this._activeResolve = null;
+        resolve(text.trim());
       };
 
       const resetSilenceTimer = () => {
         this.clearSilenceTimer();
         this.silenceTimer = setTimeout(() => {
-          finish(finalText || interimText);
+          if (this.recognition && !settled) {
+            try { this.recognition.stop(); } catch { /* ignore */ }
+          }
         }, this.SILENCE_MS);
       };
 
@@ -119,10 +121,9 @@ export class VoiceCaptureService {
       };
 
       rec.onend = () => {
-        // Browser closed the session (e.g. max duration hit).
-        // If we still have text, resolve with it; otherwise let onerror handle it.
-        if (!settled) {
-          finish(finalText || interimText);
+        // Browser closed the session (e.g. max duration hit or stop() called).
+        if (!settled && this._activeResolve) {
+          this._activeResolve(finalText || interimText);
         }
       };
 
@@ -139,9 +140,18 @@ export class VoiceCaptureService {
   /** Abort the current capture session immediately. */
   stop(): void {
     this.clearSilenceTimer();
+    this._activeResolve = null;
     if (this.recognition) {
       try { this.recognition.abort(); } catch { /* ignore */ }
       this.recognition = null;
+    }
+  }
+
+  /** Finalize the current capture session, resolving the promise with whatever text was captured so far. */
+  finalize(): void {
+    this.clearSilenceTimer();
+    if (this.recognition) {
+      try { this.recognition.stop(); } catch { /* ignore */ }
     }
   }
 

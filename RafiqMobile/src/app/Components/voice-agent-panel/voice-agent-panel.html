@@ -20,7 +20,7 @@
 
     <!-- Timer -->
     <div class="vap-timer">
-      00:08
+      {{ recordingTime() }}
     </div>
 
     <!-- Visualizer -->
@@ -47,7 +47,7 @@
         [class.vap-mic-btn--stop]="isSessionActive() && state() !== 'processing'"
         [class.vap-mic-btn--processing]="state() === 'processing'"
         [disabled]="state() === 'processing'"
-        (click)="isSessionActive() ? stopSession() : startSession()"
+        (click)="isSessionActive() ? finalizeSession() : startSession()"
       >
         @if (state() === 'processing') {
           <i class="fa-solid fa-spinner fa-spin"></i>
