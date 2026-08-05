@@ -1,12 +1,12 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HealthProfileService } from './health-profile.service';
-import { AuthService } from './auth-service';
+import { TokenStorageService } from './token-storage-service';
 import { environment } from '../Environments/Environment';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileCacheService {
   private readonly healthSvc = inject(HealthProfileService);
-  private readonly authSvc = inject(AuthService);
+  private readonly tokenSvc = inject(TokenStorageService);
 
   readonly profileImageUrl = signal<string | null>(null);
   readonly gender = signal<string | null>(null);
@@ -21,7 +21,7 @@ export class ProfileCacheService {
         this.setImageUrl(res.data?.profileImageUrl ?? null);
         this.gender.set(res.data?.gender ?? null);
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -51,7 +51,7 @@ export class ProfileCacheService {
    *   - gender-appropriate default avatar
    */
   resolveNavbarAvatar(): string {
-    const imgUrl = this.profileImageUrl() || this.authSvc.currentUser?.profileImageUrl;
+    const imgUrl = this.profileImageUrl() || this.tokenSvc.getUser()?.profileImageUrl;
     if (imgUrl) return `${environment.fileBaseUrl}${imgUrl}`;
     const g = (this.gender() ?? '').toLowerCase();
     return g === 'female' || g === '2' ? 'images/sarah_avatar.png' : 'images/ahmed_avatar.png';
