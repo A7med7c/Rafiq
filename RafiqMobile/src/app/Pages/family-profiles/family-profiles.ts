@@ -235,7 +235,7 @@ export class FamilyProfiles implements OnInit {
 
   /** The photo to show for a family/self profile, or null to fall back to the initials avatar. */
   profileAvatarUrl(profile: AccessibleProfileDto): string | null {
-    const path = profile.isSelf ? this.authSvc.currentUser?.profileImageUrl : profile.profileImageUrl;
+    const path = profile.profileImageUrl || (profile.isSelf ? this.authSvc.currentUser?.profileImageUrl : null);
     return this.resolveProfileImageUrl(path ?? null);
   }
 
