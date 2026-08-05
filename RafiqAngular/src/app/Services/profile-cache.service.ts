@@ -16,7 +16,7 @@ export class ProfileCacheService {
     this.loaded = true;
     this.healthSvc.getMyProfile().subscribe({
       next: res => {
-        this.profileImageUrl.set(res.data?.profileImageUrl ?? null);
+        this.setImageUrl(res.data?.profileImageUrl ?? null);
         this.gender.set(res.data?.gender ?? null);
       },
       error: () => {}
@@ -25,7 +25,21 @@ export class ProfileCacheService {
 
   /** Called after a successful photo upload so all pages update immediately. */
   setImageUrl(url: string | null): void {
-    this.profileImageUrl.set(url);
+    if (!url) {
+      this.profileImageUrl.set(null);
+      return;
+    }
+
+    // If the caller already supplied a cache-busted URL (contains v=),
+    // use it as-is to keep a single canonical URL across services.
+    if (/[?&]v=\d+/.test(url)) {
+      this.profileImageUrl.set(url);
+      return;
+    }
+
+    // Append cache-busting query so updated images propagate immediately
+    const separator = url.includes('?') ? '&' : '?';
+    this.profileImageUrl.set(`${url}${separator}v=${Date.now()}`);
   }
 
   /**

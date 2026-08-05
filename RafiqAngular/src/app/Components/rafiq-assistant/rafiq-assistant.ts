@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AvatarEngineComponent } from '../avatar-engine/avatar-engine';
 import { AvatarPositionService } from '../../core/assistant/services/avatar-position.service';
 import { TourEngineService } from '../../core/assistant/services/tour-engine.service';
+import { LocalizationService } from '../../Services/localization.service';
 
 /**
  * The travelling Rafiq mascot and its contextual walkthrough bubble.
@@ -26,6 +27,9 @@ export class RafiqAssistantComponent implements OnDestroy {
   readonly positionService = inject(AvatarPositionService);
   readonly tourEngine = inject(TourEngineService);
   private readonly router = inject(Router);
+  readonly l10n = inject(LocalizationService);
+  readonly t = this.l10n.t;
+  readonly dir = this.l10n.dir;
 
   readonly bubbleEl = viewChild<ElementRef<HTMLElement>>('bubbleEl');
 

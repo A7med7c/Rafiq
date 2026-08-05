@@ -39,6 +39,10 @@ export const en = {
     page: 'Page',
     dismiss: 'Dismiss',
     backToFamilyProfiles: 'Back to Family Profiles',
+    pageTour: 'Page Tour',
+    drPrefix: 'Dr.',
+    cm: 'cm',
+    kg: 'kg',
   },
 
   sidebar: {
@@ -99,6 +103,21 @@ export const en = {
     noAccount: "Don't have an account?",
     signUp: 'Sign Up',
     or: 'or',
+    googleSignIn: 'Sign in with Google',
+    loginSuccess: 'Login Successfully',
+    invalidEmailPassword: 'Invalid email/Password',
+  },
+
+  validation: {
+    invalidEmailAddress: 'Invalid email address',
+    weightBetween: 'Weight must be between 1 and 500.',
+    heightBetween: 'Height must be between 30 and 300.',
+    medicineNameRequired: 'Medicine name is required.',
+    dosageRequired: 'Dosage is required.',
+    frequencyRequired: 'Frequency is required.',
+    durationRequired: 'Duration is required.',
+    selectedTimePassed: 'The selected time has already passed.',
+    contactsValidationFailed: 'Contacts validation failed.',
   },
 
   register: {
@@ -230,6 +249,9 @@ export const en = {
     upcomingAppointment: 'Upcoming Appointment',
     viewAll: 'View all',
     noUpcomingAppointments: 'No upcoming appointments',
+    addressLabel: 'Address',
+    addressPlaceholder: 'Enter appointment address',
+    reminder30MinBefore: '30 minutes before',
     addNewAppointment: 'Add New Appointment',
     add: 'Add',
     familyOverview: 'Family Overview',
@@ -273,6 +295,8 @@ export const en = {
     generatingReportSub: 'This may take a few seconds while the AI prepares your summary',
     selectProfileTitle: 'Select Profile',
     selectProfileDesc: 'Choose whose medical report to generate',
+    familySummaryEmpty: 'Not enough health data available yet for {name}.',
+    familySummaryEmptySub: 'Upload medical records to generate an AI summary.',
   },
 
   medicalRecordsPage: {
@@ -284,6 +308,13 @@ export const en = {
   },
 
   records: {
+    patientName: 'Patient Name',
+    prescriptionDate: 'Prescription Date',
+    sortBy: 'Sort By',
+    medicinesInstructions: 'Medicines & Instructions',
+    medicine: 'Medicine',
+    changeImage: 'Change Image',
+    attachImageOptional: 'Attach Image (optional)',
     labAnalysis: 'Lab Analysis',
     labDesc: 'Upload blood tests, urine tests, and other lab reports',
     prescription: 'Prescription',
@@ -416,6 +447,8 @@ export const en = {
     durationPlaceholder: 'e.g. 7 days',
     notesPlaceholder: 'e.g. Take with food',
     medNameRequired: 'Medicine name is required to save',
+    medicinePlaceholder: 'e.g. Amoxicillin',
+    selectedMedicineBoxImage: 'Selected medicine box image',
     saveMedicine: 'Save Medicine',
     uploadingImageBtn: 'Uploading...',
     medicinesAddedSuccess: 'Medicines Added Successfully',
@@ -428,6 +461,8 @@ export const en = {
     maybeLater: 'Maybe Later',
     setReminderNow: 'Set Reminder Now',
     aiAnalysisFailed: 'AI Analysis Failed',
+    scanFailed: 'Scan failed. Please try again.',
+    setReminderFailed: 'Failed to set reminder. Please try again.',
     aiFailureText: "We couldn't analyze your document right now. Try again or fill in the details yourself.",
     aiWrongDocType: 'Wrong Document Type',
     aiUnreadableTitle: 'Image Unclear or Unreadable',
@@ -436,6 +471,17 @@ export const en = {
     tryAgain: 'Try Again',
     clearFilters: 'Clear Filters',
     filteredLabel: 'filtered',
+    filtersTitle: 'Medical Records Filters',
+    recordSavedSuccessfully: 'Record Saved Successfully',
+    documentAlreadyExist: 'The Document Already Exist',
+    recordDeletedSuccessfully: 'Record deleted successfully.',
+    dateCannotBeLater: 'Date cannot be later than today.',
+    deleteFailed: 'Failed to delete record. Please try again.',
+    uploadFailed: 'Upload failed. Please try again.',
+    saveFailed: 'Failed to save record. Please try again.',
+    saveMedicineFailed: 'Failed to save medicine.',
+    addMedicineFailed: 'Failed to add medicine.',
+    addMedicinesFailed: 'Failed to add medicines.',
   },
 
   aiAssistant: {
@@ -563,6 +609,11 @@ export const en = {
     noneReminder: 'None',
     customReminder: 'Custom',
     minutesBefore: 'minutes before',
+    reminder15MinBefore: '15 minutes before',
+    reminder30MinBefore: '30 minutes before',
+    reminder1HourBefore: '1 hour before',
+    reminder2HoursBefore: '2 hours before',
+    reminder1DayBefore: '1 day before',
     notesLabel: 'Notes',
     notesPlaceholder: 'Any additional notes or instructions...',
     cancelBtn: 'Cancel',
@@ -617,6 +668,7 @@ export const en = {
     dental: 'Dental Checkup',
     other: 'Other',
     followUp: 'Follow-up Visit',
+    validationFailed: 'Appointments validation Failed',
   },
 
   uploadValidation: {
@@ -701,6 +753,15 @@ export const en = {
     boxScan: 'Box Scan',
     clearFilter: 'Clear',
     couldNotLoadMeds: 'Could not load medications',
+    couldNotConfirmMedication: 'Could not confirm medication',
+    couldNotConfirmMedBody: 'We could not confirm {name}. Please try again.',
+    couldNotSaveReminder: 'Could not save reminder. Please try again.',
+    couldNotUpdateReminder: 'Could not update reminder. Please try again.',
+    couldNotToggleReminders: 'Could not toggle reminders. Please try again.',
+    couldNotDeleteReminders: 'Could not delete reminders. Please try again.',
+    couldNotAddMedication: 'Could not add medication. Please try again.',
+    couldNotUpdateMedication: 'Could not update medication. Please try again.',
+    couldNotDeleteMedication: 'Could not delete medication. Please try again.',
     noMedicationsFound: 'No Medications Found',
     noMedsSub: 'Your medications will appear here once added.',
     noResultsLabel: 'No Results',
@@ -792,6 +853,7 @@ export const en = {
     allergyExplain: 'Why',
     allergyContinueBtn: 'I Understand, Continue',
     allergyCancelBtn: 'Cancel',
+    medicationAddedSuccessfully: 'Medication Added Successfully',
   },
 
   family: {
@@ -898,6 +960,8 @@ export const en = {
     noInvitationsReceived: 'No invitations received',
     noInvitationsSent: 'No sent invitations yet',
     invitedYou: 'invited you',
+    cannotInviteYourself: 'You cannot invite yourself.',
+    userNotFound: 'No user found with this email.',
     profileLabel: 'Profile:',
     roleLabel: 'Role:',
     decline: 'Decline',
@@ -946,7 +1010,17 @@ export const en = {
     caregiver: 'Caregiver',
     self: 'You',
     member: 'Member',
+    requiredFields: 'Please fill in all required fields',
+    editPhoneValidationFailed: 'Edit phone number validation failed',
 
+  },
+
+  // family errors
+  familyErrors: {
+    createProfileFailed: 'Failed to create profile.',
+    sendInvitationFailed: 'Failed to send invitation.',
+    updateProfileFailed: 'Failed to update profile.',
+    updateAllergiesFailed: 'Failed to update allergies or diseases.',
   },
 
   onboarding: {
@@ -981,6 +1055,9 @@ export const en = {
       heightError: 'Enter a valid height (50–300 cm)',
       weightError: 'Enter a valid weight (1–500 kg)',
       bloodTypeError: 'Blood type is required',
+      dobRequired: 'Date of birth is required',
+      dobFuture: 'Date of birth cannot be in the future',
+      dobInvalid: 'Enter a valid date of birth',
       continueBtn: 'Continue',
     },
     step2: {
@@ -1042,6 +1119,13 @@ export const en = {
       aiBtn: 'Use AI to Fill More Info',
       saving: 'Saving...',
       completeProfile: 'Complete My Profile',
+      errorMissingBasic: 'Basic information is missing. Please go back to step 1.',
+      successCreated: 'Patient profile created successfully!',
+      successAlreadyExists: 'Your health profile is already complete.',
+      errorValidation: 'Validation failed.',
+      errorNetwork: 'Cannot connect to the server. Please check your internet connection.',
+      errorGeneral: 'Something went wrong. Please try again.',
+      errorDuringSubmission: 'An error occurred during profile submission.',
     },
     emergency: {
       stepIndicator: 'Step 2 of 5',
@@ -1059,6 +1143,13 @@ export const en = {
       adding: 'Adding...',
       addContact: 'Add Emergency Contact',
       addedContacts: 'Added Emergency Contacts',
+      phoneRequired: 'Phone number is required',
+      phoneInvalid: 'Must be a valid Egyptian mobile number (e.g. 01012345678)',
+      phoneError: 'Invalid phone number',
+      failedDelete: 'Failed to delete contact',
+      failedLoad: 'Failed to load emergency contacts',
+      failedAdd: 'Failed to add emergency contact.',
+      confirmDelete: 'Are you sure you want to delete this emergency contact?',
       continueBtn: 'Continue',
     },
     aiUpload: {
@@ -1118,6 +1209,7 @@ export const en = {
     appointmentConfirmedNotifBody: '{title} with {provider} – marked as completed.',
     couldNotConfirmAppointment: 'Could not confirm appointment',
     couldNotConfirmApptBody: 'We could not confirm {title}. Please try again.',
+    
     appointmentReminder: 'Appointment Reminder',
     medicationReminderToast: 'Medication Reminder',
   },
@@ -1295,6 +1387,12 @@ export const en = {
     toastInvalidFileBody: 'Please choose an image file.',
     toastFileTooLargeTitle: 'File Too Large',
     toastFileTooLargeBody: 'Please choose an image under 6 MB.',
+    toastHealthSavedTitle: 'Saved',
+    toastHealthSavedBody: 'Health information updated successfully.',
+    toastHealthSaveFailedTitle: 'Save Failed',
+    toastHealthSaveFailedBody: 'Failed to save health information. Please check your input and try again.',
+    toastHealthValidationFailedBody: 'Validation failed. Please correct the highlighted fields.',
+    toastHealthUnexpectedErrorBody: 'An unexpected error occurred. Please try again later.',
     toastOwnPhoneError: 'You cannot add your own phone number as an emergency contact.',
   },
 
@@ -1330,6 +1428,18 @@ export const en = {
     analysisCompleteBody: 'has been analyzed successfully.',
     analysisFailed: 'Analysis Failed',
     analysisFailedBody: 'could not be analyzed.',
+  },
+  tour: {
+    step: 'Step',
+    of: 'of',
+    skip: 'Skip',
+    skipTour: 'Skip Tour',
+    previous: 'Back',
+    previousStep: 'Previous Step',
+    next: 'Next',
+    nextStep: 'Next Step',
+    finish: 'Finish Tour',
+    mascotAria: 'Rafiq Assistant Message',
   },
 };
 

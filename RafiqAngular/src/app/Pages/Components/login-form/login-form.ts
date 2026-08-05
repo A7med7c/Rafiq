@@ -15,7 +15,7 @@ import { AuthService } from '../../../Services/auth-service';
 import { HealthProfileService } from '../../../Services/health-profile.service';
 import { LocalizationService } from '../../../Services/localization.service';
 import { environment } from '../../../Environments/Environment';
-import { getApiErrorMessages } from '../../../Utils/api-error.util';
+import { getApiErrorMessages, localizeKnownApiMessage } from '../../../Utils/api-error.util';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
 function loginIdentifierValidator(control: AbstractControl): ValidationErrors | null {
@@ -62,7 +62,8 @@ export class LoginFormComponent implements OnInit {
   ngOnInit(): void {
     this.googleService.initialize(
       environment.googleClientId,
-      (idToken: string) => this.handleGoogleLogin(idToken)
+      (idToken: string) => this.handleGoogleLogin(idToken),
+      this.l10n.lang()
     );
   }
 
@@ -83,11 +84,11 @@ export class LoginFormComponent implements OnInit {
 
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (response) => {
-        this.successMessage = response.message;
+        this.successMessage = this.localizeAuthMessage(response.message);
         this.navigateAfterLogin();
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error).map(message => this.localizeAuthMessage(message));
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       },
@@ -109,11 +110,11 @@ export class LoginFormComponent implements OnInit {
 
     this.authService.loginWithGoogle(idToken).subscribe({
       next: (response) => {
-        this.successMessage = response.message;
+        this.successMessage = this.localizeAuthMessage(response.message);
         this.navigateAfterLogin();
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error).map(message => this.localizeAuthMessage(message));
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       },
@@ -137,6 +138,10 @@ export class LoginFormComponent implements OnInit {
         this.navigatePatientAfterLogin();
       }
     });
+  }
+
+  private localizeAuthMessage(message: string): string {
+    return localizeKnownApiMessage(message, this.t());
   }
 
   private navigatePatientAfterLogin(): void {

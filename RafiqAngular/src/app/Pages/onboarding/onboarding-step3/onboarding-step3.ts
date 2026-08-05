@@ -24,19 +24,23 @@ export class OnboardingStep3 implements OnInit {
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
-  readonly steps = [
-    { label: 'Basic Info' },
-    { label: 'Emergency Contacts' },
-    { label: 'Allergies' },
-    { label: 'Chronic Diseases' },
-    { label: 'Review' },
-  ];
+  get steps() {
+    return [
+      { label: this.t().onboarding.step4.basicInfo },
+      { label: this.t().onboarding.step4.emergencyContacts },
+      { label: this.t().onboarding.step4.allergies },
+      { label: this.t().onboarding.step4.chronicDiseases },
+      { label: this.t().onboarding.step4.title },
+    ];
+  }
 
-  readonly statusOptions = [
-    { value: DiseaseStatus.Active, label: 'Active' },
-    { value: DiseaseStatus.Controlled, label: 'Controlled' },
-    { value: DiseaseStatus.Resolved, label: 'Resolved' }
-  ];
+  get statusOptions() {
+    return [
+      { value: DiseaseStatus.Active, label: this.t().myProfile.active },
+      { value: DiseaseStatus.Controlled, label: this.t().myProfile.controlled },
+      { value: DiseaseStatus.Resolved, label: this.t().myProfile.resolved }
+    ];
+  }
 
   /** 'yes' | 'no' */
   hasConditions: 'yes' | 'no' = 'no';

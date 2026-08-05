@@ -66,10 +66,9 @@
                     <span class="ai-sb-title">{{ conv.title }}</span>
                   }
 
-                  <!-- ⋮ menu trigger -->
                   <button type="button" class="ai-sb-more"
                     (click)="toggleMenu($event, conv.id)"
-                    title="More options">
+                    [title]="t().aiAssistant.moreOptions">
                     <i class="fa-solid fa-ellipsis-vertical"></i>
                   </button>
 
@@ -79,18 +78,18 @@
                       <button type="button" class="ai-sb-menu-item"
                         (click)="togglePin($event, conv.id); closeMenu()">
                         <i class="fa-solid fa-thumbtack"></i>
-                        {{ pinnedIds().has(conv.id) ? 'Unpin' : 'Pin' }}
+                        {{ pinnedIds().has(conv.id) ? t().common.dismiss : t().common.save }}
                       </button>
                       <button type="button" class="ai-sb-menu-item"
                         (click)="startRename(conv.id, conv.title)">
                         <i class="fa-solid fa-pencil"></i>
-                        Rename
+                        {{ t().aiAssistant.rename }}
                       </button>
                       <div class="ai-sb-menu-divider"></div>
                       <button type="button" class="ai-sb-menu-item ai-sb-menu-item--danger"
                         (click)="deleteConversation($event, conv.id); closeMenu()">
                         <i class="fa-solid fa-trash-can"></i>
-                        Delete
+                        {{ t().common.delete }}
                       </button>
                     </div>
                   }
@@ -116,7 +115,7 @@
             <span class="online-dot"></span>
           </div>
           <div class="ai-hdr-info">
-            <h3 class="ai-main-title">Rafiq AI</h3>
+            <h3 class="ai-main-title">{{ t().sidebar.aiAssistant }}</h3>
             @if (selectedConversation()) {
               <p class="ai-main-sub">{{ selectedConversation()!.title }}</p>
             } @else {

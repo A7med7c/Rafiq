@@ -41,6 +41,10 @@ export const ar: Translations = {
     page: 'صفحة',
     dismiss: 'إخفاء',
     backToFamilyProfiles: 'الرجوع لملفات العائلة',
+    pageTour: 'جولة الصفحة',
+    drPrefix: 'د.',
+    cm: 'سم',
+    kg: 'كجم',
   },
 
   sidebar: {
@@ -65,6 +69,13 @@ export const ar: Translations = {
     navigateTo: 'روح لـ',
     robotGreeting: 'مرحبًا! أنا هنا لمساعدتك، إذا احتجت أي شيء فأنا معك.',
     openVoice: 'تحدث مع رفيق بالصوت',
+  },
+
+  familyErrors: {
+    createProfileFailed: 'فشل إنشاء الملف.',
+    sendInvitationFailed: 'فشل إرسال الدعوة.',
+    updateProfileFailed: 'فشل تحديث الملف.',
+    updateAllergiesFailed: 'فشل تحديث الحساسية أو الأمراض.',
   },
 
   header: {
@@ -101,6 +112,21 @@ export const ar: Translations = {
     noAccount: 'معندكش حساب؟',
     signUp: 'سجل دلوقتي',
     or: 'أو',
+    googleSignIn: 'تسجيل الدخول باستخدام Google',
+    loginSuccess: 'تم تسجيل الدخول بنجاح',
+    invalidEmailPassword: 'الإيميل أو كلمة المرور غير صحيحة',
+  },
+
+  validation: {
+    invalidEmailAddress: 'عنوان البريد الإلكتروني غير صحيح',
+    weightBetween: 'الوزن لازم يكون بين 1 و500.',
+    heightBetween: 'الطول لازم يكون بين 30 و300.',
+    medicineNameRequired: 'اسم الدواء مطلوب.',
+    dosageRequired: 'الجرعة مطلوبة.',
+    frequencyRequired: 'التكرار مطلوب.',
+    durationRequired: 'المدة مطلوبة.',
+    selectedTimePassed: 'الوقت المحدد فات بالفعل.',
+    contactsValidationFailed: 'فشل التحقق من بيانات جهات الاتصال.',
   },
 
   register: {
@@ -232,6 +258,9 @@ export const ar: Translations = {
     upcomingAppointment: 'الموعد الجاي',
     viewAll: 'شوف الكل',
     noUpcomingAppointments: 'مفيش مواعيد جاية',
+    addressLabel: 'العنوان',
+    addressPlaceholder: 'اكتب عنوان الموعد',
+    reminder30MinBefore: 'قبل 30 دقيقة',
     addNewAppointment: 'أضف موعد جديد',
     add: 'أضف',
     familyOverview: 'نظرة على العيلة',
@@ -275,6 +304,8 @@ export const ar: Translations = {
     generatingReportSub: 'ممكن يستغرق ثواني قليلة أثناء إعداد الذكاء الاصطناعي لتلخيصك',
     selectProfileTitle: 'اختار الملف الشخصي',
     selectProfileDesc: 'اختار مين تحب تولد الملف الطبي بتاعه',
+    familySummaryEmpty: 'لا توجد بيانات صحية كافية متاحة بعد لـ {name}.',
+    familySummaryEmptySub: 'ارفع سجلات طبية لتوليد ملخص بالذكاء الاصطناعي.',
   },
 
   medicalRecordsPage: {
@@ -286,6 +317,13 @@ export const ar: Translations = {
   },
 
   records: {
+    patientName: 'اسم المريض',
+    prescriptionDate: 'تاريخ الروشتة',
+    sortBy: 'ترتيب حسب',
+    medicinesInstructions: 'الأدوية والتعليمات',
+    medicine: 'الدواء',
+    changeImage: 'تغيير الصورة',
+    attachImageOptional: 'إرفاق صورة (اختياري)',
     labAnalysis: 'التحاليل',
     labDesc: 'ارفع تحاليل الدم والبول والمختبر',
     prescription: 'الروشتة',
@@ -418,6 +456,8 @@ export const ar: Translations = {
     durationPlaceholder: 'مثلاً: 7 أيام',
     notesPlaceholder: 'مثلاً: خد مع الأكل',
     medNameRequired: 'اسم الدوا مطلوب',
+    medicinePlaceholder: 'مثلاً: أموكسيسيلين',
+    selectedMedicineBoxImage: 'صورة علبة الدواء المختارة',
     saveMedicine: 'احفظ الدوا',
     uploadingImageBtn: 'جاري الرفع...',
     medicinesAddedSuccess: 'الأدوية اتضافت',
@@ -430,6 +470,8 @@ export const ar: Translations = {
     maybeLater: 'ممكن بعدين',
     setReminderNow: 'اضبط تذكيرة دلوقتي',
     aiAnalysisFailed: 'معرفناش نحلل الملف',
+    scanFailed: 'فشل المسح. حاول مرة اخرى.',
+    setReminderFailed: 'فشل ضبط التذكير. حاول مرة اخرى.',
     aiFailureText: 'معرفناش نحلل وثيقتك دلوقتي. حاول تاني أو اكتب التفاصيل بنفسك.',
     aiWrongDocType: 'نوع الملف غلط',
     aiUnreadableTitle: 'الصورة مش واضحة أو مش قابلة للقراءة',
@@ -438,6 +480,17 @@ export const ar: Translations = {
     tryAgain: 'حاول تاني',
     clearFilters: 'امسح الفلاتر',
     filteredLabel: 'مفلتر',
+    filtersTitle: 'فلاتر السجلات الطبية',
+    recordSavedSuccessfully: 'تم حفظ السجل بنجاح',
+    documentAlreadyExist: 'الوثيقة موجودة بالفعل',
+    recordDeletedSuccessfully: 'تم حذف السجل بنجاح.',
+    dateCannotBeLater: 'التاريخ لا يمكن أن يكون بعد اليوم.',
+    deleteFailed: 'فشل حذف السجل. حاول مرة اخرى.',
+    uploadFailed: 'فشل الرفع. حاول مرة اخرى.',
+    saveFailed: 'فشل حفظ السجل. حاول مرة اخرى.',
+    saveMedicineFailed: 'فشل حفظ الدواء.',
+    addMedicineFailed: 'فشل إضافة الدواء.',
+    addMedicinesFailed: 'فشل إضافة الأدوية.',
   },
 
   aiAssistant: {
@@ -565,6 +618,11 @@ export const ar: Translations = {
     noneReminder: 'لأ',
     customReminder: 'مخصص',
     minutesBefore: 'دقيقة قبل',
+    reminder15MinBefore: 'قبل 15 دقيقة',
+    reminder30MinBefore: 'قبل 30 دقيقة',
+    reminder1HourBefore: 'قبل ساعة',
+    reminder2HoursBefore: 'قبل ساعتين',
+    reminder1DayBefore: 'قبل يوم',
     notesLabel: 'ملاحظات',
     notesPlaceholder: 'أي ملاحظات أو تعليمات إضافية...',
     cancelBtn: 'إلغاء',
@@ -619,6 +677,7 @@ export const ar: Translations = {
     dental: 'فحص الأسنان',
     other: 'أخرى',
     followUp: 'زيارة متابعة',
+    validationFailed: 'فشل التحقق من بيانات المواعيد',
   },
 
   uploadValidation: {
@@ -703,6 +762,15 @@ export const ar: Translations = {
     boxScan: 'مسح ضوئي علبة',
     clearFilter: 'مسح',
     couldNotLoadMeds: 'معرفناش نحمل الأدوية',
+    couldNotConfirmMedication: 'فشل تأكيد الدواء. حاول مرة اخرى.',
+    couldNotConfirmMedBody: 'لم نستطع تأكيد {name}. حاول مرة اخرى.',
+    couldNotSaveReminder: 'فشل حفظ التذكير. حاول مرة اخرى.',
+    couldNotUpdateReminder: 'فشل تحديث التذكير. حاول مرة اخرى.',
+    couldNotToggleReminders: 'فشل تبديل حالة التذكيرات. حاول مرة اخرى.',
+    couldNotDeleteReminders: 'فشل حذف التذكيرات. حاول مرة اخرى.',
+    couldNotAddMedication: 'فشل إضافة الدواء. حاول مرة اخرى.',
+    couldNotUpdateMedication: 'فشل تحديث الدواء. حاول مرة اخرى.',
+    couldNotDeleteMedication: 'فشل حذف الدواء. حاول مرة اخرى.',
     noMedicationsFound: 'مفيش أدوية',
     noMedsSub: 'أدويتك هتظهر هنا لما تضيفهم.',
     noResultsLabel: 'مفيش نتائج',
@@ -794,6 +862,7 @@ export const ar: Translations = {
     allergyExplain: 'التفاصيل',
     allergyContinueBtn: 'فاهم، أكمل على مسؤوليتي',
     allergyCancelBtn: 'إلغاء',
+    medicationAddedSuccessfully: 'تمت إضافة الدواء بنجاح',
   },
 
   family: {
@@ -900,6 +969,8 @@ export const ar: Translations = {
     noInvitationsReceived: 'مفيش دعوات مستلمة',
     noInvitationsSent: 'مفيش دعوات مبعوتة لسه',
     invitedYou: 'دعاك',
+    cannotInviteYourself: 'لا يمكنك دعوة نفسك.',
+    userNotFound: 'لم يتم العثور على مستخدم بهذا البريد الإلكتروني.',
     profileLabel: 'الملف:',
     roleLabel: 'الدور:',
     decline: 'ارفض',
@@ -947,7 +1018,9 @@ export const ar: Translations = {
     guardian: 'الوصي',
     caregiver: 'المعالج',
     self: 'أنت',
-    member: 'عضو'
+    member: 'عضو',
+    requiredFields: 'من فضلك املأ كل الحقول المطلوبة',
+    editPhoneValidationFailed: 'فشل التحقق من تعديل رقم الهاتف'
   },
 
   onboarding: {
@@ -982,6 +1055,9 @@ export const ar: Translations = {
       heightError: 'اكتب طول صح (50–300 سم)',
       weightError: 'اكتب وزن صح (1–500 كجم)',
       bloodTypeError: 'فصيلة الدم مطلوبة',
+      dobRequired: 'تاريخ الميلاد مطلوب',
+      dobFuture: 'تاريخ الميلاد لا يمكن أن يكون في المستقبل',
+      dobInvalid: 'أدخل تاريخ ميلاد صحيح',
       continueBtn: 'كمل',
     },
     step2: {
@@ -1043,6 +1119,13 @@ export const ar: Translations = {
       aiBtn: 'استخدم الذكاء الاصطناعي لتكميل المعلومات',
       saving: 'جاري الحفظ...',
       completeProfile: 'اكمل ملفي',
+      errorMissingBasic: 'المعلومات الأساسية ناقصة. ارجع للخطوة الأولى.',
+      successCreated: 'تم إنشاء ملفك الصحي بنجاح!',
+      successAlreadyExists: 'ملفك الصحي مكتمل بالفعل.',
+      errorValidation: 'فشل التحقق من البيانات.',
+      errorNetwork: 'لا يمكن الاتصال بالخادم. تحقق من اتصالك بالإنترنت.',
+      errorGeneral: 'حدث خطأ ما. حاول مرة أخرى.',
+      errorDuringSubmission: 'حدث خطأ أثناء إرسال الملف.',
     },
     emergency: {
       stepIndicator: 'خطوة 2 من 5',
@@ -1060,6 +1143,13 @@ export const ar: Translations = {
       adding: 'جاري الإضافة...',
       addContact: 'أضف جهة طوارئ',
       addedContacts: 'جهات الطوارئ اللي اتضافت',
+      phoneRequired: 'رقم الهاتف مطلوب',
+      phoneInvalid: 'يجب أن يكون رقم موبايل مصري صحيح (مثال: 01012345678)',
+      phoneError: 'رقم الهاتف غير صحيح',
+      failedDelete: 'فشل حذف جهة الاتصال',
+      failedLoad: 'فشل تحميل جهات اتصال الطوارئ',
+      failedAdd: 'فشل إضافة جهة اتصال الطوارئ.',
+      confirmDelete: 'هل أنت متأكد أنك تريد حذف جهة اتصال الطوارئ هذه؟',
       continueBtn: 'كمل',
     },
     aiUpload: {
@@ -1296,6 +1386,12 @@ export const ar: Translations = {
     toastInvalidFileBody: 'اختار ملف صورة.',
     toastFileTooLargeTitle: 'الملف كبير أوي',
     toastFileTooLargeBody: 'اختار صورة أصغر من 6 ميجا.',
+    toastHealthSavedTitle: 'تم الحفظ',
+    toastHealthSavedBody: 'تم تحديث المعلومات الصحية بنجاح.',
+    toastHealthSaveFailedTitle: 'فشل الحفظ',
+    toastHealthSaveFailedBody: 'فشل حفظ المعلومات الصحية. الرجاء التحقق من المدخلات والمحاولة مرة أخرى.',
+    toastHealthValidationFailedBody: 'فشل التحقق من المدخلات. الرجاء تصحيح الحقول المظللة.',
+    toastHealthUnexpectedErrorBody: 'حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى لاحقاً.',
     toastOwnPhoneError: 'مينفعش تضيف رقمك الخاص كجهة طوارئ.',
   },
 
@@ -1331,5 +1427,17 @@ export const ar: Translations = {
     analysisCompleteBody: 'تم تحليله بنجاح.',
     analysisFailed: 'فشل التحليل',
     analysisFailedBody: 'تعذّر تحليله.',
+  },
+  tour: {
+    step: 'الخطوة',
+    of: 'من',
+    skip: 'تخطي',
+    skipTour: 'تخطي الجولة',
+    previous: 'السابق',
+    previousStep: 'الخطوة السابقة',
+    next: 'التالي',
+    nextStep: 'الخطوة التالية',
+    finish: 'إنهاء الجولة',
+    mascotAria: 'رسالة رفيق',
   },
 };

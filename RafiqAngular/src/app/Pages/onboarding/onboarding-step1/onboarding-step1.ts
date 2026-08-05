@@ -27,29 +27,35 @@ export class OnboardingStep1 implements OnInit {
 
   readonly today = new Date().toISOString().slice(0, 10);
 
-  readonly steps = [
-    { label: 'Basic Info' },
-    { label: 'Emergency Contacts' },
-    { label: 'Allergies' },
-    { label: 'Chronic Diseases' },
-    { label: 'Review' },
-  ];
+  get steps() {
+    return [
+      { label: this.t().onboarding.step4.basicInfo },
+      { label: this.t().onboarding.step4.emergencyContacts },
+      { label: this.t().onboarding.step4.allergies },
+      { label: this.t().onboarding.step4.chronicDiseases },
+      { label: this.t().onboarding.step4.title },
+    ];
+  }
 
-  readonly genderOptions = [
-    { value: Gender.Male, label: 'Male' },
-    { value: Gender.Female, label: 'Female' }
-  ];
+  get genderOptions() {
+    return [
+      { value: Gender.Male, label: this.t().common.male },
+      { value: Gender.Female, label: this.t().common.female }
+    ];
+  }
 
-  readonly bloodTypes = [
-    { value: BloodType.APositive, label: 'A+ (APositive)' },
-    { value: BloodType.ANegative, label: 'A- (ANegative)' },
-    { value: BloodType.BPositive, label: 'B+ (BPositive)' },
-    { value: BloodType.BNegative, label: 'B- (BNegative)' },
-    { value: BloodType.ABPositive, label: 'AB+ (ABPositive)' },
-    { value: BloodType.ABNegative, label: 'AB- (ABNegative)' },
-    { value: BloodType.OPositive, label: 'O+ (OPositive)' },
-    { value: BloodType.ONegative, label: 'O- (ONegative)' }
-  ];
+  get bloodTypes() {
+    return [
+      { value: BloodType.APositive, label: 'A+' },
+      { value: BloodType.ANegative, label: 'A-' },
+      { value: BloodType.BPositive, label: 'B+' },
+      { value: BloodType.BNegative, label: 'B-' },
+      { value: BloodType.ABPositive, label: 'AB+' },
+      { value: BloodType.ABNegative, label: 'AB-' },
+      { value: BloodType.OPositive, label: 'O+' },
+      { value: BloodType.ONegative, label: 'O-' }
+    ];
+  }
 
   readonly form: FormGroup = this.fb.group({
     dateOfBirth: ['', [Validators.required, this.notFutureDateValidator]],
@@ -90,12 +96,12 @@ export class OnboardingStep1 implements OnInit {
   getDateOfBirthError(): string {
     const ctrl = this.form.get('dateOfBirth');
     if (ctrl?.hasError('required')) {
-      return 'Date of birth is required';
+      return this.t().onboarding.step1.dobRequired;
     }
     if (ctrl?.hasError('futureDate')) {
-      return 'Date of birth cannot be in the future';
+      return this.t().onboarding.step1.dobFuture;
     }
-    return 'Enter a valid date of birth';
+    return this.t().onboarding.step1.dobInvalid;
   }
 
   isInvalid(field: 'dateOfBirth' | 'gender' | 'height' | 'weight' | 'bloodType'): boolean {

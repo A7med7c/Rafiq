@@ -25,19 +25,23 @@ export class OnboardingStep2 implements OnInit {
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
-  readonly steps = [
-    { label: 'Basic Info' },
-    { label: 'Emergency Contacts' },
-    { label: 'Allergies' },
-    { label: 'Chronic Diseases' },
-    { label: 'Review' },
-  ];
+  get steps() {
+    return [
+      { label: this.t().onboarding.step4.basicInfo },
+      { label: this.t().onboarding.step4.emergencyContacts },
+      { label: this.t().onboarding.step4.allergies },
+      { label: this.t().onboarding.step4.chronicDiseases },
+      { label: this.t().onboarding.step4.title },
+    ];
+  }
 
-  readonly severityOptions = [
-    { value: AllergySeverity.Severe, label: 'Severe' },
-    { value: AllergySeverity.Moderate, label: 'Moderate' },
-    { value: AllergySeverity.Mild, label: 'Mild' }
-  ];
+  get severityOptions() {
+    return [
+      { value: AllergySeverity.Severe, label: this.t().myProfile.severe },
+      { value: AllergySeverity.Moderate, label: this.t().myProfile.moderate },
+      { value: AllergySeverity.Mild, label: this.t().myProfile.mild }
+    ];
+  }
 
   /** 'yes' | 'no' */
   hasAllergies: 'yes' | 'no' = 'no';

@@ -57,13 +57,15 @@ export class OnboardingStep4 implements OnInit {
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
-  readonly steps = [
-    { label: 'Basic Info' },
-    { label: 'Emergency Contacts' },
-    { label: 'Allergies' },
-    { label: 'Chronic Diseases' },
-    { label: 'Review' },
-  ];
+  get steps() {
+    return [
+      { label: this.t().onboarding.step4.basicInfo },
+      { label: this.t().onboarding.step4.emergencyContacts },
+      { label: this.t().onboarding.step4.allergies },
+      { label: this.t().onboarding.step4.chronicDiseases },
+      { label: this.t().onboarding.step4.title },
+    ];
+  }
 
   step1: Step1Data | null = null;
   step2: Step2Data | null = null;
@@ -148,8 +150,8 @@ export class OnboardingStep4 implements OnInit {
 
   getGenderLabel(val: number): string {
     const num = Number(val);
-    if (num === Gender.Male) return 'Male';
-    if (num === Gender.Female) return 'Female';
+    if (num === Gender.Male) return this.t().common.male;
+    if (num === Gender.Female) return this.t().common.female;
     return '—';
   }
 
@@ -170,17 +172,17 @@ export class OnboardingStep4 implements OnInit {
 
   getSeverityLabel(val: number): string {
     const num = Number(val);
-    if (num === AllergySeverity.Severe) return 'Severe';
-    if (num === AllergySeverity.Moderate) return 'Moderate';
-    if (num === AllergySeverity.Mild) return 'Mild';
+    if (num === AllergySeverity.Severe) return this.t().myProfile.severe;
+    if (num === AllergySeverity.Moderate) return this.t().myProfile.moderate;
+    if (num === AllergySeverity.Mild) return this.t().myProfile.mild;
     return '—';
   }
 
   getStatusLabel(val: number): string {
     const num = Number(val);
-    if (num === DiseaseStatus.Active) return 'Active';
-    if (num === DiseaseStatus.Controlled) return 'Controlled';
-    if (num === DiseaseStatus.Resolved) return 'Resolved';
+    if (num === DiseaseStatus.Active) return this.t().myProfile.active;
+    if (num === DiseaseStatus.Controlled) return this.t().myProfile.controlled;
+    if (num === DiseaseStatus.Resolved) return this.t().myProfile.resolved;
     return '—';
   }
 
@@ -226,7 +228,7 @@ export class OnboardingStep4 implements OnInit {
 
   completeProfile(): void {
     if (!this.step1) {
-      this.submitError = 'Basic information is missing. Please go back to step 1.';
+      this.submitError = this.t().onboarding.step4.errorMissingBasic;
       return;
     }
 
@@ -239,7 +241,7 @@ export class OnboardingStep4 implements OnInit {
     this.healthProfile.createProfile(request).subscribe({
       next: (res) => {
         this.isSubmitting = false;
-        this.submitSuccess = res?.message || 'Patient profile created successfully!';
+        this.submitSuccess = res?.message || this.t().onboarding.step4.successCreated;
         this.clearSessionStorage();
         // Mark onboarding done — dashboard will show welcome tour
         if (typeof localStorage !== 'undefined') {
@@ -255,7 +257,7 @@ export class OnboardingStep4 implements OnInit {
         const body = err?.error;
         if (err.status === 409) {
           // Profile already exists — treat as success so the user can move forward
-          this.submitSuccess = 'Your health profile is already complete.';
+          this.submitSuccess = this.t().onboarding.step4.successAlreadyExists;
           this.clearSessionStorage();
           setTimeout(() => {
             this.router.navigate(['/dashboard']);
@@ -273,16 +275,16 @@ export class OnboardingStep4 implements OnInit {
                 messages.push(errVal);
               }
             }
-            this.submitError = messages.length ? messages.join(' ') : 'Validation failed.';
+            this.submitError = messages.length ? messages.join(' ') : this.t().onboarding.step4.errorValidation;
           } else if (body.message) {
             this.submitError = body.message;
           } else {
-            this.submitError = 'An error occurred during profile submission.';
+            this.submitError = this.t().onboarding.step4.errorDuringSubmission;
           }
         } else if (err.status === 0) {
-          this.submitError = 'Cannot connect to the server. Please check your internet connection.';
+          this.submitError = this.t().onboarding.step4.errorNetwork;
         } else {
-          this.submitError = 'Something went wrong. Please try again.';
+          this.submitError = this.t().onboarding.step4.errorGeneral;
         }
       },
     });

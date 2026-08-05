@@ -64,9 +64,9 @@
         <i class="fa-regular fa-comment-dots"></i>
         {{ t().sidebar.askNow }}
       </button>
-      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startPageTour()" title="ابدأ جولة هذه الصفحة">
+      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startPageTour()" [title]="t().common.pageTour">
         <i class="fa-solid fa-compass"></i>
-        جولة هذه الصفحة
+        {{ t().common.pageTour }}
       </button>
     </div>
   </aside>
@@ -803,7 +803,7 @@
                     </button>
                     }
                     }
-                    <button type="button" class="rec-action-btn" title="More options"
+                    <button type="button" class="rec-action-btn" [title]="t().aiAssistant.moreOptions"
                       (click)="toggleMedMenu(med.id)">
                       <i class="fa-solid fa-ellipsis-vertical"></i>
                     </button>
