@@ -3,11 +3,12 @@ import { Router } from '@angular/router';
 import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
+import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
 
 @Component({
   selector: 'app-onboarding-welcome',
   standalone: true,
-  imports: [AssistantAnchorDirective],
+  imports: [AssistantAnchorDirective, AvatarEngineComponent],
   templateUrl: './onboarding-welcome.html',
   styleUrl: './onboarding-welcome.css',
 })

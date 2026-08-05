@@ -38,10 +38,12 @@ interface Step3Data {
   conditions: ConditionEntry[];
 }
 
+import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
+
 @Component({
   selector: 'app-onboarding-step4',
   standalone: true,
-  imports: [CommonModule, AssistantAnchorDirective],
+  imports: [CommonModule, AssistantAnchorDirective, AvatarEngineComponent],
   templateUrl: './onboarding-step4.html',
   styleUrl: './onboarding-step4.css',
 })

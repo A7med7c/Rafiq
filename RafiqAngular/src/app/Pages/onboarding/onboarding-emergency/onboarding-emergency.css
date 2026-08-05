@@ -38,15 +38,7 @@
   width: 80px;
 }
 
-/* ===== Onboarding layout ===== */
-.onboarding-layout {
-  width: 100%;
-  max-width: 580px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
+/* ===== Onboarding layout — uses shared styles.css ===== */
 
 /* ===== Stepper ===== */
 .stepper-wrapper {

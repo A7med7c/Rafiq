@@ -951,14 +951,13 @@ export const en = {
 
   onboarding: {
     welcome: {
-      title: 'Welcome to Rafiq!',
-      subtitle: "Let's build your Health Profile",
-      subtitle2: 'This helps us personalize your experience and give you better insights.',
+      title: "Hello! I'm Rafiq",
+      subtitle2: "I'll guide you through entering your basic information <span class=\"highlight\">step by step</span> to provide a <span class=\"highlight\">personalized health experience</span> just for you.",
       personalized: 'Personalized AI',
       personalizedSub: 'Better insights for your health',
       smarterTracking: 'Smarter Tracking',
       smarterTrackingSub: 'Track what matters most',
-      getStarted: 'Get Started',
+      getStarted: "Let's Begin",
       lessThanTwoMinutes: 'This will take less than 2 minutes',
     },
     header: {

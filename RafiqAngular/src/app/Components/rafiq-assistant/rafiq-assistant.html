@@ -1,4 +1,4 @@
-@if (tourEngine.isPlaying()) {
+@if (tourEngine.isPlaying() && !isOnboardingPage()) {
   @for (stepIndex of [tourEngine.currentStepIndex()]; track stepIndex) {
 
     <!-- ══ Speech bubble — position is the single source of truth (floating-ui). ══ -->

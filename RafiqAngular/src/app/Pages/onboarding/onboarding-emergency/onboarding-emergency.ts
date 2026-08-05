@@ -9,10 +9,12 @@ import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
+import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
+
 @Component({
   selector: 'app-onboarding-emergency',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
   templateUrl: './onboarding-emergency.html',
   styleUrl: './onboarding-emergency.css',
 })

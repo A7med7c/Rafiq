@@ -200,11 +200,11 @@
 }
 
 .state--speaking .robot-avatar-png {
-  filter: drop-shadow(0 0 22px rgba(168, 85, 247, 0.8));
+  filter: drop-shadow(0 0 22px rgba(56, 189, 248, 0.7));
 }
 
 .state--speaking .avatar-aura-glow {
-  background: radial-gradient(circle at center, rgba(168, 85, 247, 0.4), transparent 70%);
+  background: radial-gradient(circle at center, rgba(56, 189, 248, 0.45), transparent 70%);
   animation: glowPulse 0.45s ease-in-out infinite alternate;
 }
 

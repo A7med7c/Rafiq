@@ -140,6 +140,16 @@
         </div>
       }
 
+      <!-- Embedded Assistant Guide -->
+      <div class="embedded-assistant-guide">
+        <div class="embedded-avatar">
+          <app-avatar-engine size="96px" state="speaking" />
+        </div>
+        <div class="embedded-speech-bubble">
+          <p>{{ l10n.isRtl() ? 'أضف جهة اتصال للطوارئ. إذا لم تؤكد تناول الدواء، يمكننا إرسال تنبيه لها.' : 'Add an emergency contact. If you do not confirm taking your medicine, we can send them an alert.' }}</p>
+        </div>
+      </div>
+
       <!-- Bottom actions -->
       <div class="action-footer">
         <button

@@ -153,6 +153,16 @@
         }
       </div>
 
+      <!-- Embedded Assistant Guide -->
+      <div class="embedded-assistant-guide">
+        <div class="embedded-avatar">
+          <app-avatar-engine size="96px" state="speaking" />
+        </div>
+        <div class="embedded-speech-bubble">
+          <p>{{ l10n.isRtl() ? 'في هذه الخطوة، اكتب بياناتك الأساسية: تاريخ الميلاد، النوع، الطول، الوزن، وفصيلة الدم. هذه المعلومات تساعدني على متابعة حالتك الصحية بدقة.' : 'In this step, enter your basic information: date of birth, gender, height, weight, and blood type. This helps me track your health accurately.' }}</p>
+        </div>
+      </div>
+
       <!-- Continue button -->
       <button type="submit" class="continue-btn">
         {{ t().onboarding.step1.continueBtn }}

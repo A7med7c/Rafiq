@@ -8,10 +8,12 @@ import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
+import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
+
 @Component({
   selector: 'app-onboarding-step2',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
   templateUrl: './onboarding-step2.html',
   styleUrl: './onboarding-step2.css',
 })

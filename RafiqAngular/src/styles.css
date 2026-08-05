@@ -76,12 +76,90 @@ img {
 /* Shared Onboarding Layout */
 .onboarding-layout {
   width: 100%;
-  max-width: 960px;
-  padding-left: 20px;
-  padding-right: 20px;
+  max-width: 820px;
+  padding-left: 16px;
+  padding-right: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.onboarding-card,
+.form-card,
+.review-card {
+  width: 100% !important;
+  max-width: 780px !important;
+  min-height: 520px !important;
+  padding: 36px 44px !important;
+  margin: 20px 0 0 !important;
+  border-radius: 32px !important;
+  box-shadow: 0 24px 60px rgba(8, 38, 74, 0.08), 0 4px 16px rgba(8, 38, 74, 0.02) !important;
+  border: 1px solid rgba(78, 137, 184, 0.12) !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+/* ═══════════════════════════════════════════════
+   EMBEDDED ASSISTANT GUIDE BOX (ONBOARDING FORMS)
+   ═══════════════════════════════════════════════ */
+.embedded-assistant-guide {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin: 24px 0 20px;
+  box-sizing: border-box;
+}
+
+.embedded-avatar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.embedded-speech-bubble {
+  position: relative;
+  flex: 1;
+  background: #f0f9fe;
+  border: 1.5px solid #bae6fd;
+  border-radius: 20px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 14px rgba(14, 175, 215, 0.08);
+}
+
+.embedded-speech-bubble::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+/* LTR pointer (speech bubble tail pointing left to avatar) */
+[dir="ltr"] .embedded-speech-bubble::before {
+  left: -10px;
+  border-width: 8px 10px 8px 0;
+  border-color: transparent #bae6fd transparent transparent;
+}
+
+/* RTL pointer (speech bubble tail pointing right to avatar) */
+[dir="rtl"] .embedded-speech-bubble::before {
+  right: -10px;
+  border-width: 8px 0 8px 10px;
+  border-color: transparent transparent transparent #bae6fd;
+}
+
+.embedded-speech-bubble p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #08264a;
+  font-weight: 500;
 }
 
 /* ═══════════════════════════════════════════════

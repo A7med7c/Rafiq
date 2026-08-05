@@ -952,14 +952,13 @@ export const ar: Translations = {
 
   onboarding: {
     welcome: {
-      title: 'أهلاً بيك في رفيق! 👋',
-      subtitle: 'خلينا ننشئ ملفك الصحي',
-      subtitle2: 'ده هيساعدنا نعدل تجربتك ونقدملك معلومات ذكاء اصطناعي أفضل.',
+      title: 'مرحباً! أنا رفيق',
+      subtitle2: 'سأساعِدُك في إدخال بياناتِك الأساسية <span class="highlight">خطوة بخطوة</span> لتقديم <span class="highlight">تجربة صحية مخصصة</span> لك.',
       personalized: 'ذكاء اصطناعي مخصص',
       personalizedSub: 'معلومات أفضل لصحتك',
       smarterTracking: 'متابعة أذكى',
       smarterTrackingSub: 'تابع اللي مهم',
-      getStarted: 'ابدأ',
+      getStarted: 'لنبدأ',
       lessThanTwoMinutes: 'ده مش هياخد أكثر من 2 دقيقة',
     },
     header: {
