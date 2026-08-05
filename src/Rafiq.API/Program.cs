@@ -1,19 +1,20 @@
 
 using Hangfire;
-using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Rafiq.API.Extensions;
 using Rafiq.API.Middleware;
 using Rafiq.Application;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Domain.Constants;
 using Rafiq.Infrastructure;
+using Rafiq.Infrastructure.Persistence;
 using Rafiq.Infrastructure.Persistence.Identity;
 using Rafiq.Infrastructure.Services.auth;
-using Rafiq.Infrastructure.Services.MedicationReminders;
 using Rafiq.Infrastructure.Services.BackgroundJobs;
-using System.Text.Json.Serialization;
+using Rafiq.Infrastructure.Services.MedicationReminders;
 using Rafiq.Infrastructure.Services.Notifications;
+using System.Text.Json.Serialization;
 
 namespace Rafiq.API;
 
@@ -48,7 +49,8 @@ public class Program
                         .WithOrigins(
                             "http://localhost:4200",
                             "http://localhost",
-                            "https://localhost"
+                            "https://localhost",
+                            "https://rafiq-neon.vercel.app"
                         )
                         // AllowAnyHeader() is required, not optional, here: the client set
                         // is Capacitor's Android WebView (which injects its own
@@ -71,15 +73,15 @@ public class Program
 
         app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
-        if (app.Environment.IsDevelopment())
+        //if (app.Environment.IsDevelopment())
+        //{
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
         {
-            app.UseSwagger();
-            app.UseSwaggerUI(options =>
-            {
-                options.SwaggerEndpoint("/swagger/v1/swagger.json", "Rafiq API v1");
-                options.RoutePrefix = "swagger";
-            });
-        }
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "Rafiq API v1");
+            options.RoutePrefix = "swagger";
+        });
+        ///    }
 
         app.UseHttpsRedirection();
         app.UseCors("Angular");
@@ -95,6 +97,23 @@ public class Program
         {
             Authorization = new[] { new HangfireDashboardAuthorizationFilter() }
         });
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<RafiqDbContext>();
+
+            app.Logger.LogInformation(
+                "Database = {Db}",
+                db.Database.GetDbConnection().Database);
+
+            app.Logger.LogInformation(
+                "Server = {Server}",
+                db.Database.GetDbConnection().DataSource);
+
+            app.Logger.LogInformation(
+                "Roles Count = {Count}",
+                await db.Roles.CountAsync());
+        }
 
         await SeedRolesAndAdminAsync(app);
 
