@@ -18,7 +18,7 @@ export class AiChatService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/chat`;
 
-  readonly isPanelOpen = signal(true);
+  readonly isPanelOpen = signal(false);
 
   // AI access restriction — loaded once on chat init, re-checked when panel opens.
   readonly isAiRestricted = signal(false);

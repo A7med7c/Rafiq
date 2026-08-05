@@ -148,8 +148,9 @@ export const ar: Translations = {
     askAI: 'اسأل رفيق',
     myProfile: 'ملفي الشخصي',
     settings: 'الإعدادات',
-    logout: 'خروج تسجيل',
+    logout: 'تسجيل خروج',
     notifications: 'الإشعارات',
+    rateApp: 'تقييم',
   },
 
   language: {
@@ -179,6 +180,10 @@ export const ar: Translations = {
     forgotPassword: 'نسيت كلمة المرور؟',
     loggingIn: 'جاري الدخول...',
     logIn: 'تسجيل الدخول',
+    invalidCredentials: 'البريد الإلكتروني / رقم الهاتف أو كلمة المرور غير صحيحة.',
+    verifyEmailBeforeLogin: 'يرجى تأكيد بريدك الإلكتروني قبل تسجيل الدخول.',
+    loginSuccess: 'تم تسجيل الدخول بنجاح.',
+    googleLoginSuccess: 'تم تسجيل الدخول باستخدام Google بنجاح.',
     noAccount: 'معندكش حساب؟',
     signUp: 'سجل دلوقتي',
   },
@@ -248,6 +253,9 @@ export const ar: Translations = {
     showPassword: 'أظهر كلمة المرور',
     hidePassword: 'اخفي كلمة المرور',
     seconds: 'ث',
+    otpSentSuccess: 'تم إرسال كود التحقق بنجاح',
+    otpVerifiedSuccess: 'تم التحقق من الكود بنجاح',
+    passwordResetSuccess: 'تم إعادة تعيين كلمة المرور بنجاح',
   },
 
   verifyAccount: {
@@ -930,6 +938,10 @@ export const ar: Translations = {
     durationPlaceholder: 'مثلاً: 7 أيام',
     notesOptionalLabel: 'ملاحظات (اختياري)',
     notesMedPlaceholder: 'مثلاً: خد مع الأكل',
+    medNameRequiredError: 'اسم الدوا مطلوب.',
+    dosageRequiredError: 'الجرعة مطلوبة.',
+    frequencyRequiredError: 'التكرار مطلوب.',
+    durationRequiredError: 'المدة مطلوبة.',
     addMedicationBtn: 'أضف الدوا',
     editMedicationTitle: 'عدل الدوا',
     saveChangesBtn: 'احفظ التغييرات',
@@ -949,7 +961,30 @@ export const ar: Translations = {
     allergyExplain: 'التفاصيل',
     allergyContinueBtn: 'فاهم، أكمل على مسؤوليتي',
     allergyCancelBtn: 'إلغاء',
+
+    // Notifications
+    alreadyUpdated: 'تم تحديث {name} مسبقاً.',
+    doseSkipped: 'تم تخطي جرعة {name}.',
+    skipDoseFailed: 'تعذّر تخطي الجرعة.',
+    snoozeFailed: 'تعذّر تأجيل تذكير {name}.',
+    snoozedFor: 'تم تأجيل تذكير {name} لمدة {minutes} دقيقة.',
+    snoozeReminderFailed: 'تعذّر تأجيل التذكير.',
+    markedTaken: 'تم تسجيل {name} كمأخوذ. عمل رائع! 💊',
+    confirmMedFailed: 'تعذّر تأكيد الدواء.',
+    saveReminderFailed: 'تعذّر حفظ التذكير.',
+    reminderUpdated: 'تم تحديث تذكير {name}.',
+    updateReminderFailed: 'تعذّر تحديث التذكير.',
+    remindersPaused: 'تم إيقاف تذكيرات {name}.',
+    remindersResumed: 'تم استئناف تذكيرات {name}.',
+    toggleRemindersFailed: 'تعذّر تغيير حالة التذكيرات.',
+    remindersDeleted: 'تم حذف تذكيرات {name}.',
+    deleteRemindersFailed: 'تعذّر حذف التذكيرات.',
+    addedSuccess: 'تمت إضافة {name} بنجاح.',
+    updatedSuccess: 'تم تحديث {name} بنجاح.',
+    removedFromList: 'تم إزالة {name} من قائمة أدويتك.',
+    deleteMedFailed: 'تعذّر حذف الدواء.',
   },
+  
 
   family: {
     title: 'أفراد العيلة',
@@ -958,6 +993,7 @@ export const ar: Translations = {
     supervisionSettings: 'إعدادات الإشراف',
     addFamilyMember: 'أضف فرد للعيلة',
     addMember: 'أضف فرد',
+    fillRequiredFields: 'يرجى ملء جميع الحقول المطلوبة.',
     noProfilesYet: 'مفيش ملفات لسه',
     noProfilesSub: 'ضيف أفراد عيلتك عشان تقدر تتحكم في المواعيد والأدوية والتذكيرات والسجلات الصحية من مكان واحد.',
     youBadge: 'أنت',
@@ -1573,6 +1609,19 @@ export const ar: Translations = {
     versionNumber: '1.0.0',
     // Logout
     logoutBtn: 'تسجيل الخروج',
+  },
+
+  welcome: {
+    step1Title: 'أهلاً بك في رفيق',
+    step1Text: 'رفيق هو مساعدك الصحي الذكي، يساعدك أنت وعائلتك في حفظ السجلات الطبية، فهم التقارير باستخدام الذكاء الاصطناعي، وإدارة المواعيد والأدوية في مكان واحد.',
+    step2Title: 'خصوصيتك وسرية بياناتك أولاً',
+    step2Text: 'نحافظ على بياناتك الطبية وبيانات أفراد عائلتك بأعلى معايير الأمان والتشفير، مع إمكانية التحكم الكامل فيمن يمكنه الوصول إليها.',
+    step3Title: 'ذكاء يساعدك على المتابعة',
+    step3Text: 'نستخدم الذكاء الاصطناعي لتحليل سجلاتك وتقاريرك بالأدوية والمواعيد، وتنظيمها، وتقديم ملخصات واضحة، ومساعدتك على اتخاذ قرارات صحية أفضل لك ولعائلتك.',
+    step4Title: 'كل بيانات عائلتك في مكان واحد',
+    step4Text: 'احفظ وأدر سجلاتك جميع أفراد العائلة بسهولة من مكان واحد، وشارك من تختار من أفراد العائلة أو الأطباء، لتجربة رعاية صحية متكاملة.',
+    next: 'التالي',
+    getStarted: 'ابدأ الآن'
   },
 
   bottomNav: {

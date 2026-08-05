@@ -148,6 +148,7 @@ export const en = {
     settings: 'Settings',
     logout: 'Logout',
     notifications: 'Notifications',
+    rateApp: 'Rate Rafiq',
   },
 
   language: {
@@ -177,6 +178,10 @@ export const en = {
     forgotPassword: 'Forgot Password?',
     loggingIn: 'Logging in...',
     logIn: 'Log In',
+    invalidCredentials: 'Invalid email / phone number or password.',
+    verifyEmailBeforeLogin: 'Please verify your email before logging in.',
+    loginSuccess: 'Login successful.',
+    googleLoginSuccess: 'Google login successful.',
     noAccount: "Don't have an account?",
     signUp: 'Sign Up',
   },
@@ -246,6 +251,9 @@ export const en = {
     showPassword: 'Show password',
     hidePassword: 'Hide password',
     seconds: 's',
+    otpSentSuccess: 'OTP has been sent successfully',
+    otpVerifiedSuccess: 'OTP verified successfully',
+    passwordResetSuccess: 'Password reset successfully',
   },
 
   verifyAccount: {
@@ -928,6 +936,10 @@ export const en = {
     durationPlaceholder: 'e.g. 7 days',
     notesOptionalLabel: 'Notes (optional)',
     notesMedPlaceholder: 'e.g. Take with food',
+    medNameRequiredError: 'Medicine name is required.',
+    dosageRequiredError: 'Dosage is required.',
+    frequencyRequiredError: 'Frequency is required.',
+    durationRequiredError: 'Duration is required.',
     addMedicationBtn: 'Add Medication',
     editMedicationTitle: 'Edit Medication',
     saveChangesBtn: 'Save Changes',
@@ -947,6 +959,28 @@ export const en = {
     allergyExplain: 'Why',
     allergyContinueBtn: 'I Understand, Continue',
     allergyCancelBtn: 'Cancel',
+
+    // Notifications
+    alreadyUpdated: '{name} has already been updated.',
+    doseSkipped: '{name} dose skipped.',
+    skipDoseFailed: 'Could not skip dose.',
+    snoozeFailed: '{name} could not be snoozed.',
+    snoozedFor: '{name} reminder snoozed for {minutes} minutes.',
+    snoozeReminderFailed: 'Could not snooze reminder.',
+    markedTaken: '{name} marked as taken. Great job! 💊',
+    confirmMedFailed: 'Could not confirm medication.',
+    saveReminderFailed: 'Could not save reminder.',
+    reminderUpdated: 'Reminder updated for {name}.',
+    updateReminderFailed: 'Could not update reminder.',
+    remindersPaused: 'Reminders paused for {name}.',
+    remindersResumed: 'Reminders resumed for {name}.',
+    toggleRemindersFailed: 'Could not toggle reminders.',
+    remindersDeleted: 'Reminders deleted for {name}.',
+    deleteRemindersFailed: 'Could not delete reminders.',
+    addedSuccess: '{name} added successfully.',
+    updatedSuccess: '{name} updated successfully.',
+    removedFromList: '{name} has been removed from your medication list.',
+    deleteMedFailed: 'Could not delete medication.',
   },
 
   family: {
@@ -956,6 +990,7 @@ export const en = {
     supervisionSettings: 'Supervision Settings',
     addFamilyMember: 'Add Family Member',
     addMember: 'Add Member',
+    fillRequiredFields: 'Please fill in all required fields.',
     noProfilesYet: 'No profiles yet',
     noProfilesSub: 'Add your family members to help manage appointments, medications, reminders, and health records from one place.',
     youBadge: 'You',
@@ -1572,6 +1607,19 @@ export const en = {
     versionNumber: '1.0.0',
     // Logout
     logoutBtn: 'Log Out',
+  },
+
+  welcome: {
+    step1Title: 'Welcome to Rafiq',
+    step1Text: 'Rafiq is your smart health assistant, helping you and your family store medical records, understand reports using AI, and manage appointments and medications in one place.',
+    step2Title: 'Your Privacy and Data Security First',
+    step2Text: 'We protect your and your family’s medical data with the highest security and encryption standards, giving you full control over who can access it.',
+    step3Title: 'Intelligence to Help You Track',
+    step3Text: 'We use AI to analyze and organize your records, medications, and appointments, providing clear summaries and helping you make better health decisions for you and your family.',
+    step4Title: 'All Your Family’s Data in One Place',
+    step4Text: 'Easily save and manage all family members’ records from one place, and share with chosen family or doctors for a complete healthcare experience.',
+    next: 'Next',
+    getStarted: 'Start Now'
   },
 
   bottomNav: {

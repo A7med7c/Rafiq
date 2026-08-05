@@ -423,7 +423,7 @@ export class FamilyProfiles implements OnInit {
   submitCreateManaged(): void {
     const f = this.createForm;
     if (!f.firstName.trim() || !f.lastName.trim() || !f.dateOfBirth || !f.gender || !f.relationship) {
-      this.errorMessage = 'Please fill in all required fields.';
+      this.errorMessage = this.t().family.fillRequiredFields;
       return;
     }
     this.submitting.set(true);
@@ -468,7 +468,7 @@ export class FamilyProfiles implements OnInit {
   submitInvite(): void {
     const f = this.inviteForm;
     if (!f.profileId || !f.email.trim() || !f.role) {
-      this.errorMessage = 'Please fill in all required fields.';
+      this.errorMessage = this.t().family.fillRequiredFields;
       return;
     }
     this.submitting.set(true);
@@ -516,7 +516,7 @@ export class FamilyProfiles implements OnInit {
   submitEditProfile(): void {
     const f = this.editForm;
     if (!f.firstName?.trim() || !f.lastName?.trim() || !f.dateOfBirth || !f.gender) {
-      this.editError = 'Please fill in all required fields.';
+      this.editError = this.t().family.fillRequiredFields;
       return;
     }
     const profileId = this.selectedProfile()?.userHealthProfileId;

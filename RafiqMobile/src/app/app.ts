@@ -32,7 +32,7 @@ export class App {
   private _fabOffset = { x: 0, y: 0 };
 
   get showFab(): boolean {
-    return this.router.url === '/dashboard' && !this.aiChatService.isPanelOpen();
+    return !this.aiChatService.isPanelOpen();
   }
 
   onFabPointerDown(e: PointerEvent): void {

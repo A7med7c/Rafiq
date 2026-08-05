@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { Welcome } from './Pages/welcome/welcome';
 import { Login } from './Pages/Auth/login/login';
 import { Register } from './Pages/Auth/register/register';
 import { ForgotPassword } from './Pages/Auth/forgot-password/forgot-password';
@@ -8,7 +9,6 @@ import { MedicalRecords } from './Pages/medical-records/medical-records';
 import { RecordDetail } from './Pages/record-detail/record-detail';
 import { Appointments } from './Pages/appointments/appointments';
 import { AppointmentsHistory } from './Pages/appointments-history/appointments-history';
-import { AiAssistant } from './Pages/ai-assistant/ai-assistant';
 import { Medications } from './Pages/medications/medications';
 import { OnboardingWelcome } from './Pages/onboarding/onboarding-welcome/onboarding-welcome';
 import { OnboardingStep1 } from './Pages/onboarding/onboarding-step1/onboarding-step1';
@@ -27,7 +27,8 @@ import { FamilyPermissions } from './Pages/family-permissions/family-permissions
 import { adminGuard } from './Guards/admin.guard';
 import { MyProfile } from './Pages/my-profile/my-profile';
 export const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '', redirectTo: '/welcome', pathMatch: 'full' },
+  { path: 'welcome', component: Welcome, canActivate: [guestGuard] },
   {
     path: 'admin',
     canActivate: [adminGuard],
@@ -40,11 +41,10 @@ export const routes: Routes = [
   { path: 'appointments', component: Appointments, canActivate: [authGuard] },
   { path: 'appointments-history', component: AppointmentsHistory, canActivate: [authGuard] },
   { path: 'medications', component: Medications, canActivate: [authGuard] },
-  { path: 'ai-assistant', component: AiAssistant, canActivate: [authGuard] },
 
   { path: 'login', component: Login, canActivate: [guestGuard] },
   { path: 'register', component: Register, canActivate: [guestGuard] },
-  { path: 'forgot-password', component: ForgotPassword, canActivate: [guestGuard] },
+  { path: 'forgot-password', component: ForgotPassword },
   { path: 'verify-account', component: VerifyAccount, canActivate: [guestGuard] },
   { path: 'family-profiles', component: FamilyProfiles, canActivate: [authGuard] },
   { path: 'family-profiles/add', component: FamilyProfiles, canActivate: [authGuard] },

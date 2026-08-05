@@ -50,6 +50,8 @@ export class VoiceAgentPanel implements OnInit, OnDestroy {
   readonly conversationCreated = output<ConversationSummaryDto>();
   readonly messageStarted      = output<string>();   // spoken text → parent adds optimistic msg
   readonly responseReceived    = output<string>();   // conversationId → parent reloads history
+  readonly switchToChat        = output<void>();     // requested to switch to keyboard mode
+  readonly closeRequested      = output<void>();     // requested to close panel entirely
 
   // ── Internal state ──────────────────────────────────────────────────────────
   readonly state           = signal<VoiceState>('idle');
