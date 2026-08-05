@@ -63,6 +63,8 @@ export const en = {
     navigateTo: 'Navigate to',
     robotGreeting: "Hi! I'm here to help you. Let me know if you need anything.",
     openVoice: 'Talk to Rafiq AI by voice',
+    pageTour: 'Tour This Page',
+    pageTourTitle: 'Start a tour of this page',
   },
 
   header: {
@@ -983,6 +985,7 @@ export const en = {
       bloodTypeError: 'Blood type is required',
       continueBtn: 'Continue',
     },
+    stepperLabels: ['Basic Info', 'Emergency Contacts', 'Allergies', 'Chronic Diseases', 'Review'],
     step2: {
       stepIndicator: 'Step 3 of 5',
       title: 'Do you have any allergies?',

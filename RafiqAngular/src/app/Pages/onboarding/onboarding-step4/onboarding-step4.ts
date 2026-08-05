@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HealthProfileService } from '../../../Services/health-profile.service';
@@ -57,13 +57,9 @@ export class OnboardingStep4 implements OnInit {
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
-  readonly steps = [
-    { label: 'Basic Info' },
-    { label: 'Emergency Contacts' },
-    { label: 'Allergies' },
-    { label: 'Chronic Diseases' },
-    { label: 'Review' },
-  ];
+  readonly steps = computed(() =>
+    this.t().onboarding.stepperLabels.map(label => ({ label }))
+  );
 
   step1: Step1Data | null = null;
   step2: Step2Data | null = null;

@@ -6,6 +6,7 @@
  */
 
 import { TourScenario } from '../models/tour-scenario';
+import { DEFAULT_TOURS_EN } from './default-tours-en';
 
 // Onboarding pins the mascot+bubble to this constant viewport point on every step (no anchor,
 // no spotlight) rather than tracking a page element — keeps the group in the same visual spot
@@ -683,4 +684,5 @@ export const DEFAULT_TOURS: TourScenario[] = [
   MEDICATIONS_TOUR,
   FAMILY_PROFILES_TOUR,
   MY_PROFILE_TOUR,
+  ...DEFAULT_TOURS_EN,
 ];
