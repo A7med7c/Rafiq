@@ -206,3 +206,10 @@
 <app-rafiq-assistant></app-rafiq-assistant>
 <app-rating-popup></app-rating-popup>
 <app-document-analysis-card></app-document-analysis-card>
+
+@if (showFab) {
+<a (click)="aiChatService.openPanel()" role="button" tabindex="0"
+  style="position: fixed; bottom: 85px; right: 20px; z-index: 9999; cursor: pointer; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 4px 12px rgba(14,175,215,0.6));">
+  <img src="/images/RafiqLogo.png" alt="Rafiq AI Chat" style="width: 52px; height: 52px; object-fit: contain;">
+</a>
+}

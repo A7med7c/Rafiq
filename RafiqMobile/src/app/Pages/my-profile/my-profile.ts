@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
 import { ProfileCacheService } from '../../Services/profile-cache.service';
 import { HealthProfileService, PatientProfileResponse } from '../../Services/health-profile.service';
@@ -55,6 +55,7 @@ export class MyProfile implements OnInit {
   private readonly elRef = inject(ElementRef);
   private readonly http = inject(HttpClient);
   private readonly mediaPicker = inject(MediaPickerService);
+  private readonly route = inject(ActivatedRoute);
 
   // ── Sidebar / Header state ────────────────────────────────────────────────
   readonly sidebarCollapsed = signal(false);
@@ -196,6 +197,12 @@ export class MyProfile implements OnInit {
     this.applyResponsiveSidebar();
     this.loadProfile();
     this.loadContacts();
+    
+    this.route.queryParams.subscribe(params => {
+      if (params['view'] === 'settings') {
+        this.activeView.set('settings');
+      }
+    });
   }
 
   @HostListener('window:resize')
@@ -642,6 +649,17 @@ export class MyProfile implements OnInit {
         const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
       }
     });
+  }
+
+  // ── Password change ───────────────────────────────────────────────────────
+  requestPasswordChange(): void {
+    const email = this.authService.currentUser?.email;
+    if (!email) {
+      this.router.navigate(['/forgot-password']);
+      return;
+    }
+
+    this.router.navigate(['/forgot-password'], { queryParams: { email } });
   }
 
   // ── Delete Account ────────────────────────────────────────────────────────

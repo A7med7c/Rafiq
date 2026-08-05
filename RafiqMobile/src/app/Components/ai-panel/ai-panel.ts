@@ -210,9 +210,9 @@ export class AiPanel implements OnInit, OnDestroy {
   private static readonly PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/verify-account'];
 
   constructor() {
-    const initialHome = this.router.url.includes('/dashboard') || this.router.url === '/';
+    const initialHome = this.router.url.includes('/dashboard');
     this.isHomePage.set(initialHome);
-    if (initialHome) {
+    if (initialHome && this.authService.isLoggedIn) {
       this.aiChatService.ensurePanelMounted();
     }
 
@@ -220,11 +220,11 @@ export class AiPanel implements OnInit, OnDestroy {
       if (e instanceof NavigationEnd) {
         const url = e.urlAfterRedirects || e.url;
         const wasHome = this.isHomePage();
-        const nowHome = url.includes('/dashboard') || url === '/';
+        const nowHome = url.includes('/dashboard');
         this.isHomePage.set(nowHome);
         // Show the minimized hero (FAB) when landing on the home page — stays collapsed
         // until the user explicitly opens it (e.g. via "Ask AI for details").
-        if (nowHome && !wasHome) {
+        if (nowHome && !wasHome && this.authService.isLoggedIn) {
           this.aiChatService.ensurePanelMounted();
         }
       }

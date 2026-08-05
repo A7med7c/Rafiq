@@ -2,11 +2,33 @@
 
   <!-- ── GREETING HEADER ── -->
   <header class="dash-header">
-    <div class="dash-header__avatar">
+    <div class="dash-header__avatar" style="position: relative; cursor: pointer;" (click)="toggleDropdown()">
       @if (hasProfileImage) {
         <img [src]="avatarUrl" [alt]="displayName" class="dash-header__avatar-img">
       } @else {
         <div class="dash-header__avatar-initials" [style.background]="avatarBgColor">{{ userInitials }}</div>
+      }
+
+      @if (dropdownOpen()) {
+        <div class="dash-avatar-dropdown" (click)="$event.stopPropagation()">
+          <a routerLink="/my-profile" class="dash-dropdown-item">
+            <span>{{ t().header.myProfile }}</span>
+            <i class="fa-regular fa-user"></i>
+          </a>
+          <a routerLink="/my-profile" [queryParams]="{view: 'settings'}" class="dash-dropdown-item">
+            <span>{{ t().header.settings }}</span>
+            <i class="fa-solid fa-gear"></i>
+          </a>
+          <button type="button" class="dash-dropdown-item" (click)="openRatingPopup()">
+            <span>{{ t().header.rateApp }}</span>
+            <i class="fa-solid fa-star"></i>
+          </button>
+          <div class="dash-dropdown-div"></div>
+          <button type="button" class="dash-dropdown-item dash-dropdown-item--danger" (click)="logout()">
+            <span>{{ t().header.logout }}</span>
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </button>
+        </div>
       }
     </div>
     <app-language-switcher class="dash-header__lang"></app-language-switcher>
@@ -104,7 +126,7 @@
         }
 
         <div class="ai-hero__actions" style="margin-top: 16px;">
-          <button type="button" class="ai-hero__btn ai-hero__btn--outline" (click)="aiChatService.openPanel()" style="width: 100%;">
+          <button type="button" class="ai-hero__btn ai-hero__btn--outline" (click)="openAiPanel()" style="width: 100%;">
             <i class="fa-solid fa-robot"></i> {{ t().dashboard.summaryViewFull }}
           </button>
         </div>
@@ -192,7 +214,7 @@
           <span class="quick-action-box__circle bg-orange-light"><i class="fa-regular fa-bell txt-orange"></i></span>
           <span class="quick-action-box__lbl">{{ t().dashboard.reminders }}</span>
         </a>
-        <a href="javascript:void(0)" (click)="aiChatService.openPanel()" class="quick-action-box" style="cursor: pointer;">
+        <a (click)="openAiPanel()" class="quick-action-box" style="cursor: pointer;">
           <span class="quick-action-box__circle bg-teal-light"><i class="fa-solid fa-robot txt-teal"></i></span>
           <span class="quick-action-box__lbl">{{ t().dashboard.aiChat }}</span>
         </a>

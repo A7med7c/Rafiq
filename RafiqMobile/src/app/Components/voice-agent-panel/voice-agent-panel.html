@@ -1,12 +1,10 @@
-<div class="vap-footer">
-
+<div class="vap-footer vap-footer--new">
   @if (!captureSupported) {
     <!-- NOT SUPPORTED -->
     <div class="vap-bar vap-bar--unsupported">
       <i class="fa-solid fa-microphone-slash"></i>
       <span>{{ t().voiceAgent.notSupported }}</span>
     </div>
-
   } @else if (state() === 'error') {
     <!-- ERROR -->
     <div class="vap-bar vap-bar--error">
@@ -16,53 +14,53 @@
         {{ t().voiceAgent.retry }}
       </button>
     </div>
-
   } @else {
-    <!-- VOICE CONTROLS — sits in the footer like the composer -->
-    <div class="vap-controls">
+    <!-- Drag Handle -->
+    <div class="vap-drag-handle"></div>
 
-      <!-- Pulse rings animate only while listening -->
-      <div class="vap-mic-wrap" [class.vap-mic-wrap--listening]="state() === 'listening'">
-        <div class="vap-ring vap-ring--1"></div>
-        <div class="vap-ring vap-ring--2"></div>
+    <!-- Timer -->
+    <div class="vap-timer">
+      {{ recordingTime() }}
+    </div>
 
-        <!--
-          One button for the whole session:
-          • Inactive  → teal mic   → click starts session
-          • Active + listening/speaking → red stop → click ends session
-          • Active + processing → spinner, disabled (brief window; let it finish)
-        -->
-        <button
-          type="button"
-          class="vap-mic-btn"
-          [class.vap-mic-btn--stop]="isSessionActive() && state() !== 'processing'"
-          [class.vap-mic-btn--processing]="state() === 'processing'"
-          [disabled]="state() === 'processing'"
-          (click)="isSessionActive() ? stopSession() : startSession()"
-        >
-          @if (state() === 'processing') {
-            <i class="fa-solid fa-spinner fa-spin"></i>
-          } @else if (isSessionActive()) {
-            <i class="fa-solid fa-stop"></i>
-          } @else {
-            <i class="fa-solid fa-microphone"></i>
-          }
-        </button>
-      </div>
+    <!-- Visualizer -->
+    <div class="vap-visualizer" [class.vap-visualizer--listening]="state() === 'listening' || state() === 'speaking'">
+      @for (i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]; track i) {
+        <div class="vap-bar-anim"></div>
+      }
+    </div>
 
-      <p class="vap-status-label">
-        @if (state() === 'listening') {
-          {{ t().voiceAgent.listening }}
-        } @else if (state() === 'processing') {
-          {{ toolHint() ? t().voiceAgent.callingTool : t().voiceAgent.thinking }}
-        } @else if (state() === 'speaking') {
-          {{ t().voiceAgent.speaking }}
+    <!-- Swipe to Cancel -->
+    <div class="vap-cancel-hint">
+      اسحب للأعلي للإلغاء
+    </div>
+
+    <!-- Buttons Row -->
+    <div class="vap-buttons-row">
+      <button type="button" class="vap-btn-side" (click)="switchToChat.emit()">
+        <i class="fa-solid fa-keyboard"></i>
+      </button>
+      
+      <button
+        type="button"
+        class="vap-mic-btn-huge"
+        [class.vap-mic-btn--stop]="isSessionActive() && state() !== 'processing'"
+        [class.vap-mic-btn--processing]="state() === 'processing'"
+        [disabled]="state() === 'processing'"
+        (click)="isSessionActive() ? finalizeSession() : startSession()"
+      >
+        @if (state() === 'processing') {
+          <i class="fa-solid fa-spinner fa-spin"></i>
+        } @else if (isSessionActive()) {
+          <i class="fa-solid fa-stop"></i>
         } @else {
-          {{ t().voiceAgent.tapToSpeak }}
+          <i class="fa-solid fa-microphone"></i>
         }
-      </p>
+      </button>
 
+      <button type="button" class="vap-btn-side" (click)="closeRequested.emit()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
     </div>
   }
-
 </div>
