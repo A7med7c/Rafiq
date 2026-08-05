@@ -292,17 +292,8 @@ export class FamilyProfiles implements OnInit {
 
   /** The photo to show for a family/self profile, or null to fall back to the initials avatar. */
   profileAvatarUrl(profile: AccessibleProfileDto): string | null {
-    if (profile.isSelf) {
-      // Prefer the ProfileCache canonical (cache-busted) URL when available so updates
-      // to the signed-in user's photo propagate immediately across the app.
-      const cached = this.profileCache.profileImageUrl();
-      if (cached) return this.resolveProfileImageUrl(cached);
-
-      const path = this.authSvc.currentUser?.profileImageUrl;
-      return this.resolveProfileImageUrl(path ?? null);
-    }
-
-    return this.resolveProfileImageUrl(profile.profileImageUrl ?? null);
+    const path = profile.profileImageUrl || (profile.isSelf ? this.authSvc.currentUser?.profileImageUrl : null);
+    return this.resolveProfileImageUrl(path ?? null);
   }
 
   /** The photo to show for a profile member (registered account), or null for the initials avatar. */

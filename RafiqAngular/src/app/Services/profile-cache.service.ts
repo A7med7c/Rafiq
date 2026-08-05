@@ -1,10 +1,12 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HealthProfileService } from './health-profile.service';
+import { AuthService } from './auth-service';
 import { environment } from '../Environments/Environment';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileCacheService {
   private readonly healthSvc = inject(HealthProfileService);
+  private readonly authSvc = inject(AuthService);
 
   readonly profileImageUrl = signal<string | null>(null);
   readonly gender = signal<string | null>(null);
@@ -45,10 +47,11 @@ export class ProfileCacheService {
   /**
    * Returns the URL to display in the navbar:
    *   - user's own uploaded photo, or
+   *   - user's auth account profile photo, or
    *   - gender-appropriate default avatar
    */
   resolveNavbarAvatar(): string {
-    const imgUrl = this.profileImageUrl();
+    const imgUrl = this.profileImageUrl() || this.authSvc.currentUser?.profileImageUrl;
     if (imgUrl) return `${environment.fileBaseUrl}${imgUrl}`;
     const g = (this.gender() ?? '').toLowerCase();
     return g === 'female' || g === '2' ? 'images/sarah_avatar.png' : 'images/ahmed_avatar.png';
