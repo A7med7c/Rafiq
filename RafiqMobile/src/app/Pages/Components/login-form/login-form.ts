@@ -124,6 +124,57 @@ export class LoginFormComponent implements OnInit {
     });
   }
 
+  private handleUnverifiedAccount(error: HttpErrorResponse, errorMessages: string[]): boolean {
+    if (!this.isUnverifiedAccountError(error, errorMessages)) {
+      return false;
+    }
+
+    const rawId = this.loginForm.getRawValue().loginIdentifier?.trim() || '';
+    const errorBody = error.error as any;
+    const email = errorBody?.email || errorBody?.data?.email || (rawId.includes('@') ? rawId : '');
+
+    const redirectMsg = this.l10n.isRtl()
+      ? 'حسابك غير مفعل بعد. لقد أرسلنا رمز التحقق إلى بريدك الإلكتروني.'
+      : 'Your account is not verified. A verification code has been sent to your email.';
+
+    if (email) {
+      this.authService.resendOtp(email).subscribe({
+        next: () => {
+          void this.router.navigate(['/verify-account'], {
+            queryParams: { email, message: redirectMsg }
+          });
+        },
+        error: () => {
+          void this.router.navigate(['/verify-account'], {
+            queryParams: { email, message: redirectMsg }
+          });
+        }
+      });
+    } else {
+      void this.router.navigate(['/verify-account'], {
+        queryParams: { message: redirectMsg }
+      });
+    }
+
+    return true;
+  }
+
+  private isUnverifiedAccountError(error: HttpErrorResponse, messages: string[]): boolean {
+    const body = error.error as any;
+    if (body?.requiresVerification || body?.emailNotVerified || body?.code === 'EmailNotVerified' || body?.code === 'AccountNotVerified') {
+      return true;
+    }
+
+    const combinedText = [
+      body?.message || '',
+      body?.code || '',
+      ...(messages || []),
+      JSON.stringify(body || {})
+    ].join(' ').toLowerCase();
+
+    return /unverified|not verified|notverified|verify your|verify-email|verifyemail|email_not_verified/i.test(combinedText);
+  }
+
   private navigateAfterLogin(): void {
     // authService.login()/loginWithGoogle() only emit once the authenticated
     // user has been loaded, so currentUser is guaranteed to be set here.

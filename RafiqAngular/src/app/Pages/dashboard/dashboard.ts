@@ -378,6 +378,11 @@ export class Dashboard implements OnInit, OnDestroy {
     this.assistantOrchestrator.startTour('welcome-tour');
   }
 
+  startPageTour(): void {
+    if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
+    this.assistantOrchestrator.startTour('dashboard-tour');
+  }
+
   // ── Host Listeners ────────────────────────────────────────────────────────
   @HostListener('window:resize')
   onWindowResize(): void {

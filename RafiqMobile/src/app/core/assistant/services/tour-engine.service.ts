@@ -395,7 +395,7 @@ export class TourEngineService {
 
     // A fixedPosition step is always unanchored: no element is resolved, no spotlight is ever
     // drawn, and the bubble+mascot pin to the same constant viewport point every time.
-    const targetEl = step.fixedPosition ? null : effective.anchor ? this.resolveAnchorElement(effective.anchor) : null;
+    const targetEl = (step.fixedPosition || step.fixedPositionFromBottom) ? null : effective.anchor ? this.resolveAnchorElement(effective.anchor) : null;
 
     if (targetEl && typeof window !== 'undefined') {
       try {
@@ -416,22 +416,24 @@ export class TourEngineService {
       this.enterTimer = null;
     }
 
-    const enterDelay = targetEl ? STEP_ENTER_HIGHLIGHT_MS : 0;
+    const enterDelay = targetEl ? STEP_ENTER_HIGHLIGHT_MS : 100;
     this.enterTimer = setTimeout(() => {
       if (!this._isPlaying() || this._isPaused()) return;
 
-      if (targetEl && step.highlight && !step.fixedPosition) {
+      if (targetEl && step.highlight && !step.fixedPosition && !step.fixedPositionFromBottom) {
         const config = typeof step.highlight === 'object' ? step.highlight : undefined;
         this.highlightElementWithDriver(targetEl, config);
       } else {
         this.clearDriverHighlight();
       }
 
-      const positioned = step.fixedPosition
-        ? this.positionService.positionFixed(step.fixedPosition.x, step.fixedPosition.y)
-        : targetEl
-          ? this.positionService.positionToAnchor(targetEl)
-          : this.positionService.positionToCenter();
+      const positioned = step.fixedPositionFromBottom
+        ? this.positionService.positionFixedFromBottom(step.fixedPositionFromBottom.x, step.fixedPositionFromBottom.yFromBottom)
+        : step.fixedPosition
+          ? this.positionService.positionFixed(step.fixedPosition.x, step.fixedPosition.y)
+          : targetEl
+            ? this.positionService.positionToAnchor(targetEl)
+            : this.positionService.positionToCenter();
 
       Promise.resolve(positioned).then(() => {
         if (!this._isPlaying() || this._isPaused()) return;

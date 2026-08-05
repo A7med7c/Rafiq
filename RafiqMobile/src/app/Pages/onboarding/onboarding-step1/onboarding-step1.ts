@@ -7,11 +7,12 @@ import { Gender, BloodType } from '../../../Modles/health-profile-enums';
 import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
+import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
 
 @Component({
   selector: 'app-onboarding-step1',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
   templateUrl: './onboarding-step1.html',
   styleUrl: './onboarding-step1.css',
 })
@@ -22,6 +23,12 @@ export class OnboardingStep1 implements OnInit {
   private readonly tourEngine = inject(TourEngineService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
+
+  showMascotTip = true;
+
+  dismissMascotTip(): void {
+    this.showMascotTip = false;
+  }
 
   readonly today = new Date().toISOString().slice(0, 10);
 

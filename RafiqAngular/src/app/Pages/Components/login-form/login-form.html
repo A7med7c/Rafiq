@@ -89,7 +89,7 @@
       <div class="auth-divider">{{ t().login.or }}</div>
 
       <!-- Google -->
-      <div id="google-button" lang="en"></div>
+      <div id="google-button" [attr.lang]="l10n.lang()" [attr.aria-label]="t().login.googleSignIn"></div>
 
     </form>
 

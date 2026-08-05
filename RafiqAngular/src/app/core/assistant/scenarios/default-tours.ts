@@ -6,6 +6,7 @@
  */
 
 import { TourScenario } from '../models/tour-scenario';
+import { DEFAULT_TOURS_EN } from './default-tours-en';
 
 // Onboarding pins the mascot+bubble to this constant viewport point on every step (no anchor,
 // no spotlight) rather than tracking a page element — keeps the group in the same visual spot
@@ -411,7 +412,7 @@ export const DASHBOARD_TOUR: TourScenario = {
   steps: [
     {
       id: 'dash-welcome',
-      anchor: 'dashboard-nav',
+      anchor: 'sidebar-panel',
       route: '/dashboard',
       speech: 'أَهْلًا بِكَ يا {{userName}}. هَذِهِ القائِمَة الجانِبِيَّة لِلتَّنَقُّل بَيْن أَقْسام المِنَصَّة.',
       speechLanguage: 'ar-EG',
@@ -451,6 +452,30 @@ export const DASHBOARD_TOUR: TourScenario = {
       highlight: true,
     },
     {
+      id: 'dash-recent-records',
+      anchor: 'recent-records-card',
+      speech: 'هُنا آخِر السِّجِلَّات الطِّبِّيَّة المُضافَة، يُمْكِنُكَ الاطِّلَاع عَلَيْها أَو رَفْع سِجِلَّات جَدِيدَة.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'thinking',
+      highlight: true,
+    },
+    {
+      id: 'dash-medications',
+      anchor: 'medications-reminders-card',
+      speech: 'وهُنا أَدوِيَتُكَ وتَذْكِيراتُها حَتَّى لا تَفُوتَكَ جُرْعَة.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'pointLeft',
+      highlight: true,
+    },
+    {
+      id: 'dash-schedule',
+      anchor: 'today-schedule-card',
+      speech: 'وهُنا جَدْوَلُ يَوْمِكَ: المَواعِيد والتَّذْكِيرات مُرَتَّبَة بِالتَّسَلْسُل الزَّمَنِي.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'wave',
+      highlight: true,
+    },
+    {
       id: 'dash-ask-ai',
       anchor: 'ask-ai-button',
       speech: 'اِضْغَط هُنا فِي أَي وَقْت لِلتَّحَدُّث مَعِي. أَتَمَنَّى لَكَ دَوام الصِّحَّة والعافِيَة.',
@@ -461,8 +486,203 @@ export const DASHBOARD_TOUR: TourScenario = {
   ],
 };
 
+// ── Medical Records Tour ───────────────────────────────────────────────────
+
+export const MEDICAL_RECORDS_TOUR: TourScenario = {
+  id: 'medical-records-tour',
+  title: 'جولة السجلات الطبية',
+  description: 'تعرف على صفحة السجلات الطبية',
+  category: 'onboarding',
+  steps: [
+    {
+      id: 'mr-lab',
+      anchor: 'records-card-lab',
+      route: '/medical-records',
+      speech: 'فِي صَفْحَة السِّجِلَّات الطِّبِّيَّة تَجِد خَمْسَة أَقْسام: أَوَّلًا التَّحالِيل.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'wave',
+      highlight: true,
+      delayAfterMs: 300,
+    },
+    {
+      id: 'mr-prescription',
+      anchor: 'records-card-prescription',
+      speech: 'الرُّوشِتَّات.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'wave',
+      highlight: true,
+      delayAfterMs: 300,
+    },
+    {
+      id: 'mr-imaging',
+      anchor: 'records-card-imaging',
+      speech: 'الأَشِعَّة.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'wave',
+      highlight: true,
+      delayAfterMs: 300,
+    },
+    {
+      id: 'mr-medicine',
+      anchor: 'records-card-medicine',
+      speech: 'عُلَب الأَدْوِيَة.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'wave',
+      highlight: true,
+      delayAfterMs: 300,
+    },
+    {
+      id: 'mr-general',
+      anchor: 'records-card-general',
+      speech: 'ومُسْتَنَدات أُخْرَى. اسْتَخْدِم \'Scan with AI\' لِأَقُوم بِقِراءَة المُسْتَنَد واسْتِخْراج المَعْلُومات آلِيًّا، أَو \'Add Manually\' لِإِدْخالِها بِنَفْسِك.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'wave',
+      highlight: true,
+      delayAfterMs: 300,
+    },
+    {
+      id: 'mr-add',
+      anchor: 'add-record-button',
+      speech: 'وفِي أَي وَقْت، اضْغَط عَلَى \'Add Record\' لِتَخْتار نَوْع المُسْتَنَد وتَرْفَعَه مُباشَرَةً.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'pointLeft',
+      highlight: true,
+    },
+  ],
+};
+
+// ── Appointments Tour ──────────────────────────────────────────────────────
+
+export const APPOINTMENTS_TOUR: TourScenario = {
+  id: 'appointments-tour',
+  title: 'جولة المواعيد',
+  description: 'تعرف على صفحة المواعيد',
+  category: 'onboarding',
+  steps: [
+    {
+      id: 'appt-add',
+      anchor: 'add-appointment',
+      route: '/appointments',
+      speech: 'فِي صَفْحَة المَواعِيد، اضْغَط عَلَى \'Add Appointment\' لِفَتْح نافِذَة تَخْتار مِنْها نَوْع المَوْعِد: زِيارَة طَبِيب، تَحْلِيل، أَشِعَّة، تَطْعِيم، كَشْف أَسْنان، جَلْسَة عِلاج، أَو مَوْعِد آخَر. بَعْد الاِخْتِيار، سَتُحَدِّد التَّارِيخ والوَقْت والتَّذْكِير.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'pointLeft',
+      highlight: true,
+    },
+  ],
+};
+
+// ── Medications Tour ───────────────────────────────────────────────────────
+
+export const MEDICATIONS_TOUR: TourScenario = {
+  id: 'medications-tour',
+  title: 'جولة الأدوية',
+  description: 'تعرف على صفحة الأدوية والتذكيرات',
+  category: 'onboarding',
+  steps: [
+    {
+      id: 'med-main',
+      route: '/medications',
+      variants: {
+        populated: {
+          anchor: 'med-next-dose-card',
+          speech: 'هُنا تَجِد \'Next Dose\'، ويُوَضِّح اِسْم الدَّواء، الجُرْعَة، ومَوْعِد الجُرْعَة القادِمَة. اضْغَط عَلَى \'I Took It\' فَوْر أَخْذ الدَّواء لِأُسَجِّل ذَلِكَ، وسَأُرْسِل لَكَ تَنْبِيهًا إِن تَأَخَّرْتَ.',
+        },
+        empty: {
+          anchor: 'add-medication',
+          speech: 'فِي صَفْحَة الأَدْوِيَة والتَّذْكِيرات، اضْغَط عَلَى \'Add Medication\' لِتَسْجِيل أَوَّل دَواء. حَدِّد اِسْمَه ومَواعِيد الجُرَعات، وسَأَتَوَلَّى تَذْكِيرَكَ بِها فِي مَوْعِدِها بِالضَّبْط.',
+        },
+      },
+      speechLanguage: 'ar-EG',
+      avatarState: 'wave',
+      highlight: true,
+    },
+  ],
+};
+
+// ── Family Profiles Tour ───────────────────────────────────────────────────
+
+export const FAMILY_PROFILES_TOUR: TourScenario = {
+  id: 'family-profiles-tour',
+  title: 'جولة ملفات العائلة',
+  description: 'تعرف على صفحة ملفات العائلة',
+  category: 'onboarding',
+  steps: [
+    {
+      id: 'family-main',
+      anchor: 'add-family-profile',
+      route: '/family-profiles',
+      speech: 'فِي صَفْحَة \'Family Profiles\'، اخْتَر أَي فَرْد لِتَجِد تَبْوِيبات: نَظْرَة عامَّة، سِجِلَّات طِبِّيَّة، مَواعِيد، أَدْوِيَة، تَذْكِيرات، ومُلَخَّص صِحِّي. كُل مَعْلُومَة عَن صِحَّتِه فِي مَكان واحِد.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'celebrate',
+      highlight: true,
+    },
+  ],
+};
+
+// ── My Profile Tour ────────────────────────────────────────────────────────
+
+export const MY_PROFILE_TOUR: TourScenario = {
+  id: 'my-profile-tour',
+  title: 'جولة ملفي الشخصي',
+  description: 'تعرف على صفحة ملفك الشخصي',
+  category: 'onboarding',
+  steps: [
+    {
+      id: 'profile-personal',
+      anchor: 'profile-personal-info',
+      route: '/my-profile',
+      speech: 'فِي \'My Profile\' يُمْكِنُكَ تَعْدِيل بَياناتِكَ الشَّخْصِيَّة وصُورَتِكَ.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'thinking',
+      highlight: true,
+      delayAfterMs: 300,
+    },
+    {
+      id: 'profile-health',
+      anchor: 'profile-health-info',
+      speech: 'والمَعْلُومات الصِّحِّيَّة كَفَصِيلَة الدَّم والطُّول والوَزْن.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'thinking',
+      highlight: true,
+      delayAfterMs: 300,
+    },
+    {
+      id: 'profile-allergies',
+      anchor: 'profile-allergies',
+      speech: 'وأَسْفَلَها أَقْسام الحَساسِيَّة،',
+      speechLanguage: 'ar-EG',
+      avatarState: 'thinking',
+      highlight: true,
+      delayAfterMs: 300,
+    },
+    {
+      id: 'profile-chronic',
+      anchor: 'profile-chronic-diseases',
+      speech: 'الأَمْراض المُزْمِنَة،',
+      speechLanguage: 'ar-EG',
+      avatarState: 'thinking',
+      highlight: true,
+      delayAfterMs: 300,
+    },
+    {
+      id: 'profile-emergency',
+      anchor: 'profile-emergency-contacts',
+      speech: 'وجِهات الطَّوارِئ لِإِكْمال أَي بَيانات ناقِصَة.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'thinking',
+      highlight: true,
+    },
+  ],
+};
+
 export const DEFAULT_TOURS: TourScenario[] = [
   ONBOARDING_TOUR,
   WELCOME_TOUR,
   DASHBOARD_TOUR,
+  MEDICAL_RECORDS_TOUR,
+  APPOINTMENTS_TOUR,
+  MEDICATIONS_TOUR,
+  FAMILY_PROFILES_TOUR,
+  MY_PROFILE_TOUR,
+  ...DEFAULT_TOURS_EN,
 ];

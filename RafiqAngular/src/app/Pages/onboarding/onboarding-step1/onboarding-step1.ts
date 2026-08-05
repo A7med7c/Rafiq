@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -8,10 +8,12 @@ import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
+import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
+
 @Component({
   selector: 'app-onboarding-step1',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
   templateUrl: './onboarding-step1.html',
   styleUrl: './onboarding-step1.css',
 })
@@ -25,29 +27,29 @@ export class OnboardingStep1 implements OnInit {
 
   readonly today = new Date().toISOString().slice(0, 10);
 
-  readonly steps = [
-    { label: 'Basic Info' },
-    { label: 'Emergency Contacts' },
-    { label: 'Allergies' },
-    { label: 'Chronic Diseases' },
-    { label: 'Review' },
-  ];
+  readonly steps = computed(() =>
+    this.t().onboarding.stepperLabels.map(label => ({ label }))
+  );
 
-  readonly genderOptions = [
-    { value: Gender.Male, label: 'Male' },
-    { value: Gender.Female, label: 'Female' }
-  ];
+  get genderOptions() {
+    return [
+      { value: Gender.Male, label: this.t().common.male },
+      { value: Gender.Female, label: this.t().common.female }
+    ];
+  }
 
-  readonly bloodTypes = [
-    { value: BloodType.APositive, label: 'A+ (APositive)' },
-    { value: BloodType.ANegative, label: 'A- (ANegative)' },
-    { value: BloodType.BPositive, label: 'B+ (BPositive)' },
-    { value: BloodType.BNegative, label: 'B- (BNegative)' },
-    { value: BloodType.ABPositive, label: 'AB+ (ABPositive)' },
-    { value: BloodType.ABNegative, label: 'AB- (ABNegative)' },
-    { value: BloodType.OPositive, label: 'O+ (OPositive)' },
-    { value: BloodType.ONegative, label: 'O- (ONegative)' }
-  ];
+  get bloodTypes() {
+    return [
+      { value: BloodType.APositive, label: 'A+' },
+      { value: BloodType.ANegative, label: 'A-' },
+      { value: BloodType.BPositive, label: 'B+' },
+      { value: BloodType.BNegative, label: 'B-' },
+      { value: BloodType.ABPositive, label: 'AB+' },
+      { value: BloodType.ABNegative, label: 'AB-' },
+      { value: BloodType.OPositive, label: 'O+' },
+      { value: BloodType.ONegative, label: 'O-' }
+    ];
+  }
 
   readonly form: FormGroup = this.fb.group({
     dateOfBirth: ['', [Validators.required, this.notFutureDateValidator]],
@@ -88,12 +90,12 @@ export class OnboardingStep1 implements OnInit {
   getDateOfBirthError(): string {
     const ctrl = this.form.get('dateOfBirth');
     if (ctrl?.hasError('required')) {
-      return 'Date of birth is required';
+      return this.t().onboarding.step1.dobRequired;
     }
     if (ctrl?.hasError('futureDate')) {
-      return 'Date of birth cannot be in the future';
+      return this.t().onboarding.step1.dobFuture;
     }
-    return 'Enter a valid date of birth';
+    return this.t().onboarding.step1.dobInvalid;
   }
 
   isInvalid(field: 'dateOfBirth' | 'gender' | 'height' | 'weight' | 'bloodType'): boolean {

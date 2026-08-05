@@ -8,6 +8,7 @@ import { CreatePatientProfileRequest } from '../../../Modles/health-profile-requ
 import { EmergencyContactService, EmergencyContactResponse } from '../../../Services/emergency-contact.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
+import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
 
 interface Step1Data {
   dateOfBirth: string;
@@ -41,7 +42,7 @@ interface Step3Data {
 @Component({
   selector: 'app-onboarding-step4',
   standalone: true,
-  imports: [CommonModule, AssistantAnchorDirective],
+  imports: [CommonModule, AssistantAnchorDirective, AvatarEngineComponent],
   templateUrl: './onboarding-step4.html',
   styleUrl: './onboarding-step4.css',
 })
@@ -54,6 +55,12 @@ export class OnboardingStep4 implements OnInit {
   private readonly tourEngine = inject(TourEngineService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
+
+  showMascotTip = true;
+
+  dismissMascotTip(): void {
+    this.showMascotTip = false;
+  }
 
   readonly steps = [
     { label: 'Basic Info' },

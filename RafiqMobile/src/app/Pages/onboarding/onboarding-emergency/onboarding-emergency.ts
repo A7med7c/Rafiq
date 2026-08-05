@@ -8,11 +8,12 @@ import { TokenStorageService } from '../../../Services/token-storage-service';
 import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
+import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
 
 @Component({
   selector: 'app-onboarding-emergency',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
   templateUrl: './onboarding-emergency.html',
   styleUrl: './onboarding-emergency.css',
 })
@@ -26,6 +27,12 @@ export class OnboardingEmergency implements OnInit {
   private readonly tourEngine = inject(TourEngineService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
+
+  showMascotTip = true;
+
+  dismissMascotTip(): void {
+    this.showMascotTip = false;
+  }
 
   readonly steps = [
     { label: 'Basic Info' },

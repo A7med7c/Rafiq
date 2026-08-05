@@ -1,4 +1,4 @@
-<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
+﻿<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
 
   @if (mobileSidebarOpen()) {
   <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
@@ -67,9 +67,9 @@
         <i class="fa-regular fa-comment-dots"></i>
         {{ t().sidebar.askNow }}
       </button>
-      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startWelcomeTour()" title="ابدأ الجولة التعريفية">
+      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startPageTour()" [title]="t().sidebar.pageTourTitle">
         <i class="fa-solid fa-compass"></i>
-        جولة تعريفية
+        {{ t().sidebar.pageTour }}
       </button>
     </div>
   </aside>

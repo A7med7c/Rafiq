@@ -1,8 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, OnDestroy, computed, effect, inject, viewChild } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs/operators';
 import { AvatarEngineComponent } from '../avatar-engine/avatar-engine';
 import { AvatarPositionService } from '../../core/assistant/services/avatar-position.service';
 import { TourEngineService } from '../../core/assistant/services/tour-engine.service';
+import { LocalizationService } from '../../Services/localization.service';
 
 /**
  * The travelling Rafiq mascot and its contextual walkthrough bubble.
@@ -24,8 +28,25 @@ import { TourEngineService } from '../../core/assistant/services/tour-engine.ser
 export class RafiqAssistantComponent implements OnDestroy {
   readonly positionService = inject(AvatarPositionService);
   readonly tourEngine = inject(TourEngineService);
+  readonly l10n = inject(LocalizationService);
+  private readonly router = inject(Router);
+  readonly t = this.l10n.t;
+  readonly dir = this.l10n.dir;
 
   readonly bubbleEl = viewChild<ElementRef<HTMLElement>>('bubbleEl');
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      map(e => (e as NavigationEnd).urlAfterRedirects)
+    ),
+    { initialValue: this.router.url }
+  );
+
+  /** True if the user is currently on any onboarding page (robot is embedded in the form instead). */
+  readonly isOnboardingPage = computed(() => {
+    return this.currentUrl().includes('/onboarding/');
+  });
 
   readonly stepIndexes = computed(() =>
     Array.from({ length: this.tourEngine.totalSteps() }, (_, i) => i)

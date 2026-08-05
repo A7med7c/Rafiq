@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -8,10 +8,12 @@ import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
+import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
+
 @Component({
   selector: 'app-onboarding-step2',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
   templateUrl: './onboarding-step2.html',
   styleUrl: './onboarding-step2.css',
 })
@@ -23,19 +25,17 @@ export class OnboardingStep2 implements OnInit {
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
-  readonly steps = [
-    { label: 'Basic Info' },
-    { label: 'Emergency Contacts' },
-    { label: 'Allergies' },
-    { label: 'Chronic Diseases' },
-    { label: 'Review' },
-  ];
+  readonly steps = computed(() =>
+    this.t().onboarding.stepperLabels.map(label => ({ label }))
+  );
 
-  readonly severityOptions = [
-    { value: AllergySeverity.Severe, label: 'Severe' },
-    { value: AllergySeverity.Moderate, label: 'Moderate' },
-    { value: AllergySeverity.Mild, label: 'Mild' }
-  ];
+  get severityOptions() {
+    return [
+      { value: AllergySeverity.Severe, label: this.t().myProfile.severe },
+      { value: AllergySeverity.Moderate, label: this.t().myProfile.moderate },
+      { value: AllergySeverity.Mild, label: this.t().myProfile.mild }
+    ];
+  }
 
   /** 'yes' | 'no' */
   hasAllergies: 'yes' | 'no' = 'no';

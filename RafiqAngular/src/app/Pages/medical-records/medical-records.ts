@@ -30,6 +30,7 @@ import { ProfileSelectionService } from '../../Services/profile-selection.servic
 import { LocalizationService } from '../../Services/localization.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
+import { localizeKnownApiMessage } from '../../Utils/api-error.util';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -228,31 +229,42 @@ export class MedicalRecords implements OnInit {
 
   readonly appliedFilters = signal<RecordFilters>(defaultFilters(this.getSavedSortOption()));
   readonly draftFilters = signal<RecordFilters>(defaultFilters(this.getSavedSortOption()));
-  readonly recordTypeOptions: Array<{ value: RecordTab; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'lab', label: 'Lab Analysis' },
-    { value: 'prescription', label: 'Prescription' },
-    { value: 'imaging', label: 'X-Ray & Imaging' },
-    { value: 'medicine', label: 'Medicine Box' },
-    { value: 'general', label: 'Other Medical Document' },
-  ];
-  readonly aiStatusOptions: Array<{ value: AiStatusFilter; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'processed', label: 'Processed' },
-    { value: 'pending', label: 'Pending' },
-  ];
-  readonly uploadedByOptions: Array<{ value: UploadedByFilter; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'self', label: 'Self' },
-    { value: 'manual', label: 'Manual' },
-    { value: 'medicine', label: 'Medicine Box' },
-  ];
-  readonly sortOptions: Array<{ value: SortOption; label: string }> = [
-    { value: 'newest', label: 'Newest First' },
-    { value: 'oldest', label: 'Oldest First' },
-    { value: 'az', label: 'A-Z' },
-    { value: 'za', label: 'Z-A' },
-  ];
+  get recordTypeOptions(): Array<{ value: RecordTab; label: string }> {
+    return [
+      { value: 'all', label: this.t().appointments.all },
+      { value: 'lab', label: this.t().records.labAnalysisItem },
+      { value: 'prescription', label: this.t().records.prescriptionItem },
+      { value: 'imaging', label: this.t().records.xrayImagingItem },
+      { value: 'medicine', label: this.t().records.medicineBoxItem },
+      { value: 'general', label: this.t().records.otherMedicalDoc },
+    ];
+  }
+
+  get aiStatusOptions(): Array<{ value: AiStatusFilter; label: string }> {
+    return [
+      { value: 'all', label: this.t().appointments.all },
+      { value: 'processed', label: this.t().records.processed },
+      { value: 'pending', label: this.t().records.pending },
+    ];
+  }
+
+  get uploadedByOptions(): Array<{ value: UploadedByFilter; label: string }> {
+    return [
+      { value: 'all', label: this.t().appointments.all },
+      { value: 'self', label: this.t().dashboard.self },
+      { value: 'manual', label: this.t().medications.manual },
+      { value: 'medicine', label: this.t().records.medicineBoxItem },
+    ];
+  }
+
+  get sortOptions(): Array<{ value: SortOption; label: string }> {
+    return [
+      { value: 'newest', label: this.t().appointments.newestFirst },
+      { value: 'oldest', label: this.t().appointments.oldestFirst },
+      { value: 'az', label: this.t().appointments.aToZ },
+      { value: 'za', label: this.t().appointments.zToA },
+    ];
+  }
 
   readonly uploadState = signal<Record<UploadCardKey, UploadState>>({
     lab: defaultUploadState(),
@@ -703,12 +715,12 @@ export class MedicalRecords implements OnInit {
       next: () => {
         this.deleting.set(false);
         this.deleteTarget.set(null);
-        this.showToast('Record deleted successfully.', 'success');
+        this.showToast(this.t().records.recordDeletedSuccessfully, 'success');
         this.loadData();
       },
       error: err => {
         this.deleting.set(false);
-        this.showToast(err?.error?.message || 'Failed to delete record. Please try again.', 'error');
+        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.deleteFailed), 'error');
       },
     });
   }
@@ -885,7 +897,7 @@ export class MedicalRecords implements OnInit {
         } else if (errCode === 'UNREADABLE_DOCUMENT_PRESCRIPTION') {
           this.showToast(v.prescriptionUnreadable, 'error');
         } else {
-          this.showToast(err?.error?.message || 'Upload failed. Please try again.', 'error');
+          this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.uploadFailed), 'error');
         }
       },
     });
@@ -1051,12 +1063,12 @@ export class MedicalRecords implements OnInit {
       next: () => {
         this.reviewSaving.set(false);
         this.reviewForm.set(null);
-        this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : 'Record confirmed and saved.', 'success');
+        this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : this.t().records.recordSavedSuccessfully, 'success');
         this.loadData();
       },
       error: err => {
         this.reviewSaving.set(false);
-        this.showToast(err?.error?.message || 'Failed to save record. Please try again.', 'error');
+        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.saveFailed), 'error');
       },
     });
   }
@@ -1097,7 +1109,7 @@ export class MedicalRecords implements OnInit {
         } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
           this.showToast(v.medicineUnreadable, 'error');
         } else {
-          this.showToast(err?.error?.message || 'Scan failed. Please try again.', 'error');
+          this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.scanFailed), 'error');
         }
       },
     });
@@ -1161,7 +1173,7 @@ export class MedicalRecords implements OnInit {
       },
       error: err => {
         this.reminderSaving.set(false);
-        this.showToast(err?.error?.message || 'Failed to set reminder. Please try again.', 'error');
+        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.setReminderFailed), 'error');
       },
     });
   }
@@ -1205,7 +1217,7 @@ export class MedicalRecords implements OnInit {
       },
       error: err => {
         this.scanSaving.set(false);
-        this.showToast(err?.error?.message || 'Failed to save medicine.', 'error');
+        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.saveMedicineFailed), 'error');
       },
     });
   }
@@ -1280,6 +1292,10 @@ export class MedicalRecords implements OnInit {
     setTimeout(() => this.removeToast(id), 4500);
   }
 
+  private localizeApiMessage(message: string): string {
+    return localizeKnownApiMessage(message, this.t());
+  }
+
   removeToast(id: number): void {
     this.toasts.update(t => t.filter(x => x.id !== id));
   }
@@ -1291,8 +1307,8 @@ export class MedicalRecords implements OnInit {
 
   readonly RING_CIRCUMFERENCE = 2 * Math.PI * 14;
 
-  startWelcomeTour(): void {
+  startPageTour(): void {
     if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
-    this.assistantOrchestrator.startTour('welcome-tour');
+    this.assistantOrchestrator.startTour('medical-records-tour');
   }
 }

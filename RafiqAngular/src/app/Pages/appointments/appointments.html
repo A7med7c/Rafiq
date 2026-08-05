@@ -69,9 +69,9 @@
         <i class="fa-regular fa-comment-dots"></i>
         {{ t().sidebar.askNow }}
       </button>
-      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startWelcomeTour()" title="ابدأ الجولة التعريفية">
+      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startPageTour()" [title]="t().sidebar.pageTourTitle">
         <i class="fa-solid fa-compass"></i>
-        جولة تعريفية
+        {{ t().sidebar.pageTour }}
       </button>
     </div>
   </aside>
@@ -608,7 +608,7 @@
                     </button>
                     }
                     @if (!fpReadOnly()) {
-                    <button type="button" class="rec-action-btn rec-action-more" title="More options"
+                    <button type="button" class="rec-action-btn rec-action-more" [title]="t().aiAssistant.moreOptions"
                       (click)="toggleMenu(a.id, $event)">
                       <i class="fa-solid fa-ellipsis-vertical"></i>
                     </button>
@@ -657,7 +657,7 @@
                     <i class="fa-regular fa-eye"></i>
                   </button>
                   @if (!fpReadOnly()) {
-                    <button type="button" class="rec-action-btn rec-action-more" title="More options" (click)="toggleMenu(a.id, $event)">
+                    <button type="button" class="rec-action-btn rec-action-more" [title]="t().aiAssistant.moreOptions" (click)="toggleMenu(a.id, $event)">
                       <i class="fa-solid fa-ellipsis-vertical"></i>
                     </button>
                     @if (openMenuId() === a.id) {
