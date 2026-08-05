@@ -1,9 +1,8 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Rafiq.Application.Common.Models;
-using System.Security.Claims;
 using System.Text;
 
 namespace Rafiq.API.Extensions;
@@ -53,19 +52,20 @@ public static class ServiceCollectionExtensions
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-         // .AddCookie().AddGoogle(options =>
-         // {
-         //     var clientId = configuration["Authentication:Google:ClientId"];
-         //     if (clientId is null)
-         //         throw new ArgumentNullException(nameof(clientId));
+          .AddCookie().AddGoogle(options =>
+          {
+              var clientId = configuration["Authentication:Google:ClientId"];
+              if (clientId is null)
+                  throw new ArgumentNullException(nameof(clientId));
 
 
-         //     var clientSecret = configuration["Authentication:Google:ClientSecret"];
-         //     if (clientSecret is null)
-         //         throw new ArgumentNullException(nameof(clientId));
-         //     options.ClientId = clientId;
-         //     options.ClientSecret = clientSecret;
-         //     options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;})
+              var clientSecret = configuration["Authentication:Google:ClientSecret"];
+              if (clientSecret is null)
+                  throw new ArgumentNullException(nameof(clientId));
+              options.ClientId = clientId;
+              options.ClientSecret = clientSecret;
+              options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+          })
          .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
@@ -90,7 +90,7 @@ public static class ServiceCollectionExtensions
 
                         bool hasHeader = context.Request.Headers.TryGetValue("Authorization", out var headerValues);
                         var headerValue = headerValues.ToString();
-                        
+
                         logger.LogInformation(
                             "[JWT: OnMessageReceived] Method: {Method}, Path: {Path}, Scheme: {Scheme}, AuthorizationHeaderExists: {Exists}, HeaderLength: {Length}",
                             context.Request.Method,
@@ -102,7 +102,7 @@ public static class ServiceCollectionExtensions
                         if (hasHeader)
                         {
                             var headers = context.Request.Headers["Authorization"];
-                            logger.LogWarning("RAW header count={Count}, values={Values}", 
+                            logger.LogWarning("RAW header count={Count}, values={Values}",
                                 headers.Count, string.Join(" ||| ", headers.ToArray()));
                         }
 
@@ -134,7 +134,7 @@ public static class ServiceCollectionExtensions
                         var jwtToken = context.SecurityToken as Microsoft.IdentityModel.JsonWebTokens.JsonWebToken;
                         var tokenIssuer = jwtToken?.Issuer ?? context.SecurityToken?.Issuer ?? "none";
                         var tokenAudience = "none";
-                        
+
                         if (jwtToken != null && jwtToken.TryGetPayloadValue("aud", out object audObj))
                         {
                             tokenAudience = audObj?.ToString() ?? "none";
