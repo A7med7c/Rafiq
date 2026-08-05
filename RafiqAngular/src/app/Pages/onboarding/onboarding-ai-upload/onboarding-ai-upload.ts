@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HealthProfileService } from '../../../Services/health-profile.service';
+import { localizeKnownApiMessage } from '../../../Utils/api-error.util';
 import { LocalizationService } from '../../../Services/localization.service';
 import { Gender, BloodType, AllergySeverity, DiseaseStatus } from '../../../Modles/health-profile-enums';
 import { CreatePatientProfileRequest } from '../../../Modles/health-profile-request';
@@ -191,16 +192,16 @@ export class OnboardingAiUpload implements OnInit {
                 messages.push(errVal);
               }
             }
-            this.submitError = messages.length ? messages.join(' ') : 'Validation failed.';
+            this.submitError = messages.length ? messages.join(' ') : this.t().onboarding.step4.errorValidation;
           } else if (body.message) {
-            this.submitError = body.message;
+            this.submitError = localizeKnownApiMessage(body.message, this.t());
           } else {
-            this.submitError = 'An error occurred during profile submission.';
+            this.submitError = this.t().onboarding.step4.errorDuringSubmission;
           }
         } else if (err.status === 0) {
-          this.submitError = 'Cannot connect to the server. Please check your internet connection.';
+          this.submitError = this.t().onboarding.step4.errorNetwork;
         } else {
-          this.submitError = 'Something went wrong. Please try again.';
+          this.submitError = this.t().onboarding.step4.errorGeneral;
         }
       },
     });

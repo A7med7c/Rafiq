@@ -640,8 +640,16 @@ export class AiAssistant implements OnInit {
   }
   openRatingPopup(): void { this.dropdownOpen.set(false); this.reviewTracking.openManually(); }
 
-  startWelcomeTour(): void {
+  startPageTour(): void {
     if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
-    this.assistantOrchestrator.startTour('welcome-tour');
+    const route = this.router.url.split('?')[0];
+    let tourId: string;
+    if (route.includes('/medical-records'))   tourId = 'medical-records-tour';
+    else if (route.includes('/appointments')) tourId = 'appointments-tour';
+    else if (route.includes('/medications'))  tourId = 'medications-tour';
+    else if (route.includes('/family-profiles')) tourId = 'family-profiles-tour';
+    else if (route.includes('/my-profile'))   tourId = 'my-profile-tour';
+    else                                       tourId = 'dashboard-tour';
+    this.assistantOrchestrator.startTour(tourId);
   }
 }

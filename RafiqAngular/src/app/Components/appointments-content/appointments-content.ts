@@ -13,6 +13,7 @@ import {
   CreateAppointmentRequest, UpdateAppointmentRequest,
   APPOINTMENT_TYPE_LABELS, APPOINTMENT_TYPE_ICONS,
 } from '../../Modles/appointment.models';
+import { localizeKnownApiMessage } from '../../Utils/api-error.util';
 
 /** Maps each AppointmentType enum value to its key path in the i18n objects */
 const APPT_TYPE_KEYS: Record<AppointmentType, string> = {
@@ -129,11 +130,11 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   ] as const;
 
   readonly REMINDER_OPTIONS = [
-    { value: 15, label: '15 minutes before' },
-    { value: 30, label: '30 minutes before' },
-    { value: 60, label: '1 hour before' },
-    { value: 120, label: '2 hours before' },
-    { value: 1440, label: '1 day before' },
+    { value: 15, label: this.t().appointments.reminder15MinBefore },
+    { value: 30, label: this.t().appointments.reminder30MinBefore },
+    { value: 60, label: this.t().appointments.reminder1HourBefore },
+    { value: 120, label: this.t().appointments.reminder2HoursBefore },
+    { value: 1440, label: this.t().appointments.reminder1DayBefore },
   ];
 
   readonly canContinueType = computed(() =>
@@ -301,7 +302,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
       next: data => { this.appointments.set(data); this.loading.set(false); },
       error: err => {
         this.loadError.set(
-          err?.error?.message ?? 'Could not load appointments. Please try again.'
+          this.localizeApiMessage(err?.error?.message ?? this.t().appointments.couldNotLoad)
         );
         this.loading.set(false);
       },
@@ -380,11 +381,11 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   goStep2(): void {
     if (!this.fType()) {
-      this.formErrors.update(e => ({ ...e, appointmentType: 'Please select an appointment type.' }));
+      this.formErrors.update(e => ({ ...e, appointmentType: this.t().appointments.pleaseSelectType }));
       return;
     }
     if (this.fType() === AppointmentType.Other && !this.fCustomType().trim()) {
-      this.formErrors.update(e => ({ ...e, customType: 'Please describe the appointment type.' }));
+      this.formErrors.update(e => ({ ...e, customType: this.t().appointments.pleaseDescribeType }));
       return;
     }
     this.formErrors.set({});
@@ -470,27 +471,27 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   private validate(): boolean {
     const errs: Record<string, string> = {};
-    if (!this.fType()) errs['appointmentType'] = 'Please select an appointment type.';
+    if (!this.fType()) errs['appointmentType'] = this.t().appointments.pleaseSelectType;
     if (this.fType() === AppointmentType.Other && !this.fCustomType().trim()) {
-      errs['customType'] = 'Please describe the appointment type.';
+      errs['customType'] = this.t().appointments.pleaseDescribeType;
     }
-    if (!this.fTitle().trim()) errs['title'] = 'Title is required.';
-    if (!this.fProvider().trim()) errs['provider'] = 'Provider name is required.';
-    if (!this.fDate()) errs['date'] = 'Date is required.';
-    if (!this.fTime()) errs['time'] = 'Time is required.';
+    if (!this.fTitle().trim()) errs['title'] = this.t().appointments.titleRequired;
+    if (!this.fProvider().trim()) errs['provider'] = this.t().appointments.providerRequired;
+    if (!this.fDate()) errs['date'] = this.t().appointments.dateRequired;
+    if (!this.fTime()) errs['time'] = this.t().appointments.timeRequired;
     if (this.fDate() && this.fTime()) {
       const sel = new Date(`${this.fDate()}T${this.fTime()}`);
-      if (sel <= new Date()) errs['date'] = 'Appointment must be scheduled in the future.';
+      if (sel <= new Date()) errs['date'] = this.t().appointments.appointmentFuture;
       if (this.hasUpcomingAppointmentAtSelectedTime()) {
-        errs['time'] = 'You already have an upcoming appointment at this time.';
+        errs['time'] = this.t().appointments.timeConflict;
       }
     }
     if (this.customReminderSelected()) {
       const customReminder = this.fCustomReminder();
       if (customReminder === null || customReminder < 1) {
-        errs['reminder'] = 'Custom reminder must be at least 1 minute.';
+        errs['reminder'] = this.t().appointments.customReminderMin;
       } else if (customReminder > 10080) {
-        errs['reminder'] = 'Custom reminder cannot be more than 7 days.';
+        errs['reminder'] = this.t().appointments.customReminderMax;
       }
     }
     this.formErrors.set(errs);
@@ -520,16 +521,16 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
       next: saved => {
         if (id) {
           this.appointments.update(list => list.map(a => a.id === id ? saved : a));
-          this.toast('Appointment updated successfully.', 'success');
+          this.toast(this.t().appointments.appointmentUpdated, 'success');
         } else {
           this.appointments.update(list => [...list, saved]);
-          this.toast('Appointment added successfully.', 'success');
+          this.toast(this.t().appointments.appointmentAdded, 'success');
         }
         this.submitting.set(false);
         this.closeAddModal();
       },
       error: err => {
-        this.toast(err?.error?.message ?? 'Failed to save appointment.', 'error');
+        this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().appointments.failedSave), 'error');
         this.submitting.set(false);
       },
     });
@@ -554,8 +555,8 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     if (!id) return;
     this.deleting.set(true);
     this.apptSvc.delete(id).subscribe({
-      next: () => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast('Appointment deleted.', 'success'); this.deleting.set(false); this.closeDelete(); },
-      error: err => { this.toast(err?.error?.message ?? 'Delete failed.', 'error'); this.deleting.set(false); this.closeDelete(); },
+      next: () => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast(this.t().appointments.appointmentDeleted, 'success'); this.deleting.set(false); this.closeDelete(); },
+      error: err => { this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().appointments.deleteFailed), 'error'); this.deleting.set(false); this.closeDelete(); },
     });
   }
 
@@ -567,16 +568,16 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     if (!id) return;
     this.cancelling.set(true);
     this.apptSvc.cancel(id).subscribe({
-      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Appointment cancelled.', 'success'); this.cancelling.set(false); this.closeCancel(); },
-      error: err => { this.toast(err?.error?.message ?? 'Cancel failed.', 'error'); this.cancelling.set(false); this.closeCancel(); },
+      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.appointmentCancelled, 'success'); this.cancelling.set(false); this.closeCancel(); },
+      error: err => { this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().appointments.cancelFailed), 'error'); this.cancelling.set(false); this.closeCancel(); },
     });
   }
 
   // ── Complete ──────────────────────────────────────────────────────────────
   markComplete(id: string): void {
     this.apptSvc.complete(id).subscribe({
-      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast('Marked as completed.', 'success'); },
-      error: err => { this.toast(err?.error?.message ?? 'Failed.', 'error'); },
+      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.markedCompleted, 'success'); },
+      error: err => { this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().appointments.failedSave), 'error'); },
     });
   }
 
@@ -590,7 +591,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
         if (t - now <= 60_000 && t >= now - 60_000) {
           this.firedIds.add(a.id);
           this.notifSvc.push({
-            title: 'Appointment Starting Now',
+            title: this.t().notifications.appointmentReminder,
             body: `${a.title} with ${a.provider}`,
             type: 'appointment',
           });
@@ -644,9 +645,10 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   }
 
   statusLabel(s: AppointmentStatus): string {
+    const a = this.t().appointments;
     return {
-      [AppointmentStatus.Upcoming]: 'Upcoming', [AppointmentStatus.Completed]: 'Completed',
-      [AppointmentStatus.Cancelled]: 'Cancelled', [AppointmentStatus.Missed]: 'Missed'
+      [AppointmentStatus.Upcoming]: a.upcomingStatus, [AppointmentStatus.Completed]: a.completedStatus,
+      [AppointmentStatus.Cancelled]: a.cancelledStatus, [AppointmentStatus.Missed]: a.missedStatus
     }[s] ?? '';
   }
 
@@ -663,8 +665,11 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   reminderLabel(mins: number | null | undefined): string {
     if (!mins) return '—';
-    const map: Record<number, string> = { 15: '15 min', 30: '30 min', 60: '1 hr', 120: '2 hrs', 1440: '1 day' };
-    return (map[mins] ?? `${mins} min`) + ' before';
+    return `${mins} ${this.t().appointments.minutesBefore}`;
+  }
+
+  private localizeApiMessage(message: string): string {
+    return localizeKnownApiMessage(message, this.t());
   }
 
   isLastRow(index: number): boolean {

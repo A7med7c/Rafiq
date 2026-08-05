@@ -5,7 +5,7 @@
   }
 
   <!-- ═══════════ SIDEBAR ═══════════ -->
-  <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
+  <aside assistantAnchor="sidebar-panel" class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <!-- Logo -->
     <div class="sb-top">
       <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
@@ -85,10 +85,9 @@
         <i class="fa-regular fa-comment-dots"></i>
         {{ t().sidebar.askNow }}
       </button>
-      <!-- Welcome tour trigger button -->
-      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startWelcomeTour()" title="ابدأ الجولة التعريفية">
+      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startPageTour()" [title]="t().sidebar.pageTourTitle">
         <i class="fa-solid fa-compass"></i>
-        جولة تعريفية
+        {{ t().sidebar.pageTour }}
       </button>
     </div>
   </aside>
@@ -602,7 +601,7 @@
         </div>
 
         <!-- Today's Schedule -->
-        <div class="card">
+        <div assistantAnchor="today-schedule-card" class="card">
           <div class="bot-card-hdr">
             <span class="bot-card-title">{{ t().dashboard.todaySchedule }}</span>
             <a routerLink="/appointments" class="link-sm">{{ t().dashboard.viewCalendar }}</a>
@@ -795,7 +794,7 @@
           <i class="fa-solid fa-wand-magic-sparkles"></i>
         </div>
         <div>
-          <h2 class="modal-title">AI Health Summary</h2>
+          <h2 class="modal-title">{{ t().dashboard.aiHealthSummary }}</h2>
           <p class="modal-subtitle">{{ familySummaryProfile()?.firstName }} {{ familySummaryProfile()?.lastName }}</p>
         </div>
       </div>
@@ -812,24 +811,24 @@
           <circle cx="30" cy="30" r="26" fill="none" stroke-width="3" />
         </svg>
       </div>
-      <p class="ai-summary-loading-text">Generating AI Summary<span
+      <p class="ai-summary-loading-text">{{ t().dashboard.generatingAiSummary }}<span
           class="ai-dots"><span>.</span><span>.</span><span>.</span></span></p>
     </div>
     } @else if (!familySummaryData()?.hasData) {
     <div class="family-summary-empty">
       <i class="fa-solid fa-folder-open family-summary-empty-ico"></i>
-      <p>Not enough health data available yet for {{ familySummaryProfile()?.firstName }}.</p>
-      <p class="family-summary-empty-sub">Upload medical records to generate an AI summary.</p>
+      <p>{{ t().dashboard.familySummaryEmpty.replace('{name}', familySummaryProfile()?.firstName || '') }}</p>
+      <p class="family-summary-empty-sub">{{ t().dashboard.familySummaryEmptySub }}</p>
     </div>
     } @else {
     <p class="family-summary-text">{{ summaryText(familySummaryData()!) }}</p>
     }
 
     <div class="modal-footer">
-      <button type="button" class="btn-ghost" (click)="closeFamilySummary()">Close</button>
+      <button type="button" class="btn-ghost" (click)="closeFamilySummary()">{{ t().common.close }}</button>
       <button type="button" class="btn-primary"
         (click)="closeFamilySummary(); selectedReportType.set('DoctorSummary'); openReportDialog(familySummaryProfile()!.userHealthProfileId)">
-        <i class="fa-solid fa-file-medical"></i> Generate Report
+        <i class="fa-solid fa-file-medical"></i> {{ t().dashboard.generateAndDown }}
       </button>
     </div>
   </div>

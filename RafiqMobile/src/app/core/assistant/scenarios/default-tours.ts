@@ -10,7 +10,7 @@ import { TourScenario } from '../models/tour-scenario';
 // Onboarding pins the mascot+bubble to this constant viewport point on every step (no anchor,
 // no spotlight) rather than tracking a page element — keeps the group in the same visual spot
 // throughout the whole onboarding flow, as requested.
-const ONBOARDING_FIXED_POSITION = { x: 450, y: 250 };
+const ONBOARDING_FIXED_POSITION = { yFromBottom: 150 };
 
 // ── Onboarding Tour — Guided profile creation ─────────────────────────────
 
@@ -23,7 +23,7 @@ export const ONBOARDING_TOUR: TourScenario = {
     {
       id: 'onboarding-welcome-step',
       route: '/onboarding/welcome',
-      fixedPosition: ONBOARDING_FIXED_POSITION,
+      fixedPositionFromBottom: ONBOARDING_FIXED_POSITION,
       speech: 'أَهْلًا بِكَ يا {{userName}} فِي رَفِيق. أَنَا مُساعِدُكَ الصِّحِّي الذَّكِي، وسَأُساعِدُكَ الآن فِي إِعْداد مَلَفِّكَ الصِّحِّي خُطْوَة بِخُطْوَة، وسَيَسْتَغْرِق ذَلِكَ أَقَلَّ مِن دَقِيقَتَين.',
       speechLanguage: 'ar-EG',
       avatarState: 'wave',
@@ -34,7 +34,7 @@ export const ONBOARDING_TOUR: TourScenario = {
     {
       id: 'onboarding-step1-guide',
       route: '/onboarding/step1',
-      fixedPosition: ONBOARDING_FIXED_POSITION,
+      fixedPositionFromBottom: ONBOARDING_FIXED_POSITION,
       speech: 'فِي هَذِهِ الخُطْوَة، اُكْتُب بَياناتِكَ الأَساسِيَّة: تارِيخ المِيلاد، النَّوْع، الطُّول، الوَزْن، وفَصِيلَة الدَّم. هَذِهِ المَعْلُومات تُساعِدُنِي عَلَى مُتابَعَة حالَتِكَ الصِّحِّيَّة بِدِقَّة.',
       speechLanguage: 'ar-EG',
       avatarState: 'thinking',
@@ -45,7 +45,7 @@ export const ONBOARDING_TOUR: TourScenario = {
     {
       id: 'onboarding-emergency-guide',
       route: '/onboarding/emergency',
-      fixedPosition: ONBOARDING_FIXED_POSITION,
+      fixedPositionFromBottom: ONBOARDING_FIXED_POSITION,
       speech: 'أَضِف هُنا بَيانات شَخْص قَرِيب مِنْكَ لِلتَّواصُل مَعَه فِي حالات الطَّوارِئ. لَو تَأَخَّرْتَ فِي أَخْذ دَواءٍ مُهِمّ، سَأُرْسِل لَه رِسالَة تَنْبِيه عَلَى الوَاتْساب فَوْرًا.',
       speechLanguage: 'ar-EG',
       avatarState: 'pointLeft',
@@ -54,7 +54,7 @@ export const ONBOARDING_TOUR: TourScenario = {
     {
       id: 'onboarding-step2-guide',
       route: '/onboarding/step2',
-      fixedPosition: ONBOARDING_FIXED_POSITION,
+      fixedPositionFromBottom: ONBOARDING_FIXED_POSITION,
       speech: 'هَل لَدَيْكَ حَساسِيَّة مِن أَي طَعام أَو دَواء؟ إِن كانَ الأَمْر كَذَلِك، سَجِّلْها هُنا حَتَّى أُنَبِّهَكَ دائِمًا قَبْل وَصْف أَي عِلاج جَدِيد.',
       speechLanguage: 'ar-EG',
       avatarState: 'thinking',
@@ -63,7 +63,7 @@ export const ONBOARDING_TOUR: TourScenario = {
     {
       id: 'onboarding-step3-guide',
       route: '/onboarding/step3',
-      fixedPosition: ONBOARDING_FIXED_POSITION,
+      fixedPositionFromBottom: ONBOARDING_FIXED_POSITION,
       speech: 'إِن كُنْتَ تُعانِي مِن أَي مَرَض مُزْمِن، سَجِّلْه هُنا لِأَتَمَكَّن مِن مُتابَعَة حالَتِكَ وتَقْدِيم النَّصائِح المُناسِبَة لَك.',
       speechLanguage: 'ar-EG',
       avatarState: 'pointLeft',
@@ -72,7 +72,7 @@ export const ONBOARDING_TOUR: TourScenario = {
     {
       id: 'onboarding-step4-guide',
       route: '/onboarding/step4',
-      fixedPosition: ONBOARDING_FIXED_POSITION,
+      fixedPositionFromBottom: ONBOARDING_FIXED_POSITION,
       speech: 'مُمْتاز! هَذِهِ مُراجَعَة شامِلَة لِكُل البَيانات الَّتِي أَدْخَلْتَها. تَأَكَّد مِنْها، وبَعْدَها سَنَنْتَقِل مَعًا إِلَى لَوْحَة التَّحَكُّم.',
       speechLanguage: 'ar-EG',
       avatarState: 'celebrate',

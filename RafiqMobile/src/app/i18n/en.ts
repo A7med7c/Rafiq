@@ -1226,6 +1226,7 @@ export const en = {
       heightError: 'Enter a valid height (50–300 cm)',
       weightError: 'Enter a valid weight (1–500 kg)',
       bloodTypeError: 'Blood type is required',
+      mascotTip: 'Fill in your basic health info so I can give you personalized care! 💙',
       continueBtn: 'Continue',
     },
     step2: {
@@ -1243,6 +1244,7 @@ export const en = {
       addAllergyBtn: 'Add another allergy',
       backBtn: 'Back',
       skipBtn: 'Skip',
+      mascotTip: 'Knowing your allergies helps me keep you safe from harmful medicines! 🛡️',
       continueBtn: 'Continue',
     },
     step3: {
@@ -1261,6 +1263,7 @@ export const en = {
       addConditionBtn: 'Add another disease',
       backBtn: 'Back',
       skipBtn: 'Skip',
+      mascotTip: 'Tracking your chronic diseases helps me remind you of your medications on time! ⏰',
       continueBtn: 'Continue',
     },
     step4: {
@@ -1286,6 +1289,7 @@ export const en = {
       aiDesc: 'Upload your medical reports and let AI extract important health information automatically.',
       aiBtn: 'Use AI to Fill More Info',
       saving: 'Saving...',
+      mascotTip: 'Everything looks great! Review your info and complete your profile. 🎉',
       completeProfile: 'Complete My Profile',
     },
     emergency: {
@@ -1304,6 +1308,7 @@ export const en = {
       adding: 'Adding...',
       addContact: 'Add Emergency Contact',
       addedContacts: 'Added Emergency Contacts',
+      mascotTip: 'Add at least one emergency contact so I can alert them if you need help! 🆘',
       continueBtn: 'Continue',
     },
     aiUpload: {

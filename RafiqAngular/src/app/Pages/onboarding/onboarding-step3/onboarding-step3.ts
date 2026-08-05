@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -7,10 +7,12 @@ import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
+import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
+
 @Component({
   selector: 'app-onboarding-step3',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
   templateUrl: './onboarding-step3.html',
   styleUrl: './onboarding-step3.css',
 })
@@ -22,19 +24,17 @@ export class OnboardingStep3 implements OnInit {
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
-  readonly steps = [
-    { label: 'Basic Info' },
-    { label: 'Emergency Contacts' },
-    { label: 'Allergies' },
-    { label: 'Chronic Diseases' },
-    { label: 'Review' },
-  ];
+  readonly steps = computed(() =>
+    this.t().onboarding.stepperLabels.map(label => ({ label }))
+  );
 
-  readonly statusOptions = [
-    { value: DiseaseStatus.Active, label: 'Active' },
-    { value: DiseaseStatus.Controlled, label: 'Controlled' },
-    { value: DiseaseStatus.Resolved, label: 'Resolved' }
-  ];
+  get statusOptions() {
+    return [
+      { value: DiseaseStatus.Active, label: this.t().myProfile.active },
+      { value: DiseaseStatus.Controlled, label: this.t().myProfile.controlled },
+      { value: DiseaseStatus.Resolved, label: this.t().myProfile.resolved }
+    ];
+  }
 
   /** 'yes' | 'no' */
   hasConditions: 'yes' | 'no' = 'no';

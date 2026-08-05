@@ -65,9 +65,9 @@
         <i class="fa-regular fa-comment-dots"></i>
         {{ t().sidebar.askNow }}
       </button>
-      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startWelcomeTour()" title="ابدأ الجولة التعريفية">
+      <button type="button" class="sb-help-btn sb-help-btn--tour" (click)="startPageTour()" [title]="t().sidebar.pageTourTitle">
         <i class="fa-solid fa-compass"></i>
-        جولة تعريفية
+        {{ t().sidebar.pageTour }}
       </button>
     </div>
   </aside>
@@ -368,12 +368,12 @@
             <div class="mp-info-row mp-info-row--stack">
               <span class="mp-info-ico mp-info-ico--lg mp-ico-teal"><i class="fa-solid fa-ruler-vertical"></i></span>
               <span class="mp-info-lbl-stack">{{ t().myProfile.height }}</span>
-              <span class="mp-info-val mp-info-val--lg">{{ profile()?.height ? profile()!.height + ' cm' : '—' }}</span>
+              <span class="mp-info-val mp-info-val--lg">{{ profile()?.height ? profile()!.height + ' ' + t().common.cm : '—' }}</span>
             </div>
             <div class="mp-info-row mp-info-row--stack">
               <span class="mp-info-ico mp-info-ico--lg mp-ico-teal"><i class="fa-solid fa-weight-scale"></i></span>
               <span class="mp-info-lbl-stack">{{ t().myProfile.weight }}</span>
-              <span class="mp-info-val mp-info-val--lg">{{ profile()?.weight ? profile()!.weight + ' kg' : '—' }}</span>
+              <span class="mp-info-val mp-info-val--lg">{{ profile()?.weight ? profile()!.weight + ' ' + t().common.kg : '—' }}</span>
             </div>
           </div>
           } @else {
@@ -395,11 +395,11 @@
               </div>
               <div class="mp-form-field">
                 <label>{{ t().myProfile.heightCm }}</label>
-                <input type="number" [(ngModel)]="healthForm.height" name="height" min="1" max="300" placeholder="cm">
+                <input type="number" [(ngModel)]="healthForm.height" name="height" min="1" max="300" [placeholder]="t().common.cm">
               </div>
               <div class="mp-form-field">
                 <label>{{ t().myProfile.weightKg }}</label>
-                <input type="number" [(ngModel)]="healthForm.weight" name="weight" min="1" max="500" placeholder="kg">
+                <input type="number" [(ngModel)]="healthForm.weight" name="weight" min="1" max="500" [placeholder]="t().common.kg">
               </div>
             </div>
             <div class="mp-form-actions">

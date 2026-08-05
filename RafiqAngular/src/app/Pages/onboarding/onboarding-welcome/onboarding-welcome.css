@@ -1,34 +1,40 @@
-/* ===== Page wrapper — matches .login-page background ===== */
+/* ===== Page Background — Website Brand Background ===== */
 .onboarding-welcome-page {
   width: 100%;
   min-height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(20px, 4vh, 34px) 7vw;
+  padding: clamp(24px, 5vh, 48px) 20px;
   background:
     radial-gradient(circle at 18% 72%, rgba(75, 219, 255, .24), transparent 24%),
     radial-gradient(circle at 80% 12%, rgba(255, 255, 255, .95), transparent 18%),
     linear-gradient(135deg, #eef8ff 0%, #dff5ff 44%, #f7fcff 100%);
-  color: #08264a;
   font-family: 'Inter', 'Segoe UI', Tahoma, Arial, sans-serif;
+  box-sizing: border-box;
 }
 
-/* ===== Card — matches .login-card ===== */
+/* ===== Card Container ===== */
 .onboarding-card {
   width: 100%;
-  max-width: 100%;
-  background: #fff;
-  padding: clamp(28px, 5vh, 42px) 34px;
-  border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(8, 38, 74, .08);
-  border: 1px solid rgba(78, 137, 184, .08);
+  max-width: 780px;
+  min-height: 520px;
+  background: #ffffff;
+  padding: clamp(36px, 5vh, 48px) clamp(36px, 5vw, 56px);
+  border-radius: 32px;
+  box-shadow: 
+    0 24px 60px rgba(8, 38, 74, 0.08), 
+    0 4px 16px rgba(8, 38, 74, 0.02);
+  border: 1px solid rgba(78, 137, 184, 0.12);
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: cardSlideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  justify-content: space-between;
+  text-align: center;
+  animation: cardSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
   transform: translateY(24px);
+  box-sizing: border-box;
 }
 
 @keyframes cardSlideUp {
@@ -38,243 +44,213 @@
   }
 }
 
-/* ===== Brand header — matches .brand in auth-hero ===== */
-.brand-header {
-  width: 100%;
-  margin-bottom: 4px;
-  animation: fadeIn 0.5s 0.1s ease forwards;
-  opacity: 0;
-}
-
-.brand-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.brand-icon {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-.brand-text {
+/* ===== Mascot Stage & Cyan/Blue Aura ===== */
+.mascot-stage {
+  position: relative;
   display: flex;
   flex-direction: column;
-  line-height: 1.2;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
-.brand-name {
-  font-family: 'Outfit', sans-serif;
-  font-size: 19px;
-  font-weight: 800;
-  color: #08264a;
-}
-
-.brand-tagline {
-  font-size: 13px;
-  color: #5d7692;
-}
-
-/* ===== Hero illustration ===== */
-.hero-illustration {
-  width: 200px;
-  height: 168px;
+.mascot-aura {
+  position: relative;
+  width: 240px;
+  height: 240px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 20px 0 12px;
-  animation: fadeIn 0.5s 0.2s ease forwards;
-  opacity: 0;
 }
 
-.hero-illustration img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 12px 28px rgba(21, 146, 211, .18));
+/* Override Avatar Engine Purple Glow with Brand Cyan/Blue Glow */
+.mascot-aura ::ng-deep .state--speaking .avatar-aura-glow,
+.mascot-aura ::ng-deep .avatar-aura-glow {
+  background: radial-gradient(circle at center, rgba(73, 215, 255, 0.45), transparent 70%) !important;
+  animation: none !important;
 }
 
-/* ===== Welcome text — matches .card-header ===== */
-.welcome-content {
-  text-align: center;
-  margin-bottom: 22px;
-  width: 100%;
-  animation: fadeIn 0.5s 0.3s ease forwards;
-  opacity: 0;
+.mascot-aura ::ng-deep .state--speaking .robot-avatar-png,
+.mascot-aura ::ng-deep .robot-avatar-png {
+  filter: drop-shadow(0 10px 24px rgba(14, 175, 215, 0.4)) !important;
 }
 
-.welcome-title {
-  margin: 0 0 6px;
-  font-family: 'Outfit', sans-serif;
-  font-size: clamp(26px, 4vh, 34px);
-  font-weight: 700;
-  color: #111;
-  line-height: 1.2;
+.aura-circle-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(73, 215, 255, 0.35) 0%, rgba(223, 245, 255, 0.25) 60%, transparent 75%);
+  filter: blur(6px);
+  z-index: 0;
 }
 
-.welcome-subtitle {
-  margin: 0 0 10px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #4E89B8;
+.aura-dashed-ring {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(73, 215, 255, 0.4);
+  z-index: 0;
 }
 
-.welcome-description {
-  margin: 0;
-  font-size: 14.5px;
-  color: #8b8b8b;
-  line-height: 1.55;
-}
-
-/* ===== Feature cards ===== */
-.feature-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  width: 100%;
-  margin-bottom: 22px;
-  animation: fadeIn 0.5s 0.4s ease forwards;
-  opacity: 0;
-}
-
-.feature-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 12px;
-  background: #f7fcff;
-  border-radius: 14px;
-  border: 1px solid rgba(78, 137, 184, .12);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.feature-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(8, 38, 74, .07);
-}
-
-.feature-icon {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  border-radius: 10px;
-  background: #49d7ff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
+/* Sparkles & Dots around aura */
+.aura-sparkle {
+  position: absolute;
+  color: #49d7ff;
   font-size: 14px;
-  box-shadow: 0 4px 12px rgba(78, 137, 184, .24);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 1;
+  animation: sparkleGlow 3s ease-in-out infinite alternate;
+}
+
+.sparkle-top-left     { top: 22%; left: 14%; animation-delay: 0s; }
+.sparkle-top-right    { top: 18%; right: 18%; animation-delay: 1s; }
+.sparkle-bottom-right { bottom: 24%; right: 14%; animation-delay: 2s; }
+
+.aura-dot {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid rgba(73, 215, 255, 0.5);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dot-left  { width: 10px; height: 10px; top: 46%; left: 16%; }
+.dot-right { width: 7px;  height: 7px;  top: 32%; right: 22%; }
+
+@keyframes sparkleGlow {
+  0%   { opacity: 0.4; transform: scale(0.9); }
+  100% { opacity: 0.9; transform: scale(1.15); }
+}
+
+/* Ground shadow below robot */
+.mascot-ground-shadow {
+  width: 130px;
+  height: 12px;
+  background: radial-gradient(ellipse at center, rgba(8, 38, 74, 0.18) 0%, transparent 75%);
+  border-radius: 50%;
+  margin-top: -6px;
+  filter: blur(2px);
+}
+
+/* ===== Welcome Header (Speech Bubble + Title) ===== */
+.welcome-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.speech-bubble-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.feature-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.feature-title {
-  font-size: 12.5px;
-  font-weight: 600;
+.welcome-title {
+  margin: 0;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: clamp(26px, 5vw, 32px);
+  font-weight: 800;
   color: #08264a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
-.feature-desc {
-  font-size: 11px;
-  color: #8b8b8b;
-  line-height: 1.3;
+/* ===== Welcome Description ===== */
+.welcome-description {
+  margin: 0 0 32px;
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: #5d7692;
+  max-width: 620px;
+  font-weight: 400;
 }
 
-/* ===== CTA Button — matches .submit-button ===== */
+/* Highlighted spans in subtitle using brand blue */
+.welcome-description ::ng-deep .highlight,
+.welcome-description :host ::ng-deep .highlight,
+::ng-deep .welcome-description .highlight {
+  color: #0EAFD7;
+  font-weight: 700;
+}
+
+/* ===== Action Button — Brand Cyan/Blue Gradient ===== */
 .cta-button {
   width: 100%;
-  min-height: 54px;
+  max-width: 340px;
+  min-height: 56px;
   border: none;
-  border-radius: 16px;
-  background: #49d7ff;
-  color: #fff;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #49d7ff 0%, #0EAFD7 100%);
+  color: #ffffff;
   font-family: 'Inter', sans-serif;
-  font-size: 17px;
+  font-size: 17.5px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 12px 22px rgba(78, 137, 184, .24);
-  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
-  animation: fadeIn 0.5s 0.5s ease forwards;
-  opacity: 0;
+  box-shadow: 0 12px 26px rgba(14, 175, 215, 0.32);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, background 0.25s ease;
+  box-sizing: border-box;
 }
 
 .cta-button:hover {
-  background: linear-gradient(135deg, #467fae 0%, #356f9a 100%);
-  box-shadow: 0 16px 28px rgba(78, 137, 184, .30);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #36d1fc 0%, #0b9ec3 100%);
+  box-shadow: 0 16px 32px rgba(14, 175, 215, 0.42);
+  transform: translateY(-2px);
 }
 
 .cta-button:active {
   transform: translateY(0);
-  box-shadow: 0 9px 18px rgba(78, 137, 184, .22);
+  box-shadow: 0 8px 18px rgba(14, 175, 215, 0.25);
 }
 
-.cta-button i {
+.cta-arrow {
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
-.cta-button:hover i {
+.cta-button:hover .cta-arrow {
   transform: translateX(4px);
 }
 
-/* ===== Footer note ===== */
-.footer-note {
-  margin-top: 16px;
-  font-size: 13px;
-  color: #93a3b5;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  animation: fadeIn 0.5s 0.6s ease forwards;
-  opacity: 0;
+/* RTL Arrow direction (flipped for forward navigation in RTL) */
+[dir="rtl"] .cta-arrow {
+  transform: scaleX(-1);
 }
 
-.footer-note i {
-  color: #49d7ff;
-  font-size: 13px;
+[dir="rtl"] .cta-button:hover .cta-arrow {
+  transform: scaleX(-1) translateX(4px);
 }
 
-/* ===== Shared fade-in ===== */
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 576px) {
+/* ===== Responsive adjustments ===== */
+@media (max-width: 480px) {
   .onboarding-card {
-    padding: 28px 18px;
+    padding: 32px 20px 32px;
+    border-radius: 28px;
+  }
+
+  .mascot-aura {
+    width: 200px;
+    height: 200px;
   }
 
   .welcome-title {
-    font-size: 26px;
+    font-size: 25px;
   }
 
-  .hero-illustration {
-    width: 170px;
-    height: 145px;
+  .welcome-description {
+    font-size: 14.5px;
+    margin-bottom: 28px;
   }
 
   .cta-button {
     min-height: 52px;
     font-size: 16px;
-  }
-
-  .feature-title {
-    white-space: normal;
   }
 }

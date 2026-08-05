@@ -258,7 +258,7 @@
                 </div>
               </div>
               <div class="filter-section">
-                <p class="filter-section-title">Sort By</p>
+                <p class="filter-section-title">{{ t().records.sortBy }}</p>
                 <select class="sort-select" [ngModel]="draftFilters().sortBy" (ngModelChange)="updateDraftFilter('sortBy', $event)">
                   @for (item of sortOptions; track item.value) {
                   <option [value]="item.value">{{ item.label }}</option>
@@ -361,7 +361,7 @@
                 <div>
                   <span class="table-rec-name">{{ rec.name }}</span>
                   @if (rec.rawRecord.doctorName) {
-                  <span class="table-rec-sub">Dr. {{ rec.rawRecord.doctorName }}</span>
+                  <span class="table-rec-sub">{{ t().common.drPrefix }} {{ rec.rawRecord.doctorName }}</span>
                   }
                 </div>
               </div>
@@ -640,7 +640,7 @@
           }
         </div>
         <div class="scan-field scan-field--full">
-          <label class="scan-label">{{ t().records.description }} <span class="scan-optional">(optional)</span></label>
+          <label class="scan-label">{{ t().records.description }} <span class="scan-optional">({{ t().common.optional }})</span></label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="generalUploadForm.description"
             [disabled]="uploadLoading()" rows="4"></textarea>
         </div>
@@ -779,11 +779,11 @@
           <input type="text" class="scan-input" [(ngModel)]="rf.doctorName">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Patient Name</label>
+          <label class="scan-label">{{ t().records.patientName }}</label>
           <input type="text" class="scan-input" [(ngModel)]="rf.patientName">
         </div>
         <div class="scan-field">
-          <label class="scan-label">Prescription Date</label>
+          <label class="scan-label">{{ t().records.prescriptionDate }}</label>
           <input type="date" class="scan-input" [(ngModel)]="rf.prescriptionDate" [max]="todayStr">
         </div>
         }
@@ -872,7 +872,7 @@
       @if (rf.type === 'prescription') {
       <div class="review-table-section">
         <div class="review-table-hdr">
-          <h4 class="detail-h4"><i class="fa-solid fa-capsules"></i> Medicines &amp; Instructions</h4>
+          <h4 class="detail-h4"><i class="fa-solid fa-capsules"></i> {{ t().records.medicinesInstructions }}</h4>
           <div style="display:flex;gap:8px;align-items:center;">
             <button type="button" class="mini-add-btn" [disabled]="reviewSaving() || addingAllMeds() || addingMedIndex() !== null"
               (click)="addAllPrescriptionMedsToMedications()">
@@ -896,7 +896,7 @@
         <div class="detail-table-wrap">
           <table class="detail-table review-edit-table">
             <thead><tr>
-              <th>Medicine</th>
+              <th>{{ t().records.medicine }}</th>
               <th>{{ t().records.dosage }}</th>
               <th>{{ t().records.frequency }}</th>
               <th>{{ t().records.duration }}</th>
@@ -1015,7 +1015,7 @@
           (change)="onManualMedImageSelected($event)">
         @if (manualMedicineImagePreviewUrl()) {
         <div class="manual-img-wrap">
-          <img [src]="manualMedicineImagePreviewUrl()" class="modal-image" alt="Selected medicine box image">
+          <img [src]="manualMedicineImagePreviewUrl()" class="modal-image" [attr.alt]="t().records.selectedMedicineBoxImage">
           @if (manualMedicineImageUploading()) {
           <div class="manual-img-uploading">
             <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:18px;height:18px;">
@@ -1032,7 +1032,7 @@
         <button type="button" class="manual-img-upload-btn" [disabled]="manualMedicineImageUploading()"
           (click)="manualMedImgInput.click()">
           <i class="fa-solid fa-image"></i>
-          {{ manualMedicineImagePreviewUrl() ? 'Change Image' : 'Attach Image (optional)' }}
+          {{ manualMedicineImagePreviewUrl() ? t().records.changeImage : t().records.attachImageOptional }}
         </button>
         } @else {
         <!-- AI scan / Edit mode: show server image or placeholder -->
@@ -1080,7 +1080,7 @@
       <div class="scan-form-grid">
         <div class="scan-field">
           <label class="scan-label">{{ t().records.medicineName }} <span class="scan-required">*</span></label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.medicineName" placeholder="e.g. Amoxicillin">
+          <input type="text" class="scan-input" [(ngModel)]="scanForm.medicineName" [attr.placeholder]="t().records.medicinePlaceholder">
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.strengthDosage }}</label>

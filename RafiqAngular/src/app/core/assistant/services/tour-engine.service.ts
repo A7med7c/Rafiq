@@ -176,9 +176,18 @@ export class TourEngineService {
    * @param scenarioOrId TourScenario object or registered scenario ID string
    */
   startTour(scenarioOrId: string | TourScenario): boolean {
-    const scenario = typeof scenarioOrId === 'string'
-      ? this.getScenario(scenarioOrId)
-      : scenarioOrId;
+    let scenario: TourScenario | undefined;
+    if (typeof scenarioOrId === 'string') {
+      // Auto-select the English variant when the app is in English.
+      // Looks for '<id>-en' first; falls back to the base Arabic scenario.
+      const lang = this.l10n?.lang() ?? 'ar';
+      const resolvedId = lang === 'en'
+        ? (this.getScenario(`${scenarioOrId}-en`) ? `${scenarioOrId}-en` : scenarioOrId)
+        : scenarioOrId;
+      scenario = this.getScenario(resolvedId);
+    } else {
+      scenario = scenarioOrId;
+    }
 
     if (!scenario || !scenario.steps || scenario.steps.length === 0) {
       console.warn(`[TourEngineService] Tour scenario not found or has no steps: "${scenarioOrId}"`);
@@ -416,7 +425,7 @@ export class TourEngineService {
       this.enterTimer = null;
     }
 
-    const enterDelay = targetEl ? STEP_ENTER_HIGHLIGHT_MS : 0;
+    const enterDelay = targetEl ? STEP_ENTER_HIGHLIGHT_MS : 100;
     this.enterTimer = setTimeout(() => {
       if (!this._isPlaying() || this._isPaused()) return;
 

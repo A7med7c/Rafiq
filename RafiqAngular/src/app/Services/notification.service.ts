@@ -7,6 +7,7 @@ import { AppointmentReminderNotificationPayload, DocumentAnalysisCompletedPayloa
 import { NotificationSoundService } from './notification-sound.service';
 import { PersistedNotificationsService } from './persisted-notifications.service';
 import { LocalizationService } from './localization.service';
+import { localizeKnownApiMessage } from '../Utils/api-error.util';
 
 export interface AppNotification {
   id: string;
@@ -345,7 +346,7 @@ export class NotificationService {
         const nc = this.localization.t().notifications;
         this.showToast(
           nc.couldNotConfirmMedication,
-          err?.error?.message || nc.couldNotConfirmMedBody.replace('{name}', reminder.medicineName),
+          localizeKnownApiMessage(err?.error?.message ?? nc.couldNotConfirmMedBody.replace('{name}', reminder.medicineName), this.localization.t()),
           'error'
         );
       },
@@ -808,7 +809,7 @@ export class NotificationService {
         const nc = this.localization.t().notifications;
         this.showToast(
           nc.couldNotConfirmAppointment,
-          err?.error?.message || nc.couldNotConfirmApptBody.replace('{title}', reminder.title),
+          localizeKnownApiMessage(err?.error?.message ?? nc.couldNotConfirmApptBody.replace('{title}', reminder.title), this.localization.t()),
           'error'
         );
       },

@@ -4,6 +4,8 @@ import { AvatarEngineComponent } from '../avatar-engine/avatar-engine';
 import { AvatarPositionService } from '../../core/assistant/services/avatar-position.service';
 import { TourEngineService } from '../../core/assistant/services/tour-engine.service';
 
+import { LocalizationService } from '../../Services/localization.service';
+
 /**
  * The travelling Rafiq mascot and its contextual walkthrough bubble.
  *
@@ -24,8 +26,14 @@ import { TourEngineService } from '../../core/assistant/services/tour-engine.ser
 export class RafiqAssistantComponent implements OnDestroy {
   readonly positionService = inject(AvatarPositionService);
   readonly tourEngine = inject(TourEngineService);
+  protected readonly l10n = inject(LocalizationService, { optional: true });
+  protected readonly t = this.l10n?.t;
 
   readonly bubbleEl = viewChild<ElementRef<HTMLElement>>('bubbleEl');
+
+  readonly isOnboarding = computed(() =>
+    this.tourEngine.currentScenario()?.category === 'onboarding'
+  );
 
   readonly stepIndexes = computed(() =>
     Array.from({ length: this.tourEngine.totalSteps() }, (_, i) => i)
