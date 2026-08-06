@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, inject, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { inject } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { AllergySeverity } from '../../../Modles/health-profile-enums';
 import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
@@ -16,7 +16,7 @@ import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-
   templateUrl: './onboarding-step2.html',
   styleUrl: './onboarding-step2.css',
 })
-export class OnboardingStep2 implements OnInit {
+export class OnboardingStep2 implements OnInit, OnDestroy {
 
   private readonly router = inject(Router);
   private readonly fb     = inject(FormBuilder);
@@ -24,24 +24,20 @@ export class OnboardingStep2 implements OnInit {
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
-  showMascotTip = true;
+  private valueSub?: Subscription;
 
-  dismissMascotTip(): void {
-    this.showMascotTip = false;
-  }
+  // Per-row dropdown state
+  openDropdownIndex: number | null = null;
+  dropdownTop = 0;
+  dropdownLeft = 0;
+  dropdownWidth = 0;
 
-  readonly steps = [
-    { label: 'Basic Info' },
-    { label: 'Emergency Contacts' },
-    { label: 'Allergies' },
-    { label: 'Chronic Diseases' },
-    { label: 'Review' },
-  ];
+  readonly steps = computed(() => this.t().onboarding.stepperLabels.map(label => ({ label })));
 
   readonly severityOptions = [
-    { value: AllergySeverity.Severe, label: 'Severe' },
-    { value: AllergySeverity.Moderate, label: 'Moderate' },
-    { value: AllergySeverity.Mild, label: 'Mild' }
+    { value: AllergySeverity.Severe,   label: 'Severe',   labelAr: 'شديدة' },
+    { value: AllergySeverity.Moderate, label: 'Moderate', labelAr: 'متوسطة' },
+    { value: AllergySeverity.Mild,     label: 'Mild',     labelAr: 'خفيفة' }
   ];
 
   /** 'yes' | 'no' */
@@ -72,6 +68,62 @@ export class OnboardingStep2 implements OnInit {
         console.error('Error parsing onboarding_step2 from sessionStorage', e);
       }
     }
+
+    this.valueSub = this.form.valueChanges.subscribe(() => {
+      this.saveState();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.valueSub?.unsubscribe();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.severity-shell') && !target.closest('.dropdown-portal')) {
+      this.openDropdownIndex = null;
+    }
+  }
+
+  toggleSeverityDropdown(index: number, trigger: HTMLElement): void {
+    if (this.openDropdownIndex === index) {
+      this.openDropdownIndex = null;
+      return;
+    }
+    const rect = trigger.getBoundingClientRect();
+    this.dropdownTop = rect.bottom + 6;
+    this.dropdownLeft = rect.left;
+    this.dropdownWidth = Math.max(rect.width, 160);
+    this.openDropdownIndex = index;
+  }
+
+  selectSeverity(index: number, val: number, event: Event): void {
+    event.stopPropagation();
+    this.allergiesArray.at(index).get('severity')?.setValue(val);
+    this.allergiesArray.at(index).get('severity')?.markAsDirty();
+    this.saveState();
+    this.openDropdownIndex = null;
+  }
+
+  getSeverityLabel(val: number): string {
+    const found = this.severityOptions.find(o => o.value === Number(val));
+    if (!found) return '';
+    return this.l10n.isRtl() ? found.labelAr : found.label;
+  }
+
+  getSeverityClass(val: number): string {
+    switch (Number(val)) {
+      case AllergySeverity.Severe:   return 'severity-high';
+      case AllergySeverity.Moderate: return 'severity-medium';
+      case AllergySeverity.Mild:     return 'severity-low';
+      default: return '';
+    }
+  }
+
+  private saveState(): void {
+    const data = this.hasAllergies === 'yes' ? this.allergiesArray.getRawValue() : [];
+    sessionStorage.setItem('onboarding_step2', JSON.stringify({ hasAllergies: this.hasAllergies, allergies: data }));
   }
 
   get allergiesArray(): FormArray {
@@ -86,6 +138,7 @@ export class OnboardingStep2 implements OnInit {
     if (value === 'no') {
       this.allergiesArray.clear();
     }
+    this.saveState();
   }
 
   addAllergy(): void {
@@ -95,6 +148,7 @@ export class OnboardingStep2 implements OnInit {
         severity: [AllergySeverity.Moderate, Validators.required],
       })
     );
+    this.saveState();
   }
 
   removeAllergy(index: number): void {
@@ -102,16 +156,7 @@ export class OnboardingStep2 implements OnInit {
     if (this.allergiesArray.length === 0) {
       this.hasAllergies = 'no';
     }
-  }
-
-  severityClass(severity: number | string): string {
-    const val = Number(severity);
-    switch (val) {
-      case AllergySeverity.Severe:   return 'severity-high';
-      case AllergySeverity.Moderate: return 'severity-medium';
-      case AllergySeverity.Mild:     return 'severity-low';
-      default:                       return '';
-    }
+    this.saveState();
   }
 
   getSeverityValue(index: number): number {
@@ -119,6 +164,7 @@ export class OnboardingStep2 implements OnInit {
   }
 
   goBack(): void {
+    this.saveState();
     this.router.navigate(['/onboarding/emergency']);
   }
 
@@ -127,12 +173,7 @@ export class OnboardingStep2 implements OnInit {
       this.form.markAllAsTouched();
       if (this.form.invalid) return;
     }
-
-    const data = this.hasAllergies === 'yes'
-      ? this.allergiesArray.getRawValue()
-      : [];
-
-    sessionStorage.setItem('onboarding_step2', JSON.stringify({ hasAllergies: this.hasAllergies, allergies: data }));
+    this.saveState();
     if (this.tourEngine.isPlaying()) this.tourEngine.nextStep();
     this.router.navigate(['/onboarding/step3']);
   }
@@ -140,7 +181,7 @@ export class OnboardingStep2 implements OnInit {
   skip(): void {
     this.hasAllergies = 'no';
     this.allergiesArray.clear();
-    sessionStorage.setItem('onboarding_step2', JSON.stringify({ hasAllergies: 'no', allergies: [] }));
+    this.saveState();
     if (this.tourEngine.isPlaying()) this.tourEngine.nextStep();
     this.router.navigate(['/onboarding/step3']);
   }

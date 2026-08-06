@@ -1,9 +1,9 @@
-<div class="step-page">
+<div class="step-page" [dir]="l10n.dir()">
 
   <!-- Top navigation bar -->
   <header class="step-header">
     <button class="back-btn" (click)="goBack()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg class="back-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"/>
       </svg>
       {{ t().onboarding.header.back }}
@@ -17,10 +17,10 @@
     <!-- Progress stepper -->
     <div class="stepper-wrapper">
       <div class="stepper">
-        @for (step of steps; track $index) {
+        @for (step of steps(); track $index) {
           <div class="step-item"
-               [class.active]="$index === 3"
-               [class.done]="$index < 3">
+               [class.active]="$index === 4"
+               [class.done]="$index < 4">
             <div class="step-circle">
               @if ($index < 3) {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -32,8 +32,8 @@
             </div>
             <span class="step-label">{{ step.label }}</span>
           </div>
-          @if ($index < steps.length - 1) {
-            <div class="step-connector" [class.filled]="$index < 3"></div>
+          @if ($index < steps().length - 1) {
+            <div class="step-connector" [class.filled]="$index < 4"></div>
           }
         }
       </div>
@@ -41,7 +41,6 @@
 
   <!-- Form card -->
   <div class="form-card">
-    <p class="step-indicator">{{ t().onboarding.step3.stepIndicator }}</p>
     <h2 class="form-title" assistantAnchor="onboarding-form-heading">{{ t().onboarding.step3.title }}</h2>
     <p class="form-description">{{ t().onboarding.step3.subtitle }} {{ t().onboarding.step3.subtitle2 }}</p>
 
@@ -52,13 +51,19 @@
               class="yn-card"
               [class.yn-selected]="hasConditions === 'no'"
               (click)="selectHasConditions('no')">
-        <div class="yn-radio" [class.yn-radio-selected]="hasConditions === 'no'">
-          @if (hasConditions === 'no') {
-            <div class="yn-radio-dot"></div>
-          }
+        <div class="yn-illustration shield-icon">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M12 8a2.5 2.5 0 0 0-2.5 2.5c0 1.8 2.5 4.5 2.5 4.5s2.5-2.7 2.5-4.5A2.5 2.5 0 0 0 12 8z" fill="currentColor" fill-opacity="0.25"/>
+          </svg>
         </div>
-        <div class="yn-text">
-          <span class="yn-main">{{ t().common.no }}</span>
+        <div class="yn-content">
+          <div class="yn-header">
+            <div class="yn-radio" [class.yn-radio-selected]="hasConditions === 'no'">
+              <div class="yn-radio-dot"></div>
+            </div>
+            <span class="yn-main">{{ t().common.no }}</span>
+          </div>
           <span class="yn-sub">{{ t().onboarding.step3.noLabel }}</span>
         </div>
       </button>
@@ -67,17 +72,24 @@
               class="yn-card"
               [class.yn-selected]="hasConditions === 'yes'"
               (click)="selectHasConditions('yes')">
-        <div class="yn-text">
-          <span class="yn-main">{{ t().common.yes }}</span>
+        <div class="yn-illustration clipboard-icon">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+            <path d="M9 11h6"/>
+            <path d="M9 15h4"/>
+            <circle cx="16" cy="16" r="3" fill="currentColor" fill-opacity="0.25"/>
+          </svg>
+        </div>
+        <div class="yn-content">
+          <div class="yn-header">
+            <div class="yn-radio" [class.yn-radio-selected]="hasConditions === 'yes'">
+              <div class="yn-radio-dot"></div>
+            </div>
+            <span class="yn-main">{{ t().common.yes }}</span>
+          </div>
           <span class="yn-sub">{{ t().onboarding.step3.yesLabel }}</span>
         </div>
-        @if (hasConditions === 'yes') {
-          <div class="yn-check">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          </div>
-        }
       </button>
 
     </div>
@@ -128,13 +140,9 @@
                 </div>
 
                 <!-- Status dropdown -->
-                <div class="status-shell" [ngClass]="statusClass(getStatusValue($index))">
-                  <select class="status-select" formControlName="status">
-                    @for (opt of statusOptions; track opt.value) {
-                      <option [value]="opt.value">{{ opt.label }}</option>
-                    }
-                  </select>
-                  <svg class="status-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <div #statusTrigger class="status-shell" [ngClass]="statusClass(getStatusValue($index))" (click)="toggleStatusDropdown($index, statusTrigger)">
+                  <span class="status-label">{{ getStatusLabel(getStatusValue($index)) }}</span>
+                  <svg class="status-arrow" [class.open]="openDropdownIndex === $index" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                     <polyline points="6 9 12 15 18 9"/>
                   </svg>
                 </div>
@@ -161,24 +169,25 @@
         </div>
       </div>
     }
+  </div>
 
-    <!-- In-Form Mascot Tip (3D Robot Avatar + Speech Bubble) -->
-    @if (showMascotTip) {
-      <div class="in-form-mascot-tip">
-        <div class="mascot-avatar-wrapper">
-          <app-avatar-engine size="76px"></app-avatar-engine>
-        </div>
-        <div class="mascot-speech-bubble">
-          <button type="button" class="mascot-close-btn" (click)="dismissMascotTip()" aria-label="إغلاق">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-          <p class="mascot-speech-text">{{ t().onboarding.step3.mascotTip }}</p>
-        </div>
+  <!-- ─── AI Guide Bubble ─── -->
+  <div class="ob-guide">
+    <div class="ob-guide__row">
+      <div class="ob-guide__mascot" aria-hidden="true">
+        <app-avatar-engine size="68px" state="speaking" />
       </div>
-    }
-
+      <div class="ob-guide__bubble" [dir]="l10n.dir()">
+        <strong class="ob-guide__title">
+          {{ l10n.isRtl() ? 'الأمراض المزمنة' : 'Chronic Diseases' }}
+        </strong>
+        <p class="ob-guide__body">
+          {{ l10n.isRtl()
+            ? 'سجّل أي أمراض مزمنة حتى نتمكن من تخصيص رعايتك.'
+            : 'Record any chronic conditions to personalize your care.' }}
+        </p>
+      </div>
+    </div>
   </div>
 
   <!-- Bottom action bar -->
@@ -187,20 +196,35 @@
     <button type="button" class="btn-skip" (click)="skip()">{{ t().onboarding.step3.skipBtn }}</button>
     <button type="button" class="btn-continue" (click)="continue()">
       {{ t().onboarding.step3.continueBtn }}
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg class="continue-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
       </svg>
     </button>
   </div>
 
-  <!-- Bottom progress bar -->
-  <div class="progress-footer">
-    <div class="progress-track">
-      <div class="progress-fill" style="width: 80%"></div>
-    </div>
-    <span class="progress-label">{{ t().onboarding.step3.stepIndicator }}</span>
-  </div>
+
 
   </div> <!-- /onboarding-layout -->
 
 </div>
+
+<!-- Status dropdown portal -->
+@if (openDropdownIndex !== null) {
+  <div class="dropdown-portal"
+       [style.top.px]="dropdownTop"
+       [style.left.px]="dropdownLeft"
+       [style.width.px]="dropdownWidth">
+    @for (opt of statusOptions; track opt.value) {
+      <div class="dropdown-portal-item"
+           [class.selected]="conditionsArray.at(openDropdownIndex).get('status')?.value === opt.value"
+           (click)="selectStatus(openDropdownIndex, opt.value, $event)">
+        <span>{{ l10n.isRtl() ? opt.labelAr : opt.label }}</span>
+        @if (conditionsArray.at(openDropdownIndex).get('status')?.value === opt.value) {
+          <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        }
+      </div>
+    }
+  </div>
+}

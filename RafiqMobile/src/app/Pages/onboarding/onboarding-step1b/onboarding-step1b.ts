@@ -1,28 +1,28 @@
-import { Component, OnInit, OnDestroy, HostListener, ElementRef, ViewChild, inject, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, inject, computed } from '@angular/core';
 import { Router } from '@angular/router';
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { Gender } from '../../../Modles/health-profile-enums';
+import { BloodType } from '../../../Modles/health-profile-enums';
 import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
 
 @Component({
-  selector: 'app-onboarding-step1',
+  selector: 'app-onboarding-step1b',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
-  templateUrl: './onboarding-step1.html',
-  styleUrl: './onboarding-step1.css',
+  templateUrl: './onboarding-step1b.html',
+  styleUrl: './onboarding-step1b.css',
 })
-export class OnboardingStep1 implements OnInit, OnDestroy {
+export class OnboardingStep1b implements OnInit, OnDestroy {
 
-  private readonly router = inject(Router);
-  private readonly fb     = inject(FormBuilder);
-  private readonly tourEngine = inject(TourEngineService);
-  protected readonly l10n = inject(LocalizationService);
-  protected readonly t = this.l10n.t;
+  private readonly router      = inject(Router);
+  private readonly fb          = inject(FormBuilder);
+  private readonly tourEngine  = inject(TourEngineService);
+  protected readonly l10n      = inject(LocalizationService);
+  protected readonly t         = this.l10n.t;
 
   private valueSub?: Subscription;
   dropdownOpen = false;
@@ -30,18 +30,23 @@ export class OnboardingStep1 implements OnInit, OnDestroy {
   dropdownLeft = 0;
   dropdownWidth = 0;
 
-  readonly today = new Date().toISOString().slice(0, 10);
-
   readonly steps = computed(() => this.t().onboarding.stepperLabels.map(label => ({ label })));
 
-  readonly genderOptions = [
-    { value: Gender.Male, labelEn: 'Male', labelAr: 'ذكر' },
-    { value: Gender.Female, labelEn: 'Female', labelAr: 'أنثى' }
+  readonly bloodTypes = [
+    { value: BloodType.APositive,  label: 'A+'  },
+    { value: BloodType.ANegative,  label: 'A-'  },
+    { value: BloodType.BPositive,  label: 'B+'  },
+    { value: BloodType.BNegative,  label: 'B-'  },
+    { value: BloodType.ABPositive, label: 'AB+' },
+    { value: BloodType.ABNegative, label: 'AB-' },
+    { value: BloodType.OPositive,  label: 'O+'  },
+    { value: BloodType.ONegative,  label: 'O-'  },
   ];
 
   readonly form: FormGroup = this.fb.group({
-    dateOfBirth: ['', [Validators.required, this.notFutureDateValidator]],
-    gender:      ['', Validators.required],
+    height:    ['', [Validators.required, Validators.min(50),  Validators.max(300)]],
+    weight:    ['', [Validators.required, Validators.min(1),   Validators.max(500)]],
+    bloodType: ['',  Validators.required],
   });
 
   ngOnInit(): void {
@@ -50,12 +55,11 @@ export class OnboardingStep1 implements OnInit, OnDestroy {
       try {
         const data = JSON.parse(saved);
         this.form.patchValue({
-          dateOfBirth: data.dateOfBirth ?? '',
-          gender:      data.gender !== undefined && data.gender !== '' ? Number(data.gender) : '',
+          height:    data.height    ?? '',
+          weight:    data.weight    ?? '',
+          bloodType: data.bloodType !== undefined && data.bloodType !== '' ? Number(data.bloodType) : '',
         }, { emitEvent: false });
-      } catch (e) {
-        console.error('Error parsing onboarding_step1 from sessionStorage', e);
-      }
+      } catch { /* ignore */ }
     }
 
     this.valueSub = this.form.valueChanges.subscribe(() => {
@@ -87,21 +91,20 @@ export class OnboardingStep1 implements OnInit, OnDestroy {
     this.dropdownOpen = true;
   }
 
-  selectGender(val: number, event: Event): void {
+  selectBloodType(val: number, event: Event): void {
     event.stopPropagation();
-    this.form.get('gender')?.setValue(val);
-    this.form.get('gender')?.markAsTouched();
-    this.form.get('gender')?.markAsDirty();
+    this.form.get('bloodType')?.setValue(val);
+    this.form.get('bloodType')?.markAsTouched();
+    this.form.get('bloodType')?.markAsDirty();
     this.saveState();
     this.dropdownOpen = false;
   }
 
-  getSelectedGenderLabel(): string {
-    const val = this.form.get('gender')?.value;
+  getSelectedBloodTypeLabel(): string {
+    const val = this.form.get('bloodType')?.value;
     if (val === '' || val === null || val === undefined) return '';
-    const found = this.genderOptions.find(g => g.value === Number(val));
-    if (!found) return '';
-    return this.l10n.isRtl() ? found.labelAr : found.labelEn;
+    const found = this.bloodTypes.find(b => b.value === Number(val));
+    return found ? found.label : '';
   }
 
   private saveState(): void {
@@ -111,7 +114,7 @@ export class OnboardingStep1 implements OnInit, OnDestroy {
 
   goBack(): void {
     this.saveState();
-    this.router.navigate(['/onboarding/welcome']);
+    this.router.navigate(['/onboarding/step1']);
   }
 
   continue(): void {
@@ -121,34 +124,11 @@ export class OnboardingStep1 implements OnInit, OnDestroy {
     }
     this.saveState();
     if (this.tourEngine.isPlaying()) this.tourEngine.nextStep();
-    this.router.navigate(['/onboarding/step1b']);
+    this.router.navigate(['/onboarding/emergency']);
   }
 
-  getDateOfBirthError(): string {
-    const ctrl = this.form.get('dateOfBirth');
-    if (ctrl?.hasError('required')) {
-      return 'Date of birth is required';
-    }
-    if (ctrl?.hasError('futureDate')) {
-      return 'Date of birth cannot be in the future';
-    }
-    return 'Enter a valid date of birth';
-  }
-
-  isInvalid(field: 'dateOfBirth' | 'gender'): boolean {
+  isInvalid(field: 'height' | 'weight' | 'bloodType'): boolean {
     const ctrl = this.form.get(field);
     return !!ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched);
-  }
-
-  private notFutureDateValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value) {
-      return null;
-    }
-
-    const selectedDate = new Date(`${control.value}T00:00:00`);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return selectedDate > today ? { futureDate: true } : null;
   }
 }

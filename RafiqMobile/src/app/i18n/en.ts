@@ -1159,6 +1159,7 @@ export const en = {
   },
 
   onboarding: {
+    stepperLabels: ['Basic Info', 'Physical Info', 'Emergency', 'Allergies', 'Chronic Diseases', 'Review'],
     welcome: {
       title: 'Welcome to Rafiq!',
       subtitle: "Let's build your Health Profile",

@@ -12,7 +12,7 @@
  */
 
 import { Injectable, signal, computed, inject, NgZone, effect } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, NavigationStart } from '@angular/router';
 import { driver, Driver } from 'driver.js';
 
 import { TourScenario, TourStepScenario, TourState, TourStepVariant } from '../models/tour-scenario';
@@ -133,6 +133,33 @@ export class TourEngineService {
   constructor() {
     // Auto-register built-in default tours
     DEFAULT_TOURS.forEach(scenario => this.registerScenario(scenario));
+
+    // Automatically stop active tour on navigation to auth / login pages
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        const url = event.url.toLowerCase();
+        if (
+          url.includes('/login') ||
+          url.includes('/register') ||
+          url.includes('/auth') ||
+          url === '/' ||
+          url === '/landing'
+        ) {
+          if (this._isPlaying()) {
+            this.stopTour(false);
+          }
+        }
+      }
+    });
+
+    // Automatically stop active tour when user logs out
+    if (this.authService) {
+      this.authService.currentUser$.subscribe((user) => {
+        if (!user && this._isPlaying()) {
+          this.stopTour(false);
+        }
+      });
+    }
 
     // Nice-to-have: lets global CSS pulse the Driver.js spotlight in sync with the mascot's
     // speaking state, so the user's eye is drawn to both the highlight and the bubble at once.
@@ -288,10 +315,14 @@ export class TourEngineService {
     this._stepVisible.set(false);
     this.clearAllTimers();
     this.clearStepResources();
+    this.clearDriverHighlight();
+
+    if (typeof document !== 'undefined') {
+      document.body.classList.remove('rafiq-tour-active');
+      document.body.classList.remove('rafiq-tour-speaking');
+    }
 
     const finish = () => {
-      this.clearDriverHighlight();
-
       this._isPlaying.set(false);
       this._isPaused.set(false);
       this._isWaitingForUser.set(false);
@@ -299,10 +330,6 @@ export class TourEngineService {
       this._currentScenario.set(null);
       this._currentStepIndex.set(0);
       this._effectiveStep.set(null);
-
-      if (typeof document !== 'undefined') {
-        document.body.classList.remove('rafiq-tour-active');
-      }
 
       // Return assistant to home position and set idle avatar state
       this.positionService.returnHome();

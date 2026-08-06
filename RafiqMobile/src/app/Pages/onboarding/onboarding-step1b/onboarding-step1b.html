@@ -1,0 +1,169 @@
+<div class="step-page" [dir]="l10n.dir()">
+
+  <!-- Top navigation bar -->
+  <header class="step-header">
+    <button class="back-btn" (click)="goBack()">
+      <svg class="back-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      {{ t().onboarding.header.back }}
+    </button>
+    <h1 class="header-title">{{ t().onboarding.header.createHealthProfile }}</h1>
+    <div class="header-spacer"></div>
+  </header>
+
+  <div class="onboarding-layout">
+
+    <!-- Progress stepper -->
+    <div class="stepper-wrapper">
+      <div class="stepper">
+        @for (step of steps(); track $index) {
+          <div class="step-item" [class.active]="$index === 1" [class.done]="$index < 1">
+            <div class="step-circle">
+              @if ($index < 1) {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              } @else {
+                <span class="step-number">{{ $index + 1 }}</span>
+              }
+            </div>
+            <span class="step-label">{{ step.label }}</span>
+          </div>
+          @if ($index < steps().length - 1) {
+            <div class="step-connector" [class.filled]="$index < 1"></div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Form card -->
+    <div class="form-card">
+      <h2 class="form-title" assistantAnchor="onboarding-form-heading">
+        {{ l10n.isRtl() ? 'أخبرنا عن معلوماتك الجسدية' : 'Tell us about your physical information' }}
+      </h2>
+
+      <form id="step1bForm" [formGroup]="form" (ngSubmit)="continue()" novalidate>
+
+        <!-- Row: Height + Weight -->
+        <div class="fields-row">
+
+          <div class="field">
+            <label for="height" class="field-label">{{ t().onboarding.step1.heightLabel }}</label>
+            <div class="input-shell" [class.invalid]="isInvalid('height')">
+              <input
+                id="height"
+                type="number"
+                class="field-input"
+                formControlName="height"
+                [placeholder]="t().onboarding.step1.heightPlaceholder"
+                min="50"
+                max="300"
+              />
+              <span class="input-unit">{{ t().onboarding.step1.heightUnit }}</span>
+            </div>
+            @if (isInvalid('height')) {
+              <p class="field-error">{{ t().onboarding.step1.heightError }}</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="weight" class="field-label">{{ t().onboarding.step1.weightLabel }}</label>
+            <div class="input-shell" [class.invalid]="isInvalid('weight')">
+              <input
+                id="weight"
+                type="number"
+                class="field-input"
+                formControlName="weight"
+                [placeholder]="t().onboarding.step1.weightPlaceholder"
+                min="1"
+                max="500"
+              />
+              <span class="input-unit">{{ t().onboarding.step1.weightUnit }}</span>
+            </div>
+            @if (isInvalid('weight')) {
+              <p class="field-error">{{ t().onboarding.step1.weightError }}</p>
+            }
+          </div>
+
+        </div>
+
+        <!-- Blood Type -->
+        <div class="field">
+          <label class="field-label">{{ t().onboarding.step1.bloodTypeLabel }}</label>
+          <div #bloodTrigger class="input-shell select-shell" [class.invalid]="isInvalid('bloodType')" (click)="toggleDropdown(bloodTrigger)">
+            <span class="blood-drop-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C12 2 5 10.5 5 15a7 7 0 0 0 14 0C19 10.5 12 2 12 2Z"/>
+              </svg>
+            </span>
+            <div class="custom-select-trigger" [class.placeholder]="!getSelectedBloodTypeLabel()">
+              {{ getSelectedBloodTypeLabel() || t().onboarding.step1.selectBloodType }}
+            </div>
+            <span class="select-arrow" [class.open]="dropdownOpen">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </span>
+          </div>
+          @if (isInvalid('bloodType')) {
+            <p class="field-error">{{ t().onboarding.step1.bloodTypeError }}</p>
+          }
+        </div>
+
+      </form>
+    </div>
+
+    <!-- ─── AI Guide Bubble ─── -->
+    <div class="ob-guide">
+      <div class="ob-guide__row">
+        <div class="ob-guide__mascot" aria-hidden="true">
+          <app-avatar-engine size="68px" state="speaking" />
+        </div>
+        <div class="ob-guide__bubble" [dir]="l10n.dir()">
+          <strong class="ob-guide__title">
+            {{ l10n.isRtl() ? 'معلوماتك الجسدية' : 'Your Physical Information' }}
+          </strong>
+          <p class="ob-guide__body">
+            {{ l10n.isRtl()
+              ? 'أدخل طولك ووزنك، ثم اختر فصيلة دمك.'
+              : 'Enter your height and weight, then select your blood type.' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom action bar -->
+    <div class="action-bar">
+      <button type="submit" form="step1bForm" class="continue-btn" (click)="continue()">
+        {{ t().onboarding.step1.continueBtn }}
+        <svg class="continue-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+    </div>
+
+  </div> <!-- /onboarding-layout -->
+
+</div>
+
+<!-- Fixed-position dropdown portal (escapes all overflow:hidden and appears above mascot) -->
+@if (dropdownOpen) {
+  <div class="dropdown-portal"
+       [style.top.px]="dropdownTop"
+       [style.left.px]="dropdownLeft"
+       [style.width.px]="dropdownWidth">
+    @for (bt of bloodTypes; track bt.value) {
+      <div class="dropdown-portal-item"
+           [class.selected]="form.get('bloodType')?.value === bt.value"
+           (click)="selectBloodType(bt.value, $event)">
+        <span>{{ bt.label }}</span>
+        @if (form.get('bloodType')?.value === bt.value) {
+          <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        }
+      </div>
+    }
+  </div>
+}

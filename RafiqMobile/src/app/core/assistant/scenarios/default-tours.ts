@@ -6,6 +6,7 @@
  */
 
 import { TourScenario } from '../models/tour-scenario';
+import { DEFAULT_TOURS_EN } from './default-tours-en';
 
 // Onboarding pins the mascot+bubble to this constant viewport point on every step (no anchor,
 // no spotlight) rather than tracking a page element — keeps the group in the same visual spot
@@ -35,11 +36,18 @@ export const ONBOARDING_TOUR: TourScenario = {
       id: 'onboarding-step1-guide',
       route: '/onboarding/step1',
       fixedPositionFromBottom: ONBOARDING_FIXED_POSITION,
-      speech: 'فِي هَذِهِ الخُطْوَة، اُكْتُب بَياناتِكَ الأَساسِيَّة: تارِيخ المِيلاد، النَّوْع، الطُّول، الوَزْن، وفَصِيلَة الدَّم. هَذِهِ المَعْلُومات تُساعِدُنِي عَلَى مُتابَعَة حالَتِكَ الصِّحِّيَّة بِدِقَّة.',
+      speech: 'فِي هَذِهِ الخُطْوَة، اُكْتُب بَياناتِكَ الشَّخْصِيَّة: تارِيخ المِيلاد والنَّوْع. هَذِهِ المَعْلُومات ضَرُورِيَّة لِإِعْداد مَلَفِّكَ الصِّحِّي.',
       speechLanguage: 'ar-EG',
       avatarState: 'thinking',
-      // Waits for "Continue" (the form's own submit handler calls nextStep()) — the user must
-      // actually fill in and submit their basic info before the tour moves on.
+      waitForUser: true,
+    },
+    {
+      id: 'onboarding-step1b-guide',
+      route: '/onboarding/step1b',
+      fixedPositionFromBottom: ONBOARDING_FIXED_POSITION,
+      speech: 'الآن أَدْخِل مَعْلُوماتِكَ الجَسَدِيَّة: الطُّول، الوَزْن، وفَصِيلَة الدَّم. هَذِهِ المَعْلُومات تُساعِدُنِي عَلَى مُتابَعَة صِحَّتِكَ بِدِقَّة أَكْبَر.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'thinking',
       waitForUser: true,
     },
     {
@@ -465,4 +473,5 @@ export const DEFAULT_TOURS: TourScenario[] = [
   ONBOARDING_TOUR,
   WELCOME_TOUR,
   DASHBOARD_TOUR,
+  ...DEFAULT_TOURS_EN,
 ];

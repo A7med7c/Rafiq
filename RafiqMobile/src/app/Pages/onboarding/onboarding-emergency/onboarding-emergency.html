@@ -1,9 +1,9 @@
-<div class="step-page">
+<div class="step-page" [dir]="l10n.dir()">
 
   <!-- Top navigation bar -->
   <header class="step-header">
     <button class="back-btn" (click)="goBack()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg class="back-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"/>
       </svg>
       {{ t().onboarding.header.back }}
@@ -17,15 +17,21 @@
     <!-- Progress stepper -->
     <div class="stepper-wrapper">
       <div class="stepper">
-        @for (step of steps; track $index) {
-          <div class="step-item" [class.active]="$index === 1" [class.done]="$index < 1">
+        @for (step of steps(); track $index) {
+          <div class="step-item" [class.active]="$index === 2" [class.done]="$index < 2">
             <div class="step-circle">
-              <span class="step-number">{{ $index + 1 }}</span>
+              @if ($index < 2) {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              } @else {
+                <span class="step-number">{{ $index + 1 }}</span>
+              }
             </div>
             <span class="step-label">{{ step.label }}</span>
           </div>
-          @if ($index < steps.length - 1) {
-            <div class="step-connector" [class.filled]="$index < 1"></div>
+          @if ($index < steps().length - 1) {
+            <div class="step-connector" [class.filled]="$index < 2"></div>
           }
         }
       </div>
@@ -33,62 +39,68 @@
 
     <!-- Form card -->
     <div class="form-card">
-      <p class="step-indicator">{{ t().onboarding.emergency.stepIndicator }}</p>
-      <h2 class="form-title" assistantAnchor="onboarding-form-heading">{{ t().onboarding.emergency.title }}</h2>
-      <p class="form-subtitle">{{ t().onboarding.emergency.subtitle }}</p>
+      <h2 class="form-title" assistantAnchor="onboarding-form-heading">
+        {{ t().onboarding.emergency.title }}
+      </h2>
+      <p class="form-subtitle">
+        {{ t().onboarding.emergency.subtitle }}
+      </p>
 
       <form [formGroup]="form" (ngSubmit)="addContact()" novalidate autocomplete="off">
 
-        <div class="fields-row">
-          <!-- Name field -->
-          <div class="field">
-            <label for="name" class="field-label">{{ t().onboarding.emergency.contactName }}</label>
-            <div class="input-shell" [class.invalid]="isInvalid('name')">
-              <input
-                id="name"
-                type="text"
-                class="field-input"
-                formControlName="name"
-                [placeholder]="t().onboarding.emergency.contactNamePlaceholder"
-                autocomplete="off"
-              />
-            </div>
-            @if (isInvalid('name')) {
-              <p class="field-error">{{ t().onboarding.emergency.contactNameError }}</p>
-            }
+        <!-- Contact Name field -->
+        <div class="field">
+          <label for="name" class="field-label">{{ t().onboarding.emergency.contactName }}</label>
+          <div class="input-shell" [class.invalid]="isInvalid('name')">
+            <input
+              id="name"
+              type="text"
+              class="field-input"
+              formControlName="name"
+              [placeholder]="t().onboarding.emergency.contactNamePlaceholder"
+              autocomplete="off"
+            />
           </div>
-
-          <!-- Relation field -->
-          <div class="field">
-            <label for="relation" class="field-label">{{ t().onboarding.emergency.relationLabel }}</label>
-            <div class="input-shell" [class.invalid]="isInvalid('relation')">
-              <input
-                id="relation"
-                type="text"
-                class="field-input"
-                formControlName="relation"
-                [placeholder]="t().onboarding.emergency.relationPlaceholder"
-                autocomplete="off"
-              />
-            </div>
-            @if (isInvalid('relation')) {
-              <p class="field-error">{{ t().onboarding.emergency.relationError }}</p>
-            }
-          </div>
+          @if (isInvalid('name')) {
+            <p class="field-error">{{ t().onboarding.emergency.contactNameError }}</p>
+          }
         </div>
 
-        <!-- Phone Number field -->
+        <!-- Relationship field (Select Dropdown) -->
+        <div class="field">
+          <label class="field-label">{{ t().onboarding.emergency.relationLabel }}</label>
+          <div #relationTrigger class="input-shell select-shell" [class.invalid]="isInvalid('relation')" (click)="toggleDropdown(relationTrigger)">
+            <div class="custom-select-trigger" [class.placeholder]="!getSelectedRelationLabel()">
+              {{ getSelectedRelationLabel() || t().onboarding.emergency.relationPlaceholder }}
+            </div>
+            <span class="select-arrow" [class.open]="dropdownOpen">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </span>
+          </div>
+          @if (isInvalid('relation')) {
+            <p class="field-error">{{ t().onboarding.emergency.relationError }}</p>
+          }
+        </div>
+
+        <!-- Phone Number field with Phone Icon -->
         <div class="field phone-field">
           <label for="phoneNumber" class="field-label">{{ t().onboarding.emergency.phoneLabel }}</label>
           <div class="input-shell" [class.invalid]="isInvalid('phoneNumber')">
             <input
               id="phoneNumber"
-              type="text"
+              type="tel"
               class="field-input"
               formControlName="phoneNumber"
               [placeholder]="t().onboarding.emergency.phonePlaceholder"
               autocomplete="off"
             />
+            <span class="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+            </span>
           </div>
           @if (isInvalid('phoneNumber')) {
             <p class="field-error">{{ getPhoneError() }}</p>
@@ -101,6 +113,7 @@
           </div>
         }
 
+        <!-- Add Contact Button -->
         <button type="submit" class="add-btn" [disabled]="isAdding">
           @if (isAdding) {
             {{ t().onboarding.emergency.adding }}
@@ -114,7 +127,7 @@
 
       </form>
 
-      <!-- Divider -->
+      <!-- Added Contacts List -->
       @if (contacts.length > 0) {
         <div class="divider"></div>
 
@@ -130,7 +143,7 @@
                   <span class="phone">{{ c.phoneNumber }}</span>
                 </p>
               </div>
-              <button class="delete-btn" (click)="deleteContact(c.id)">
+              <button type="button" class="delete-btn" (click)="deleteContact(c.id)">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                 </svg>
@@ -140,52 +153,68 @@
         </div>
       }
 
-      <!-- In-Form Mascot Tip (3D Robot Avatar + Speech Bubble) -->
-      @if (showMascotTip) {
-        <div class="in-form-mascot-tip">
-          <div class="mascot-avatar-wrapper">
-            <app-avatar-engine size="76px"></app-avatar-engine>
-          </div>
-          <div class="mascot-speech-bubble">
-            <button type="button" class="mascot-close-btn" (click)="dismissMascotTip()" aria-label="إغلاق">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-            <p class="mascot-speech-text">{{ t().onboarding.emergency.mascotTip }}</p>
-          </div>
+    </div><!-- /form-card -->
+
+    <!-- ─── AI Guide Bubble ─── -->
+    <div class="ob-guide">
+      <div class="ob-guide__row">
+        <div class="ob-guide__mascot" aria-hidden="true">
+          <app-avatar-engine size="68px" state="speaking" />
         </div>
-      }
-
-      <!-- Bottom actions -->
-      <div class="action-footer">
-        <button
-          type="button"
-          class="skip-btn"
-          (click)="skip()">
-          {{ t().common.skip }}
-        </button>
-        <button
-          class="finish-btn"
-          [disabled]="contacts.length === 0"
-          (click)="continueToNextStep()">
-          {{ t().onboarding.emergency.continueBtn }}
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-        </button>
+        <div class="ob-guide__bubble" [dir]="l10n.dir()">
+          <strong class="ob-guide__title">
+            {{ l10n.isRtl() ? 'جهات الاتصال للطوارئ' : 'Emergency Contacts' }}
+          </strong>
+          <p class="ob-guide__body">
+            {{ l10n.isRtl()
+              ? 'أضف هنا بيانات شخص قريب منك للتواصل معه في حالات الطوارئ. لو تأخرت في أخذ دواء مهم، سأرسل له رسالة تنبيه على الواتساب فوراً.'
+              : 'Add an emergency contact here — someone close to you I can reach in urgent situations. If you\'re late taking an important medication, I\'ll send them an instant WhatsApp alert.' }}
+          </p>
+        </div>
       </div>
-
     </div>
 
-    <!-- Bottom progress bar -->
-    <div class="progress-footer">
-      <div class="progress-track">
-        <div class="progress-fill" style="width: 40%"></div>
-      </div>
-      <span class="progress-label">{{ t().onboarding.emergency.stepIndicator }}</span>
+    <!-- Bottom action buttons: Skip & Continue -->
+    <div class="action-footer">
+      <button
+        type="button"
+        class="skip-btn"
+        (click)="skip()">
+        {{ t().common.skip }}
+      </button>
+      <button
+        type="button"
+        class="finish-btn"
+        [disabled]="contacts.length === 0"
+        (click)="continueToNextStep()">
+        {{ t().onboarding.emergency.continueBtn }}
+        <svg class="continue-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
     </div>
 
-  </div>
+  </div> <!-- /onboarding-layout -->
 
 </div>
+
+<!-- Fixed-position dropdown portal (escapes all overflow:hidden) -->
+@if (dropdownOpen) {
+  <div class="dropdown-portal"
+       [style.top.px]="dropdownTop"
+       [style.left.px]="dropdownLeft"
+       [style.width.px]="dropdownWidth">
+    @for (opt of relationOptions; track opt.value) {
+      <div class="dropdown-portal-item"
+           [class.selected]="form.get('relation')?.value === opt.value"
+           (click)="selectRelation(opt.value, $event)">
+        <span>{{ l10n.isRtl() ? opt.labelAr : opt.labelEn }}</span>
+        @if (form.get('relation')?.value === opt.value) {
+          <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        }
+      </div>
+    }
+  </div>
+}

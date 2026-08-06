@@ -14,6 +14,12 @@
   color: #08264a;
 }
 
+/* ===== Action bar wrapper ===== */
+.action-bar {
+  width: 100%;
+  padding-top: 16px;
+}
+
 /* ===== Top header ===== */
 .step-header {
   width: 100%;
@@ -55,7 +61,7 @@
 }
 
 .header-spacer {
-  width: 80px; /* mirrors back btn to keep title centered */
+  width: 80px;
 }
 
 /* ===== Stepper ===== */
@@ -131,7 +137,7 @@
   flex: 1;
   height: 2px;
   background: #d4e5f2;
-  margin-top: 17px; /* aligns with circle center */
+  margin-top: 17px;
   min-width: 20px;
   max-width: 80px;
   border-radius: 1px;
@@ -141,7 +147,7 @@
   background: #49d7ff;
 }
 
-/* ===== Form card — matches .login-card ===== */
+/* ===== Form card ===== */
 .form-card {
   width: 100%;
   max-width: 100%;
@@ -160,15 +166,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.step-indicator {
-  margin: 0 0 4px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #93a3b5;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-
 .form-title {
   margin: 0 0 24px;
   font-family: 'Outfit', sans-serif;
@@ -177,7 +174,6 @@
   color: #111;
 }
 
-/* ===== Form layout ===== */
 form {
   display: flex;
   flex-direction: column;
@@ -190,7 +186,6 @@ form {
   gap: 16px;
 }
 
-/* ===== Field ===== */
 .field {
   display: flex;
   flex-direction: column;
@@ -203,18 +198,18 @@ form {
   color: #333;
 }
 
-/* ===== Input shell ===== */
 .input-shell {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 50px;
+  background: #ffffff;
+  border: 1.5px solid #d4e5f2;
+  border-radius: 14px;
+  padding: 0 14px;
   display: flex;
   align-items: center;
-  height: 50px;
-  border: 1px solid #d8d8d8;
-  border-radius: 12px;
-  padding: 0 14px;
-  background: #fff;
   transition: border-color .25s, box-shadow .25s;
   position: relative;
-  overflow: hidden;
 }
 
 .input-shell:focus-within {
@@ -242,23 +237,6 @@ form {
   color: #b2b2b2;
 }
 
-/* Date input — hide native calendar icon so we show our own */
-.field-input[type="date"]::-webkit-calendar-picker-indicator {
-  opacity: 0;
-  position: absolute;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-}
-
-.input-suffix-icon {
-  color: #8baec8;
-  display: flex;
-  align-items: center;
-  pointer-events: none;
-}
-
 .input-unit {
   font-size: 13px;
   font-weight: 600;
@@ -267,7 +245,6 @@ form {
   padding-left: 6px;
 }
 
-/* ===== Select shell ===== */
 .select-shell {
   position: relative;
   cursor: pointer;
@@ -360,7 +337,6 @@ form {
   flex-shrink: 0;
 }
 
-/* Blood drop icon */
 .blood-drop-icon {
   color: #49d7ff;
   display: flex;
@@ -369,21 +345,19 @@ form {
   flex-shrink: 0;
 }
 
-/* ===== Field error ===== */
+[dir="rtl"] .blood-drop-icon {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
 .field-error {
   margin: 0;
   font-size: 12.5px;
   color: #d64545;
 }
 
-/* ===== Action bar wrapper ===== */
-.action-bar {
-  width: 100%;
-  padding-top: 16px;
-}
-
-/* ===== Continue button — matches .submit-button ===== */
 .continue-btn {
+  margin-top: 8px;
   width: 100%;
   min-height: 52px;
   border: none;
@@ -413,47 +387,14 @@ form {
   box-shadow: 0 4px 12px rgba(14, 175, 215, .25);
 }
 
-.continue-btn svg {
-  transition: transform 0.2s ease;
-}
-
 .continue-btn:hover svg {
   transform: translateX(4px);
 }
 
-/* ===== Bottom progress bar ===== */
-.progress-footer {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  max-width: 100%;
-  padding: 20px 0 0;
+.continue-icon {
+  transition: transform 0.2s ease;
 }
 
-.progress-track {
-  flex: 1;
-  height: 5px;
-  background: #d4e5f2;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #49d7ff, #4E89B8);
-  border-radius: 999px;
-  transition: width 0.4s ease;
-}
-
-.progress-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #8baec8;
-  white-space: nowrap;
-}
-
-/* ===== Responsive ===== */
 @media (max-width: 600px) {
   .form-card {
     margin: 16px 12px 0;
@@ -466,25 +407,14 @@ form {
     gap: 20px;
   }
 
-  .header-title {
-    font-size: 15px;
-  }
-
-  .header-spacer {
-    display: none;
-  }
-
-  .stepper-wrapper {
-    padding: 20px 12px 0;
-  }
-
-  .step-connector {
-    min-width: 10px;
-  }
+  .header-title { font-size: 15px; }
+  .header-spacer { display: none; }
+  .stepper-wrapper { padding: 20px 12px 0; }
+  .step-connector { min-width: 10px; }
 }
 
 /* ===== Fixed-position dropdown portal ===== */
-/* Rendered outside the form-card to escape overflow:hidden */
+/* Rendered outside the form-card to escape overflow:hidden and appear above mascot */
 .dropdown-portal {
   position: fixed;
   z-index: 9999;
@@ -493,7 +423,7 @@ form {
   border-radius: 14px;
   box-shadow: 0 16px 40px rgba(8, 38, 74, 0.18);
   padding: 6px;
-  max-height: 220px;
+  max-height: 260px;
   overflow-y: auto;
   animation: dropdownIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

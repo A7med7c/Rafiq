@@ -9,11 +9,12 @@ import { RafiqAssistantComponent } from './Components/rafiq-assistant/rafiq-assi
 import { TourEngineService } from './core/assistant/services/tour-engine.service';
 import { RatingPopup } from './Components/rating-popup/rating-popup';
 import { DocumentAnalysisCardComponent } from './Components/document-analysis-card/document-analysis-card';
+import { TourGlowRingDirective } from './core/assistant/directives/tour-glow-ring.directive';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, AiPanel, RafiqAssistantComponent, RatingPopup, DocumentAnalysisCardComponent],
+  imports: [CommonModule, RouterOutlet, AiPanel, RafiqAssistantComponent, RatingPopup, DocumentAnalysisCardComponent, TourGlowRingDirective],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
