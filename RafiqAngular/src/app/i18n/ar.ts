@@ -806,7 +806,6 @@ export const ar: Translations = {
     boxScan: 'مسح ضوئي علبة',
     clearFilter: 'مسح',
     couldNotLoadMeds: 'معرفناش نحمل الأدوية',
-    couldNotConfirmMedication: 'فشل تأكيد الدواء. حاول مرة اخرى.',
     couldNotConfirmMedBody: 'لم نستطع تأكيد {name}. حاول مرة اخرى.',
     couldNotSaveReminder: 'فشل حفظ التذكير. حاول مرة اخرى.',
     couldNotUpdateReminder: 'فشل تحديث التذكير. حاول مرة اخرى.',

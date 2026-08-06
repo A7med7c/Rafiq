@@ -795,7 +795,6 @@ export const en = {
     boxScan: 'Box Scan',
     clearFilter: 'Clear',
     couldNotLoadMeds: 'Could not load medications',
-    couldNotConfirmMedication: 'Could not confirm medication',
     couldNotConfirmMedBody: 'We could not confirm {name}. Please try again.',
     couldNotSaveReminder: 'Could not save reminder. Please try again.',
     couldNotUpdateReminder: 'Could not update reminder. Please try again.',
