@@ -1,4 +1,4 @@
-@if (tourEngine.isPlaying() && !isOnboardingPage()) {
+@if (tourEngine.isPlaying() && !isOnboardingPage() && !isAuthPage()) {
   @for (stepIndex of [tourEngine.currentStepIndex()]; track stepIndex) {
 
     <article
@@ -25,30 +25,34 @@
         ></app-avatar-engine>
       </div>
 
-      <!-- Header: step counter + dots + skip -->
-      <header class="tour-bubble__progress" [dir]="l10n?.dir() ?? 'rtl'">
+      <!-- Header: step counter + dots + narration audio btn + skip -->
+      <header class="tour-bubble__progress" [dir]="isArabicTour() ? 'rtl' : 'ltr'">
         <span class="tour-bubble__step-text">
-          @if (l10n?.lang() === 'ar') {
+          @if (isArabicTour()) {
             الخطوة {{ stepIndex + 1 }} من {{ tourEngine.totalSteps() }}
           } @else {
             Step {{ stepIndex + 1 }} of {{ tourEngine.totalSteps() }}
           }
         </span>
         <div class="tour-bubble__top-actions">
-          <div class="tour-bubble__dots" aria-hidden="true" dir="ltr">
-            @for (index of stepIndexes(); track index) {
-              <i [class.tour-bubble__dot--active]="index === stepIndex"></i>
-            }
-          </div>
+          <button
+            type="button"
+            class="tour-bubble__audio-btn"
+            (click)="toggleMute()"
+            [title]="isMuted() ? (isArabicTour() ? 'تشغيل الصوت' : 'Unmute') : (isArabicTour() ? 'كتم الصوت' : 'Mute')"
+            [attr.aria-label]="isMuted() ? 'Unmute' : 'Mute'"
+          >
+            <i [class]="isMuted() ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high'"></i>
+          </button>
           <button
             type="button"
             class="tour-bubble__skip-btn"
             (click)="tourEngine.stopTour()"
-            [title]="l10n?.lang() === 'ar' ? 'تخطي الجولة' : 'Skip tour'"
-            [attr.aria-label]="l10n?.lang() === 'ar' ? 'تخطي الجولة' : 'Skip tour'"
+            [title]="isArabicTour() ? 'تخطي الجولة' : 'Skip tour'"
+            [attr.aria-label]="isArabicTour() ? 'تخطي الجولة' : 'Skip tour'"
           >
             <i class="fa-solid fa-xmark"></i>
-            <span>{{ l10n?.lang() === 'ar' ? 'تخطي' : 'Skip' }}</span>
+            <span>{{ isArabicTour() ? 'تخطي' : 'Skip' }}</span>
           </button>
         </div>
       </header>
@@ -58,15 +62,15 @@
       }
 
       <!-- Controls: Previous / Next / Finish -->
-      <footer class="tour-bubble__controls" [dir]="l10n?.dir() ?? 'rtl'">
+      <footer class="tour-bubble__controls" [dir]="isArabicTour() ? 'rtl' : 'ltr'">
         <button
           type="button"
           class="tour-bubble__button tour-bubble__button--quiet"
           (click)="tourEngine.previousStep()"
           [disabled]="stepIndex === 0"
-          [attr.aria-label]="l10n?.lang() === 'ar' ? 'الخطوة السابقة' : 'Previous step'"
+          [attr.aria-label]="isArabicTour() ? 'الخطوة السابقة' : 'Previous step'"
         >
-          @if (l10n?.lang() === 'ar') {
+          @if (isArabicTour()) {
             <i class="fa-solid fa-arrow-right"></i> السابق
           } @else {
             <i class="fa-solid fa-arrow-left"></i> Previous
@@ -78,9 +82,9 @@
             type="button"
             class="tour-bubble__button tour-bubble__button--primary"
             (click)="tourEngine.nextStep()"
-            [attr.aria-label]="l10n?.lang() === 'ar' ? 'الخطوة التالية' : 'Next step'"
+            [attr.aria-label]="isArabicTour() ? 'الخطوة التالية' : 'Next step'"
           >
-            @if (l10n?.lang() === 'ar') {
+            @if (isArabicTour()) {
               التالي <i class="fa-solid fa-arrow-left"></i>
             } @else {
               Next <i class="fa-solid fa-arrow-right"></i>
@@ -91,9 +95,9 @@
             type="button"
             class="tour-bubble__button tour-bubble__button--primary tour-bubble__button--finish"
             (click)="tourEngine.stopTour(false)"
-            [attr.aria-label]="l10n?.lang() === 'ar' ? 'إنهاء الجولة' : 'Finish tour'"
+            [attr.aria-label]="isArabicTour() ? 'إنهاء الجولة' : 'Finish tour'"
           >
-            @if (l10n?.lang() === 'ar') {
+            @if (isArabicTour()) {
               إنهاء الجولة <i class="fa-solid fa-check"></i>
             } @else {
               Finish <i class="fa-solid fa-check"></i>

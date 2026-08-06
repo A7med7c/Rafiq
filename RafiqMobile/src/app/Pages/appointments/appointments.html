@@ -15,7 +15,7 @@
 
     <!-- ── Upcoming Appointment (Hero Card) ── -->
     @if (nextAppointment(); as next) {
-      <div class="hero-card">
+      <div class="hero-card" assistantAnchor="appts-upcoming-card">
         <div class="hero-hdr">
           <div class="hero-info">
             <h2 class="hero-doc">{{ next.provider }}</h2>
@@ -46,7 +46,7 @@
 
     <!-- ── Today's Reminder ── -->
     @if (todaysReminder(); as reminder) {
-      <div class="reminder-card">
+      <div class="reminder-card" assistantAnchor="appts-reminder-card">
         <div class="rem-icon-wrap">
           <i class="fa-solid fa-bell rem-icon"></i>
         </div>
@@ -61,7 +61,7 @@
     }
 
     <!-- ── Quick Overview (Scrollable Chips) ── -->
-    <div class="summary-chips-wrap">
+    <div class="summary-chips-wrap" assistantAnchor="appts-summary-chips">
       <div class="summary-chip chip-blue">
         <span>{{ t().appointments.upcomingStatus }} &bull; {{ upcomingCount() }}</span>
       </div>
@@ -87,7 +87,7 @@
     } @else {
       <!-- ── Appointment Timeline (Upcoming) ── -->
       @if (upcomingAppointments().length > 0) {
-        <section class="appt-section">
+        <section class="appt-section" assistantAnchor="appts-upcoming-list">
           <h3 class="section-title">{{ t().appointments.upcomingAppointmentsSection }}</h3>
           <div class="appt-list">
             @for (appt of upcomingAppointments(); track appt.id) {
@@ -114,7 +114,7 @@
 
       <!-- ── Appointment History (Previous) ── -->
       @if (groupedPreviousAppointments().length > 0) {
-        <section class="appt-section">
+        <section class="appt-section" assistantAnchor="appts-history-section">
           <div class="history-header">
             <h3 class="section-title">{{ t().appointments.previousAppointmentsSection }}</h3>
           </div>
@@ -163,7 +163,7 @@
 
     <!-- ── Reminder Settings Section ── -->
     <h3 class="section-title appts-reminder-settings-title">{{ t().appointments.reminderSettingsSection }}</h3>
-    <div class="reminder-settings-card" [class.disabled-card]="!masterReminderEnabled()">
+    <div class="reminder-settings-card" assistantAnchor="appts-reminder-settings" [class.disabled-card]="!masterReminderEnabled()">
       <div class="rem-set-header">
         <div class="rem-set-icon-bg">
           <i class="fa-solid fa-bell rem-set-bell-icon"></i>
@@ -235,7 +235,7 @@
   </div><!-- /m-body -->
 
   <!-- Floating Action Button -->
-  <button class="fab-add" (click)="addAppointment()" [attr.aria-label]="t().appointments.addAppointment">
+  <button class="fab-add" assistantAnchor="add-appointment" (click)="addAppointment()" [attr.aria-label]="t().appointments.addAppointment">
     <i class="fa-solid fa-plus"></i>
   </button>
 

@@ -6,6 +6,7 @@ import { filter, map } from 'rxjs/operators';
 import { AvatarEngineComponent } from '../avatar-engine/avatar-engine';
 import { AvatarPositionService } from '../../core/assistant/services/avatar-position.service';
 import { TourEngineService } from '../../core/assistant/services/tour-engine.service';
+import { SpeechService } from '../../core/assistant/services/speech.service';
 import { LocalizationService } from '../../Services/localization.service';
 
 @Component({
@@ -21,9 +22,12 @@ import { LocalizationService } from '../../Services/localization.service';
 export class RafiqAssistantComponent implements OnDestroy {
   readonly positionService = inject(AvatarPositionService);
   readonly tourEngine = inject(TourEngineService);
+  private readonly speechService = inject(SpeechService);
   protected readonly l10n = inject(LocalizationService, { optional: true });
   private readonly router = inject(Router);
   private readonly keyboardOffset = signal(0);
+
+  readonly isMuted = signal<boolean>(false);
 
   readonly bubbleEl = viewChild<ElementRef<HTMLElement>>('bubbleEl');
 
@@ -40,6 +44,11 @@ export class RafiqAssistantComponent implements OnDestroy {
     this.currentUrl().includes('/onboarding/')
   );
 
+  readonly isAuthPage = computed(() => {
+    const url = this.currentUrl().toLowerCase();
+    return url.includes('/login') || url.includes('/register') || url.includes('/forgot-password');
+  });
+
   readonly stepIndexes = computed(() =>
     Array.from({ length: this.tourEngine.totalSteps() }, (_, i) => i)
   );
@@ -54,14 +63,29 @@ export class RafiqAssistantComponent implements OnDestroy {
     return keyboard > 0 ? keyboard + 18 : 96;
   });
 
+  readonly isArabicTour = computed(() => {
+    const currentScenario = this.tourEngine.currentScenario();
+    if (!currentScenario) return (this.l10n?.lang() ?? 'ar') === 'ar';
+    return !currentScenario.id.endsWith('-en');
+  });
+
   readonly isKeyboardOpen = computed(() => this.keyboardOffset() > 0);
 
-  previousLabel(): string {
-    return this.l10n?.lang() === 'ar' ? 'السابق' : 'Previous';
+  toggleMute(): void {
+    const nextState = !this.isMuted();
+    this.isMuted.set(nextState);
+    if (nextState) {
+      this.speechService.stopSpeaking();
+    } else {
+      this.replaySpeech();
+    }
   }
 
-  progressLabel(stepIndex: number): string {
-    return `${stepIndex + 1} / ${this.tourEngine.totalSteps()}`;
+  replaySpeech(): void {
+    const text = this.tourEngine.currentStepSpeechResolved();
+    if (!text) return;
+    const lang = this.l10n?.lang() === 'en' ? 'en-US' : 'ar-EG';
+    this.speechService.speak(text, lang).subscribe();
   }
 
   constructor() {
@@ -100,13 +124,19 @@ export class RafiqAssistantComponent implements OnDestroy {
   }
 
   private readonly updateKeyboardOffset = (): void => {
+    if (typeof window === 'undefined') return;
     const viewport = window.visualViewport;
-    if (!viewport) {
-      this.keyboardOffset.set(0);
-      return;
-    }
+    const hiddenHeight = viewport
+      ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+      : 0;
+    const newOffset = hiddenHeight > 80 ? Math.round(hiddenHeight) : 0;
 
-    const hiddenHeight = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
-    this.keyboardOffset.set(hiddenHeight > 80 ? Math.round(hiddenHeight) : 0);
+    if (this.keyboardOffset() !== newOffset) {
+      queueMicrotask(() => {
+        if (this.keyboardOffset() !== newOffset) {
+          this.keyboardOffset.set(newOffset);
+        }
+      });
+    }
   };
 }

@@ -9,7 +9,7 @@ import { authInterceptor } from './Interceptors/auth.interceptor';
 import { AuthService } from './Services/auth-service';
 
 function initializeAuth(authService: AuthService) {
-  return () => authService.initializeSession().subscribe();
+  return () => authService.initializeSession();
 }
 
 export const appConfig: ApplicationConfig = {

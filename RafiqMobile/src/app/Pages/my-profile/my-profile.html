@@ -6,6 +6,11 @@
     <header class="mp-header">
       <h1 class="mp-header-title">{{ t().myProfile.pageTitle }}</h1>
       <div class="mp-header-actions">
+        <button type="button" assistantAnchor="header-tour-btn" class="mp-icon-btn" (click)="startTour()"
+          [attr.aria-label]="l10n.isRtl() ? 'جولة تعريفيّة' : 'Page Tour'"
+          [title]="l10n.isRtl() ? 'جولة تعريفيّة' : 'Page Tour'">
+          <i class="fa-solid fa-circle-question"></i>
+        </button>
         <button class="mp-icon-btn" (click)="notifService.openNotificationCenter()" [attr.aria-label]="t().header.notifications">
           <i class="fa-regular fa-bell"></i>
           @if (unreadNotifCount() > 0) {
@@ -22,7 +27,7 @@
     } @else if (profile()) {
 
       <!-- ── Avatar + Name Card ── -->
-      <div class="mp-hero-card">
+      <div class="mp-hero-card" assistantAnchor="profile-hero-card">
         <div class="mp-avatar-wrap" (click)="openPhotoModal()">
           @if (hasProfileImage()) {
             <img [src]="heroAvatarUrl()" alt="Avatar" class="mp-avatar-img">
@@ -59,7 +64,7 @@
 
       <!-- ── Navigation List ── -->
       <div class="mp-section-card">
-        <button class="mp-row" (click)="activeView.set('personal'); scrollToTop()">
+        <button class="mp-row" assistantAnchor="profile-personal-info" (click)="activeView.set('personal'); scrollToTop()">
           <div class="mp-row-icon" style="background:#EBF5FF; color:#1A7FD4;">
             <i class="fa-solid fa-user"></i>
           </div>
@@ -72,7 +77,7 @@
 
         <div class="mp-row-sep"></div>
 
-        <button class="mp-row" (click)="activeView.set('health'); scrollToTop()">
+        <button class="mp-row" assistantAnchor="profile-health-info" (click)="activeView.set('health'); scrollToTop()">
           <div class="mp-row-icon" style="background:#EDFBF3; color:#16A34A;">
             <i class="fa-solid fa-heart-pulse"></i>
           </div>
@@ -85,7 +90,7 @@
 
         <div class="mp-row-sep"></div>
 
-        <button class="mp-row" (click)="activeView.set('emergency'); scrollToTop()">
+        <button class="mp-row" assistantAnchor="profile-emergency-contacts" (click)="activeView.set('emergency'); scrollToTop()">
           <div class="mp-row-icon" style="background:#FFF3ED; color:#EA580C;">
             <i class="fa-solid fa-phone-volume"></i>
           </div>
@@ -98,7 +103,7 @@
 
         <div class="mp-row-sep"></div>
 
-        <button class="mp-row" routerLink="/family-profiles">
+        <button class="mp-row" assistantAnchor="profile-family-profiles" routerLink="/family-profiles">
           <div class="mp-row-icon" style="background:#F3EEFF; color:#7C3AED;">
             <i class="fa-solid fa-users"></i>
           </div>
@@ -111,7 +116,7 @@
 
         <div class="mp-row-sep"></div>
 
-        <button class="mp-row" (click)="openRatingPopup()">
+        <button class="mp-row" assistantAnchor="profile-rate-rafiq" (click)="openRatingPopup()">
           <div class="mp-row-icon" style="background:#FEF3C7; color:#D97706;">
             <i class="fa-solid fa-star"></i>
           </div>
@@ -124,7 +129,7 @@
 
         <div class="mp-row-sep"></div>
 
-        <button class="mp-row" (click)="activeView.set('settings'); scrollToTop()">
+        <button class="mp-row" assistantAnchor="profile-settings" (click)="activeView.set('settings'); scrollToTop()">
           <div class="mp-row-icon" style="background:#F1F5F9; color:#475569;">
             <i class="fa-solid fa-gear"></i>
           </div>

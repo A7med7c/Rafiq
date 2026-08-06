@@ -14,6 +14,11 @@
   <h1 class="mobile-header__title">{{ title }}</h1>
 
   <div class="mobile-header__right">
+    <button type="button" assistantAnchor="header-tour-btn" class="mobile-header__btn mobile-header__tour" (click)="startTour()"
+      [attr.aria-label]="l10n.isRtl() ? 'جولة تعريفيّة' : 'Page Tour'"
+      [title]="l10n.isRtl() ? 'جولة تعريفيّة' : 'Page Tour'">
+      <i class="fa-solid fa-circle-question"></i>
+    </button>
 
     @if (showNotifications) {
       <button type="button" class="mobile-header__btn mobile-header__notif" (click)="notificationsClicked.emit()"
