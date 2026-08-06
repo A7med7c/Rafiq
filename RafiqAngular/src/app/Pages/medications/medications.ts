@@ -1618,7 +1618,7 @@ export class Medications implements OnInit, OnDestroy {
         this.showDeleteMedModal.set(false);
         this.deleteMedId.set(null);
         this.deleteMedName.set('');
-        this.toast(`${medName} has been removed from your medication list.`, 'success');
+        this.toast(`${medName} {this.l10n.t().medication.removedFromList()}`, 'success');
         // Remove from local list and reload schedule (reminders may have been cancelled)
         this.medicines.update(list => list.filter(m => m.id !== medId));
         this.medicineReminders.update(rec => {

@@ -73,6 +73,8 @@ export const ar: Translations = {
     pageTourTitle: 'ابدأ جولة هذه الصفحة',
   },
 
+
+
   familyErrors: {
     createProfileFailed: 'فشل إنشاء الملف.',
     sendInvitationFailed: 'فشل إرسال الدعوة.',
@@ -117,6 +119,7 @@ export const ar: Translations = {
     googleSignIn: 'تسجيل الدخول باستخدام Google',
     loginSuccess: 'تم تسجيل الدخول بنجاح',
     invalidEmailPassword: 'الإيميل أو كلمة المرور غير صحيحة',
+    phoneNumberAlreadyExist: 'رقم الهاتف موجود بالفعل'
   },
 
   validation: {
@@ -163,6 +166,7 @@ export const ar: Translations = {
     logIn: 'تسجيل الدخول',
     showPassword: 'أظهر كلمة المرور',
     hidePassword: 'اخفي كلمة المرور',
+    sucessCreated: 'تم انشاء الحساب بنجاح , ارسلنا لك كود التحقق عبر حساب جوجل'
   },
 
   forgotPassword: {
@@ -493,6 +497,11 @@ export const ar: Translations = {
     saveMedicineFailed: 'فشل حفظ الدواء.',
     addMedicineFailed: 'فشل إضافة الدواء.',
     addMedicinesFailed: 'فشل إضافة الأدوية.',
+    lab: "تحليل طبي",
+    imaging: "الأشعة والتصوير",
+    prescriptionn: "وصفة طبية",
+    medicineBoxx: "علبة الأدوية",
+    generalDocumentt: "مستند عام",
   },
 
   aiAssistant: {
@@ -864,6 +873,7 @@ export const ar: Translations = {
     allergyContinueBtn: 'فاهم، أكمل على مسؤوليتي',
     allergyCancelBtn: 'إلغاء',
     medicationAddedSuccessfully: 'تمت إضافة الدواء بنجاح',
+    removedFromList: 'بنجاح {name} تم حذف ',
   },
 
   family: {

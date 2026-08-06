@@ -125,7 +125,7 @@ export class RegisterFormComponent {
 
     this.authService.register(this.registerForm.getRawValue(), this.profileImage).subscribe({
       next: (response) => {
-        this.successMessage = 'Your account has been created successfully. We\'ve sent a verification code to your email.';
+        this.successMessage = this.l10n.t().register.sucessCreated;
         const email = response.data.email;
 
         setTimeout(() => {
@@ -135,7 +135,7 @@ export class RegisterFormComponent {
         }, 1200);
       },
       error: (error: HttpErrorResponse) => {
-        this.apiErrors = getApiErrorMessages(error);
+        this.apiErrors = getApiErrorMessages(error , this.l10n.t());
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       }

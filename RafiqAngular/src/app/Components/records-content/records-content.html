@@ -366,7 +366,7 @@
                 </div>
               </div>
             </td>
-            <td [attr.data-label]="t().records.type"><span class="type-pill" [class]="'type-' + rec.type">{{ rec.typeLabel }}</span></td>
+            <td [attr.data-label]="t().records.type"><span class="type-pill" [class]="'type-' + rec.type">{{ recordTypeLabel(rec.type) }}</span></td>
             <td class="table-date" [attr.data-label]="t().records.date">{{ rec.date }}</td>
             <td class="table-uploaded" [attr.data-label]="t().records.uploadedBy">{{ rec.uploadedBy }}</td>
             <td [attr.data-label]="t().records.aiSummaryStatus">
