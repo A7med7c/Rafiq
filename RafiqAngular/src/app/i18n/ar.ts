@@ -444,7 +444,7 @@ export const ar: Translations = {
     analysingImaging: 'جاري تحليل تقرير الأشعة...',
     extractingPrescription: 'جاري استخراج الروشتة...',
     analysingDocument: 'جاري تحليل الوثيقة الطبية...',
-    scanningMedicineBox: 'جاري مسح ضوئي علبة الدوا...',
+    scanningMedicineBox: 'جاري المسح الضوئي لعلبة الدوا...',
     readingLabel: 'الذكاء الاصطناعي بيقرا الليبل',
     editMedicineRecord: 'عدل سجل الدوا',
     addMedicineManually: 'أضف دوا بنفسك',
