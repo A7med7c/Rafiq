@@ -16,8 +16,8 @@
     background: #fff;
     padding: clamp(22px, 3vh, 30px) 30px;
     border-radius: 20px;
-    box-shadow: 0 24px 60px rgba(8,38,74,.08);
-    border: 1px solid rgba(78,137,184,.08);
+    box-shadow: 0 24px 60px rgba(8, 38, 74, .08);
+    border: 1px solid rgba(78, 137, 184, .08);
 }
 
 .card-header {
@@ -94,7 +94,8 @@ form,
     overflow: hidden;
     flex-shrink: 0;
     border: 1px solid #d8d8d8;
-    background-color: #f3f4f6; /* Added background for placeholder */
+    background-color: #f3f4f6;
+    /* Added background for placeholder */
 }
 
 .profile-image-preview img {
@@ -114,9 +115,10 @@ form,
 }
 
 .profile-image-actions {
+    width: 100%;
     display: flex;
-    align-items: center;
-    gap: 10px;
+    justify-content: center;
+    margin-top: 12px;
 }
 
 .input-shell {
@@ -131,7 +133,7 @@ form,
 
 .input-shell:focus-within {
     border-color: #4E89B8;
-    box-shadow: 0 0 0 3px rgba(78,137,184,.15);
+    box-shadow: 0 0 0 3px rgba(78, 137, 184, .15);
 }
 
 input,
@@ -168,7 +170,7 @@ input::placeholder {
 }
 
 .icon-button:hover {
-    background: rgba(78,137,184,.1);
+    background: rgba(78, 137, 184, .1);
     color: #4E89B8;
 }
 
@@ -227,7 +229,7 @@ input::placeholder {
 
 .input-shell.invalid {
     border-color: #d64545;
-    box-shadow: 0 0 0 3px rgba(214,69,69,.12);
+    box-shadow: 0 0 0 3px rgba(214, 69, 69, .12);
 }
 
 .field-error {
@@ -248,7 +250,7 @@ input::placeholder {
     margin: 0;
 }
 
-.alert p + p {
+.alert p+p {
     margin-top: 6px;
 }
 
@@ -290,18 +292,18 @@ input::placeholder {
     }
 }
 
-@media(max-width: 960px){
-    :host{
+@media(max-width: 960px) {
+    :host {
         height: 100%;
         min-height: 0;
     }
 
-    .login-container{
+    .login-container {
         height: 100%;
         align-items: center;
     }
 
-    .login-card{
+    .login-card {
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -312,6 +314,7 @@ input::placeholder {
 }
 
 @media(max-width: 640px) {
+
     /* Fields stay two-up on mobile too: stacking them would blow the no-scroll budget */
     .login-card {
         padding: clamp(10px, 2.4vh, 18px) 14px;
@@ -418,6 +421,7 @@ input::placeholder {
         font-size: 12px;
     }
 }
+
 /* Styling the text next to the button (e.g., "No file chosen") */
 input[type="file"] {
     color: #8b8b8b;

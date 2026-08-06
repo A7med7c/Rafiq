@@ -332,7 +332,7 @@ export class MedicalRecords implements OnInit {
 
   get userEmail(): string { return this.authService.currentUser?.email ?? ''; }
 
-  get avatarUrl(): string { return this.authService.avatarUrl; }
+  get avatarUrl(): string | null { return this.authService.avatarUrl; }
 
   get hasProfileImage(): boolean { return !!this.authService.currentUser?.profileImageUrl; }
 

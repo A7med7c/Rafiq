@@ -151,7 +151,7 @@ export class MyProfile implements OnInit {
     return this.authService.currentUser?.email ?? '';
   }
 
-  get avatarUrl(): string {
+  get avatarUrl(): string | null {
     return this.authService.avatarUrl;
   }
 

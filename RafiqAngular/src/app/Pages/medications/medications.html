@@ -96,14 +96,14 @@
           }
         </button>
         <div class="hdr-user" (click)="toggleDropdown()">
-          <img [src]="profileCache.resolveNavbarAvatar()" alt="user" class="hdr-avatar">
+          <img [src]="profileCache.resolveNavbarAvatar()" alt="" class="hdr-avatar">
           <span class="hdr-username">{{ displayName }}</span>
           <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
           @if (dropdownOpen()) {
           <div class="user-dropdown" (click)="$event.stopPropagation()">
             <div class="user-dropdown-hdr">
               <div class="user-dropdown-av">
-                <img [src]="profileCache.resolveNavbarAvatar()" alt="avatar">
+                <img [src]="profileCache.resolveNavbarAvatar()" alt="">
               </div>
               <div class="user-dropdown-info">
                 <span class="user-dropdown-name">{{ displayName }}</span>

@@ -273,7 +273,7 @@ export class Dashboard implements OnInit, OnDestroy {
     return this.authService.currentUser?.email ?? '';
   }
 
-  get avatarUrl(): string {
+  get avatarUrl(): string | null {
     const cachedUrl = this.profileCache.profileImageUrl();
     if (cachedUrl) return `${environment.fileBaseUrl}${cachedUrl}`;
     return this.authService.avatarUrl;
@@ -286,7 +286,7 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   get hasProfileImage(): boolean {
-    return !!(this.profileCache.profileImageUrl() || this.authService.currentUser?.profileImageUrl);
+    return !!this.avatarUrl;
   }
 
   get userInitials(): string {
