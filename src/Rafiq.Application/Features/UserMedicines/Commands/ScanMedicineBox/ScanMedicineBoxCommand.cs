@@ -10,5 +10,5 @@ namespace Rafiq.Application.Features.UserMedicines.Commands.ScanMedicineBox;
 /// and returns the extracted information along with the uploaded image path.
 /// Does NOT save to the database directly.
 /// </summary>
-public sealed record ScanMedicineBoxCommand(IFormFile Image)
+public sealed record ScanMedicineBoxCommand(IFormFile Image, string Language = "en")
     : IRequest<ApiResponse<ScanMedicineBoxResponseDto>>;

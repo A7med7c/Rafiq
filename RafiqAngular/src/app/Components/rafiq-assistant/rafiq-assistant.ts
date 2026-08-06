@@ -8,6 +8,9 @@ import { AvatarPositionService } from '../../core/assistant/services/avatar-posi
 import { TourEngineService } from '../../core/assistant/services/tour-engine.service';
 import { LocalizationService } from '../../Services/localization.service';
 
+import { SpeechService } from '../../core/assistant/services/speech.service';
+import { signal } from '@angular/core';
+
 /**
  * The travelling Rafiq mascot and its contextual walkthrough bubble.
  *
@@ -28,10 +31,13 @@ import { LocalizationService } from '../../Services/localization.service';
 export class RafiqAssistantComponent implements OnDestroy {
   readonly positionService = inject(AvatarPositionService);
   readonly tourEngine = inject(TourEngineService);
+  private readonly speechService = inject(SpeechService);
   readonly l10n = inject(LocalizationService);
   private readonly router = inject(Router);
   readonly t = this.l10n.t;
   readonly dir = this.l10n.dir;
+
+  readonly isMuted = this.speechService.isMuted;
 
   readonly bubbleEl = viewChild<ElementRef<HTMLElement>>('bubbleEl');
 
@@ -52,12 +58,33 @@ export class RafiqAssistantComponent implements OnDestroy {
     Array.from({ length: this.tourEngine.totalSteps() }, (_, i) => i)
   );
 
+  toggleMute(): void {
+    const isNowMuted = this.speechService.toggleMute();
+    if (!isNowMuted) {
+      this.replaySpeech();
+    }
+  }
+
+  replaySpeech(): void {
+    const text = this.tourEngine.currentStepSpeechResolved();
+    if (!text) return;
+    const lang = this.l10n.isRtl() ? 'ar-EG' : 'en-US';
+    this.speechService.speak(text, lang).subscribe();
+  }
+
   constructor() {
     // Register the bubble element with the positioning service as soon as it exists in the
     // DOM (it is created/destroyed by the @if in the template alongside tourEngine.isPlaying()).
     effect(() => {
       const ref = this.bubbleEl();
       this.positionService.setFloatingElement(ref?.nativeElement ?? null);
+    });
+
+    effect(() => {
+      // If user has muted speech and tour engine tries to speak, stop speaking
+      if (this.isMuted() && this.tourEngine.isSpeaking()) {
+        this.speechService.stopSpeaking();
+      }
     });
   }
 

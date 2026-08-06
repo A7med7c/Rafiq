@@ -20,6 +20,16 @@ public interface ILabReportRepository
         string labName,
         string doctorName,
         CancellationToken cancellationToken = default);
+        
+    /// <summary>
+    /// Searches for an existing lab report by its file hash, checking both the current profile
+    /// and any other profile the current user has Active access to.
+    /// </summary>
+    Task<(Guid profileId, string profileName, bool isSameProfile)?> FindDuplicateByHashAsync(
+        string fileHash,
+        Guid currentProfileId,
+        Guid currentUserId,
+        CancellationToken cancellationToken = default);
 
     void Update(LabReport labReport);
 

@@ -11,6 +11,7 @@ namespace Rafiq.Application.Features.PatientProfiles.Commands.Allergies.CreateAl
 
 public sealed class CreateAllergyCommandHandler(
     IAllergyRepository allergyRepository,
+    IUserMedicineRepository userMedicineRepository,
     IHealthProfileAuthorizationService authorizationService,
     IUnitOfWork unitOfWork,
     IMapper mapper,
@@ -38,8 +39,17 @@ public sealed class CreateAllergyCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
         await summaryCache.MarkNeedsRefreshAsync(request.PatientProfileId, cancellationToken);
 
+        var userMedicines = await userMedicineRepository.GetAllByProfileIdAsync(request.PatientProfileId, cancellationToken);
+        var conflictingMedicines = AllergyConflictChecker.GetConflictingMedicines(request.Name, userMedicines.Select(m => m.MedicineName));
+
+        var message = "Allergy created successfully.";
+        if (conflictingMedicines.Count > 0)
+        {
+            message = $"خلي بالك، في أدوية عندك بتتعارض مع الحساسية دي: {string.Join("، ", conflictingMedicines)}. كمرجع أولي، مع ملاحظة إن القرار الطبي النهائي يعتمد على تقييم الطبيب أو الصيدلي.";
+        }
+
         return ApiResponse<AllergyDto>.SuccessResponse(
             mapper.Map<AllergyDto>(allergy),
-            "Allergy created successfully.");
+            message);
     }
 }

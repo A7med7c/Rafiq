@@ -67,11 +67,12 @@ public sealed class UserMedicinesController(
     /// </summary>
     [HttpPost("scan-box")]
     public async Task<IActionResult> ScanMedicineBox(
+        [FromHeader(Name = "Accept-Language")] string? language,
         IFormFile image,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new ScanMedicineBoxCommand(image),
+            new ScanMedicineBoxCommand(image, language ?? "en"),
             cancellationToken);
 
         return Ok(result);

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, isDevMode } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  BehaviorSubject, Observable, Subject, catchError, finalize, firstValueFrom,
+  BehaviorSubject, Observable, Subject, catchError, finalize, firstValueFrom, from,
   map, of, shareReplay, switchMap, tap, throwError
 } from 'rxjs';
 import { Account } from '../Modles/account';
@@ -25,10 +25,7 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly profileSelectionSvc = inject(ProfileSelectionService);
 
-  private readonly currentUserSubject = new BehaviorSubject<Account | null>(
-    this.tokenStorage.getUser()
-  );
-
+  private readonly currentUserSubject = new BehaviorSubject<Account | null>(null);
   readonly currentUser$ = this.currentUserSubject.asObservable();
   private sessionInitialized = false;
 
@@ -74,21 +71,36 @@ export class AuthService {
     return `${environment.fileBaseUrl}${profileImageUrl}`;
   }
 
+  /**
+   * Initializes the session on application boot.
+   * Awaits TokenStorageService cache hydration first to prevent native cold-boot race conditions.
+   */
   initializeSession(): Observable<Account | null> {
     if (this.sessionInitialized) {
       return of(this.currentUserSubject.value);
     }
 
-    this.sessionInitialized = true;
+    return from(this.tokenStorage.initialize()).pipe(
+      switchMap(() => {
+        this.sessionInitialized = true;
 
-    if (!this.tokenStorage.isLoggedIn()) {
-      return of(null);
-    }
+        // Sync currentUserSubject with hydrated storage
+        const cachedUser = this.tokenStorage.getUser();
+        if (cachedUser) {
+          this.currentUserSubject.next(cachedUser);
+        }
 
-    return this.getMe().pipe(
-      catchError(() => {
-        this.clearLocalSession();
-        return of(null);
+        if (!this.tokenStorage.isLoggedIn()) {
+          return of(null);
+        }
+
+        // Fetch fresh account profile from /auth/me
+        return this.getMe().pipe(
+          catchError((err) => {
+            console.warn('[Auth] initializeSession: getMe() failed, keeping tokens active.', err?.status);
+            return of(this.tokenStorage.getUser() ?? null);
+          })
+        );
       })
     );
   }
@@ -98,7 +110,7 @@ export class AuthService {
       `${environment.apiUrl}/auth/login`,
       request
     ).pipe(
-      switchMap((response) => this.completeAuthentication(response))
+      switchMap((response) => this.handleAuthSuccess(response))
     );
   }
 
@@ -168,7 +180,7 @@ export class AuthService {
       `${environment.apiUrl}/auth/google`,
       { idToken }
     ).pipe(
-      switchMap((response) => this.completeAuthentication(response))
+      switchMap((response) => this.handleAuthSuccess(response))
     );
   }
 
@@ -194,8 +206,8 @@ export class AuthService {
       `${environment.apiUrl}/auth/refresh-token`,
       { refreshToken }
     ).pipe(
-      tap((response) => {
-        this.storeTokens(response);
+      switchMap((response) => from(this.tokenStorage.setTokens(response.data)).pipe(map(() => response))),
+      tap(() => {
         this.log('Access token refreshed.');
         this.tokensRefreshedSubject.next();
       }),
@@ -264,10 +276,10 @@ export class AuthService {
       `${environment.apiUrl}/auth/me`
     ).pipe(
       map((response) => response.data),
-      tap((user) => {
-        this.tokenStorage.setUser(user);
-        this.currentUserSubject.next(user);
-      })
+      switchMap((user) => from(this.tokenStorage.setUser(user)).pipe(
+        tap(() => this.currentUserSubject.next(user)),
+        map(() => user)
+      ))
     );
   }
 
@@ -283,9 +295,9 @@ export class AuthService {
 
     return request$.pipe(
       catchError(() => of(undefined)),
-      finalize(() => {
-        this.clearLocalSession();
-        this.router.navigate(['/login']);
+      switchMap(() => from(this.clearLocalSession())),
+      tap(() => {
+        void this.router.navigate(['/login']);
       })
     );
   }
@@ -295,10 +307,10 @@ export class AuthService {
       `${environment.apiUrl}/auth/me`,
       { firstName, lastName, phoneNumber }
     ).pipe(
-      tap(res => {
-        this.tokenStorage.setUser(res.data);
-        this.currentUserSubject.next(res.data);
-      })
+      switchMap((res) => from(this.tokenStorage.setUser(res.data)).pipe(
+        tap(() => this.currentUserSubject.next(res.data)),
+        map(() => res)
+      ))
     );
   }
 
@@ -320,38 +332,28 @@ export class AuthService {
     return this.http.delete<ApiResponse<string>>(
       `${environment.apiUrl}/auth/me`
     ).pipe(
+      switchMap((res) => from(this.clearLocalSession()).pipe(
+        tap(() => void this.router.navigate(['/login'])),
+        map(() => res)
+      ))
+    );
+  }
+
+  private handleAuthSuccess(response: AuthResponse, loadProfile = true): Observable<AuthResponse> {
+    return from(this.tokenStorage.setTokens(response.data)).pipe(
       tap(() => {
-        this.clearLocalSession();
-        this.router.navigate(['/login']);
-      })
+        if (loadProfile) {
+          this.getMe().subscribe({
+            error: (err) => console.warn('[Auth] getMe() returned error after login (keeping session active):', err)
+          });
+        }
+      }),
+      map(() => response)
     );
   }
 
-  private storeTokens(response: AuthResponse): void {
-    this.tokenStorage.setTokens(response.data);
-  }
-
-  /**
-   * Stores the tokens from a login/social-login response and then loads the
-   * authenticated user before the caller is allowed to proceed. Login is not
-   * considered complete — and callers must not navigate — until this resolves:
-   * an in-flight token with no confirmed identity is not a logged-in session.
-   */
-  private completeAuthentication(response: AuthResponse): Observable<AuthResponse> {
-    this.storeTokens(response);
-
-    return this.getMe().pipe(
-      map(() => response),
-      catchError((error) => {
-        this.clearLocalSession();
-        return throwError(() => error);
-      })
-    );
-  }
-
-  private clearLocalSession(): void {
-    this.sessionInitialized = false;
-    this.tokenStorage.clear();
+  private async clearLocalSession(): Promise<void> {
+    await this.tokenStorage.clear();
     this.profileSelectionSvc.clear();
     this.currentUserSubject.next(null);
   }

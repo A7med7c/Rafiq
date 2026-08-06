@@ -99,6 +99,28 @@
   flex-shrink: 0;
 }
 
+.tour-bubble__audio-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #cfe8ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  padding: 0;
+}
+.tour-bubble__audio-btn:hover {
+  background: #f0f9ff;
+  color: #0eafd7;
+  border-color: #7dd3fc;
+  transform: scale(1.05);
+}
+
 .tour-bubble__skip-btn {
   display: inline-flex;
   align-items: center;

@@ -36,11 +36,12 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
     [HttpPost("upload/lab")]
     public async Task<IActionResult> UploadLabReport(
         [FromQuery] Guid profileId,
+        [FromHeader(Name = "Accept-Language")] string? language,
         IFormFile image,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new UploadLabReportCommand(profileId, image),
+            new UploadLabReportCommand(profileId, image, language ?? "en"),
             cancellationToken);
 
         return Ok(result);
@@ -136,11 +137,12 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
     [HttpPost("upload/imaging")]
     public async Task<IActionResult> UploadImagingReport(
         [FromQuery] Guid profileId,
+        [FromHeader(Name = "Accept-Language")] string? language,
         IFormFile image,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new UploadImagingReportCommand(profileId, image),
+            new UploadImagingReportCommand(profileId, image, language ?? "en"),
             cancellationToken);
 
         return Ok(result);
@@ -309,10 +311,11 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
         [FromQuery] Guid profileId,
         IFormFile image,
         [FromForm] string? description,
+        [FromHeader(Name = "Accept-Language")] string? language,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new UploadGeneralDocumentAsyncCommand(image, profileId, description),
+            new UploadGeneralDocumentAsyncCommand(image, profileId, description, language ?? "en"),
             cancellationToken);
         return Ok(result);
     }
@@ -336,9 +339,10 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
     [HttpPost("general/{id:guid}/retry")]
     public async Task<IActionResult> RetryDocumentAnalysis(
         Guid id,
+        [FromHeader(Name = "Accept-Language")] string? language,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new RetryDocumentAnalysisCommand(id), cancellationToken);
+        var result = await mediator.Send(new RetryDocumentAnalysisCommand(id, language ?? "en"), cancellationToken);
         return Ok(result);
     }
 

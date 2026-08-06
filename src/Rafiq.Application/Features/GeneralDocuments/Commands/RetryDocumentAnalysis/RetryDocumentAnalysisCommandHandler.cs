@@ -32,7 +32,7 @@ public sealed class RetryDocumentAnalysisCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Enqueue after the DB write — prevents race where job runs before status is Pending
-        analysisJobService.EnqueueAnalysis(document.Id, userId, document.UserHealthProfileId);
+        analysisJobService.EnqueueAnalysis(document.Id, userId, document.UserHealthProfileId, request.Language);
 
         return ApiResponse<bool>.SuccessResponse(true, "Document queued for retry.");
     }

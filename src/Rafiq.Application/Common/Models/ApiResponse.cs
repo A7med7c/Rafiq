@@ -17,12 +17,14 @@ public sealed class ApiResponse<T> : ApiResponseBase
     public new static ApiResponse<T> FailureResponse(
         string message,
         IReadOnlyList<string>? errors = null,
-        string? errorCode = null)
+        string? errorCode = null,
+        object? errorData = null)
         => new()
         {
             Success = false,
             Message = message,
             Errors = errors ?? Array.Empty<string>(),
-            ErrorCode = errorCode
+            ErrorCode = errorCode,
+            ErrorData = errorData
         };
 }

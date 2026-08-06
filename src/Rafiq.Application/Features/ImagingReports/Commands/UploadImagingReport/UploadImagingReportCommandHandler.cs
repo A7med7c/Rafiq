@@ -16,7 +16,9 @@ public sealed class UploadImagingReportCommandHandler(
     IBedrockService bedrockService,
     IFileStorageService fileStorageService,
     IAiTelemetryContext telemetryContext,
-    IUsageIntelligenceService usageIntelligence)
+    IUsageIntelligenceService usageIntelligence,
+    IDuplicateDocumentDetector duplicateDetector,
+    IImagingReportRepository imagingReportRepository)
     : IRequestHandler<UploadImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
 {
     public async Task<ApiResponse<ImagingReportResponseDto>> Handle(
@@ -43,11 +45,52 @@ public sealed class UploadImagingReportCommandHandler(
         using var memoryStream = new MemoryStream();
         await imageStream.CopyToAsync(memoryStream, cancellationToken);
         var imageBytes = memoryStream.ToArray();
+        
+        var fileExtension = Path.GetExtension(request.Image.FileName);
+        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+        var uploadStream = new MemoryStream(imageBytes);
+        var imageUrl = await fileStorageService.UploadFileAsync(
+            uploadStream,
+            uniqueFileName,
+            "imaging",
+            cancellationToken);
+
+        // ── Phase 1: Fast duplicate check ────────────────────────────
+        var duplicateCheck = await duplicateDetector.ComputeHashAndCheckAsync(
+            imageBytes,
+            imageUrl,
+            profileId,
+            currentUserId!.Value,
+            cancellationToken);
+
+        if (duplicateCheck.IsDuplicate)
+        {
+            if (duplicateCheck.IsSameProfile)
+            {
+                throw new DocumentValidationException("DUPLICATE_DOCUMENT", "This exact document has already been uploaded to this profile.");
+            }
+            
+            if (!request.BypassFamilyDuplicateCheck)
+            {
+                return ApiResponse<ImagingReportResponseDto>.FailureResponse(
+                    "This document already exists in another family member's profile.",
+                    errorCode: "DuplicateInFamily",
+                    errorData: new
+                    {
+                        existingProfileId = duplicateCheck.ExistingProfileId,
+                        existingProfileName = duplicateCheck.ExistingProfileName
+                    });
+            }
+        }
+        // ─────────────────────────────────────────────────────────────
+
         var base64Image = Convert.ToBase64String(imageBytes);
 
         var extracted = await bedrockService.AnalyzeAsync<BedrockImagingReportDto>(
             base64Image,
-            ImagingReportPrompt.Build(),
+            ImagingReportPrompt.Build(request.Language),
+            LanguageSystemPrompt.Build(request.Language),
             cancellationToken)
             ?? throw new BadRequestException("No imaging report data could be extracted from the uploaded image.");
 
@@ -84,16 +127,6 @@ public sealed class UploadImagingReportCommandHandler(
                 "UNREADABLE_DOCUMENT_IMAGING_REPORT",
                 "The imaging report image is unreadable. Please upload a clearer image or enter the information manually.");
 
-        var fileExtension = Path.GetExtension(request.Image.FileName);
-        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-
-        using var uploadStream = new MemoryStream(imageBytes);
-        var imageUrl = await fileStorageService.UploadFileAsync(
-            uploadStream,
-            uniqueFileName,
-            "imaging",
-            cancellationToken);
-
         var reportDate = DateOnly.TryParseExact(
             extracted.ReportDate,
             "yyyy-MM-dd",
@@ -118,8 +151,30 @@ public sealed class UploadImagingReportCommandHandler(
             CreatedAt = DateTime.UtcNow
         };
 
-        return ApiResponse<ImagingReportResponseDto>.SuccessResponse(
+        var response = ApiResponse<ImagingReportResponseDto>.SuccessResponse(
             preview,
             "Imaging report analyzed successfully. Review before saving.");
+
+        // ── Phase 2: Smart similarity check ──────────────────────────
+        var existsDuplicate = await imagingReportRepository.ExistsDuplicateAsync(
+            profileId,
+            reportDate,
+            extracted.ImagingType ?? string.Empty,
+            extracted.BodyPart ?? string.Empty,
+            cancellationToken);
+
+        if (existsDuplicate)
+        {
+            response = new ApiResponse<ImagingReportResponseDto>
+            {
+                Success = true,
+                Message = response.Message,
+                Data = response.Data,
+                Warnings = new List<string> { "PossibleDuplicate" }
+            };
+        }
+        // ─────────────────────────────────────────────────────────────
+
+        return response;
     }
 }

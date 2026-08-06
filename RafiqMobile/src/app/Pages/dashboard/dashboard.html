@@ -39,6 +39,12 @@
         {{ t().dashboard.familyWell }}
       </p>
     </div>
+    <button type="button" assistantAnchor="header-tour-btn" class="dash-header__bell dash-header__tour-btn"
+      (click)="assistantOrchestrator.tourEngine.startCurrentPageTour()"
+      [attr.aria-label]="l10n.isRtl() ? 'جولة تعريفيّة' : 'Page Tour'"
+      [title]="l10n.isRtl() ? 'جولة تعريفيّة' : 'Page Tour'">
+      <i class="fa-solid fa-circle-question"></i>
+    </button>
     <button type="button" class="dash-header__bell" [class.dash-header__bell--active]="notifService.notificationCenterOpen()"
       (click)="notifService.toggleNotificationCenter()" [attr.aria-label]="t().header.notifications">
       <i class="fa-regular fa-bell"></i>
@@ -126,7 +132,7 @@
         }
 
         <div class="ai-hero__actions" style="margin-top: 16px;">
-          <button type="button" class="ai-hero__btn ai-hero__btn--outline" (click)="openAiPanel()" style="width: 100%;">
+          <button type="button" assistantAnchor="ai-summary-details-btn" class="ai-hero__btn ai-hero__btn--outline" (click)="openAiPanel()" style="width: 100%;">
             <i class="fa-solid fa-robot"></i> {{ t().dashboard.summaryViewFull }}
           </button>
         </div>
@@ -134,7 +140,7 @@
     </section>
 
     <!-- ── TODAY ── -->
-    <section class="m-section">
+    <section assistantAnchor="today-schedule-section" class="m-section">
       <div class="m-section__hdr">
         <h3 class="m-section__title">{{ t().dashboard.today }}</h3>
         <a routerLink="/appointments" class="m-section__link">{{ t().dashboard.viewAll }}</a>
@@ -197,28 +203,28 @@
     </section>
 
     <!-- ── QUICK ACTIONS ── -->
-    <section class="m-section">
+    <section assistantAnchor="quick-actions-section" class="m-section">
       <div class="m-section__hdr">
         <h3 class="m-section__title">{{ t().dashboard.quickActions }}</h3>
       </div>
       <div class="quick-actions">
-        <a routerLink="/medical-records" class="quick-action-box">
+        <a assistantAnchor="qa-upload-record" routerLink="/medical-records" class="quick-action-box">
           <span class="quick-action-box__circle bg-blue-light"><i class="fa-solid fa-cloud-arrow-up txt-blue"></i></span>
           <span class="quick-action-box__lbl">{{ t().dashboard.uploadRecord }}</span>
         </a>
-        <a routerLink="/appointments" class="quick-action-box">
+        <a assistantAnchor="qa-appointments" routerLink="/appointments" class="quick-action-box">
           <span class="quick-action-box__circle bg-purple-light"><i class="fa-regular fa-calendar txt-purple"></i></span>
           <span class="quick-action-box__lbl">{{ t().sidebar.appointments }}</span>
         </a>
-        <a routerLink="/medications" class="quick-action-box">
+        <a assistantAnchor="qa-reminders" routerLink="/medications" class="quick-action-box">
           <span class="quick-action-box__circle bg-orange-light"><i class="fa-regular fa-bell txt-orange"></i></span>
           <span class="quick-action-box__lbl">{{ t().dashboard.reminders }}</span>
         </a>
-        <a (click)="openAiPanel()" class="quick-action-box" style="cursor: pointer;">
+        <a assistantAnchor="ai-chat-quick-action" (click)="openAiPanel()" class="quick-action-box" style="cursor: pointer;">
           <span class="quick-action-box__circle bg-teal-light"><i class="fa-solid fa-robot txt-teal"></i></span>
           <span class="quick-action-box__lbl">{{ t().dashboard.aiChat }}</span>
         </a>
-        <a routerLink="/family-profiles" class="quick-action-box">
+        <a assistantAnchor="qa-family" routerLink="/family-profiles" class="quick-action-box">
           <span class="quick-action-box__circle bg-purple-light"><i class="fa-solid fa-people-roof txt-purple"></i></span>
           <span class="quick-action-box__lbl">{{ t().dashboard.family }}</span>
         </a>

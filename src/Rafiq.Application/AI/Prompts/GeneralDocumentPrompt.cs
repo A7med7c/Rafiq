@@ -1,9 +1,12 @@
-﻿namespace Rafiq.Application.AI.Prompts;
+namespace Rafiq.Application.AI.Prompts;
 
 public static class GeneralDocumentPrompt
 {
-    public static string Build() =>
-    """
+    public static string Build(string language = "en")
+    {
+        var langName = language.StartsWith("ar", System.StringComparison.OrdinalIgnoreCase) ? "Arabic" : "English";
+        
+        return $$"""
 You are an expert medical document analysis assistant.
 
 STEP 1 — CLASSIFY THE DOCUMENT
@@ -25,6 +28,8 @@ STEP 2 — IF documentCategory is "general", extract:
 4. Hospital or clinic name
 5. Document date
 6. Short patient-friendly summary (2-3 sentences)
+   IMPORTANT: The summary MUST be generated entirely in the following language: {{langName}}.
+   WARNING RULE: If there are any highly abnormal or dangerous findings that require immediate medical attention, you MUST start the summary with a clear and prominent warning in the requested language ({{langName}}).
 7. Full OCR text of the document
 
 If documentCategory is NOT "general", still set it correctly and leave all other fields null.
@@ -49,4 +54,5 @@ JSON:
   "ocrText":""
 }
 """;
+    }
 }

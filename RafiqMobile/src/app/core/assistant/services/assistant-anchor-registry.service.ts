@@ -62,6 +62,8 @@ export class AssistantAnchorRegistryService {
   }
 
   private updateAnchorNamesSignal(): void {
-    this._anchorNames.set(Array.from(this.anchorMap.keys()));
+    queueMicrotask(() => {
+      this._anchorNames.set(Array.from(this.anchorMap.keys()));
+    });
   }
 }

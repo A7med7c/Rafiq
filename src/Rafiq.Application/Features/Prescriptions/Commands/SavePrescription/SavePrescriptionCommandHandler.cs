@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.Prescriptions.DTOs;
@@ -15,7 +16,8 @@ public sealed class SavePrescriptionCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IPrescriptionRepository prescriptionRepository,
     IUnitOfWork unitOfWork,
-    IHealthSummaryCacheRepository summaryCache)
+    IHealthSummaryCacheRepository summaryCache,
+    Rafiq.Infrastructure.Persistence.RafiqDbContext dbContext)
     : IRequestHandler<SavePrescriptionCommand, ApiResponse<PrescriptionResponseDto>>
 {
     public async Task<ApiResponse<PrescriptionResponseDto>> Handle(
@@ -56,6 +58,25 @@ public sealed class SavePrescriptionCommandHandler(
             patientName,
             prescriptionDate,
             request.ImagePath ?? string.Empty);
+
+        if (!string.IsNullOrEmpty(request.ImagePath))
+        {
+            var session = await dbContext.DocumentUploadSessions
+                .FirstOrDefaultAsync(s => s.ImageUrl == request.ImagePath, cancellationToken);
+                
+            if (session != null)
+            {
+                prescription = new Prescription(
+                    profileId,
+                    doctorName,
+                    patientName,
+                    prescriptionDate,
+                    request.ImagePath,
+                    session.FileHash);
+                    
+                dbContext.DocumentUploadSessions.Remove(session);
+            }
+        }
 
         foreach (var medicine in request.Medicines ?? [])
         {

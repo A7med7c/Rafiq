@@ -10,6 +10,10 @@ public class ApiResponseBase
 
     public string? ErrorCode { get; init; }
 
+    public IReadOnlyList<string>? Warnings { get; init; }
+
+    public object? ErrorData { get; init; }
+
     public static ApiResponseBase SuccessResponse(string message = "OK")
         => new()
         {
@@ -17,15 +21,16 @@ public class ApiResponseBase
             Message = message
         };
 
-    public static ApiResponseBase FailureResponse(
         string message,
         IReadOnlyList<string>? errors = null,
-        string? errorCode = null)
+        string? errorCode = null,
+        object? errorData = null)
         => new()
         {
             Success = false,
             Message = message,
             Errors = errors ?? Array.Empty<string>(),
-            ErrorCode = errorCode
+            ErrorCode = errorCode,
+            ErrorData = errorData
         };
 }

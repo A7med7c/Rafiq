@@ -234,6 +234,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly scanSaving = signal(false);
   readonly scanMode = signal<'create' | 'edit'>('create');
   readonly scanRecordId = signal<string | null>(null);
+  scanFormTouched = signal(false);
   scanForm: ScanForm = this.emptyScanForm();
 
   // Manual entry & AI failure recovery
@@ -1107,6 +1108,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.manualMedicineMode.set(false);
     this.scanSource.set(3);
     this.manualImageUploading.set(false);
+    this.scanFormTouched.set(false);
   }
 
   onManualImageSelected(e: Event): void {
@@ -1162,6 +1164,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       this.scanRecordId.set(null);
       this._scanFormSnapshot = null;
       this.scanResult.set({ medicineName: '', strength: '', dosageForm: '', manufacturer: '', imagePath: '' });
+      this.scanFormTouched.set(false);
       return;
     }
     const typeMap: Record<string, 'lab' | 'imaging' | 'prescription' | 'general'> = {
@@ -1180,6 +1183,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   saveScanResult(): void {
+    this.scanFormTouched.set(true);
     if (!this.scanForm.medicineName.trim()) return;
     if (this.manualMedicineImageUploading()) return;
 
@@ -1225,8 +1229,14 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.manualMedicineMode.set(false);
         this.scanSource.set(3);
         this.loadData();
-        this.showToast(mode === 'edit' ? this.t().records.medicineUpdatedSuccess : this.t().records.medicineSavedSuccess, 'success');
         const savedMedicineId = res?.data?.id ?? null;
+        if (res && res.message && res.message.includes('خلي بالك')) {
+          alert(res.message);
+        } else {
+          if (mode === 'edit' || !savedMedicineId) {
+            this.showToast(mode === 'edit' ? this.t().records.medicineUpdatedSuccess : this.t().records.medicineSavedSuccess, 'success');
+          }
+        }
         if (mode !== 'edit' && savedMedicineId) {
           this.openReminderPrompt('single', savedMedicineId);
         } else {
@@ -1235,7 +1245,25 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       },
       error: err => {
         this.scanSaving.set(false);
-        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.saveMedicineFailed), 'error');
+        let msg = err?.error?.message ?? this.t().records.saveMedicineFailed;
+        if (err?.error?.errors) {
+          const errors = err.error.errors;
+          if (Array.isArray(errors) && errors.length > 0) {
+            msg = errors[0];
+          } else if (typeof errors === 'object') {
+            const firstKey = Object.keys(errors)[0];
+            if (firstKey && Array.isArray(errors[firstKey]) && errors[firstKey].length > 0) {
+              msg = errors[firstKey][0];
+            }
+          }
+        }
+        
+        const localizedMsg = this.localizeApiMessage(msg);
+        if (localizedMsg.includes('خلي بالك')) {
+          alert(localizedMsg);
+        } else {
+          this.showToast(localizedMsg, 'error');
+        }
       },
     });
   }
@@ -1339,14 +1367,23 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     profileId$.pipe(
       switchMap(pid => this.http.post(`${this.base}/user-medicines?profileId=${pid}`, payload))
     ).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.addingMedIndex.set(null);
         this.addedMedIndices.update(s => new Set([...s, index]));
-        this.showToast(`${med.medicineName} added to your medications.`, 'success');
+        if (res && res.message && res.message.includes('خلي بالك')) {
+          alert(res.message);
+        } else {
+          this.showToast(`${med.medicineName} added to your medications.`, 'success');
+        }
       },
       error: err => {
         this.addingMedIndex.set(null);
-        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.addMedicineFailed), 'error');
+        const msg = this.localizeApiMessage(err?.error?.message ?? this.t().records.addMedicineFailed);
+        if (msg.includes('خلي بالك')) {
+          alert(msg);
+        } else {
+          this.showToast(msg, 'error');
+        }
       },
     });
   }
@@ -1380,14 +1417,32 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         ))
       )
     ).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.addingAllMeds.set(false);
         this.addedMedIndices.update(s => new Set([...s, ...notYetAdded.map(({ i }) => i)]));
-        this.showToast('All medicines added to your medications.', 'success');
+        if (res && Array.isArray(res)) {
+          let alertShown = false;
+          res.forEach((r: any) => {
+            if (r && r.message && r.message.includes('خلي بالك') && !alertShown) {
+              alert(r.message);
+              alertShown = true;
+            }
+          });
+          if (!alertShown) {
+            this.showToast('All medicines added to your medications.', 'success');
+          }
+        } else {
+          this.showToast('All medicines added to your medications.', 'success');
+        }
       },
       error: err => {
         this.addingAllMeds.set(false);
-        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.addMedicinesFailed), 'error');
+        const msg = this.localizeApiMessage(err?.error?.message ?? this.t().records.addMedicinesFailed);
+        if (msg.includes('خلي بالك')) {
+          alert(msg);
+        } else {
+          this.showToast(msg, 'error');
+        }
       },
     });
   }

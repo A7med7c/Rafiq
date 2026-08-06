@@ -1549,9 +1549,6 @@ export class Medications implements OnInit, OnDestroy {
     const m = this.medCopy();
     const errs: string[] = [];
     if (!f.medicineName.trim()) errs.push(m.medicineNameRequired);
-    if (!f.dosage.trim()) errs.push(m.dosageRequired);
-    if (!f.frequency.trim()) errs.push(m.frequencyRequired);
-    if (!f.duration.trim()) errs.push(m.durationRequired);
     return errs;
   }
 

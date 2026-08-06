@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.LabReports.DTOs;
@@ -15,7 +16,8 @@ public sealed class SaveLabReportCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     ILabReportRepository labReportRepository,
     IUnitOfWork unitOfWork,
-    IHealthSummaryCacheRepository summaryCache)
+    IHealthSummaryCacheRepository summaryCache,
+    Rafiq.Infrastructure.Persistence.RafiqDbContext dbContext)
     : IRequestHandler<SaveLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
     public async Task<ApiResponse<LabReportResponseDto>> Handle(
@@ -53,6 +55,28 @@ public sealed class SaveLabReportCommandHandler(
             request.ImageUrl ?? string.Empty,
             request.OcrText,
             request.Summary);
+
+        // Fetch FileHash from session
+        if (!string.IsNullOrEmpty(request.ImageUrl))
+        {
+            var session = await dbContext.DocumentUploadSessions
+                .FirstOrDefaultAsync(s => s.ImageUrl == request.ImageUrl, cancellationToken);
+                
+            if (session != null)
+            {
+                labReport = new LabReport(
+                    profileId,
+                    doctorName,
+                    labName,
+                    reportDate,
+                    request.ImageUrl,
+                    request.OcrText,
+                    request.Summary,
+                    session.FileHash);
+                    
+                dbContext.DocumentUploadSessions.Remove(session);
+            }
+        }
 
         foreach (var result in request.Results ?? [])
         {

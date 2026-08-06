@@ -8,5 +8,6 @@ namespace Rafiq.Application.Features.GeneralDocuments.Commands.UploadGeneralDocu
 public sealed record UploadGeneralDocumentAsyncCommand(
     IFormFile Image,
     Guid ProfileId,
-    string? Description)
+    string? Description,
+    string Language = "en")
     : IRequest<ApiResponse<UploadGeneralDocumentAsyncResponseDto>>;

@@ -61,7 +61,7 @@ public sealed class UploadGeneralDocumentAsyncCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Enqueue the Hangfire job — returns immediately
-        analysisJobService.EnqueueAnalysis(document.Id, userId, request.ProfileId);
+        analysisJobService.EnqueueAnalysis(document.Id, userId, request.ProfileId, request.Language);
 
         return ApiResponse<UploadGeneralDocumentAsyncResponseDto>.SuccessResponse(
             new UploadGeneralDocumentAsyncResponseDto

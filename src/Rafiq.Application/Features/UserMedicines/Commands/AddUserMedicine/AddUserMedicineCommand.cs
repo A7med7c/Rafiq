@@ -13,5 +13,6 @@ public sealed record AddUserMedicineCommand(
     string Duration,
     string? Notes,
     string? ImagePath,
-    MedicineSource Source)
+    MedicineSource Source,
+    bool BypassFamilyDuplicateCheck = false)
     : IRequest<ApiResponse<UserMedicineResponseDto>>;

@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { filter, take } from 'rxjs';
 import { GoogleService } from '../../../Services/google-service';
 import { AuthService } from '../../../Services/auth-service';
 import { HealthProfileService } from '../../../Services/health-profile.service';
@@ -176,19 +177,19 @@ export class LoginFormComponent implements OnInit {
   }
 
   private navigateAfterLogin(): void {
-    // authService.login()/loginWithGoogle() only emit once the authenticated
-    // user has been loaded, so currentUser is guaranteed to be set here.
-    const user = this.authService.currentUser;
-    if (!user) {
-      return;
-    }
+    this.authService.currentUser$.pipe(
+      filter(user => !!user),
+      take(1)
+    ).subscribe({
+      next: user => {
+        if (user.role === 'Admin') {
+          void this.router.navigate(['/admin']);
+          return;
+        }
 
-    if (user.role === 'Admin') {
-      void this.router.navigate(['/admin']);
-      return;
-    }
-
-    this.navigatePatientAfterLogin();
+        this.navigatePatientAfterLogin();
+      }
+    });
   }
 
   private navigatePatientAfterLogin(): void {

@@ -26,6 +26,8 @@ public sealed class GeneralDocument : BaseEntity
 
     public string? OcrText { get; private set; }
 
+    public string? FileHash { get; private set; }
+
     // ── Async analysis state ─────────────────────────────────────────────────
 
     public GeneralDocumentStatus AnalysisStatus { get; private set; } = GeneralDocumentStatus.Pending;
@@ -49,7 +51,8 @@ public sealed class GeneralDocument : BaseEntity
         string? hospitalOrClinic = null,
         string? documentDate = null,
         string? ocrText = null,
-        GeneralDocumentStatus analysisStatus = GeneralDocumentStatus.Pending)
+        GeneralDocumentStatus analysisStatus = GeneralDocumentStatus.Pending,
+        string? fileHash = null)
     {
         UserHealthProfileId = userHealthProfileId;
         Title = title;
@@ -62,6 +65,7 @@ public sealed class GeneralDocument : BaseEntity
         DocumentDate = documentDate;
         OcrText = ocrText;
         AnalysisStatus = analysisStatus;
+        FileHash = fileHash;
     }
 
     /// <summary>Called by the background job to claim the document atomically.</summary>

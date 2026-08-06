@@ -22,10 +22,12 @@ interface Toast {
   type: 'success' | 'error';
 }
 
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+
 @Component({
   selector: 'app-appointments-content',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AssistantAnchorDirective],
   templateUrl: './appointments-content.html',
   styleUrl: '../../Pages/appointments/appointments.css',
   encapsulation: ViewEncapsulation.None

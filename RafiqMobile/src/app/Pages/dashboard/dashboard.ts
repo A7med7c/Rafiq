@@ -44,7 +44,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private readonly elRef              = inject(ElementRef);
   private readonly medicalReportSvc   = inject(MedicalReportService);
   private readonly downloadSvc        = inject(DownloadService);
-  private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
+  protected readonly assistantOrchestrator = inject(AssistantOrchestratorService);
   private readonly reviewTracking      = inject(ReviewTrackingService);
   private readonly medRemindersSvc     = inject(MedicationRemindersService);
 
@@ -382,9 +382,9 @@ export class Dashboard implements OnInit, OnDestroy {
       error: () => { this.records.set([]); this.recordsLoading.set(false); this.hasLoadError.set(true); },
     });
 
-    this.medRemindersSvc.getHistory(this.localToday()).subscribe({
+    this.medRemindersSvc.getToday().subscribe({
       next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
-      error: () => { this.reminders.set([]); this.remindersLoading.set(false); this.hasLoadError.set(true); },
+      error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
     });
 
     this.apptService.getAll().pipe(
@@ -407,7 +407,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   private loadReminderData(): void {
     this.remindersLoading.set(true);
-    this.medRemindersSvc.getHistory(this.localToday()).subscribe({
+    this.medRemindersSvc.getToday().subscribe({
       next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
       error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
     });
@@ -462,7 +462,8 @@ export class Dashboard implements OnInit, OnDestroy {
 
   startWelcomeTour(): void {
     if (this.assistantOrchestrator.tourEngine.isPlaying()) return;
-    this.assistantOrchestrator.startTour('welcome-tour');
+    const tourId = this.l10n.lang() === 'en' ? 'welcome-tour-en' : 'welcome-tour';
+    this.assistantOrchestrator.startTour(tourId);
   }
 
   // ── Host Listeners ────────────────────────────────────────────────────────

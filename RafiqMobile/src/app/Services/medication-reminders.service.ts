@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, of, shareReplay, switchMap } from 'rxjs';
+import { Observable, catchError, map, of, shareReplay, switchMap } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse, ApiResponseBase } from '../Modles/api-response';
 import { MedicationReminderLogDto } from '../Modles/medication-reminder.models';
@@ -24,7 +24,8 @@ export class MedicationRemindersService {
 
   private readonly profileId$: Observable<string> =
     this.healthProfileSvc.getMyProfile().pipe(
-      map(r => r.data.id),
+      map(r => r.data?.id ?? ''),
+      catchError(() => of('')),
       shareReplay(1),
     );
 
@@ -37,6 +38,7 @@ export class MedicationRemindersService {
         )
       ),
       map(r => r.data ?? []),
+      catchError(() => of([] as MedicationReminderLogDto[]))
     );
   }
 
@@ -67,6 +69,7 @@ export class MedicationRemindersService {
         )
       ),
       map(r => r.data ?? []),
+      catchError(() => of([] as MedicationReminderLogDto[]))
     );
   }
 
@@ -77,6 +80,7 @@ export class MedicationRemindersService {
         this.http.get<ApiResponse<UserMedicine[]>>(`${this.medBase}?profileId=${pid}`)
       ),
       map(r => r.data ?? []),
+      catchError(() => of([] as UserMedicine[]))
     );
   }
 

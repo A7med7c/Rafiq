@@ -1058,43 +1058,57 @@
         }
         }
       </div>
-      <div class="scan-form-grid">
-        <div class="scan-field scan-field--full">
-          <label class="scan-label">{{ t().records.medicineName }} <span class="scan-required">*</span></label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.medicineName" [attr.placeholder]="t().records.medicinePlaceholder">
-          <p class="scan-hint">{{ t().records.medicineDetailsHint }}</p>
+      <div class="rm-section rm-dates-grid" style="margin-top: 15px;">
+        <div>
+          <label class="rm-section-title">
+            <i class="fa-solid fa-pills"></i> {{ t().records.medicineName }} <span style="color:var(--red)">*</span>
+          </label>
+          <input type="text" class="rm-time-input"
+            [(ngModel)]="scanForm.medicineName"
+            [placeholder]="t().records.medicinePlaceholder"
+            [class.rm-input-error]="scanFormTouched() && !scanForm.medicineName.trim()" />
         </div>
-        <div class="scan-field scan-field--full">
-          <label class="scan-label">{{ t().records.medicineOptionalDetails }}</label>
-        </div>
-        <div class="scan-field">
-          <label class="scan-label">{{ t().records.strengthDosage }}</label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.dosage" [attr.placeholder]="t().records.strengthPlaceholder">
-        </div>
-        <div class="scan-field">
-          <label class="scan-label">{{ t().records.dosageForm }}</label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.dosageForm" [attr.placeholder]="t().records.dosageFormPlaceholder">
-        </div>
-        <div class="scan-field">
-          <label class="scan-label">{{ t().records.manufacturer }}</label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.manufacturer" [attr.placeholder]="t().records.manufacturerPlaceholder">
-        </div>
-        <div class="scan-field">
-          <label class="scan-label">{{ t().records.frequency }}</label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.frequency" [attr.placeholder]="t().records.frequencyPlaceholder">
-        </div>
-        <div class="scan-field">
-          <label class="scan-label">{{ t().records.duration }}</label>
-          <input type="text" class="scan-input" [(ngModel)]="scanForm.duration" [attr.placeholder]="t().records.durationPlaceholder">
-        </div>
-        <div class="scan-field scan-field--full">
-          <label class="scan-label">{{ t().records.notesOptional }}</label>
-          <textarea class="scan-input scan-textarea" [(ngModel)]="scanForm.notes"
-            [attr.placeholder]="t().records.notesPlaceholder" rows="3"></textarea>
+        <div>
+          <label class="rm-section-title">
+            <i class="fa-solid fa-flask"></i> {{ t().records.strengthDosage }}
+          </label>
+          <input type="text" class="rm-time-input"
+            [(ngModel)]="scanForm.dosage"
+            [placeholder]="t().records.strengthPlaceholder" />
         </div>
       </div>
-      @if (scanForm.medicineName.trim() === '') {
-      <p class="scan-validation"><i class="fa-solid fa-triangle-exclamation"></i> {{ t().records.medNameRequired }}</p>
+
+      <div class="rm-section rm-dates-grid">
+        <div>
+          <label class="rm-section-title">
+            <i class="fa-regular fa-clock"></i> {{ t().records.frequency }}
+          </label>
+          <input type="text" class="rm-time-input"
+            [(ngModel)]="scanForm.frequency"
+            [placeholder]="t().records.frequencyPlaceholder" />
+        </div>
+        <div>
+          <label class="rm-section-title">
+            <i class="fa-solid fa-calendar-days"></i> {{ t().records.duration }}
+          </label>
+          <input type="text" class="rm-time-input"
+            [(ngModel)]="scanForm.duration"
+            [placeholder]="t().records.durationPlaceholder" />
+        </div>
+      </div>
+
+      <div class="rm-section">
+        <label class="rm-section-title">
+          <i class="fa-regular fa-note-sticky"></i> {{ t().records.notesOptional }}
+        </label>
+        <textarea class="rm-notes-area"
+          [(ngModel)]="scanForm.notes"
+          [placeholder]="t().records.notesPlaceholder"
+          rows="2"></textarea>
+      </div>
+
+      @if (scanFormTouched() && scanForm.medicineName.trim() === '') {
+      <p class="scan-validation" style="color:var(--red); font-size:12px; margin-top:5px;"><i class="fa-solid fa-triangle-exclamation"></i> {{ t().records.medNameRequired }}</p>
       }
     </div>
     <footer class="modal-ftr">
