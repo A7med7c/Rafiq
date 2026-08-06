@@ -27,7 +27,7 @@ export class RafiqAssistantComponent implements OnDestroy {
   private readonly router = inject(Router);
   private readonly keyboardOffset = signal(0);
 
-  readonly isMuted = signal<boolean>(false);
+  readonly isMuted = this.speechService.isMuted;
 
   readonly bubbleEl = viewChild<ElementRef<HTMLElement>>('bubbleEl');
 
@@ -72,11 +72,8 @@ export class RafiqAssistantComponent implements OnDestroy {
   readonly isKeyboardOpen = computed(() => this.keyboardOffset() > 0);
 
   toggleMute(): void {
-    const nextState = !this.isMuted();
-    this.isMuted.set(nextState);
-    if (nextState) {
-      this.speechService.stopSpeaking();
-    } else {
+    const isNowMuted = this.speechService.toggleMute();
+    if (!isNowMuted) {
       this.replaySpeech();
     }
   }

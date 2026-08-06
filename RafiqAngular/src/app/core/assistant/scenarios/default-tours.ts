@@ -229,6 +229,39 @@ export const WELCOME_TOUR: TourScenario = {
       highlight: true,
     },
 
+    // 7b ── Recent Medical Records card on Dashboard
+    {
+      id: 'welcome-recent-records',
+      anchor: 'recent-records-card',
+      route: '/dashboard',
+      speech: 'وهُنا قِسْم \'السِّجِلَّات الطِّبِّيَّة الأَخِيرَة\' فِي لَوْحَة التَّحَكُّم، حَيْثُ يَعْرِض لَكَ أَحْدَث التَّحالِيل والأَشِعَّة والرُّوشِتَّات المَرْفُوعَة مَع حالَتِها.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'thinking',
+      highlight: true,
+    },
+
+    // 7c ── Medications & Reminders card on Dashboard
+    {
+      id: 'welcome-medications-reminders',
+      anchor: 'medications-reminders-card',
+      route: '/dashboard',
+      speech: 'وهُنا قِسْم \'الأَدْوِيَة والتَّذْكِيرات\' لِمُتابَعَة الأَدْوِيَة الحالِيَّة ومَواعِيد التَّنْبِيهات القادِمَة لِكُل دَواء.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'pointLeft',
+      highlight: true,
+    },
+
+    // 7d ── Today's Schedule card on Dashboard
+    {
+      id: 'welcome-today-schedule',
+      anchor: 'today-schedule-card',
+      route: '/dashboard',
+      speech: 'وأَخِيرًا قِسْم \'جَدْوَل اليَوْم\' لِعَرْض كافَّة المَواعِيد والتَّنْبِيهات المُقَرَّرَة لَكَ اليَوْم مَرَّتَّبَة زَمَنِيًّا.',
+      speechLanguage: 'ar-EG',
+      avatarState: 'celebrate',
+      highlight: true,
+    },
+
     // 8 ── Medical Records — split one sub-step per record-type card so the highlight
     // tracks the exact card named, then a closing sub-step on the Add Record button.
     {

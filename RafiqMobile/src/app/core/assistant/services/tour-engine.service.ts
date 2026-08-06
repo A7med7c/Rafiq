@@ -497,6 +497,15 @@ export class TourEngineService {
       this.activeSpeechSub = null;
     }
 
+    if (this.speechService.isMuted()) {
+      this._isSpeaking.set(false);
+      this.avatarService.setState('idle');
+      // Calculate comfortable reading duration when muted (4.5s minimum up to 8.5s based on text length)
+      const readingDelayMs = Math.max(4500, Math.min(8500, textToSpeak.length * 65));
+      this.handleStepCompletion(step, readingDelayMs);
+      return;
+    }
+
     this._isSpeaking.set(true);
     this.activeSpeechSub = this.speechService.speak(textToSpeak, lang).subscribe({
       next: () => {
@@ -513,7 +522,7 @@ export class TourEngineService {
     });
   }
 
-  private handleStepCompletion(step: TourStepScenario): void {
+  private handleStepCompletion(step: TourStepScenario, customDelayMs?: number): void {
     if (!this._isPlaying() || this._isPaused()) return;
 
     if (step.waitForUser) {
@@ -528,7 +537,7 @@ export class TourEngineService {
         }, step.waitForUser.timeoutMs);
       }
     } else {
-      const delay = step.delayAfterMs ?? 1500;
+      const delay = customDelayMs ?? step.delayAfterMs ?? 1500;
       this.autoAdvanceTimer = setTimeout(() => {
         if (this._isPlaying() && !this._isPaused()) {
           this.nextStep();

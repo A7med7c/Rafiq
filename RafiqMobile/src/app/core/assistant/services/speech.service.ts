@@ -5,7 +5,7 @@
  * and manage SpeechRecognizer / SpeechSynthesizer sessions.
  */
 
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, from, throwError, EMPTY, of } from 'rxjs';
 import { switchMap, catchError, tap } from 'rxjs/operators';
@@ -26,6 +26,16 @@ const TAG = '[SpeechService]';
 })
 export class SpeechService {
   private readonly http = inject(HttpClient);
+  readonly isMuted = signal<boolean>(false);
+
+  toggleMute(): boolean {
+    const nextState = !this.isMuted();
+    this.isMuted.set(nextState);
+    if (nextState) {
+      this.stopSpeaking();
+    }
+    return nextState;
+  }
   private currentRecognizer: any = null;
   private currentSynthesizer: any = null;
 
@@ -447,6 +457,11 @@ export class SpeechService {
    * regardless of which engine produced it.
    */
   speak(text: string, language: string = 'ar-EG'): Observable<void> {
+    if (this.isMuted()) {
+      this.stopSpeaking();
+      return of(undefined);
+    }
+
     // Kill any in-progress synthesizer immediately and claim a new generation.
     // Any async step still in flight from a previous speak() call will see
     // myGen !== this._speechGen and short-circuit with EMPTY, so there is
