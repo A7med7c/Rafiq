@@ -11,5 +11,5 @@ namespace Rafiq.Application.Features.LabReports.Commands.UploadLabReport;
 /// returns the extracted data for review.
 /// UserId is NEVER accepted from the client — it comes from the JWT.
 /// </summary>
-public sealed record UploadLabReportCommand(Guid ProfileId, IFormFile Image)
+public sealed record UploadLabReportCommand(Guid ProfileId, IFormFile Image, string Language = "en", bool BypassFamilyDuplicateCheck = false)
     : IRequest<ApiResponse<LabReportResponseDto>>, IAiCommand;

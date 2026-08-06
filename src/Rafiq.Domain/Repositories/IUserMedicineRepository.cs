@@ -21,6 +21,12 @@ public interface IUserMedicineRepository
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<UserMedicine>> GetAllByProfileIdAsync(Guid userHealthProfileId, CancellationToken cancellationToken = default);
+    
+    Task<(Guid profileId, string profileName, bool isSameProfile)?> FindDuplicateByHashAsync(
+        string fileHash,
+        Guid currentProfileId,
+        Guid currentUserId,
+        CancellationToken cancellationToken = default);
 
     void Update(UserMedicine userMedicine);
 

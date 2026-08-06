@@ -16,7 +16,9 @@ public sealed class UploadPrescriptionCommandHandler(
     IBedrockService bedrockService,
     IFileStorageService fileStorageService,
     IAiTelemetryContext telemetryContext,
-    IUsageIntelligenceService usageIntelligence)
+    IUsageIntelligenceService usageIntelligence,
+    IDuplicateDocumentDetector duplicateDetector,
+    IPrescriptionRepository prescriptionRepository)
     : IRequestHandler<UploadPrescriptionCommand, ApiResponse<PrescriptionResponseDto>>
 {
     public async Task<ApiResponse<PrescriptionResponseDto>> Handle(
@@ -43,11 +45,52 @@ public sealed class UploadPrescriptionCommandHandler(
         using var memoryStream = new MemoryStream();
         await imageStream.CopyToAsync(memoryStream, cancellationToken);
         var imageBytes = memoryStream.ToArray();
+        
+        var fileExtension = Path.GetExtension(request.Image.FileName);
+        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+        var uploadStream = new MemoryStream(imageBytes);
+        var imagePath = await fileStorageService.UploadFileAsync(
+            uploadStream,
+            uniqueFileName,
+            "prescriptions",
+            cancellationToken);
+
+        // ── Phase 1: Fast duplicate check ────────────────────────────
+        var duplicateCheck = await duplicateDetector.ComputeHashAndCheckAsync(
+            imageBytes,
+            imagePath,
+            profileId,
+            currentUserId!.Value,
+            cancellationToken);
+
+        if (duplicateCheck.IsDuplicate)
+        {
+            if (duplicateCheck.IsSameProfile)
+            {
+                throw new DocumentValidationException("DUPLICATE_DOCUMENT", "This exact document has already been uploaded to this profile.");
+            }
+            
+            if (!request.BypassFamilyDuplicateCheck)
+            {
+                return ApiResponse<PrescriptionResponseDto>.FailureResponse(
+                    "This document already exists in another family member's profile.",
+                    errorCode: "DuplicateInFamily",
+                    errorData: new
+                    {
+                        existingProfileId = duplicateCheck.ExistingProfileId,
+                        existingProfileName = duplicateCheck.ExistingProfileName
+                    });
+            }
+        }
+        // ─────────────────────────────────────────────────────────────
+
         var base64Image = Convert.ToBase64String(imageBytes);
 
         var extracted = await bedrockService.AnalyzeAsync<BedrockPrescriptionDto>(
             base64Image,
-            PrescriptionPrompt.Build(),
+            PrescriptionPrompt.Build(request.Language),
+            LanguageSystemPrompt.Build(request.Language),
             cancellationToken)
             ?? throw new BadRequestException("No prescription data could be extracted from the uploaded image.");
 
@@ -87,16 +130,6 @@ public sealed class UploadPrescriptionCommandHandler(
         if (extracted.Medicines.Count == 0)
             throw new BadRequestException("No medicines could be extracted from the uploaded prescription image.");
 
-        var fileExtension = Path.GetExtension(request.Image.FileName);
-        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-
-        using var uploadStream = new MemoryStream(imageBytes);
-        var imagePath = await fileStorageService.UploadFileAsync(
-            uploadStream,
-            uniqueFileName,
-            "prescriptions",
-            cancellationToken);
-
         var prescriptionDate = DateOnly.TryParseExact(
             extracted.PrescriptionDate,
             "yyyy-MM-dd",
@@ -125,8 +158,30 @@ public sealed class UploadPrescriptionCommandHandler(
             }).ToList()
         };
 
-        return ApiResponse<PrescriptionResponseDto>.SuccessResponse(
+        var response = ApiResponse<PrescriptionResponseDto>.SuccessResponse(
             preview,
             "Prescription analyzed successfully. Review before saving.");
+
+        // ── Phase 2: Smart similarity check ──────────────────────────
+        var existsDuplicate = await prescriptionRepository.ExistsDuplicateAsync(
+            profileId,
+            prescriptionDate,
+            extracted.DoctorName ?? string.Empty,
+            extracted.PatientName ?? string.Empty,
+            cancellationToken);
+
+        if (existsDuplicate)
+        {
+            response = new ApiResponse<PrescriptionResponseDto>
+            {
+                Success = true,
+                Message = response.Message,
+                Data = response.Data,
+                Warnings = new List<string> { "PossibleDuplicate" }
+            };
+        }
+        // ─────────────────────────────────────────────────────────────
+
+        return response;
     }
 }

@@ -7,8 +7,11 @@ namespace Rafiq.Application.AI.Prompts;
 /// </summary>
 public static class PrescriptionPrompt
 {
-    public static string Build() =>
-        """
+    public static string Build(string language = "en")
+    {
+        var langName = language.StartsWith("ar", System.StringComparison.OrdinalIgnoreCase) ? "Arabic" : "English";
+        
+        return $$"""
         You are an expert medical prescription analyzer.
 
         Your first task is to determine whether the uploaded image is a medical prescription.
@@ -64,9 +67,9 @@ public static class PrescriptionPrompt
         - Never skip any medicine.
         - Preserve medicine names exactly as written.
         - Extract the dosage (e.g., 500mg, 1 tablet, 10ml).
-        - Extract the frequency (e.g., twice daily, every 8 hours, once at night).
-        - Extract the duration (e.g., 7 days, 2 weeks, 1 month).
-        - Extract any special notes or instructions for each medicine if present.
+        - Extract the frequency (e.g., twice daily, every 8 hours, once at night). Translate frequency to the requested language ({{langName}}).
+        - Extract the duration (e.g., 7 days, 2 weeks, 1 month). Translate duration to the requested language ({{langName}}).
+        - Extract any special notes or instructions for each medicine if present. Translate notes to the requested language ({{langName}}).
         - If any field is missing or unreadable, return null.
 
         Rules when isValidDocument is false OR isUnreadable is true:
@@ -83,4 +86,5 @@ public static class PrescriptionPrompt
         - prescriptionDate must always use the format yyyy-MM-dd.
         - If no date is visible, return null for prescriptionDate.
         """;
+    }
 }

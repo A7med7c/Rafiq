@@ -32,7 +32,8 @@ public sealed class ScanMedicineBoxCommandHandler(
 
         var extracted = await bedrockService.AnalyzeAsync<BedrockMedicineBoxDto>(
             base64Image,
-            MedicineBoxPrompt.Build(),
+            MedicineBoxPrompt.Build(request.Language),
+            LanguageSystemPrompt.Build(request.Language),
             cancellationToken)
             ?? throw new BadRequestException("No medicine data could be extracted from the uploaded image.");
 

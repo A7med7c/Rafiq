@@ -16,7 +16,9 @@ public sealed class UploadLabReportCommandHandler(
     IBedrockService bedrockService,
     IFileStorageService fileStorageService,
     IAiTelemetryContext telemetryContext,
-    IUsageIntelligenceService usageIntelligence)
+    IUsageIntelligenceService usageIntelligence,
+    IDuplicateDocumentDetector duplicateDetector,
+    ILabReportRepository labReportRepository)
     : IRequestHandler<UploadLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
     public async Task<ApiResponse<LabReportResponseDto>> Handle(
@@ -43,11 +45,52 @@ public sealed class UploadLabReportCommandHandler(
         using var memoryStream = new MemoryStream();
         await imageStream.CopyToAsync(memoryStream, cancellationToken);
         var imageBytes = memoryStream.ToArray();
+        
+        var fileExtension = Path.GetExtension(request.Image.FileName);
+        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+        var uploadStream = new MemoryStream(imageBytes);
+        var imageUrl = await fileStorageService.UploadFileAsync(
+            uploadStream,
+            uniqueFileName,
+            "labs",
+            cancellationToken);
+
+        // ── Phase 1: Fast duplicate check ────────────────────────────
+        var duplicateCheck = await duplicateDetector.ComputeHashAndCheckAsync(
+            imageBytes,
+            imageUrl,
+            profileId,
+            currentUserId!.Value, // Must exist due to EnsureCanWriteAsync check inside
+            cancellationToken);
+
+        if (duplicateCheck.IsDuplicate)
+        {
+            if (duplicateCheck.IsSameProfile)
+            {
+                throw new DocumentValidationException("DUPLICATE_DOCUMENT", "This exact document has already been uploaded to this profile.");
+            }
+            
+            if (!request.BypassFamilyDuplicateCheck)
+            {
+                return ApiResponse<LabReportResponseDto>.FailureResponse(
+                    "This document already exists in another family member's profile.",
+                    errorCode: "DuplicateInFamily",
+                    errorData: new
+                    {
+                        existingProfileId = duplicateCheck.ExistingProfileId,
+                        existingProfileName = duplicateCheck.ExistingProfileName
+                    });
+            }
+        }
+        // ─────────────────────────────────────────────────────────────
+
         var base64Image = Convert.ToBase64String(imageBytes);
 
         var extracted = await bedrockService.AnalyzeAsync<BedrockLabReportDto>(
             base64Image,
-            LabReportPrompt.Build(),
+            LabReportPrompt.Build(request.Language),
+            LanguageSystemPrompt.Build(request.Language),
             cancellationToken)
             ?? throw new BadRequestException("No lab report data could be extracted from the uploaded image.");
 
@@ -89,16 +132,6 @@ public sealed class UploadLabReportCommandHandler(
         if (extracted.Tests.Count == 0)
             throw new BadRequestException("No laboratory tests could be extracted from the uploaded image.");
 
-        var fileExtension = Path.GetExtension(request.Image.FileName);
-        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-
-        using var uploadStream = new MemoryStream(imageBytes);
-        var imageUrl = await fileStorageService.UploadFileAsync(
-            uploadStream,
-            uniqueFileName,
-            "labs",
-            cancellationToken);
-
         var reportDate = DateOnly.TryParseExact(
             extracted.ReportDate,
             "yyyy-MM-dd",
@@ -129,8 +162,30 @@ public sealed class UploadLabReportCommandHandler(
             }).ToList()
         };
 
-        return ApiResponse<LabReportResponseDto>.SuccessResponse(
+        var response = ApiResponse<LabReportResponseDto>.SuccessResponse(
             preview,
             "Lab report analyzed successfully. Review before saving.");
+
+        // ── Phase 2: Smart similarity check ──────────────────────────
+        var existsDuplicate = await labReportRepository.ExistsDuplicateAsync(
+            profileId,
+            reportDate,
+            extracted.LabName ?? string.Empty,
+            extracted.DoctorName ?? string.Empty,
+            cancellationToken);
+
+        if (existsDuplicate)
+        {
+            response = new ApiResponse<LabReportResponseDto>
+            {
+                Success = true,
+                Message = response.Message,
+                Data = response.Data,
+                Warnings = new List<string> { "PossibleDuplicate" }
+            };
+        }
+        // ─────────────────────────────────────────────────────────────
+
+        return response;
     }
 }

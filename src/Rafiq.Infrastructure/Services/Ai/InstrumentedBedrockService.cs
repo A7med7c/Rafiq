@@ -19,6 +19,7 @@ public sealed class InstrumentedBedrockService(
     public async Task<T?> AnalyzeAsync<T>(
         string base64Image,
         string prompt,
+        string? systemPrompt = null,
         CancellationToken cancellationToken = default)
     {
         var feature = telemetryContext.Feature ?? AiFeature.GeneralDocOcr;
@@ -26,7 +27,7 @@ public sealed class InstrumentedBedrockService(
 
         try
         {
-            var result = await inner.AnalyzeAsync<T>(base64Image, prompt, cancellationToken);
+            var result = await inner.AnalyzeAsync<T>(base64Image, prompt, systemPrompt, cancellationToken);
             sw.Stop();
 
             await logWriter.WriteAsync(

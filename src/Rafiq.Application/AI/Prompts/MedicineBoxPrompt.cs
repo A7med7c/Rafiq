@@ -2,8 +2,8 @@ namespace Rafiq.Application.AI.Prompts;
 
 public static class MedicineBoxPrompt
 {
-    public static string Build() =>
-        """
+    public static string Build(string language = "en") =>
+        $$"""
         You are an expert pharmacist and medicine recognition AI.
 
         Your first task is to determine whether the uploaded image is a medicine box or blister pack.
@@ -46,7 +46,7 @@ public static class MedicineBoxPrompt
 
         - Extract the brand name or generic name of the medicine into medicineName.
         - Extract the strength or concentration (e.g., 500mg, 10mg/ml) into strength.
-        - Extract the dosage form (e.g., Tablet, Capsule, Syrup, Cream, Injection) into dosageForm.
+        - Extract the dosage form (e.g., Tablet, Capsule, Syrup, Cream, Injection) into dosageForm. Translate the dosage form into the requested language ({{language}}) if it is a general term (e.g. if language is 'ar', translate 'Tablet' to 'أقراص').
         - Extract the manufacturer or company name into manufacturer.
         - If any field is missing, not visible, or unreadable, return null for that field.
 

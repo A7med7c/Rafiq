@@ -5,6 +5,7 @@ import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../Services/auth-service';
 import { TokenStorageService } from '../Services/token-storage-service';
 import { environment } from '../Environments/Environment';
+import { LocalizationService } from '../Services/localization.service';
 
 const AUTH_URL = environment.apiUrl + '/auth/';
 
@@ -39,12 +40,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
+  const l10n = inject(LocalizationService);
+  const lang = l10n.lang();
+
   // ngrok's free-tier browser-warning interstitial intercepts XHR/fetch calls made
   // from a different origin (e.g. localhost:4200) before they ever reach the API,
   // returning an HTML page (ngrok-error-code: ERR_NGROK_6024) with no CORS headers —
   // which the browser then reports as a CORS failure. This header bypasses it.
   let authReq = req.clone({
-    setHeaders: { 'ngrok-skip-browser-warning': 'true' }
+    setHeaders: { 
+      'ngrok-skip-browser-warning': 'true',
+      'Accept-Language': lang
+    }
   });
 
   if (shouldAttachToken(req.url)) {

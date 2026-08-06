@@ -11,5 +11,5 @@ namespace Rafiq.Application.Features.Prescriptions.Commands.UploadPrescription;
 /// saves the extracted data, and returns the result.
 /// UserId is NEVER accepted from the client — it comes from the JWT.
 /// </summary>
-public sealed record UploadPrescriptionCommand(Guid ProfileId, IFormFile Image)
+public sealed record UploadPrescriptionCommand(Guid ProfileId, IFormFile Image, string Language = "en", bool BypassFamilyDuplicateCheck = false)
     : IRequest<ApiResponse<PrescriptionResponseDto>>, IAiCommand;

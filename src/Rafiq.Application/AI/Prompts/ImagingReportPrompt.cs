@@ -2,8 +2,11 @@ namespace Rafiq.Application.AI.Prompts;
 
 public static class ImagingReportPrompt
 {
-    public static string Build() =>
-        """
+    public static string Build(string language = "en")
+    {
+        var langName = language.StartsWith("ar", System.StringComparison.OrdinalIgnoreCase) ? "Arabic" : "English";
+        
+        return $$"""
         You are an expert radiology and medical imaging report analyzer.
 
         Your first task is to determine whether the uploaded image is a medical imaging report.
@@ -63,9 +66,16 @@ public static class ImagingReportPrompt
 
         Summary Rules (apply ONLY when isValidDocument is true):
         - Generate aiSummary as a short patient-friendly explanation in 2-3 sentences.
+        
+        IMPORTANT: The summary MUST be generated entirely in the following language: {{langName}}.
+        
         - Do not diagnose beyond the report text.
         - Do not recommend medications.
         - Do not create treatment plans.
         - Mention that the patient should review the result with their doctor.
+        
+        WARNING RULE:
+        - If there are any highly abnormal or dangerous findings that require immediate medical attention, you MUST start the aiSummary with a clear and prominent warning in the requested language ({{langName}}).
         """;
+    }
 }

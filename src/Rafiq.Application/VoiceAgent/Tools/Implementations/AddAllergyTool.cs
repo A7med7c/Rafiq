@@ -59,7 +59,7 @@ public sealed class AddAllergyTool(ISender mediator) : IVoiceTool
             if (!result.Success)
                 return new ToolResult(false, result.Message ?? "Failed to add allergy.");
 
-            return new ToolResult(true, "Allergy added successfully.", result.Data, EntityType: "Allergy");
+            return new ToolResult(true, result.Message ?? "Allergy added successfully.", result.Data, EntityType: "Allergy");
         }
         catch (ValidationException ex)
         {

@@ -27,7 +27,7 @@ public sealed class DocumentAnalysisJob(
 {
     // No automatic retries — a failed AI call should surface to the user, not re-run silently.
     [AutomaticRetry(Attempts = 0)]
-    public async Task ExecuteAsync(Guid documentId, Guid userId, Guid profileId)
+    public async Task ExecuteAsync(Guid documentId, Guid userId, Guid profileId, string language = "en")
     {
         backgroundUserContext.UserId = userId;
         var userIdStr = userId.ToString();
@@ -73,7 +73,8 @@ public sealed class DocumentAnalysisJob(
             // AI analysis
             var extracted = await bedrockService.AnalyzeAsync<BedrockGeneralDocumentDto>(
                 base64,
-                GeneralDocumentPrompt.Build(),
+                GeneralDocumentPrompt.Build(language),
+                LanguageSystemPrompt.Build(language),
                 timeoutCts.Token);
 
             if (extracted is null)

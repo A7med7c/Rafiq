@@ -47,5 +47,11 @@ public sealed class UserMedicineConfiguration : IEntityTypeConfiguration<UserMed
 
         builder.HasIndex(x => x.UserHealthProfileId);
         builder.HasIndex(x => x.CreatedAt);
+        
+        builder.Property(x => x.FileHash)
+            .HasMaxLength(64)
+            .IsRequired(false);
+            
+        builder.HasIndex(x => new { x.UserHealthProfileId, x.FileHash });
     }
 }

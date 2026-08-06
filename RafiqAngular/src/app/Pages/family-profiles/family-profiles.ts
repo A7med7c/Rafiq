@@ -765,7 +765,18 @@ export class FamilyProfiles implements OnInit {
           this.editSubmitting.set(false);
           return of(null);
         })
-      ).subscribe(res => { if (res !== null) finish(); });
+      ).subscribe((res: any) => { 
+        if (res !== null) {
+          if (Array.isArray(res)) {
+            res.forEach((r: any) => {
+              if (r && r.message && r.message.includes('خلي بالك')) {
+                alert(r.message);
+              }
+            });
+          }
+          finish(); 
+        }
+      });
     });
   }
 

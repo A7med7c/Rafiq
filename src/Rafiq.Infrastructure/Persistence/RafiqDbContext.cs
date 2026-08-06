@@ -67,6 +67,7 @@ public sealed class RafiqDbContext : IdentityDbContext<
 
     public DbSet<ImagingReport> ImagingReports => Set<ImagingReport>();
     public DbSet<GeneralDocument> GeneralDocuments => Set<GeneralDocument>();
+    public DbSet<DocumentUploadSession> DocumentUploadSessions => Set<DocumentUploadSession>();
 
     #endregion
 
