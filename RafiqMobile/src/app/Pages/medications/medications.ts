@@ -571,7 +571,7 @@ export class Medications implements OnInit, OnDestroy {
     return u?.firstName?.trim() || u?.email || 'there';
   }
   get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
-  get avatarUrl(): string { return this.authSvc.avatarUrl; }
+  get avatarUrl(): string | null { return this.authSvc.avatarUrl; }
 
   get hasProfileImage(): boolean { return !!this.authSvc.currentUser?.profileImageUrl; }
 

@@ -62,14 +62,13 @@ export class AuthService {
     void this.router.navigate([role === 'Admin' ? '/admin/dashboard' : '/dashboard']);
   }
 
-  /** Resolves the current user's avatar to an absolute URL, falling back to the default avatar. */
-  get avatarUrl(): string {
+  get avatarUrl(): string | null {
     return this.resolveAvatarUrl(this.currentUser?.profileImageUrl);
   }
 
-  resolveAvatarUrl(profileImageUrl: string | null | undefined): string {
+  resolveAvatarUrl(profileImageUrl: string | null | undefined): string | null {
     if (!profileImageUrl) {
-      return 'images/ahmed_avatar.png';
+      return null;
     }
 
     return `${environment.fileBaseUrl}${profileImageUrl}`;

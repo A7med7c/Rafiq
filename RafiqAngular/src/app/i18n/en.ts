@@ -549,7 +549,6 @@ export const en = {
       'Do I have any upcoming appointments?',
       'Show my active reminders.',
       'Generate my medical report.',
-      'What foods suit my health condition?',
     ],
     aiRestrictedTitle: 'AI Access Restricted',
     aiRestrictedMessage: 'Your access to Rafiq AI has been restricted by an administrator. You cannot use the AI assistant until the restriction is removed. Please contact support if you believe this is a mistake.',

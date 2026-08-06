@@ -196,7 +196,7 @@ export class AiPanel implements OnInit, OnDestroy {
   readonly attachedImageFormat = signal<string | null>(null);
   readonly attachError = signal<string | null>(null);
 
-  get avatarUrl(): string {
+  get avatarUrl(): string | null {
     return this.authService.avatarUrl;
   }
 

@@ -53,7 +53,25 @@ export class ProfileCacheService {
   resolveNavbarAvatar(): string {
     const imgUrl = this.profileImageUrl() || this.tokenSvc.getUser()?.profileImageUrl;
     if (imgUrl) return `${environment.fileBaseUrl}${imgUrl}`;
-    const g = (this.gender() ?? '').toLowerCase();
-    return g === 'female' || g === '2' ? 'images/sarah_avatar.png' : 'images/ahmed_avatar.png';
+    
+    const u = this.tokenSvc.getUser();
+    let initials = '?';
+    let seed = 'U';
+    
+    if (u) {
+      const f = (u.firstName ?? '')[0] ?? '';
+      const l = (u.lastName ?? '')[0] ?? '';
+      initials = (f + l).toUpperCase() || (u.email ?? '?')[0].toUpperCase();
+      seed = u.firstName?.trim() || u.email || 'U';
+    }
+
+    const palette = ['#0EAFD7', '#7C3AED', '#16A34A', '#EA580C', '#0D9488'];
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+    const bgColor = palette[Math.abs(h) % palette.length];
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="${bgColor}"/><text x="50" y="50" font-family="Arial, sans-serif" font-size="45" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="central">${initials}</text></svg>`;
+    
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
   }
 }
