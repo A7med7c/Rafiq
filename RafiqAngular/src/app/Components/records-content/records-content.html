@@ -366,7 +366,7 @@
                 </div>
               </div>
             </td>
-            <td [attr.data-label]="t().records.type"><span class="type-pill" [class]="'type-' + rec.type">{{ rec.typeLabel }}</span></td>
+            <td [attr.data-label]="t().records.type"><span class="type-pill" [class]="'type-' + rec.type">{{ recordTypeLabel(rec.type) }}</span></td>
             <td class="table-date" [attr.data-label]="t().records.date">{{ rec.date }}</td>
             <td class="table-uploaded" [attr.data-label]="t().records.uploadedBy">{{ rec.uploadedBy }}</td>
             <td [attr.data-label]="t().records.aiSummaryStatus">
@@ -968,25 +968,6 @@
 </div>
 }
 
-<!-- ═══ MEDICINE SCAN LOADING ═══ -->
-@if (scanLoading()) {
-<div class="scan-backdrop">
-  <div class="scan-dialog">
-    <div class="scan-ring-wrap">
-      <svg class="scan-spinner" viewBox="0 0 60 60">
-        <circle cx="30" cy="30" r="24" fill="none" stroke="#E0E7FF" stroke-width="4" />
-        <circle cx="30" cy="30" r="24" fill="none" stroke="#4A7CF7" stroke-width="4" stroke-dasharray="150.8"
-          stroke-dashoffset="75" stroke-linecap="round" transform="rotate(-90 30 30)" />
-      </svg>
-      <div class="scan-ico-center"><i class="fa-solid fa-pills"></i></div>
-    </div>
-    <p class="scan-title">{{ t().records.scanningMedicineBox }}</p>
-    <p class="scan-sub">{{ t().records.readingLabel }}</p>
-    <div class="scan-dots"><span></span><span></span><span></span></div>
-  </div>
-</div>
-}
-
 <!-- ═══ MEDICINE SCAN REVIEW MODAL ═══ -->
 @if (scanResult()) {
 <div class="modal-overlay" (click)="cancelScanReview()">
@@ -996,10 +977,10 @@
         <div class="modal-ico rec-ico-orange"><i class="fa-solid fa-pills"></i></div>
         <div>
           <h3 class="modal-title">
-            {{ scanMode() === 'edit' ? t().records.editMedicineRecord : manualMedicineMode() ? t().records.addMedicineManually : t().records.reviewScannedMedicine }}
+            {{ scanMode() === 'edit' ? t().records.editMedicineRecord : manualMedicineMode() ? t().records.addMedicineManually : t().records.medicineDetailsTitle }}
           </h3>
           <p class="modal-sub">
-            {{ manualMedicineMode() ? t().records.fillMedicineSave : t().records.editMedicineBeforeSave }}
+            {{ t().records.medicineDetailsHint }}
           </p>
         </div>
       </div>
@@ -1078,9 +1059,13 @@
         }
       </div>
       <div class="scan-form-grid">
-        <div class="scan-field">
+        <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.medicineName }} <span class="scan-required">*</span></label>
           <input type="text" class="scan-input" [(ngModel)]="scanForm.medicineName" [attr.placeholder]="t().records.medicinePlaceholder">
+          <p class="scan-hint">{{ t().records.medicineDetailsHint }}</p>
+        </div>
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">{{ t().records.medicineOptionalDetails }}</label>
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.strengthDosage }}</label>

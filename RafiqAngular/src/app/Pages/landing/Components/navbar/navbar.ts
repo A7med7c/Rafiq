@@ -189,11 +189,13 @@ export class Navbar implements AfterViewInit, OnDestroy {
   }
 
   private scrollToSection(sectionId: string): void {
-    setTimeout(() => {
-      document.getElementById(sectionId)?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    });
+    const el = document.getElementById(sectionId);
+    if (!el) return;
+
+    const navbarEl = document.querySelector<HTMLElement>('.navbar');
+    const navbarHeight = navbarEl?.getBoundingClientRect().height ?? 0;
+    const top = el.getBoundingClientRect().top + window.scrollY - navbarHeight;
+
+    window.scrollTo({ top, behavior: 'smooth' });
   }
 }

@@ -20,22 +20,21 @@ const GRADIENTS = [
   'linear-gradient(135deg,#c3a4ff,#7c3aed)',
 ];
 
-const STATIC: Record<LandingLanguage, TestimonialItem[]> = {
-  en: [
-    { quote: '"Rafiq has made managing my health so easy. The AI assistant is always there for me!"', initials: 'AM', name: 'Ahmed M.', role: 'Patient', stars: 5, gradient: GRADIENTS[0] },
-    { quote: '"I love the medication reminders and how I can keep all my family records in one place."', initials: 'SK', name: 'Sara K.', role: 'User', stars: 5, gradient: GRADIENTS[1] },
-    { quote: '"Booking appointments has never been this simple and convenient."', initials: 'OT', name: 'Omar T.', role: 'User', stars: 5, gradient: GRADIENTS[2] },
-  ],
-  ar: [
-    { quote: '"رفيق خلى إدارة صحتي سهلة جداً. المساعد الذكي دايماً موجود معايا!"', initials: 'AM', name: 'أحمد م.', role: 'مريض', stars: 5, gradient: GRADIENTS[0] },
-    { quote: '"بحب تذكيرات الأدوية وإزاي أقدر أحتفظ بكل سجلات عيلتي في مكان واحد."', initials: 'SK', name: 'سارة ك.', role: 'مستخدمة', stars: 5, gradient: GRADIENTS[1] },
-    { quote: '"حجز المواعيد ماكانش بالسهولة دي قبل كده."', initials: 'OT', name: 'عمر ط.', role: 'مستخدم', stars: 5, gradient: GRADIENTS[2] },
-  ],
-};
-
 const TEXT = {
-  en: { title: 'What Our Users Say', subtitle: 'Trusted by thousands of users and families.' },
-  ar: { title: 'إيه اللي بيقوله مستخدمينا', subtitle: 'بيثق فينا آلاف المستخدمين والعائلات' },
+  en: {
+    title: 'What Our Users Say',
+    subtitle: 'Trusted by thousands of users and families.',
+    noReviewsTitle: 'No Reviews Yet',
+    noReviewsSub: 'Be the first to share your experience with Rafiq.',
+    loading: 'Loading reviews...',
+  },
+  ar: {
+    title: 'إيه اللي بيقوله مستخدمينا',
+    subtitle: 'بيثق فينا آلاف المستخدمين والعائلات',
+    noReviewsTitle: 'لا يوجد تقييمات بعد',
+    noReviewsSub: 'كن أول من يشارك تجربته مع رفيق.',
+    loading: 'جارٍ تحميل التقييمات...',
+  },
 };
 
 @Component({
@@ -52,23 +51,32 @@ export class Testimonials implements OnInit {
 
   readonly activeSlide = signal(0);
   readonly items = signal<TestimonialItem[]>([]);
+  readonly loading = signal(true);
 
   get t() { return TEXT[this.language]; }
 
   ngOnInit(): void {
-    this.items.set(STATIC[this.language]);
-    this.reviewService.getPublic(12).subscribe(res => {
-      if (res.data && res.data.length > 0) {
-        const fromApi: TestimonialItem[] = res.data.map((r, i) => ({
-          quote: `"${r.comment || '⭐'.repeat(r.stars)}"`,
-          initials: r.displayName.slice(0, 2).toUpperCase(),
-          name: r.displayName,
-          role: this.language === 'ar' ? 'مستخدم' : 'User',
-          stars: r.stars,
-          gradient: GRADIENTS[i % GRADIENTS.length],
-        }));
-        this.items.set([...fromApi, ...STATIC[this.language]].slice(0, 9));
-      }
+    this.reviewService.getPublic(12).subscribe({
+      next: res => {
+        if (res.data && res.data.length > 0) {
+          const fromApi: TestimonialItem[] = res.data.map((r, i) => ({
+            quote: `"${r.comment || '⭐'.repeat(Math.min(r.stars, 5))}"`,
+            initials: r.displayName.slice(0, 2).toUpperCase(),
+            name: r.displayName,
+            role: this.language === 'ar' ? 'مستخدم' : 'User',
+            stars: r.stars,
+            gradient: GRADIENTS[i % GRADIENTS.length],
+          }));
+          this.items.set(fromApi);
+        } else {
+          this.items.set([]);
+        }
+        this.loading.set(false);
+      },
+      error: () => {
+        this.items.set([]);
+        this.loading.set(false);
+      },
     });
   }
 

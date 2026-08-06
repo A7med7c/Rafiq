@@ -5,35 +5,46 @@
       <p>{{ t.subtitle }}</p>
     </div>
 
-    <div class="testimonials-grid">
-      @for (item of items(); track item.name; let i = $index) {
-        <article class="testimonial-card">
-          <div class="stars" aria-hidden="true">
-            @for (s of starsArray(item.stars); track s) {
-              <span [class.star--filled]="s <= item.stars">★</span>
-            }
-          </div>
-          <p>{{ item.quote }}</p>
-          <div class="testimonial-author">
-            <span class="avatar" [style.background]="item.gradient">{{ item.initials }}</span>
-            <div>
-              <strong>{{ item.name }}</strong>
-              <span>{{ item.role }}</span>
+    @if (loading()) {
+      <div class="testimonials-loading" aria-live="polite">
+        <span>{{ t.loading }}</span>
+      </div>
+    } @else if (items().length === 0) {
+      <div class="testimonials-empty">
+        <p class="testimonials-empty-title">{{ t.noReviewsTitle }}</p>
+        <p class="testimonials-empty-sub">{{ t.noReviewsSub }}</p>
+      </div>
+    } @else {
+      <div class="testimonials-grid">
+        @for (item of items(); track item.name; let i = $index) {
+          <article class="testimonial-card">
+            <div class="stars" aria-hidden="true">
+              @for (s of starsArray(item.stars); track s) {
+                <span [class.star--filled]="s <= item.stars">★</span>
+              }
             </div>
-          </div>
-        </article>
-      }
-    </div>
+            <p>{{ item.quote }}</p>
+            <div class="testimonial-author">
+              <span class="avatar" [style.background]="item.gradient">{{ item.initials }}</span>
+              <div>
+                <strong>{{ item.name }}</strong>
+                <span>{{ item.role }}</span>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
 
-    <div class="dots">
-      @for (item of items(); track item.name; let i = $index) {
-        <button
-          type="button"
-          [class.active]="activeSlide() === i"
-          [attr.aria-label]="'Slide ' + (i + 1)"
-          (click)="selectSlide(i)">
-        </button>
-      }
-    </div>
+      <div class="dots">
+        @for (item of items(); track item.name; let i = $index) {
+          <button
+            type="button"
+            [class.active]="activeSlide() === i"
+            [attr.aria-label]="'Slide ' + (i + 1)"
+            (click)="selectSlide(i)">
+          </button>
+        }
+      </div>
+    }
   </div>
 </section>
