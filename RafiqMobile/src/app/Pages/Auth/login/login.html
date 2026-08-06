@@ -1,11 +1,34 @@
 <div class="login-page">
 
+    <span class="login-orb login-orb--1" aria-hidden="true"></span>
+    <span class="login-orb login-orb--2" aria-hidden="true"></span>
+    <span class="login-orb login-orb--3" aria-hidden="true"></span>
+    <span class="login-orb login-orb--4" aria-hidden="true"></span>
+
     <a routerLink="/welcome" class="lp-back" aria-label="Back">
         <i class="fa-solid fa-arrow-left"></i>
     </a>
 
-    <app-auth-hero></app-auth-hero>
+    <main class="login-scene">
+        <div class="login-copy">
+            <app-auth-hero></app-auth-hero>
+            <app-login-form></app-login-form>
+        </div>
 
-    <app-login-form></app-login-form>
+        <section class="login-visual" aria-hidden="true">
+            <div class="login-visual__glow"></div>
+            <div class="login-visual__halo"></div>
+            <div class="login-visual__robot-wrap">
+                <img src="/images/rafiq-robot.png" alt="Rafiq AI Robot" class="login-visual__robot">
+            </div>
+
+            <span class="login-icon login-icon--heart"><i class="fa-solid fa-heart-pulse"></i></span>
+            <span class="login-icon login-icon--calendar"><i class="fa-regular fa-calendar-check"></i></span>
+            <span class="login-icon login-icon--analytics"><i class="fa-solid fa-chart-line"></i></span>
+            <span class="login-icon login-icon--pills"><i class="fa-solid fa-pills"></i></span>
+            <span class="login-icon login-icon--stethoscope"><i class="fa-solid fa-stethoscope"></i></span>
+            <span class="login-icon login-icon--notes"><i class="fa-solid fa-file-waveform"></i></span>
+        </section>
+    </main>
 
 </div>

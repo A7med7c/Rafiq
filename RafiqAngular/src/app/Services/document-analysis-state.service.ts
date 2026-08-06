@@ -8,7 +8,7 @@ import {
 } from './signalr.service';
 
 export type AnalysisStatus = 'Pending' | 'Processing' | 'Completed' | 'Failed' | 'ReadyToReview';
-export type UploadDocType  = 'lab' | 'imaging' | 'prescription' | 'general';
+export type UploadDocType  = 'lab' | 'imaging' | 'prescription' | 'general' | 'medicine';
 
 export interface TrackedDocument {
   documentId: string;
