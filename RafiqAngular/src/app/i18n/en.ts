@@ -108,6 +108,7 @@ export const en = {
     googleSignIn: 'Sign in with Google',
     loginSuccess: 'Login Successfully',
     invalidEmailPassword: 'Invalid email/Password',
+    phoneNumberAlreadyExist: 'An account with this phone number already exists.'
   },
 
   validation: {
@@ -154,6 +155,7 @@ export const en = {
     logIn: 'Log In',
     showPassword: 'Show password',
     hidePassword: 'Hide password',
+    sucessCreated: 'Your Account Has Been Created Successfully'
   },
 
   forgotPassword: {
@@ -484,6 +486,11 @@ export const en = {
     saveMedicineFailed: 'Failed to save medicine.',
     addMedicineFailed: 'Failed to add medicine.',
     addMedicinesFailed: 'Failed to add medicines.',
+    lab: "Lab Analysis",
+    imaging: "X-Ray & Imaging",
+    prescriptionn: "Prescription",
+    medicineBoxx: "Medicine Box",
+    generalDocumentt: "General Document",
   },
 
   aiAssistant: {
@@ -662,7 +669,7 @@ export const en = {
     viewDetails: 'View Details',
     viewOnly: 'View Only',
     viewingFor: 'Viewing appointments for:',
-    lab: 'Lab Test / Blood Work',
+    lab: 'Lab / Blood Test',
     doctor: 'Doctor Visit',
     vaccination: 'Vaccination',
     imaging: 'Imaging / Radiology',
@@ -856,6 +863,7 @@ export const en = {
     allergyContinueBtn: 'I Understand, Continue',
     allergyCancelBtn: 'Cancel',
     medicationAddedSuccessfully: 'Medication Added Successfully',
+    removedFromList: '{name} removed from your medications successfully'
   },
 
   family: {
@@ -1174,7 +1182,6 @@ export const en = {
       completeProfile: 'Complete My Profile',
     },
   },
-
   notifications: {
     centerTitle: 'Notifications',
     unreadCount: 'unread',
@@ -1212,7 +1219,7 @@ export const en = {
     appointmentConfirmedNotifBody: '{title} with {provider} – marked as completed.',
     couldNotConfirmAppointment: 'Could not confirm appointment',
     couldNotConfirmApptBody: 'We could not confirm {title}. Please try again.',
-    
+
     appointmentReminder: 'Appointment Reminder',
     medicationReminderToast: 'Medication Reminder',
   },

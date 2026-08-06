@@ -1307,6 +1307,22 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
+  protected recordTypeLabel(type: string): string {
+
+  const backendToKey: Record<string, string> = {
+    "Lab Report": "lab",
+    "Imaging Report": "imaging",
+    "Prescription": "prescription",
+    "Medicine Box": "medicineBox",
+    "Manual": "manual",
+    "Self": "self"
+  };
+
+  const key = backendToKey[type] ?? type;
+
+  return (this.t().records as Record<string, string>)[key] ?? type;
+}
+
   // ── Task 1: add prescription medicines to Medications module ─────────────
   addPrescriptionMedToMedications(index: number): void {
     const rf = this.reviewForm();
