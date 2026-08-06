@@ -417,6 +417,211 @@ body.rafiq-tour-speaking .driver-active-element {
   }
 }
 
+/* ═══════════════════════════════════════════════
+   MOBILE TOUR — GLOW RING HIGHLIGHT
+   Applied by TourGlowRingDirective to whichever
+   element the current tour step anchors to.
+   ═══════════════════════════════════════════════ */
+
+.tour-glow-ring {
+  position: relative;
+  z-index: 100;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 3px #0EAFD7,
+    0 0 0 6px rgba(14, 175, 215, 0.25),
+    0 0 20px rgba(14, 175, 215, 0.35) !important;
+  animation: tour-glow-pulse 1.8s ease-in-out infinite;
+  transition: box-shadow 0.3s ease;
+}
+
+@keyframes tour-glow-pulse {
+  0%   { box-shadow: 0 0 0 3px #0EAFD7, 0 0 0 6px rgba(14,175,215,0.25), 0 0 20px rgba(14,175,215,0.35); }
+  50%  { box-shadow: 0 0 0 3px #0EAFD7, 0 0 0 9px rgba(14,175,215,0.18), 0 0 32px rgba(14,175,215,0.22); }
+  100% { box-shadow: 0 0 0 3px #0EAFD7, 0 0 0 6px rgba(14,175,215,0.25), 0 0 20px rgba(14,175,215,0.35); }
+}
+
+/* ═══════════════════════════════════════════════
+   ONBOARDING LAYOUT — shared wrapper used by all
+   onboarding step pages (copied from Angular global styles)
+   ═══════════════════════════════════════════════ */
+.onboarding-layout {
+  width: 100%;
+  max-width: 820px;
+  padding-left: 16px;
+  padding-right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ═══════════════════════════════════════════════
+   ONBOARDING GUIDE BUBBLE  (ob-guide)
+   Compact inline AI assistant embedded between
+   the form card and navigation buttons.
+   Mascot anchored left (chat convention); tail
+   always points left toward the mascot.
+   ═══════════════════════════════════════════════ */
+
+.ob-guide {
+  width: 100%;
+  padding: 14px 16px 6px;
+}
+
+/* Force LTR so mascot is always on the left regardless of page direction */
+.ob-guide__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  direction: ltr;
+}
+
+.ob-guide__mascot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-right: -10px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Cyan glow ring — same palette as the welcome page mascot aura */
+.ob-guide__mascot::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(73, 215, 255, 0.28) 0%, rgba(73, 215, 255, 0.04) 60%, transparent 78%);
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+.ob-guide__mascot::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(73, 215, 255, 0.50);
+  pointer-events: none;
+  animation: ob-aura-spin 10s linear infinite;
+}
+
+@keyframes ob-aura-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Override avatar glow to match brand cyan */
+.ob-guide__mascot .avatar-aura-glow {
+  background: radial-gradient(circle at center, rgba(73, 215, 255, 0.45), transparent 70%) !important;
+}
+
+.ob-guide__mascot .robot-avatar-png {
+  filter: drop-shadow(0 4px 14px rgba(14, 175, 215, 0.45)) !important;
+}
+
+.ob-guide__bubble {
+  flex: 0 0 auto;
+  width: 65%;
+  background: #f0f9fe;
+  border: 1.5px solid #bae6fd;
+  border-radius: 20px;
+  padding: 12px 16px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 3px 14px rgba(14, 175, 215, 0.10);
+  animation: ob-guide-in 0.25s ease both;
+  min-height: 72px;
+}
+
+@keyframes ob-guide-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Tail — border colour (always points left toward mascot) */
+.ob-guide__bubble::before {
+  content: '';
+  position: absolute;
+  bottom: 18px;
+  left: -9px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 7px 9px 7px 0;
+  border-color: transparent #bae6fd transparent transparent;
+}
+
+/* Tail — fill */
+.ob-guide__bubble::after {
+  content: '';
+  position: absolute;
+  bottom: 19px;
+  left: -7px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 6px 8px 6px 0;
+  border-color: transparent #f0f9fe transparent transparent;
+}
+
+.ob-guide__title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0EAFD7;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.ob-guide__body {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #08264a;
+  margin: 0;
+  font-weight: 500;
+}
+
+.ob-guide__progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 7px 0 2px;
+}
+
+.ob-guide__dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  direction: ltr;
+}
+
+.ob-guide__dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c5d8ea;
+  transition: width .25s ease, background .25s ease, border-radius .25s ease;
+}
+
+.ob-guide__dot--active {
+  background: #0EAFD7;
+  width: 14px;
+  border-radius: 3px;
+}
+
+.ob-guide__counter {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0EAFD7;
+  letter-spacing: .06em;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ════════════════════════════════════════
    GLOBAL TOASTS (Based on new design)
 ════════════════════════════════════════ */

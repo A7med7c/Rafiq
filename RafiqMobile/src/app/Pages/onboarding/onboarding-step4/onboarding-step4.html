@@ -1,9 +1,9 @@
-<div class="step-page">
+<div class="step-page" [dir]="l10n.dir()">
 
   <!-- Top navigation bar -->
   <header class="step-header">
     <button class="back-btn" (click)="goBack()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg class="back-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"/>
       </svg>
       {{ t().onboarding.header.back }}
@@ -14,257 +14,225 @@
 
   <div class="onboarding-layout">
 
-  <!-- Progress stepper — all previous steps done -->
-  <div class="stepper-wrapper">
-    <div class="stepper">
-      @for (step of steps; track $index) {
-        <div class="step-item"
-             [class.active]="$index === 4"
-             [class.done]="$index < 4">
-          <div class="step-circle">
-            @if ($index < 4) {
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-            } @else {
-              <span class="step-number">{{ $index + 1 }}</span>
-            }
+    <!-- Progress stepper — all previous steps done -->
+    <div class="stepper-wrapper">
+      <div class="stepper">
+        @for (step of steps(); track $index) {
+          <div class="step-item"
+               [class.active]="$index === 5"
+               [class.done]="$index < 5">
+            <div class="step-circle">
+              @if ($index < 5) {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              } @else {
+                <span class="step-number">{{ $index + 1 }}</span>
+              }
+            </div>
+            <span class="step-label">{{ step.label }}</span>
           </div>
-          <span class="step-label">{{ step.label }}</span>
-        </div>
-        @if ($index < steps.length - 1) {
-          <div class="step-connector" [class.filled]="$index < 4"></div>
+          @if ($index < steps().length - 1) {
+            <div class="step-connector" [class.filled]="$index < 5"></div>
+          }
         }
-      }
+      </div>
     </div>
-  </div>
 
-  <!-- Review card -->
-  <div class="review-card">
-    <p class="step-indicator">{{ t().onboarding.step4.stepIndicator }}</p>
-    <h2 class="form-title" assistantAnchor="onboarding-form-heading">{{ t().onboarding.step4.title }}</h2>
+    <!-- Review card container -->
+    <div class="form-card">
+      <h2 class="form-title" assistantAnchor="onboarding-form-heading">
+        {{ t().onboarding.step4.title }}
+      </h2>
+      <p class="form-subtitle">
+        {{ l10n.isRtl() ? 'يرجى مراجعة وتأكيد بياناتك.' : 'Please review and confirm your details.' }}
+      </p>
 
-    <div class="review-grid">
+      <div class="review-cards-list">
 
-      <!-- Basic Information -->
-      <div class="review-section">
-        <div class="section-header">
-          <span class="section-title">{{ t().onboarding.step4.basicInfo }}</span>
-          <button class="edit-btn" (click)="editStep(1)">{{ t().onboarding.step4.editBtn }}</button>
-        </div>
-
-        @if (step1) {
-          <div class="info-rows">
-
-            <!-- Date of Birth -->
-            <div class="info-row">
-              <span class="info-icon">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-              </span>
-              <span class="info-label">{{ t().onboarding.step4.dob }}</span>
-              <span class="info-value">{{ formatDate(step1.dateOfBirth) }}</span>
-            </div>
-
-            <!-- Gender -->
-            <div class="info-row">
-              <span class="info-icon">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                </svg>
-              </span>
-              <span class="info-label">{{ t().onboarding.step4.gender }}</span>
-              <span class="info-value">{{ getGenderLabel(step1.gender) }}</span>
-            </div>
-
-            <!-- Height -->
-            <div class="info-row">
-              <span class="info-icon">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="20" x2="12" y2="4"/><line x1="8" y1="8" x2="12" y2="4"/><line x1="16" y1="8" x2="12" y2="4"/>
-                </svg>
-              </span>
-              <span class="info-label">{{ t().onboarding.step4.heightLabel }}</span>
-              <span class="info-value">{{ step1.height }} cm</span>
-            </div>
-
-            <!-- Weight -->
-            <div class="info-row">
-              <span class="info-icon">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-              </span>
-              <span class="info-label">{{ t().onboarding.step4.weightLabel }}</span>
-              <span class="info-value">{{ step1.weight }} kg</span>
-            </div>
-
-            <!-- Blood Type -->
-            <div class="info-row">
-              <span class="info-icon blood">
-                <svg width="11" height="13" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C12 2 5 10.5 5 15a7 7 0 0 0 14 0C19 10.5 12 2 12 2Z"/>
-                </svg>
-              </span>
-              <span class="info-label">{{ t().onboarding.step4.bloodTypeLabel }}</span>
-              <span class="info-value">{{ getBloodTypeLabel(step1.bloodType) }}</span>
-            </div>
-
+        <!-- 1. Basic Information Card -->
+        <div class="review-item-card" (click)="editStep(1)">
+          <div class="item-icon-circle blue-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
           </div>
-        } @else {
-          <p class="empty-hint">{{ t().onboarding.step4.noData }}. <button class="edit-btn inline" (click)="editStep(1)">{{ t().onboarding.step4.fillIn }}</button></p>
-        }
-      </div>
-
-      <!-- Emergency Contacts -->
-      <div class="review-section">
-        <div class="section-header">
-          <span class="section-title">{{ t().onboarding.step4.emergencyContacts }}</span>
-          <button class="edit-btn" (click)="editStep('emergency')">{{ t().onboarding.step4.editBtn }}</button>
-        </div>
-
-        @if (emergencyContacts && emergencyContacts.length) {
-          <div class="badge-rows">
-            @for (c of emergencyContacts; track c.id) {
-              <div class="badge-row">
-                <span class="dot"></span>
-                <span class="badge-name">{{ c.name }} ({{ c.relation }})</span>
-                <span class="severity-badge status-resolved">{{ c.phoneNumber }}</span>
-              </div>
-            }
+          <div class="item-details">
+            <h3 class="item-title">{{ t().onboarding.step4.basicInfo }}</h3>
+            <p class="item-summary">
+              @if (step1) {
+                {{ getGenderLabel(step1.gender) }}, {{ formatDate(step1.dateOfBirth) }} • {{ step1.height }} cm, {{ step1.weight }} kg • {{ getBloodTypeLabel(step1.bloodType) }}
+              } @else {
+                {{ t().onboarding.step4.noData }}
+              }
+            </p>
           </div>
-        } @else {
-          <p class="no-items">{{ t().onboarding.step4.noContacts }}</p>
-        }
-      </div>
-
-      <!-- Allergies -->
-      <div class="review-section">
-        <div class="section-header">
-          <span class="section-title">{{ t().onboarding.step4.allergies }}</span>
-          <button class="edit-btn" (click)="editStep(2)">{{ t().onboarding.step4.editBtn }}</button>
-        </div>
-
-        @if (step2 && step2.hasAllergies === 'yes' && step2.allergies.length) {
-          <div class="badge-rows">
-            @for (a of step2.allergies; track $index) {
-              <div class="badge-row">
-                <span class="dot"></span>
-                <span class="badge-name">{{ a.name }}</span>
-                <span class="severity-badge" [ngClass]="severityClass(a.severity)">{{ getSeverityLabel(a.severity) }}</span>
-              </div>
-            }
-          </div>
-        } @else {
-          <p class="no-items">{{ t().onboarding.step4.noAllergies }}</p>
-        }
-      </div>
-
-      <!-- Chronic Diseases -->
-      <div class="review-section">
-        <div class="section-header">
-          <span class="section-title">{{ t().onboarding.step4.chronicDiseases }}</span>
-          <button class="edit-btn" (click)="editStep(3)">{{ t().onboarding.step4.editBtn }}</button>
-        </div>
-
-        @if (step3 && step3.hasConditions === 'yes' && step3.conditions.length) {
-          <div class="badge-rows">
-            @for (c of step3.conditions; track $index) {
-              <div class="badge-row">
-                <span class="dot"></span>
-                <span class="badge-name">{{ c.name }}</span>
-                <span class="severity-badge" [ngClass]="statusClass(c.status)">{{ getStatusLabel(c.status) }}</span>
-              </div>
-            }
-          </div>
-        } @else {
-          <p class="no-items">{{ t().onboarding.step4.noChronicDiseases }}</p>
-        }
-      </div>
-
-    </div><!-- /review-grid -->
-
-    <!-- In-Form Mascot Tip (3D Robot Avatar + Speech Bubble) -->
-    @if (showMascotTip) {
-      <div class="in-form-mascot-tip">
-        <div class="mascot-avatar-wrapper">
-          <app-avatar-engine size="76px"></app-avatar-engine>
-        </div>
-        <div class="mascot-speech-bubble">
-          <button type="button" class="mascot-close-btn" (click)="dismissMascotTip()" aria-label="إغلاق">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          <button class="edit-link" type="button" (click)="editStep(1); $event.stopPropagation()">
+            {{ t().onboarding.step4.editBtn }}
+            <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
             </svg>
           </button>
-          <p class="mascot-speech-text">{{ t().onboarding.step4.mascotTip }}</p>
         </div>
-      </div>
-    }
 
-    <!-- AI enhance banner -->
-    <div class="ai-banner">
-      <div class="ai-banner-left">
-        <div class="ai-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        <!-- 2. Emergency Contacts Card -->
+        <div class="review-item-card" (click)="editStep('emergency')">
+          <div class="item-icon-circle green-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </div>
+          <div class="item-details">
+            <h3 class="item-title">{{ t().onboarding.step4.emergencyContacts }}</h3>
+            <p class="item-summary">
+              @if (emergencyContacts && emergencyContacts.length) {
+                @for (c of emergencyContacts; track c.id; let isLast = $last) {
+                  {{ c.name }} ({{ c.relation }}){{ isLast ? '' : ', ' }}
+                }
+              } @else {
+                {{ t().onboarding.step4.noContacts }}
+              }
+            </p>
+          </div>
+          <button class="edit-link" type="button" (click)="editStep('emergency'); $event.stopPropagation()">
+            {{ t().onboarding.step4.editBtn }}
+            <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- 3. Allergies Card -->
+        <div class="review-item-card" (click)="editStep(2)">
+          <div class="item-icon-circle orange-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>
+            </svg>
+          </div>
+          <div class="item-details">
+            <h3 class="item-title">{{ t().onboarding.step4.allergies }}</h3>
+            <p class="item-summary">
+              @if (step2 && step2.hasAllergies === 'yes' && step2.allergies.length) {
+                @for (a of step2.allergies; track $index; let isLast = $last) {
+                  {{ a.name }} ({{ getSeverityLabel(a.severity) }}){{ isLast ? '' : ', ' }}
+                }
+              } @else {
+                {{ t().onboarding.step4.noAllergies }}
+              }
+            </p>
+          </div>
+          <button class="edit-link" type="button" (click)="editStep(2); $event.stopPropagation()">
+            {{ t().onboarding.step4.editBtn }}
+            <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- 4. Chronic Diseases Card -->
+        <div class="review-item-card" (click)="editStep(3)">
+          <div class="item-icon-circle purple-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/>
+            </svg>
+          </div>
+          <div class="item-details">
+            <h3 class="item-title">{{ t().onboarding.step4.chronicDiseases }}</h3>
+            <p class="item-summary">
+              @if (step3 && step3.hasConditions === 'yes' && step3.conditions.length) {
+                @for (c of step3.conditions; track $index; let isLast = $last) {
+                  {{ c.name }} ({{ getStatusLabel(c.status) }}){{ isLast ? '' : ', ' }}
+                }
+              } @else {
+                {{ t().onboarding.step4.noChronicDiseases }}
+              }
+            </p>
+          </div>
+          <button class="edit-link" type="button" (click)="editStep(3); $event.stopPropagation()">
+            {{ t().onboarding.step4.editBtn }}
+            <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+
+      </div><!-- /review-cards-list -->
+
+      <!-- AI Enhance Banner -->
+      <div class="ai-banner">
+        <div class="ai-banner-content">
+          <div class="ai-mascot-thumb">
+            <app-avatar-engine size="52px" state="idle" />
+          </div>
+          <div class="ai-text-info">
+            <h4 class="ai-title">
+              {{ t().onboarding.step4.aiBanner }}
+              <span class="ai-recommended-badge">{{ t().onboarding.step4.recommended }}</span>
+            </h4>
+            <p class="ai-desc">{{ t().onboarding.step4.aiDesc }}</p>
+          </div>
+        </div>
+        <button class="ai-button" type="button" (click)="goToAiUpload()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
+          {{ t().onboarding.step4.aiBtn }}
+        </button>
+      </div>
+
+    </div><!-- /form-card -->
+
+    <!-- AI Mascot & Speech Bubble -->
+    <div class="ob-guide">
+      <div class="ob-guide__row">
+        <div class="ob-guide__mascot" aria-hidden="true">
+          <app-avatar-engine size="68px" state="speaking" />
         </div>
-        <div class="ai-text">
-          <p class="ai-title">{{ t().onboarding.step4.aiBanner }} <span class="ai-recommended">{{ t().onboarding.step4.recommended }}</span></p>
-          <p class="ai-desc">{{ t().onboarding.step4.aiDesc }}</p>
+        <div class="ob-guide__bubble" [dir]="l10n.dir()">
+          <strong class="ob-guide__title">
+            {{ l10n.isRtl() ? 'المراجعة' : 'Review' }}
+          </strong>
+          <p class="ob-guide__body">
+            {{ l10n.isRtl()
+              ? 'كل حاجة تمام! راجع معلوماتك وأكمل ملفك الصحّي.'
+              : 'Everything looks great! Review your info and complete your profile.' }}
+          </p>
         </div>
       </div>
-      <button class="ai-button" (click)="goToAiUpload()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        {{ t().onboarding.step4.aiBtn }}
+    </div>
+
+    <!-- Complete Profile Button -->
+    <div class="complete-wrapper">
+      <button class="complete-btn" (click)="completeProfile()" [disabled]="isSubmitting">
+        @if (isSubmitting) {
+          <span class="btn-spinner"></span>
+          {{ t().onboarding.step4.saving }}
+        } @else {
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          {{ t().onboarding.step4.completeProfile }}
+        }
       </button>
-    </div>
 
-  </div><!-- /review-card -->
-
-  <!-- Complete button -->
-  <div class="complete-wrapper">
-    <button class="complete-btn" (click)="completeProfile()" [disabled]="isSubmitting">
-      @if (isSubmitting) {
-        <span class="btn-spinner"></span>
-        {{ t().onboarding.step4.saving }}
-      } @else {
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        {{ t().onboarding.step4.completeProfile }}
+      @if (submitError) {
+        <div class="submit-error">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          {{ submitError }}
+        </div>
       }
-    </button>
 
-    @if (submitError) {
-      <div class="submit-error">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        {{ submitError }}
-      </div>
-    }
-
-    @if (submitSuccess) {
-      <div class="submit-success">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        {{ submitSuccess }}
-      </div>
-    }
-  </div>
-
-  <!-- Bottom progress bar -->
-  <div class="progress-footer">
-    <div class="progress-track">
-      <div class="progress-fill" style="width: 100%"></div>
+      @if (submitSuccess) {
+        <div class="submit-success">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          {{ submitSuccess }}
+        </div>
+      }
     </div>
-    <span class="progress-label">{{ t().onboarding.step4.stepIndicator }}</span>
-  </div>
 
   </div> <!-- /onboarding-layout -->
 

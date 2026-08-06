@@ -1,8 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, HostListener, ChangeDetectorRef, inject, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { inject } from '@angular/core';
 import { EmergencyContactService, EmergencyContactResponse } from '../../../Services/emergency-contact.service';
 import { TokenStorageService } from '../../../Services/token-storage-service';
 import { LocalizationService } from '../../../Services/localization.service';
@@ -28,18 +27,24 @@ export class OnboardingEmergency implements OnInit {
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
-  showMascotTip = true;
+  dropdownOpen = false;
+  dropdownTop = 0;
+  dropdownLeft = 0;
+  dropdownWidth = 0;
 
-  dismissMascotTip(): void {
-    this.showMascotTip = false;
-  }
+  readonly steps = computed(() => this.t().onboarding.stepperLabels.map(label => ({ label })));
 
-  readonly steps = [
-    { label: 'Basic Info' },
-    { label: 'Emergency Contacts' },
-    { label: 'Allergies' },
-    { label: 'Chronic Diseases' },
-    { label: 'Review' }
+  readonly relationOptions = [
+    { value: 'Father', labelEn: 'Father', labelAr: 'أب' },
+    { value: 'Mother', labelEn: 'Mother', labelAr: 'أم' },
+    { value: 'Spouse', labelEn: 'Spouse', labelAr: 'زوج / زوجة' },
+    { value: 'Son', labelEn: 'Son', labelAr: 'ابن' },
+    { value: 'Daughter', labelEn: 'Daughter', labelAr: 'ابنة' },
+    { value: 'Brother', labelEn: 'Brother', labelAr: 'أخ' },
+    { value: 'Sister', labelEn: 'Sister', labelAr: 'أخت' },
+    { value: 'Relative', labelEn: 'Relative', labelAr: 'قريب' },
+    { value: 'Friend', labelEn: 'Friend', labelAr: 'صديق' },
+    { value: 'Other', labelEn: 'Other', labelAr: 'آخر' }
   ];
 
   contacts: EmergencyContactResponse[] = [];
@@ -55,6 +60,42 @@ export class OnboardingEmergency implements OnInit {
 
   ngOnInit(): void {
     this.loadContacts();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.select-shell') && !target.closest('.dropdown-portal')) {
+      this.dropdownOpen = false;
+    }
+  }
+
+  toggleDropdown(trigger: HTMLElement): void {
+    if (this.dropdownOpen) {
+      this.dropdownOpen = false;
+      return;
+    }
+    const rect = trigger.getBoundingClientRect();
+    this.dropdownTop = rect.bottom + 6;
+    this.dropdownLeft = rect.left;
+    this.dropdownWidth = rect.width;
+    this.dropdownOpen = true;
+  }
+
+  selectRelation(val: string, event: Event): void {
+    event.stopPropagation();
+    this.form.get('relation')?.setValue(val);
+    this.form.get('relation')?.markAsTouched();
+    this.form.get('relation')?.markAsDirty();
+    this.dropdownOpen = false;
+  }
+
+  getSelectedRelationLabel(): string {
+    const val = this.form.get('relation')?.value;
+    if (!val) return '';
+    const found = this.relationOptions.find(r => r.value === val);
+    if (!found) return val;
+    return this.l10n.isRtl() ? found.labelAr : found.labelEn;
   }
 
   loadContacts(): void {
@@ -86,7 +127,9 @@ export class OnboardingEmergency implements OnInit {
     const cleanNum = (num: string) => num.replace(/\D/g, '').slice(-10);
 
     if (userPhone && cleanNum(body.phoneNumber) === cleanNum(userPhone)) {
-      this.submitError = "You cannot add your own phone number as an emergency contact.";
+      this.submitError = this.l10n.isRtl()
+        ? "لا يمكنك إضافة رقم هاتفك الخاص كجهة اتصال للطوارئ."
+        : "You cannot add your own phone number as an emergency contact.";
       return;
     }
 
@@ -106,7 +149,7 @@ export class OnboardingEmergency implements OnInit {
       },
       error: (err) => {
         this.isAdding = false;
-        const msg = err?.error?.message || 'Failed to add emergency contact.';
+        const msg = err?.error?.message || (this.l10n.isRtl() ? 'فشلت إضافة جهة اتصل الطوارئ.' : 'Failed to add emergency contact.');
         this.submitError = msg;
         this.cdr.detectChanges();
       }
@@ -114,7 +157,8 @@ export class OnboardingEmergency implements OnInit {
   }
 
   deleteContact(id: string): void {
-    if (confirm('Are you sure you want to delete this emergency contact?')) {
+    const confirmMsg = this.l10n.isRtl() ? 'هل أنت تأكد من حذف جهة الاتصال هذه؟' : 'Are you sure you want to delete this emergency contact?';
+    if (confirm(confirmMsg)) {
       this.emergencyService.deleteEmergencyContact(id).subscribe({
         next: (res) => {
           if (res?.success) {
@@ -123,7 +167,6 @@ export class OnboardingEmergency implements OnInit {
         },
         error: (err) => {
           console.error('Failed to delete contact', err);
-          alert('Failed to delete contact.');
         }
       });
     }
@@ -136,13 +179,13 @@ export class OnboardingEmergency implements OnInit {
 
   getPhoneError(): string {
     const ctrl = this.form.get('phoneNumber');
-    if (ctrl?.hasError('required')) return 'Phone number is required';
-    if (ctrl?.hasError('pattern')) return 'Must be a valid Egyptian mobile number (e.g. 01012345678)';
-    return 'Invalid phone number';
+    if (ctrl?.hasError('required')) return this.l10n.isRtl() ? 'رقم الهاتف مطلوب' : 'Phone number is required';
+    if (ctrl?.hasError('pattern')) return this.l10n.isRtl() ? 'يجب أن يكون رقم مصري صحيح (مثال: 01012345678)' : 'Must be a valid Egyptian mobile number (e.g. 01012345678)';
+    return this.l10n.isRtl() ? 'رقم الهاتف غير صحيح' : 'Invalid phone number';
   }
 
   goBack(): void {
-    this.router.navigate(['/onboarding/step1']);
+    this.router.navigate(['/onboarding/step1b']);
   }
 
   skip(): void {
