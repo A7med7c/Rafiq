@@ -111,6 +111,19 @@
 
         <div class="mp-row-sep"></div>
 
+        <button class="mp-row" (click)="openRatingPopup()">
+          <div class="mp-row-icon" style="background:#FEF3C7; color:#D97706;">
+            <i class="fa-solid fa-star"></i>
+          </div>
+          <div class="mp-row-text">
+            <span class="mp-row-title">{{ t().ratingPopup.rateRafiq }}</span>
+            <span class="mp-row-sub">{{ t().ratingPopup.subtitle }}</span>
+          </div>
+          <i class="fa-solid fa-chevron-left mp-row-chevron"></i>
+        </button>
+
+        <div class="mp-row-sep"></div>
+
         <button class="mp-row" (click)="activeView.set('settings'); scrollToTop()">
           <div class="mp-row-icon" style="background:#F1F5F9; color:#475569;">
             <i class="fa-solid fa-gear"></i>
@@ -582,7 +595,7 @@
           </label>
         </div>
         <div class="mp-row-sep"></div>
-        <button class="mp-row mp-row--tight">
+        <button class="mp-row mp-row--tight" (click)="requestPasswordChange()">
           <div class="mp-row-text">
             <span class="mp-row-title">{{ t().settings.changePassword }}</span>
           </div>

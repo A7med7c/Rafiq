@@ -26,6 +26,7 @@ import {
 import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
+import { localizeKnownApiMessage } from '../../Utils/api-error.util';
 
 type AddStep = 'choose' | 'create' | 'invite' | 'invited';
 
@@ -291,7 +292,7 @@ export class FamilyProfiles implements OnInit {
 
   /** The photo to show for a family/self profile, or null to fall back to the initials avatar. */
   profileAvatarUrl(profile: AccessibleProfileDto): string | null {
-    const path = profile.isSelf ? this.authSvc.currentUser?.profileImageUrl : profile.profileImageUrl;
+    const path = profile.profileImageUrl || (profile.isSelf ? this.authSvc.currentUser?.profileImageUrl : null);
     return this.resolveProfileImageUrl(path ?? null);
   }
 
@@ -528,7 +529,7 @@ export class FamilyProfiles implements OnInit {
   submitCreateManaged(): void {
     const f = this.createForm;
     if (!f.firstName.trim() || !f.lastName.trim() || !f.dateOfBirth || !f.gender || !f.relationship) {
-      this.errorMessage = 'Please fill in all required fields.';
+      this.errorMessage = this.t().family.requiredFields;
       return;
     }
     this.submitting.set(true);
@@ -546,7 +547,7 @@ export class FamilyProfiles implements OnInit {
       chronicDiseases: f.showDiseases ? f.chronicDiseases.filter(d => d.name.trim()) : [],
     }).pipe(catchError(err => {
       const apiErrors: string[] = err?.error?.errors ?? [];
-      this.errorMessage = apiErrors.length ? apiErrors.join(' ') : (err?.error?.message || 'Failed to create profile.');
+      this.errorMessage = apiErrors.length ? this.localizeApiMessages(apiErrors).join(' ') : this.localizeApiMessage(err?.error?.message ?? this.t().familyErrors.createProfileFailed);
       this.submitting.set(false);
       return of(null);
     })).subscribe(result => {
@@ -573,7 +574,7 @@ export class FamilyProfiles implements OnInit {
   submitInvite(): void {
     const f = this.inviteForm;
     if (!f.profileId || !f.email.trim() || !f.role) {
-      this.errorMessage = 'Please fill in all required fields.';
+      this.errorMessage = this.t().family.requiredFields;
       return;
     }
     this.submitting.set(true);
@@ -581,7 +582,7 @@ export class FamilyProfiles implements OnInit {
     this.fpSvc.sendInvitation(f.profileId, f.email.trim(), f.role).pipe(
       catchError(err => {
         const apiErrors: string[] = err?.error?.errors ?? [];
-        this.errorMessage = apiErrors.length ? apiErrors.join(' ') : (err?.error?.message || 'Failed to send invitation.');
+        this.errorMessage = apiErrors.length ? this.localizeApiMessages(apiErrors).join(' ') : this.localizeApiMessage(err?.error?.message ?? this.t().familyErrors.sendInvitationFailed);
         this.submitting.set(false);
         return of(null);
       })
@@ -621,7 +622,7 @@ export class FamilyProfiles implements OnInit {
   submitEditProfile(): void {
     const f = this.editForm;
     if (!f.firstName?.trim() || !f.lastName?.trim() || !f.dateOfBirth || !f.gender) {
-      this.editError = 'Please fill in all required fields.';
+      this.editError = this.t().family.requiredFields;
       return;
     }
     const profileId = this.selectedProfile()?.userHealthProfileId;
@@ -642,7 +643,7 @@ export class FamilyProfiles implements OnInit {
     }).pipe(
       catchError(err => {
         const apiErrors: string[] = err?.error?.errors ?? [];
-        this.editError = apiErrors.length ? apiErrors.join(' ') : (err?.error?.message || 'Failed to update profile.');
+        this.editError = apiErrors.length ? this.localizeApiMessages(apiErrors).join(' ') : this.localizeApiMessage(err?.error?.message ?? this.t().familyErrors.updateProfileFailed);
         this.editSubmitting.set(false);
         return of(null);
       })
@@ -733,7 +734,13 @@ export class FamilyProfiles implements OnInit {
           this.fpSvc.updateProfileImage(profileId, profileImage, removeImage).pipe(
             catchError(() => of(null))
           ).subscribe(updated => {
-            if (updated) { patchImageUrl(updated.profileImageUrl); }
+              if (updated) {
+                patchImageUrl(updated.profileImageUrl);
+                // If the edited profile belongs to the current user, update global auth state
+                if (this.selectedProfile()?.isSelf) {
+                  try { this.authSvc.updateProfileImageUrl(updated.profileImageUrl ?? null); } catch {}
+                }
+              }
             patchTextFields();
             this.editSubmitting.set(false);
             this.closeEditModal();
@@ -754,7 +761,7 @@ export class FamilyProfiles implements OnInit {
       forkJoin(ops).pipe(
         catchError(err => {
           const apiErrors: string[] = err?.error?.errors ?? [];
-          this.editError = apiErrors.length ? apiErrors.join(' ') : (err?.error?.message || 'Failed to update allergies or diseases.');
+          this.editError = apiErrors.length ? this.localizeApiMessages(apiErrors).join(' ') : this.localizeApiMessage(err?.error?.message ?? this.t().familyErrors.updateAllergiesFailed);
           this.editSubmitting.set(false);
           return of(null);
         })
@@ -1118,6 +1125,14 @@ return p.isSelf ? (this.t().family as any)[key] ?? this.t().family.member : 'Act
 
   return (this.t().common as any)[key] ?? gender;
 }
+
+  private localizeApiMessages(messages: string[]): string[] {
+    return messages.map(message => this.localizeApiMessage(message));
+  }
+
+  private localizeApiMessage(message: string): string {
+    return localizeKnownApiMessage(message, this.t());
+  }
 
   startPageTour(): void {
     if (this.assistantOrchestrator.tourEngine.isPlaying()) return;

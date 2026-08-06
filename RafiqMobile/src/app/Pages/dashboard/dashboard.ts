@@ -273,7 +273,7 @@ export class Dashboard implements OnInit, OnDestroy {
     return this.authService.currentUser?.email ?? '';
   }
 
-  get avatarUrl(): string {
+  get avatarUrl(): string | null {
     const cachedUrl = this.profileCache.profileImageUrl();
     if (cachedUrl) return `${environment.fileBaseUrl}${cachedUrl}`;
     return this.authService.avatarUrl;
@@ -286,7 +286,7 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   get hasProfileImage(): boolean {
-    return !!(this.profileCache.profileImageUrl() || this.authService.currentUser?.profileImageUrl);
+    return !!this.avatarUrl;
   }
 
   get userInitials(): string {
@@ -452,8 +452,12 @@ export class Dashboard implements OnInit, OnDestroy {
     this.router.navigate(['/appointments'], { queryParams: { openAdd: '1' } });
   }
 
+  openAiPanel(): void {
+    this.aiChatService.openPanel();
+  }
+
   openVoiceMode(): void {
-    this.aiChatService.openPanelInVoiceMode();
+    this.aiChatService.openPanel(); // Assuming we just open the panel, or add a voice mode flag later
   }
 
   startWelcomeTour(): void {
@@ -470,7 +474,7 @@ export class Dashboard implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    if (!target.closest('.hdr-user')) {
+    if (!target.closest('.hdr-user') && !target.closest('.dash-header__avatar')) {
       this.dropdownOpen.set(false);
     }
     this.resetInactivityTimer();

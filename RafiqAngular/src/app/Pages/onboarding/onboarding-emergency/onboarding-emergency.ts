@@ -77,7 +77,7 @@ export class OnboardingEmergency implements OnInit {
     const cleanNum = (num: string) => num.replace(/\D/g, '').slice(-10);
 
     if (userPhone && cleanNum(body.phoneNumber) === cleanNum(userPhone)) {
-      this.submitError = "You cannot add your own phone number as an emergency contact.";
+      this.submitError = this.t().myProfile.toastOwnPhoneError;
       return;
     }
 
@@ -97,7 +97,7 @@ export class OnboardingEmergency implements OnInit {
       },
       error: (err) => {
         this.isAdding = false;
-        const msg = err?.error?.message || 'Failed to add emergency contact.';
+        const msg = err?.error?.message || this.t().onboarding.emergency.failedAdd;
         this.submitError = msg;
         this.cdr.detectChanges();
       }
@@ -105,7 +105,7 @@ export class OnboardingEmergency implements OnInit {
   }
 
   deleteContact(id: string): void {
-    if (confirm('Are you sure you want to delete this emergency contact?')) {
+    if (confirm(this.t().onboarding.emergency.confirmDelete)) {
       this.emergencyService.deleteEmergencyContact(id).subscribe({
         next: (res) => {
           if (res?.success) {
@@ -114,7 +114,7 @@ export class OnboardingEmergency implements OnInit {
         },
         error: (err) => {
           console.error('Failed to delete contact', err);
-          alert('Failed to delete contact.');
+          alert(this.t().onboarding.emergency.failedDelete);
         }
       });
     }
@@ -127,9 +127,9 @@ export class OnboardingEmergency implements OnInit {
 
   getPhoneError(): string {
     const ctrl = this.form.get('phoneNumber');
-    if (ctrl?.hasError('required')) return 'Phone number is required';
-    if (ctrl?.hasError('pattern')) return 'Must be a valid Egyptian mobile number (e.g. 01012345678)';
-    return 'Invalid phone number';
+    if (ctrl?.hasError('required')) return this.t().onboarding.emergency.phoneRequired;
+    if (ctrl?.hasError('pattern')) return this.t().onboarding.emergency.phoneInvalid;
+    return this.t().onboarding.emergency.phoneError;
   }
 
   goBack(): void {

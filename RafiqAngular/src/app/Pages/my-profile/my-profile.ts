@@ -14,6 +14,7 @@ import { LocalizationService } from '../../Services/localization.service';
 import { AiChatService } from '../../Services/ai-chat.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { HttpClient } from '@angular/common/http';
+import { localizeKnownApiMessage } from '../../Utils/api-error.util';
 import { environment } from '../../Environments/Environment';
 import { ApiResponse } from '../../Modles/api-response';
 import { map, switchMap } from 'rxjs';
@@ -329,7 +330,7 @@ export class MyProfile implements OnInit {
             },
             error: (err) => {
               this.personalSaving.set(false);
-              const msg = err?.error?.message ?? 'Failed to request email change.';
+              const msg = localizeKnownApiMessage(err?.error?.message ?? 'Failed to request email change.', this.t());
               this.personalFormError.set(msg);
             }
           });
@@ -341,7 +342,7 @@ export class MyProfile implements OnInit {
       },
       error: (err) => {
         this.personalSaving.set(false);
-        const msg = err?.error?.message ?? 'Failed to save changes.';
+        const msg = localizeKnownApiMessage(err?.error?.message ?? 'Failed to save changes.', this.t());
         this.personalFormError.set(msg);
       }
     });
@@ -369,7 +370,7 @@ export class MyProfile implements OnInit {
       },
       error: (err) => {
         this.emailOtpSaving.set(false);
-        const msg = err?.error?.message ?? 'Invalid or expired code.';
+        const msg = localizeKnownApiMessage(err?.error?.message ?? 'Invalid or expired code.', this.t());
         this.emailOtpError.set(msg);
       }
     });
@@ -451,8 +452,32 @@ export class MyProfile implements OnInit {
         this.profile.set(res.data);
         this.healthSaving.set(false);
         this.editingHealth.set(false);
+        this.notifService.showToast(this.t().myProfile.toastHealthSavedTitle || this.t().myProfile.toastSavedTitle, this.t().myProfile.toastHealthSavedBody || '', 'success');
       },
-      error: () => { this.healthSaving.set(false); }
+      error: (err) => {
+        this.healthSaving.set(false);
+        const status = err?.status;
+        const apiErrors: string[] = err?.error?.errors ?? [];
+
+        if (apiErrors.length) {
+          // show combined validation messages if provided by backend
+          const localized = apiErrors.map(m => localizeKnownApiMessage(m, this.t())).join(' ');
+          this.notifService.showToast(this.t().myProfile.toastHealthSaveFailedTitle || this.t().myProfile.toastErrorTitle, localized, 'error');
+          return;
+        }
+
+        if (status === 400 || status === 422) {
+          const raw = err?.error?.message;
+          const msg = raw ? localizeKnownApiMessage(raw, this.t()) : (this.t().myProfile.toastHealthValidationFailedBody ?? this.t().myProfile.toastHealthSaveFailedBody ?? 'Validation failed.');
+          this.notifService.showToast(this.t().myProfile.toastHealthSaveFailedTitle || this.t().myProfile.toastErrorTitle, msg, 'error');
+          return;
+        }
+
+        // fallback for 500/other
+        const rawFallback = err?.error?.message;
+        const fallback = rawFallback ? localizeKnownApiMessage(rawFallback, this.t()) : (this.t().myProfile.toastHealthUnexpectedErrorBody ?? this.t().myProfile.toastHealthSaveFailedBody ?? 'An unexpected error occurred.');
+        this.notifService.showToast(this.t().myProfile.toastHealthSaveFailedTitle || this.t().myProfile.toastErrorTitle, fallback, 'error');
+      }
     });
   }
 
@@ -570,7 +595,7 @@ export class MyProfile implements OnInit {
       },
       error: (err) => {
         this.contactSaving.set(false);
-        const msg = err?.error?.message ?? 'Failed to add emergency contact.';
+        const msg = localizeKnownApiMessage(err?.error?.message ?? 'Failed to add emergency contact.', this.t());
         this.contactFormError.set(msg);
       }
     });
@@ -607,14 +632,14 @@ export class MyProfile implements OnInit {
     this.healthSvc.deleteProfileImage(id).subscribe({
       next: (res) => {
         this.profile.set(res.data);
-        this.profileCache.setImageUrl(null);
+          this.authService.updateProfileImageUrl(null);
         this.deletingPhoto.set(false);
         this.photoModalOpen.set(false);
         this.notifService.showToast(this.t().myProfile.toastPhotoRemovedTitle, this.t().myProfile.toastPhotoRemovedBody, 'success');
       },
       error: (err) => {
         this.deletingPhoto.set(false);
-        const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
+        const msg = localizeKnownApiMessage(err?.error?.message ?? this.t().myProfile.toastErrorTitle, this.t());
         this.notifService.showToast(this.t().myProfile.toastErrorTitle, msg, 'error');
       }
     });
@@ -642,14 +667,15 @@ export class MyProfile implements OnInit {
     this.healthSvc.uploadProfileImage(id, file).subscribe({
       next: (res) => {
         this.profile.set(res.data);
-        this.profileCache.setImageUrl(res.data?.profileImageUrl ?? null);
+          // Update global auth + cache so every component sees the new image immediately
+          this.authService.updateProfileImageUrl(res.data?.profileImageUrl ?? null);
         this.photoUploading.set(false);
         this.photoModalOpen.set(false);
         this.notifService.showToast(this.t().myProfile.toastPhotoUpdatedTitle, this.t().myProfile.toastPhotoUpdatedBody, 'success');
       },
       error: (err) => {
         this.photoUploading.set(false);
-        const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
+        const msg = localizeKnownApiMessage(err?.error?.message ?? this.t().myProfile.toastErrorTitle, this.t());
         this.notifService.showToast(this.t().myProfile.toastErrorTitle, msg, 'error');
       }
     });

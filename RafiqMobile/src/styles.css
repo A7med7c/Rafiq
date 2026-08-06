@@ -621,3 +621,106 @@ body.rafiq-tour-speaking .driver-active-element {
   letter-spacing: .06em;
   font-variant-numeric: tabular-nums;
 }
+
+/* ════════════════════════════════════════
+   GLOBAL TOASTS (Based on new design)
+════════════════════════════════════════ */
+.toast-container {
+  position: fixed;
+  top: calc(76px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: auto;
+  right: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999;
+  pointer-events: none;
+  width: min(90vw, 400px);
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  width: 100%;
+  pointer-events: all;
+  animation: toast-in-down 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 1px solid transparent;
+}
+
+@keyframes toast-in-down {
+  from { opacity: 0; transform: translateY(-24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Success */
+.toast.toast--success, .toast.toast-success { background: #F0FDF4; border-color: #BBF7D0; }
+.toast.toast--success .fa-circle-check, .toast.toast-success .fa-circle-check, .toast.toast--success .toast-icon, .toast.toast-success .toast-icon {
+  background: #22C55E; color: #fff;
+}
+
+/* Info */
+.toast.toast--info, .toast.toast-info { background: #EFF6FF; border-color: #BFDBFE; }
+.toast.toast--info .fa-circle-info, .toast.toast-info .fa-circle-info, .toast.toast--info .toast-icon, .toast.toast-info .toast-icon {
+  background: #3B82F6; color: #fff;
+}
+
+/* Warning */
+.toast.toast--warning, .toast.toast-warning { background: #FFFBEB; border-color: #FDE68A; }
+.toast.toast--warning .fa-triangle-exclamation, .toast.toast-warning .fa-triangle-exclamation, .toast.toast--warning .toast-icon, .toast.toast-warning .toast-icon {
+  background: #F59E0B; color: #fff;
+}
+
+/* Error */
+.toast.toast--error, .toast.toast-error { background: #FEF2F2; border-color: #FECACA; }
+.toast.toast--error .fa-circle-xmark, .toast.toast-error .fa-circle-xmark, .toast.toast--error .toast-icon, .toast.toast-error .toast-icon {
+  background: #EF4444; color: #fff;
+}
+
+/* Alert / Notification */
+.toast.toast--alert, .toast.toast-alert { background: #F5F3FF; border-color: #DDD6FE; }
+.toast.toast--alert .fa-bell, .toast.toast-alert .fa-bell, .toast.toast--alert .toast-icon, .toast.toast-alert .toast-icon {
+  background: #8B5CF6; color: #fff;
+}
+
+/* Text */
+.toast-msg, .toast span {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1F2937;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Icon */
+.toast > i.fa-solid, .toast-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* Close button */
+.toast-close {
+  background: transparent;
+  border: none;
+  color: #6B7280;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.toast-close:hover { color: #374151; }

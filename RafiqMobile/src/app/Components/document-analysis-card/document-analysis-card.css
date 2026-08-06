@@ -10,7 +10,7 @@
 /* ── Floating chip (minimized) ────────────────────────────────────────────── */
 .dac-chip {
   position: fixed;
-  bottom: 88px;
+  bottom: 140px;
   inset-inline-end: 20px;
   display: flex;
   align-items: center;
@@ -70,7 +70,7 @@
 /* ── Expanded panel ────────────────────────────────────────────────────────── */
 .dac-panel {
   position: fixed;
-  bottom: 88px;
+  bottom: 140px;
   inset-inline-end: 20px;
   width: 340px;
   background: #fff;

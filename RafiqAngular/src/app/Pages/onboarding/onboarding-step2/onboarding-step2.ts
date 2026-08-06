@@ -29,11 +29,13 @@ export class OnboardingStep2 implements OnInit {
     this.t().onboarding.stepperLabels.map(label => ({ label }))
   );
 
-  readonly severityOptions = [
-    { value: AllergySeverity.Severe, label: 'Severe' },
-    { value: AllergySeverity.Moderate, label: 'Moderate' },
-    { value: AllergySeverity.Mild, label: 'Mild' }
-  ];
+  get severityOptions() {
+    return [
+      { value: AllergySeverity.Severe, label: this.t().myProfile.severe },
+      { value: AllergySeverity.Moderate, label: this.t().myProfile.moderate },
+      { value: AllergySeverity.Mild, label: this.t().myProfile.mild }
+    ];
+  }
 
   /** 'yes' | 'no' */
   hasAllergies: 'yes' | 'no' = 'no';

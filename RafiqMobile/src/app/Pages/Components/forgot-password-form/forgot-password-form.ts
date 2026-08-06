@@ -7,7 +7,8 @@ import {
   Validators
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../Services/auth-service';
 import { LocalizationService } from '../../../Services/localization.service';
@@ -31,11 +32,12 @@ type Step = 'email' | 'otp' | 'password';
   templateUrl: './forgot-password-form.html',
   styleUrl: './forgot-password-form.css'
 })
-export class ForgotPasswordFormComponent {
+export class ForgotPasswordFormComponent implements OnInit {
 
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly changeDetector = inject(ChangeDetectorRef);
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
@@ -50,6 +52,9 @@ export class ForgotPasswordFormComponent {
   submittedEmail = '';
   otpCode = '';
   private resetToken = '';
+  
+  resendTimer = 0;
+  private resendInterval: any;
 
   readonly emailForm = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email, Validators.maxLength(256)]]
@@ -62,6 +67,16 @@ export class ForgotPasswordFormComponent {
     },
     { validators: passwordsMatchValidator }
   );
+
+  ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['email']) {
+        this.emailForm.patchValue({ email: params['email'] });
+        // Optionally submit immediately or let the user click submit
+        // this.submitEmail(); 
+      }
+    });
+  }
 
   togglePasswordVisibility(field: 'password' | 'confirmPassword'): void {
     if (field === 'password') {
@@ -103,8 +118,9 @@ export class ForgotPasswordFormComponent {
     this.authService.forgotPassword(email).subscribe({
       next: (response) => {
         this.submittedEmail = email;
-        this.successMessage = response.message;
+        this.successMessage = this.t().forgotPassword.otpSentSuccess ?? response.message;
         this.step = 'otp';
+        this.startResendTimer();
       },
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error, this.t());
@@ -131,7 +147,7 @@ export class ForgotPasswordFormComponent {
     this.authService.verifyResetOtp(this.submittedEmail, this.otpCode.trim()).subscribe({
       next: (response) => {
         this.resetToken = response.data.resetToken;
-        this.successMessage = response.message;
+        this.successMessage = this.t().forgotPassword.otpVerifiedSuccess ?? response.message;
         this.step = 'password';
       },
       error: (error: HttpErrorResponse) => {
@@ -152,7 +168,8 @@ export class ForgotPasswordFormComponent {
 
     this.authService.forgotPassword(this.submittedEmail).subscribe({
       next: (response) => {
-        this.successMessage = response.message;
+        this.successMessage = this.t().forgotPassword.otpSentSuccess ?? response.message;
+        this.startResendTimer();
       },
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error, this.t());
@@ -179,7 +196,7 @@ export class ForgotPasswordFormComponent {
 
     this.authService.resetPassword(this.resetToken, newPassword).subscribe({
       next: (response) => {
-        this.successMessage = response.message;
+        this.successMessage = this.t().forgotPassword.passwordResetSuccess ?? response.message;
         setTimeout(() => this.router.navigate(['/login']), 1500);
       },
       error: (error: HttpErrorResponse) => {
@@ -191,5 +208,19 @@ export class ForgotPasswordFormComponent {
         this.isSubmitting = false;
       }
     });
+  }
+
+  private startResendTimer(): void {
+    if (this.resendInterval) {
+      clearInterval(this.resendInterval);
+    }
+    this.resendTimer = 60;
+    this.resendInterval = setInterval(() => {
+      this.resendTimer--;
+      if (this.resendTimer <= 0) {
+        clearInterval(this.resendInterval);
+      }
+      this.changeDetector.detectChanges();
+    }, 1000);
   }
 }

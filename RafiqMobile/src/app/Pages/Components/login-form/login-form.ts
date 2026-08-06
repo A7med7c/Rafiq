@@ -82,17 +82,12 @@ export class LoginFormComponent implements OnInit {
 
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (response) => {
-        this.successMessage = response.message;
+        this.successMessage = this.localizeLoginMessage(response.message);
         this.navigateAfterLogin();
       },
       error: (error: HttpErrorResponse) => {
-        const errorMessages = getApiErrorMessages(error, this.t());
-
-        if (this.handleUnverifiedAccount(error, errorMessages)) {
-          return;
-        }
-
-        this.apiErrors = errorMessages;
+        this.apiErrors = getApiErrorMessages(error, this.t())
+          .map((message) => this.localizeLoginMessage(message));
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       },
@@ -114,17 +109,12 @@ export class LoginFormComponent implements OnInit {
 
     this.authService.loginWithGoogle(idToken).subscribe({
       next: (response) => {
-        this.successMessage = response.message;
+        this.successMessage = this.localizeLoginMessage(response.message);
         this.navigateAfterLogin();
       },
       error: (error: HttpErrorResponse) => {
-        const errorMessages = getApiErrorMessages(error, this.t());
-
-        if (this.handleUnverifiedAccount(error, errorMessages)) {
-          return;
-        }
-
-        this.apiErrors = errorMessages;
+        this.apiErrors = getApiErrorMessages(error, this.t())
+          .map((message) => this.localizeLoginMessage(message));
         this.isSubmitting = false;
         this.changeDetector.detectChanges();
       },
@@ -212,5 +202,19 @@ export class LoginFormComponent implements OnInit {
         }
       }
     });
+  }
+
+  private localizeLoginMessage(message: string): string {
+    const loginTranslations = this.t().login;
+    const normalizedMessage = message.trim().replace(/\.$/, '');
+
+    const messages: Record<string, string> = {
+      'Invalid email / phone number or password': loginTranslations.invalidCredentials,
+      'Please verify your email before logging in': loginTranslations.verifyEmailBeforeLogin,
+      'Login successful': loginTranslations.loginSuccess,
+      'Google login successful': loginTranslations.googleLoginSuccess,
+    };
+
+    return messages[normalizedMessage] ?? message;
   }
 }

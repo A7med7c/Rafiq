@@ -102,7 +102,7 @@
           }
         </button>
         <div class="hdr-user" (click)="toggleDropdown()">
-          <img [src]="profileCache.resolveNavbarAvatar()" alt="user" class="hdr-avatar">
+          <img [src]="profileCache.resolveNavbarAvatar()" alt="" class="hdr-avatar">
           <span class="hdr-username">{{ displayName }}</span>
           <i class="fa-solid fa-chevron-down hdr-chevron" [class.hdr-chevron--open]="dropdownOpen()"></i>
 
@@ -110,7 +110,7 @@
           <div class="user-dropdown" (click)="$event.stopPropagation()">
             <div class="user-dropdown-hdr">
               <div class="user-dropdown-av">
-                <img [src]="profileCache.resolveNavbarAvatar()" alt="avatar">
+                <img [src]="profileCache.resolveNavbarAvatar()" alt="">
               </div>
               <div class="user-dropdown-info">
                 <span class="user-dropdown-name">{{ displayName }}</span>
@@ -608,7 +608,7 @@
                     </button>
                     }
                     @if (!fpReadOnly()) {
-                    <button type="button" class="rec-action-btn rec-action-more" title="More options"
+                    <button type="button" class="rec-action-btn rec-action-more" [title]="t().aiAssistant.moreOptions"
                       (click)="toggleMenu(a.id, $event)">
                       <i class="fa-solid fa-ellipsis-vertical"></i>
                     </button>
@@ -657,7 +657,7 @@
                     <i class="fa-regular fa-eye"></i>
                   </button>
                   @if (!fpReadOnly()) {
-                    <button type="button" class="rec-action-btn rec-action-more" title="More options" (click)="toggleMenu(a.id, $event)">
+                    <button type="button" class="rec-action-btn rec-action-more" [title]="t().aiAssistant.moreOptions" (click)="toggleMenu(a.id, $event)">
                       <i class="fa-solid fa-ellipsis-vertical"></i>
                     </button>
                     @if (openMenuId() === a.id) {

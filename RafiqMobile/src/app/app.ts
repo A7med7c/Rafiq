@@ -10,6 +10,7 @@ import { TourEngineService } from './core/assistant/services/tour-engine.service
 import { RatingPopup } from './Components/rating-popup/rating-popup';
 import { DocumentAnalysisCardComponent } from './Components/document-analysis-card/document-analysis-card';
 import { TourGlowRingDirective } from './core/assistant/directives/tour-glow-ring.directive';
+import { AuthService } from './Services/auth-service';
 
 @Component({
   selector: 'app-root',
@@ -23,8 +24,11 @@ export class App {
   readonly l10n = inject(LocalizationService);
   readonly tourEngine = inject(TourEngineService);
   readonly aiChatService = inject(AiChatService);
+  readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   readonly title = signal('RafiqAngular');
+
+  private static readonly PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/verify-account', '/welcome', '/tour'];
 
   // ── FAB drag state ───────────────────────────────
   readonly fabPos = signal({ top: window.innerHeight - 80, left: window.innerWidth - 200 });
@@ -33,7 +37,10 @@ export class App {
   private _fabOffset = { x: 0, y: 0 };
 
   get showFab(): boolean {
-    return this.router.url === '/dashboard' && !this.aiChatService.isPanelOpen();
+    if (!this.authService.isLoggedIn) return false;
+    const url = this.router.url;
+    if (App.PUBLIC_ROUTES.some(r => url === r || url.startsWith(r + '?'))) return false;
+    return !this.aiChatService.isPanelOpen();
   }
 
   onFabPointerDown(e: PointerEvent): void {

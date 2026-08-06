@@ -11,7 +11,8 @@ export class GoogleService {
 
   initialize(
     clientId: string,
-    callback: (credential: string) => void
+    callback: (credential: string) => void,
+    locale = 'en'
   ): void {
     if (typeof google === 'undefined') {
       return;
@@ -28,22 +29,22 @@ export class GoogleService {
       return;
     }
 
-    this.renderButton(buttonElement);
-    this.observeButtonWidth(buttonElement);
+    this.renderButton(buttonElement, locale);
+    this.observeButtonWidth(buttonElement, locale);
   }
 
-  private observeButtonWidth(buttonElement: HTMLElement): void {
+  private observeButtonWidth(buttonElement: HTMLElement, locale: string): void {
     this.resizeObserver?.disconnect();
 
     if (typeof ResizeObserver === 'undefined') {
       return;
     }
 
-    this.resizeObserver = new ResizeObserver(() => this.renderButton(buttonElement));
+    this.resizeObserver = new ResizeObserver(() => this.renderButton(buttonElement, locale));
     this.resizeObserver.observe(buttonElement);
   }
 
-  private renderButton(buttonElement: HTMLElement): void {
+  private renderButton(buttonElement: HTMLElement, locale: string): void {
     const buttonWidth = Math.floor(buttonElement.getBoundingClientRect().width);
 
     if (!buttonWidth || (buttonElement.childElementCount && Math.abs(buttonWidth - this.renderedButtonWidth) < 2)) {
@@ -62,7 +63,7 @@ export class GoogleService {
         shape: 'pill',
         width: Math.min(buttonWidth, 400),
         text: 'signin_with',
-        locale: 'en',
+        locale,
         logo_alignment: 'left'
       }
     );

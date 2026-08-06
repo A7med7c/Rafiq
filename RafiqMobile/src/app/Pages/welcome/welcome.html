@@ -1,0 +1,58 @@
+<div class="welcome-wrapper" [dir]="localization.dir()">
+  <!-- Top Bar -->
+  <header class="w-header">
+    <button class="skip-btn" (click)="finish()">{{ localization.t().common.skip }}</button>
+  </header>
+
+  <!-- Main Content -->
+  <main class="w-main">
+    <div class="hero-container">
+      <div class="hero-glow"></div>
+      <div class="hero-sparkles">
+        <span class="sparkle s1">✦</span>
+        <span class="sparkle s2">✦</span>
+        <span class="sparkle s3">✦</span>
+      </div>
+
+      <!-- Floating Elements -->
+      <div class="floating-icon" 
+           *ngFor="let icon of steps[currentStep].floatingIcons" 
+           [ngClass]="[icon.posClass, icon.shapeClass, icon.colorClass]">
+        <i [class]="icon.class"></i>
+        <i *ngIf="icon.subClass" [class]="icon.subClass" class="sub-icon"></i>
+      </div>
+
+      <ng-container *ngIf="steps[currentStep].isImage; else iconTpl">
+        <img [src]="steps[currentStep].img" alt="Hero Illustration" class="hero-img" />
+      </ng-container>
+      <ng-template #iconTpl>
+        <div class="hero-icon-placeholder">
+          <i [class]="steps[currentStep].icon"></i>
+        </div>
+      </ng-template>
+    </div>
+    
+    <div class="text-content">
+      <h1 class="w-title">{{ steps[currentStep].title }}</h1>
+      <p class="w-text">{{ steps[currentStep].text }}</p>
+    </div>
+  </main>
+
+  <!-- Bottom Bar -->
+  <footer class="w-footer">
+    <!-- Next Button: placed first in DOM to appear on the right side under RTL layout -->
+    <button class="next-btn" (click)="nextStep()">
+      {{ steps[currentStep].buttonText }}
+      <i [class]="localization.isRtl() ? 'fa-solid fa-arrow-left' : 'fa-solid fa-arrow-right'"></i>
+    </button>
+
+    <div class="w-dots">
+      <span class="dot" *ngFor="let step of steps; let i = index" [class.active]="i === currentStep"></span>
+    </div>
+
+    <!-- Back Button: placed last to appear on the left side under RTL layout -->
+    <button class="back-btn" (click)="prevStep()" [style.visibility]="currentStep === 0 ? 'hidden' : 'visible'">
+      <i [class]="localization.isRtl() ? 'fa-solid fa-arrow-right' : 'fa-solid fa-arrow-left'"></i>
+    </button>
+  </footer>
+</div>

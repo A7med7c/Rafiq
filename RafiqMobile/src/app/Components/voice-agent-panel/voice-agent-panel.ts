@@ -1,5 +1,5 @@
 import {
-  Component, OnDestroy, inject, signal, effect, untracked,
+  Component, OnDestroy, OnInit, inject, signal, effect, untracked,
   input, output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -31,7 +31,7 @@ const PROCESSING_TIMEOUT_MS = 90_000;
   templateUrl: './voice-agent-panel.html',
   styleUrl: './voice-agent-panel.css',
 })
-export class VoiceAgentPanel implements OnDestroy {
+export class VoiceAgentPanel implements OnInit, OnDestroy {
   private readonly voiceAgentSvc  = inject(VoiceAgentService);
   private readonly voiceCapture   = inject(VoiceCaptureService);
   private readonly voiceSynthesis = inject(VoiceSynthesisService);
@@ -50,17 +50,22 @@ export class VoiceAgentPanel implements OnDestroy {
   readonly conversationCreated = output<ConversationSummaryDto>();
   readonly messageStarted      = output<string>();   // spoken text → parent adds optimistic msg
   readonly responseReceived    = output<string>();   // conversationId → parent reloads history
+  readonly switchToChat        = output<void>();     // requested to switch to keyboard mode
+  readonly closeRequested      = output<void>();     // requested to close panel entirely
 
   // ── Internal state ──────────────────────────────────────────────────────────
   readonly state           = signal<VoiceState>('idle');
   readonly toolHint        = signal<string | null>(null);
   readonly errorMessage    = signal<string | null>(null);
   readonly isSessionActive = signal(false);
+  readonly recordingTime = signal('00:00');
 
   readonly captureSupported   = this.voiceCapture.isSupported;
   readonly synthesisSupported = this.voiceSynthesis.isSupported;
 
   private _activeConversationId: string | null = null;
+  private _recordingTimerInterval: ReturnType<typeof setInterval> | null = null;
+  private _recordingSeconds = 0;
 
   // Inactivity tracking — timer only activates after the first completed exchange
   // so the initial "waiting for the user to speak" phase has no timeout.
@@ -116,7 +121,17 @@ export class VoiceAgentPanel implements OnDestroy {
     });
   }
 
+  ngOnInit(): void {
+    // Automatically start the voice session when the panel opens
+    setTimeout(() => {
+      if (!this.isSessionActive()) {
+        this.startSession();
+      }
+    }, 300); // small delay to let UI animations finish
+  }
+
   ngOnDestroy(): void {
+    if (this._recordingTimerInterval) clearInterval(this._recordingTimerInterval);
     this.clearInactivityTimer();
     this.clearProcessingTimer();
     this.isSessionActive.set(false);
@@ -130,7 +145,26 @@ export class VoiceAgentPanel implements OnDestroy {
     if (!this.captureSupported) return;
     this._hasHadExchange = false;
     this.isSessionActive.set(true);
+
+    // Start dynamic timer
+    this._recordingSeconds = 0;
+    this.recordingTime.set('00:00');
+    if (this._recordingTimerInterval) clearInterval(this._recordingTimerInterval);
+    this._recordingTimerInterval = setInterval(() => {
+      this._recordingSeconds++;
+      const m = Math.floor(this._recordingSeconds / 60).toString().padStart(2, '0');
+      const s = (this._recordingSeconds % 60).toString().padStart(2, '0');
+      this.recordingTime.set(`${m}:${s}`);
+    }, 1000);
+
     void this.startListening();
+  }
+
+  private _manualFinalize = false;
+
+  finalizeSession(): void {
+    this._manualFinalize = true;
+    this.voiceCapture.finalize();
   }
 
   stopSession(): void {
@@ -150,6 +184,7 @@ export class VoiceAgentPanel implements OnDestroy {
     this.state.set('listening');
     this.toolHint.set(null);
     this.errorMessage.set(null);
+    this._manualFinalize = false;
 
     // Begin counting inactivity only after the first exchange has completed.
     // The timer is NOT reset on consecutive no-speech retries — only when a
@@ -190,13 +225,17 @@ export class VoiceAgentPanel implements OnDestroy {
     // Speech was captured — the user is active. Cancel the inactivity timer so
     // it does not fire while the AI is processing or speaking the response.
     this.clearInactivityTimer();
+    if (this._recordingTimerInterval) {
+      clearInterval(this._recordingTimerInterval);
+      this._recordingTimerInterval = null;
+    }
 
     if (!text) {
       // Empty transcript (browser quirk) — restart if session is still running.
-      if (this.isSessionActive()) {
+      if (this.isSessionActive() && !this._manualFinalize) {
         void this.startListening();
       } else {
-        this.state.set('idle');
+        this.stopSession();
       }
       return;
     }

@@ -28,11 +28,13 @@ export class OnboardingStep3 implements OnInit {
     this.t().onboarding.stepperLabels.map(label => ({ label }))
   );
 
-  readonly statusOptions = [
-    { value: DiseaseStatus.Active, label: 'Active' },
-    { value: DiseaseStatus.Controlled, label: 'Controlled' },
-    { value: DiseaseStatus.Resolved, label: 'Resolved' }
-  ];
+  get statusOptions() {
+    return [
+      { value: DiseaseStatus.Active, label: this.t().myProfile.active },
+      { value: DiseaseStatus.Controlled, label: this.t().myProfile.controlled },
+      { value: DiseaseStatus.Resolved, label: this.t().myProfile.resolved }
+    ];
+  }
 
   /** 'yes' | 'no' */
   hasConditions: 'yes' | 'no' = 'no';

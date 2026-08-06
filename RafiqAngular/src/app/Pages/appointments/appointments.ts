@@ -23,6 +23,7 @@ import {
   APPOINTMENT_TYPE_LABELS, APPOINTMENT_TYPE_ICONS,
 } from '../../Modles/appointment.models';
 import { FamilyProfileBannerComponent } from '../../Components/family-profile-banner/family-profile-banner';
+import { localizeKnownApiMessage } from '../../Utils/api-error.util';
 
 /** Maps each AppointmentType enum value to its key path in the i18n objects */
 const APPT_TYPE_KEYS: Record<AppointmentType, string> = {
@@ -199,7 +200,7 @@ translate(key: string): string {
 
   readonly REMINDER_OPTIONS = [
     { value: 15,   label: '15 minutes before' },
-    { value: 30,   label: '30 minutes before' },
+    { value: 30,   label: this.t().appointments.reminder30MinBefore },
     { value: 60,   label: '1 hour before' },
     { value: 120,  label: '2 hours before' },
     { value: 1440, label: '1 day before' },
@@ -693,7 +694,7 @@ nextPage() {
         this.closeAddModal();
       },
       error: err => {
-        this.toast(err?.error?.message ?? this.t().appointments.failedSave, 'error');
+        this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().appointments.failedSave), 'error');
         this.submitting.set(false);
       },
     });
@@ -722,7 +723,7 @@ nextPage() {
     this.deleting.set(true);
     this.apptSvc.delete(id).subscribe({
       next:  ()  => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast(this.t().appointments.appointmentDeleted, 'success'); this.deleting.set(false); this.closeDelete(); },
-      error: err => { this.toast(err?.error?.message ?? this.t().appointments.deleteFailed, 'error'); this.deleting.set(false); this.closeDelete(); },
+      error: err => { this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().appointments.deleteFailed), 'error'); this.deleting.set(false); this.closeDelete(); },
     });
   }
 
@@ -738,7 +739,7 @@ nextPage() {
     this.cancelling.set(true);
     this.apptSvc.cancel(id).subscribe({
       next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.appointmentCancelled, 'success'); this.cancelling.set(false); this.closeCancel(); },
-      error: err   => { this.toast(err?.error?.message ?? this.t().appointments.cancelFailed, 'error'); this.cancelling.set(false); this.closeCancel(); },
+      error: err   => { this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().appointments.cancelFailed), 'error'); this.cancelling.set(false); this.closeCancel(); },
     });
   }
 
@@ -747,7 +748,7 @@ nextPage() {
     if (this.fpReadOnly()) return;
     this.apptSvc.complete(id).subscribe({
       next:  saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.markedCompleted, 'success'); },
-      error: err   => { this.toast(err?.error?.message ?? this.t().appointments.failedSave, 'error'); },
+      error: err   => { this.toast(this.localizeApiMessage(err?.error?.message ?? this.t().appointments.failedSave), 'error'); },
     });
   }
 
@@ -834,6 +835,10 @@ nextPage() {
       1440: `1440 ${before}`,
     };
     return map[mins] ?? `${mins} ${before}`;
+  }
+
+  private localizeApiMessage(message: string): string {
+    return localizeKnownApiMessage(message, this.t());
   }
 
   statusClass(s: AppointmentStatus): string {

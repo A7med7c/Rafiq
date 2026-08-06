@@ -22,7 +22,7 @@ import { ProfileSelectionService } from '../../Services/profile-selection.servic
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 
-type MedTab = 'schedule' | 'medications' | 'history';
+type MedTab = 'schedule' | 'history';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
 type SnoozeOption = 15 | 30 | 60;
 type RepeatOption = 'Once' | 'Daily' | 'Weekly' | 'Monthly';
@@ -571,7 +571,7 @@ export class Medications implements OnInit, OnDestroy {
     return u?.firstName?.trim() || u?.email || 'there';
   }
   get userEmail(): string { return this.authSvc.currentUser?.email ?? ''; }
-  get avatarUrl(): string { return this.authSvc.avatarUrl; }
+  get avatarUrl(): string | null { return this.authSvc.avatarUrl; }
 
   get hasProfileImage(): boolean { return !!this.authSvc.currentUser?.profileImageUrl; }
 
@@ -667,10 +667,10 @@ export class Medications implements OnInit, OnDestroy {
   get addMedErrors(): string[] {
     const f = this.addMedForm;
     const errs: string[] = [];
-    if (!f.medicineName.trim()) errs.push('Medicine name is required.');
-    if (!f.dosage.trim()) errs.push('Dosage is required.');
-    if (!f.frequency.trim()) errs.push('Frequency is required.');
-    if (!f.duration.trim()) errs.push('Duration is required.');
+    if (!f.medicineName.trim()) errs.push(this.t().medications.medNameRequiredError);
+    if (!f.dosage.trim()) errs.push(this.t().medications.dosageRequiredError);
+    if (!f.frequency.trim()) errs.push(this.t().medications.frequencyRequiredError);
+    if (!f.duration.trim()) errs.push(this.t().medications.durationRequiredError);
     return errs;
   }
 
@@ -691,7 +691,7 @@ export class Medications implements OnInit, OnDestroy {
       this.loadMedicines();
 
       if (params['tab'] === 'medications' || params['tab'] === 'schedule') {
-        this.setTab(params['tab']);
+        this.setTab('schedule');
       }
 
       const reminderId = params['reminderId'] ?? null;
@@ -763,16 +763,13 @@ export class Medications implements OnInit, OnDestroy {
   // ── Tabs ──────────────────────────────────────────────────────────────────
   setTab(tab: MedTab): void {
     this.activeTab.set(tab);
-    if (tab === 'medications' && this.medicines().length === 0 && !this.medsLoading()) {
-      this.loadMedicines();
-    }
     if (tab === 'history' && this.historyLogs().length === 0 && !this.historyLoading()) {
       this.loadHistory();
     }
   }
 
   goToMedsAndHighlight(): void {
-    this.setTab('medications');
+    this.setTab('schedule');
     this.highlightNoReminders.set(true);
     setTimeout(() => this.highlightNoReminders.set(false), 4000);
   }
@@ -998,7 +995,7 @@ export class Medications implements OnInit, OnDestroy {
         this.showSnoozePicker.set(false);
 
         if (!res.success) {
-          this.toast(res.message || `${log.medicineName} has already been updated.`, 'success');
+          this.toast(res.message || this.t().medications.alreadyUpdated.replace('{name}', log.medicineName), 'success');
           this.loadSchedule();
           return;
         }
@@ -1014,12 +1011,12 @@ export class Medications implements OnInit, OnDestroy {
           })
         );
 
-        this.toast(`${log.medicineName} dose skipped.`, 'success');
+        this.toast(this.t().medications.doseSkipped.replace('{name}', log.medicineName), 'success');
         this.notifSvc.notifyReminderChanged();
         this.loadSchedule();
       },
       error: err => {
-        this.toast(err?.error?.message ?? 'Could not skip dose.', 'error');
+        this.toast(err?.error?.message ?? this.t().medications.skipDoseFailed, 'error');
         this.skipping.set(false);
       },
     });
@@ -1045,7 +1042,7 @@ export class Medications implements OnInit, OnDestroy {
         this.showSnoozePicker.set(false);
 
         if (!res.success) {
-          this.toast(res.message || `${log.medicineName} could not be snoozed.`, 'success');
+          this.toast(res.message || this.t().medications.snoozeFailed.replace('{name}', log.medicineName), 'success');
           this.loadSchedule();
           return;
         }
@@ -1059,12 +1056,12 @@ export class Medications implements OnInit, OnDestroy {
           )
         );
 
-        this.toast(`${log.medicineName} reminder snoozed for ${minutes} minutes.`, 'success');
+        this.toast(this.t().medications.snoozedFor.replace('{name}', log.medicineName).replace('{minutes}', minutes.toString()), 'success');
         this.notifSvc.notifyReminderChanged();
         this.loadSchedule();
       },
       error: err => {
-        this.toast(err?.error?.message ?? 'Could not snooze reminder.', 'error');
+        this.toast(err?.error?.message ?? this.t().medications.snoozeReminderFailed, 'error');
         this.snoozing.set(false);
       },
     });
@@ -1137,7 +1134,7 @@ export class Medications implements OnInit, OnDestroy {
         // elsewhere (duplicate click, stale dialog, race with another tab).  Refresh from
         // the server so the display reflects the actual persisted state.
         if (!res.success) {
-          this.toast(res.message || `${log.medicineName} has already been updated.`, 'success');
+          this.toast(res.message || this.t().medications.alreadyUpdated.replace('{name}', log.medicineName), 'success');
           this.loadSchedule();
           return;
         }
@@ -1174,7 +1171,7 @@ export class Medications implements OnInit, OnDestroy {
         );
 
         this.reviewTracking.trackAction();
-        this.toast(`${log.medicineName} marked as taken. Great job! 💊`, 'success');
+        this.toast(this.t().medications.markedTaken.replace('{name}', log.medicineName), 'success');
         this.notifSvc.push({
           title: 'Medication Confirmed',
           body: `${log.medicineName} ${log.dosage} taken at ${this.formatTime(log.reminderTime)}`,
@@ -1188,7 +1185,7 @@ export class Medications implements OnInit, OnDestroy {
         this.loadSchedule();
       },
       error: err => {
-        this.toast(err?.error?.message ?? 'Could not confirm medication.', 'error');
+        this.toast(err?.error?.message ?? this.t().medications.confirmMedFailed, 'error');
         this.confirming.set(false);
       },
     });
@@ -1426,7 +1423,7 @@ export class Medications implements OnInit, OnDestroy {
           this.showReminderConfirmation.set(true);
         },
         error: err => {
-          this.toast(err?.error?.message ?? 'Could not save reminder.', 'error');
+          this.toast(err?.error?.message ?? this.t().medications.saveReminderFailed, 'error');
           this.addReminderSaving.set(false);
         },
       });
@@ -1473,10 +1470,10 @@ export class Medications implements OnInit, OnDestroy {
             this.addReminderSaving.set(false);
             this.closeAddReminder();
             this.notifSvc.notifyReminderChanged();
-            this.toast(`Reminder updated for ${medName}.`, 'success');
+            this.toast(this.t().medications.reminderUpdated.replace('{name}', medName), 'success');
           },
           error: err => {
-            this.toast(err?.error?.message ?? 'Could not update reminder.', 'error');
+            this.toast(err?.error?.message ?? this.t().medications.updateReminderFailed, 'error');
             this.addReminderSaving.set(false);
           },
         });
@@ -1506,7 +1503,7 @@ export class Medications implements OnInit, OnDestroy {
         const isNowPaused = this.isPaused(medId);
         const medName = this.medicines().find(m => m.id === medId)?.medicineName ?? 'medicine';
         this.notifSvc.notifyReminderChanged();
-        this.toast(`Reminders ${isNowPaused ? 'paused' : 'resumed'} for ${medName}.`, 'success');
+        this.toast(isNowPaused ? this.t().medications.remindersPaused.replace('{name}', medName) : this.t().medications.remindersResumed.replace('{name}', medName), 'success');
       },
       error: err => {
         // Revert on error
@@ -1514,7 +1511,7 @@ export class Medications implements OnInit, OnDestroy {
           ...rec,
           [medId]: oldReminders,
         }));
-        this.toast(err?.error?.message ?? 'Could not toggle reminders.', 'error');
+        this.toast(err?.error?.message ?? this.t().medications.toggleRemindersFailed, 'error');
       },
     });
   }
@@ -1551,12 +1548,12 @@ export class Medications implements OnInit, OnDestroy {
         this.deletingReminder.set(false);
         this.closeDeleteReminder();
         this.notifSvc.notifyReminderChanged();
-        this.toast(`Reminders deleted for ${medName}.`, 'success');
+        this.toast(this.t().medications.remindersDeleted.replace('{name}', medName), 'success');
       },
       error: err => {
         // Revert on error
         this.medicineReminders.update(rec => ({ ...rec, [medId]: oldReminders }));
-        this.toast(err?.error?.message ?? 'Could not delete reminders.', 'error');
+        this.toast(err?.error?.message ?? this.t().medications.deleteRemindersFailed, 'error');
         this.deletingReminder.set(false);
       },
     });
@@ -1747,11 +1744,11 @@ export class Medications implements OnInit, OnDestroy {
       next: res => {
         this.addMedSaving.set(false);
         this.showAddMedModal.set(false);
-        this.toast(`${payload.medicineName} added successfully.`, 'success');
+        this.toast(this.t().medications.addedSuccess.replace('{name}', payload.medicineName), 'success');
         this.reviewTracking.trackAction();
         this.loadMedicines();
         if (res.data?.id) {
-          this.setTab('medications');
+          this.setTab('schedule');
         }
       },
       error: err => {
@@ -1769,10 +1766,10 @@ export class Medications implements OnInit, OnDestroy {
   get editMedErrors(): string[] {
     const f = this.editMedForm;
     const errs: string[] = [];
-    if (!f.medicineName.trim()) errs.push('Medicine name is required.');
-    if (!f.dosage.trim()) errs.push('Dosage is required.');
-    if (!f.frequency.trim()) errs.push('Frequency is required.');
-    if (!f.duration.trim()) errs.push('Duration is required.');
+    if (!f.medicineName.trim()) errs.push(this.t().medications.medNameRequiredError);
+    if (!f.dosage.trim()) errs.push(this.t().medications.dosageRequiredError);
+    if (!f.frequency.trim()) errs.push(this.t().medications.frequencyRequiredError);
+    if (!f.duration.trim()) errs.push(this.t().medications.durationRequiredError);
     return errs;
   }
 
@@ -1789,7 +1786,6 @@ export class Medications implements OnInit, OnDestroy {
     this.editMedTouched.set(false);
     this.showEditMedModal.set(true);
     this.openMedMenuId.set(null);
-    if (this.viewingMed()) this.closeMedView();
   }
 
   closeEditMed(): void {
@@ -1819,7 +1815,7 @@ export class Medications implements OnInit, OnDestroy {
         this.editMedSaving.set(false);
         this.showEditMedModal.set(false);
         this.editingMed.set(null);
-        this.toast(`${payload.medicineName} updated successfully.`, 'success');
+        this.toast(this.t().medications.updatedSuccess.replace('{name}', payload.medicineName), 'success');
         // Patch the medicine in the local list without a full reload
         if (res.data) {
           this.medicines.update(list =>
@@ -1843,7 +1839,6 @@ export class Medications implements OnInit, OnDestroy {
     this.deleteMedName.set(medName);
     this.showDeleteMedModal.set(true);
     this.openMedMenuId.set(null);
-    if (this.viewingMed()) this.closeMedView();
   }
 
   closeDeleteMed(): void {
@@ -1865,7 +1860,7 @@ export class Medications implements OnInit, OnDestroy {
         this.showDeleteMedModal.set(false);
         this.deleteMedId.set(null);
         this.deleteMedName.set('');
-        this.toast(`${medName} has been removed from your medication list.`, 'success');
+        this.toast(this.t().medications.removedFromList.replace('{name}', medName), 'success');
         // Remove from local list and reload schedule (reminders may have been cancelled)
         this.medicines.update(list => list.filter(m => m.id !== medId));
         this.medicineReminders.update(rec => {
@@ -1876,7 +1871,7 @@ export class Medications implements OnInit, OnDestroy {
         this.loadSchedule();
       },
       error: err => {
-        this.toast(err?.error?.message ?? 'Could not delete medication.', 'error');
+        this.toast(err?.error?.message ?? this.t().medications.deleteMedFailed, 'error');
         this.deletingMed.set(false);
       },
     });
