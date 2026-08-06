@@ -18,12 +18,16 @@ export class Contact {
       subtitle: 'Join Rafiq today and experience the future of healthcare.',
       cta: 'Get Started Now →',
       note: "It's free and easy to start.",
+      contactEmail: 'Contact us: ai.rafiq.medicall@gmail.com',
+      email: 'ai.rafiq.medicall@gmail.com',
     },
     ar: {
       title: 'مستعد تتحكم في صحتك؟',
       subtitle: 'انضم لرفيق النهارده وعيش مستقبل الرعاية الصحية.',
       cta: 'ابدأ دلوقتي ←',
       note: 'مجاني وسهل تبدأ.',
+      contactEmail: 'تواصل معنا: ai.rafiq.medicall@gmail.com',
+      email: 'ai.rafiq.medicall@gmail.com',
     },
   };
 

@@ -22,7 +22,7 @@ export class Footer {
         { label: 'Home', section: 'home' as LandingSection },
         { label: 'About', section: 'about' as LandingSection },
         { label: 'Features', section: 'features' as LandingSection },
-        { label: 'Contact', section: 'contact' as LandingSection },
+        // { label: 'Contact', section: 'contact' as LandingSection },
       ],
       serviceLinks: ['Appointments', 'Health Records', 'Medications', 'AI Assistant', 'Health Analytics'],
       supportLinks: ['Help Center', 'Privacy Policy', 'Terms of Service', 'FAQ'],
@@ -30,7 +30,7 @@ export class Footer {
       appStore: 'App Store',
       playStoreSmall: 'GET IT ON',
       playStore: 'Google Play',
-      copyright: '© 2024 Rafiq. All rights reserved.',
+      copyright: '© 2026 Rafiq. All rights reserved.',
     },
     ar: {
       brand: 'رفيق | Rafiq',
@@ -60,9 +60,13 @@ export class Footer {
   }
 
   scrollToSection(sectionId: LandingSection): void {
-    document.getElementById(sectionId)?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
+    const el = document.getElementById(sectionId);
+    if (!el) return;
+
+    const navbarEl = document.querySelector<HTMLElement>('.navbar');
+    const navbarHeight = navbarEl?.getBoundingClientRect().height ?? 0;
+    const top = el.getBoundingClientRect().top + window.scrollY - navbarHeight;
+
+    window.scrollTo({ top, behavior: 'smooth' });
   }
 }
