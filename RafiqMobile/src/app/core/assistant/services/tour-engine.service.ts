@@ -11,7 +11,7 @@
  *   stepExit  → highlight + bubble/mascot fade out together, THEN the next stepEnter begins
  */
 
-import { Injectable, signal, computed, inject, NgZone, effect } from '@angular/core';
+import { Injectable, signal, computed, inject, NgZone, effect, Injector } from '@angular/core';
 import { Router, NavigationStart } from '@angular/router';
 import { driver, Driver } from 'driver.js';
 
@@ -51,8 +51,12 @@ export class TourEngineService {
   private readonly anchorRegistry = inject(AssistantAnchorRegistryService);
   private readonly highlightTool = inject(HighlightTool);
   private readonly navigateTool = inject(NavigateTool);
-  private readonly authService = inject(AuthService, { optional: true });
+  private readonly injector = inject(Injector);
   private readonly l10n = inject(LocalizationService, { optional: true });
+
+  private get authService(): AuthService | null {
+    return this.injector.get(AuthService, null, { optional: true });
+  }
 
   /** Scenario registry mapping scenario ID -> TourScenario */
   private readonly registry = new Map<string, TourScenario>();
@@ -303,6 +307,7 @@ export class TourEngineService {
     const scenario = this._currentScenario();
     const wasVisible = this._stepVisible();
 
+    this._isPlaying.set(false);
     this._stepVisible.set(false);
     this.clearAllTimers();
     this.clearStepResources();
@@ -611,12 +616,66 @@ export class TourEngineService {
   // ── Driver.js Spotlight Rendering ──────────────────────────────────
 
   private highlightElementWithDriver(element: HTMLElement, config?: any): void {
-    // On mobile, highlighting is handled by TourGlowRingDirective (CSS glow ring).
-    // driver.js overlay is skipped because it is too large for small screens.
+    if (typeof window === 'undefined') return;
+    try {
+      if (!this.activeDriver) {
+        this.activeDriver = driver({
+          animate: true,
+          allowClose: false,
+          overlayOpacity: 0.65,
+          stagePadding: 6,
+          popoverClass: 'rafiq-driver-popover',
+        });
+      }
+      this.activeDriver.highlight({ element });
+    } catch (err) {
+      console.warn('[TourEngineService] Spotlight highlight warning:', err);
+    }
   }
 
   private clearDriverHighlight(): void {
-    // No-op on mobile — glow ring is cleared by TourGlowRingDirective.
+    if (this.activeDriver) {
+      try {
+        this.activeDriver.destroy();
+      } catch { /* ignore */ }
+      this.activeDriver = null;
+    }
+  }
+
+  /**
+   * Starts a dedicated tour for the current active page route (or full welcome-tour fallback).
+   * Used when user taps the header Tour button (?).
+   */
+  startCurrentPageTour(): boolean {
+    const route = this.router.url.split('?')[0].toLowerCase();
+    const isEn = this.l10n?.lang() === 'en';
+
+    let scenarioId = 'dashboard-tour';
+
+    if (route.includes('/medical-records')) {
+      scenarioId = 'medical-records-tour';
+    } else if (route.includes('/appointments')) {
+      scenarioId = 'appointments-tour';
+    } else if (route.includes('/medications')) {
+      scenarioId = 'medications-tour';
+    } else if (route.includes('/family')) {
+      scenarioId = 'family-profiles-tour';
+    } else if (route.includes('/my-profile')) {
+      scenarioId = 'my-profile-tour';
+    } else if (route.includes('/dashboard')) {
+      scenarioId = 'dashboard-tour';
+    } else {
+      scenarioId = 'welcome-tour';
+    }
+
+    if (isEn) {
+      const enId = `${scenarioId}-en`;
+      if (this.getScenario(enId)) {
+        scenarioId = enId;
+      }
+    }
+
+    return this.startTour(scenarioId);
   }
 
   private clearStepResources(): void {
@@ -655,7 +714,7 @@ export class TourEngineService {
       const selector = anchorName.startsWith('#') || anchorName.startsWith('.')
         ? anchorName
         : `#${anchorName}`;
-      el = (document.querySelector(selector) || document.getElementById(anchorName)) as HTMLElement | null;
+      el = (document.querySelector(selector) || document.getElementById(anchorName) || document.querySelector(`[assistantAnchor="${anchorName}"]`)) as HTMLElement | null;
     }
     return el;
   }

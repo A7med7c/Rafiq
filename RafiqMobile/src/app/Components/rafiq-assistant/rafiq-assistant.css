@@ -613,6 +613,26 @@
   flex-shrink: 0;
 }
 
+.tour-bubble__audio-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #cfe8ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0EAFD7;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.tour-bubble__audio-btn:hover {
+  background: #eef8ff;
+  border-color: #0EAFD7;
+  transform: scale(1.06);
+}
+
 .tour-bubble__skip-btn {
   display: inline-flex;
   align-items: center;

@@ -11,10 +11,36 @@ import { MobileHeader } from '../../shared/mobile-header/mobile-header';
 import { AppointmentsContentComponent } from '../../Components/appointments-content/appointments-content';
 import { catchError, of } from 'rxjs';
 
+import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+
+import { TourEngineService } from '../../core/assistant/services/tour-engine.service';
+
+const DEMO_TOUR_APPOINTMENT: AppointmentDto = {
+  id: 'demo-tour-appt',
+  title: 'زيارة طبيب (توضيحي)',
+  provider: 'د. سارة أحمد',
+  appointmentType: AppointmentType.DoctorVisit,
+  appointmentDateTime: new Date(Date.now() + 86400000).toISOString(),
+  reminderOffsetMinutes: 30,
+  status: AppointmentStatus.Upcoming,
+  createdAt: new Date().toISOString(),
+};
+
+const DEMO_COMPLETED_APPOINTMENT: AppointmentDto = {
+  id: 'demo-completed-appt',
+  title: 'فحص دوري (توضيحي)',
+  provider: 'د. محمد علي',
+  appointmentType: AppointmentType.LabTest,
+  appointmentDateTime: new Date(Date.now() - 86400000 * 3).toISOString(),
+  reminderOffsetMinutes: undefined,
+  status: AppointmentStatus.Completed,
+  createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+};
+
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, RouterLink, BottomNav, MobileHeader, AppointmentsContentComponent],
+  imports: [CommonModule, RouterLink, AssistantAnchorDirective, BottomNav, MobileHeader, AppointmentsContentComponent],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
 })
@@ -24,6 +50,7 @@ export class Appointments implements OnInit {
   protected readonly notifSvc = inject(NotificationService);
   protected readonly l10n = inject(LocalizationService);
   protected readonly aiChatService = inject(AiChatService);
+  private readonly tourEngine = inject(TourEngineService);
   private readonly router = inject(Router);
 
   protected readonly t = this.l10n.t;
@@ -68,15 +95,27 @@ export class Appointments implements OnInit {
   }
 
   readonly upcomingAppointments = computed(() => {
-    return this.appointments()
+    const real = this.appointments()
       .filter(a => a.status === AppointmentStatus.Upcoming)
       .sort((a, b) => new Date(a.appointmentDateTime).getTime() - new Date(b.appointmentDateTime).getTime());
+
+    if (real.length === 0 && this.tourEngine.isPlaying()) {
+      return [DEMO_TOUR_APPOINTMENT];
+    }
+
+    return real;
   });
 
   readonly previousAppointments = computed(() => {
-    return this.appointments()
+    const real = this.appointments()
       .filter(a => a.status !== AppointmentStatus.Upcoming)
       .sort((a, b) => new Date(b.appointmentDateTime).getTime() - new Date(a.appointmentDateTime).getTime());
+
+    if (real.length === 0 && this.tourEngine.isPlaying()) {
+      return [DEMO_COMPLETED_APPOINTMENT];
+    }
+
+    return real;
   });
 
   readonly groupedPreviousAppointments = computed(() => {

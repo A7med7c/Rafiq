@@ -18,8 +18,8 @@ import { environment } from '../../Environments/Environment';
 import { ApiResponse } from '../../Modles/api-response';
 import { map, switchMap } from 'rxjs';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
+import { TourEngineService } from '../../core/assistant/services/tour-engine.service';
 import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
-import { MobileHeader } from '../../shared/mobile-header/mobile-header';
 import { MediaPickerService } from '../../Services/media-picker.service';
 
 interface UpdateProfileBody {
@@ -37,7 +37,7 @@ interface UpdateProfileBody {
 @Component({
   selector: 'app-my-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, BottomNav],
+  imports: [CommonModule, FormsModule, RouterLink, AssistantAnchorDirective, BottomNav],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',
 })
@@ -48,7 +48,12 @@ export class MyProfile implements OnInit {
   private readonly emergencySvc = inject(EmergencyContactService);
   protected readonly notifService = inject(NotificationService);
   protected readonly l10n = inject(LocalizationService);
+  protected readonly tourEngine = inject(TourEngineService);
   readonly aiChatService = inject(AiChatService);
+
+  startTour(): void {
+    this.tourEngine.startCurrentPageTour();
+  }
   private readonly reviewTracking = inject(ReviewTrackingService);
   protected readonly t = this.l10n.t;
   private readonly router = inject(Router);

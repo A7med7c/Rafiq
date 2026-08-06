@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { HealthProfileService } from '../../../Services/health-profile.service';
 import { LocalizationService } from '../../../Services/localization.service';
 import { MediaPickerService } from '../../../Services/media-picker.service';
+import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { Gender, BloodType, AllergySeverity, DiseaseStatus } from '../../../Modles/health-profile-enums';
 import { CreatePatientProfileRequest } from '../../../Modles/health-profile-request';
 
@@ -49,6 +50,7 @@ export class OnboardingAiUpload implements OnInit {
   private readonly healthProfile = inject(HealthProfileService);
   private readonly http          = inject(HttpClient);
   protected readonly l10n        = inject(LocalizationService);
+  private readonly tourEngine    = inject(TourEngineService);
   private readonly mediaPicker   = inject(MediaPickerService);
   protected readonly t = this.l10n.t;
 
@@ -163,6 +165,10 @@ export class OnboardingAiUpload implements OnInit {
         this.isSubmitting = false;
         this.submitSuccess = res?.message || 'Patient profile created successfully!';
         this.clearSessionStorage();
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('rafiq_tour_completed');
+        }
+        if (this.tourEngine.isPlaying()) this.tourEngine.stopTour(false);
         setTimeout(() => {
           this.router.navigate(['/dashboard']);
         }, 2000);
@@ -174,6 +180,10 @@ export class OnboardingAiUpload implements OnInit {
           // Profile already exists — treat as success so the user can move forward
           this.submitSuccess = 'Your health profile is already complete.';
           this.clearSessionStorage();
+          if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem('rafiq_tour_completed');
+          }
+          if (this.tourEngine.isPlaying()) this.tourEngine.stopTour(false);
           setTimeout(() => {
             this.router.navigate(['/dashboard']);
           }, 2000);
