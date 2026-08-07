@@ -862,6 +862,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
           this.documentAnalysisState.failSyncUpload(tempId, v.prescription);
           this.showToast(v.prescription, 'error');
+        } else if (errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED' || err?.error?.message === 'This exact document has already been uploaded to this profile.') {
+          this.documentAnalysisState.failSyncUpload(tempId, (v as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.');
+          this.showToast((v as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.', 'error');
         } else if (errCode?.startsWith('UNREADABLE_DOCUMENT_')) {
           this.documentAnalysisState.failSyncUpload(tempId, 'Document unreadable — enter manually.');
           this._failedFile = file;
@@ -1116,6 +1119,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         const errCode = err?.error?.errorCode as string | undefined;
         if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
           this.documentAnalysisState.failSyncUpload(tempId, this.t().uploadValidation.medicine);
+        } else if (errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED' || err?.error?.message === 'This exact document has already been uploaded to this profile.') {
+          this.documentAnalysisState.failSyncUpload(tempId, (this.t().uploadValidation as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.');
         } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
           this.documentAnalysisState.failSyncUpload(tempId, this.t().uploadValidation.medicineUnreadable);
         } else {
