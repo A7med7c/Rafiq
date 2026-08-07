@@ -33,11 +33,18 @@ jobs:
         run: dotnet test src/src.sln --configuration Release --no-build --verbosity normal
 
       - name: Publish API
+        shell: pwsh
         run: |
           dotnet publish src/Rafiq.API/Rafiq.API.csproj `
             --configuration Release `
             --no-build `
-            --output ./publish
+            --output "${{ github.workspace }}\publish"
+
+      - name: Verify publish output
+        shell: pwsh
+        run: |
+          Write-Host "Workspace: ${{ github.workspace }}"
+          Get-ChildItem "${{ github.workspace }}\publish" -Recurse
 
       - name: Deploy to MonsterASP.NET
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
@@ -46,4 +53,4 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          source-path: ./publish
+          source-path: ${{ github.workspace }}\publish
