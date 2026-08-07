@@ -1103,10 +1103,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       const payload = {
         doctorName: rf.doctorName, patientName: rf.patientName,
         prescriptionDate: rf.prescriptionDate, imagePath: rf.imagePath,
-        medicines: rf.prescriptionMedicines.map(m => ({
-          medicineName: m.medicineName, dosage: m.dosage, frequency: m.frequency,
-          duration: m.duration, instructions: m.instructions,
-        })),
+        medicines: rf.prescriptionMedicines
+          .filter((_, i) => this.addedMedIndices().has(i))
+          .map(m => ({
+            medicineName: m.medicineName, dosage: m.dosage, frequency: m.frequency,
+            duration: m.duration, instructions: m.instructions,
+          })),
       };
       request$ = rf.mode === 'edit' && rf.recordId
         ? this.http.put(`${this.base}/prescriptions/${rf.recordId}`, payload)

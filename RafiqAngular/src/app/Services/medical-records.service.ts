@@ -161,6 +161,10 @@ export class MedicalRecordsService {
 
     // Map Medicines
     data.medicines.forEach(m => {
+      const sourceStr = String(m.source || '').toLowerCase();
+      if (sourceStr === 'prescription' || sourceStr === '2' || sourceStr === 'manual' || sourceStr === '1') {
+        return;
+      }
       records.push({
         id: m.id,
         name: m.medicineName,

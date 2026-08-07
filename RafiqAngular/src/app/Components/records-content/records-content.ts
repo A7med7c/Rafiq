@@ -1053,10 +1053,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         medicalAttentionReason: rf.medicalAttentionReason,
         recommendedSpecialty: rf.recommendedSpecialty,
         confidenceScore: rf.confidenceScore,
-        medicines: rf.prescriptionMedicines.map(m => ({
-          medicineName: m.medicineName, dosage: m.dosage, frequency: m.frequency,
-          duration: m.duration, instructions: m.instructions,
-        })),
+        medicines: rf.prescriptionMedicines
+          .filter((_, i) => this.addedMedIndices().has(i))
+          .map(m => ({
+            medicineName: m.medicineName, dosage: m.dosage, frequency: m.frequency,
+            duration: m.duration, instructions: m.instructions,
+          })),
       };
       request$ = rf.mode === 'edit' && rf.recordId
         ? this.http.put(`${this.base}/prescriptions/${rf.recordId}`, payload)
@@ -1310,7 +1312,6 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   closeReminderPrompt(): void {
     this.showReminderPromptModal.set(false);
     this.reminderPromptMedicineId.set(null);
-    void this.router.navigate(['/medications'], { queryParams: { tab: 'medications' } });
   }
 
   goToSetReminder(): void {
