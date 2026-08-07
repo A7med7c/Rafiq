@@ -219,6 +219,7 @@
         <div><span>{{ t().records.labName }}</span><strong>{{ rec.rawRecord.labName || '-' }}</strong></div>
         <div><span>{{ t().records.doctorName }}</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
         <div><span>{{ t().records.reportDate }}</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong></div>
+        
       </div>
       }
       @if (rec.type === 'imaging') {

@@ -40,8 +40,8 @@
           <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().records.scanWithAI }}
           }
         </button>
-        <button type="button" class="up-btn up-btn--manual"
-          [disabled]="getUploadState('lab').uploading" (click)="openManualEntry('lab')">
+        <button type="button" class="up-btn up-btn--manual" [disabled]="getUploadState('lab').uploading"
+          (click)="openManualEntry('lab')">
           <i class="fa-solid fa-pen-to-square"></i> {{ t().records.addManually }}
         </button>
       </div>
@@ -56,20 +56,22 @@
         <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('prescription').uploading"
           [class.up-btn--loading]="getUploadState('prescription').uploading" (click)="triggerUpload('Prescription')">
           @if (getUploadState('prescription').uploading) {
-          <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('prescription').indeterminate">
+          <svg class="up-ring" viewBox="0 0 36 36"
+            [class.up-ring--indeterminate]="getUploadState('prescription').indeterminate">
             <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
             <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
               [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
-              [attr.stroke-dashoffset]="progressOffset(getUploadState('prescription').progress)"
-              stroke-linecap="round" transform="rotate(-90 18 18)" />
+              [attr.stroke-dashoffset]="progressOffset(getUploadState('prescription').progress)" stroke-linecap="round"
+              transform="rotate(-90 18 18)" />
           </svg>
-          @if (!getUploadState('prescription').indeterminate) { <span>{{ getUploadState('prescription').progress }}%</span> }
+          @if (!getUploadState('prescription').indeterminate) { <span>{{ getUploadState('prescription').progress
+            }}%</span> }
           } @else {
           <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().records.scanWithAI }}
           }
         </button>
-        <button type="button" class="up-btn up-btn--manual"
-          [disabled]="getUploadState('prescription').uploading" (click)="openManualEntry('prescription')">
+        <button type="button" class="up-btn up-btn--manual" [disabled]="getUploadState('prescription').uploading"
+          (click)="openManualEntry('prescription')">
           <i class="fa-solid fa-pen-to-square"></i> {{ t().records.addManually }}
         </button>
       </div>
@@ -84,7 +86,8 @@
         <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('imaging').uploading"
           [class.up-btn--loading]="getUploadState('imaging').uploading" (click)="triggerUpload('X-Ray & Imaging')">
           @if (getUploadState('imaging').uploading) {
-          <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('imaging').indeterminate">
+          <svg class="up-ring" viewBox="0 0 36 36"
+            [class.up-ring--indeterminate]="getUploadState('imaging').indeterminate">
             <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
             <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
               [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
@@ -96,8 +99,8 @@
           <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().records.scanWithAI }}
           }
         </button>
-        <button type="button" class="up-btn up-btn--manual"
-          [disabled]="getUploadState('imaging').uploading" (click)="openManualEntry('imaging')">
+        <button type="button" class="up-btn up-btn--manual" [disabled]="getUploadState('imaging').uploading"
+          (click)="openManualEntry('imaging')">
           <i class="fa-solid fa-pen-to-square"></i> {{ t().records.addManually }}
         </button>
       </div>
@@ -112,7 +115,8 @@
         <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('medicine').uploading"
           [class.up-btn--loading]="getUploadState('medicine').uploading" (click)="triggerUpload('Medicine Box')">
           @if (getUploadState('medicine').uploading) {
-          <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('medicine').indeterminate">
+          <svg class="up-ring" viewBox="0 0 36 36"
+            [class.up-ring--indeterminate]="getUploadState('medicine').indeterminate">
             <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
             <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
               [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
@@ -124,8 +128,8 @@
           <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().records.scanWithAI }}
           }
         </button>
-        <button type="button" class="up-btn up-btn--manual"
-          [disabled]="getUploadState('medicine').uploading" (click)="openManualEntry('medicine')">
+        <button type="button" class="up-btn up-btn--manual" [disabled]="getUploadState('medicine').uploading"
+          (click)="openManualEntry('medicine')">
           <i class="fa-solid fa-pen-to-square"></i> {{ t().records.addManually }}
         </button>
       </div>
@@ -138,9 +142,11 @@
       <span class="up-count">{{ generalCount() }} {{ t().records.recordsSuffix }}</span>
       <div class="up-btn-group">
         <button type="button" class="up-btn up-btn--scan" [disabled]="getUploadState('general').uploading"
-          [class.up-btn--loading]="getUploadState('general').uploading" (click)="triggerUpload('General Medical Document')">
+          [class.up-btn--loading]="getUploadState('general').uploading"
+          (click)="triggerUpload('General Medical Document')">
           @if (getUploadState('general').uploading) {
-          <svg class="up-ring" viewBox="0 0 36 36" [class.up-ring--indeterminate]="getUploadState('general').indeterminate">
+          <svg class="up-ring" viewBox="0 0 36 36"
+            [class.up-ring--indeterminate]="getUploadState('general').indeterminate">
             <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
             <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
               [attr.stroke-dasharray]="RING_CIRCUMFERENCE"
@@ -152,8 +158,8 @@
           <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().records.scanWithAI }}
           }
         </button>
-        <button type="button" class="up-btn up-btn--manual"
-          [disabled]="getUploadState('general').uploading" (click)="openManualEntry('general')">
+        <button type="button" class="up-btn up-btn--manual" [disabled]="getUploadState('general').uploading"
+          (click)="openManualEntry('general')">
           <i class="fa-solid fa-pen-to-square"></i> {{ t().records.addManually }}
         </button>
       </div>
@@ -164,43 +170,54 @@
   <!-- TABS BAR + TOOLBAR -->
   <section class="records-toolbar" style="margin-top: 15px;">
     <div class="tabs-bar">
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'all'" (click)="setTab('all')">{{ t().records.allRecords }}</button>
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'lab'" (click)="setTab('lab')">{{ t().records.labAnalysisTab }}</button>
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'prescription'" (click)="setTab('prescription')">{{ t().records.prescriptionsTab }}</button>
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'imaging'" (click)="setTab('imaging')">{{ t().records.xraysImagingTab }}</button>
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'medicine'" (click)="setTab('medicine')">{{ t().records.medicineBoxesTab }}</button>
-      <button type="button" class="tab-link" [class.active]="activeTab() === 'general'" (click)="setTab('general')">{{ t().records.otherDocumentsTab }}</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'all'" (click)="setTab('all')">{{
+        t().records.allRecords }}</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'lab'" (click)="setTab('lab')">{{
+        t().records.labAnalysisTab }}</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'prescription'"
+        (click)="setTab('prescription')">{{ t().records.prescriptionsTab }}</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'imaging'" (click)="setTab('imaging')">{{
+        t().records.xraysImagingTab }}</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'medicine'" (click)="setTab('medicine')">{{
+        t().records.medicineBoxesTab }}</button>
+      <button type="button" class="tab-link" [class.active]="activeTab() === 'general'" (click)="setTab('general')">{{
+        t().records.otherDocumentsTab }}</button>
     </div>
 
     <!-- Mobile-only: collapsible tab selector -->
     <div class="mobile-tab-select">
-      <button type="button" class="mobile-tab-trigger" [class.is-open]="mobileTabMenuOpen()" (click)="toggleMobileTabMenu()">
+      <button type="button" class="mobile-tab-trigger" [class.is-open]="mobileTabMenuOpen()"
+        (click)="toggleMobileTabMenu()">
         <i [class]="'fa-solid ' + activeTabIcon() + ' mtt-icon'"></i>
         <span class="mtt-label">{{ activeTabLabel() }}</span>
         <i class="fa-solid fa-chevron-down mtt-chevron"></i>
       </button>
       @if (mobileTabMenuOpen()) {
-        <div class="mobile-tab-backdrop" (click)="closeMobileTabMenu()"></div>
-        <div class="mobile-tab-dropdown">
-          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'all'" (click)="setTab('all')">
-            <i class="fa-solid fa-layer-group"></i> {{ t().records.allRecords }}
-          </button>
-          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'lab'" (click)="setTab('lab')">
-            <i class="fa-solid fa-flask"></i> {{ t().records.labAnalysisTab }}
-          </button>
-          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'prescription'" (click)="setTab('prescription')">
-            <i class="fa-solid fa-prescription-bottle-medical"></i> {{ t().records.prescriptionsTab }}
-          </button>
-          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'imaging'" (click)="setTab('imaging')">
-            <i class="fa-solid fa-x-ray"></i> {{ t().records.xraysImagingTab }}
-          </button>
-          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'medicine'" (click)="setTab('medicine')">
-            <i class="fa-solid fa-pills"></i> {{ t().records.medicineBoxesTab }}
-          </button>
-          <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'general'" (click)="setTab('general')">
-            <i class="fa-solid fa-file-medical"></i> {{ t().records.otherDocumentsTab }}
-          </button>
-        </div>
+      <div class="mobile-tab-backdrop" (click)="closeMobileTabMenu()"></div>
+      <div class="mobile-tab-dropdown">
+        <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'all'" (click)="setTab('all')">
+          <i class="fa-solid fa-layer-group"></i> {{ t().records.allRecords }}
+        </button>
+        <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'lab'" (click)="setTab('lab')">
+          <i class="fa-solid fa-flask"></i> {{ t().records.labAnalysisTab }}
+        </button>
+        <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'prescription'"
+          (click)="setTab('prescription')">
+          <i class="fa-solid fa-prescription-bottle-medical"></i> {{ t().records.prescriptionsTab }}
+        </button>
+        <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'imaging'"
+          (click)="setTab('imaging')">
+          <i class="fa-solid fa-x-ray"></i> {{ t().records.xraysImagingTab }}
+        </button>
+        <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'medicine'"
+          (click)="setTab('medicine')">
+          <i class="fa-solid fa-pills"></i> {{ t().records.medicineBoxesTab }}
+        </button>
+        <button type="button" class="mobile-tab-item" [class.is-active]="activeTab() === 'general'"
+          (click)="setTab('general')">
+          <i class="fa-solid fa-file-medical"></i> {{ t().records.otherDocumentsTab }}
+        </button>
+      </div>
       }
     </div>
 
@@ -208,10 +225,12 @@
     <div class="records-table-tools">
       <div class="search-wrap">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input type="text" [attr.placeholder]="t().records.searchPlaceholder" [(ngModel)]="searchQueryValue" class="search-input">
+        <input type="text" [attr.placeholder]="t().records.searchPlaceholder" [(ngModel)]="searchQueryValue"
+          class="search-input">
       </div>
       <div class="filter-menu-wrap">
-        <button type="button" class="filter-btn" [class.menu-open]="filterMenuOpen()" (click)="toggleFilterMenu($event)">
+        <button type="button" class="filter-btn" [class.menu-open]="filterMenuOpen()"
+          (click)="toggleFilterMenu($event)">
           <i class="fa-solid fa-sliders"></i> {{ t().records.filter }}
         </button>
         @if (filterMenuOpen()) {
@@ -249,17 +268,20 @@
                 <div class="date-filter-grid">
                   <label class="date-filter-field">
                     <span>{{ t().records.fromDate }}</span>
-                    <input type="date" [ngModel]="draftFilters().fromDate" (ngModelChange)="updateDraftFilter('fromDate', $event)">
+                    <input type="date" [ngModel]="draftFilters().fromDate"
+                      (ngModelChange)="updateDraftFilter('fromDate', $event)">
                   </label>
                   <label class="date-filter-field">
                     <span>{{ t().records.toDate }}</span>
-                    <input type="date" [ngModel]="draftFilters().toDate" (ngModelChange)="updateDraftFilter('toDate', $event)">
+                    <input type="date" [ngModel]="draftFilters().toDate"
+                      (ngModelChange)="updateDraftFilter('toDate', $event)">
                   </label>
                 </div>
               </div>
               <div class="filter-section">
                 <p class="filter-section-title">{{ t().records.sortBy }}</p>
-                <select class="sort-select" [ngModel]="draftFilters().sortBy" (ngModelChange)="updateDraftFilter('sortBy', $event)">
+                <select class="sort-select" [ngModel]="draftFilters().sortBy"
+                  (ngModelChange)="updateDraftFilter('sortBy', $event)">
                   @for (item of sortOptions; track item.value) {
                   <option [value]="item.value">{{ item.label }}</option>
                   }
@@ -268,8 +290,10 @@
             </div>
           </div>
           <div class="filter-actions">
-            <button type="button" class="filter-action-btn filter-action-btn--ghost" (click)="resetFilters()">{{ t().records.resetFilters }}</button>
-            <button type="button" class="filter-action-btn filter-action-btn--primary" (click)="applyFilters()">{{ t().records.applyFilters }}</button>
+            <button type="button" class="filter-action-btn filter-action-btn--ghost" (click)="resetFilters()">{{
+              t().records.resetFilters }}</button>
+            <button type="button" class="filter-action-btn filter-action-btn--primary" (click)="applyFilters()">{{
+              t().records.applyFilters }}</button>
           </div>
         </div>
         }
@@ -277,8 +301,8 @@
       <!-- Add Record button (shown always — compact mode embeds it here) -->
       @if (!readOnly) {
       <div class="add-record-menu-wrap">
-        <button type="button" class="add-record-btn" assistantAnchor="add-record-button" [class.menu-open]="addRecordMenuOpen()"
-          (click)="toggleAddRecordMenu($event)">
+        <button type="button" class="add-record-btn" assistantAnchor="add-record-button"
+          [class.menu-open]="addRecordMenuOpen()" (click)="toggleAddRecordMenu($event)">
           <i class="fa-solid fa-plus"></i> {{ t().records.addRecord }}
         </button>
         @if (addRecordMenuOpen()) {
@@ -317,15 +341,17 @@
   }
 
   <!-- RECORDS TABLE -->
-  <section class="table-card" [class.tab-animating]="tabAnimating()"
-    [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
+  <section class="table-card" [class.tab-animating]="tabAnimating()" [class.tab-slide-left]="tabDirection() === 'left'"
+    [class.tab-slide-right]="tabDirection() === 'right'">
     @if (loading()) {
     <div class="table-loader">
       <div class="skl-list">
         @for (s of [1,2,3,4,5]; track s) {
         <div class="skl-row">
           <div class="skl-sq"></div>
-          <div class="skl-lines"><div class="skl-line skl-70"></div></div>
+          <div class="skl-lines">
+            <div class="skl-line skl-70"></div>
+          </div>
           <div class="skl-pill"></div>
         </div>
         }
@@ -360,26 +386,29 @@
                 </div>
                 <div>
                   <span class="table-rec-name">{{ rec.name }}
-                  @if (rec.requiresMedicalAttention) {
-                    <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}" (click)="openWarningModal(rec)" title="Medical Warning">
+                    @if (rec.requiresMedicalAttention) {
+                    <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}"
+                      (click)="openWarningModal(rec)" title="Medical Warning">
                       <i class="fa-solid fa-triangle-exclamation"></i> {{ rec.attentionLevel || 'Warning' }}
                     </span>
-                  }</span>
+                    }</span>
                   @if (rec.rawRecord.doctorName) {
                   <span class="table-rec-sub">{{ t().common.drPrefix }} {{ rec.rawRecord.doctorName }}</span>
                   }
                 </div>
               </div>
             </td>
-            <td [attr.data-label]="t().records.type"><span class="type-pill" [class]="'type-' + rec.type">{{ recordTypeLabel(rec.type) }}</span></td>
+            <td [attr.data-label]="t().records.type"><span class="type-pill" [class]="'type-' + rec.type">{{
+                recordTypeLabel(rec.type) }}</span></td>
             <td class="table-date" [attr.data-label]="t().records.date">{{ rec.date }}</td>
-                          <td class="table-uploaded" [attr.data-label]="t().records.uploadedBy">
-                {{ rec.uploadedBy }}
-                
-              </td>
+            <td class="table-uploaded" [attr.data-label]="t().records.uploadedBy">
+              {{ rec.uploadedBy }}
+
+            </td>
             <td [attr.data-label]="t().records.aiSummaryStatus">
               <span class="pill" [class]="rec.hasAiSummary ? 'pill-green' : 'pill-yellow'">
-                <i class="fa-solid" [class.fa-check-double]="rec.hasAiSummary" [class.fa-spinner]="!rec.hasAiSummary"></i>
+                <i class="fa-solid" [class.fa-check-double]="rec.hasAiSummary"
+                  [class.fa-spinner]="!rec.hasAiSummary"></i>
                 {{ rec.hasAiSummary ? t().records.processed : t().records.pending }}
               </span>
             </td>
@@ -396,8 +425,7 @@
                 @if (!readOnly) {
                 <div class="record-actions" [style.z-index]="actionMenuOpen() === rec.id ? 50 : 1">
                   <button type="button" class="action-btn" [attr.title]="t().records.menu"
-                    [disabled]="loading() || deleting() || reviewSaving()"
-                    (click)="toggleActionMenu(rec.id, $event)">
+                    [disabled]="loading() || deleting() || reviewSaving()" (click)="toggleActionMenu(rec.id, $event)">
                     <i class="fa-solid fa-ellipsis-vertical"></i>
                   </button>
                   @if (actionMenuOpen() === rec.id) {
@@ -405,7 +433,8 @@
                     <button type="button" class="record-menu-item" (click)="editRecord(rec)">
                       <i class="fa-solid fa-pen-to-square"></i> {{ t().records.editAction }}
                     </button>
-                    <button type="button" class="record-menu-item record-menu-item--danger" (click)="openDeleteModal(rec)">
+                    <button type="button" class="record-menu-item record-menu-item--danger"
+                      (click)="openDeleteModal(rec)">
                       <i class="fa-solid fa-trash-can"></i> {{ t().records.deleteAction }}
                     </button>
                   </div>
@@ -429,7 +458,8 @@
         {{ page }}
       </button>
       }
-      <button type="button" class="page-btn" [disabled]="currentPage() === totalPages() || loading()" (click)="nextPage()">
+      <button type="button" class="page-btn" [disabled]="currentPage() === totalPages() || loading()"
+        (click)="nextPage()">
         <i class="fa-solid fa-chevron-right"></i>
       </button>
     </div>
@@ -449,11 +479,13 @@
         </div>
         <div>
           <h3 class="modal-title">{{ rec.name }}
-                  @if (rec.requiresMedicalAttention) {
-                    <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}" (click)="openWarningModal(rec)" title="Medical Warning">
-                      <i class="fa-solid fa-triangle-exclamation"></i> {{ rec.attentionLevel || 'Warning' }}
-                    </span>
-                  }</h3>
+            @if (rec.requiresMedicalAttention) {
+            <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}"
+              (click)="openWarningModal(rec)" title="Medical Warning">
+              <i class="fa-solid fa-triangle-exclamation"></i> {{ rec.attentionLevel || 'Warning' }}
+            </span>
+            }
+          </h3>
           <p class="modal-sub">{{ rec.typeLabel }} · {{ rec.date }}</p>
         </div>
       </div>
@@ -486,7 +518,8 @@
       <div class="detail-info-grid">
         <div><span>{{ t().records.labName }}</span><strong>{{ rec.rawRecord.labName || '-' }}</strong></div>
         <div><span>{{ t().records.doctorName }}</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
-        <div><span>{{ t().records.reportDate }}</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong></div>
+        <div><span>{{ t().records.reportDate }}</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong>
+        </div>
       </div>
       }
       @if (rec.type === 'imaging') {
@@ -494,7 +527,8 @@
         <div><span>{{ t().records.imagingType }}</span><strong>{{ rec.rawRecord.imagingType || '-' }}</strong></div>
         <div><span>{{ t().records.bodyPart }}</span><strong>{{ rec.rawRecord.bodyPart || '-' }}</strong></div>
         <div><span>{{ t().records.doctorName }}</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
-        <div><span>{{ t().records.reportDate }}</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong></div>
+        <div><span>{{ t().records.reportDate }}</span><strong>{{ rec.rawRecord.reportDate || rec.date || '-' }}</strong>
+        </div>
       </div>
       <div class="detail-section">
         <h4 class="detail-h4"><i class="fa-solid fa-magnifying-glass-chart"></i> {{ t().records.findings }}</h4>
@@ -509,8 +543,10 @@
       <div class="detail-info-grid">
         <div><span>{{ t().records.documentType }}</span><strong>{{ rec.rawRecord.documentType || '-' }}</strong></div>
         <div><span>{{ t().records.doctorName }}</span><strong>{{ rec.rawRecord.doctorName || '-' }}</strong></div>
-        <div><span>{{ t().records.hospitalClinic }}</span><strong>{{ rec.rawRecord.hospitalOrClinic || '-' }}</strong></div>
-        <div><span>{{ t().records.documentDate }}</span><strong>{{ rec.rawRecord.documentDate || rec.date || '-' }}</strong></div>
+        <div><span>{{ t().records.hospitalClinic }}</span><strong>{{ rec.rawRecord.hospitalOrClinic || '-' }}</strong>
+        </div>
+        <div><span>{{ t().records.documentDate }}</span><strong>{{ rec.rawRecord.documentDate || rec.date || '-'
+            }}</strong></div>
       </div>
       @if (rec.rawRecord.description) {
       <div class="detail-section">
@@ -519,12 +555,12 @@
       </div>
       }
       }
-                <div class="detail-section ai-summary-card">
-          <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> {{ t().records.aiSummary }}</h4>
-          <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
-        </div>
-        
-        <app-medical-warning-card *ngIf="rec.requiresMedicalAttention" [data]="rec"></app-medical-warning-card>
+      <div class="detail-section ai-summary-card">
+        <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> {{ t().records.aiSummary }}</h4>
+        <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
+      </div>
+
+      <app-medical-warning-card *ngIf="rec.requiresMedicalAttention" [data]="rec"></app-medical-warning-card>
       @if (rec.type === 'lab' && rec.rawRecord.results && rec.rawRecord.results.length > 0) {
       <div class="detail-section">
         <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> {{ t().records.completeLabResults }}</h4>
@@ -537,25 +573,31 @@
             </div>
             <div class="lab-result-r">
               <span class="lab-val">{{ res.value }} {{ res.unit }}</span>
-              <span class="pill" [class]="res.status === 'Normal' ? 'pill-green-sm' : 'pill-red-sm'">{{ res.status }}</span>
+              <span class="pill" [class]="res.status === 'Normal' ? 'pill-green-sm' : 'pill-red-sm'">{{ res.status
+                }}</span>
             </div>
           </li>
           }
         </ul>
         <div class="detail-table-wrap">
           <table class="detail-table">
-            <thead><tr>
-              <th>{{ t().records.testName }}</th>
-              <th>{{ t().records.value }}</th>
-              <th>{{ t().records.unit }}</th>
-              <th>{{ t().records.referenceRange }}</th>
-              <th>{{ t().records.status }}</th>
-            </tr></thead>
+            <thead>
+              <tr>
+                <th>{{ t().records.testName }}</th>
+                <th>{{ t().records.value }}</th>
+                <th>{{ t().records.unit }}</th>
+                <th>{{ t().records.referenceRange }}</th>
+                <th>{{ t().records.status }}</th>
+              </tr>
+            </thead>
             <tbody>
               @for (res of rec.rawRecord.results; track res.id) {
               <tr>
-                <td>{{ res.testName }}</td><td>{{ res.value }}</td>
-                <td>{{ res.unit }}</td><td>{{ res.normalRange }}</td><td>{{ res.status }}</td>
+                <td>{{ res.testName }}</td>
+                <td>{{ res.value }}</td>
+                <td>{{ res.unit }}</td>
+                <td>{{ res.normalRange }}</td>
+                <td>{{ res.status }}</td>
               </tr>
               }
             </tbody>
@@ -578,7 +620,8 @@
       }
     </div>
     <footer class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDetails()">{{ t().records.closeBtn }}</button>
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="closeDetails()">{{ t().records.closeBtn
+        }}</button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="downloadRecord(rec)">
         <i class="fa-solid fa-arrow-down-to-bracket"></i> {{ t().records.downloadPDF }}
       </button>
@@ -597,11 +640,13 @@
         <div>
           <h3 class="modal-title">{{ t().records.deleteRecord }}</h3>
           <p class="modal-sub">{{ rec.name }}
-                  @if (rec.requiresMedicalAttention) {
-                    <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}" (click)="openWarningModal(rec)" title="Medical Warning">
-                      <i class="fa-solid fa-triangle-exclamation"></i> {{ rec.attentionLevel || 'Warning' }}
-                    </span>
-                  }</p>
+            @if (rec.requiresMedicalAttention) {
+            <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}"
+              (click)="openWarningModal(rec)" title="Medical Warning">
+              <i class="fa-solid fa-triangle-exclamation"></i> {{ rec.attentionLevel || 'Warning' }}
+            </span>
+            }
+          </p>
         </div>
       </div>
       <button type="button" class="close-modal-btn" [disabled]="deleting()" (click)="closeDeleteModal()">
@@ -613,9 +658,10 @@
       <p>{{ t().records.cannotBeUndone }}</p>
     </div>
     <footer class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="deleting()" (click)="closeDeleteModal()">{{ t().records.cancelBtn }}</button>
-      <button type="button" class="modal-btn modal-btn-danger" [disabled]="deleting()" [class.modal-btn--saving]="deleting()"
-        (click)="deleteRecord()">
+      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="deleting()"
+        (click)="closeDeleteModal()">{{ t().records.cancelBtn }}</button>
+      <button type="button" class="modal-btn modal-btn-danger" [disabled]="deleting()"
+        [class.modal-btn--saving]="deleting()" (click)="deleteRecord()">
         @if (deleting()) {
         <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
           <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
@@ -653,21 +699,23 @@
       <div class="scan-form-grid">
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.documentImage }} <span class="scan-required">*</span></label>
-          <input type="file" class="scan-input" accept=".jpg,.jpeg,.png,.webp"
-            [disabled]="uploadLoading()" (change)="onGeneralFileSelected($event)">
+          <input type="file" class="scan-input" accept=".jpg,.jpeg,.png,.webp" [disabled]="uploadLoading()"
+            (change)="onGeneralFileSelected($event)">
           @if (generalUploadForm.fileName) {
           <p class="scan-file-name"><i class="fa-regular fa-file-image"></i> {{ generalUploadForm.fileName }}</p>
           }
         </div>
         <div class="scan-field scan-field--full">
-          <label class="scan-label">{{ t().records.description }} <span class="scan-optional">({{ t().common.optional }})</span></label>
+          <label class="scan-label">{{ t().records.description }} <span class="scan-optional">({{ t().common.optional
+              }})</span></label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="generalUploadForm.description"
             [disabled]="uploadLoading()" rows="4"></textarea>
         </div>
       </div>
     </div>
     <footer class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="uploadLoading()" (click)="cancelGeneralUpload()">{{ t().records.cancelBtn }}</button>
+      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="uploadLoading()"
+        (click)="cancelGeneralUpload()">{{ t().records.cancelBtn }}</button>
       <button type="button" class="modal-btn modal-btn-primary" [disabled]="uploadLoading() || !generalUploadForm.file"
         [class.modal-btn--saving]="uploadLoading()" (click)="submitGeneralUpload()">
         @if (uploadLoading()) {
@@ -698,7 +746,8 @@
         </div>
         <div>
           <h3 class="modal-title">
-            {{ rf.mode === 'edit' ? t().records.editRecord : manualReviewMode() ? t().records.addRecordManually : t().records.reviewExtractedData }}
+            {{ rf.mode === 'edit' ? t().records.editRecord : manualReviewMode() ? t().records.addRecordManually :
+            t().records.reviewExtractedData }}
           </h3>
           <p class="modal-sub">
             {{ manualReviewMode() ? t().records.fillAndSave : t().records.editBeforeSaving }}
@@ -725,7 +774,8 @@
         </button>
         }
         } @else {
-        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{ t().records.imagePreviewUnavailable }}</span></div>
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{
+            t().records.imagePreviewUnavailable }}</span></div>
         }
         } @else {
         @if (manualReviewMode()) {
@@ -733,10 +783,10 @@
           @if (manualImageUploading()) {
           <div class="manual-img-loading">
             <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:18px;height:18px;">
-              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
               <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
                 [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
-                stroke-linecap="round" transform="rotate(-90 18 18)"/>
+                stroke-linecap="round" transform="rotate(-90 18 18)" />
             </svg>
             <span>{{ t().records.uploadingImage }}</span>
           </div>
@@ -748,7 +798,8 @@
           }
         </div>
         } @else {
-        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{ t().records.noImageAttachedReview }}</span></div>
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{
+            t().records.noImageAttachedReview }}</span></div>
         }
         }
       </div>
@@ -762,7 +813,8 @@
         }
 
         <!-- Medical Warning Card directly below the AI Summary -->
-        <app-medical-warning-card class="scan-field--full" *ngIf="rf.requiresMedicalAttention" [data]="rf"></app-medical-warning-card>
+        <app-medical-warning-card class="scan-field--full" *ngIf="rf.requiresMedicalAttention"
+          [data]="rf"></app-medical-warning-card>
 
         @if (rf.type === 'lab') {
         <div class="scan-field">
@@ -841,7 +893,7 @@
           <input type="text" class="scan-input" [(ngModel)]="rf.documentDate">
         </div>
         }
-      }
+        }
         @if (!manualReviewMode() && rf.type !== 'general') {
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.ocrText }}</label>
@@ -862,14 +914,16 @@
         </div>
         <div class="detail-table-wrap">
           <table class="detail-table review-edit-table">
-            <thead><tr>
-              <th>{{ t().records.testName }}</th>
-              <th>{{ t().records.value }}</th>
-              <th>{{ t().records.unit }}</th>
-              <th>{{ t().records.referenceRange }}</th>
-              <th>{{ t().records.status }}</th>
-              <th></th>
-            </tr></thead>
+            <thead>
+              <tr>
+                <th>{{ t().records.testName }}</th>
+                <th>{{ t().records.value }}</th>
+                <th>{{ t().records.unit }}</th>
+                <th>{{ t().records.referenceRange }}</th>
+                <th>{{ t().records.status }}</th>
+                <th></th>
+              </tr>
+            </thead>
             <tbody>
               @for (res of rf.results; track res.id) {
               <tr>
@@ -879,7 +933,8 @@
                 <td><input class="table-edit-input" [(ngModel)]="res.normalRange"></td>
                 <td><input class="table-edit-input" [(ngModel)]="res.status"></td>
                 <td>
-                  <button type="button" class="row-delete-btn" [disabled]="reviewSaving()" (click)="removeLabResult(res.id)">
+                  <button type="button" class="row-delete-btn" [disabled]="reviewSaving()"
+                    (click)="removeLabResult(res.id)">
                     <i class="fa-solid fa-trash-can"></i>
                   </button>
                 </td>
@@ -895,18 +950,20 @@
         <div class="review-table-hdr">
           <h4 class="detail-h4"><i class="fa-solid fa-capsules"></i> {{ t().records.medicinesInstructions }}</h4>
           <div style="display:flex;gap:8px;align-items:center;">
-            <button type="button" class="mini-add-btn" [disabled]="reviewSaving() || addingAllMeds() || addingMedIndex() !== null"
+            <button type="button" class="mini-add-btn"
+              [disabled]="reviewSaving() || addingAllMeds() || addingMedIndex() !== null"
               (click)="addAllPrescriptionMedsToMedications()">
               @if (addingAllMeds()) {
-                <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:12px;height:12px;">
-                  <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3"/>
-                  <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
-                    [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
-                    stroke-linecap="round" transform="rotate(-90 18 18)"/>
-                </svg>
-                {{ t().records.adding }}
+              <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:12px;height:12px;">
+                <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+                  stroke-opacity="0.3" />
+                <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+                  [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+                  stroke-linecap="round" transform="rotate(-90 18 18)" />
+              </svg>
+              {{ t().records.adding }}
               } @else {
-                <i class="fa-solid fa-pills"></i> {{ t().records.addAllToMedications }}
+              <i class="fa-solid fa-pills"></i> {{ t().records.addAllToMedications }}
               }
             </button>
             <button type="button" class="mini-add-btn" [disabled]="reviewSaving()" (click)="addPrescriptionMed()">
@@ -916,14 +973,16 @@
         </div>
         <div class="detail-table-wrap">
           <table class="detail-table review-edit-table">
-            <thead><tr>
-              <th>{{ t().records.medicine }}</th>
-              <th>{{ t().records.dosage }}</th>
-              <th>{{ t().records.frequency }}</th>
-              <th>{{ t().records.duration }}</th>
-              <th>{{ t().records.instructions }}</th>
-              <th></th>
-            </tr></thead>
+            <thead>
+              <tr>
+                <th>{{ t().records.medicine }}</th>
+                <th>{{ t().records.dosage }}</th>
+                <th>{{ t().records.frequency }}</th>
+                <th>{{ t().records.duration }}</th>
+                <th>{{ t().records.instructions }}</th>
+                <th></th>
+              </tr>
+            </thead>
             <tbody>
               @for (med of rf.prescriptionMedicines; track $index) {
               <tr>
@@ -934,28 +993,29 @@
                 <td><input class="table-edit-input" [(ngModel)]="med.instructions"></td>
                 <td style="white-space:nowrap;">
                   @if (addedMedIndices().has($index)) {
-                    <span style="color:var(--color-success,#22c55e);font-size:12px;padding:0 4px;">
-                      <i class="fa-solid fa-circle-check"></i> {{ t().records.added }}
-                    </span>
+                  <span style="color:var(--color-success,#22c55e);font-size:12px;padding:0 4px;">
+                    <i class="fa-solid fa-circle-check"></i> {{ t().records.added }}
+                  </span>
                   } @else {
-                    <button type="button" class="row-delete-btn"
-                      [attr.title]="t().records.addAllToMedications"
-                      style="color:var(--color-primary,#4a7cf7);"
-                      [disabled]="reviewSaving() || addingAllMeds() || addingMedIndex() !== null || !med.medicineName.trim()"
-                      (click)="addPrescriptionMedToMedications($index)">
-                      @if (addingMedIndex() === $index) {
-                        <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:12px;height:12px;">
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3"/>
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
-                            [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
-                            stroke-linecap="round" transform="rotate(-90 18 18)"/>
-                        </svg>
-                      } @else {
-                        <i class="fa-solid fa-pills"></i>
-                      }
-                    </button>
+                  <button type="button" class="row-delete-btn" [attr.title]="t().records.addAllToMedications"
+                    style="color:var(--color-primary,#4a7cf7);"
+                    [disabled]="reviewSaving() || addingAllMeds() || addingMedIndex() !== null || !med.medicineName.trim()"
+                    (click)="addPrescriptionMedToMedications($index)">
+                    @if (addingMedIndex() === $index) {
+                    <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:12px;height:12px;">
+                      <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+                        stroke-opacity="0.3" />
+                      <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
+                        [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
+                        stroke-linecap="round" transform="rotate(-90 18 18)" />
+                    </svg>
+                    } @else {
+                    <i class="fa-solid fa-pills"></i>
+                    }
+                  </button>
                   }
-                  <button type="button" class="row-delete-btn" [disabled]="reviewSaving()" (click)="removePrescriptionMed($index)">
+                  <button type="button" class="row-delete-btn" [disabled]="reviewSaving()"
+                    (click)="removePrescriptionMed($index)">
                     <i class="fa-solid fa-trash-can"></i>
                   </button>
                 </td>
@@ -968,7 +1028,8 @@
       }
     </div>
     <footer class="modal-ftr">
-      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="reviewSaving()" (click)="cancelReview()">{{ t().records.cancelBtn }}</button>
+      <button type="button" class="modal-btn modal-btn-secondary" [disabled]="reviewSaving()"
+        (click)="cancelReview()">{{ t().records.cancelBtn }}</button>
       <button type="button" class="modal-btn modal-btn-primary" [disabled]="reviewSaving()"
         [class.modal-btn--saving]="reviewSaving()" (click)="confirmAndSave()">
         @if (reviewSaving()) {
@@ -998,7 +1059,8 @@
         <div class="modal-ico rec-ico-orange"><i class="fa-solid fa-pills"></i></div>
         <div>
           <h3 class="modal-title">
-            {{ scanMode() === 'edit' ? t().records.editMedicineRecord : manualMedicineMode() ? t().records.addMedicineManually : t().records.medicineDetailsTitle }}
+            {{ scanMode() === 'edit' ? t().records.editMedicineRecord : manualMedicineMode() ?
+            t().records.addMedicineManually : t().records.medicineDetailsTitle }}
           </h3>
           <p class="modal-sub">
             {{ t().records.medicineDetailsHint }}
@@ -1017,7 +1079,8 @@
           (change)="onManualMedImageSelected($event)">
         @if (manualMedicineImagePreviewUrl()) {
         <div class="manual-img-wrap">
-          <img [src]="manualMedicineImagePreviewUrl()" class="modal-image" [attr.alt]="t().records.selectedMedicineBoxImage">
+          <img [src]="manualMedicineImagePreviewUrl()" class="modal-image"
+            [attr.alt]="t().records.selectedMedicineBoxImage">
           @if (manualMedicineImageUploading()) {
           <div class="manual-img-uploading">
             <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:18px;height:18px;">
@@ -1051,7 +1114,8 @@
         </button>
         }
         } @else {
-        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{ t().records.imagePreviewUnavailable }}</span></div>
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{
+            t().records.imagePreviewUnavailable }}</span></div>
         }
         } @else {
         @if (manualMedicineMode()) {
@@ -1059,10 +1123,10 @@
           @if (manualImageUploading()) {
           <div class="manual-img-loading">
             <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:18px;height:18px;">
-              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
               <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
                 [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
-                stroke-linecap="round" transform="rotate(-90 18 18)"/>
+                stroke-linecap="round" transform="rotate(-90 18 18)" />
             </svg>
             <span>{{ t().records.uploadingImage }}</span>
           </div>
@@ -1074,7 +1138,8 @@
           }
         </div>
         } @else {
-        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{ t().records.noImageAttached }}</span></div>
+        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{ t().records.noImageAttached
+            }}</span></div>
         }
         }
         }
@@ -1084,8 +1149,7 @@
           <label class="rm-section-title">
             <i class="fa-solid fa-pills"></i> {{ t().records.medicineName }} <span style="color:var(--red)">*</span>
           </label>
-          <input type="text" class="rm-time-input"
-            [(ngModel)]="scanForm.medicineName"
+          <input type="text" class="rm-time-input" [(ngModel)]="scanForm.medicineName"
             [placeholder]="t().records.medicinePlaceholder"
             [class.rm-input-error]="scanFormTouched() && !scanForm.medicineName.trim()" />
         </div>
@@ -1093,8 +1157,7 @@
           <label class="rm-section-title">
             <i class="fa-solid fa-flask"></i> {{ t().records.strengthDosage }}
           </label>
-          <input type="text" class="rm-time-input"
-            [(ngModel)]="scanForm.dosage"
+          <input type="text" class="rm-time-input" [(ngModel)]="scanForm.dosage"
             [placeholder]="t().records.strengthPlaceholder" />
         </div>
       </div>
@@ -1104,16 +1167,14 @@
           <label class="rm-section-title">
             <i class="fa-regular fa-clock"></i> {{ t().records.frequency }}
           </label>
-          <input type="text" class="rm-time-input"
-            [(ngModel)]="scanForm.frequency"
+          <input type="text" class="rm-time-input" [(ngModel)]="scanForm.frequency"
             [placeholder]="t().records.frequencyPlaceholder" />
         </div>
         <div>
           <label class="rm-section-title">
             <i class="fa-solid fa-calendar-days"></i> {{ t().records.duration }}
           </label>
-          <input type="text" class="rm-time-input"
-            [(ngModel)]="scanForm.duration"
+          <input type="text" class="rm-time-input" [(ngModel)]="scanForm.duration"
             [placeholder]="t().records.durationPlaceholder" />
         </div>
       </div>
@@ -1122,23 +1183,22 @@
         <label class="rm-section-title">
           <i class="fa-regular fa-note-sticky"></i> {{ t().records.notesOptional }}
         </label>
-        <textarea class="rm-notes-area"
-          [(ngModel)]="scanForm.notes"
-          [placeholder]="t().records.notesPlaceholder"
+        <textarea class="rm-notes-area" [(ngModel)]="scanForm.notes" [placeholder]="t().records.notesPlaceholder"
           rows="2"></textarea>
       </div>
 
       @if (scanFormTouched() && scanForm.medicineName.trim() === '') {
-      <p class="scan-validation" style="color:var(--red); font-size:12px; margin-top:5px;"><i class="fa-solid fa-triangle-exclamation"></i> {{ t().records.medNameRequired }}</p>
+      <p class="scan-validation" style="color:var(--red); font-size:12px; margin-top:5px;"><i
+          class="fa-solid fa-triangle-exclamation"></i> {{ t().records.medNameRequired }}</p>
       }
     </div>
     <footer class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary"
-        [disabled]="scanSaving() || manualMedicineImageUploading()" (click)="cancelScanReview()">{{ t().records.cancelBtn }}</button>
+        [disabled]="scanSaving() || manualMedicineImageUploading()" (click)="cancelScanReview()">{{
+        t().records.cancelBtn }}</button>
       <button type="button" class="modal-btn modal-btn-primary"
         [disabled]="scanSaving() || manualMedicineImageUploading() || scanForm.medicineName.trim() === ''"
-        [class.modal-btn--saving]="scanSaving() || manualMedicineImageUploading()"
-        (click)="saveScanResult()">
+        [class.modal-btn--saving]="scanSaving() || manualMedicineImageUploading()" (click)="saveScanResult()">
         @if (scanSaving() || manualMedicineImageUploading()) {
         <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:16px;height:16px;">
           <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
@@ -1166,7 +1226,8 @@
         <div class="modal-ico reminder-prompt-ico"><i class="fa-solid fa-circle-check"></i></div>
         <div>
           <h3 class="modal-title">
-            {{ reminderPromptMode() === 'multi' ? t().records.medicinesAddedSuccess : t().records.medicineAddedSuccess }}
+            {{ reminderPromptMode() === 'multi' ? t().records.medicinesAddedSuccess : t().records.medicineAddedSuccess
+            }}
           </h3>
         </div>
       </div>
