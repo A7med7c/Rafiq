@@ -97,7 +97,9 @@ public class AlarmActivity extends Activity {
         bodyView.setPadding(0, 0, 0, dp(36));
         root.addView(bodyView, matchWrap());
 
-        Button takeButton = actionButton("Take Medicine", Color.rgb(21, 128, 61), Color.WHITE);
+        String primaryActionLabel = reminderType.equalsIgnoreCase("Appointment")
+            ? "Confirm Attendance" : "Take Medicine";
+        Button takeButton = actionButton(primaryActionLabel, Color.rgb(21, 128, 61), Color.WHITE);
         takeButton.setOnClickListener(v -> takeMedicine());
         root.addView(takeButton, buttonLayout());
 
