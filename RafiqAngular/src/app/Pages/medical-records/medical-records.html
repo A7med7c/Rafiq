@@ -89,6 +89,9 @@
         <input type="text" class="hdr-search-inp" [attr.placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
+        <button type="button" class="hdr-bell" (click)="l10n.toggle()" title="English / عربي">
+          <i class="fa-solid fa-globe"></i>
+        </button>
         <button type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           {{ t().header.askAI }}
