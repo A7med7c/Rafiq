@@ -9,7 +9,8 @@ public sealed class UploadGeneralDocumentCommandHandler(
     ICurrentUserService currentUserService,
     IBedrockService bedrockService,
     IFileStorageService fileStorageService,
-    IAiTelemetryContext telemetryContext)
+    IAiTelemetryContext telemetryContext,
+    IMedicalWarningCalculator warningCalculator)
     : IRequestHandler<
         UploadGeneralDocumentCommand,
         ApiResponse<GeneralDocumentPreviewDto>>
@@ -80,8 +81,13 @@ public sealed class UploadGeneralDocumentCommandHandler(
                 DoctorName = extracted.DoctorName,
                 HospitalOrClinic = extracted.HospitalOrClinic,
                 DocumentDate = extracted.DocumentDate,
-                AiSummary = extracted.AiSummary,
+                                AiSummary = extracted.AiSummary,
                 OcrText = extracted.OcrText,
+                MedicalAttentionReason = extracted.MedicalAttentionReason,
+                RecommendedSpecialty = extracted.RecommendedSpecialty,
+                ConfidenceScore = extracted.ConfidenceScore,
+                RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(extracted.ConfidenceScore),
+                AttentionLevel = warningCalculator.ComputeAttentionLevel(extracted.ConfidenceScore).ToString(),
                 ImagePath = imagePath
             },
             "Document analyzed successfully.");

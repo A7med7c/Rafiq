@@ -12,6 +12,9 @@ public sealed record SaveLabReportCommand(
     string? Summary,
     string? OcrText,
     string? ImageUrl,
+    string? MedicalAttentionReason,
+    string? RecommendedSpecialty,
+    double? ConfidenceScore,
     List<SaveLabResultCommand>? Results)
     : IRequest<ApiResponse<LabReportResponseDto>>;
 

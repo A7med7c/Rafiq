@@ -18,5 +18,11 @@ public sealed class BedrockPrescriptionDto
 
     public string? PrescriptionDate { get; set; }
 
-    public List<BedrockPrescriptionMedicineDto> Medicines { get; set; } = new();
+    public List<BedrockPrescriptionMedicineDto>? Medicines { get; set; }
+
+    public string? MedicalAttentionReason { get; set; }
+
+    public string? RecommendedSpecialty { get; set; }
+
+    public double? ConfidenceScore { get; set; }
 }

@@ -23,4 +23,10 @@ public sealed class BedrockImagingReportDto
     public string? OcrText { get; set; }
 
     public string? AiSummary { get; set; }
+
+    public string? MedicalAttentionReason { get; set; }
+
+    public string? RecommendedSpecialty { get; set; }
+
+    public double? ConfidenceScore { get; set; }
 }

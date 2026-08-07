@@ -17,7 +17,8 @@ public sealed class SaveImagingReportCommandHandler(
     IImagingReportRepository imagingReportRepository,
     IUnitOfWork unitOfWork,
     IHealthSummaryCacheRepository summaryCache,
-    Rafiq.Infrastructure.Persistence.RafiqDbContext dbContext)
+    IDocumentUploadSessionRepository sessionRepository,
+    IMedicalWarningCalculator warningCalculator)
     : IRequestHandler<SaveImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
 {
     public async Task<ApiResponse<ImagingReportResponseDto>> Handle(
@@ -57,12 +58,14 @@ public sealed class SaveImagingReportCommandHandler(
             reportDate,
             request.ImageUrl ?? string.Empty,
             request.OcrText,
-            request.Summary);
+            request.Summary,
+            request.MedicalAttentionReason,
+            request.RecommendedSpecialty,
+            request.ConfidenceScore);
 
         if (!string.IsNullOrEmpty(request.ImageUrl))
         {
-            var session = await dbContext.DocumentUploadSessions
-                .FirstOrDefaultAsync(s => s.ImageUrl == request.ImageUrl, cancellationToken);
+            var session = await sessionRepository.GetByImageUrlAsync(request.ImageUrl, cancellationToken);
                 
             if (session != null)
             {
@@ -77,9 +80,12 @@ public sealed class SaveImagingReportCommandHandler(
                     request.ImageUrl,
                     request.OcrText,
                     request.Summary,
+                    request.MedicalAttentionReason,
+                    request.RecommendedSpecialty,
+                    request.ConfidenceScore,
                     session.FileHash);
                     
-                dbContext.DocumentUploadSessions.Remove(session);
+                sessionRepository.Remove(session);
             }
         }
 

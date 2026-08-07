@@ -15,4 +15,10 @@
     public string? OcrText { get; init; }
 
     public string ImagePath { get; init; } = null!;
+
+    public string? MedicalAttentionReason { get; init; }
+    public string? RecommendedSpecialty { get; init; }
+    public double? ConfidenceScore { get; init; }
+    public bool RequiresMedicalAttention { get; init; }
+    public string? AttentionLevel { get; init; }
 }

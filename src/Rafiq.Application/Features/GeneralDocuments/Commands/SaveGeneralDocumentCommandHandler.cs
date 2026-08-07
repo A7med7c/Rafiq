@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.GeneralDocuments.Commands.SaveGeneralDocument;
@@ -11,7 +11,8 @@ public sealed class SaveGeneralDocumentCommandHandler(
     ICurrentUserService currentUserService,
     IGeneralDocumentRepository repository,
     IUnitOfWork unitOfWork,
-    IHealthSummaryCacheRepository summaryCache)
+    IHealthSummaryCacheRepository summaryCache,
+    IMedicalWarningCalculator warningCalculator)
     : IRequestHandler<
         SaveGeneralDocumentCommand,
         ApiResponse<GeneralDocumentResponseDto>>
@@ -34,7 +35,10 @@ public sealed class SaveGeneralDocumentCommandHandler(
             request.DoctorName,
             request.HospitalOrClinic,
             request.DocumentDate,
-            request.OcrText);
+            request.OcrText,
+            request.MedicalAttentionReason,
+            request.RecommendedSpecialty,
+            request.ConfidenceScore);
 
         await repository.AddAsync(document, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -53,6 +57,11 @@ public sealed class SaveGeneralDocumentCommandHandler(
                 HospitalOrClinic = document.HospitalOrClinic,
                 DocumentDate = document.DocumentDate,
                 OcrText = document.OcrText,
+                MedicalAttentionReason = document.MedicalAttentionReason,
+                RecommendedSpecialty = document.RecommendedSpecialty,
+                ConfidenceScore = document.ConfidenceScore,
+                RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(document.ConfidenceScore),
+                AttentionLevel = warningCalculator.ComputeAttentionLevel(document.ConfidenceScore).ToString(),
                 CreatedAt = document.CreatedAt
             },
             "General document saved successfully.");

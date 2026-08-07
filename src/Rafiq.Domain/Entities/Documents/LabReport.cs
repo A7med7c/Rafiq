@@ -16,6 +16,9 @@ public class LabReport : BaseEntity
         string imageUrl,
         string? ocrText,
         string? description,
+        string? medicalAttentionReason = null,
+        string? recommendedSpecialty = null,
+        double? confidenceScore = null,
         string? fileHash = null)
     {
         UserHealthProfileId = userHealthProfileId;
@@ -25,6 +28,9 @@ public class LabReport : BaseEntity
         ImageUrl = imageUrl;
         OCRText = ocrText;
         Description = description;
+        MedicalAttentionReason = medicalAttentionReason;
+        RecommendedSpecialty = recommendedSpecialty;
+        ConfidenceScore = confidenceScore;
         FileHash = fileHash;
     }
 
@@ -46,6 +52,12 @@ public class LabReport : BaseEntity
 
     public string? FileHash { get; private set; }
 
+    public string? MedicalAttentionReason { get; private set; }
+
+    public string? RecommendedSpecialty { get; private set; }
+
+    public double? ConfidenceScore { get; private set; }
+
     public ICollection<LabResult> Results { get; set; }
         = new List<LabResult>();
     
@@ -54,6 +66,9 @@ public class LabReport : BaseEntity
         string labName,
         DateOnly reportDate,
         string? description,
+        string? medicalAttentionReason,
+        string? recommendedSpecialty,
+        double? confidenceScore,
         string? imageUrl,
         string? ocrText)
     {
@@ -61,6 +76,9 @@ public class LabReport : BaseEntity
         LabName = labName;
         ReportDate = reportDate;
         Description = description;
+        MedicalAttentionReason = medicalAttentionReason;
+        RecommendedSpecialty = recommendedSpecialty;
+        ConfidenceScore = confidenceScore;
         if (!string.IsNullOrWhiteSpace(imageUrl))
             ImageUrl = imageUrl;
         OCRText = ocrText;

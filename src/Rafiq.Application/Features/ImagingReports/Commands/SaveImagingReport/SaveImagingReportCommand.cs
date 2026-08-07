@@ -14,5 +14,8 @@ public sealed record SaveImagingReportCommand(
     string? ReportDate,
     string? Summary,
     string? OcrText,
-    string? ImageUrl)
+    string? ImageUrl,
+    string? MedicalAttentionReason,
+    string? RecommendedSpecialty,
+    double? ConfidenceScore)
     : IRequest<ApiResponse<ImagingReportResponseDto>>;

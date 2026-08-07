@@ -19,6 +19,7 @@ import { DocumentAnalysisStateService } from '../../Services/document-analysis-s
 import { switchMap, map } from 'rxjs';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { localizeKnownApiMessage } from '../../Utils/api-error.util';
+import { MedicalWarningCardComponent } from '../medical-warning-card/medical-warning-card';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -57,6 +58,11 @@ export interface ReviewLabResult {
 }
 
 export interface ReviewForm {
+  requiresMedicalAttention?: boolean;
+  attentionLevel?: string;
+  medicalAttentionReason?: string;
+  recommendedSpecialty?: string;
+  confidenceScore?: number;
   type: 'lab' | 'imaging' | 'prescription' | 'general';
   mode: 'create' | 'edit';
   recordId?: string;
@@ -120,13 +126,13 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
   uploadedBy: 'all',
   fromDate: '',
   toDate: '',
-  sortBy,
+  sortBy
 });
 
 @Component({
   selector: 'app-records-content',
   standalone: true,
-  imports: [CommonModule, FormsModule, AssistantAnchorDirective],
+  imports: [CommonModule, FormsModule, AssistantAnchorDirective, MedicalWarningCardComponent],
   templateUrl: './records-content.html',
   styleUrl: '../../Pages/medical-records/medical-records.css',
   encapsulation: ViewEncapsulation.None,
@@ -289,6 +295,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   private readonly _doc = inject(DOCUMENT);
 
+  selectedWarningRecord = signal<UnifiedMedicalRecord | null>(null);
+
   constructor() {
     // Open review modal when the floating card's "Review" button is clicked
     effect(() => {
@@ -307,7 +315,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.selectedRecord() || this.deleteTarget() || this.reviewForm() ||
         this.generalUploadFormOpen() ||
         this.scanResult() || this.showReminderPromptModal() || this.lightboxUrl() ||
-        this.showAiFailDialog()
+        this.showAiFailDialog() || this.selectedWarningRecord()
       );
       const container = this._doc.querySelector('.dsh-body') as HTMLElement | null;
       if (container) {
@@ -420,6 +428,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     if (this.reviewForm() && !this.reviewSaving()) { this.cancelReview(); return; }
     if (this.generalUploadFormOpen() && !this.uploadLoading()) { this.cancelGeneralUpload(); return; }
     if (this.selectedRecord()) { this.closeDetails(); return; }
+    if (this.selectedWarningRecord()) { this.closeWarningModal(); return; }
     this.addRecordMenuOpen.set(false);
     this.filterMenuOpen.set(false);
     this.actionMenuOpen.set(null);
@@ -917,6 +926,11 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         duration: m.duration ?? '',
         instructions: m.instructions ?? m.notes ?? '',
       })),
+      requiresMedicalAttention: data.requiresMedicalAttention ?? false,
+      medicalAttentionReason: data.medicalAttentionReason ?? '',
+      recommendedSpecialty: data.recommendedSpecialty ?? '',
+      attentionLevel: data.attentionLevel ?? '',
+      confidenceScore: data.confidenceScore ?? 0,
       rawResponse: data,
     };
     this.reviewImageFailed.set(false);
@@ -1009,6 +1023,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       const payload = {
         labName: rf.labName, doctorName: rf.doctorName, reportDate: rf.reportDate,
         summary: rf.summary, ocrText: rf.ocrText, imageUrl: rf.imagePath,
+        medicalAttentionReason: rf.medicalAttentionReason,
+        recommendedSpecialty: rf.recommendedSpecialty,
+        confidenceScore: rf.confidenceScore,
         results: rf.results.map(r => ({ testName: r.testName, value: r.value, unit: r.unit, normalRange: r.normalRange, status: r.status })),
       };
       request$ = rf.mode === 'edit' && rf.recordId
@@ -1019,6 +1036,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         imagingType: rf.imagingType, bodyPart: rf.bodyPart, findings: rf.findings,
         impression: rf.impression, doctorName: rf.doctorName, reportDate: rf.reportDate,
         summary: rf.summary, ocrText: rf.ocrText, imageUrl: rf.imagePath,
+        medicalAttentionReason: rf.medicalAttentionReason,
+        recommendedSpecialty: rf.recommendedSpecialty,
+        confidenceScore: rf.confidenceScore,
       };
       request$ = rf.mode === 'edit' && rf.recordId
         ? this.http.put(`${this.base}/documents/imaging/${rf.recordId}`, payload)
@@ -1027,6 +1047,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       const payload = {
         doctorName: rf.doctorName, patientName: rf.patientName,
         prescriptionDate: rf.prescriptionDate, imagePath: rf.imagePath,
+        medicalAttentionReason: rf.medicalAttentionReason,
+        recommendedSpecialty: rf.recommendedSpecialty,
+        confidenceScore: rf.confidenceScore,
         medicines: rf.prescriptionMedicines.map(m => ({
           medicineName: m.medicineName, dosage: m.dosage, frequency: m.frequency,
           duration: m.duration, instructions: m.instructions,
@@ -1040,6 +1063,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         title: rf.title, description: rf.description, aiSummary: rf.summary, imagePath: rf.imagePath,
         documentType: rf.documentType, doctorName: rf.doctorName, hospitalOrClinic: rf.hospitalOrClinic,
         documentDate: rf.documentDate, ocrText: rf.ocrText,
+        medicalAttentionReason: rf.medicalAttentionReason,
+        recommendedSpecialty: rf.recommendedSpecialty,
+        confidenceScore: rf.confidenceScore,
       };
       request$ = rf.mode === 'edit' && rf.recordId
         ? this.http.put(`${this.base}/documents/general/${rf.recordId}`, payload)
@@ -1506,5 +1532,15 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     } else {
       this.uploadAndReview(type, file);
     }
+  }
+
+  openWarningModal(record: any) {
+    if (record.requiresMedicalAttention) {
+      this.selectedWarningRecord.set(record);
+    }
+  }
+
+  closeWarningModal() {
+    this.selectedWarningRecord.set(null);
   }
 }

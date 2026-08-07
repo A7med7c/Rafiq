@@ -4,7 +4,7 @@ public sealed class ApiResponse<T> : ApiResponseBase
 {
     public T? Data { get; init; }
 
-    public new static ApiResponse<T> SuccessResponse(
+    public static ApiResponse<T> SuccessResponse(
         T? data,
         string message = "OK")
         => new()

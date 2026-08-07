@@ -1,0 +1,30 @@
+@if(data.requiresMedicalAttention) {
+<div class="medical-warning-card" [class.compact]="compact">
+  <div class="warning-header priority-bg-{{ (data.attentionLevel || '').toLowerCase() }}">
+    <i class="fa-solid fa-triangle-exclamation warning-icon"></i>
+    <h4 class="warning-title">{{ t().records.medicalAttentionRecommended }}</h4>
+  </div>
+  <div class="warning-content">
+    <div class="warning-row">
+      <span class="warning-label">{{ t().records.medicalAttentionReason }}:</span>
+      <span class="warning-value">{{ data.medicalAttentionReason }}</span>
+    </div>
+    <div class="warning-row">
+      <span class="warning-label">{{ t().records.recommendedSpecialty }}:</span>
+      <span class="warning-value">{{ data.recommendedSpecialty || '-' }}</span>
+    </div>
+    <div class="warning-row">
+      <span class="warning-label">{{ t().records.priorityLevel }}:</span>
+      <span class="warning-value priority-{{ data.attentionLevel?.toLowerCase() }}">{{ data.attentionLevel }}</span>
+    </div>
+    <div class="warning-row">
+      <span class="warning-label">{{ t().records.aiConfidence }}:</span>
+      <span class="warning-value">{{ data.confidenceScore }}%</span>
+    </div>
+  </div>
+  <div class="warning-footer">
+    <p class="disclaimer"><i class="fa-solid fa-circle-info"></i> {{ t().records.disclaimer }}</p>
+    <p class="safety-note"><i class="fa-solid fa-shield-halved"></i> {{ t().records.safetyNote }}</p>
+  </div>
+</div>
+}

@@ -22,5 +22,11 @@ public sealed class ImagingReportResponseDto
 
     public string? Summary { get; init; } // AI Explanation
 
+        public string? MedicalAttentionReason { get; init; }
+    public string? RecommendedSpecialty { get; init; }
+    public double? ConfidenceScore { get; init; }
+    public bool RequiresMedicalAttention { get; init; }
+    public string? AttentionLevel { get; init; }
+
     public DateTime CreatedAt { get; init; }
 }

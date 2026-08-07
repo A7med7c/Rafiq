@@ -18,7 +18,8 @@ public sealed class UploadImagingReportCommandHandler(
     IAiTelemetryContext telemetryContext,
     IUsageIntelligenceService usageIntelligence,
     IDuplicateDocumentDetector duplicateDetector,
-    IImagingReportRepository imagingReportRepository)
+    IImagingReportRepository imagingReportRepository,
+    IMedicalWarningCalculator warningCalculator)
     : IRequestHandler<UploadImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
 {
     public async Task<ApiResponse<ImagingReportResponseDto>> Handle(
@@ -27,11 +28,11 @@ public sealed class UploadImagingReportCommandHandler(
     {
         var profileId = request.ProfileId;
 
+        var currentUserId = currentUserService.UserId
+            ?? throw new UnauthorizedException("Authentication is required.");
+
         if (profileId == Guid.Empty)
         {
-            var currentUserId = currentUserService.UserId
-                ?? throw new UnauthorizedException("Authentication is required.");
-
             profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
                 ?? throw new NotFoundException("PatientProfile", currentUserId);
         }
@@ -61,7 +62,7 @@ public sealed class UploadImagingReportCommandHandler(
             imageBytes,
             imageUrl,
             profileId,
-            currentUserId!.Value,
+            currentUserId,
             cancellationToken);
 
         if (duplicateCheck.IsDuplicate)
@@ -147,7 +148,12 @@ public sealed class UploadImagingReportCommandHandler(
             ReportDate = reportDate.ToString("yyyy-MM-dd"),
             ImageUrl = imageUrl,
             OCRText = extracted.OcrText,
-            Summary = extracted.AiSummary,
+                        Summary = extracted.AiSummary,
+            MedicalAttentionReason = extracted.MedicalAttentionReason,
+            RecommendedSpecialty = extracted.RecommendedSpecialty,
+            ConfidenceScore = extracted.ConfidenceScore,
+            RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(extracted.ConfidenceScore),
+            AttentionLevel = warningCalculator.ComputeAttentionLevel(extracted.ConfidenceScore).ToString(),
             CreatedAt = DateTime.UtcNow
         };
 

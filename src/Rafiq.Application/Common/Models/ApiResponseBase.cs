@@ -14,13 +14,17 @@ public class ApiResponseBase
 
     public object? ErrorData { get; init; }
 
-    public static ApiResponseBase SuccessResponse(string message = "OK")
-        => new()
-        {
-            Success = true,
-            Message = message
-        };
+    public static ApiResponseBase SuccessResponse(
+    string message = "OK",
+    IReadOnlyList<string>? warnings = null)
+    => new()
+    {
+        Success = true,
+        Message = message,
+        Warnings = warnings
+    };
 
+    public static ApiResponseBase FailureResponse(
         string message,
         IReadOnlyList<string>? errors = null,
         string? errorCode = null,

@@ -18,7 +18,8 @@ public sealed class UploadPrescriptionCommandHandler(
     IAiTelemetryContext telemetryContext,
     IUsageIntelligenceService usageIntelligence,
     IDuplicateDocumentDetector duplicateDetector,
-    IPrescriptionRepository prescriptionRepository)
+    IPrescriptionRepository prescriptionRepository,
+    IMedicalWarningCalculator warningCalculator)
     : IRequestHandler<UploadPrescriptionCommand, ApiResponse<PrescriptionResponseDto>>
 {
     public async Task<ApiResponse<PrescriptionResponseDto>> Handle(
@@ -27,11 +28,11 @@ public sealed class UploadPrescriptionCommandHandler(
     {
         var profileId = request.ProfileId;
 
+        var currentUserId = currentUserService.UserId
+            ?? throw new UnauthorizedException("Authentication is required.");
+
         if (profileId == Guid.Empty)
         {
-            var currentUserId = currentUserService.UserId
-                ?? throw new UnauthorizedException("Authentication is required.");
-
             profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
                 ?? throw new NotFoundException("PatientProfile", currentUserId);
         }
@@ -61,7 +62,7 @@ public sealed class UploadPrescriptionCommandHandler(
             imageBytes,
             imagePath,
             profileId,
-            currentUserId!.Value,
+            currentUserId,
             cancellationToken);
 
         if (duplicateCheck.IsDuplicate)
@@ -147,7 +148,13 @@ public sealed class UploadPrescriptionCommandHandler(
             PrescriptionDate = prescriptionDate.ToString("yyyy-MM-dd"),
             ImagePath = imagePath,
             CreatedAt = DateTime.UtcNow,
-            Medicines = extracted.Medicines.Select(medicine => new PrescriptionMedicineResponseDto
+            MedicalAttentionReason = extracted.MedicalAttentionReason,
+            RecommendedSpecialty = extracted.RecommendedSpecialty,
+            ConfidenceScore = extracted.ConfidenceScore,
+            RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(extracted.ConfidenceScore),
+            AttentionLevel = warningCalculator.ComputeAttentionLevel(extracted.ConfidenceScore).ToString(),
+
+            Medicines = (extracted.Medicines ?? []).Select(medicine => new PrescriptionMedicineResponseDto
             {
                 Id = Guid.NewGuid(),
                 MedicineName = medicine.MedicineName ?? string.Empty,

@@ -20,7 +20,13 @@ public sealed class BedrockLabReportDto
 
     public string? OcrText { get; set; }
 
-    public string? Summary { get; set; }
+    public string? AiSummary { get; set; }
+
+    public string? MedicalAttentionReason { get; set; }
+
+    public string? RecommendedSpecialty { get; set; }
+
+    public double? ConfidenceScore { get; set; }
 
     public List<BedrockLabResultDto> Tests { get; set; } = new();
 }
