@@ -28,7 +28,11 @@ public static class MedicineBoxPrompt
           "medicineName": "",
           "strength": "",
           "dosageForm": "",
-          "manufacturer": ""
+          "manufacturer": "",
+          "aiSummary": "",
+          "medicalAttentionReason": null,
+          "recommendedSpecialty": null,
+          "confidenceScore": null
         }
 
         Document Validation Rules:
@@ -36,8 +40,10 @@ public static class MedicineBoxPrompt
         - Determine the type of the uploaded image before extracting any data.
         - Use ONLY these values for detectedDocumentType: "Prescription", "LabReport", "ImagingReport", "MedicineBox", "Unknown".
         - If the image IS a medicine box or blister pack AND is clearly readable, set "isValidDocument": true, "isUnreadable": false, "detectedDocumentType": "MedicineBox".
-        - If the image IS a medicine box or blister pack BUT is too blurry, too cropped, too dark, too low resolution, or otherwise unreadable so that the medicine name and details cannot be reliably extracted, set "isValidDocument": true, "isUnreadable": true, "detectedDocumentType": "MedicineBox".
-        - If the image is NOT a medicine box or blister pack (e.g., it is a prescription, lab report, imaging report, or unrelated photo), set "isValidDocument": false, "isUnreadable": false.
+        - If the image IS a medicine box or blister pack BUT is truly completely unreadable (e.g. completely black, 100% blurred out), set "isValidDocument": true, "isUnreadable": true, "detectedDocumentType": "MedicineBox".
+        - Reject ONLY documents clearly unrelated to medicine boxes (e.g. food recipes, cars).
+        - NEVER reject because of different layouts, hospital templates, cropping, rotation, mixed Arabic/English, low quality, or mobile photos.
+        - If the image is entirely NOT a medicine box or blister pack, set "isValidDocument": false, "isUnreadable": false.
         - If the image is completely blank, empty, random noise, or cannot be classified at all, set "isValidDocument": false, "isUnreadable": false, "detectedDocumentType": "Unknown".
         - Set detectedDocumentType to the actual detected type when it can be identified with confidence, otherwise set it to "Unknown".
         - Do NOT guess or infer the document type. Only classify with confidence.
@@ -59,5 +65,20 @@ public static class MedicineBoxPrompt
 
         - Every JSON property must exist.
         - Every value must be returned as a STRING except null values and boolean values.
+        
+        Summary Rules (apply ONLY when isValidDocument is true):
+        - Generate aiSummary as a short patient-friendly explanation in 2-3 sentences about what this medicine is typically used for.
+        
+        IMPORTANT: The summary MUST be generated entirely in the following language: {{language}}.
+        
+        Medical Warning Rules:
+        - Generate warnings ONLY from findings explicitly present in the uploaded medical record. NEVER infer, assume, or diagnose unsupported conditions.
+        - The examples provided below are just conceptual. Evaluate overall clinical significance instead of strict matching.
+        - Generate a warning ONLY when findings indicate medical evaluation or follow-up is likely needed (e.g. extremely dangerous drugs that should not be taken without strict supervision).
+        - DO NOT generate a warning for minor/routine deviations (e.g. minor variations without clinical urgency).
+        - If a warning is warranted, populate "medicalAttentionReason" with a concise explanation (maximum 40 words, non-medical terms) in {{language}}.
+        - Set "recommendedSpecialty" to EXACTLY ONE of the following, or null if confidence isn't high enough: Cardiologist, Pulmonologist, Endocrinologist, Nephrologist, Neurologist, OrthopedicSurgeon, GeneralSurgeon, EntSpecialist, Dermatologist, Gastroenterologist, Ophthalmologist, Urologist, Gynecologist, Hematologist, Oncologist, EmergencyDepartment.
+        - Set "confidenceScore" between 0.00 and 1.00. This represents your confidence in the medical recommendation itself, NOT OCR/classification confidence.
+        - If no warning is needed, return null for medicalAttentionReason, recommendedSpecialty, and confidenceScore.
         """;
 }

@@ -9,7 +9,8 @@ namespace Rafiq.Application.Features.Prescriptions.Queries.GetPrescriptionById;
 
 public sealed class GetPrescriptionByIdQueryHandler(
     IHealthProfileAuthorizationService authorizationService,
-    IPrescriptionRepository prescriptionRepository)
+    IPrescriptionRepository prescriptionRepository,
+    IMedicalWarningCalculator warningCalculator)
     : IRequestHandler<GetPrescriptionByIdQuery, ApiResponse<PrescriptionResponseDto>>
 {
     public async Task<ApiResponse<PrescriptionResponseDto>> Handle(
@@ -30,6 +31,12 @@ public sealed class GetPrescriptionByIdQueryHandler(
             PrescriptionDate = prescription.PrescriptionDate.ToString("yyyy-MM-dd"),
             ImagePath = prescription.ImagePath,
             CreatedAt = prescription.CreatedAt,
+            MedicalAttentionReason = prescription.MedicalAttentionReason,
+            RecommendedSpecialty = prescription.RecommendedSpecialty,
+            ConfidenceScore = prescription.ConfidenceScore,
+            RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(prescription.ConfidenceScore),
+            AttentionLevel = warningCalculator.ComputeAttentionLevel(prescription.ConfidenceScore).ToString(),
+
             Medicines = prescription.Medicines.Select(m => new PrescriptionMedicineResponseDto
             {
                 Id = m.Id,

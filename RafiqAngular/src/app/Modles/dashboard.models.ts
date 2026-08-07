@@ -18,6 +18,11 @@ export interface LabReport {
   imageUrl?: string;
   createdAt: string;
   results: LabResult[];
+  requiresMedicalAttention?: boolean;
+  medicalAttentionReason?: string;
+  recommendedSpecialty?: string;
+  attentionLevel?: string;
+  confidenceScore?: number;
 }
 
 // ===== Imaging Report =====
@@ -33,6 +38,11 @@ export interface ImagingReport {
   ocrText?: string;
   summary?: string;
   createdAt: string;
+  requiresMedicalAttention?: boolean;
+  medicalAttentionReason?: string;
+  recommendedSpecialty?: string;
+  attentionLevel?: string;
+  confidenceScore?: number;
 }
 
 // ===== Prescription =====
@@ -53,6 +63,11 @@ export interface Prescription {
   imagePath?: string;
   createdAt: string;
   medicines: PrescriptionMedicine[];
+  requiresMedicalAttention?: boolean;
+  medicalAttentionReason?: string;
+  recommendedSpecialty?: string;
+  attentionLevel?: string;
+  confidenceScore?: number;
 }
 
 // ===== Unified Medical Record (for display) =====
@@ -96,6 +111,11 @@ export interface GeneralMedicalDocument {
   documentDate?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  requiresMedicalAttention?: boolean;
+  medicalAttentionReason?: string;
+  recommendedSpecialty?: string;
+  attentionLevel?: string;
+  confidenceScore?: number;
 }
 
 // ===== Medicine Reminder =====

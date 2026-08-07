@@ -112,6 +112,7 @@ public static class DependencyInjection
         services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
         services.AddScoped<IMessageReactionRepository, MessageReactionRepository>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddScoped<IDocumentUploadSessionRepository, DocumentUploadSessionRepository>();
         services.AddScoped<IDuplicateDocumentDetector, DuplicateDocumentDetector>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
@@ -150,6 +151,10 @@ public static class DependencyInjection
         services.AddScoped<DocumentAnalysisJob>();
         services.AddScoped<DocumentRecoveryJob>();
         services.AddScoped<IDocumentAnalysisJobService, DocumentAnalysisJobService>();
+
+        // ── Medical Warnings ──────────────────────────────────────────────
+        services.Configure<MedicalWarningSettings>(configuration.GetSection("MedicalWarning"));
+        services.AddScoped<IMedicalWarningCalculator, MedicalWarningCalculator>();
 
         // ── Hangfire ──────────────────────────────────────────────────────
         var connectionString = configuration.GetConnectionString("DefaultConnection")!;

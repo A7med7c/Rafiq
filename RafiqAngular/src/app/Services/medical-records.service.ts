@@ -23,6 +23,11 @@ export interface UnifiedMedicalRecord {
   uploadedBy: string;
   hasAiSummary: boolean;
   summary: string;
+  requiresMedicalAttention?: boolean;
+  medicalAttentionReason?: string;
+  recommendedSpecialty?: string;
+  attentionLevel?: string;
+  confidenceScore?: number;
   rawRecord: any;
 }
 
@@ -105,6 +110,11 @@ export class MedicalRecordsService {
         uploadedBy: l.doctorName || 'Self',
         hasAiSummary: !!(l.summary || l.ocrText),
         summary: l.summary || 'Lab report processed successfully.',
+        requiresMedicalAttention: l.requiresMedicalAttention,
+        medicalAttentionReason: l.medicalAttentionReason,
+        recommendedSpecialty: l.recommendedSpecialty,
+        attentionLevel: l.attentionLevel,
+        confidenceScore: l.confidenceScore,
         rawRecord: l,
       });
     });
@@ -120,6 +130,11 @@ export class MedicalRecordsService {
         uploadedBy: im.doctorName || 'Self',
         hasAiSummary: !!(im.summary || im.findings),
         summary: im.summary || im.findings || 'Imaging report analyzed.',
+        requiresMedicalAttention: im.requiresMedicalAttention,
+        medicalAttentionReason: im.medicalAttentionReason,
+        recommendedSpecialty: im.recommendedSpecialty,
+        attentionLevel: im.attentionLevel,
+        confidenceScore: im.confidenceScore,
         rawRecord: im,
       });
     });
@@ -135,6 +150,11 @@ export class MedicalRecordsService {
         uploadedBy: p.patientName || 'Self',
         hasAiSummary: p.medicines && p.medicines.length > 0,
         summary: p.medicines ? p.medicines.map(m => `${m.medicineName} (${m.dosage})`).join(', ') : 'Prescription verified.',
+        requiresMedicalAttention: p.requiresMedicalAttention,
+        medicalAttentionReason: p.medicalAttentionReason,
+        recommendedSpecialty: p.recommendedSpecialty,
+        attentionLevel: p.attentionLevel,
+        confidenceScore: p.confidenceScore,
         rawRecord: p,
       });
     });
@@ -165,6 +185,11 @@ export class MedicalRecordsService {
         uploadedBy: d.doctorName || d.hospitalOrClinic || 'Self',
         hasAiSummary: !!d.aiSummary,
         summary: d.aiSummary || d.description || 'Document saved successfully.',
+        requiresMedicalAttention: d.requiresMedicalAttention,
+        medicalAttentionReason: d.medicalAttentionReason,
+        recommendedSpecialty: d.recommendedSpecialty,
+        attentionLevel: d.attentionLevel,
+        confidenceScore: d.confidenceScore,
         rawRecord: d,
       });
     });

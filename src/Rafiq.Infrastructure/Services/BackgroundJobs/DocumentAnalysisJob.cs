@@ -107,7 +107,10 @@ public sealed class DocumentAnalysisJob(
                 doctorName: extracted.DoctorName,
                 hospitalOrClinic: extracted.HospitalOrClinic,
                 documentDate: extracted.DocumentDate,
-                ocrText: extracted.OcrText);
+                ocrText: extracted.OcrText,
+                medicalAttentionReason: extracted.MedicalAttentionReason,
+                recommendedSpecialty: extracted.RecommendedSpecialty,
+                confidenceScore: extracted.ConfidenceScore);
 
             // Persist a DB notification so it appears in the notification centre
             var notif = new UserNotification(

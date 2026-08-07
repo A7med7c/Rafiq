@@ -1,4 +1,4 @@
-﻿public sealed class BedrockGeneralDocumentDto
+public sealed class BedrockGeneralDocumentDto
 {
     public string? DocumentCategory { get; set; }
 
@@ -13,6 +13,12 @@
     public string? DocumentDate { get; set; }
 
     public string? AiSummary { get; set; }
+
+    public string? MedicalAttentionReason { get; set; }
+
+    public string? RecommendedSpecialty { get; set; }
+
+    public double? ConfidenceScore { get; set; }
 
     public string? OcrText { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.GeneralDocuments.DTOs;
 
@@ -14,5 +14,8 @@ public sealed record SaveGeneralDocumentCommand(
     string? DoctorName,
     string? HospitalOrClinic,
     string? DocumentDate,
+    string? MedicalAttentionReason,
+    string? RecommendedSpecialty,
+    double? ConfidenceScore,
     string? OcrText)
     : IRequest<ApiResponse<GeneralDocumentResponseDto>>;

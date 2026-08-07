@@ -19,6 +19,9 @@ public class ImagingReport : BaseEntity
         string imageUrl,
         string? ocrText,
         string? description,
+        string? medicalAttentionReason = null,
+        string? recommendedSpecialty = null,
+        double? confidenceScore = null,
         string? fileHash = null)
     {
         UserHealthProfileId = userHealthProfileId;
@@ -31,6 +34,9 @@ public class ImagingReport : BaseEntity
         ImageUrl = imageUrl;
         OCRText = ocrText;
         Description = description;
+        MedicalAttentionReason = medicalAttentionReason;
+        RecommendedSpecialty = recommendedSpecialty;
+        ConfidenceScore = confidenceScore;
         FileHash = fileHash;
     }
 
@@ -57,6 +63,12 @@ public class ImagingReport : BaseEntity
     public string? Description { get; set; } // Stores AI summary
 
     public string? FileHash { get; private set; }
+
+    public string? MedicalAttentionReason { get; private set; }
+
+    public string? RecommendedSpecialty { get; private set; }
+
+    public double? ConfidenceScore { get; private set; }
     
     public void Update(
         string imagingType,
@@ -66,6 +78,9 @@ public class ImagingReport : BaseEntity
         string? doctorName,
         DateOnly reportDate,
         string? description,
+        string? medicalAttentionReason,
+        string? recommendedSpecialty,
+        double? confidenceScore,
         string? imageUrl,
         string? ocrText)
     {
@@ -76,6 +91,9 @@ public class ImagingReport : BaseEntity
         DoctorName = doctorName;
         ReportDate = reportDate;
         Description = description;
+        MedicalAttentionReason = medicalAttentionReason;
+        RecommendedSpecialty = recommendedSpecialty;
+        ConfidenceScore = confidenceScore;
         if (!string.IsNullOrWhiteSpace(imageUrl))
             ImageUrl = imageUrl;
         OCRText = ocrText;

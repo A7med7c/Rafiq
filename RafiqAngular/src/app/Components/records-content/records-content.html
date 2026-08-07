@@ -359,7 +359,12 @@
                   <i [class]="'fa-solid ' + getRecordIcon(rec.type)"></i>
                 </div>
                 <div>
-                  <span class="table-rec-name">{{ rec.name }}</span>
+                  <span class="table-rec-name">{{ rec.name }}
+                  @if (rec.requiresMedicalAttention) {
+                    <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}" (click)="openWarningModal(rec)" title="Medical Warning">
+                      <i class="fa-solid fa-triangle-exclamation"></i> {{ rec.attentionLevel || 'Warning' }}
+                    </span>
+                  }</span>
                   @if (rec.rawRecord.doctorName) {
                   <span class="table-rec-sub">{{ t().common.drPrefix }} {{ rec.rawRecord.doctorName }}</span>
                   }
@@ -368,7 +373,10 @@
             </td>
             <td [attr.data-label]="t().records.type"><span class="type-pill" [class]="'type-' + rec.type">{{ recordTypeLabel(rec.type) }}</span></td>
             <td class="table-date" [attr.data-label]="t().records.date">{{ rec.date }}</td>
-            <td class="table-uploaded" [attr.data-label]="t().records.uploadedBy">{{ rec.uploadedBy }}</td>
+                          <td class="table-uploaded" [attr.data-label]="t().records.uploadedBy">
+                {{ rec.uploadedBy }}
+                
+              </td>
             <td [attr.data-label]="t().records.aiSummaryStatus">
               <span class="pill" [class]="rec.hasAiSummary ? 'pill-green' : 'pill-yellow'">
                 <i class="fa-solid" [class.fa-check-double]="rec.hasAiSummary" [class.fa-spinner]="!rec.hasAiSummary"></i>
@@ -440,7 +448,12 @@
           <i [class]="'fa-solid ' + getRecordIcon(rec.type)"></i>
         </div>
         <div>
-          <h3 class="modal-title">{{ rec.name }}</h3>
+          <h3 class="modal-title">{{ rec.name }}
+                  @if (rec.requiresMedicalAttention) {
+                    <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}" (click)="openWarningModal(rec)" title="Medical Warning">
+                      <i class="fa-solid fa-triangle-exclamation"></i> {{ rec.attentionLevel || 'Warning' }}
+                    </span>
+                  }</h3>
           <p class="modal-sub">{{ rec.typeLabel }} · {{ rec.date }}</p>
         </div>
       </div>
@@ -506,10 +519,12 @@
       </div>
       }
       }
-      <div class="detail-section">
-        <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> {{ t().records.aiSummary }}</h4>
-        <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
-      </div>
+                <div class="detail-section ai-summary-card">
+          <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> {{ t().records.aiSummary }}</h4>
+          <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
+        </div>
+        
+        <app-medical-warning-card *ngIf="rec.requiresMedicalAttention" [data]="rec"></app-medical-warning-card>
       @if (rec.type === 'lab' && rec.rawRecord.results && rec.rawRecord.results.length > 0) {
       <div class="detail-section">
         <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> {{ t().records.completeLabResults }}</h4>
@@ -581,7 +596,12 @@
         <div class="modal-ico delete-modal-ico"><i class="fa-solid fa-trash-can"></i></div>
         <div>
           <h3 class="modal-title">{{ t().records.deleteRecord }}</h3>
-          <p class="modal-sub">{{ rec.name }}</p>
+          <p class="modal-sub">{{ rec.name }}
+                  @if (rec.requiresMedicalAttention) {
+                    <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}" (click)="openWarningModal(rec)" title="Medical Warning">
+                      <i class="fa-solid fa-triangle-exclamation"></i> {{ rec.attentionLevel || 'Warning' }}
+                    </span>
+                  }</p>
         </div>
       </div>
       <button type="button" class="close-modal-btn" [disabled]="deleting()" (click)="closeDeleteModal()">
@@ -733,6 +753,17 @@
         }
       </div>
       <div class="scan-form-grid">
+        <!-- AI Summary at the very top of the form grid -->
+        @if (!manualReviewMode()) {
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">{{ t().records.aiSummary }}</label>
+          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
+        </div>
+        }
+
+        <!-- Medical Warning Card directly below the AI Summary -->
+        <app-medical-warning-card class="scan-field--full" *ngIf="rf.requiresMedicalAttention" [data]="rf"></app-medical-warning-card>
+
         @if (rf.type === 'lab') {
         <div class="scan-field">
           <label class="scan-label">{{ t().records.labName }}</label>
@@ -810,17 +841,7 @@
           <input type="text" class="scan-input" [(ngModel)]="rf.documentDate">
         </div>
         }
-        <div class="scan-field scan-field--full">
-          <label class="scan-label">{{ t().records.aiSummary }}</label>
-          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
-        </div>
-        }
-        @if (!manualReviewMode() && rf.type !== 'general') {
-        <div class="scan-field scan-field--full">
-          <label class="scan-label">{{ t().records.aiSummary }}</label>
-          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
-        </div>
-        }
+      }
         @if (!manualReviewMode() && rf.type !== 'general') {
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.ocrText }}</label>
@@ -1229,3 +1250,21 @@
   </div>
   }
 </div>
+
+
+@if (selectedWarningRecord()) {
+<div class="modal-overlay" (click)="closeWarningModal()">
+  <div class="modal-content md-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-triangle-exclamation"></i> {{ t().records.medicalWarning }}</h3>
+      <button class="modal-close" (click)="closeWarningModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <app-medical-warning-card [data]="selectedWarningRecord()!"></app-medical-warning-card>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeWarningModal()">{{ t().common.close }}</button>
+    </div>
+  </div>
+</div>
+}
