@@ -511,6 +511,7 @@ export class NotificationService {
     });
 
     this._appointmentReminderQueue.update(q => [...q, event]);
+    this._appointmentReminderModalOpen.set(true);
 
     this.emitNativeNotification({
       id: crypto.randomUUID(),

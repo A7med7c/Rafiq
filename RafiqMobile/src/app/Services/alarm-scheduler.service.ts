@@ -5,6 +5,7 @@ import { AlarmSchedulerPlugin } from './alarm-scheduler-plugin';
 import type { AlarmScheduleRequest } from './alarm-scheduler-plugin';
 import { MedicationRemindersService, UpcomingReminderDto } from './medication-reminders.service';
 import { CachedReminder, OfflineReminderService } from './offline-reminder.service';
+import { AppointmentsService } from './appointments.service';
 
 /**
  * Thin wrapper around AlarmSchedulerPlugin that schedules / cancels native
@@ -23,6 +24,7 @@ export class AlarmSchedulerService {
 
   private readonly isAndroid = Capacitor.getPlatform() === 'android';
   private readonly medicationReminders = inject(MedicationRemindersService);
+  private readonly appointmentsSvc    = inject(AppointmentsService);
   private readonly offlineReminders = inject(OfflineReminderService);
   private actionInFlight: Promise<void> | null = null;
 
@@ -163,6 +165,39 @@ export class AlarmSchedulerService {
         reminderId: action.reminderId,
         action: 'snooze',
       });
+    }
+
+    // ── Appointment alarm actions ─────────────────────────────────────────────
+    // AlarmActivity records the action to SharedPreferences via MainActivity.
+    // Without these handlers completePendingAction() was never called for
+    // appointments, leaving SharedPreferences permanently dirty.
+
+    if (action.action === 'takeMedicine' && action.reminderType === 'Appointment') {
+      // "Confirm Attendance" tapped — mark appointment complete on the backend,
+      // remove from the offline SQLite cache, and cancel the AlarmManager entry.
+      try {
+        await firstValueFrom(this.appointmentsSvc.complete(action.reminderId));
+      } catch (e) {
+        console.error('[AlarmSchedulerService] Failed to complete appointment via alarm action', e);
+      }
+      await this.offlineReminders.removeReminder(action.reminderId);
+      await this.cancelAlarm(action.reminderId);
+      await AlarmSchedulerPlugin.completePendingAction({
+        reminderId: action.reminderId,
+        action: 'takeMedicine',
+      });
+      return;
+    }
+
+    if (action.action === 'snooze' && action.reminderType === 'Appointment') {
+      // AlarmActivity.snooze() already re-scheduled the native alarm and
+      // updated the SQLite reminderTime via NativeReminderStore.updateSnooze.
+      // Just clear the SharedPreferences pending action.
+      await AlarmSchedulerPlugin.completePendingAction({
+        reminderId: action.reminderId,
+        action: 'snooze',
+      });
+      return;
     }
   }
 }
