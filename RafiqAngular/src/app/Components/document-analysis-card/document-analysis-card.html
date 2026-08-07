@@ -78,6 +78,10 @@
             <i class="fa-solid fa-pen-to-square"></i>
             {{ l10n.t().documentAnalysis.review }}
           </button>
+          <button type="button" class="dac-btn dac-btn--dismiss" (click)="dismiss(doc)"
+            [attr.aria-label]="l10n.t().documentAnalysis.dismiss">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         } @else if (doc.status === 'Completed') {
           <button type="button" class="dac-btn dac-btn--view" (click)="viewDocument(doc)">
             {{ l10n.t().documentAnalysis.view }}

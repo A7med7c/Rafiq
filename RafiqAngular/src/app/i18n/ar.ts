@@ -509,6 +509,8 @@ export const ar: Translations = {
     saveMedicineFailed: 'فشل حفظ الدواء.',
     addMedicineFailed: 'فشل إضافة الدواء.',
     addMedicinesFailed: 'فشل إضافة الأدوية.',
+    medicineAddedToProfile: 'تمت إضافة {medicine} إلى أدويتك.',
+    allMedicinesAddedToProfile: 'تمت إضافة جميع الأدوية إلى أدويتك.',
     lab: "تحليل طبي",
     imaging: "الأشعة والتصوير",
     prescriptionn: "وصفة طبية",
