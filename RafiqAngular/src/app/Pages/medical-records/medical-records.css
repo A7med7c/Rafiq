@@ -3194,3 +3194,240 @@ html[dir="rtl"] .user-dropdown {
     font-size: 11px !important;
   }
 }
+
+/* Modern Medicine Form Styling */
+.modern-med-form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: #ffffff;
+  border-radius: 0 0 16px 16px;
+}
+
+.modern-med-img-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 28px 20px;
+  text-align: center;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.modern-med-img-zone:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.modern-img-icon i {
+  font-size: 32px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  transition: color 0.3s;
+}
+.modern-med-img-zone:hover .modern-img-icon i {
+  color: #3b82f6;
+}
+
+.modern-img-btn {
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.modern-img-btn:hover:not(:disabled) {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.15);
+}
+.modern-img-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modern-preview-wrap, .manual-img-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 3px solid white;
+}
+.modern-preview-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+.modern-preview-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  width: 100%;
+  position: relative;
+  cursor: zoom-in;
+}
+
+.modern-preview-zoom {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.modern-preview-wrap:hover .modern-preview-zoom {
+  opacity: 1;
+}
+
+.modern-img-remove-btn {
+  margin-top: 12px;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.modern-img-remove-btn:hover:not(:disabled) {
+  background: #ef4444;
+  color: white;
+}
+
+.modern-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #3b82f6;
+  backdrop-filter: blur(2px);
+}
+
+.modern-img-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.modern-med-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.modern-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.modern-input-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.modern-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modern-label i {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+}
+
+.modern-input {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  color: #0f172a;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.01);
+  width: 100%;
+}
+.modern-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+.modern-input::placeholder {
+  color: #94a3b8;
+}
+
+.modern-input.error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+.modern-input.error:focus {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+
+textarea.modern-input {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.modern-error-msg {
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: slide-up 0.2s ease-out;
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .modern-med-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

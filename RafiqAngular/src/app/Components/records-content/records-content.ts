@@ -1074,6 +1074,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
     request$.subscribe({
       next: () => {
+        const hasAddedMedicines = this.addedMedIndices().size > 0;
         this.reviewSaving.set(false);
         this.reviewForm.set(null);
         this._reviewFormSnapshot = null;
@@ -1086,7 +1087,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.showToast(rf.mode === 'edit' ? 'Record updated successfully.' : this.t().records.recordSavedSuccessfully, 'success');
         this.loadData();
 
-        if (rf.type === 'prescription' && rf.mode !== 'edit') {
+        if (rf.type === 'prescription' && rf.mode !== 'edit' && hasAddedMedicines) {
           this.openReminderPrompt('multi');
         }
       },
@@ -1399,7 +1400,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         if (res && res.message && res.message.includes('خلي بالك')) {
           alert(res.message);
         } else {
-          this.showToast(`${med.medicineName} added to your medications.`, 'success');
+          this.showToast(this.t().records.medicineAddedToProfile.replace('{medicine}', med.medicineName), 'success');
         }
       },
       error: err => {
@@ -1455,10 +1456,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
             }
           });
           if (!alertShown) {
-            this.showToast('All medicines added to your medications.', 'success');
+            this.showToast(this.t().records.allMedicinesAddedToProfile, 'success');
           }
         } else {
-          this.showToast('All medicines added to your medications.', 'success');
+          this.showToast(this.t().records.allMedicinesAddedToProfile, 'success');
         }
       },
       error: err => {

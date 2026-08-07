@@ -498,6 +498,8 @@ export const en = {
     saveMedicineFailed: 'Failed to save medicine.',
     addMedicineFailed: 'Failed to add medicine.',
     addMedicinesFailed: 'Failed to add medicines.',
+    medicineAddedToProfile: '{medicine} added to your medications.',
+    allMedicinesAddedToProfile: 'All medicines added to your medications.',
     lab: "Lab Analysis",
     imaging: "X-Ray & Imaging",
     prescriptionn: "Prescription",
