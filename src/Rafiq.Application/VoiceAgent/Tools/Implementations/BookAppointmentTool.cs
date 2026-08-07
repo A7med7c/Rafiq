@@ -61,7 +61,7 @@ public sealed class BookAppointmentTool(ISender mediator) : IVoiceTool
         "                            'تطعيم'→Vaccination, 'متابعة'→FollowUp.\n" +
         "  title:            Brief description. Infer when obvious: 'dentist'→'Dentist Appointment'.\n" +
         "  provider:         Doctor or clinic name. Must come from the user — never invent.\n" +
-        "  appointmentDateTime: DATE + TIME the user specified, combined into ISO-8601 UTC.\n" +
+        "  appointmentDateTime: DATE + TIME the user specified, combined into ISO-8601 with the local timezone offset (e.g., append +03:00 for Egypt/Saudi). DO NOT convert to UTC yourself.\n" +
         "                    DATE and TIME are two separate pieces the user must provide.\n" +
         "                    Date given, time missing → ask: 'What time on [date]?'\n" +
         "                    Time given, date missing → ask: 'What date?'\n" +
