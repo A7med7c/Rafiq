@@ -210,21 +210,16 @@ export class AiPanel implements OnInit, OnDestroy {
   private static readonly PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/verify-account'];
 
   constructor() {
-    const initialHome = this.router.url.includes('/dashboard');
-    this.isHomePage.set(initialHome);
-    if (initialHome && this.authService.isLoggedIn) {
+    const isPublic = AiPanel.PUBLIC_ROUTES.some(r => this.router.url === r || this.router.url.startsWith(r + '?'));
+    if (!isPublic && this.authService.isLoggedIn) {
       this.aiChatService.ensurePanelMounted();
     }
 
     this._routerSub = this.router.events.subscribe(e => {
       if (e instanceof NavigationEnd) {
         const url = e.urlAfterRedirects || e.url;
-        const wasHome = this.isHomePage();
-        const nowHome = url.includes('/dashboard');
-        this.isHomePage.set(nowHome);
-        // Show the minimized hero (FAB) when landing on the home page — stays collapsed
-        // until the user explicitly opens it (e.g. via "Ask AI for details").
-        if (nowHome && !wasHome && this.authService.isLoggedIn) {
+        const isPublicUrl = AiPanel.PUBLIC_ROUTES.some(r => url === r || url.startsWith(r + '?'));
+        if (!isPublicUrl && this.authService.isLoggedIn) {
           this.aiChatService.ensurePanelMounted();
         }
       }
