@@ -14,6 +14,9 @@ public class Prescription : BaseEntity
         string patientName,
         DateOnly prescriptionDate,
         string imagePath,
+        string? medicalAttentionReason = null,
+        string? recommendedSpecialty = null,
+        double? confidenceScore = null,
         string? fileHash = null)
     {
         UserHealthProfileId = userHealthProfileId;
@@ -21,6 +24,9 @@ public class Prescription : BaseEntity
         PatientName = patientName;
         PrescriptionDate = prescriptionDate;
         ImagePath = imagePath;
+        MedicalAttentionReason = medicalAttentionReason;
+        RecommendedSpecialty = recommendedSpecialty;
+        ConfidenceScore = confidenceScore;
         FileHash = fileHash;
     }
 
@@ -37,6 +43,12 @@ public class Prescription : BaseEntity
     public string ImagePath { get; private set; } = null!;
 
     public string? FileHash { get; private set; }
+
+    public string? MedicalAttentionReason { get; private set; }
+
+    public string? RecommendedSpecialty { get; private set; }
+
+    public double? ConfidenceScore { get; private set; }
 
     public ICollection<PrescriptionMedicine> Medicines { get; set; }
         = new List<PrescriptionMedicine>();

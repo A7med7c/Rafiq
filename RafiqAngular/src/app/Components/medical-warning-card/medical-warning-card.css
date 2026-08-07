@@ -1,0 +1,90 @@
+:host {
+  display: block;
+  grid-column: 1 / -1;
+}
+
+.medical-warning-card {
+  background-color: #fff5f5;
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.warning-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.warning-icon {
+  color: #ef4444;
+  font-size: 20px;
+  margin-inline-end: 8px;
+}
+.warning-title {
+  color: #b91c1c;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.warning-content {
+  display: grid;
+  gap: 8px;
+}
+.warning-row {
+  display: flex;
+  flex-direction: column;
+}
+.warning-label {
+  font-size: 12px;
+  color: #991b1b;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.warning-value {
+  font-size: 14px;
+  color: #7f1d1d;
+  font-weight: 500;
+}
+.warning-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #fecaca;
+  font-size: 12px;
+  color: #991b1b;
+}
+.disclaimer, .safety-note {
+  margin: 4px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.disclaimer i, .safety-note i {
+  margin-top: 2px;
+  opacity: 0.8;
+}
+.compact {
+  padding: 12px;
+  margin: 8px 0;
+}
+.compact .warning-footer {
+  margin-top: 12px;
+}
+
+/* Dynamic Colors */
+.priority-emergency { color: #dc2626 !important; font-weight: 700; }
+.priority-bg-emergency .warning-icon, .priority-bg-emergency .warning-title { color: #dc2626; }
+.priority-bg-emergency { border-bottom: 1px solid #fecaca; padding-bottom: 8px; }
+
+.priority-urgent { color: #ea580c !important; font-weight: 700; }
+.priority-bg-urgent .warning-icon, .priority-bg-urgent .warning-title { color: #ea580c; }
+.priority-bg-urgent { border-bottom: 1px solid #ffedd5; padding-bottom: 8px; }
+
+.priority-follow-up, .priority-soon { color: #ca8a04 !important; font-weight: 700; }
+.priority-bg-follow-up .warning-icon, .priority-bg-follow-up .warning-title { color: #ca8a04; }
+.priority-bg-soon .warning-icon, .priority-bg-soon .warning-title { color: #ca8a04; }
+.priority-bg-follow-up, .priority-bg-soon { border-bottom: 1px solid #fef08a; padding-bottom: 8px; }
+
+.medical-warning-card {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}

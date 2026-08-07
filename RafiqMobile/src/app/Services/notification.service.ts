@@ -7,6 +7,7 @@ import { AppointmentReminderNotificationPayload, DocumentAnalysisCompletedPayloa
 import { NotificationSoundService } from './notification-sound.service';
 import { PersistedNotificationsService } from './persisted-notifications.service';
 import { LocalizationService } from './localization.service';
+
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 export interface AppNotification {
@@ -59,6 +60,7 @@ export class NotificationService {
   private readonly appointmentsService = inject(AppointmentsService);
   private readonly notificationSoundService = inject(NotificationSoundService);
   private readonly persistedSvc = inject(PersistedNotificationsService);
+
   private readonly localization = inject(LocalizationService);
 
   private readonly router = inject(Router);
@@ -144,6 +146,7 @@ export class NotificationService {
 
   constructor() {
     this._initLocalNotifications();
+    
     this.authService.currentUser$.subscribe((user) => {
       const nextUserId = user?.userId ?? null;
 
@@ -458,6 +461,7 @@ export class NotificationService {
     this.showBrowserReminderNotification(reminder);
     this.notificationSoundService.play();
 
+
     // The Hangfire job that fired this SignalR event has also just transitioned the backend
     // log from Pending → Sent.  Increment the refresh tick so the Medications page re-fetches
     // todayLogs and picks up the updated statuses, attempt states, and sort order — without
@@ -507,6 +511,7 @@ export class NotificationService {
     });
 
     this._appointmentReminderQueue.update(q => [...q, event]);
+    this._appointmentReminderModalOpen.set(true);
 
     this.emitNativeNotification({
       id: crypto.randomUUID(),
@@ -520,6 +525,7 @@ export class NotificationService {
 
 
     this.notificationSoundService.play();
+
 
     if (isDevMode()) {
       console.debug('[NotificationService] AppointmentReminderDue received', event);
@@ -571,7 +577,7 @@ export class NotificationService {
   }
 
   private emitNativeNotification(notification: BrowserNotificationItem & { action?: string }): void {
-    const idNum = Math.floor(Math.random() * 2000000000);
+    const idNum = this.stableNotificationId(notification.sourceId ?? notification.id);
     
     LocalNotifications.schedule({
       notifications: [
@@ -586,6 +592,17 @@ export class NotificationService {
         }
       ]
     });
+  }
+
+  private stableNotificationId(source: string): number {
+    let hash = 0;
+    for (let i = 0; i < source.length; i++) {
+      hash = Math.imul(31, hash) + source.charCodeAt(i);
+      hash |= 0;
+    }
+
+    const id = hash & 0x7fffffff;
+    return id === 0 ? 1 : id;
   }
 
   private emitBrowserNotification(notification: BrowserNotificationItem): void {

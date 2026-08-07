@@ -15,4 +15,10 @@ public sealed class BedrockMedicineBoxDto
     public string? DosageForm { get; set; }
 
     public string? Manufacturer { get; set; }
+
+    public string? MedicalAttentionReason { get; set; }
+
+    public string? RecommendedSpecialty { get; set; }
+
+    public double? ConfidenceScore { get; set; }
 }

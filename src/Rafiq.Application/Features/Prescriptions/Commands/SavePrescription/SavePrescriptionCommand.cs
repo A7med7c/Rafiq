@@ -18,5 +18,8 @@ public sealed record SavePrescriptionCommand(
     string? PatientName,
     string? PrescriptionDate,
     string? ImagePath,
+    string? MedicalAttentionReason,
+    string? RecommendedSpecialty,
+    double? ConfidenceScore,
     List<SavePrescriptionMedicineCommandItem>? Medicines)
     : IRequest<ApiResponse<PrescriptionResponseDto>>;

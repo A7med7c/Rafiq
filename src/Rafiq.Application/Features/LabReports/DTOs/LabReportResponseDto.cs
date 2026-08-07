@@ -23,6 +23,16 @@ public sealed class LabReportResponseDto
 
     public string? ImageUrl { get; init; } // Relative URL path
 
+    public string? MedicalAttentionReason { get; init; }
+    
+    public string? RecommendedSpecialty { get; init; }
+    
+    public double? ConfidenceScore { get; init; }
+    
+    public bool RequiresMedicalAttention { get; init; }
+    
+    public string? AttentionLevel { get; init; }
+
     public DateTime CreatedAt { get; init; }
 
     public List<LabResultResponseDto> Results { get; init; } = new();

@@ -66,7 +66,8 @@ export function localizeKnownApiMessage(message: string, translations: any): str
     'Medication Added Successfully': translations.medications?.medicationAddedSuccessfully,
     'You cannot invite yourself.': translations.family?.cannotInviteYourself,
     'An account with this phone number already exists.' : translations.login.phoneNumberAlreadyExist,
-    'Google login successful.': translations.login?.googleLoginSuccess
+    'Google login successful.': translations.login?.googleLoginSuccess,
+    'Invalid email / phone number or password.' : translations.login?.invalidEmailPassword,
   };
 
   if (map[normalized]) return map[normalized]!;

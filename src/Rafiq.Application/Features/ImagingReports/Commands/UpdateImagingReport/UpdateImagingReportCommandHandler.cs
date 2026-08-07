@@ -42,6 +42,9 @@ public sealed class UpdateImagingReportCommandHandler(
             request.DoctorName,
             reportDate,
             request.Summary,
+            imagingReport.MedicalAttentionReason,
+            imagingReport.RecommendedSpecialty,
+            imagingReport.ConfidenceScore,
             request.ImageUrl,
             request.OcrText);
 

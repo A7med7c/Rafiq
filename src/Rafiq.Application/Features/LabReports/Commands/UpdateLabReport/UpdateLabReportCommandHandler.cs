@@ -39,6 +39,9 @@ public sealed class UpdateLabReportCommandHandler(
             request.LabName ?? string.Empty,
             reportDate,
             request.Summary,
+            labReport.MedicalAttentionReason,
+            labReport.RecommendedSpecialty,
+            labReport.ConfidenceScore,
             request.ImageUrl,
             request.OcrText);
 

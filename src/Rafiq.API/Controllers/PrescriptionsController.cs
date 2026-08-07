@@ -48,6 +48,9 @@ public sealed class PrescriptionsController(IMediator mediator) : ControllerBase
                 body.PatientName,
                 body.PrescriptionDate,
                 body.ImagePath,
+                body.MedicalAttentionReason,
+                body.RecommendedSpecialty,
+                body.ConfidenceScore,
                 medicines),
             cancellationToken);
 
@@ -114,6 +117,9 @@ public sealed record SavePrescriptionRequest(
     string? PatientName,
     string? PrescriptionDate,
     string? ImagePath,
+      string? MedicalAttentionReason,
+      string? RecommendedSpecialty,
+      double? ConfidenceScore,
     List<SavePrescriptionMedicineRequest>? Medicines);
 
 public sealed record SavePrescriptionMedicineRequest(

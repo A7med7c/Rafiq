@@ -7,6 +7,7 @@ using Rafiq.Application.Features.MedicationReminderEngine.Commands.SnoozeMedicat
 using Rafiq.Application.Features.MedicationReminderEngine.Queries.GetMedicationReminderById;
 using Rafiq.Application.Features.MedicationReminderEngine.Queries.GetMedicationReminderHistory;
 using Rafiq.Application.Features.MedicationReminderEngine.Queries.GetTodaysMedicationReminders;
+using Rafiq.Application.Features.MedicationReminderEngine.Queries.GetUpcomingMedicationReminders;
 
 namespace Rafiq.API.Controllers;
 
@@ -15,6 +16,18 @@ namespace Rafiq.API.Controllers;
 [Route("api/medication-reminders")]
 public sealed class MedicationReminderEngineController(IMediator mediator) : ControllerBase
 {
+    [HttpGet("upcoming")]
+    public async Task<IActionResult> GetUpcoming(
+        [FromQuery] Guid profileId,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new GetUpcomingMedicationRemindersQuery(profileId),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     [HttpGet("today")]
     public async Task<IActionResult> GetToday(
         [FromQuery] Guid profileId,

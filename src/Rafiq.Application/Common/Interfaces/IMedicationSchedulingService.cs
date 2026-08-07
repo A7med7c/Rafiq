@@ -18,4 +18,13 @@ public interface IMedicationSchedulingService
     /// </summary>
     /// <returns><c>true</c> if a log was created; otherwise <c>false</c>.</returns>
     Task<bool> ScheduleTodayIfApplicableAsync(MedicineReminder reminder, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Pure, read-only calculation of today's upcoming reminder occurrences for a given reminder.
+    /// Does NOT insert logs, queue jobs, publish events, or modify the database in any way.
+    /// Used exclusively by the GET /api/medication-reminders/upcoming endpoint.
+    /// </summary>
+    Task<IReadOnlyCollection<(MedicationReminderLog Log, DateTime ScheduledUtc, bool Notify)>> GetUpcomingStagesAsync(
+        MedicineReminder reminder,
+        CancellationToken cancellationToken = default);
 }

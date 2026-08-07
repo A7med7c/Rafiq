@@ -28,6 +28,12 @@ public sealed class GeneralDocument : BaseEntity
 
     public string? FileHash { get; private set; }
 
+    public string? MedicalAttentionReason { get; private set; }
+
+    public string? RecommendedSpecialty { get; private set; }
+
+    public double? ConfidenceScore { get; private set; }
+
     // ── Async analysis state ─────────────────────────────────────────────────
 
     public GeneralDocumentStatus AnalysisStatus { get; private set; } = GeneralDocumentStatus.Pending;
@@ -51,6 +57,9 @@ public sealed class GeneralDocument : BaseEntity
         string? hospitalOrClinic = null,
         string? documentDate = null,
         string? ocrText = null,
+        string? medicalAttentionReason = null,
+        string? recommendedSpecialty = null,
+        double? confidenceScore = null,
         GeneralDocumentStatus analysisStatus = GeneralDocumentStatus.Pending,
         string? fileHash = null)
     {
@@ -64,6 +73,9 @@ public sealed class GeneralDocument : BaseEntity
         HospitalOrClinic = hospitalOrClinic;
         DocumentDate = documentDate;
         OcrText = ocrText;
+        MedicalAttentionReason = medicalAttentionReason;
+        RecommendedSpecialty = recommendedSpecialty;
+        ConfidenceScore = confidenceScore;
         AnalysisStatus = analysisStatus;
         FileHash = fileHash;
     }
@@ -84,7 +96,10 @@ public sealed class GeneralDocument : BaseEntity
         string? doctorName,
         string? hospitalOrClinic,
         string? documentDate,
-        string? ocrText)
+        string? ocrText,
+        string? medicalAttentionReason,
+        string? recommendedSpecialty,
+        double? confidenceScore)
     {
         Title = title;
         AiSummary = aiSummary;
@@ -93,6 +108,9 @@ public sealed class GeneralDocument : BaseEntity
         HospitalOrClinic = hospitalOrClinic;
         DocumentDate = documentDate;
         OcrText = ocrText;
+        MedicalAttentionReason = medicalAttentionReason;
+        RecommendedSpecialty = recommendedSpecialty;
+        ConfidenceScore = confidenceScore;
         AnalysisStatus = GeneralDocumentStatus.Completed;
         FailureReason = null;
         MarkUpdated();

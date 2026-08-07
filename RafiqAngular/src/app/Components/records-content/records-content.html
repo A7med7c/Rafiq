@@ -359,7 +359,12 @@
                   <i [class]="'fa-solid ' + getRecordIcon(rec.type)"></i>
                 </div>
                 <div>
-                  <span class="table-rec-name">{{ rec.name }}</span>
+                  <span class="table-rec-name">{{ rec.name }}
+                  @if (rec.requiresMedicalAttention) {
+                    <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}" (click)="openWarningModal(rec)" title="Medical Warning">
+                      <i class="fa-solid fa-triangle-exclamation"></i> {{ rec.attentionLevel || 'Warning' }}
+                    </span>
+                  }</span>
                   @if (rec.rawRecord.doctorName) {
                   <span class="table-rec-sub">{{ t().common.drPrefix }} {{ rec.rawRecord.doctorName }}</span>
                   }
@@ -368,7 +373,10 @@
             </td>
             <td [attr.data-label]="t().records.type"><span class="type-pill" [class]="'type-' + rec.type">{{ recordTypeLabel(rec.type) }}</span></td>
             <td class="table-date" [attr.data-label]="t().records.date">{{ rec.date }}</td>
-            <td class="table-uploaded" [attr.data-label]="t().records.uploadedBy">{{ rec.uploadedBy }}</td>
+                          <td class="table-uploaded" [attr.data-label]="t().records.uploadedBy">
+                {{ rec.uploadedBy }}
+                
+              </td>
             <td [attr.data-label]="t().records.aiSummaryStatus">
               <span class="pill" [class]="rec.hasAiSummary ? 'pill-green' : 'pill-yellow'">
                 <i class="fa-solid" [class.fa-check-double]="rec.hasAiSummary" [class.fa-spinner]="!rec.hasAiSummary"></i>
@@ -440,7 +448,12 @@
           <i [class]="'fa-solid ' + getRecordIcon(rec.type)"></i>
         </div>
         <div>
-          <h3 class="modal-title">{{ rec.name }}</h3>
+          <h3 class="modal-title">{{ rec.name }}
+                  @if (rec.requiresMedicalAttention) {
+                    <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}" (click)="openWarningModal(rec)" title="Medical Warning">
+                      <i class="fa-solid fa-triangle-exclamation"></i> {{ rec.attentionLevel || 'Warning' }}
+                    </span>
+                  }</h3>
           <p class="modal-sub">{{ rec.typeLabel }} · {{ rec.date }}</p>
         </div>
       </div>
@@ -506,10 +519,12 @@
       </div>
       }
       }
-      <div class="detail-section">
-        <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> {{ t().records.aiSummary }}</h4>
-        <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
-      </div>
+                <div class="detail-section ai-summary-card">
+          <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> {{ t().records.aiSummary }}</h4>
+          <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
+        </div>
+        
+        <app-medical-warning-card *ngIf="rec.requiresMedicalAttention" [data]="rec"></app-medical-warning-card>
       @if (rec.type === 'lab' && rec.rawRecord.results && rec.rawRecord.results.length > 0) {
       <div class="detail-section">
         <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> {{ t().records.completeLabResults }}</h4>
@@ -581,7 +596,12 @@
         <div class="modal-ico delete-modal-ico"><i class="fa-solid fa-trash-can"></i></div>
         <div>
           <h3 class="modal-title">{{ t().records.deleteRecord }}</h3>
-          <p class="modal-sub">{{ rec.name }}</p>
+          <p class="modal-sub">{{ rec.name }}
+                  @if (rec.requiresMedicalAttention) {
+                    <span class="warning-badge warning-badge-{{ (rec.attentionLevel || '').toLowerCase() }}" (click)="openWarningModal(rec)" title="Medical Warning">
+                      <i class="fa-solid fa-triangle-exclamation"></i> {{ rec.attentionLevel || 'Warning' }}
+                    </span>
+                  }</p>
         </div>
       </div>
       <button type="button" class="close-modal-btn" [disabled]="deleting()" (click)="closeDeleteModal()">
@@ -733,6 +753,17 @@
         }
       </div>
       <div class="scan-form-grid">
+        <!-- AI Summary at the very top of the form grid -->
+        @if (!manualReviewMode()) {
+        <div class="scan-field scan-field--full">
+          <label class="scan-label">{{ t().records.aiSummary }}</label>
+          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
+        </div>
+        }
+
+        <!-- Medical Warning Card directly below the AI Summary -->
+        <app-medical-warning-card class="scan-field--full" *ngIf="rf.requiresMedicalAttention" [data]="rf"></app-medical-warning-card>
+
         @if (rf.type === 'lab') {
         <div class="scan-field">
           <label class="scan-label">{{ t().records.labName }}</label>
@@ -810,17 +841,7 @@
           <input type="text" class="scan-input" [(ngModel)]="rf.documentDate">
         </div>
         }
-        <div class="scan-field scan-field--full">
-          <label class="scan-label">{{ t().records.aiSummary }}</label>
-          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
-        </div>
-        }
-        @if (!manualReviewMode() && rf.type !== 'general') {
-        <div class="scan-field scan-field--full">
-          <label class="scan-label">{{ t().records.aiSummary }}</label>
-          <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
-        </div>
-        }
+      }
         @if (!manualReviewMode() && rf.type !== 'general') {
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.ocrText }}</label>
@@ -988,18 +1009,18 @@
         <i class="fa-solid fa-xmark"></i>
       </button>
     </header>
-    <div class="modal-body scan-form-body">
-      <div class="review-image-pad">
+    <div class="modal-body modern-med-form">
+      <div class="modern-med-img-zone">
         @if (isMedicineManualMode()) {
         <!-- Manual mode: local file picker + preview, same as other manual record forms -->
         <input #manualMedImgInput type="file" accept=".jpg,.jpeg,.png,.webp,.gif" style="display:none"
           (change)="onManualMedImageSelected($event)">
         @if (manualMedicineImagePreviewUrl()) {
-        <div class="manual-img-wrap">
-          <img [src]="manualMedicineImagePreviewUrl()" class="modal-image" [attr.alt]="t().records.selectedMedicineBoxImage">
+        <div class="manual-img-wrap" style="margin-bottom: 15px;">
+          <img [src]="manualMedicineImagePreviewUrl()" class="modern-preview-img" [attr.alt]="t().records.selectedMedicineBoxImage">
           @if (manualMedicineImageUploading()) {
-          <div class="manual-img-uploading">
-            <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:18px;height:18px;">
+          <div class="modern-img-overlay">
+            <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:24px;height:24px;">
               <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3" />
               <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
                 [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
@@ -1010,34 +1031,39 @@
           }
         </div>
         }
-        <button type="button" class="manual-img-upload-btn" [disabled]="manualMedicineImageUploading()"
+        <button type="button" class="modern-img-btn" [disabled]="manualMedicineImageUploading()"
           (click)="manualMedImgInput.click()">
-          <i class="fa-solid fa-image"></i>
+          <i class="fa-solid" [class.fa-image]="!manualMedicineImagePreviewUrl()" [class.fa-arrows-rotate]="manualMedicineImagePreviewUrl()"></i>
           {{ manualMedicineImagePreviewUrl() ? t().records.changeImage : t().records.attachImageOptional }}
         </button>
         } @else {
         <!-- AI scan / Edit mode: show server image or placeholder -->
         @if (getImageUrl(scanForm.imagePath); as imageUrl) {
         @if (!scanImageFailed()) {
-        <button type="button" class="modal-image-btn" (click)="openLightbox(imageUrl)">
-          <img [src]="imageUrl" alt="Uploaded medicine box" class="modal-image" (error)="scanImageFailed.set(true)">
-          <span class="modal-image-zoom"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></span>
-        </button>
-        @if (manualMedicineMode()) {
-        <button type="button" class="manual-img-remove-btn" [disabled]="manualImageUploading() || scanSaving()"
-          (click)="clearManualImage('medicine')">
-          <i class="fa-solid fa-trash-can"></i> {{ t().records.removeImage }}
-        </button>
+        <div class="modern-preview-wrap">
+          <button type="button" class="modern-preview-btn" (click)="openLightbox(imageUrl)">
+            <img [src]="imageUrl" alt="Uploaded medicine box" class="modern-preview-img" (error)="scanImageFailed.set(true)">
+            <span class="modern-preview-zoom"><i class="fa-solid fa-expand"></i></span>
+          </button>
+          @if (manualMedicineMode()) {
+          <button type="button" class="modern-img-remove-btn" [disabled]="manualImageUploading() || scanSaving()"
+            (click)="clearManualImage('medicine')">
+            <i class="fa-solid fa-trash-can"></i> {{ t().records.removeImage }}
+          </button>
+          }
+        </div>
+        } @else {
+        <div class="modern-img-placeholder">
+          <div class="modern-img-icon"><i class="fa-regular fa-image"></i></div>
+          <span>{{ t().records.imagePreviewUnavailable }}</span>
+        </div>
         }
         } @else {
-        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{ t().records.imagePreviewUnavailable }}</span></div>
-        }
-        } @else {
         @if (manualMedicineMode()) {
-        <div class="manual-img-upload-pad">
+        <div class="modern-img-upload-pad">
           @if (manualImageUploading()) {
-          <div class="manual-img-loading">
-            <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:18px;height:18px;">
+          <div class="modern-img-overlay">
+            <svg class="up-ring up-ring--indeterminate" viewBox="0 0 36 36" style="width:24px;height:24px;">
               <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity="0.3"/>
               <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" stroke-width="3"
                 [attr.stroke-dasharray]="RING_CIRCUMFERENCE" [attr.stroke-dashoffset]="progressOffset(30)"
@@ -1046,70 +1072,74 @@
             <span>{{ t().records.uploadingImage }}</span>
           </div>
           } @else {
-          <button type="button" class="manual-img-choose-btn" [disabled]="scanSaving()"
+          <div class="modern-img-icon" style="margin-bottom: 12px;"><i class="fa-regular fa-images"></i></div>
+          <button type="button" class="modern-img-btn" [disabled]="scanSaving()"
             (click)="manualMedImageInput.click()">
-            <i class="fa-solid fa-image"></i> {{ t().records.chooseImageOptional }}
+            <i class="fa-solid fa-cloud-arrow-up"></i> {{ t().records.chooseImageOptional }}
           </button>
           }
         </div>
         } @else {
-        <div class="modal-image-placeholder"><i class="fa-regular fa-image"></i><span>{{ t().records.noImageAttached }}</span></div>
+        <div class="modern-img-placeholder">
+          <div class="modern-img-icon"><i class="fa-regular fa-image"></i></div>
+          <span>{{ t().records.noImageAttached }}</span>
+        </div>
         }
         }
         }
       </div>
-      <div class="rm-section rm-dates-grid" style="margin-top: 15px;">
-        <div>
-          <label class="rm-section-title">
-            <i class="fa-solid fa-pills"></i> {{ t().records.medicineName }} <span style="color:var(--red)">*</span>
+      
+      <div class="modern-med-grid">
+        <div class="modern-input-group full-width">
+          <label class="modern-label">
+            <i class="fa-solid fa-pills" style="color: #3b82f6;"></i> {{ t().records.medicineName }} <span style="color: #ef4444;">*</span>
           </label>
-          <input type="text" class="rm-time-input"
+          <input type="text" class="modern-input"
             [(ngModel)]="scanForm.medicineName"
             [placeholder]="t().records.medicinePlaceholder"
-            [class.rm-input-error]="scanFormTouched() && !scanForm.medicineName.trim()" />
+            [class.error]="scanFormTouched() && !scanForm.medicineName.trim()" />
+          @if (scanFormTouched() && !scanForm.medicineName.trim()) {
+            <span class="modern-error-msg"><i class="fa-solid fa-circle-exclamation"></i> {{ t().records.medNameRequired }}</span>
+          }
         </div>
-        <div>
-          <label class="rm-section-title">
-            <i class="fa-solid fa-flask"></i> {{ t().records.strengthDosage }}
+        
+        <div class="modern-input-group">
+          <label class="modern-label">
+            <i class="fa-solid fa-flask" style="color: #10b981;"></i> {{ t().records.strengthDosage }}
           </label>
-          <input type="text" class="rm-time-input"
+          <input type="text" class="modern-input"
             [(ngModel)]="scanForm.dosage"
             [placeholder]="t().records.strengthPlaceholder" />
         </div>
-      </div>
-
-      <div class="rm-section rm-dates-grid">
-        <div>
-          <label class="rm-section-title">
-            <i class="fa-regular fa-clock"></i> {{ t().records.frequency }}
+        
+        <div class="modern-input-group">
+          <label class="modern-label">
+            <i class="fa-regular fa-clock" style="color: #f59e0b;"></i> {{ t().records.frequency }}
           </label>
-          <input type="text" class="rm-time-input"
+          <input type="text" class="modern-input"
             [(ngModel)]="scanForm.frequency"
             [placeholder]="t().records.frequencyPlaceholder" />
         </div>
-        <div>
-          <label class="rm-section-title">
-            <i class="fa-solid fa-calendar-days"></i> {{ t().records.duration }}
+        
+        <div class="modern-input-group full-width">
+          <label class="modern-label">
+            <i class="fa-solid fa-calendar-days" style="color: #8b5cf6;"></i> {{ t().records.duration }}
           </label>
-          <input type="text" class="rm-time-input"
+          <input type="text" class="modern-input"
             [(ngModel)]="scanForm.duration"
             [placeholder]="t().records.durationPlaceholder" />
         </div>
+        
+        <div class="modern-input-group full-width">
+          <label class="modern-label">
+            <i class="fa-regular fa-note-sticky" style="color: #64748b;"></i> {{ t().records.notesOptional }}
+          </label>
+          <textarea class="modern-input"
+            [(ngModel)]="scanForm.notes"
+            [placeholder]="t().records.notesPlaceholder"
+            rows="3"></textarea>
+        </div>
       </div>
-
-      <div class="rm-section">
-        <label class="rm-section-title">
-          <i class="fa-regular fa-note-sticky"></i> {{ t().records.notesOptional }}
-        </label>
-        <textarea class="rm-notes-area"
-          [(ngModel)]="scanForm.notes"
-          [placeholder]="t().records.notesPlaceholder"
-          rows="2"></textarea>
-      </div>
-
-      @if (scanFormTouched() && scanForm.medicineName.trim() === '') {
-      <p class="scan-validation" style="color:var(--red); font-size:12px; margin-top:5px;"><i class="fa-solid fa-triangle-exclamation"></i> {{ t().records.medNameRequired }}</p>
-      }
     </div>
     <footer class="modal-ftr">
       <button type="button" class="modal-btn modal-btn-secondary"
@@ -1229,3 +1259,21 @@
   </div>
   }
 </div>
+
+
+@if (selectedWarningRecord()) {
+<div class="modal-overlay" (click)="closeWarningModal()">
+  <div class="modal-content md-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-triangle-exclamation"></i> {{ t().records.medicalWarning }}</h3>
+      <button class="modal-close" (click)="closeWarningModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <app-medical-warning-card [data]="selectedWarningRecord()!"></app-medical-warning-card>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeWarningModal()">{{ t().common.close }}</button>
+    </div>
+  </div>
+</div>
+}

@@ -62,6 +62,9 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
                 body.Summary,
                 body.OcrText,
                 body.ImageUrl,
+                body.MedicalAttentionReason,
+                body.RecommendedSpecialty,
+                body.ConfidenceScore,
                 body.Results?.Select(r => new SaveLabResultCommand(
                     r.TestName,
                     r.Value,
@@ -165,7 +168,10 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
                 body.ReportDate,
                 body.Summary,
                 body.OcrText,
-                body.ImageUrl),
+                body.ImageUrl,
+                body.MedicalAttentionReason,
+                body.RecommendedSpecialty,
+                body.ConfidenceScore),
             cancellationToken);
 
         return StatusCode(StatusCodes.Status201Created, result);
@@ -264,6 +270,9 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
                 body.DoctorName,
                 body.HospitalOrClinic,
                 body.DocumentDate,
+                body.MedicalAttentionReason,
+                body.RecommendedSpecialty,
+                body.ConfidenceScore,
                 body.OcrText),
             cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
@@ -373,6 +382,9 @@ public sealed record SaveLabReportRequest(
     string? Summary,
     string? OcrText,
     string? ImageUrl,
+    string? MedicalAttentionReason,
+    string? RecommendedSpecialty,
+    double? ConfidenceScore,
     List<SaveLabResultRequest>? Results);
 
 public sealed record SaveLabResultRequest(
@@ -391,7 +403,10 @@ public sealed record SaveImagingReportRequest(
     string? ReportDate,
     string? Summary,
     string? OcrText,
-    string? ImageUrl);
+    string? ImageUrl,
+      string? MedicalAttentionReason,
+      string? RecommendedSpecialty,
+      double? ConfidenceScore);
 
 public sealed record UpdateLabReportRequest(
     string? LabName,
@@ -400,6 +415,9 @@ public sealed record UpdateLabReportRequest(
     string? Summary,
     string? OcrText,
     string? ImageUrl,
+    string? MedicalAttentionReason,
+    string? RecommendedSpecialty,
+    double? ConfidenceScore,
     List<SaveLabResultRequest>? Results);
 
 public sealed record UpdateImagingReportRequest(
@@ -411,7 +429,10 @@ public sealed record UpdateImagingReportRequest(
     string? ReportDate,
     string? Summary,
     string? OcrText,
-    string? ImageUrl);
+    string? ImageUrl,
+      string? MedicalAttentionReason,
+      string? RecommendedSpecialty,
+      double? ConfidenceScore);
 
 public sealed record SaveGeneralDocumentRequest(
     string Title,
@@ -422,7 +443,10 @@ public sealed record SaveGeneralDocumentRequest(
     string? DoctorName,
     string? HospitalOrClinic,
     string? DocumentDate,
-    string? OcrText);
+    string? OcrText,
+      string? MedicalAttentionReason,
+      string? RecommendedSpecialty,
+      double? ConfidenceScore);
 
 public sealed record UpdateGeneralDocumentRequest(
     string Title,
@@ -433,7 +457,10 @@ public sealed record UpdateGeneralDocumentRequest(
     string? DoctorName,
     string? HospitalOrClinic,
     string? DocumentDate,
-    string? OcrText);
+    string? OcrText,
+      string? MedicalAttentionReason,
+      string? RecommendedSpecialty,
+      double? ConfidenceScore);
 
 public sealed record UploadRecordImageResponse(string Path);
 

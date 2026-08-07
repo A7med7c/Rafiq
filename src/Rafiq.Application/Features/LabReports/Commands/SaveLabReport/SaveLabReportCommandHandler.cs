@@ -17,7 +17,8 @@ public sealed class SaveLabReportCommandHandler(
     ILabReportRepository labReportRepository,
     IUnitOfWork unitOfWork,
     IHealthSummaryCacheRepository summaryCache,
-    Rafiq.Infrastructure.Persistence.RafiqDbContext dbContext)
+    IDocumentUploadSessionRepository sessionRepository,
+    IMedicalWarningCalculator warningCalculator)
     : IRequestHandler<SaveLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
     public async Task<ApiResponse<LabReportResponseDto>> Handle(
@@ -54,13 +55,15 @@ public sealed class SaveLabReportCommandHandler(
             reportDate,
             request.ImageUrl ?? string.Empty,
             request.OcrText,
-            request.Summary);
+            request.Summary,
+            request.MedicalAttentionReason,
+            request.RecommendedSpecialty,
+            request.ConfidenceScore);
 
         // Fetch FileHash from session
         if (!string.IsNullOrEmpty(request.ImageUrl))
         {
-            var session = await dbContext.DocumentUploadSessions
-                .FirstOrDefaultAsync(s => s.ImageUrl == request.ImageUrl, cancellationToken);
+            var session = await sessionRepository.GetByImageUrlAsync(request.ImageUrl, cancellationToken);
                 
             if (session != null)
             {
@@ -72,9 +75,12 @@ public sealed class SaveLabReportCommandHandler(
                     request.ImageUrl,
                     request.OcrText,
                     request.Summary,
+                    request.MedicalAttentionReason,
+                    request.RecommendedSpecialty,
+                    request.ConfidenceScore,
                     session.FileHash);
                     
-                dbContext.DocumentUploadSessions.Remove(session);
+                sessionRepository.Remove(session);
             }
         }
 
@@ -104,6 +110,11 @@ public sealed class SaveLabReportCommandHandler(
             Summary = labReport.Description,
             ImageUrl = labReport.ImageUrl,
             CreatedAt = labReport.CreatedAt,
+            MedicalAttentionReason = labReport.MedicalAttentionReason,
+            RecommendedSpecialty = labReport.RecommendedSpecialty,
+            ConfidenceScore = labReport.ConfidenceScore,
+            RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(labReport.ConfidenceScore),
+            AttentionLevel = warningCalculator.ComputeAttentionLevel(labReport.ConfidenceScore).ToString(),
             Results = labReport.Results.Select(r => new LabResultResponseDto
             {
                 Id = r.Id,

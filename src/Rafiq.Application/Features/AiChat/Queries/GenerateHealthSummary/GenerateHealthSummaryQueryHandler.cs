@@ -37,12 +37,14 @@ public sealed class GenerateHealthSummaryQueryHandler(
     private static string BuildSummarySystemPrompt(bool isArabic)
     {
         var langNote = isArabic
-            ? "All text values (conditions, allergy names, overallStatusNote, insights, recommendations) must be written in Arabic. " +
-              "The enum values overallStatus, labResults.status, and allergies[].severity must always be the exact English strings specified below."
+            ? "ABSOLUTE LANGUAGE RULE — THIS IS YOUR HIGHEST PRIORITY INSTRUCTION:\n" +
+              "All text fields (conditions, allergy names, overallStatusNote, insights, recommendations, issueNote) MUST be written ENTIRELY in Arabic (العربية). " +
+              "Generating these fields in English is strictly forbidden. " +
+              "However, the enum values (overallStatus, labResults.status, and allergies[].severity) MUST remain in the exact English strings specified below."
             : "All values must be written in English.";
 
         return
-            "You are Rafiq, an AI health assistant. " +
+            "You are Rafiq, a multilingual medical AI assistant.\n" +
             "Analyze the patient's health data and return ONLY a valid JSON object — no markdown, no code blocks, no explanation, no extra text before or after.\n\n" +
             "Return this exact schema:\n" +
             "{\n" +
@@ -67,7 +69,7 @@ public sealed class GenerateHealthSummaryQueryHandler(
             "- recommendations: 2 to 3 items. Each must be exactly one actionable sentence.\n" +
             "- Do NOT invent information not present in the patient records.\n" +
             "- Do NOT list every item — include only the most clinically relevant.\n" +
-            langNote + "\n" +
+            langNote + "\n\n" +
             "Return ONLY the JSON object. Nothing else.";
     }
 

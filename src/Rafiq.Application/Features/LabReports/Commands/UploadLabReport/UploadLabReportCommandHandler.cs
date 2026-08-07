@@ -18,7 +18,8 @@ public sealed class UploadLabReportCommandHandler(
     IAiTelemetryContext telemetryContext,
     IUsageIntelligenceService usageIntelligence,
     IDuplicateDocumentDetector duplicateDetector,
-    ILabReportRepository labReportRepository)
+    ILabReportRepository labReportRepository,
+    IMedicalWarningCalculator warningCalculator)
     : IRequestHandler<UploadLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
     public async Task<ApiResponse<LabReportResponseDto>> Handle(
@@ -27,11 +28,11 @@ public sealed class UploadLabReportCommandHandler(
     {
         var profileId = request.ProfileId;
 
+        var currentUserId = currentUserService.UserId
+            ?? throw new UnauthorizedException("Authentication is required.");
+
         if (profileId == Guid.Empty)
         {
-            var currentUserId = currentUserService.UserId
-                ?? throw new UnauthorizedException("Authentication is required.");
-
             profileId = (await patientProfileRepository.GetByUserIdAsync(currentUserId, cancellationToken))?.Id
                 ?? throw new NotFoundException("PatientProfile", currentUserId);
         }
@@ -61,7 +62,7 @@ public sealed class UploadLabReportCommandHandler(
             imageBytes,
             imageUrl,
             profileId,
-            currentUserId!.Value, // Must exist due to EnsureCanWriteAsync check inside
+            currentUserId, // Must exist due to EnsureCanWriteAsync check inside
             cancellationToken);
 
         if (duplicateCheck.IsDuplicate)
@@ -148,9 +149,14 @@ public sealed class UploadLabReportCommandHandler(
             DoctorName = extracted.DoctorName ?? string.Empty,
             ReportDate = reportDate.ToString("yyyy-MM-dd"),
             OCRText = extracted.OcrText,
-            Summary = extracted.Summary,
+            Summary = extracted.AiSummary,
             ImageUrl = imageUrl,
             CreatedAt = DateTime.UtcNow,
+            MedicalAttentionReason = extracted.MedicalAttentionReason,
+            RecommendedSpecialty = extracted.RecommendedSpecialty,
+            ConfidenceScore = extracted.ConfidenceScore,
+            RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(extracted.ConfidenceScore),
+            AttentionLevel = warningCalculator.ComputeAttentionLevel(extracted.ConfidenceScore).ToString(),
             Results = extracted.Tests.Select(test => new LabResultResponseDto
             {
                 Id = Guid.NewGuid(),

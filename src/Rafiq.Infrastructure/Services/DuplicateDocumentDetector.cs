@@ -13,7 +13,8 @@ public class DuplicateDocumentDetector : IDuplicateDocumentDetector
     private readonly IPrescriptionRepository _prescriptionRepository;
     private readonly IUserMedicineRepository _userMedicineRepository;
     private readonly IGeneralDocumentRepository _generalDocumentRepository;
-    private readonly RafiqDbContext _dbContext;
+    private readonly IDocumentUploadSessionRepository _sessionRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public DuplicateDocumentDetector(
         ILabReportRepository labReportRepository,
@@ -21,14 +22,16 @@ public class DuplicateDocumentDetector : IDuplicateDocumentDetector
         IPrescriptionRepository prescriptionRepository,
         IUserMedicineRepository userMedicineRepository,
         IGeneralDocumentRepository generalDocumentRepository,
-        RafiqDbContext dbContext)
+        IDocumentUploadSessionRepository sessionRepository,
+        IUnitOfWork unitOfWork)
     {
         _labReportRepository = labReportRepository;
         _imagingReportRepository = imagingReportRepository;
         _prescriptionRepository = prescriptionRepository;
         _userMedicineRepository = userMedicineRepository;
         _generalDocumentRepository = generalDocumentRepository;
-        _dbContext = dbContext;
+        _sessionRepository = sessionRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<DuplicateCheckResult> ComputeHashAndCheckAsync(
@@ -67,8 +70,8 @@ public class DuplicateDocumentDetector : IDuplicateDocumentDetector
             fileHash,
             DateTime.UtcNow.AddHours(24));
             
-        await _dbContext.DocumentUploadSessions.AddAsync(session, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _sessionRepository.AddAsync(session, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new DuplicateCheckResult
         {

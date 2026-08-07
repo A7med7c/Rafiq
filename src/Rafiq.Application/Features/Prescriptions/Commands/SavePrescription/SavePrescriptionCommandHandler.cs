@@ -17,7 +17,8 @@ public sealed class SavePrescriptionCommandHandler(
     IPrescriptionRepository prescriptionRepository,
     IUnitOfWork unitOfWork,
     IHealthSummaryCacheRepository summaryCache,
-    Rafiq.Infrastructure.Persistence.RafiqDbContext dbContext)
+    IDocumentUploadSessionRepository sessionRepository,
+    IMedicalWarningCalculator warningCalculator)
     : IRequestHandler<SavePrescriptionCommand, ApiResponse<PrescriptionResponseDto>>
 {
     public async Task<ApiResponse<PrescriptionResponseDto>> Handle(
@@ -61,8 +62,7 @@ public sealed class SavePrescriptionCommandHandler(
 
         if (!string.IsNullOrEmpty(request.ImagePath))
         {
-            var session = await dbContext.DocumentUploadSessions
-                .FirstOrDefaultAsync(s => s.ImageUrl == request.ImagePath, cancellationToken);
+            var session = await sessionRepository.GetByImageUrlAsync(request.ImagePath, cancellationToken);
                 
             if (session != null)
             {
@@ -72,9 +72,12 @@ public sealed class SavePrescriptionCommandHandler(
                     patientName,
                     prescriptionDate,
                     request.ImagePath,
+                    request.MedicalAttentionReason,
+                    request.RecommendedSpecialty,
+                    request.ConfidenceScore,
                     session.FileHash);
                     
-                dbContext.DocumentUploadSessions.Remove(session);
+                sessionRepository.Remove(session);
             }
         }
 
@@ -102,6 +105,12 @@ public sealed class SavePrescriptionCommandHandler(
             PrescriptionDate = prescription.PrescriptionDate.ToString("yyyy-MM-dd"),
             ImagePath = prescription.ImagePath,
             CreatedAt = prescription.CreatedAt,
+            MedicalAttentionReason = prescription.MedicalAttentionReason,
+            RecommendedSpecialty = prescription.RecommendedSpecialty,
+            ConfidenceScore = prescription.ConfidenceScore,
+            RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(prescription.ConfidenceScore),
+            AttentionLevel = warningCalculator.ComputeAttentionLevel(prescription.ConfidenceScore).ToString(),
+
             Medicines = prescription.Medicines.Select(m => new PrescriptionMedicineResponseDto
             {
                 Id = m.Id,

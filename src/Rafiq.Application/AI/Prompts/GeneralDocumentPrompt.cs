@@ -29,7 +29,6 @@ STEP 2 — IF documentCategory is "general", extract:
 5. Document date
 6. Short patient-friendly summary (2-3 sentences)
    IMPORTANT: The summary MUST be generated entirely in the following language: {{langName}}.
-   WARNING RULE: If there are any highly abnormal or dangerous findings that require immediate medical attention, you MUST start the summary with a clear and prominent warning in the requested language ({{langName}}).
 7. Full OCR text of the document
 
 If documentCategory is NOT "general", still set it correctly and leave all other fields null.
@@ -41,6 +40,16 @@ Rules:
 - Never invent data.
 - If a value does not exist return null.
 
+Medical Warning Rules:
+- Generate warnings ONLY from findings explicitly present in the uploaded medical record. NEVER infer, assume, or diagnose unsupported conditions.
+- The examples provided below are just conceptual. Evaluate overall clinical significance instead of strict matching.
+- Generate a warning ONLY when findings indicate medical evaluation or follow-up is likely needed.
+- DO NOT generate a warning for minor/routine deviations (e.g. minor variations without clinical urgency).
+- If a warning is warranted, populate "medicalAttentionReason" with a concise explanation (maximum 40 words, non-medical terms) in {{langName}}.
+- Set "recommendedSpecialty" to EXACTLY ONE of the following, or null if confidence isn't high enough: Cardiologist, Pulmonologist, Endocrinologist, Nephrologist, Neurologist, OrthopedicSurgeon, GeneralSurgeon, EntSpecialist, Dermatologist, Gastroenterologist, Ophthalmologist, Urologist, Gynecologist, Hematologist, Oncologist, EmergencyDepartment.
+- Set "confidenceScore" between 0.00 and 1.00. This represents your confidence in the medical recommendation itself, NOT OCR/classification confidence.
+- If no warning is needed, return null for medicalAttentionReason, recommendedSpecialty, and confidenceScore.
+
 JSON:
 
 {
@@ -51,6 +60,9 @@ JSON:
   "hospitalOrClinic":"",
   "documentDate":"",
   "aiSummary":"",
+  "medicalAttentionReason":null,
+  "recommendedSpecialty":null,
+  "confidenceScore":null,
   "ocrText":""
 }
 """;

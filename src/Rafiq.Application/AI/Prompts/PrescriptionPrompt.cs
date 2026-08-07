@@ -36,6 +36,10 @@ public static class PrescriptionPrompt
           "doctorName": "",
           "patientName": "",
           "prescriptionDate": "yyyy-MM-dd",
+          "aiSummary": "",
+          "medicalAttentionReason": null,
+          "recommendedSpecialty": null,
+          "confidenceScore": null,
           "medicines": [
             {
               "medicineName": "",
@@ -52,8 +56,10 @@ public static class PrescriptionPrompt
         - Determine the type of the uploaded image before extracting any data.
         - Use ONLY these values for detectedDocumentType: "Prescription", "LabReport", "ImagingReport", "MedicineBox", "Unknown".
         - If the image IS a prescription AND is clearly readable, set "isValidDocument": true, "isUnreadable": false, "detectedDocumentType": "Prescription".
-        - If the image IS a prescription BUT is too blurry, too cropped, too dark, too low resolution, or otherwise unreadable so that data cannot be reliably extracted, set "isValidDocument": true, "isUnreadable": true, "detectedDocumentType": "Prescription".
-        - If the image is NOT a prescription (e.g., it is a lab report, imaging report, medicine box, or unrelated photo), set "isValidDocument": false, "isUnreadable": false.
+        - If the image IS a prescription BUT is truly completely unreadable (e.g. completely black, 100% blurred out), set "isValidDocument": true, "isUnreadable": true, "detectedDocumentType": "Prescription".
+        - Reject ONLY documents clearly unrelated to medical prescriptions (e.g. food recipes, cars).
+        - NEVER reject because of different layouts, hospital templates, cropping, rotation, mixed Arabic/English, low quality, or mobile photos.
+        - If the image is entirely NOT a prescription, set "isValidDocument": false, "isUnreadable": false.
         - If the image is completely blank, empty, random noise, or cannot be classified at all, set "isValidDocument": false, "isUnreadable": false, "detectedDocumentType": "Unknown".
         - Set detectedDocumentType to the actual detected type when it can be identified with confidence, otherwise set it to "Unknown".
         - Do NOT guess or infer the document type. Only classify with confidence.
@@ -85,6 +91,16 @@ public static class PrescriptionPrompt
         - Numeric values must also be returned as strings.
         - prescriptionDate must always use the format yyyy-MM-dd.
         - If no date is visible, return null for prescriptionDate.
+        
+        Medical Warning Rules:
+        - Generate warnings ONLY from findings explicitly present in the uploaded medical record. NEVER infer, assume, or diagnose unsupported conditions.
+        - The examples provided below are just conceptual. Evaluate overall clinical significance instead of strict matching.
+        - Generate a warning ONLY when findings indicate medical evaluation or follow-up is likely needed (e.g. extremely dangerous drug combinations).
+        - DO NOT generate a warning for minor/routine deviations (e.g. minor variations without clinical urgency).
+        - If a warning is warranted, populate "medicalAttentionReason" with a concise explanation (maximum 40 words, non-medical terms) in {{langName}}.
+        - Set "recommendedSpecialty" to EXACTLY ONE of the following, or null if confidence isn't high enough: Cardiologist, Pulmonologist, Endocrinologist, Nephrologist, Neurologist, OrthopedicSurgeon, GeneralSurgeon, EntSpecialist, Dermatologist, Gastroenterologist, Ophthalmologist, Urologist, Gynecologist, Hematologist, Oncologist, EmergencyDepartment.
+        - Set "confidenceScore" between 0.00 and 1.00. This represents your confidence in the medical recommendation itself, NOT OCR/classification confidence.
+        - If no warning is needed, return null for medicalAttentionReason, recommendedSpecialty, and confidenceScore.
         """;
     }
 }
