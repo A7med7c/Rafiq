@@ -17,6 +17,7 @@ using Rafiq.Infrastructure.Services.Notifications;
 using Rafiq.Infrastructure.Services.BackgroundJobs;
 using Rafiq.Infrastructure.Services.MedicationReminders;
 using Rafiq.Infrastructure.Services.AppointmentReminders;
+using Rafiq.Infrastructure.Services.Appointments;
 using Rafiq.Infrastructure.Services.Ai;
 using Rafiq.Infrastructure.Services.AiChat;
 using Rafiq.Infrastructure.Services.Common;
@@ -133,6 +134,7 @@ public static class DependencyInjection
         // ── Appointment Reminder Engine ────────────────────────────────────
         services.AddScoped<IAppointmentReminderScheduler, AppointmentReminderScheduler>();
         services.AddScoped<AppointmentReminderJob>();
+        services.AddScoped<UpdateMissedAppointmentsJob>();
 
         // ── Chat async processor ──────────────────────────────────────────
         services.AddScoped<ChatMessageProcessorJob>();

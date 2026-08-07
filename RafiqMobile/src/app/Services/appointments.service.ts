@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, of, switchMap } from 'rxjs';
+import { Observable, firstValueFrom, map, of, switchMap } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse } from '../Modles/api-response';
 import {
@@ -10,6 +10,7 @@ import {
 } from '../Modles/appointment.models';
 import { HealthProfileService } from './health-profile.service';
 import { ProfileSelectionService } from './profile-selection.service';
+import { UpcomingReminderDto } from './medication-reminders.service';
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentsService {
@@ -45,6 +46,19 @@ export class AppointmentsService {
         )
       ),
       map(r => r.data ?? []),
+    );
+  }
+
+  /**
+   * GET /api/appointments/upcoming — returns the unified UpcomingReminderDto
+   * contract for offline sync. Separate from getUpcoming() which returns the
+   * domain-specific AppointmentDto used by the UI.
+   */
+  getUpcomingForSync(profileId: string): Promise<UpcomingReminderDto[]> {
+    return firstValueFrom(
+      this.http
+        .get<ApiResponse<UpcomingReminderDto[]>>(`${this.base}/upcoming?profileId=${profileId}`)
+        .pipe(map(r => r.data ?? []))
     );
   }
 

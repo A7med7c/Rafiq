@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { NotificationService } from './Services/notification.service';
 import { LocalizationService } from './Services/localization.service';
@@ -10,6 +10,8 @@ import { TourEngineService } from './core/assistant/services/tour-engine.service
 import { RatingPopup } from './Components/rating-popup/rating-popup';
 import { DocumentAnalysisCardComponent } from './Components/document-analysis-card/document-analysis-card';
 import { AuthService } from './Services/auth-service';
+import { ReminderBootstrapService } from './Services/reminder-bootstrap.service';
+import { AlarmSchedulerService } from './Services/alarm-scheduler.service';
 
 @Component({
   selector: 'app-root',
@@ -18,14 +20,26 @@ import { AuthService } from './Services/auth-service';
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
+export class App implements OnInit {
   readonly notificationService = inject(NotificationService);
   readonly l10n = inject(LocalizationService);
   readonly tourEngine = inject(TourEngineService);
   readonly aiChatService = inject(AiChatService);
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly reminderBootstrap = inject(ReminderBootstrapService);
+  private readonly alarmScheduler = inject(AlarmSchedulerService);
   readonly title = signal('RafiqAngular');
+
+  ngOnInit(): void {
+    // Bootstrap offline reminders once per app start.
+    // ReminderBootstrapService is idempotent and auth-guarded:
+    //   • Returns immediately if the user is not logged in.
+    //   • Returns immediately on subsequent calls (bootstrapDone flag).
+    //   • Concurrent calls share the same in-flight Promise.
+    void this.reminderBootstrap.bootstrap();
+    void this.alarmScheduler.consumePendingNativeAction();
+  }
 
   private static readonly PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/verify-account', '/welcome', '/tour'];
 

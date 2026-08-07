@@ -1,11 +1,30 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, of, shareReplay, switchMap } from 'rxjs';
+import { Observable, firstValueFrom, map, of, shareReplay, switchMap } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse, ApiResponseBase } from '../Modles/api-response';
 import { MedicationReminderLogDto } from '../Modles/medication-reminder.models';
 import { AddUserMedicinePayload, CreateReminderPayload, MedicineReminder, UpdateReminderPayload, UpdateUserMedicinePayload, UserMedicine } from '../Modles/dashboard.models';
 import { HealthProfileService } from './health-profile.service';
+
+/**
+ * Shared offline-sync contract. Mirrors the backend UpcomingReminderDto exactly.
+ * Exported so OfflineReminderService and ReminderBootstrapService can import it
+ * from a single source of truth.
+ * Version has been intentionally omitted — UpdatedAt is the sync cursor.
+ */
+export interface UpcomingReminderDto {
+  reminderId: string;                          // backend primary key
+  entityId: string;                            // MedicineId or AppointmentId
+  reminderType: 'Medication' | 'Appointment';
+  title: string;
+  body: string;
+  scheduledAt: string;                         // ISO-8601 with UTC offset
+  status: string;                              // Pending | Sent | Overdue | Missed | Confirmed | Skipped
+  updatedAt: string;                           // ISO-8601 — primary sync cursor
+  isDeleted: boolean;                          // true when soft-deleted on server
+  payload?: unknown;                           // optional extensible metadata
+}
 
 export interface AllergyCheckResult {
   isSafe: boolean;
@@ -37,6 +56,19 @@ export class MedicationRemindersService {
         )
       ),
       map(r => r.data ?? []),
+    );
+  }
+
+  /**
+   * GET /api/medication-reminders/upcoming
+   * Read-only. Returns today's upcoming reminder occurrences mapped to the
+   * shared UpcomingReminderDto contract for offline sync.
+   */
+  getUpcomingReminders(profileId: string): Promise<UpcomingReminderDto[]> {
+    return firstValueFrom(
+      this.http
+        .get<ApiResponse<UpcomingReminderDto[]>>(`${this.base}/upcoming?profileId=${profileId}`)
+        .pipe(map(r => r.data ?? []))
     );
   }
 
