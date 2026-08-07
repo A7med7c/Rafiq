@@ -33,14 +33,17 @@ jobs:
         run: dotnet test src/src.sln --configuration Release --no-build --verbosity normal
 
       - name: Publish API
-        run: >
-          dotnet publish src/Rafiq.API/Rafiq.API.csproj
-          --configuration Release
-          --no-build
-          --output ./publish
+        run: |
+          dotnet publish src/Rafiq.API/Rafiq.API.csproj `
+            --configuration Release `
+            --no-build `
+            --output ./publish
 
       - name: Deploy to MonsterASP.NET
-        uses: azure/webapps-deploy@v3
+        uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
-          publish-profile: ${{ secrets.PUBLISH_PROFILE }}
-          package: ./publish
+          website-name: ${{ secrets.WEBSITE_NAME }}
+          server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
+          server-username: ${{ secrets.SERVER_USERNAME }}
+          server-password: ${{ secrets.SERVER_PASSWORD }}
+          source-path: ./publish
