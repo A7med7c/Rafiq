@@ -10,17 +10,13 @@ namespace Rafiq.Application.Features.Appointments.Queries.GetTodayAppointments;
 public sealed class GetTodayAppointmentsQueryHandler(
     IPatientProfileRepository patientProfileRepository,
     IHealthProfileAuthorizationService authorizationService,
-    IAppointmentRepository appointmentRepository,
-    IUnitOfWork unitOfWork)
+    IAppointmentRepository appointmentRepository)
     : IRequestHandler<GetTodayAppointmentsQuery, ApiResponse<List<AppointmentResponseDto>>>
 {
     public async Task<ApiResponse<List<AppointmentResponseDto>>> Handle(
         GetTodayAppointmentsQuery request,
         CancellationToken cancellationToken)
     {
-        await appointmentRepository.UpdateMissedAppointmentsAsync(cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-
         _ = await patientProfileRepository.GetByIdAsync(request.ProfileId, cancellationToken)
             ?? throw new NotFoundException("UserHealthProfile", request.ProfileId);
 

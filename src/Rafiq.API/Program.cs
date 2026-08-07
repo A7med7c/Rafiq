@@ -13,6 +13,7 @@ using Rafiq.Infrastructure.Persistence.Identity;
 using Rafiq.Infrastructure.Services.auth;
 using Rafiq.Infrastructure.Services.BackgroundJobs;
 using Rafiq.Infrastructure.Services.MedicationReminders;
+using Rafiq.Infrastructure.Services.Appointments;
 using Rafiq.Infrastructure.Services.Notifications;
 using System.Text.Json.Serialization;
 
@@ -134,6 +135,14 @@ public class Program
             "document-recovery",
             job => job.ExecuteAsync(),
             "*/10 * * * *");   // every 10 minutes
+
+        // Marks past-due appointments as Missed. Previously done lazily in GET handlers
+        // (causing side effects on reads). Now a dedicated background job keeps GET endpoints
+        // completely read-only. Runs every 5 minutes for timely status accuracy.
+        RecurringJob.AddOrUpdate<UpdateMissedAppointmentsJob>(
+            "update-missed-appointments",
+            job => job.ExecuteAsync(),
+            "*/5 * * * *");   // every 5 minutes
 
         app.Run();
     }

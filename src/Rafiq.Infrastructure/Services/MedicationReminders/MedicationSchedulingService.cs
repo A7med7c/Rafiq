@@ -43,6 +43,26 @@ public sealed class MedicationSchedulingService(
     /// </summary>
     private const int StageIntervalMinutes = 1;
 
+    /// <summary>
+    /// Pure calculation of upcoming reminder occurrences for today.
+    /// Returns a collection of tuples (log, scheduled UTC, notify?) without persisting or scheduling.
+    /// Used by the GET upcoming endpoint (read‑only).
+    /// </summary>
+    public async Task<IReadOnlyCollection<(MedicationReminderLog Log, DateTime ScheduledUtc, bool Notify)>> GetUpcomingStagesAsync(
+        MedicineReminder reminder,
+        CancellationToken cancellationToken = default)
+    {
+        var today = dateTimeProvider.Today;
+        if (!IsApplicableForDate(reminder, today))
+            return Array.Empty<(MedicationReminderLog, DateTime, bool)>();
+
+        var profileId = await ResolveHealthProfileIdAsync(reminder, cancellationToken);
+        if (profileId is null)
+            return Array.Empty<(MedicationReminderLog, DateTime, bool)>();
+
+        return CalculateUpcomingOccurrences(reminder, today, profileId.Value);
+    }
+
     public async Task<bool> ScheduleTodayIfApplicableAsync(
         MedicineReminder reminder,
         CancellationToken cancellationToken = default)
@@ -74,38 +94,6 @@ public sealed class MedicationSchedulingService(
         // rather than by manipulating wall-clock TimeSpans.
         var anchorUtc = dateTimeProvider.ToUtc(today, reminder.ReminderTime);
 
-        var stageDefinitions = new (int ReminderNumber, TimeSpan Offset)[]
-        {
-            (1, TimeSpan.FromMinutes(-StageIntervalMinutes)),  // early warning, before dose time
-            (2, TimeSpan.Zero),                                 // main reminder, at dose time
-            (3, TimeSpan.FromMinutes(StageIntervalMinutes)),   // overdue reminder, after dose time
-        };
-
-        // All three logs are materialised for today — even for a dose whose time has fully
-        // passed.  Today's Schedule, adherence and history must show the complete picture,
-        // not only the future.
-        var stages = new List<(MedicationReminderLog Log, DateTime ScheduledUtc, bool Notify)>();
-
-        foreach (var (reminderNumber, offset) in stageDefinitions)
-        {
-            var stageUtc = anchorUtc + offset;
-            var delay = stageUtc - dateTimeProvider.UtcNow;
-            var notify = delay >= -_lateGrace;
-
-            var log = new MedicationReminderLog(
-                reminder.Id,
-                profileId.Value,
-                today,
-                ClampToDay(reminder.ReminderTime + offset),
-                reminderNumber);
-
-            if (!notify)
-                log.MarkAsOverdue();
-
-            await logRepository.AddAsync(log, cancellationToken);
-            stages.Add((log, stageUtc, notify));
-        }
-
         // All three logs must be committed before any job is queued: with a zero delay
         // Hangfire can run MedicationReminderJob immediately, and it looks the log up by id.
         //
@@ -115,6 +103,14 @@ public sealed class MedicationSchedulingService(
         // (MedicineReminderId, ScheduledDate, ReminderNumber) is the actual guarantee: the
         // loser's insert fails here, and that failure is the signal that someone else already
         // scheduled this occurrence — not a real error, so no jobs get queued for it.
+
+        var stages = CalculateUpcomingOccurrences(reminder, today, profileId.Value);
+
+        foreach (var (log, _, _) in stages)
+        {
+            await logRepository.AddAsync(log, cancellationToken);
+        }
+
         try
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -216,5 +212,51 @@ public sealed class MedicationSchedulingService(
             reminder.UserMedicineId, cancellationToken);
 
         return userMedicine?.UserHealthProfileId;
+    }
+
+    /// <summary>
+    /// Pure calculation — no I/O, no side effects.
+    /// Produces the three escalation-stage tuples (log shell, UTC fire time, should-notify?)
+    /// for a reminder that applies on <paramref name="date"/>.
+    ///
+    /// The returned <see cref="MedicationReminderLog"/> objects are NOT attached to any
+    /// DbContext and are NOT saved. Callers that need persistence must call AddAsync
+    /// themselves; callers that only need the schedule (e.g. the GET endpoint) can discard
+    /// the log objects entirely.
+    /// </summary>
+    private IReadOnlyCollection<(MedicationReminderLog Log, DateTime ScheduledUtc, bool Notify)>
+        CalculateUpcomingOccurrences(MedicineReminder reminder, DateOnly date, Guid profileId)
+    {
+        var anchorUtc = dateTimeProvider.ToUtc(date, reminder.ReminderTime);
+
+        var stageDefinitions = new (int ReminderNumber, TimeSpan Offset)[]
+        {
+            (1, TimeSpan.FromMinutes(-StageIntervalMinutes)),  // early warning
+            (2, TimeSpan.Zero),                                 // main reminder
+            (3, TimeSpan.FromMinutes(StageIntervalMinutes)),   // overdue reminder
+        };
+
+        var results = new List<(MedicationReminderLog, DateTime, bool)>(3);
+
+        foreach (var (reminderNumber, offset) in stageDefinitions)
+        {
+            var stageUtc = anchorUtc + offset;
+            var delay    = stageUtc - dateTimeProvider.UtcNow;
+            var notify   = delay >= -_lateGrace;
+
+            var log = new MedicationReminderLog(
+                reminder.Id,
+                profileId,
+                date,
+                ClampToDay(reminder.ReminderTime + offset),
+                reminderNumber);
+
+            if (!notify)
+                log.MarkAsOverdue();
+
+            results.Add((log, stageUtc, notify));
+        }
+
+        return results;
     }
 }
