@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, firstValueFrom, map, of, shareReplay, switchMap, catchError } from 'rxjs';
+import { Observable, catchError, firstValueFrom, map, of, shareReplay, switchMap } from 'rxjs';
 import { environment } from '../Environments/Environment';
 import { ApiResponse, ApiResponseBase } from '../Modles/api-response';
 import { MedicationReminderLogDto } from '../Modles/medication-reminder.models';

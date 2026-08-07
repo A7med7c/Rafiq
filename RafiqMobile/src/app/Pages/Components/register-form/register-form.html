@@ -134,16 +134,17 @@
 
             <!-- Row 4: Optional Profile Details (Standalone) -->
             <div class="field profile-image-field">
-                <label for="profileImage">{{ t().register.profilePhotoOptional }}</label>
+                <label>{{ t().register.profilePhotoOptional }}</label>
                 <div class="profile-image-picker">
                     <div class="profile-image-preview">
                         @if (profileImagePreview) {
                         <img [src]="profileImagePreview" [alt]="t().register.profilePreview">
-                        <button type="button" class="icon-button" style="margin-left: 8px;" (click)="removeProfileImage()">
-                            <i class="fa-solid fa-times"></i> {{ t().common.remove }}
+                        <button type="button" class="profile-image-remove" (click)="removeProfileImage()"
+                            [attr.aria-label]="t().common.remove">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                         </button>
                         } @else {
-                        <div class="image-placeholder" style="display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; background-color: #f3f4f6; border-radius: 50%; color: #9ca3af;">
+                        <div class="image-placeholder">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="32" height="32">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="12" cy="7" r="4"></circle>
@@ -152,8 +153,9 @@
                         }
                     </div>
                     <div class="profile-image-actions">
-                        <button type="button" class="fp-btn-primary" style="padding: 8px 16px; font-size: 14px; border-radius: 8px; margin-top: 8px;" (click)="selectProfileImage()">
-                          <i class="fa-solid fa-camera"></i> {{ t().common.mediaPickerTitle }}
+                        <button type="button" class="profile-image-button" (click)="selectProfileImage()">
+                          <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                          <span>{{ t().common.mediaPickerTitle }}</span>
                         </button>
                     </div>
                 </div>
