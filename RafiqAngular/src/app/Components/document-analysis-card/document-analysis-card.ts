@@ -145,7 +145,7 @@ export class DocumentAnalysisCardComponent {
   }
 
   typeIcon(type: string): string {
-    return ({ lab: 'fa-flask', imaging: 'fa-x-ray', prescription: 'fa-prescription-bottle-medical', general: 'fa-file-medical' })[type] ?? 'fa-file-medical';
+    return ({ lab: 'fa-flask', imaging: 'fa-x-ray', prescription: 'fa-prescription-bottle-medical', medicine: 'fa-pills', general: 'fa-file-medical' })[type] ?? 'fa-file-medical';
   }
 
   statusLabel(doc: TrackedDocument): string {
@@ -155,6 +155,13 @@ export class DocumentAnalysisCardComponent {
     if (doc.status === 'Failed')        return doc.failureReason ?? da.statusFailed;
     if (doc.status === 'ReadyToReview') return da.statusReadyToReview ?? 'Ready to review';
     return da.statusPending;
+  }
+
+  displayTitle(doc: TrackedDocument): string {
+    if (doc.uploadType === 'medicine' && doc.reviewData?.medicineName) {
+      return doc.reviewData.medicineName;
+    }
+    return doc.title;
   }
 
   protected trackByDocId(_: number, doc: TrackedDocument): string {

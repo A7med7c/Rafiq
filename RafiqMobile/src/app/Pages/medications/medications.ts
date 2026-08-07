@@ -21,6 +21,19 @@ import { FamilyProfilesService, AccessibleProfileDto } from '../../Services/fami
 import { ProfileSelectionService } from '../../Services/profile-selection.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
+import { TourEngineService } from '../../core/assistant/services/tour-engine.service';
+
+const DEMO_TOUR_MEDICINE: UserMedicine = {
+  id: 'demo-tour-med-1',
+  medicineName: 'بنادول إكسترا (توضيحي)',
+  dosage: '500 ملغ - قرص واحد',
+  frequency: 'مرتين يومياً',
+  duration: '7 أيام',
+  notes: 'تناول الدواء بعد الطعام',
+  source: 'Manual',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
 
 type MedTab = 'schedule' | 'history';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -98,7 +111,7 @@ interface Dose {
 @Component({
   selector: 'app-medications',
   standalone: true,
-  imports: [CommonModule, FormsModule, FamilyProfileBannerComponent, BottomNav, MobileHeader],
+  imports: [CommonModule, FormsModule, AssistantAnchorDirective, FamilyProfileBannerComponent, BottomNav, MobileHeader],
   templateUrl: './medications.html',
   styleUrl: './medications.css',
 })
@@ -131,6 +144,7 @@ export class Medications implements OnInit, OnDestroy {
   protected readonly profileCache = inject(ProfileCacheService);
   protected readonly notifSvc = inject(NotificationService);
   private readonly medSvc = inject(MedicationRemindersService);
+  private readonly tourEngine = inject(TourEngineService);
   private readonly route = inject(ActivatedRoute);
   protected readonly router = inject(Router);
   protected readonly l10n = inject(LocalizationService);
@@ -538,11 +552,20 @@ export class Medications implements OnInit, OnDestroy {
   readonly pausedMedCount = computed(() =>
     this.medicines().filter(m => this.isPaused(m.id)).length
   );
+  readonly displayMedicines = computed(() => {
+    const real = this.medicines();
+    if (real.length === 0 && this.tourEngine.isPlaying()) {
+      return [DEMO_TOUR_MEDICINE];
+    }
+    return real;
+  });
+
   readonly filteredMedicines = computed(() => {
+    const real = this.displayMedicines();
     const subTab = this.medSubTab();
     const q = this.medSearch().toLowerCase().trim();
     const src = this.medSourceFilter();
-    return this.medicines().filter(m => {
+    return real.filter(m => {
       if (subTab === 'with-reminder' && !this.hasReminders(m.id)) return false;
       if (subTab === 'no-reminder' && this.hasReminders(m.id)) return false;
       if (subTab === 'paused' && !this.isPaused(m.id)) return false;

@@ -108,6 +108,7 @@ export const en = {
     googleSignIn: 'Sign in with Google',
     loginSuccess: 'Login Successfully',
     invalidEmailPassword: 'Invalid email/Password',
+    phoneNumberAlreadyExist: 'An account with this phone number already exists.'
   },
 
   validation: {
@@ -154,6 +155,7 @@ export const en = {
     logIn: 'Log In',
     showPassword: 'Show password',
     hidePassword: 'Hide password',
+    sucessCreated: 'Your Account Has Been Created Successfully'
   },
 
   forgotPassword: {
@@ -435,9 +437,13 @@ export const en = {
     readingLabel: 'Our AI is reading the label',
     editMedicineRecord: 'Edit Medicine Record',
     addMedicineManually: 'Add Medicine Manually',
-    reviewScannedMedicine: 'Review Scanned Medicine',
-    fillMedicineSave: 'Fill in the details and save to your medications',
-    editMedicineBeforeSave: 'Edit any field before saving to your record',
+    medicineDetailsTitle: 'Medicine Details',
+    medicineDetailsHint: 'Only the medicine name is required. Everything else is optional.',
+    medicineOptionalDetails: 'Optional details',
+    medicineNoChanges: 'No changes detected. Please edit at least one field before saving.',
+    medicineSavedSuccess: 'Medicine saved to your records.',
+    medicineUpdatedSuccess: 'Medicine record updated successfully.',
+    medicineSaveError: 'Failed to save medicine.',
     strengthDosage: 'Strength / Dosage',
     dosageForm: 'Dosage Form',
     manufacturer: 'Manufacturer',
@@ -484,6 +490,11 @@ export const en = {
     saveMedicineFailed: 'Failed to save medicine.',
     addMedicineFailed: 'Failed to add medicine.',
     addMedicinesFailed: 'Failed to add medicines.',
+    lab: "Lab Analysis",
+    imaging: "X-Ray & Imaging",
+    prescriptionn: "Prescription",
+    medicineBoxx: "Medicine Box",
+    generalDocumentt: "General Document",
   },
 
   aiAssistant: {
@@ -661,7 +672,7 @@ export const en = {
     viewDetails: 'View Details',
     viewOnly: 'View Only',
     viewingFor: 'Viewing appointments for:',
-    lab: 'Lab Test / Blood Work',
+    lab: 'Lab / Blood Test',
     doctor: 'Doctor Visit',
     vaccination: 'Vaccination',
     imaging: 'Imaging / Radiology',
@@ -732,6 +743,36 @@ export const en = {
     tip1: 'Take your medication consistently at the same time each day.',
     tip2: 'You can confirm early — we track the exact time.',
     tip3: "We'll stop reminding you once you confirm.",
+    reminderTimeRequired: 'Add at least one reminder time.',
+    reminderTimeDuplicate: 'This reminder time already exists.',
+    reminderTimePast: 'The selected time has already passed.',
+    medicineNameRequired: 'Medicine name is required.',
+    dosageRequired: 'Dosage is required.',
+    frequencyRequired: 'Frequency is required.',
+    durationRequired: 'Duration is required.',
+    reminderSetFor: 'Reminder set for {name}.',
+    reminderUpdatedFor: 'Reminder updated for {name}.',
+    pausedState: 'paused',
+    resumedState: 'resumed',
+    remindersPausedFor: 'Reminders {state} for {name}.',
+    remindersDeletedFor: 'Reminders deleted for {name}.',
+    reminderSavedError: 'Could not save reminder.',
+    reminderUpdatedError: 'Could not update reminder.',
+    reminderToggleError: 'Could not toggle reminders.',
+    reminderDeleteError: 'Could not delete reminders.',
+    medicationAddedSuccess: '{name} added successfully.',
+    medicationUpdatedSuccess: '{name} updated successfully.',
+    medicationDeletedSuccess: '{name} has been removed from your medication list.',
+    medicationAddError: 'Could not add medication.',
+    medicationUpdateError: 'Could not update medication.',
+    medicationDeleteError: 'Could not delete medication.',
+    alreadyTakenNotice: '{name} has already been marked as taken.',
+    alreadyUpdatedNotice: '{name} has already been updated.',
+    medicationTakenSuccess: '{name} marked as taken.',
+    reminderInactiveNotice: 'This reminder for {name} is no longer active.',
+    medicationConfirmedTitle: 'Medication Confirmed',
+    medicationConfirmedBody: '{name} {dosage} taken at {time}.',
+    couldNotConfirmMedication: 'Could not confirm medication.',
     needToReschedule: 'Need to reschedule?',
     manageAndUpdate: 'Manage your medications or update reminder times.',
     manageMedications: 'Manage Medications',
@@ -754,7 +795,6 @@ export const en = {
     boxScan: 'Box Scan',
     clearFilter: 'Clear',
     couldNotLoadMeds: 'Could not load medications',
-    couldNotConfirmMedication: 'Could not confirm medication',
     couldNotConfirmMedBody: 'We could not confirm {name}. Please try again.',
     couldNotSaveReminder: 'Could not save reminder. Please try again.',
     couldNotUpdateReminder: 'Could not update reminder. Please try again.',
@@ -855,6 +895,7 @@ export const en = {
     allergyContinueBtn: 'I Understand, Continue',
     allergyCancelBtn: 'Cancel',
     medicationAddedSuccessfully: 'Medication Added Successfully',
+    removedFromList: '{name} removed from your medications successfully'
   },
 
   family: {
@@ -1173,7 +1214,6 @@ export const en = {
       completeProfile: 'Complete My Profile',
     },
   },
-
   notifications: {
     centerTitle: 'Notifications',
     unreadCount: 'unread',
@@ -1211,7 +1251,7 @@ export const en = {
     appointmentConfirmedNotifBody: '{title} with {provider} – marked as completed.',
     couldNotConfirmAppointment: 'Could not confirm appointment',
     couldNotConfirmApptBody: 'We could not confirm {title}. Please try again.',
-    
+
     appointmentReminder: 'Appointment Reminder',
     medicationReminderToast: 'Medication Reminder',
   },

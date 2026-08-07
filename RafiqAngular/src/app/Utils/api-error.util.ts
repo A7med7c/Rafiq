@@ -1,17 +1,23 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiErrorBody } from '../Modles/api-response';
 
-export function getApiErrorMessages(error: HttpErrorResponse): string[] {
+export function getApiErrorMessages(error: HttpErrorResponse , translations?: any): string[] {
   const body = error.error as ApiErrorBody | null;
+if (body?.errors?.length) {
+  return body.errors.map(message =>
+    translations
+      ? localizeKnownApiMessage(message, translations)
+      : message
+  );
+}
 
-  if (body?.errors?.length) {
-    return body.errors;
-  }
-
-  if (body?.message) {
-    return [body.message];
-  }
-
+if (body?.message) {
+  return [
+    translations
+      ? localizeKnownApiMessage(body.message, translations)
+      : body.message
+  ];
+}
   switch (error.status) {
     case 400:
       return ['Invalid request. Please check your input.'];
@@ -59,6 +65,9 @@ export function localizeKnownApiMessage(message: string, translations: any): str
     'Contacts validation failed': translations.validation?.contactsValidationFailed,
     'Medication Added Successfully': translations.medications?.medicationAddedSuccessfully,
     'You cannot invite yourself.': translations.family?.cannotInviteYourself,
+    'An account with this phone number already exists.' : translations.login.phoneNumberAlreadyExist,
+    'Google login successful.': translations.login?.googleLoginSuccess,
+    'Invalid email / phone number or password.' : translations.login?.invalidEmailPassword,
   };
 
   if (map[normalized]) return map[normalized]!;

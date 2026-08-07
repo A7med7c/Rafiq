@@ -230,11 +230,11 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly generalUploadFormOpen = signal(false);
   generalUploadForm: GeneralUploadForm = this.emptyGeneralUploadForm();
 
-  readonly scanLoading = signal(false);
   readonly scanResult = signal<ScanMedicineBoxResponse | null>(null);
   readonly scanSaving = signal(false);
   readonly scanMode = signal<'create' | 'edit'>('create');
   readonly scanRecordId = signal<string | null>(null);
+  scanFormTouched = signal(false);
   scanForm: ScanForm = this.emptyScanForm();
 
   // Manual entry & AI failure recovery
@@ -294,14 +294,18 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     effect(() => {
       const review = this.documentAnalysisState.pendingReview();
       if (!review) return;
-      this.openReviewModal(review.uploadType as any, review.data);
+      if (review.uploadType === 'medicine') {
+        this.openMedicineReviewModal(review.data as ScanMedicineBoxResponse);
+      } else {
+        this.openReviewModal(review.uploadType as any, review.data);
+      }
       this.documentAnalysisState.clearPendingReview();
     });
 
     effect(() => {
       const open = !!(
         this.selectedRecord() || this.deleteTarget() || this.reviewForm() ||
-        this.generalUploadFormOpen() || this.scanLoading() ||
+        this.generalUploadFormOpen() ||
         this.scanResult() || this.showReminderPromptModal() || this.lightboxUrl() ||
         this.showAiFailDialog()
       );
@@ -696,29 +700,16 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     if (this.readOnly) return;
     if (record.type === 'medicine') {
       this.actionMenuOpen.set(null);
-      this.scanForm = {
+      this.openMedicineReviewModal({
         medicineName: record.rawRecord.medicineName ?? '',
-        dosage: record.rawRecord.dosage ?? '',
+        strength: record.rawRecord.dosage ?? '',
         dosageForm: record.rawRecord.dosageForm ?? '',
         manufacturer: record.rawRecord.manufacturer ?? '',
         frequency: record.rawRecord.frequency ?? '',
         duration: record.rawRecord.duration ?? '',
         notes: record.rawRecord.notes ?? '',
         imagePath: record.rawRecord.imagePath ?? '',
-      };
-      this.scanImageFailed.set(false);
-      this.scanMode.set('edit');
-      this.scanRecordId.set(record.id);
-      this.isMedicineManualMode.set(false);
-      this.clearManualImage('medicine');
-      this._scanFormSnapshot = this.snapshotScanForm(this.scanForm);
-      this.scanResult.set({
-        medicineName: this.scanForm.medicineName,
-        strength: this.scanForm.dosage,
-        dosageForm: this.scanForm.dosageForm,
-        manufacturer: this.scanForm.manufacturer,
-        imagePath: this.scanForm.imagePath,
-      });
+      }, 'edit', record.id);
       return;
     }
     this.actionMenuOpen.set(null);
@@ -933,6 +924,25 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this._reviewFormSnapshot = this.snapshotReviewForm(form);
   }
 
+  private openMedicineReviewModal(data: any, mode: 'create' | 'edit' = 'create', recordId?: string): void {
+    this.scanForm = {
+      medicineName: data.medicineName ?? '',
+      dosage: data.strength ?? '',
+      dosageForm: data.dosageForm ?? '',
+      manufacturer: data.manufacturer ?? '',
+      frequency: data.frequency ?? '',
+      duration: data.duration ?? '',
+      notes: data.notes ?? '',
+      imagePath: data.imagePath ?? '',
+    };
+    this.scanImageFailed.set(false);
+    this.scanMode.set(mode);
+    this.scanRecordId.set(recordId ?? null);
+    this.manualMedicineMode.set(false);
+    this.scanResult.set(data);
+    this._scanFormSnapshot = this.snapshotScanForm(this.scanForm);
+  }
+
   addLabResult(): void {
     const rf = this.reviewForm();
     if (!rf) return;
@@ -986,7 +996,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
       if (rf.mode === 'edit' && this._reviewFormSnapshot !== null &&
         this.snapshotReviewForm(rf) === this._reviewFormSnapshot) {
-      this.showToast(this.t().records.editBeforeSaving, 'error');
+      this.showToast(this.t().records.medicineNoChanges, 'error');
       return;
     }
 
@@ -1062,48 +1072,28 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private startMedicineScan(file: File): void {
-    this.scanLoading.set(true);
+    const tempId = crypto.randomUUID();
+    this.documentAnalysisState.trackSyncUpload(tempId, this.t().records.scanningMedicineBox, 'medicine');
     this.setUploading('medicine', true);
     const form = new FormData();
     form.append('image', file);
 
     this.http.post<{ data: ScanMedicineBoxResponse }>(`${this.base}/user-medicines/scan-box`, form).subscribe({
       next: res => {
-        this.scanLoading.set(false);
         this.setUploading('medicine', false);
         const data = res?.data ?? (res as unknown as ScanMedicineBoxResponse);
-        this.scanForm = {
-          medicineName: data.medicineName ?? '',
-          dosage: data.strength ?? '',
-          dosageForm: data.dosageForm ?? '',
-          manufacturer: data.manufacturer ?? '',
-          frequency: '', duration: '', notes: '',
-          imagePath: data.imagePath ?? '',
-        };
-        this.scanImageFailed.set(false);
-        this.scanMode.set('create');
-        this.scanRecordId.set(null);
-        this.scanResult.set(data);
-        this._scanFormSnapshot = this.snapshotScanForm(this.scanForm);
+        this.documentAnalysisState.completeWithReviewData(tempId, data);
       },
       error: err => {
-        this.scanLoading.set(false);
         this.setUploading('medicine', false);
         const errCode = err?.error?.errorCode as string | undefined;
         if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
-          this.showToast(this.t().uploadValidation.medicine, 'error');
+          this.documentAnalysisState.failSyncUpload(tempId, this.t().uploadValidation.medicine);
         } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
-          this._failedFile = file;
-          this._failedType = 'medicine';
-          this._failedDesc = '';
-          this.aiFailIsUnreadable.set(true);
-          this.showAiFailDialog.set(true);
+          this.documentAnalysisState.failSyncUpload(tempId, this.t().uploadValidation.medicineUnreadable);
         } else {
-          this._failedFile = file;
-          this._failedType = 'medicine';
-          this._failedDesc = '';
-          this.aiFailIsUnreadable.set(false);
-          this.showAiFailDialog.set(true);
+          const reason = err?.error?.message || 'Analysis failed. Please try again.';
+          this.documentAnalysisState.failSyncUpload(tempId, reason);
         }
       },
     });
@@ -1118,6 +1108,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.manualMedicineMode.set(false);
     this.scanSource.set(3);
     this.manualImageUploading.set(false);
+    this.scanFormTouched.set(false);
   }
 
   onManualImageSelected(e: Event): void {
@@ -1173,6 +1164,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       this.scanRecordId.set(null);
       this._scanFormSnapshot = null;
       this.scanResult.set({ medicineName: '', strength: '', dosageForm: '', manufacturer: '', imagePath: '' });
+      this.scanFormTouched.set(false);
       return;
     }
     const typeMap: Record<string, 'lab' | 'imaging' | 'prescription' | 'general'> = {
@@ -1191,12 +1183,13 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   saveScanResult(): void {
+    this.scanFormTouched.set(true);
     if (!this.scanForm.medicineName.trim()) return;
     if (this.manualMedicineImageUploading()) return;
 
     if (this.scanMode() === 'edit' && this._scanFormSnapshot !== null &&
         this.snapshotScanForm(this.scanForm) === this._scanFormSnapshot) {
-      this.showToast(this.t().records.editBeforeSaving, 'error');
+      this.showToast(this.t().records.medicineNoChanges, 'error');
       return;
     }
 
@@ -1236,15 +1229,41 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.manualMedicineMode.set(false);
         this.scanSource.set(3);
         this.loadData();
-
         const savedMedicineId = res?.data?.id ?? null;
+        if (res && res.message && res.message.includes('خلي بالك')) {
+          alert(res.message);
+        } else {
+          if (mode === 'edit' || !savedMedicineId) {
+            this.showToast(mode === 'edit' ? this.t().records.medicineUpdatedSuccess : this.t().records.medicineSavedSuccess, 'success');
+          }
+        }
         if (mode !== 'edit' && savedMedicineId) {
           this.openReminderPrompt('single', savedMedicineId);
+        } else {
+          void this.router.navigate(['/medications'], { queryParams: { tab: 'medications' } });
         }
       },
       error: err => {
         this.scanSaving.set(false);
-        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.saveMedicineFailed), 'error');
+        let msg = err?.error?.message ?? this.t().records.saveMedicineFailed;
+        if (err?.error?.errors) {
+          const errors = err.error.errors;
+          if (Array.isArray(errors) && errors.length > 0) {
+            msg = errors[0];
+          } else if (typeof errors === 'object') {
+            const firstKey = Object.keys(errors)[0];
+            if (firstKey && Array.isArray(errors[firstKey]) && errors[firstKey].length > 0) {
+              msg = errors[firstKey][0];
+            }
+          }
+        }
+        
+        const localizedMsg = this.localizeApiMessage(msg);
+        if (localizedMsg.includes('خلي بالك')) {
+          alert(localizedMsg);
+        } else {
+          this.showToast(localizedMsg, 'error');
+        }
       },
     });
   }
@@ -1259,6 +1278,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   closeReminderPrompt(): void {
     this.showReminderPromptModal.set(false);
     this.reminderPromptMedicineId.set(null);
+    void this.router.navigate(['/medications'], { queryParams: { tab: 'medications' } });
   }
 
   goToSetReminder(): void {
@@ -1307,6 +1327,22 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
+  protected recordTypeLabel(type: string): string {
+
+  const backendToKey: Record<string, string> = {
+    "Lab Report": "lab",
+    "Imaging Report": "imaging",
+    "Prescription": "prescription",
+    "Medicine Box": "medicineBox",
+    "Manual": "manual",
+    "Self": "self"
+  };
+
+  const key = backendToKey[type] ?? type;
+
+  return (this.t().records as Record<string, string>)[key] ?? type;
+}
+
   // ── Task 1: add prescription medicines to Medications module ─────────────
   addPrescriptionMedToMedications(index: number): void {
     const rf = this.reviewForm();
@@ -1331,14 +1367,23 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     profileId$.pipe(
       switchMap(pid => this.http.post(`${this.base}/user-medicines?profileId=${pid}`, payload))
     ).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.addingMedIndex.set(null);
         this.addedMedIndices.update(s => new Set([...s, index]));
-        this.showToast(`${med.medicineName} added to your medications.`, 'success');
+        if (res && res.message && res.message.includes('خلي بالك')) {
+          alert(res.message);
+        } else {
+          this.showToast(`${med.medicineName} added to your medications.`, 'success');
+        }
       },
       error: err => {
         this.addingMedIndex.set(null);
-        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.addMedicineFailed), 'error');
+        const msg = this.localizeApiMessage(err?.error?.message ?? this.t().records.addMedicineFailed);
+        if (msg.includes('خلي بالك')) {
+          alert(msg);
+        } else {
+          this.showToast(msg, 'error');
+        }
       },
     });
   }
@@ -1372,14 +1417,32 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         ))
       )
     ).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.addingAllMeds.set(false);
         this.addedMedIndices.update(s => new Set([...s, ...notYetAdded.map(({ i }) => i)]));
-        this.showToast('All medicines added to your medications.', 'success');
+        if (res && Array.isArray(res)) {
+          let alertShown = false;
+          res.forEach((r: any) => {
+            if (r && r.message && r.message.includes('خلي بالك') && !alertShown) {
+              alert(r.message);
+              alertShown = true;
+            }
+          });
+          if (!alertShown) {
+            this.showToast('All medicines added to your medications.', 'success');
+          }
+        } else {
+          this.showToast('All medicines added to your medications.', 'success');
+        }
       },
       error: err => {
         this.addingAllMeds.set(false);
-        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.addMedicinesFailed), 'error');
+        const msg = this.localizeApiMessage(err?.error?.message ?? this.t().records.addMedicinesFailed);
+        if (msg.includes('خلي بالك')) {
+          alert(msg);
+        } else {
+          this.showToast(msg, 'error');
+        }
       },
     });
   }

@@ -9,7 +9,7 @@ const STORAGE_KEY = 'rafiq_lang';
 @Injectable({ providedIn: 'root' })
 export class LocalizationService {
   private readonly _lang = signal<AppLanguage>(
-    (localStorage.getItem(STORAGE_KEY) as AppLanguage) ?? 'en'
+    (localStorage.getItem(STORAGE_KEY) as AppLanguage) ?? 'ar'
   );
 
   readonly lang = this._lang.asReadonly();

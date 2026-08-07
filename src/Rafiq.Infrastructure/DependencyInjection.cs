@@ -113,6 +113,7 @@ public static class DependencyInjection
         services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
         services.AddScoped<IMessageReactionRepository, MessageReactionRepository>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddScoped<IDuplicateDocumentDetector, DuplicateDocumentDetector>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));

@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Rafiq.Application.AI.Prompts;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
@@ -33,6 +33,7 @@ public sealed class UploadGeneralDocumentCommandHandler(
         var extracted = await bedrockService.AnalyzeAsync<BedrockGeneralDocumentDto>(
             base64,
             GeneralDocumentPrompt.Build(),
+            LanguageSystemPrompt.Build("en"),
             cancellationToken)
             ?? throw new BadRequestException("Unable to analyze document.");
 

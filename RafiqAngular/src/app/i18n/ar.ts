@@ -73,6 +73,8 @@ export const ar: Translations = {
     pageTourTitle: 'ابدأ جولة هذه الصفحة',
   },
 
+
+
   familyErrors: {
     createProfileFailed: 'فشل إنشاء الملف.',
     sendInvitationFailed: 'فشل إرسال الدعوة.',
@@ -117,6 +119,7 @@ export const ar: Translations = {
     googleSignIn: 'تسجيل الدخول باستخدام Google',
     loginSuccess: 'تم تسجيل الدخول بنجاح',
     invalidEmailPassword: 'الإيميل أو كلمة المرور غير صحيحة',
+    phoneNumberAlreadyExist: 'رقم الهاتف موجود بالفعل'
   },
 
   validation: {
@@ -163,6 +166,7 @@ export const ar: Translations = {
     logIn: 'تسجيل الدخول',
     showPassword: 'أظهر كلمة المرور',
     hidePassword: 'اخفي كلمة المرور',
+    sucessCreated: 'تم انشاء الحساب بنجاح , ارسلنا لك كود التحقق عبر حساب جوجل'
   },
 
   forgotPassword: {
@@ -440,13 +444,17 @@ export const ar: Translations = {
     analysingImaging: 'جاري تحليل تقرير الأشعة...',
     extractingPrescription: 'جاري استخراج الروشتة...',
     analysingDocument: 'جاري تحليل الوثيقة الطبية...',
-    scanningMedicineBox: 'جاري مسح ضوئي علبة الدوا...',
+    scanningMedicineBox: 'جاري المسح الضوئي لعلبة الدوا...',
     readingLabel: 'الذكاء الاصطناعي بيقرا الليبل',
     editMedicineRecord: 'عدل سجل الدوا',
     addMedicineManually: 'أضف دوا بنفسك',
-    reviewScannedMedicine: 'راجع الدوا اللي اتمسح ضوئي',
-    fillMedicineSave: 'اكتب التفاصيل واحفظهم في أدويتك',
-    editMedicineBeforeSave: 'عدل أي حاجة قبل الحفظ في السجل',
+    medicineDetailsTitle: 'تفاصيل الدوا',
+    medicineDetailsHint: 'اسم الدوا بس هو المطلوب. باقي التفاصيل اختيارية.',
+    medicineOptionalDetails: 'تفاصيل اختيارية',
+    medicineNoChanges: 'لا توجد تغييرات. عدّل أي حقل قبل الحفظ.',
+    medicineSavedSuccess: 'تم حفظ الدوا في سجلاتك.',
+    medicineUpdatedSuccess: 'تم تحديث سجل الدوا بنجاح.',
+    medicineSaveError: 'معرفناش نحفظ الدوا.',
     strengthDosage: 'القوة / الجرعة',
     dosageForm: 'شكل الجرعة',
     manufacturer: 'الشركة المنتجة',
@@ -493,6 +501,11 @@ export const ar: Translations = {
     saveMedicineFailed: 'فشل حفظ الدواء.',
     addMedicineFailed: 'فشل إضافة الدواء.',
     addMedicinesFailed: 'فشل إضافة الأدوية.',
+    lab: "تحليل طبي",
+    imaging: "الأشعة والتصوير",
+    prescriptionn: "وصفة طبية",
+    medicineBoxx: "علبة الأدوية",
+    generalDocumentt: "مستند عام",
   },
 
   aiAssistant: {
@@ -741,6 +754,36 @@ export const ar: Translations = {
     tip1: 'خد دواك بانتظام في نفس الوقت كل يوم.',
     tip2: 'تقدر تأكد من قبل الوقت، بنسجل الوقت الفعلي.',
     tip3: 'هنوقف التذكير لما تأكد.',
+    reminderTimeRequired: 'ضيف وقت تذكير واحد على الأقل.',
+    reminderTimeDuplicate: 'وقت التذكير ده موجود بالفعل.',
+    reminderTimePast: 'الوقت المختار عدى بالفعل.',
+    medicineNameRequired: 'اسم الدوا مطلوب.',
+    dosageRequired: 'الجرعة مطلوبة.',
+    frequencyRequired: 'التكرار مطلوب.',
+    durationRequired: 'المدة مطلوبة.',
+    reminderSetFor: 'اتعملت تذكيرة لـ {name}.',
+    reminderUpdatedFor: 'اتحدثت التذكيرة لـ {name}.',
+    pausedState: 'متوقفة',
+    resumedState: 'شغالة',
+    remindersPausedFor: 'التذكيرات {state} لـ {name}.',
+    remindersDeletedFor: 'اتمسحت تذكيرات {name}.',
+    reminderSavedError: 'معرفناش نحفظ التذكيرة.',
+    reminderUpdatedError: 'معرفناش نحدث التذكيرة.',
+    reminderToggleError: 'معرفناش نغير حالة التذكيرات.',
+    reminderDeleteError: 'معرفناش نمسح التذكيرات.',
+    medicationAddedSuccess: 'اتضاف {name} بنجاح.',
+    medicationUpdatedSuccess: 'اتحدث {name} بنجاح.',
+    medicationDeletedSuccess: 'اتشال {name} من قائمة الأدوية.',
+    medicationAddError: 'معرفناش نضيف الدوا.',
+    medicationUpdateError: 'معرفناش نحدث الدوا.',
+    medicationDeleteError: 'معرفناش نمسح الدوا.',
+    alreadyTakenNotice: 'تم تسجيل {name} كأنه اتاخد بالفعل.',
+    alreadyUpdatedNotice: 'تم تحديث {name} بالفعل.',
+    medicationTakenSuccess: 'تم تسجيل {name} كأخذ الدوا.',
+    reminderInactiveNotice: 'التذكرة دي لـ {name} بقت غير فعالة.',
+    medicationConfirmedTitle: 'تم تأكيد الدوا',
+    medicationConfirmedBody: 'تم أخذ {name} {dosage} في {time}.',
+    couldNotConfirmMedication: 'معرفناش نأكد الدوا.',
     needToReschedule: 'محتاج تغير المواعيد؟',
     manageAndUpdate: 'اتحكم في أدويتك أو غير أوقات التذكير.',
     manageMedications: 'اتحكم في الأدوية',
@@ -763,7 +806,6 @@ export const ar: Translations = {
     boxScan: 'مسح ضوئي علبة',
     clearFilter: 'مسح',
     couldNotLoadMeds: 'معرفناش نحمل الأدوية',
-    couldNotConfirmMedication: 'فشل تأكيد الدواء. حاول مرة اخرى.',
     couldNotConfirmMedBody: 'لم نستطع تأكيد {name}. حاول مرة اخرى.',
     couldNotSaveReminder: 'فشل حفظ التذكير. حاول مرة اخرى.',
     couldNotUpdateReminder: 'فشل تحديث التذكير. حاول مرة اخرى.',
@@ -864,6 +906,7 @@ export const ar: Translations = {
     allergyContinueBtn: 'فاهم، أكمل على مسؤوليتي',
     allergyCancelBtn: 'إلغاء',
     medicationAddedSuccessfully: 'تمت إضافة الدواء بنجاح',
+    removedFromList: 'بنجاح {name} تم حذف ',
   },
 
   family: {

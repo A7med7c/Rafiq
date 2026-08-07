@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ElementRef, ViewChild, inject, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { inject } from '@angular/core';
-import { Gender, BloodType } from '../../../Modles/health-profile-enums';
+import { Subscription } from 'rxjs';
+import { Gender } from '../../../Modles/health-profile-enums';
 import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
@@ -16,7 +16,7 @@ import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-
   templateUrl: './onboarding-step1.html',
   styleUrl: './onboarding-step1.css',
 })
-export class OnboardingStep1 implements OnInit {
+export class OnboardingStep1 implements OnInit, OnDestroy {
 
   private readonly router = inject(Router);
   private readonly fb     = inject(FormBuilder);
@@ -24,44 +24,24 @@ export class OnboardingStep1 implements OnInit {
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
-  showMascotTip = true;
-
-  dismissMascotTip(): void {
-    this.showMascotTip = false;
-  }
+  private valueSub?: Subscription;
+  dropdownOpen = false;
+  dropdownTop = 0;
+  dropdownLeft = 0;
+  dropdownWidth = 0;
 
   readonly today = new Date().toISOString().slice(0, 10);
 
-  readonly steps = [
-    { label: 'Basic Info' },
-    { label: 'Emergency Contacts' },
-    { label: 'Allergies' },
-    { label: 'Chronic Diseases' },
-    { label: 'Review' },
-  ];
+  readonly steps = computed(() => this.t().onboarding.stepperLabels.map(label => ({ label })));
 
   readonly genderOptions = [
-    { value: Gender.Male, label: 'Male' },
-    { value: Gender.Female, label: 'Female' }
-  ];
-
-  readonly bloodTypes = [
-    { value: BloodType.APositive, label: 'A+ (APositive)' },
-    { value: BloodType.ANegative, label: 'A- (ANegative)' },
-    { value: BloodType.BPositive, label: 'B+ (BPositive)' },
-    { value: BloodType.BNegative, label: 'B- (BNegative)' },
-    { value: BloodType.ABPositive, label: 'AB+ (ABPositive)' },
-    { value: BloodType.ABNegative, label: 'AB- (ABNegative)' },
-    { value: BloodType.OPositive, label: 'O+ (OPositive)' },
-    { value: BloodType.ONegative, label: 'O- (ONegative)' }
+    { value: Gender.Male, labelEn: 'Male', labelAr: 'ذكر' },
+    { value: Gender.Female, labelEn: 'Female', labelAr: 'أنثى' }
   ];
 
   readonly form: FormGroup = this.fb.group({
     dateOfBirth: ['', [Validators.required, this.notFutureDateValidator]],
     gender:      ['', Validators.required],
-    height:      ['', [Validators.required, Validators.min(50), Validators.max(300)]],
-    weight:      ['', [Validators.required, Validators.min(1), Validators.max(500)]],
-    bloodType:   ['', Validators.required],
   });
 
   ngOnInit(): void {
@@ -69,14 +49,68 @@ export class OnboardingStep1 implements OnInit {
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        this.form.patchValue(data);
+        this.form.patchValue({
+          dateOfBirth: data.dateOfBirth ?? '',
+          gender:      data.gender !== undefined && data.gender !== '' ? Number(data.gender) : '',
+        }, { emitEvent: false });
       } catch (e) {
         console.error('Error parsing onboarding_step1 from sessionStorage', e);
       }
     }
+
+    this.valueSub = this.form.valueChanges.subscribe(() => {
+      this.saveState();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.valueSub?.unsubscribe();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.select-shell') && !target.closest('.dropdown-portal')) {
+      this.dropdownOpen = false;
+    }
+  }
+
+  toggleDropdown(trigger: HTMLElement): void {
+    if (this.dropdownOpen) {
+      this.dropdownOpen = false;
+      return;
+    }
+    const rect = trigger.getBoundingClientRect();
+    this.dropdownTop = rect.bottom + 6;
+    this.dropdownLeft = rect.left;
+    this.dropdownWidth = rect.width;
+    this.dropdownOpen = true;
+  }
+
+  selectGender(val: number, event: Event): void {
+    event.stopPropagation();
+    this.form.get('gender')?.setValue(val);
+    this.form.get('gender')?.markAsTouched();
+    this.form.get('gender')?.markAsDirty();
+    this.saveState();
+    this.dropdownOpen = false;
+  }
+
+  getSelectedGenderLabel(): string {
+    const val = this.form.get('gender')?.value;
+    if (val === '' || val === null || val === undefined) return '';
+    const found = this.genderOptions.find(g => g.value === Number(val));
+    if (!found) return '';
+    return this.l10n.isRtl() ? found.labelAr : found.labelEn;
+  }
+
+  private saveState(): void {
+    const prev = JSON.parse(sessionStorage.getItem('onboarding_step1') ?? '{}');
+    sessionStorage.setItem('onboarding_step1', JSON.stringify({ ...prev, ...this.form.getRawValue() }));
   }
 
   goBack(): void {
+    this.saveState();
     this.router.navigate(['/onboarding/welcome']);
   }
 
@@ -85,11 +119,9 @@ export class OnboardingStep1 implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    // Store step 1 data so later steps can access it
-    sessionStorage.setItem('onboarding_step1', JSON.stringify(this.form.getRawValue()));
-    // Advance the onboarding tour to the emergency contacts step
+    this.saveState();
     if (this.tourEngine.isPlaying()) this.tourEngine.nextStep();
-    this.router.navigate(['/onboarding/emergency']);
+    this.router.navigate(['/onboarding/step1b']);
   }
 
   getDateOfBirthError(): string {
@@ -103,7 +135,7 @@ export class OnboardingStep1 implements OnInit {
     return 'Enter a valid date of birth';
   }
 
-  isInvalid(field: 'dateOfBirth' | 'gender' | 'height' | 'weight' | 'bloodType'): boolean {
+  isInvalid(field: 'dateOfBirth' | 'gender'): boolean {
     const ctrl = this.form.get(field);
     return !!ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched);
   }

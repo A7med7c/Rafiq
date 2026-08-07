@@ -13,13 +13,15 @@ public class Prescription : BaseEntity
         string doctorName,
         string patientName,
         DateOnly prescriptionDate,
-        string imagePath)
+        string imagePath,
+        string? fileHash = null)
     {
         UserHealthProfileId = userHealthProfileId;
         DoctorName = doctorName;
         PatientName = patientName;
         PrescriptionDate = prescriptionDate;
         ImagePath = imagePath;
+        FileHash = fileHash;
     }
 
     public Guid UserHealthProfileId { get; private set; }
@@ -33,6 +35,8 @@ public class Prescription : BaseEntity
     public DateOnly PrescriptionDate { get; set; }
 
     public string ImagePath { get; private set; } = null!;
+
+    public string? FileHash { get; private set; }
 
     public ICollection<PrescriptionMedicine> Medicines { get; set; }
         = new List<PrescriptionMedicine>();

@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Rafiq.Application.Common.Interfaces;
 using Rafiq.Application.Common.Models;
 using Rafiq.Application.Features.ImagingReports.DTOs;
@@ -15,7 +16,8 @@ public sealed class SaveImagingReportCommandHandler(
     IHealthProfileAuthorizationService authorizationService,
     IImagingReportRepository imagingReportRepository,
     IUnitOfWork unitOfWork,
-    IHealthSummaryCacheRepository summaryCache)
+    IHealthSummaryCacheRepository summaryCache,
+    Rafiq.Infrastructure.Persistence.RafiqDbContext dbContext)
     : IRequestHandler<SaveImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
 {
     public async Task<ApiResponse<ImagingReportResponseDto>> Handle(
@@ -56,6 +58,30 @@ public sealed class SaveImagingReportCommandHandler(
             request.ImageUrl ?? string.Empty,
             request.OcrText,
             request.Summary);
+
+        if (!string.IsNullOrEmpty(request.ImageUrl))
+        {
+            var session = await dbContext.DocumentUploadSessions
+                .FirstOrDefaultAsync(s => s.ImageUrl == request.ImageUrl, cancellationToken);
+                
+            if (session != null)
+            {
+                imagingReport = new ImagingReport(
+                    profileId,
+                    imagingType,
+                    bodyPart,
+                    request.Findings ?? string.Empty,
+                    request.Impression ?? string.Empty,
+                    request.DoctorName,
+                    reportDate,
+                    request.ImageUrl,
+                    request.OcrText,
+                    request.Summary,
+                    session.FileHash);
+                    
+                dbContext.DocumentUploadSessions.Remove(session);
+            }
+        }
 
         await imagingReportRepository.AddAsync(imagingReport, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

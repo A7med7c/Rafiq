@@ -18,7 +18,8 @@ public class ImagingReport : BaseEntity
         DateOnly reportDate,
         string imageUrl,
         string? ocrText,
-        string? description)
+        string? description,
+        string? fileHash = null)
     {
         UserHealthProfileId = userHealthProfileId;
         ImagingType = imagingType;
@@ -30,6 +31,7 @@ public class ImagingReport : BaseEntity
         ImageUrl = imageUrl;
         OCRText = ocrText;
         Description = description;
+        FileHash = fileHash;
     }
 
     public Guid UserHealthProfileId { get; private set; }
@@ -53,6 +55,8 @@ public class ImagingReport : BaseEntity
     public string? OCRText { get; private set; }
 
     public string? Description { get; set; } // Stores AI summary
+
+    public string? FileHash { get; private set; }
     
     public void Update(
         string imagingType,

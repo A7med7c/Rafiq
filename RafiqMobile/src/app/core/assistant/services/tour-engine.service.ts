@@ -11,8 +11,8 @@
  *   stepExit  → highlight + bubble/mascot fade out together, THEN the next stepEnter begins
  */
 
-import { Injectable, signal, computed, inject, NgZone, effect } from '@angular/core';
-import { Router } from '@angular/router';
+import { Injectable, signal, computed, inject, NgZone, effect, Injector } from '@angular/core';
+import { Router, NavigationStart } from '@angular/router';
 import { driver, Driver } from 'driver.js';
 
 import { TourScenario, TourStepScenario, TourState, TourStepVariant } from '../models/tour-scenario';
@@ -51,8 +51,12 @@ export class TourEngineService {
   private readonly anchorRegistry = inject(AssistantAnchorRegistryService);
   private readonly highlightTool = inject(HighlightTool);
   private readonly navigateTool = inject(NavigateTool);
-  private readonly authService = inject(AuthService, { optional: true });
+  private readonly injector = inject(Injector);
   private readonly l10n = inject(LocalizationService, { optional: true });
+
+  private get authService(): AuthService | null {
+    return this.injector.get(AuthService, null, { optional: true });
+  }
 
   /** Scenario registry mapping scenario ID -> TourScenario */
   private readonly registry = new Map<string, TourScenario>();
@@ -133,6 +137,33 @@ export class TourEngineService {
   constructor() {
     // Auto-register built-in default tours
     DEFAULT_TOURS.forEach(scenario => this.registerScenario(scenario));
+
+    // Automatically stop active tour on navigation to auth / login pages
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        const url = event.url.toLowerCase();
+        if (
+          url.includes('/login') ||
+          url.includes('/register') ||
+          url.includes('/auth') ||
+          url === '/' ||
+          url === '/landing'
+        ) {
+          if (this._isPlaying()) {
+            this.stopTour(false);
+          }
+        }
+      }
+    });
+
+    // Automatically stop active tour when user logs out
+    if (this.authService) {
+      this.authService.currentUser$.subscribe((user) => {
+        if (!user && this._isPlaying()) {
+          this.stopTour(false);
+        }
+      });
+    }
 
     // Nice-to-have: lets global CSS pulse the Driver.js spotlight in sync with the mascot's
     // speaking state, so the user's eye is drawn to both the highlight and the bubble at once.
@@ -276,13 +307,18 @@ export class TourEngineService {
     const scenario = this._currentScenario();
     const wasVisible = this._stepVisible();
 
+    this._isPlaying.set(false);
     this._stepVisible.set(false);
     this.clearAllTimers();
     this.clearStepResources();
+    this.clearDriverHighlight();
+
+    if (typeof document !== 'undefined') {
+      document.body.classList.remove('rafiq-tour-active');
+      document.body.classList.remove('rafiq-tour-speaking');
+    }
 
     const finish = () => {
-      this.clearDriverHighlight();
-
       this._isPlaying.set(false);
       this._isPaused.set(false);
       this._isWaitingForUser.set(false);
@@ -290,10 +326,6 @@ export class TourEngineService {
       this._currentScenario.set(null);
       this._currentStepIndex.set(0);
       this._effectiveStep.set(null);
-
-      if (typeof document !== 'undefined') {
-        document.body.classList.remove('rafiq-tour-active');
-      }
 
       // Return assistant to home position and set idle avatar state
       this.positionService.returnHome();
@@ -465,6 +497,15 @@ export class TourEngineService {
       this.activeSpeechSub = null;
     }
 
+    if (this.speechService.isMuted()) {
+      this._isSpeaking.set(false);
+      this.avatarService.setState('idle');
+      // Calculate comfortable reading duration when muted (4.5s minimum up to 8.5s based on text length)
+      const readingDelayMs = Math.max(4500, Math.min(8500, textToSpeak.length * 65));
+      this.handleStepCompletion(step, readingDelayMs);
+      return;
+    }
+
     this._isSpeaking.set(true);
     this.activeSpeechSub = this.speechService.speak(textToSpeak, lang).subscribe({
       next: () => {
@@ -481,7 +522,7 @@ export class TourEngineService {
     });
   }
 
-  private handleStepCompletion(step: TourStepScenario): void {
+  private handleStepCompletion(step: TourStepScenario, customDelayMs?: number): void {
     if (!this._isPlaying() || this._isPaused()) return;
 
     if (step.waitForUser) {
@@ -496,7 +537,7 @@ export class TourEngineService {
         }, step.waitForUser.timeoutMs);
       }
     } else {
-      const delay = step.delayAfterMs ?? 1500;
+      const delay = customDelayMs ?? step.delayAfterMs ?? 1500;
       this.autoAdvanceTimer = setTimeout(() => {
         if (this._isPlaying() && !this._isPaused()) {
           this.nextStep();
@@ -584,24 +625,20 @@ export class TourEngineService {
   // ── Driver.js Spotlight Rendering ──────────────────────────────────
 
   private highlightElementWithDriver(element: HTMLElement, config?: any): void {
-    this.clearDriverHighlight();
-
+    if (typeof window === 'undefined') return;
     try {
-      this.activeDriver = driver({
-        animate: true,
-        allowClose: false,
-        overlayColor: '#000000',
-        overlayOpacity: 0.6,
-        stagePadding: config?.stagePadding ?? 6,
-        stageRadius: config?.stageRadius ?? 12,
-        popoverClass: 'rafiq-tour-driver-popover-hidden',
-      });
-
-      this.activeDriver.highlight({
-        element: element,
-      });
+      if (!this.activeDriver) {
+        this.activeDriver = driver({
+          animate: true,
+          allowClose: false,
+          overlayOpacity: 0.65,
+          stagePadding: 6,
+          popoverClass: 'rafiq-driver-popover',
+        });
+      }
+      this.activeDriver.highlight({ element });
     } catch (err) {
-      console.warn('[TourEngineService] Failed to render Driver.js spotlight:', err);
+      console.warn('[TourEngineService] Spotlight highlight warning:', err);
     }
   }
 
@@ -609,11 +646,45 @@ export class TourEngineService {
     if (this.activeDriver) {
       try {
         this.activeDriver.destroy();
-      } catch {
-        // Suppress driver cleanup error
-      }
+      } catch { /* ignore */ }
       this.activeDriver = null;
     }
+  }
+
+  /**
+   * Starts a dedicated tour for the current active page route (or full welcome-tour fallback).
+   * Used when user taps the header Tour button (?).
+   */
+  startCurrentPageTour(): boolean {
+    const route = this.router.url.split('?')[0].toLowerCase();
+    const isEn = this.l10n?.lang() === 'en';
+
+    let scenarioId = 'dashboard-tour';
+
+    if (route.includes('/medical-records')) {
+      scenarioId = 'medical-records-tour';
+    } else if (route.includes('/appointments')) {
+      scenarioId = 'appointments-tour';
+    } else if (route.includes('/medications')) {
+      scenarioId = 'medications-tour';
+    } else if (route.includes('/family')) {
+      scenarioId = 'family-profiles-tour';
+    } else if (route.includes('/my-profile')) {
+      scenarioId = 'my-profile-tour';
+    } else if (route.includes('/dashboard')) {
+      scenarioId = 'dashboard-tour';
+    } else {
+      scenarioId = 'welcome-tour';
+    }
+
+    if (isEn) {
+      const enId = `${scenarioId}-en`;
+      if (this.getScenario(enId)) {
+        scenarioId = enId;
+      }
+    }
+
+    return this.startTour(scenarioId);
   }
 
   private clearStepResources(): void {
@@ -652,7 +723,7 @@ export class TourEngineService {
       const selector = anchorName.startsWith('#') || anchorName.startsWith('.')
         ? anchorName
         : `#${anchorName}`;
-      el = (document.querySelector(selector) || document.getElementById(anchorName)) as HTMLElement | null;
+      el = (document.querySelector(selector) || document.getElementById(anchorName) || document.querySelector(`[assistantAnchor="${anchorName}"]`)) as HTMLElement | null;
     }
     return el;
   }

@@ -811,6 +811,24 @@ nextPage() {
     return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[type] ?? '';
   }
 
+protected appointmentTypeLabel(type: string): string {
+
+  const backendToKey: Record<string, string> = {
+    "Lab / Blood Test": "lab",
+    "Doctor Visit": "doctor",
+    "Vaccination": "vaccination",
+    "Imaging / Radiology": "imaging",
+    "Therapy Session": "therapy",
+    "Dental Checkup": "dental",
+    "Other": "other",
+    "Follow-up Visit": "followUp"
+  };
+
+  const key = backendToKey[type] ?? type;
+
+  return (this.t().appointments as Record<string, string>)[key] ?? type;
+}
+
   typeIcon(t: AppointmentType): string {
     return APPOINTMENT_TYPE_ICONS[t] ?? 'fa-calendar';
   }

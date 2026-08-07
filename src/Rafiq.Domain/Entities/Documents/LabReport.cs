@@ -15,7 +15,8 @@ public class LabReport : BaseEntity
         DateOnly reportDate,
         string imageUrl,
         string? ocrText,
-        string? description)
+        string? description,
+        string? fileHash = null)
     {
         UserHealthProfileId = userHealthProfileId;
         DoctorName = doctorName;
@@ -24,6 +25,7 @@ public class LabReport : BaseEntity
         ImageUrl = imageUrl;
         OCRText = ocrText;
         Description = description;
+        FileHash = fileHash;
     }
 
     public Guid UserHealthProfileId { get; private set; }
@@ -41,6 +43,8 @@ public class LabReport : BaseEntity
     public string? OCRText { get; private set; }
 
     public string? Description { get; set; } // Stores AI summary
+
+    public string? FileHash { get; private set; }
 
     public ICollection<LabResult> Results { get; set; }
         = new List<LabResult>();

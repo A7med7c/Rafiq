@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 public sealed class GeneralDocumentConfiguration
@@ -55,5 +55,11 @@ public sealed class GeneralDocumentConfiguration
 
         // Used by the stuck-document recovery job
         builder.HasIndex(x => new { x.AnalysisStatus, x.UpdatedAt });
+        
+        builder.Property(x => x.FileHash)
+            .HasMaxLength(64)
+            .IsRequired(false);
+            
+        builder.HasIndex(x => new { x.UserHealthProfileId, x.FileHash });
     }
 }

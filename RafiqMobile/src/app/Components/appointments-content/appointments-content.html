@@ -8,7 +8,7 @@
         <p class="appts-subtitle">{{ t().appointments.subtitle }}</p>
       </div>
       @if (!readOnly) {
-        <button type="button" class="add-appt-btn" (click)="openAdd()">
+        <button type="button" assistantAnchor="add-appointment" class="add-appt-btn" (click)="openAdd()">
           <i class="fa-solid fa-plus"></i>
           {{ t().appointments.addAppointment }}
         </button>
@@ -19,79 +19,81 @@
     <div class="appointment-overview">
 
       <!-- ================= NEXT APPOINTMENT ================= -->
-      @if (nextAppointment(); as next) {
-      <div class="next-card">
-        <div class="next-card-content">
-          <div class="next-header">
-            <div class="next-icon">
-              <i class="fa-regular fa-calendar"></i>
-            </div>
-            <div>
-              <p class="next-small-title">{{ t().appointments.nextAppointment }}</p>
-              <h2 class="next-title">{{ next.title }}</h2>
-              <p class="next-provider">
-                <i class="fa-solid fa-user-doctor"></i>
-                {{ next.provider }}
-              </p>
-              <div class="next-meta">
-                <span>
-                  <i class="fa-regular fa-calendar"></i>
-                  {{ formatDate(next.appointmentDateTime) }}
-                </span>
-                <span>
-                  <i class="fa-regular fa-clock"></i>
-                  {{ formatTime(next.appointmentDateTime) }}
-                </span>
+      <div assistantAnchor="appts-upcoming-card">
+        @if (nextAppointment(); as next) {
+        <div class="next-card">
+          <div class="next-card-content">
+            <div class="next-header">
+              <div class="next-icon">
+                <i class="fa-regular fa-calendar"></i>
               </div>
-              @if (next.reminderOffsetMinutes) {
-              <p class="next-reminder">
-                <i class="fa-regular fa-bell"></i>
-                {{ t().appointments.reminderPrefix }} {{ reminderLabel(next.reminderOffsetMinutes) }}
-              </p>
-              }
+              <div>
+                <p class="next-small-title">{{ t().appointments.nextAppointment }}</p>
+                <h2 class="next-title">{{ next.title }}</h2>
+                <p class="next-provider">
+                  <i class="fa-solid fa-user-doctor"></i>
+                  {{ next.provider }}
+                </p>
+                <div class="next-meta">
+                  <span>
+                    <i class="fa-regular fa-calendar"></i>
+                    {{ formatDate(next.appointmentDateTime) }}
+                  </span>
+                  <span>
+                    <i class="fa-regular fa-clock"></i>
+                    {{ formatTime(next.appointmentDateTime) }}
+                  </span>
+                </div>
+                @if (next.reminderOffsetMinutes) {
+                <p class="next-reminder">
+                  <i class="fa-regular fa-bell"></i>
+                  {{ t().appointments.reminderPrefix }} {{ reminderLabel(next.reminderOffsetMinutes) }}
+                </p>
+                }
+              </div>
             </div>
+            <button class="next-btn" (click)="openView(next)">
+              {{ t().appointments.viewDetails }}
+            </button>
           </div>
-          <button class="next-btn" (click)="openView(next)">
-            {{ t().appointments.viewDetails }}
-          </button>
-        </div>
-        <div class="next-image">
-          <img src="/images/calender.png" alt="{{ t().appointments.title }}">
-        </div>
-      </div>
-      }
-      @else {
-      <div class="next-card next-card-empty">
-        <div class="next-card-content">
-          <div class="next-header">
-            <div class="next-icon">
-              <i class="fa-regular fa-calendar"></i>
-            </div>
-            <div>
-              <div class="next-small-title next-empty-small-title">
-                {{ t().appointments.nextAppointment }}
-              </div>
-              <h2 class="next-title empty-title next-empty-title">
-                {{ t().appointments.noUpcomingAppointment }}
-              </h2>
-              <p class="empty-text">
-                {{ t().appointments.noUpcomingText }}
-              </p>
-              <button class="next-btn" (click)="openAdd()">
-                <i class="fa-solid fa-plus"></i>
-                {{ t().appointments.addAppointment }}
-              </button>
-            </div>
+          <div class="next-image">
+            <img src="/images/calender.png" alt="{{ t().appointments.title }}">
           </div>
         </div>
-        <div class="next-image">
-          <img src="/images/calender.png" alt="{{ t().appointments.title }}">
+        }
+        @else {
+        <div class="next-card next-card-empty">
+          <div class="next-card-content">
+            <div class="next-header">
+              <div class="next-icon">
+                <i class="fa-regular fa-calendar"></i>
+              </div>
+              <div>
+                <div class="next-small-title next-empty-small-title">
+                  {{ t().appointments.nextAppointment }}
+                </div>
+                <h2 class="next-title empty-title next-empty-title">
+                  {{ t().appointments.noUpcomingAppointment }}
+                </h2>
+                <p class="empty-text">
+                  {{ t().appointments.noUpcomingText }}
+                </p>
+                <button class="next-btn" (click)="openAdd()">
+                  <i class="fa-solid fa-plus"></i>
+                  {{ t().appointments.addAppointment }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="next-image">
+            <img src="/images/calender.png" alt="{{ t().appointments.title }}">
+          </div>
         </div>
+        }
       </div>
-      }
 
       <!-- ================= STATS ================= -->
-      <div class="stat-grid">
+      <div assistantAnchor="appts-summary-chips" class="stat-grid">
         <div class="stat-card stat-card-blue" (click)="setTab('upcoming')">
           <div class="stat-ico-wrap stat-ico-blue">
             <i class="fa-solid fa-clipboard-check" style="color: rgb(116, 192, 252);"></i>
@@ -171,7 +173,7 @@
   <!-- ── Toolbar / Controls ── -->
   <div class="appts-toolbar">
     <!-- Tabs -->
-    <div class="appts-tab-bar">
+    <div assistantAnchor="appts-tab-bar" class="appts-tab-bar">
       <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab() === 'all'" (click)="setTab('all')">
         {{ t().appointments.all }}
       </button>
@@ -187,7 +189,7 @@
     </div>
 
     <!-- Search + Filters -->
-    <div class="appts-controls-row">
+    <div assistantAnchor="appts-search-wrap" class="appts-controls-row">
       <div class="appts-search-wrap">
         <i class="fa-solid fa-magnifying-glass appts-search-ico"></i>
         <input type="text" class="appts-search-inp" [placeholder]="t().appointments.searchPlaceholder" [ngModel]="searchQuery()"
@@ -211,7 +213,7 @@
   </div>
 
   <!-- ── Table ── -->
-  <div class="card appts-table-card" [class.tab-animating]="tabAnimating()" [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
+  <div assistantAnchor="appts-upcoming-list" class="card appts-table-card" [class.tab-animating]="tabAnimating()" [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
     @if (loading()) {
       <div class="skl-list">
         @for (s of [1,2,3,4]; track s) {

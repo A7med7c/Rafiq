@@ -16,7 +16,7 @@
           <i class="fa-solid fa-clock-rotate-left"></i> السجل
         </button>
         @if (!fpReadOnly()) {
-          <button type="button" (click)="openAddMed()" style="background-color: var(--blue, #0EAFD7); color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; font-family: inherit;">
+          <button type="button" assistantAnchor="add-medication-btn" (click)="openAddMed()" style="background-color: var(--blue, #0EAFD7); color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; font-family: inherit;">
             <i class="fa-solid fa-plus"></i> {{ t().medications.addMedication }}
           </button>
         }
@@ -27,7 +27,7 @@
     <app-family-profile-banner [profile]="viewingFpProfile()" [readOnly]="fpReadOnly()" />
 
     <!-- ── Today's Overview Section ── -->
-    <div style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); margin-bottom: 24px;">
+    <div assistantAnchor="med-today-glance" style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); margin-bottom: 24px;">
       <h3 style="font-size: 16px; font-weight: 700; color: #334155; margin-top: 0; margin-bottom: 16px;">{{ t().medications.todayAtGlance || 'نظرة عامة اليوم' }}</h3>
       
       <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; text-align: center;">
@@ -66,14 +66,14 @@
     </div>
 
     <!-- ── Active Medications Section ── -->
-    <div style="margin-bottom: 24px;">
+    <div assistantAnchor="med-active-list" style="margin-bottom: 24px;">
       <h3 style="font-size: 18px; font-weight: 700; color: #334155; margin-bottom: 16px;">{{ t().medications.myMedicationsTab || 'أدويتك النشطة' }}</h3>
       
       @if (medsLoading()) {
         <div style="text-align: center; padding: 40px; color: var(--blue, #0EAFD7);">
           <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
         </div>
-      } @else if (medicines().length === 0) {
+      } @else if (displayMedicines().length === 0) {
         <div style="text-align: center; padding: 40px; background: white; border-radius: 16px; color: #94A3B8;">
           <i class="fa-solid fa-pills fa-3x" style="margin-bottom: 16px;"></i>
           <p style="font-size: 16px;">{{ t().medications.noMedicationsFound }}</p>

@@ -51,6 +51,36 @@ public sealed class GeneralDocumentRepository
                  && d.Title.ToLower() == title.ToLower(),
             cancellationToken);
 
+    public async Task<(Guid profileId, string profileName, bool isSameProfile)?> FindDuplicateByHashAsync(
+        string fileHash,
+        Guid currentProfileId,
+        Guid currentUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var sameProfile = await _context.GeneralDocuments
+            .Where(r => r.FileHash == fileHash && r.UserHealthProfileId == currentProfileId && !r.IsDeleted)
+            .Select(r => new { r.UserHealthProfileId })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (sameProfile != null)
+            return (sameProfile.UserHealthProfileId, string.Empty, true);
+
+        var familyDuplicate = await (from r in _context.GeneralDocuments
+            join hpa in _context.HealthProfileAccesses on r.UserHealthProfileId equals hpa.UserHealthProfileId
+            join p in _context.UserHealthProfiles on r.UserHealthProfileId equals p.Id
+            where r.FileHash == fileHash
+               && !r.IsDeleted
+               && hpa.GranteeUserId == currentUserId
+               && hpa.Status == Rafiq.Domain.Enums.AccessStatus.Active
+            select new { r.UserHealthProfileId, ProfileName = p.FirstName + " " + p.LastName })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (familyDuplicate != null)
+            return (familyDuplicate.UserHealthProfileId, familyDuplicate.ProfileName, false);
+
+        return null;
+    }
+
     public void Update(GeneralDocument document)
     {
         _context.GeneralDocuments.Update(document);

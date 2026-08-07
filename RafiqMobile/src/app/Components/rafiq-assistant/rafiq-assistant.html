@@ -1,120 +1,111 @@
-@if (tourEngine.isPlaying() && !isOnboarding()) {
+@if (tourEngine.isPlaying() && !isOnboardingPage() && !isAuthPage()) {
   @for (stepIndex of [tourEngine.currentStepIndex()]; track stepIndex) {
 
-    <!-- ══ Speech bubble — position is the single source of truth (floating-ui). ══ -->
     <article
       #bubbleEl
       class="tour-bubble"
-      [class.tour-bubble--onboarding]="isOnboarding()"
       [class.tour-bubble--visible]="tourEngine.stepVisible()"
       [style.left.px]="positionService.bubbleLeft()"
       [style.top.px]="positionService.bubbleTop()"
-      dir="rtl"
+      [dir]="l10n?.dir() ?? 'rtl'"
       role="dialog"
       aria-live="polite"
-      aria-label="رسالة رفيق"
+      [attr.aria-label]="l10n?.lang() === 'ar' ? 'رسالة رفيق' : 'Rafiq message'"
     >
-      <!-- ══ Mascot chip (3D Avatar Engine) ══ -->
+      <!-- Mascot chip -->
       <div
         class="mascot-chip"
-        [class]="'mascot-chip ' + (isOnboarding() ? 'mascot-chip--onboarding' : ('mascot-chip--' + positionService.mascotCorner()))"
-        [class.mascot-chip--large]="!isOnboarding() && !tourEngine.currentStepHasAnchor()"
+        [class]="'mascot-chip mascot-chip--' + positionService.mascotCorner()"
+        [class.mascot-chip--large]="!tourEngine.currentStepHasAnchor()"
         [class.mascot-chip--speaking]="tourEngine.isSpeaking()"
         aria-hidden="true"
       >
         <app-avatar-engine
-          [size]="isOnboarding() ? '88px' : (!tourEngine.currentStepHasAnchor() ? '130px' : '96px')"
+          [size]="!tourEngine.currentStepHasAnchor() ? '130px' : '96px'"
         ></app-avatar-engine>
       </div>
 
-      @if (isOnboarding()) {
-        <!-- Onboarding Header: Name + Badge + Close -->
-        <header class="tour-bubble__onboarding-header" dir="rtl">
-          <div class="tour-bubble__brand">
-            <span class="tour-bubble__brand-name">Rafiq</span>
-            <span class="tour-bubble__brand-badge">Your Assistant</span>
-          </div>
+      <!-- Header: step counter + dots + narration audio btn + skip -->
+      <header class="tour-bubble__progress" [dir]="isArabicTour() ? 'rtl' : 'ltr'">
+        <span class="tour-bubble__step-text">
+          @if (isArabicTour()) {
+            الخطوة {{ stepIndex + 1 }} من {{ tourEngine.totalSteps() }}
+          } @else {
+            Step {{ stepIndex + 1 }} of {{ tourEngine.totalSteps() }}
+          }
+        </span>
+        <div class="tour-bubble__top-actions">
           <button
             type="button"
-            class="tour-bubble__close-btn"
+            class="tour-bubble__audio-btn"
+            (click)="toggleMute()"
+            [title]="isMuted() ? (isArabicTour() ? 'تشغيل الصوت' : 'Unmute') : (isArabicTour() ? 'كتم الصوت' : 'Mute')"
+            [attr.aria-label]="isMuted() ? 'Unmute' : 'Mute'"
+          >
+            <i [class]="isMuted() ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high'"></i>
+          </button>
+          <button
+            type="button"
+            class="tour-bubble__skip-btn"
             (click)="tourEngine.stopTour()"
-            title="إغلاق"
-            aria-label="إغلاق"
+            [title]="isArabicTour() ? 'تخطي الجولة' : 'Skip tour'"
+            [attr.aria-label]="isArabicTour() ? 'تخطي الجولة' : 'Skip tour'"
           >
             <i class="fa-solid fa-xmark"></i>
+            <span>{{ isArabicTour() ? 'تخطي' : 'Skip' }}</span>
           </button>
-        </header>
+        </div>
+      </header>
 
-        <!-- Message -->
-        @if (tourEngine.currentStepSpeechResolved()) {
-          <p class="tour-bubble__message tour-bubble__message--onboarding">
-            {{ tourEngine.currentStepSpeechResolved() }}
-          </p>
-        }
-      } @else {
-        <!-- Normal Guided Tour Header: step counter + dots + skip -->
-        <header class="tour-bubble__progress" dir="rtl">
-          <span class="tour-bubble__step-text">
-            الخطوة {{ stepIndex + 1 }} من {{ tourEngine.totalSteps() }}
-          </span>
-          <div class="tour-bubble__top-actions">
-            <div class="tour-bubble__dots" aria-hidden="true" dir="ltr">
-              @for (index of stepIndexes(); track index) {
-                <i [class.tour-bubble__dot--active]="index === stepIndex"></i>
-              }
-            </div>
-            <button
-              type="button"
-              class="tour-bubble__skip-btn"
-              (click)="tourEngine.stopTour()"
-              title="تخطي الجولة"
-              aria-label="تخطي الجولة"
-            >
-              <i class="fa-solid fa-xmark"></i>
-              <span>تخطي</span>
-            </button>
-          </div>
-        </header>
+      @if (tourEngine.currentStepSpeechResolved()) {
+        <p class="tour-bubble__message">{{ tourEngine.currentStepSpeechResolved() }}</p>
+      }
 
-        <!-- Message — uses resolved speech so {{userName}} becomes real name -->
-        @if (tourEngine.currentStepSpeechResolved()) {
-          <p class="tour-bubble__message">{{ tourEngine.currentStepSpeechResolved() }}</p>
-        }
+      <!-- Controls: Previous / Next / Finish -->
+      <footer class="tour-bubble__controls" [dir]="isArabicTour() ? 'rtl' : 'ltr'">
+        <button
+          type="button"
+          class="tour-bubble__button tour-bubble__button--quiet"
+          (click)="tourEngine.previousStep()"
+          [disabled]="stepIndex === 0"
+          [attr.aria-label]="isArabicTour() ? 'الخطوة السابقة' : 'Previous step'"
+        >
+          @if (isArabicTour()) {
+            <i class="fa-solid fa-arrow-right"></i> السابق
+          } @else {
+            <i class="fa-solid fa-arrow-left"></i> Previous
+          }
+        </button>
 
-        <!-- Controls: Previous / Next / Finish -->
-        <footer class="tour-bubble__controls" dir="rtl">
+        @if (stepIndex < tourEngine.totalSteps() - 1) {
           <button
             type="button"
-            class="tour-bubble__button tour-bubble__button--quiet"
-            (click)="tourEngine.previousStep()"
-            [disabled]="stepIndex === 0"
-            aria-label="الخطوة السابقة"
+            class="tour-bubble__button tour-bubble__button--primary"
+            (click)="tourEngine.nextStep()"
+            [attr.aria-label]="isArabicTour() ? 'الخطوة التالية' : 'Next step'"
           >
-            <i class="fa-solid fa-arrow-right"></i> السابق
-          </button>
-
-          @if (stepIndex < tourEngine.totalSteps() - 1) {
-            <button
-              type="button"
-              class="tour-bubble__button tour-bubble__button--primary"
-              (click)="tourEngine.nextStep()"
-              aria-label="الخطوة التالية"
-            >
+            @if (isArabicTour()) {
               التالي <i class="fa-solid fa-arrow-left"></i>
-            </button>
-          } @else {
-            <button
-              type="button"
-              class="tour-bubble__button tour-bubble__button--primary tour-bubble__button--finish"
-              (click)="tourEngine.stopTour(false)"
-              aria-label="إنهاء الجولة"
-            >
+            } @else {
+              Next <i class="fa-solid fa-arrow-right"></i>
+            }
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="tour-bubble__button tour-bubble__button--primary tour-bubble__button--finish"
+            (click)="tourEngine.stopTour(false)"
+            [attr.aria-label]="isArabicTour() ? 'إنهاء الجولة' : 'Finish tour'"
+          >
+            @if (isArabicTour()) {
               إنهاء الجولة <i class="fa-solid fa-check"></i>
-            </button>
-          }
-        </footer>
-      }
-    </article>
+            } @else {
+              Finish <i class="fa-solid fa-check"></i>
+            }
+          </button>
+        }
+      </footer>
 
+    </article>
   }
 }

@@ -1602,6 +1602,13 @@ html[dir="rtl"] .user-dropdown {
   cursor: default;
 }
 
+.scan-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #6B7280;
+  line-height: 1.45;
+}
+
 .scan-textarea {
   resize: vertical;
   min-height: 72px;

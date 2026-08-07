@@ -32,11 +32,15 @@
           {{ t().tour.step }} {{ stepIndex + 1 }} {{ t().tour.of }} {{ tourEngine.totalSteps() }}
         </span>
         <div class="tour-bubble__top-actions">
-          <div class="tour-bubble__dots" aria-hidden="true" dir="ltr">
-            @for (index of stepIndexes(); track index) {
-              <i [class.tour-bubble__dot--active]="index === stepIndex"></i>
-            }
-          </div>
+          <button
+            type="button"
+            class="tour-bubble__audio-btn"
+            (click)="toggleMute()"
+            [title]="isMuted() ? (l10n.isRtl() ? 'تشغيل الصوت' : 'Unmute') : (l10n.isRtl() ? 'كتم الصوت' : 'Mute')"
+            [attr.aria-label]="isMuted() ? 'Unmute' : 'Mute'"
+          >
+            <i [class]="isMuted() ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high'"></i>
+          </button>
           <button
             type="button"
             class="tour-bubble__skip-btn"

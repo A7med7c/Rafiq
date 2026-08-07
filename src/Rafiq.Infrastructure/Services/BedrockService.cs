@@ -36,32 +36,48 @@ public sealed class BedrockService : IBedrockService
     public async Task<T?> AnalyzeAsync<T>(
         string base64Image,
         string prompt,
+        string? systemPrompt = null,
         CancellationToken cancellationToken = default)
     {
         _httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", _settings.ApiKey);
 
-        var requestBody = new
+        // Build the messages list — system message first (if any), then user message
+        var userMessage = new
         {
-            model_id = "qwen.qwen3-vl-235b-a22b",
-            messages = new[]
+            role   = "user",
+            text   = prompt,
+            images = new[]
             {
                 new
                 {
-                    role   = "user",
-                    text   = prompt,
-                    images = new[]
-                    {
-                        new
-                        {
-                            format      = "jpeg",
-                            data_base64 = base64Image
-                        }
-                    }
+                    format      = "jpeg",
+                    data_base64 = base64Image
                 }
-            },
-            max_tokens = 2000
+            }
         };
+
+        object requestBody;
+
+        if (!string.IsNullOrWhiteSpace(systemPrompt))
+        {
+            var sysMessage = new { role = "system", text = systemPrompt };
+            requestBody = new
+            {
+                model_id   = "qwen.qwen3-vl-235b-a22b",
+                messages   = new object[] { sysMessage, userMessage },
+                max_tokens = 2000
+            };
+        }
+        else
+        {
+            requestBody = new
+            {
+                model_id   = "qwen.qwen3-vl-235b-a22b",
+                messages   = new object[] { userMessage },
+                max_tokens = 2000
+            };
+        }
 
         var json    = JsonSerializer.Serialize(requestBody);
         var content = new StringContent(json, Encoding.UTF8, "application/json");

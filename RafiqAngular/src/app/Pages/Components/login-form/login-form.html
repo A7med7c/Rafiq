@@ -2,7 +2,7 @@
   <div class="login-card">
 
     @if (successMessage) {
-    <div class="alert alert-success" role="status">{{ successMessage }}</div>
+    <div class="alert alert-success" role="status">{{ t().login.loginSuccess}}</div>
     }
 
     @if (apiErrors.length) {
@@ -75,8 +75,8 @@
       </a>
 
       <!-- Submit -->
-      <button assistantAnchor="login-submit" class="submit-button" type="submit"
-        [attr.aria-busy]="isSubmitting" [disabled]="isSubmitting || loginForm.invalid">
+      <button assistantAnchor="login-submit" class="submit-button" type="submit" [attr.aria-busy]="isSubmitting"
+        [disabled]="isSubmitting || loginForm.invalid">
         <span class="button-content">
           @if (isSubmitting) {
           <span class="button-spinner" aria-hidden="true"></span>

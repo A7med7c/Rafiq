@@ -19,11 +19,12 @@ public sealed class PrescriptionsController(IMediator mediator) : ControllerBase
     [HttpPost("upload")]
     public async Task<IActionResult> UploadPrescription(
         [FromQuery] Guid profileId,
+        [FromHeader(Name = "Accept-Language")] string? language,
         IFormFile image,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new UploadPrescriptionCommand(profileId, image),
+            new UploadPrescriptionCommand(profileId, image, language ?? "en"),
             cancellationToken);
 
         return Ok(result);

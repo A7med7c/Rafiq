@@ -67,7 +67,7 @@
 
       <!-- Centre: title + status label -->
       <div class="dac-item__body">
-        <p class="dac-item__title" [title]="doc.title">{{ doc.title }}</p>
+        <p class="dac-item__title" [title]="displayTitle(doc)">{{ displayTitle(doc) }}</p>
         <p class="dac-item__status">{{ statusLabel(doc) }}</p>
       </div>
 

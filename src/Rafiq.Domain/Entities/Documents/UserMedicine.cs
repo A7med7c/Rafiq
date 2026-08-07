@@ -17,7 +17,8 @@ public class UserMedicine : BaseEntity
         string duration,
         string? notes,
         string? imagePath,
-        MedicineSource source)
+        MedicineSource source,
+        string? fileHash = null)
     {
         UserHealthProfileId = userHealthProfileId;
         MedicineName = medicineName;
@@ -27,6 +28,7 @@ public class UserMedicine : BaseEntity
         Notes = notes;
         ImagePath = imagePath;
         Source = source;
+        FileHash = fileHash;
     }
 
     public Guid UserHealthProfileId { get; private set; }
@@ -46,6 +48,8 @@ public class UserMedicine : BaseEntity
     public string? ImagePath { get; private set; }
 
     public MedicineSource Source { get; private set; }
+
+    public string? FileHash { get; private set; }
 
     public virtual ICollection<MedicineReminder> Reminders { get; private set; } = new List<MedicineReminder>();
 }

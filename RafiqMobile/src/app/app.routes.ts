@@ -12,6 +12,7 @@ import { AppointmentsHistory } from './Pages/appointments-history/appointments-h
 import { Medications } from './Pages/medications/medications';
 import { OnboardingWelcome } from './Pages/onboarding/onboarding-welcome/onboarding-welcome';
 import { OnboardingStep1 } from './Pages/onboarding/onboarding-step1/onboarding-step1';
+import { OnboardingStep1b } from './Pages/onboarding/onboarding-step1b/onboarding-step1b';
 import { OnboardingStep2 } from './Pages/onboarding/onboarding-step2/onboarding-step2';
 import { OnboardingStep3 } from './Pages/onboarding/onboarding-step3/onboarding-step3';
 import { OnboardingStep4 } from './Pages/onboarding/onboarding-step4/onboarding-step4';
@@ -55,6 +56,7 @@ export const routes: Routes = [
   { path: 'my-profile', component: MyProfile, canActivate: [authGuard] },
   { path: 'onboarding/welcome', component: OnboardingWelcome, canActivate: [authGuard] },
   { path: 'onboarding/step1', component: OnboardingStep1, canActivate: [authGuard] },
+  { path: 'onboarding/step1b', component: OnboardingStep1b, canActivate: [authGuard] },
   { path: 'onboarding/step2', component: OnboardingStep2, canActivate: [authGuard] },
   { path: 'onboarding/step3', component: OnboardingStep3, canActivate: [authGuard] },
   { path: 'onboarding/step4', component: OnboardingStep4, canActivate: [authGuard] },

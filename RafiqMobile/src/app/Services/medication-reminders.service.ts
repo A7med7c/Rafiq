@@ -43,7 +43,8 @@ export class MedicationRemindersService {
 
   private readonly profileId$: Observable<string> =
     this.healthProfileSvc.getMyProfile().pipe(
-      map(r => r.data.id),
+      map(r => r.data?.id ?? ''),
+      catchError(() => of('')),
       shareReplay(1),
     );
 
@@ -56,6 +57,7 @@ export class MedicationRemindersService {
         )
       ),
       map(r => r.data ?? []),
+      catchError(() => of([] as MedicationReminderLogDto[]))
     );
   }
 
@@ -99,6 +101,7 @@ export class MedicationRemindersService {
         )
       ),
       map(r => r.data ?? []),
+      catchError(() => of([] as MedicationReminderLogDto[]))
     );
   }
 
@@ -109,6 +112,7 @@ export class MedicationRemindersService {
         this.http.get<ApiResponse<UserMedicine[]>>(`${this.medBase}?profileId=${pid}`)
       ),
       map(r => r.data ?? []),
+      catchError(() => of([] as UserMedicine[]))
     );
   }
 
