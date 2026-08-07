@@ -670,7 +670,7 @@ nextPage() {
       customType:             this.fType() === AppointmentType.Other ? this.fCustomType().trim() : undefined,
       title:                  this.fTitle().trim(),
       provider:               this.fProvider().trim(),
-      appointmentDateTime: `${this.fDate()}T${this.fTime()}:00`,
+      appointmentDateTime: new Date(`${this.fDate()}T${this.fTime()}`).toISOString(),
       reminderOffsetMinutes:  this.getReminderOffset() ?? undefined,
       notes:                  this.fNotes().trim() || undefined,
     };
