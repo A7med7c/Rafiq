@@ -717,7 +717,8 @@ export const ar: Translations = {
     generalShouldBeImaging: 'هذه أشعة — ارفعها في قسم الأشعات.',
     generalShouldBePrescription: 'هذه روشتة — ارفعها في قسم الروشتات.',
     generalShouldBeMedicine: 'هذه علبة دواء — امسحها في قسم علبة الدوا.',
-    generalNotMedical: 'الصورة دي مش وثيقة طبية.'
+    generalNotMedical: 'الصورة دي مش وثيقة طبية.',
+    exactDocumentUploaded: 'تم رفع هذه الوثيقة بالفعل لهذا الملف الشخصي.'
   },
 
   medications: {

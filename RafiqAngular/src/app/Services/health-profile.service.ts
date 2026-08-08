@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
 import { environment } from '../Environments/Environment';
 import { ApiResponse } from '../Modles/api-response';
 import { CreatePatientProfileRequest } from '../Modles/health-profile-request';
@@ -28,6 +29,7 @@ export class HealthProfileService {
 
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/patient-profiles`;
+  private hasProfileCache: boolean | null = null;
 
   /**
    * Creates a new patient health profile.
@@ -40,6 +42,8 @@ export class HealthProfileService {
     return this.http.post<ApiResponse<PatientProfileResponse>>(
       this.baseUrl,
       request
+    ).pipe(
+      tap(() => this.setHasProfileCache(true))
     );
   }
 
@@ -47,7 +51,39 @@ export class HealthProfileService {
   getMyProfile(): Observable<ApiResponse<PatientProfileResponse>> {
     return this.http.get<ApiResponse<PatientProfileResponse>>(
       `${this.baseUrl}/me`
+    ).pipe(
+      tap(res => {
+        if (res?.data?.id) {
+          this.setHasProfileCache(true);
+        }
+      })
     );
+  }
+
+  /** Checks if the authenticated user has a completed patient health profile. */
+  hasProfile(): Observable<boolean> {
+    if (this.hasProfileCache !== null) {
+      return of(this.hasProfileCache);
+    }
+    return this.getMyProfile().pipe(
+      map(res => {
+        const exists = !!res?.data?.id;
+        this.hasProfileCache = exists;
+        return exists;
+      }),
+      catchError(err => {
+        this.hasProfileCache = false;
+        return of(false);
+      })
+    );
+  }
+
+  setHasProfileCache(val: boolean): void {
+    this.hasProfileCache = val;
+  }
+
+  clearProfileCache(): void {
+    this.hasProfileCache = null;
   }
 
   /** Uploads (or replaces) the profile picture for the given patient profile. */
