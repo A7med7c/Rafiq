@@ -13,11 +13,12 @@ import { TourGlowRingDirective } from './core/assistant/directives/tour-glow-rin
 import { AuthService } from './Services/auth-service';
 import { ReminderBootstrapService } from './Services/reminder-bootstrap.service';
 import { AlarmSchedulerService } from './Services/alarm-scheduler.service';
+import { NotificationPermissionDialogComponent } from './Components/notification-permission-dialog/notification-permission-dialog';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, AiPanel, RafiqAssistantComponent, RatingPopup, DocumentAnalysisCardComponent, TourGlowRingDirective],
+  imports: [CommonModule, RouterOutlet, AiPanel, RafiqAssistantComponent, RatingPopup, DocumentAnalysisCardComponent, TourGlowRingDirective, NotificationPermissionDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

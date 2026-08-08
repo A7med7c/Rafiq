@@ -8,6 +8,7 @@ import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/r
 import { AppointmentsService } from '../../Services/appointments.service';
 import { NotificationService } from '../../Services/notification.service';
 import { LocalizationService } from '../../Services/localization.service';
+import { NotificationPermissionService, NotificationPermissionResult } from '../../Services/notification-permission.service';
 import {
   AppointmentDto, AppointmentStatus, AppointmentType,
   CreateAppointmentRequest, UpdateAppointmentRequest,
@@ -45,6 +46,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly l10n  = inject(LocalizationService);
+  private readonly notificationPermissionService = inject(NotificationPermissionService);
   readonly t = this.l10n.t;
 
   // ── Data ─────────────────────────────────────────────────────────────────
@@ -306,7 +308,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
       next: data => { this.appointments.set(data); this.loading.set(false); },
       error: err => {
         this.loadError.set(
-          err?.error?.message ?? this.t().appointments.couldNotLoad
+          this.t().appointments.couldNotLoad
         );
         this.loading.set(false);
       },
@@ -537,9 +539,17 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
         this.submitting.set(false);
         this.closeAddModal();
         this.appointmentChanged.emit();
+        
+        if (body.reminderOffsetMinutes !== undefined) {
+           this.notificationPermissionService.ensurePermission().then(result => {
+               if (result === NotificationPermissionResult.Denied || result === NotificationPermissionResult.PermanentlyDenied) {
+                   this.toast(this.l10n.t().notificationPermission.appointmentSavedNoNotifs, 'error');
+               }
+           });
+        }
       },
       error: err => {
-        this.toast(err?.error?.message ?? this.t().appointments.failedSave, 'error');
+        this.toast(this.t().appointments.failedSave, 'error');
         this.submitting.set(false);
       },
     });
@@ -565,7 +575,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     this.deleting.set(true);
     this.apptSvc.delete(id).subscribe({
       next: () => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast(this.t().appointments.appointmentDeleted, 'success'); this.deleting.set(false); this.closeDelete(); this.appointmentChanged.emit(); },
-      error: err => { this.toast(err?.error?.message ?? this.t().appointments.deleteFailed, 'error'); this.deleting.set(false); this.closeDelete(); },
+      error: err => { this.toast(this.t().appointments.deleteFailed, 'error'); this.deleting.set(false); this.closeDelete(); },
     });
   }
 
@@ -578,7 +588,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     this.cancelling.set(true);
     this.apptSvc.cancel(id).subscribe({
       next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.appointmentCancelled, 'success'); this.cancelling.set(false); this.closeCancel(); this.appointmentChanged.emit(); },
-      error: err => { this.toast(err?.error?.message ?? this.t().appointments.cancelFailed, 'error'); this.cancelling.set(false); this.closeCancel(); },
+      error: err => { this.toast(this.t().appointments.cancelFailed, 'error'); this.cancelling.set(false); this.closeCancel(); },
     });
   }
 
@@ -586,7 +596,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   markComplete(id: string): void {
     this.apptSvc.complete(id).subscribe({
       next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.markedCompleted, 'success'); this.appointmentChanged.emit(); },
-      error: err => { this.toast(err?.error?.message ?? this.t().appointments.genericFailed, 'error'); },
+      error: err => { this.toast(this.t().appointments.genericFailed, 'error'); },
     });
   }
 

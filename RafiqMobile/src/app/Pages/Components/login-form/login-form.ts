@@ -134,9 +134,7 @@ export class LoginFormComponent implements OnInit {
     const errorBody = error.error as any;
     const email = errorBody?.email || errorBody?.data?.email || (rawId.includes('@') ? rawId : '');
 
-    const redirectMsg = this.l10n.isRtl()
-      ? 'حسابك غير مفعل بعد. لقد أرسلنا رمز التحقق إلى بريدك الإلكتروني.'
-      : 'Your account is not verified. A verification code has been sent to your email.';
+    const redirectMsg = this.t().login.unverifiedRedirectMessage;
 
     if (email) {
       this.authService.resendOtp(email).subscribe({

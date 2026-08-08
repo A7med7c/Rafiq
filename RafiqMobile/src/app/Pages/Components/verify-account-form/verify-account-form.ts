@@ -46,12 +46,12 @@ export class VerifyAccountFormComponent implements OnInit, OnDestroy {
 
   verify(): void {
     if (!this.email.trim()) {
-      this.apiErrors = ['Please enter your email address.'];
+      this.apiErrors = [this.t().verifyAccount.emailRequired];
       return;
     }
 
     if (!this.verificationCode.trim()) {
-      this.apiErrors = ['Please enter the verification code.'];
+      this.apiErrors = [this.t().verifyAccount.codeRequired];
       return;
     }
 
@@ -61,7 +61,7 @@ export class VerifyAccountFormComponent implements OnInit, OnDestroy {
 
     this.authService.verifyAccount(this.email.trim(), this.verificationCode.trim()).subscribe({
       next: (response) => {
-        this.successMessage = response.message;
+        this.successMessage = this.t().verifyAccount.successMessage;
         setTimeout(() => this.router.navigate(['/login']), 1500);
       },
       error: (error: HttpErrorResponse) => {
@@ -86,7 +86,7 @@ export class VerifyAccountFormComponent implements OnInit, OnDestroy {
 
     this.authService.resendOtp(this.email.trim()).subscribe({
       next: (response) => {
-        this.successMessage = response.message;
+        this.successMessage = this.t().verifyAccount.resendSuccessMessage;
         this.startCooldown();
       },
       error: (error: HttpErrorResponse) => {

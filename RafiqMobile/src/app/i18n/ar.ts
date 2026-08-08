@@ -184,6 +184,7 @@ export const ar: Translations = {
     verifyEmailBeforeLogin: 'يرجى تأكيد بريدك الإلكتروني قبل تسجيل الدخول.',
     loginSuccess: 'تم تسجيل الدخول بنجاح.',
     googleLoginSuccess: 'تم تسجيل الدخول باستخدام Google بنجاح.',
+    unverifiedRedirectMessage: 'حسابك غير مفعل بعد. لقد أرسلنا رمز التحقق إلى بريدك الإلكتروني.',
     noAccount: 'معندكش حساب؟',
     signUp: 'سجل دلوقتي',
   },
@@ -220,6 +221,7 @@ export const ar: Translations = {
     logIn: 'تسجيل الدخول',
     showPassword: 'أظهر كلمة المرور',
     hidePassword: 'اخفي كلمة المرور',
+    accountCreatedSuccess: "تم إنشاء حسابك بنجاح. لقد أرسلنا رمز التحقق إلى بريدك الإلكتروني.",
   },
 
   forgotPassword: {
@@ -256,6 +258,7 @@ export const ar: Translations = {
     otpSentSuccess: 'تم إرسال كود التحقق بنجاح',
     otpVerifiedSuccess: 'تم التحقق من الكود بنجاح',
     passwordResetSuccess: 'تم إعادة تعيين كلمة المرور بنجاح',
+    otpExpired: 'انتهت صلاحية رمز التحقق أو تم الوصول إلى الحد الأقصى لمحاولات التحقق',
   },
 
   verifyAccount: {
@@ -274,6 +277,10 @@ export const ar: Translations = {
     alreadyVerified: 'عملت تأكيد بالفعل؟',
     logIn: 'تسجيل الدخول',
     seconds: 'ث',
+    emailRequired: 'البريد الإلكتروني مطلوب.',
+    codeRequired: 'رمز التحقق مطلوب.',
+    successMessage: 'تم تأكيد حسابك بنجاح.',
+    resendSuccessMessage: 'تم إعادة إرسال رمز التحقق بنجاح.',
   },
 
   dashboard: {
@@ -795,9 +802,7 @@ export const ar: Translations = {
     generalShouldBeImaging: 'هذه أشعة — ارفعها في قسم الأشعات.',
     generalShouldBePrescription: 'هذه روشتة — ارفعها في قسم الروشتات.',
     generalShouldBeMedicine: 'هذه علبة دواء — امسحها في قسم علبة الدوا.',
-    generalNotMedical: 'الصورة دي مش وثيقة طبية.',
-    exactDocumentUploaded: 'تم رفع هذه الوثيقة بالفعل لهذا الملف الشخصي.',
-    externalServiceError: 'خدمة التحليل غير متاحة حالياً أو الصورة كبيرة جداً. يرجى المحاولة مرة أخرى.'
+    generalNotMedical: 'الصورة دي مش وثيقة طبية.'
   },
 
   medications: {
@@ -985,7 +990,7 @@ export const ar: Translations = {
     removedFromList: 'تم إزالة {name} من قائمة أدويتك.',
     deleteMedFailed: 'تعذّر حذف الدواء.',
   },
-  
+
 
   family: {
     title: 'أفراد العيلة',
@@ -1195,6 +1200,32 @@ export const ar: Translations = {
     navPermissionsSub: 'اتحكم في الوصول والمشاركة',
     ageLabel: 'العمر',
     statusLabel: 'الحالة',
+  },
+
+  tour: {
+    step: 'الخطوة',
+    of: 'من',
+    skip: 'تخطي',
+    skipTour: 'تخطي الجولة',
+    previous: 'السابق',
+    previousStep: 'الخطوة السابقة',
+    next: 'التالي',
+    nextStep: 'الخطوة التالية',
+    finish: 'إنهاء الجولة',
+    mascotAria: 'رسالة رفيق',
+  },
+
+  notificationPermission: {
+    softPromptTitle: 'ابقَ على اطلاع',
+    softPromptDesc: 'قم بتفعيل الإشعارات لتلقي تذكيرات الأدوية والمواعيد. هذا سيساعدك على إدارة صحة عائلتك بفعالية.',
+    enableNotifications: 'تفعيل الإشعارات',
+    maybeLater: 'ربما لاحقاً',
+    deniedPromptTitle: 'الإشعارات معطلة',
+    deniedPromptDesc: 'لقد قمت بتعطيل الإشعارات بشكل دائم. افتح الإعدادات لتفعيلها إذا كنت ترغب في تلقي التذكيرات.',
+    openSettings: 'فتح الإعدادات',
+    cancel: 'إلغاء',
+    medicationSavedNoNotifs: 'تم حفظ الدواء بنجاح. الإشعارات معطلة، لذلك لن يتم إرسال تنبيهات التذكير حتى يتم تفعيل الإشعارات.',
+    appointmentSavedNoNotifs: 'تم حفظ تذكير الموعد. الإشعارات معطلة، لذلك لن يتم إرسال تنبيهات التذكير حتى يتم تفعيل الإشعارات.',
   },
 
   onboarding: {
@@ -1617,7 +1648,6 @@ export const ar: Translations = {
     // Logout
     logoutBtn: 'تسجيل الخروج',
   },
-
   welcome: {
     step1Title: 'أهلاً بك في رفيق',
     step1Text: 'رفيق هو مساعدك الصحي الذكي، يساعدك أنت وعائلتك في حفظ السجلات الطبية، فهم التقارير باستخدام الذكاء الاصطناعي، وإدارة المواعيد والأدوية في مكان واحد.',
@@ -1630,12 +1660,31 @@ export const ar: Translations = {
     next: 'التالي',
     getStarted: 'ابدأ الآن'
   },
-
   bottomNav: {
-    home:         'الرئيسية',
-    records:      'السجلات',
+    home: 'الرئيسية',
+    records: 'السجلات',
     appointments: 'المواعيد',
-    medications:  'الدوا والتذكيرات',
-    profile:      'ملفي',
+    medications: 'الدوا والتذكيرات',
+    profile: 'ملفي',
   },
+
+  familyErrors: {
+    createProfileFailed: 'فشل إنشاء الملف.',
+    sendInvitationFailed: 'فشل إرسال الدعوة.',
+    updateProfileFailed: 'فشل تحديث الملف.',
+    updateAllergiesFailed: 'فشل تحديث الحساسية أو الأمراض.',
+  },
+
+  validation: {
+    invalidEmailAddress: 'عنوان البريد الإلكتروني غير صحيح',
+    weightBetween: 'الوزن لازم يكون بين 1 و500.',
+    heightBetween: 'الطول لازم يكون بين 30 و300.',
+    medicineNameRequired: 'اسم الدواء مطلوب.',
+    dosageRequired: 'الجرعة مطلوبة.',
+    frequencyRequired: 'التكرار مطلوب.',
+    durationRequired: 'المدة مطلوبة.',
+    selectedTimePassed: 'الوقت المحدد فات بالفعل.',
+    contactsValidationFailed: 'فشل التحقق من بيانات جهات الاتصال.',
+  },
+
 };

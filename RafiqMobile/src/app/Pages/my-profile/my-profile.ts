@@ -343,7 +343,7 @@ export class MyProfile implements OnInit {
             },
             error: (err) => {
               this.personalSaving.set(false);
-              const msg = err?.error?.message ?? 'Failed to request email change.';
+              const msg = 'Failed to request email change.';
               this.personalFormError.set(msg);
             }
           });
@@ -354,7 +354,7 @@ export class MyProfile implements OnInit {
       },
       error: (err) => {
         this.personalSaving.set(false);
-        const msg = err?.error?.message ?? 'Failed to save changes.';
+        const msg = 'Failed to save changes.';
         this.personalFormError.set(msg);
       }
     });
@@ -381,7 +381,7 @@ export class MyProfile implements OnInit {
       },
       error: (err) => {
         this.emailOtpSaving.set(false);
-        const msg = err?.error?.message ?? 'Invalid or expired code.';
+        const msg = 'Invalid or expired code.';
         this.emailOtpError.set(msg);
       }
     });
@@ -582,7 +582,7 @@ export class MyProfile implements OnInit {
       },
       error: (err) => {
         this.contactSaving.set(false);
-        const msg = err?.error?.message ?? 'Failed to add emergency contact.';
+        const msg = 'Failed to add emergency contact.';
         this.contactFormError.set(msg);
       }
     });
@@ -632,7 +632,7 @@ export class MyProfile implements OnInit {
       },
       error: (err) => {
         this.photoUploading.set(false);
-        const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
+        const msg = this.t().myProfile.toastErrorTitle;
       }
     });
   }
@@ -651,7 +651,7 @@ export class MyProfile implements OnInit {
       },
       error: (err) => {
         this.deletingPhoto.set(false);
-        const msg = err?.error?.message ?? this.t().myProfile.toastErrorTitle;
+        const msg = this.t().myProfile.toastErrorTitle;
       }
     });
   }

@@ -35,6 +35,7 @@
     "@floating-ui/dom": "^1.8.0",
     "@microsoft/signalr": "^10.0.0",
     "capacitor-biometric-authentication": "^2.3.1",
+    "capacitor-native-settings": "^8.2.0",
     "capacitor-secure-storage-plugin": "^0.13.0",
     "driver.js": "^1.8.0",
     "jspdf": "^4.2.1",

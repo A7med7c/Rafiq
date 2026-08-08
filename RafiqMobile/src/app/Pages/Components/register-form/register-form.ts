@@ -77,16 +77,24 @@ export class RegisterFormComponent {
 
   async selectProfileImage(): Promise<void> {
     this.apiErrors = [];
-    const file = await this.mediaPicker.selectMedia({ accept: 'image/jpeg,image/png,image/webp,image/gif' });
+
+    const file = await this.mediaPicker.selectMedia({
+      accept: 'image/jpeg,image/png,image/webp,image/gif'
+    });
+
     if (!file) return;
 
     if (!RegisterFormComponent.ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      this.apiErrors = ['Profile image must be a JPEG, PNG, WEBP, or GIF file.'];
+      this.apiErrors = [
+        this.t().Validation.ProfileImageMustBeAJPEGPNGWEBP
+      ];
       return;
     }
 
     if (file.size > RegisterFormComponent.MAX_IMAGE_SIZE_BYTES) {
-      this.apiErrors = ['Profile image must not exceed 5 MB.'];
+      this.apiErrors = [
+        this.t().Validation.ProfileImageMustNotExceed5MB
+      ];
       return;
     }
 
@@ -97,6 +105,7 @@ export class RegisterFormComponent {
       this.profileImagePreview = reader.result as string;
       this.changeDetector.detectChanges();
     };
+
     reader.readAsDataURL(file);
   }
 
@@ -117,17 +126,27 @@ export class RegisterFormComponent {
 
     this.isSubmitting = true;
 
-    this.authService.register(this.registerForm.getRawValue(), this.profileImage).subscribe({
+    this.authService.register(
+      this.registerForm.getRawValue(),
+      this.profileImage
+    ).subscribe({
       next: (response) => {
-        this.successMessage = 'Your account has been created successfully. We\'ve sent a verification code to your email.';
+
+        this.successMessage =
+          this.t().register.accountCreatedSuccess;
+
         const email = response.data.email;
 
         setTimeout(() => {
           this.router.navigate(['/verify-account'], {
-            queryParams: { email, message: this.successMessage }
+            queryParams: {
+              email,
+              message: this.successMessage
+            }
           });
         }, 1200);
       },
+
       error: (error: HttpErrorResponse) => {
         this.apiErrors = getApiErrorMessages(error, this.t());
         this.isSubmitting = false;
@@ -135,7 +154,6 @@ export class RegisterFormComponent {
       }
     });
   }
-
   isInvalid(controlName: keyof RegisterFormComponent['registerForm']['controls']): boolean {
     const control = this.registerForm.controls[controlName];
     return control.invalid && (control.dirty || control.touched);
