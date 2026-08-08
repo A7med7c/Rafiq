@@ -64,12 +64,20 @@ export class AppointmentsService {
           map(r => r.data ?? []),
           map(appts => appts.map(appt => {
             const nc = this.localization.t().notifications;
+            
+            let scheduledAt = appt.appointmentDateTime;
+            if (appt.reminderOffsetMinutes) {
+              const dt = new Date(appt.appointmentDateTime);
+              dt.setMinutes(dt.getMinutes() - appt.reminderOffsetMinutes);
+              scheduledAt = dt.toISOString();
+            }
+
             return {
               reminderId: appt.id,
               title: appt.title,
               body: appt.notes || nc.upcomingAppointmentBody.replace('{title}', appt.title).replace('{provider}', appt.provider),
               reminderType: 'Appointment',
-              scheduledAt: appt.appointmentDateTime,
+              scheduledAt: scheduledAt,
               updatedAt: appt.updatedAt || appt.createdAt,
               isDeleted: appt.status === 'Cancelled'
             } as UpcomingReminderDto;

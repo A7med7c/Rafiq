@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, AfterViewInit, ViewChild, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { NotificationService } from './Services/notification.service';
 import { LocalizationService } from './Services/localization.service';
@@ -14,6 +14,7 @@ import { AuthService } from './Services/auth-service';
 import { ReminderBootstrapService } from './Services/reminder-bootstrap.service';
 import { AlarmSchedulerService } from './Services/alarm-scheduler.service';
 import { NotificationPermissionDialogComponent } from './Components/notification-permission-dialog/notification-permission-dialog';
+import { NotificationPermissionGuardService } from './Services/notification-permission-guard.service';
 
 @Component({
   selector: 'app-root',
@@ -22,7 +23,7 @@ import { NotificationPermissionDialogComponent } from './Components/notification
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App implements OnInit {
+export class App implements OnInit, AfterViewInit {
   readonly notificationService = inject(NotificationService);
   readonly l10n = inject(LocalizationService);
   readonly tourEngine = inject(TourEngineService);
@@ -31,6 +32,10 @@ export class App implements OnInit {
   private readonly router = inject(Router);
   private readonly reminderBootstrap = inject(ReminderBootstrapService);
   private readonly alarmScheduler = inject(AlarmSchedulerService);
+  private readonly notifPermGuard = inject(NotificationPermissionGuardService);
+  
+  @ViewChild(NotificationPermissionDialogComponent) permDialog!: NotificationPermissionDialogComponent;
+
   readonly title = signal('RafiqAngular');
 
   ngOnInit(): void {
@@ -41,6 +46,12 @@ export class App implements OnInit {
     //   • Concurrent calls share the same in-flight Promise.
     void this.reminderBootstrap.bootstrap();
     void this.alarmScheduler.consumePendingNativeAction();
+  }
+
+  ngAfterViewInit(): void {
+    if (this.permDialog) {
+      this.notifPermGuard.registerGlobalDialog(this.permDialog);
+    }
   }
 
   private static readonly PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/verify-account', '/welcome', '/tour'];

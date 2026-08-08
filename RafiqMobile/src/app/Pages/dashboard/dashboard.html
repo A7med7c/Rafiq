@@ -130,7 +130,7 @@
           <div class="health-stat">
             <i class="fa-solid fa-pills health-stat__ico text-teal"></i>
             <span class="health-stat__lbl">{{ t().dashboard.summaryMedications }}</span>
-            <span class="health-stat__val text-teal">{{ healthSummary()!.medications.count }} Active</span>
+            <span class="health-stat__val text-teal">{{ healthSummary()!.medications.count }} {{ t().dashboard.summaryMedActive }}</span>
           </div>
         </div>
         }
@@ -454,7 +454,6 @@
   </section>
 
   <div class="m-spacer"></div>
-  <app-notification-permission-dialog></app-notification-permission-dialog>
 </div><!-- /m-body -->
 
 <app-bottom-nav></app-bottom-nav>

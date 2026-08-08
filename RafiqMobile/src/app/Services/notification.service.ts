@@ -7,6 +7,7 @@ import { AppointmentReminderNotificationPayload, DocumentAnalysisCompletedPayloa
 import { NotificationSoundService } from './notification-sound.service';
 import { PersistedNotificationsService } from './persisted-notifications.service';
 import { LocalizationService } from './localization.service';
+import { ReminderBootstrapService } from './reminder-bootstrap.service';
 
 import { LocalNotifications } from '@capacitor/local-notifications';
 
@@ -60,6 +61,7 @@ export class NotificationService {
   private readonly appointmentsService = inject(AppointmentsService);
   private readonly notificationSoundService = inject(NotificationSoundService);
   private readonly persistedSvc = inject(PersistedNotificationsService);
+  private readonly reminderBootstrap = inject(ReminderBootstrapService);
 
   private readonly localization = inject(LocalizationService);
 
@@ -760,6 +762,7 @@ export class NotificationService {
 
   notifyReminderChanged(): void {
     this._reminderDataRefreshTick.update(tick => tick + 1);
+    void this.reminderBootstrap.forceSync();
   }
 
   openAppointmentReminderFromToast(appointmentId: string): void {
@@ -839,6 +842,7 @@ export class NotificationService {
 
   notifyAppointmentChanged(): void {
     this._appointmentDataRefreshTick.update(t => t + 1);
+    void this.reminderBootstrap.forceSync();
   }
 
   private dequeueAppointmentReminder(appointmentId: string): AppointmentReminderNotificationPayload | null {

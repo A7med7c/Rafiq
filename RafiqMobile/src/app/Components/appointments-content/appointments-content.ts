@@ -9,6 +9,7 @@ import { AppointmentsService } from '../../Services/appointments.service';
 import { NotificationService } from '../../Services/notification.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { NotificationPermissionService, NotificationPermissionResult } from '../../Services/notification-permission.service';
+import { NotificationPermissionGuardService } from '../../Services/notification-permission-guard.service';
 import {
   AppointmentDto, AppointmentStatus, AppointmentType,
   CreateAppointmentRequest, UpdateAppointmentRequest,
@@ -46,7 +47,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly l10n  = inject(LocalizationService);
-  private readonly notificationPermissionService = inject(NotificationPermissionService);
+  private readonly notificationPermissionGuardService = inject(NotificationPermissionGuardService);
   readonly t = this.l10n.t;
 
   // ── Data ─────────────────────────────────────────────────────────────────
@@ -507,8 +508,18 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     return Object.keys(errs).length === 0;
   }
 
-  submitForm(): void {
+  async submitForm(): Promise<void> {
     if (!this.validate()) return;
+
+    let reminderOffset = this.getReminderOffset() ?? undefined;
+    if (reminderOffset !== undefined) {
+      const hasPerm = await this.notificationPermissionGuardService.ensurePermission();
+      if (!hasPerm) {
+          reminderOffset = undefined;
+          this.toast(this.l10n.t().notificationPermission?.appointmentSavedNoNotifs || 'Appointment will be saved without a reminder. Reminders require notification permission.', 'error');
+      }
+    }
+
     const dt = new Date(`${this.fDate()}T${this.fTime()}`);
     const body: CreateAppointmentRequest = {
       appointmentType: this.fType()!,
@@ -516,7 +527,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
       title: this.fTitle().trim(),
       provider: this.fProvider().trim(),
       appointmentDateTime: new Date(`${this.fDate()}T${this.fTime()}`).toISOString(),
-      reminderOffsetMinutes: this.getReminderOffset() ?? undefined,
+      reminderOffsetMinutes: reminderOffset,
       notes: this.fNotes().trim() || undefined,
     };
 
@@ -538,15 +549,8 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
         }
         this.submitting.set(false);
         this.closeAddModal();
+        this.notifSvc.notifyAppointmentChanged();
         this.appointmentChanged.emit();
-        
-        if (body.reminderOffsetMinutes !== undefined) {
-           this.notificationPermissionService.ensurePermission().then(result => {
-               if (result === NotificationPermissionResult.Denied || result === NotificationPermissionResult.PermanentlyDenied) {
-                   this.toast(this.l10n.t().notificationPermission.appointmentSavedNoNotifs, 'error');
-               }
-           });
-        }
       },
       error: err => {
         this.toast(this.t().appointments.failedSave, 'error');
@@ -574,7 +578,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     if (!id) return;
     this.deleting.set(true);
     this.apptSvc.delete(id).subscribe({
-      next: () => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast(this.t().appointments.appointmentDeleted, 'success'); this.deleting.set(false); this.closeDelete(); this.appointmentChanged.emit(); },
+      next: () => { this.appointments.update(l => l.filter(a => a.id !== id)); this.toast(this.t().appointments.appointmentDeleted, 'success'); this.deleting.set(false); this.closeDelete(); this.notifSvc.notifyAppointmentChanged(); this.appointmentChanged.emit(); },
       error: err => { this.toast(this.t().appointments.deleteFailed, 'error'); this.deleting.set(false); this.closeDelete(); },
     });
   }
@@ -587,7 +591,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     if (!id) return;
     this.cancelling.set(true);
     this.apptSvc.cancel(id).subscribe({
-      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.appointmentCancelled, 'success'); this.cancelling.set(false); this.closeCancel(); this.appointmentChanged.emit(); },
+      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.appointmentCancelled, 'success'); this.cancelling.set(false); this.closeCancel(); this.notifSvc.notifyAppointmentChanged(); this.appointmentChanged.emit(); },
       error: err => { this.toast(this.t().appointments.cancelFailed, 'error'); this.cancelling.set(false); this.closeCancel(); },
     });
   }
@@ -595,8 +599,8 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   // ── Complete ──────────────────────────────────────────────────────────────
   markComplete(id: string): void {
     this.apptSvc.complete(id).subscribe({
-      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.markedCompleted, 'success'); this.appointmentChanged.emit(); },
-      error: err => { this.toast(this.t().appointments.genericFailed, 'error'); },
+      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.appointmentCompleted, 'success'); this.notifSvc.notifyAppointmentChanged(); this.appointmentChanged.emit(); },
+      error: err => { this.toast(this.t().appointments.completeFailed, 'error'); },
     });
   }
 

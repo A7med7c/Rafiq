@@ -1,111 +1,99 @@
 package com.rafiq.mobile;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.content.SharedPreferences;
 
-import java.io.File;
+import org.json.JSONObject;
+
 import java.time.Instant;
+import java.util.Map;
 
 final class NativeReminderStore {
 
-    private static final String TABLE_NAME = "reminders";
-    private static final String[] DATABASE_NAMES = {
-        "offline_remindersSQLite.db",
-        "offline_reminders.db",
-        "offline_reminders"
-    };
+    private static final String PREFS_NAME = "rafiq_native_alarms";
 
     private NativeReminderStore() {
     }
 
-    static void restoreFutureAlarms(Context context) {
-        SQLiteDatabase db = openDatabase(context);
-        if (db == null) return;
-
-        try (Cursor cursor = db.query(
-            TABLE_NAME,
-            new String[] { "serverId", "title", "body", "type", "reminderTime" },
-            "status = ?",
-            new String[] { "scheduled" },
-            null,
-            null,
-            null
-        )) {
-            long now = System.currentTimeMillis();
-            while (cursor.moveToNext()) {
-                String serverId = cursor.getString(0);
-                String title = cursor.getString(1);
-                String body = cursor.getString(2);
-                String type = cursor.getString(3);
-                String reminderTime = cursor.getString(4);
-                long triggerAtMillis = parseMillis(reminderTime);
-
-                if (isBlank(serverId) || triggerAtMillis <= now) {
-                    continue;
-                }
-
-                AlarmReceiver.scheduleAlarm(
-                    context,
-                    serverId,
-                    "appointment".equalsIgnoreCase(type) ? "Appointment" : "Medication",
-                    title,
-                    body,
-                    reminderTime,
-                    triggerAtMillis
-                );
-            }
+    static void saveAlarm(Context context, String reminderId, String reminderType, String title, String body, String scheduledAt, long triggerAtMillis) {
+        if (isBlank(reminderId)) return;
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        try {
+            JSONObject json = new JSONObject();
+            json.put("reminderId", reminderId);
+            json.put("reminderType", reminderType);
+            json.put("title", title);
+            json.put("body", body);
+            json.put("scheduledAt", scheduledAt);
+            json.put("triggerAtMillis", triggerAtMillis);
+            prefs.edit().putString(reminderId, json.toString()).apply();
         } catch (Exception ignored) {
-        } finally {
-            db.close();
+        }
+    }
+
+    static void removeAlarm(Context context, String reminderId) {
+        if (isBlank(reminderId)) return;
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        prefs.edit().remove(reminderId).apply();
+    }
+
+    static void restoreFutureAlarms(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        Map<String, ?> allEntries = prefs.getAll();
+        long now = System.currentTimeMillis();
+
+        SharedPreferences.Editor editor = prefs.edit();
+        boolean hasChanges = false;
+
+        for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
+            try {
+                String jsonStr = (String) entry.getValue();
+                JSONObject json = new JSONObject(jsonStr);
+                String reminderId = json.getString("reminderId");
+                String reminderType = json.optString("reminderType", "Medication");
+                String title = json.optString("title", "Reminder");
+                String body = json.optString("body", "Time for your reminder");
+                String scheduledAt = json.getString("scheduledAt");
+                long triggerAtMillis = json.getLong("triggerAtMillis");
+
+                if (triggerAtMillis > now) {
+                    AlarmReceiver.scheduleAlarm(
+                        context,
+                        reminderId,
+                        reminderType,
+                        title,
+                        body,
+                        scheduledAt,
+                        triggerAtMillis
+                    );
+                } else {
+                    editor.remove(reminderId);
+                    hasChanges = true;
+                }
+            } catch (Exception e) {
+                editor.remove(entry.getKey());
+                hasChanges = true;
+            }
+        }
+
+        if (hasChanges) {
+            editor.apply();
         }
     }
 
     static void updateSnooze(Context context, String reminderId, long triggerAtMillis) {
         if (isBlank(reminderId)) return;
-
-        SQLiteDatabase db = openDatabase(context);
-        if (db == null) return;
-
-        try {
-            ContentValues values = new ContentValues();
-            String nextTime = Instant.ofEpochMilli(triggerAtMillis).toString();
-            values.put("reminderTime", nextTime);
-            values.put("lastUpdated", nextTime);
-            values.put("status", "scheduled");
-            db.update(TABLE_NAME, values, "serverId = ?", new String[] { reminderId });
-        } catch (Exception ignored) {
-        } finally {
-            db.close();
-        }
-    }
-
-    private static SQLiteDatabase openDatabase(Context context) {
-        for (String name : DATABASE_NAMES) {
-            File file = context.getDatabasePath(name);
-            if (!file.exists()) continue;
-
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String jsonStr = prefs.getString(reminderId, null);
+        if (jsonStr != null) {
             try {
-                return SQLiteDatabase.openDatabase(
-                    file.getAbsolutePath(),
-                    null,
-                    SQLiteDatabase.OPEN_READWRITE
-                );
+                JSONObject json = new JSONObject(jsonStr);
+                String nextTime = Instant.ofEpochMilli(triggerAtMillis).toString();
+                json.put("scheduledAt", nextTime);
+                json.put("triggerAtMillis", triggerAtMillis);
+                prefs.edit().putString(reminderId, json.toString()).apply();
             } catch (Exception ignored) {
             }
-        }
-
-        return null;
-    }
-
-    private static long parseMillis(String value) {
-        if (isBlank(value)) return -1;
-
-        try {
-            return Instant.parse(value).toEpochMilli();
-        } catch (Exception ignored) {
-            return -1;
         }
     }
 

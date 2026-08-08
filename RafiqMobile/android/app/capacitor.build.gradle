@@ -22,6 +22,7 @@ dependencies {
     implementation project(':capacitor-status-bar')
     implementation project(':capawesome-capacitor-file-picker')
     implementation project(':capacitor-biometric-authentication')
+    implementation project(':capacitor-native-settings')
     implementation project(':capacitor-secure-storage-plugin')
 
 }

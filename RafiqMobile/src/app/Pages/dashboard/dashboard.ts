@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit, OnDestroy, signal, computed, HostListener, ElementRef, ViewChild } from '@angular/core';
+import { Component, effect, inject, OnInit, OnDestroy, signal, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../Services/auth-service';
@@ -24,12 +24,12 @@ import { MedicationRemindersService } from '../../Services/medication-reminders.
 import { MedicationReminderLogDto } from '../../Modles/medication-reminder.models';
 import { DownloadService } from '../../Services/download.service';
 import { NotificationPermissionService, NotificationPermissionResult } from '../../Services/notification-permission.service';
-import { NotificationPermissionDialogComponent } from '../../Components/notification-permission-dialog/notification-permission-dialog';
+import { NotificationPermissionGuardService } from '../../Services/notification-permission-guard.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, AssistantAnchorDirective, BottomNav, LanguageSwitcher, NotificationPermissionDialogComponent],
+  imports: [CommonModule, RouterLink, AssistantAnchorDirective, BottomNav, LanguageSwitcher],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -49,11 +49,8 @@ export class Dashboard implements OnInit, OnDestroy {
   protected readonly assistantOrchestrator = inject(AssistantOrchestratorService);
   private readonly reviewTracking      = inject(ReviewTrackingService);
   private readonly medRemindersSvc     = inject(MedicationRemindersService);
-  private readonly notificationPermissionService = inject(NotificationPermissionService);
-
-  private readonly notifPermSvc          = inject(NotificationPermissionService);
-
-  @ViewChild(NotificationPermissionDialogComponent) permDialog!: NotificationPermissionDialogComponent;
+  private readonly notifPermSvc        = inject(NotificationPermissionService);
+  private readonly notifPermGuard      = inject(NotificationPermissionGuardService);
 
   // ── Reactive effects ─────────────────────────────────────────────────────
   private readonly dashboardRefreshEffect = effect(() => {
@@ -456,8 +453,8 @@ export class Dashboard implements OnInit, OnDestroy {
     
     const currentStatus = await this.notifPermSvc.checkPermission();
     if (currentStatus !== NotificationPermissionResult.Granted) {
+      await this.notifPermGuard.ensurePermission();
       this.notifPermSvc.markPromptAsShown();
-      await this.permDialog.open('soft');
     } else {
       this.notifPermSvc.markPromptAsShown();
     }

@@ -121,7 +121,7 @@ export class OfflineReminderService {
       if (!existing) {
         // (b) New reminder → insert + schedule
         await this.insertAndSchedule(item);
-      } else if (existing.lastUpdated !== item.updatedAt) {
+      } else if (existing.lastUpdated !== item.updatedAt || existing.reminderTime !== item.scheduledAt) {
         // (c) Changed → update + reschedule using the SAME notificationId
         await this.updateAndReschedule(existing, item);
       } else if (existing.notificationId !== this.stableId(item.reminderId)) {

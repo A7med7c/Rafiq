@@ -806,6 +806,7 @@ export const en = {
   medications: {
     title: 'Medications & Reminders',
     addMedication: 'Add Medication',
+    historyBtn: 'History',
     viewingFor: 'Viewing medications for:',
     viewOnly: 'View Only',
     overdue: 'Overdue',
