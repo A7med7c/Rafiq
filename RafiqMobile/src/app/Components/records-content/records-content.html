@@ -482,7 +482,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.reportDate }}</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.reportDate" name="reportDate" [placeholder]="t().records.reportDate"></app-date-picker>
         </div>
         }
         @if (rf.type === 'imaging') {
@@ -500,7 +500,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.reportDate }}</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.reportDate" name="reportDate" [placeholder]="t().records.reportDate"></app-date-picker>
         </div>
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.findings }}</label>
@@ -522,7 +522,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">Prescription Date</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.prescriptionDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.prescriptionDate" name="prescriptionDate" [placeholder]="t().records.prescription"></app-date-picker>
         </div>
         }
         @if (rf.type === 'general') {
@@ -545,7 +545,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.documentDate }}</label>
-          <input type="text" class="scan-input" [(ngModel)]="rf.documentDate">
+          <app-date-picker [(ngModel)]="rf.documentDate" name="documentDate" [placeholder]="t().records.documentDate"></app-date-picker>
         </div>
         }
         <div class="scan-field scan-field--full">

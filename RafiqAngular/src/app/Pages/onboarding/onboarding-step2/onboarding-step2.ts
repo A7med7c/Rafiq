@@ -9,11 +9,12 @@ import { TourEngineService } from '../../../core/assistant/services/tour-engine.
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 
 import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
+import { CustomSelectComponent } from '../../../Components/ui/custom-select/custom-select';
 
 @Component({
   selector: 'app-onboarding-step2',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent, CustomSelectComponent],
   templateUrl: './onboarding-step2.html',
   styleUrl: './onboarding-step2.css',
 })

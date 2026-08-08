@@ -70,15 +70,24 @@ const blankForm = (): ApptForm => ({
 
 import { TimePickerComponent } from '../../Components/ui/time-picker/time-picker';
 import { DatePickerComponent } from '../../Components/ui/date-picker/date-picker';
+import { CustomSelectComponent, SelectOption } from '../../Components/ui/custom-select/custom-select';
 
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent, TimePickerComponent, DatePickerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent, TimePickerComponent, DatePickerComponent, CustomSelectComponent],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
 })
 export class Appointments implements OnInit, OnDestroy {
+  get sortOptions(): SelectOption[] {
+    return [
+      { value: 'recent', label: this.t().appointments.newestFirst },
+      { value: 'oldest', label: this.t().appointments.oldestFirst },
+      { value: 'az', label: this.t().appointments.aToZ },
+      { value: 'za', label: this.t().appointments.zToA },
+    ];
+  }
   private readonly authSvc        = inject(AuthService);
   protected readonly profileCache = inject(ProfileCacheService);
   private readonly apptSvc   = inject(AppointmentsService);

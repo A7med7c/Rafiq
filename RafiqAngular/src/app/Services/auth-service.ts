@@ -15,6 +15,7 @@ import { environment } from '../Environments/Environment';
 import { TokenStorageService } from './token-storage-service';
 import { ProfileSelectionService } from './profile-selection.service';
 import { ProfileCacheService } from './profile-cache.service';
+import { HealthProfileService } from './health-profile.service';
 
 @Injectable({
   providedIn: 'root'
@@ -26,6 +27,7 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly profileSelectionSvc = inject(ProfileSelectionService);
   private readonly profileCache = inject(ProfileCacheService);
+  private readonly healthProfileSvc = inject(HealthProfileService);
 
   private readonly currentUserSubject = new BehaviorSubject<Account | null>(
     this.tokenStorage.getUser()
@@ -61,7 +63,19 @@ export class AuthService {
       return;
     }
     const role = this.currentUser?.role;
-    void this.router.navigate([role === 'Admin' ? '/admin/dashboard' : '/dashboard']);
+    if (role === 'Admin') {
+      void this.router.navigate(['/admin/dashboard']);
+    } else {
+      this.healthProfileSvc.clearProfileCache();
+      this.healthProfileSvc.hasProfile().subscribe({
+        next: (hasProfile) => {
+          void this.router.navigate([hasProfile ? '/dashboard' : '/onboarding/welcome']);
+        },
+        error: () => {
+          void this.router.navigate(['/onboarding/welcome']);
+        }
+      });
+    }
   }
 
   /** Resolves the current user's avatar to an absolute URL, falling back to the default avatar. */

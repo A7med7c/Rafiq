@@ -497,13 +497,12 @@
 
           <!-- Sort dropdown -->
           <div class="appts-sort-wrap">
-            <i class="fa-solid fa-arrow-down-wide-short appts-sort-ico"></i>
-            <select class="appts-sort-sel" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event); currentPage.set(1)">
-              <option value="recent">{{ t().appointments.newestFirst }}</option>
-              <option value="oldest">{{ t().appointments.oldestFirst }}</option>
-              <option value="az">{{ t().appointments.aToZ }}</option>
-              <option value="za">{{ t().appointments.zToA }}</option>
-            </select>
+            <app-custom-select
+              [ngModel]="sortBy()"
+              (ngModelChange)="sortBy.set($event); currentPage.set(1)"
+              [options]="sortOptions"
+              [placeholder]="t().appointments.newestFirst">
+            </app-custom-select>
           </div>
 
         </div>

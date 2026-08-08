@@ -5,6 +5,10 @@
   font-family: inherit;
 }
 
+.date-picker-wrapper.is-open {
+  z-index: 99999;
+}
+
 .date-picker-wrapper.disabled {
   opacity: 0.6;
   pointer-events: none;
@@ -13,13 +17,13 @@
 .date-picker-trigger {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  height: 48px;
-  padding: 0 16px;
+  height: 38px;
+  padding: 0 12px;
   background: #ffffff;
-  border: 1.5px solid var(--border-color, #e2e8f0);
-  border-radius: 14px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
   box-sizing: border-box;
   cursor: pointer;
   user-select: none;
@@ -36,13 +40,13 @@
 
 .calendar-icon {
   color: #64748b;
-  font-size: 1rem;
+  font-size: 0.85rem;
   flex-shrink: 0;
 }
 
 .trigger-text {
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 400;
   color: #1e293b;
 }
 
@@ -54,10 +58,7 @@
 .date-picker-popover {
   position: absolute;
   top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  width: 100%;
+  z-index: 999999;
   min-width: 240px;
   background: #ffffff;
   border: 1.5px solid #0EAFD7;
@@ -179,7 +180,7 @@
 
 .wheel-item--active {
   color: #0EAFD7;
-  font-weight: 700;
+  font-weight: 500;
   font-size: 0.92rem;
   opacity: 1;
 }

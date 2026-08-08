@@ -249,21 +249,22 @@
                 <div class="date-filter-grid">
                   <label class="date-filter-field">
                     <span>{{ t().records.fromDate }}</span>
-                    <input type="date" [ngModel]="draftFilters().fromDate" (ngModelChange)="updateDraftFilter('fromDate', $event)">
+                    <app-date-picker [ngModel]="draftFilters().fromDate" (ngModelChange)="updateDraftFilter('fromDate', $event)" [placeholder]="t().records.fromDate"></app-date-picker>
                   </label>
                   <label class="date-filter-field">
                     <span>{{ t().records.toDate }}</span>
-                    <input type="date" [ngModel]="draftFilters().toDate" (ngModelChange)="updateDraftFilter('toDate', $event)">
+                    <app-date-picker [ngModel]="draftFilters().toDate" (ngModelChange)="updateDraftFilter('toDate', $event)" [placeholder]="t().records.toDate"></app-date-picker>
                   </label>
                 </div>
               </div>
               <div class="filter-section">
                 <p class="filter-section-title">{{ t().records.sortBy }}</p>
-                <select class="sort-select" [ngModel]="draftFilters().sortBy" (ngModelChange)="updateDraftFilter('sortBy', $event)">
-                  @for (item of sortOptions; track item.value) {
-                  <option [value]="item.value">{{ item.label }}</option>
-                  }
-                </select>
+                <app-custom-select
+                  [ngModel]="draftFilters().sortBy"
+                  (ngModelChange)="updateDraftFilter('sortBy', $event)"
+                  [options]="sortOptions"
+                  [placeholder]="t().records.sortBy">
+                </app-custom-select>
               </div>
             </div>
           </div>
@@ -775,7 +776,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.reportDate }}</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.reportDate" name="reportDate" [placeholder]="t().records.reportDate"></app-date-picker>
         </div>
         }
         @if (rf.type === 'imaging') {
@@ -793,7 +794,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.reportDate }}</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.reportDate" name="reportDate" [placeholder]="t().records.reportDate"></app-date-picker>
         </div>
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.findings }}</label>
@@ -815,7 +816,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.prescriptionDate }}</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.prescriptionDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.prescriptionDate" name="prescriptionDate" [placeholder]="t().records.prescriptionDate"></app-date-picker>
         </div>
         }
         @if (rf.type === 'general') {
@@ -838,7 +839,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.documentDate }}</label>
-          <input type="text" class="scan-input" [(ngModel)]="rf.documentDate">
+          <app-date-picker [(ngModel)]="rf.documentDate" name="documentDate" [placeholder]="t().records.documentDate"></app-date-picker>
         </div>
         }
       }

@@ -90,6 +90,37 @@ export class MyProfile implements OnInit {
       { value: 'Female', label: this.l10n.isRtl() ? 'أُنْثَى' : 'Female' },
     ];
   }
+
+  get bloodTypeSelectOptions(): SelectOption[] {
+    return [
+      { value: 'APositive', label: 'A+' },
+      { value: 'ANegative', label: 'A-' },
+      { value: 'BPositive', label: 'B+' },
+      { value: 'BNegative', label: 'B-' },
+      { value: 'ABPositive', label: 'AB+' },
+      { value: 'ABNegative', label: 'AB-' },
+      { value: 'OPositive', label: 'O+' },
+      { value: 'ONegative', label: 'O-' },
+    ];
+  }
+
+  get severitySelectOptions(): SelectOption[] {
+    const isRtl = this.l10n.isRtl();
+    return [
+      { value: 'Mild', label: isRtl ? 'خفيف' : 'Mild' },
+      { value: 'Moderate', label: isRtl ? 'متوسط' : 'Moderate' },
+      { value: 'Severe', label: isRtl ? 'شديد' : 'Severe' },
+    ];
+  }
+
+  get statusSelectOptions(): SelectOption[] {
+    const isRtl = this.l10n.isRtl();
+    return [
+      { value: 'Active', label: isRtl ? 'نشط' : 'Active' },
+      { value: 'Controlled', label: isRtl ? 'تحت السيطرة' : 'Controlled' },
+      { value: 'Resolved', label: isRtl ? 'متعافي / منتهي' : 'Resolved' },
+    ];
+  }
   readonly personalSaving = signal(false);
   readonly personalFormError = signal<string | null>(null);
   readonly emailOtpError     = signal<string | null>(null);

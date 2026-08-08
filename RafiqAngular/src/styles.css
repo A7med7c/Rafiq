@@ -219,6 +219,23 @@ img {
 }
 
 /* ═══════════════════════════════════════════════
+   CUSTOM UI POPOVERS Z-INDEX OVERLAYS
+   ═══════════════════════════════════════════════ */
+.date-picker-wrapper.is-open,
+.time-picker-wrapper.is-open,
+.custom-select-wrapper.is-open {
+  position: relative !important;
+  z-index: 999999 !important;
+}
+
+.date-picker-popover,
+.time-picker-popover,
+.custom-select-popover,
+.custom-select-menu {
+  z-index: 9999999 !important;
+}
+
+/* ═══════════════════════════════════════════════
    EMBEDDED ASSISTANT GUIDE BOX (ONBOARDING FORMS)
    ═══════════════════════════════════════════════ */
 .embedded-assistant-guide {
@@ -228,6 +245,8 @@ img {
   width: 100%;
   margin: 24px 0 20px;
   box-sizing: border-box;
+  position: relative !important;
+  z-index: 1 !important;
 }
 
 .embedded-avatar {
@@ -238,7 +257,8 @@ img {
 }
 
 .embedded-speech-bubble {
-  position: relative;
+  position: relative !important;
+  z-index: 1 !important;
   flex: 1;
   background: #f0f9fe;
   border: 1.5px solid #bae6fd;

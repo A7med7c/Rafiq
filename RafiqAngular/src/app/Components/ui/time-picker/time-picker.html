@@ -1,75 +1,8 @@
-<div class="time-picker-wrapper" [class.disabled]="disabled" [class.invalid]="invalid">
+<div class="time-picker-wrapper" [class.disabled]="disabled" [class.invalid]="invalid" [class.is-open]="isOpen">
   <div class="time-picker-trigger" (click)="togglePopover()">
     <span class="trigger-text" [class.placeholder]="!getDisplayValue()">
       {{ getDisplayValue() || placeholder }}
     </span>
     <i class="fa-regular fa-clock clock-icon"></i>
   </div>
-
-  @if (isOpen) {
-    <div class="time-picker-popover">
-      <div class="wheels-container">
-        <!-- Highlight bar behind selected center row -->
-        <div class="wheel-selection-bar"></div>
-
-        <!-- Hours Column -->
-        <div class="wheel-col">
-          <button type="button" class="wheel-arrow" (click)="stepHour(-1)">
-            <i class="fa-solid fa-chevron-up"></i>
-          </button>
-          <div class="wheel-list-3">
-            <div class="wheel-item wheel-item--subtle" (click)="stepHour(-1)">{{ getPrevHour() }}</div>
-            <div class="wheel-item wheel-item--active">{{ selectedHour }}</div>
-            <div class="wheel-item wheel-item--subtle" (click)="stepHour(1)">{{ getNextHour() }}</div>
-          </div>
-          <button type="button" class="wheel-arrow" (click)="stepHour(1)">
-            <i class="fa-solid fa-chevron-down"></i>
-          </button>
-        </div>
-
-        <div class="wheel-divider"></div>
-
-        <!-- Minutes Column -->
-        <div class="wheel-col">
-          <button type="button" class="wheel-arrow" (click)="stepMinute(-1)">
-            <i class="fa-solid fa-chevron-up"></i>
-          </button>
-          <div class="wheel-list-3">
-            <div class="wheel-item wheel-item--subtle" (click)="stepMinute(-1)">{{ getPrevMinute() }}</div>
-            <div class="wheel-item wheel-item--active">{{ selectedMinute }}</div>
-            <div class="wheel-item wheel-item--subtle" (click)="stepMinute(1)">{{ getNextMinute() }}</div>
-          </div>
-          <button type="button" class="wheel-arrow" (click)="stepMinute(1)">
-            <i class="fa-solid fa-chevron-down"></i>
-          </button>
-        </div>
-
-        <div class="wheel-divider"></div>
-
-        <!-- AM/PM Column -->
-        <div class="wheel-col">
-          <button type="button" class="wheel-arrow" (click)="togglePeriod()">
-            <i class="fa-solid fa-chevron-up"></i>
-          </button>
-          <div class="wheel-list-3">
-            <div class="wheel-item wheel-item--subtle" (click)="togglePeriod()">{{ getPrevPeriod() }}</div>
-            <div class="wheel-item wheel-item--active">{{ selectedPeriod }}</div>
-            <div class="wheel-item wheel-item--subtle" (click)="togglePeriod()">{{ getNextPeriod() }}</div>
-          </div>
-          <button type="button" class="wheel-arrow" (click)="togglePeriod()">
-            <i class="fa-solid fa-chevron-down"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="picker-footer">
-        <button type="button" class="btn-clear" (click)="clear()">
-          {{ l10n.isRtl() ? 'مسح' : 'Clear' }}
-        </button>
-        <button type="button" class="btn-done" (click)="confirm()">
-          {{ l10n.isRtl() ? 'تم' : 'Done' }}
-        </button>
-      </div>
-    </div>
-  }
 </div>

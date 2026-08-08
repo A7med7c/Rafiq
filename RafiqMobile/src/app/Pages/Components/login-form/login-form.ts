@@ -191,14 +191,17 @@ export class LoginFormComponent implements OnInit {
   }
 
   private navigatePatientAfterLogin(): void {
-    this.healthProfileSvc.getMyProfile().subscribe({
-      next: () => void this.router.navigate(['/dashboard']),
-      error: (err: HttpErrorResponse) => {
-        if (err.status === 404) {
-          void this.router.navigate(['/onboarding/welcome']);
-        } else {
+    this.healthProfileSvc.clearProfileCache();
+    this.healthProfileSvc.hasProfile().subscribe({
+      next: (hasProfile) => {
+        if (hasProfile) {
           void this.router.navigate(['/dashboard']);
+        } else {
+          void this.router.navigate(['/onboarding/welcome']);
         }
+      },
+      error: () => {
+        void this.router.navigate(['/onboarding/welcome']);
       }
     });
   }

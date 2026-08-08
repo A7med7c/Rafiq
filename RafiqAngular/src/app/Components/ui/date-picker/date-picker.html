@@ -1,81 +1,8 @@
-<div class="date-picker-wrapper" [class.disabled]="disabled" [class.invalid]="invalid">
+<div class="date-picker-wrapper" [class.disabled]="disabled" [class.invalid]="invalid" [class.is-open]="isOpen">
   <div class="date-picker-trigger" (click)="togglePopover()">
     <i class="fa-regular fa-calendar calendar-icon"></i>
     <span class="trigger-text" [class.placeholder]="!getDisplayValue()">
       {{ getDisplayValue() || placeholder }}
     </span>
   </div>
-
-  @if (isOpen) {
-    <div class="date-picker-popover">
-      <div class="wheels-header">
-        <span class="col-hdr">{{ l10n.isRtl() ? 'السنة' : 'Year' }}</span>
-        <span class="col-hdr">{{ l10n.isRtl() ? 'الشهر' : 'Month' }}</span>
-        <span class="col-hdr">{{ l10n.isRtl() ? 'اليوم' : 'Day' }}</span>
-      </div>
-
-      <div class="wheels-container">
-        <!-- Highlight bar behind selected center row -->
-        <div class="wheel-selection-bar"></div>
-
-        <!-- Year Column -->
-        <div class="wheel-col">
-          <button type="button" class="wheel-arrow" (click)="stepYear(1)">
-            <i class="fa-solid fa-chevron-up"></i>
-          </button>
-          <div class="wheel-list-3">
-            <div class="wheel-item wheel-item--subtle" (click)="stepYear(1)">{{ getPrevYear() }}</div>
-            <div class="wheel-item wheel-item--active">{{ selectedYear }}</div>
-            <div class="wheel-item wheel-item--subtle" (click)="stepYear(-1)">{{ getNextYear() }}</div>
-          </div>
-          <button type="button" class="wheel-arrow" (click)="stepYear(-1)">
-            <i class="fa-solid fa-chevron-down"></i>
-          </button>
-        </div>
-
-        <div class="wheel-divider"></div>
-
-        <!-- Month Column -->
-        <div class="wheel-col">
-          <button type="button" class="wheel-arrow" (click)="stepMonth(-1)">
-            <i class="fa-solid fa-chevron-up"></i>
-          </button>
-          <div class="wheel-list-3">
-            <div class="wheel-item wheel-item--subtle" (click)="stepMonth(-1)">{{ getPrevMonthName() }}</div>
-            <div class="wheel-item wheel-item--active">{{ getCurrentMonthName() }}</div>
-            <div class="wheel-item wheel-item--subtle" (click)="stepMonth(1)">{{ getNextMonthName() }}</div>
-          </div>
-          <button type="button" class="wheel-arrow" (click)="stepMonth(1)">
-            <i class="fa-solid fa-chevron-down"></i>
-          </button>
-        </div>
-
-        <div class="wheel-divider"></div>
-
-        <!-- Day Column -->
-        <div class="wheel-col">
-          <button type="button" class="wheel-arrow" (click)="stepDay(-1)">
-            <i class="fa-solid fa-chevron-up"></i>
-          </button>
-          <div class="wheel-list-3">
-            <div class="wheel-item wheel-item--subtle" (click)="stepDay(-1)">{{ getPrevDay().toString().padStart(2, '0') }}</div>
-            <div class="wheel-item wheel-item--active">{{ selectedDay.toString().padStart(2, '0') }}</div>
-            <div class="wheel-item wheel-item--subtle" (click)="stepDay(1)">{{ getNextDay().toString().padStart(2, '0') }}</div>
-          </div>
-          <button type="button" class="wheel-arrow" (click)="stepDay(1)">
-            <i class="fa-solid fa-chevron-down"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="picker-footer">
-        <button type="button" class="btn-clear" (click)="clear()">
-          {{ l10n.isRtl() ? 'مسح' : 'Clear' }}
-        </button>
-        <button type="button" class="btn-confirm" (click)="confirm()">
-          {{ l10n.isRtl() ? 'تأكيد' : 'Confirm' }}
-        </button>
-      </div>
-    </div>
-  }
 </div>

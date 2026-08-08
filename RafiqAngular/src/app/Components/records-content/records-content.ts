@@ -129,10 +129,13 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
   sortBy
 });
 
+import { CustomSelectComponent, SelectOption } from '../ui/custom-select/custom-select';
+import { DatePickerComponent } from '../ui/date-picker/date-picker';
+
 @Component({
   selector: 'app-records-content',
   standalone: true,
-  imports: [CommonModule, FormsModule, AssistantAnchorDirective, MedicalWarningCardComponent],
+  imports: [CommonModule, FormsModule, AssistantAnchorDirective, MedicalWarningCardComponent, CustomSelectComponent, DatePickerComponent],
   templateUrl: './records-content.html',
   styleUrl: '../../Pages/medical-records/medical-records.css',
   encapsulation: ViewEncapsulation.None,
