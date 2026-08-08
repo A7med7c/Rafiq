@@ -391,6 +391,16 @@ export const en = {
   },
 
   records: {
+    recordTypes: 'Record Types',
+    medicalReports: 'Medical Reports',
+    recordCount: 'record',
+    medications: 'Medications',
+    prescriptions: 'Prescriptions',
+    imaging: 'Imaging',
+    labResults: 'Lab Results',
+    latestRecords: 'Latest Records',
+    viewAll: 'View All',
+    addNewRecord: 'Add New Record',
     labAnalysis: 'Lab Analysis',
     labDesc: 'Upload blood tests, urine tests, and other lab reports',
     prescription: 'Prescription',
@@ -413,6 +423,15 @@ export const en = {
     searchPlaceholder: 'Search records...',
     filter: 'Filter',
     recordType: 'Record Type',
+    typeAutoDetermined: 'Type is determined automatically',
+    uploadImagePrefix: 'Upload image of',
+    orChooseFromDevice: 'Or choose from your device',
+    scanOption: 'Scan',
+    fileOption: 'Choose File',
+    cameraOption: 'Take Photo',
+    orOption: 'OR',
+    addManuallyTitle: 'Enter data manually',
+    addManuallyDesc: 'Write data manually without an image',
     aiStatus: 'AI Status',
     uploadedBy: 'Uploaded By',
     dateRange: 'Date Range',
@@ -556,6 +575,9 @@ export const en = {
     tryAgain: 'Try Again',
     clearFilters: 'Clear Filters',
     filteredLabel: 'filtered',
+    duplicateFoundTitle: 'Duplicate Document Found',
+    duplicateFoundDesc: 'It looks like you\'ve already uploaded a document named {name}. Do you want to continue?',
+    continueBtn: 'Continue',
   },
 
   aiAssistant: {
@@ -1675,7 +1697,7 @@ export const en = {
     finish: 'Finish Tour',
     mascotAria: 'Rafiq Message',
   },
-  
+
   notificationPermission: {
     softPromptTitle: 'Stay on Track',
     softPromptDesc: 'Enable notifications to receive medication and appointment reminders. This helps you manage your family\'s health effectively.',

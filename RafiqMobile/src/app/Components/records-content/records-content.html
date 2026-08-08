@@ -13,33 +13,33 @@
   @if (!compact && !readOnly) {
     @if (!uploadFlowType()) {
       <div class="fp-section-header" style="padding: 0 16px;">
-        <h3>أنواع السجلات</h3>
+        <h3>{{ t().records.recordTypes }}</h3>
       </div>
       <div class="fp-types-scroll" [class.has-active-tab]="activeTab() !== 'all'">
         <div assistantAnchor="mr-card-general" class="fp-type-card fp-bg-cyan" [class.active-card]="activeTab() === 'general'" (click)="toggleTab('general')">
           <div class="fp-type-icon"><i class="fa-solid fa-file-medical"></i></div>
-          <div class="fp-type-title">تقارير طبية</div>
-          <div class="fp-type-count">{{ generalCount() }} سجل</div>
+          <div class="fp-type-title">{{ t().records.otherDocumentsTab }}</div>
+          <div class="fp-type-count">{{ generalCount() }} {{ t().records.recordsSuffix }}</div>
         </div>
         <div assistantAnchor="mr-card-medicine" class="fp-type-card fp-bg-orange" [class.active-card]="activeTab() === 'medicine'" (click)="toggleTab('medicine')">
           <div class="fp-type-icon"><i class="fa-solid fa-pills"></i></div>
-          <div class="fp-type-title">أدوية</div>
-          <div class="fp-type-count">{{ medicineCount() }} سجل</div>
+          <div class="fp-type-title">{{ t().records.medicineBoxesTab }}</div>
+          <div class="fp-type-count">{{ medicineCount() }} {{ t().records.recordsSuffix }}</div>
         </div>
         <div assistantAnchor="mr-card-prescription" class="fp-type-card fp-bg-green" [class.active-card]="activeTab() === 'prescription'" (click)="toggleTab('prescription')">
           <div class="fp-type-icon"><i class="fa-solid fa-prescription-bottle-medical"></i></div>
-          <div class="fp-type-title">روشتات</div>
-          <div class="fp-type-count">{{ prescriptionCount() }} سجل</div>
+          <div class="fp-type-title">{{ t().records.prescriptionsTab }}</div>
+          <div class="fp-type-count">{{ prescriptionCount() }} {{ t().records.recordsSuffix }}</div>
         </div>
         <div assistantAnchor="mr-card-imaging" class="fp-type-card fp-bg-purple" [class.active-card]="activeTab() === 'imaging'" (click)="toggleTab('imaging')">
           <div class="fp-type-icon"><i class="fa-solid fa-x-ray"></i></div>
-          <div class="fp-type-title">أشعة</div>
-          <div class="fp-type-count">{{ imagingCount() }} سجل</div>
+          <div class="fp-type-title">{{ t().records.xraysImagingTab }}</div>
+          <div class="fp-type-count">{{ imagingCount() }} {{ t().records.recordsSuffix }}</div>
         </div>
         <div assistantAnchor="mr-card-lab" class="fp-type-card fp-bg-blue" [class.active-card]="activeTab() === 'lab'" (click)="toggleTab('lab')">
           <div class="fp-type-icon"><i class="fa-solid fa-flask"></i></div>
-          <div class="fp-type-title">تحاليل</div>
-          <div class="fp-type-count">{{ labCount() }} سجل</div>
+          <div class="fp-type-title">{{ t().records.labAnalysisTab }}</div>
+          <div class="fp-type-count">{{ labCount() }} {{ t().records.recordsSuffix }}</div>
         </div>
       </div>
     } @else {
@@ -51,28 +51,28 @@
         </div>
         <div class="uf-body">
           <div class="uf-type-banner">
-            <p class="uf-type-label">النوع: <span>{{ getUploadFlowTitle() }}</span></p>
-            <p class="uf-type-sub">يتم تحديد النوع تلقائيا</p>
+            <p class="uf-type-label">{{ t().records.type }}: <span>{{ getUploadFlowTitle() }}</span></p>
+            <p class="uf-type-sub">{{ t().records.typeAutoDetermined || 'Type is determined automatically' }}</p>
           </div>
 
           <div class="uf-upload-box">
             <div class="uf-upload-icon-circle"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-            <h3>ارفع صورة {{ getUploadFlowTitle() }}</h3>
-            <p>أو اختر من جهازك</p>
+            <h3>{{ t().records.uploadImagePrefix || 'Upload image of' }} {{ getUploadFlowTitle() }}</h3>
+            <p>{{ t().records.orChooseFromDevice || 'Or choose from your device' }}</p>
 
             <div class="uf-upload-actions">
-               <button type="button" (click)="triggerUploadMethod('scan')"><i class="fa-solid fa-print"></i><span>مسح ضوئي</span></button>
-               <button type="button" (click)="triggerUploadMethod('file')"><i class="fa-solid fa-folder"></i><span>اختيار ملف</span></button>
-               <button type="button" (click)="triggerUploadMethod('camera')"><i class="fa-solid fa-camera"></i><span>التقاط صورة</span></button>
+               <button type="button" (click)="triggerUploadMethod('scan')"><i class="fa-solid fa-print"></i><span>{{ t().records.scanOption || 'Scan' }}</span></button>
+               <button type="button" (click)="triggerUploadMethod('file')"><i class="fa-solid fa-folder"></i><span>{{ t().records.fileOption || 'Choose File' }}</span></button>
+               <button type="button" (click)="triggerUploadMethod('camera')"><i class="fa-solid fa-camera"></i><span>{{ t().records.cameraOption || 'Take Photo' }}</span></button>
             </div>
           </div>
 
-          <div class="uf-separator"><span>أو</span></div>
+          <div class="uf-separator"><span>{{ t().records.orOption || 'OR' }}</span></div>
 
           <button type="button" class="uf-manual-btn" (click)="triggerManualEntry()">
              <div class="uf-manual-content">
-                <h4><i class="fa-solid fa-pen"></i> إدخال البيانات يدويا</h4>
-                <p>اكتب البيانات يدويا بدون صورة</p>
+                <h4><i class="fa-solid fa-pen"></i> {{ t().records.addManuallyTitle || 'Enter data manually' }}</h4>
+                <p>{{ t().records.addManuallyDesc || 'Write data manually without an image' }}</p>
              </div>
           </button>
         </div>
@@ -84,9 +84,9 @@
   @if (!uploadFlowType()) {
     <div assistantAnchor="mr-recent-list">
       <div class="fp-section-header fp-mt-24" style="padding: 0 16px;">
-        <h3>آخر السجلات</h3>
+        <h3>{{ t().records.latestRecords }}</h3>
         @if (!showAllRecords() && pagedRecords().length > 0) {
-          <a class="fp-view-all-btn" (click)="showAllRecords.set(true)">عرض الكل</a>
+          <a class="fp-view-all-btn" (click)="showAllRecords.set(true)">{{ t().records.viewAll }}</a>
         }
       </div>
     
@@ -147,7 +147,7 @@
   @if (!readOnly && !uploadFlowType()) {
     <div class="add-record-menu-wrap fp-fab-wrap">
       <button type="button" assistantAnchor="add-record-button" class="fp-fab-btn" [class.menu-open]="addRecordMenuOpen()" (click)="toggleAddRecordMenu($event)">
-        <i class="fa-solid fa-plus"></i> إضافة سجل جديد
+        <i class="fa-solid fa-plus"></i> {{ t().records.addNewRecord }}
       </button>
 
       @if (addRecordMenuOpen()) {

@@ -100,10 +100,7 @@
               @if (hasReminders(med.id) && getSortedReminderTimes(med.id).length > 0) {
                 <div style="display: flex; flex-direction: column; align-items: flex-end; margin-inline-start: 12px; flex-shrink: 0;">
                   <span style="font-size: 14px; font-weight: 700; color: #0EAFD7;">
-                    {{ +(getSortedReminderTimes(med.id)[0].split(':')[0]) > 12 ? (+(getSortedReminderTimes(med.id)[0].split(':')[0]) - 12) + ':' + getSortedReminderTimes(med.id)[0].split(':')[1] : getSortedReminderTimes(med.id)[0] }}
-                  </span>
-                  <span style="font-size: 11px; color: #94A3B8; font-weight: 600;">
-                    {{ +(getSortedReminderTimes(med.id)[0].split(':')[0]) >= 12 ? 'PM' : 'AM' }}
+                    {{ getSortedReminderTimes(med.id)[0] }}
                   </span>
                   <!-- Active Dot indicator -->
                   @if (hasActiveReminders(med.id)) {
