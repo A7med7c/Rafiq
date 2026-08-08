@@ -599,8 +599,8 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   // ── Complete ──────────────────────────────────────────────────────────────
   markComplete(id: string): void {
     this.apptSvc.complete(id).subscribe({
-      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.appointmentCompleted, 'success'); this.notifSvc.notifyAppointmentChanged(); this.appointmentChanged.emit(); },
-      error: err => { this.toast(this.t().appointments.completeFailed, 'error'); },
+      next: saved => { this.appointments.update(l => l.map(a => a.id === id ? saved : a)); this.toast(this.t().appointments.markedCompleted, 'success'); this.notifSvc.notifyAppointmentChanged(); this.appointmentChanged.emit(); },
+      error: err => { this.toast(this.t().appointments.genericFailed, 'error'); },
     });
   }
 
