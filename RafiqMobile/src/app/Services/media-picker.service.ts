@@ -68,7 +68,8 @@ export class MediaPickerService {
   private async takePhoto(source: CameraSource): Promise<File | null> {
     try {
       const photo = await Camera.getPhoto({
-        quality: 90,
+        quality: 60,
+        width: 1200,
         allowEditing: false,
         resultType: CameraResultType.Uri,
         source: source

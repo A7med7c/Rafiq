@@ -800,7 +800,9 @@ export const en = {
     generalShouldBeImaging: 'This is a radiology report — upload it in the X-Ray & Imaging section.',
     generalShouldBePrescription: 'This is a prescription — upload it in the Prescriptions section.',
     generalShouldBeMedicine: 'This is a medicine box — scan it in the Medicine Box section.',
-    generalNotMedical: 'This does not appear to be a medical document.'
+    generalNotMedical: 'This does not appear to be a medical document.',
+    exactDocumentUploaded: 'This exact document has already been uploaded to this profile.',
+    externalServiceError: 'The AI service is currently unavailable or the image is too large. Please try again or enter manually.'
   },
 
   medications: {

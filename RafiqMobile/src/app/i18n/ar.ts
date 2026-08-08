@@ -1687,4 +1687,4 @@ export const ar: Translations = {
     contactsValidationFailed: 'فشل التحقق من بيانات جهات الاتصال.',
   },
 
-};
+};
