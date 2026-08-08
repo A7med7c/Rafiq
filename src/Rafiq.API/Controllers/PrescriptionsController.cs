@@ -20,11 +20,12 @@ public sealed class PrescriptionsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> UploadPrescription(
         [FromQuery] Guid profileId,
         [FromHeader(Name = "Accept-Language")] string? language,
+        [FromForm] bool bypassFamilyDuplicateCheck,
         IFormFile image,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new UploadPrescriptionCommand(profileId, image, language ?? "en"),
+            new UploadPrescriptionCommand(profileId, image, language ?? "en", bypassFamilyDuplicateCheck),
             cancellationToken);
 
         return Ok(result);

@@ -32,7 +32,7 @@ export class OnboardingStep1 implements OnInit, OnDestroy {
 
   readonly today = new Date().toISOString().slice(0, 10);
 
-  readonly steps = computed(() => this.t().onboarding.stepperLabels.map(label => ({ label })));
+  readonly steps = computed(() => this.t().onboarding.stepperLabels.map((label: string) => ({ label })));
 
   readonly genderOptions = [
     { value: Gender.Male, labelEn: 'Male', labelAr: 'ذكر' },

@@ -21,6 +21,7 @@ export interface TrackedDocument {
   failureReason: string | null;
   reviewData?: any;
   enqueuedAt: Date;
+  profileId?: string;
 }
 
 export interface PendingReviewRequest {
@@ -96,11 +97,11 @@ export class DocumentAnalysisStateService {
 
   // ── Sync upload tracking (lab / imaging / prescription) ──────────────────
 
-  trackSyncUpload(tempId: string, title: string, uploadType: UploadDocType): void {
+  trackSyncUpload(tempId: string, title: string, uploadType: UploadDocType, profileId?: string): void {
     const doc: TrackedDocument = {
       documentId: tempId, title, imagePath: '', uploadType,
       status: 'Pending', documentType: null, aiSummary: null,
-      failureReason: null, enqueuedAt: new Date(),
+      failureReason: null, enqueuedAt: new Date(), profileId,
     };
     this.trackedDocuments.update(docs => [...docs, doc]);
   }
@@ -123,11 +124,11 @@ export class DocumentAnalysisStateService {
 
   // ── Async tracking (general documents via Hangfire) ──────────────────────
 
-  trackDocument(documentId: string, title: string, imagePath: string): void {
+  trackDocument(documentId: string, title: string, imagePath: string, profileId?: string): void {
     const doc: TrackedDocument = {
       documentId, title, imagePath, uploadType: 'general',
       status: 'Pending', documentType: null, aiSummary: null,
-      failureReason: null, enqueuedAt: new Date(),
+      failureReason: null, enqueuedAt: new Date(), profileId,
     };
     this.trackedDocuments.update(docs => [...docs, doc]);
   }

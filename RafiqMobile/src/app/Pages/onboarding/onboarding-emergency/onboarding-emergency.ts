@@ -32,7 +32,7 @@ export class OnboardingEmergency implements OnInit {
   dropdownLeft = 0;
   dropdownWidth = 0;
 
-  readonly steps = computed(() => this.t().onboarding.stepperLabels.map(label => ({ label })));
+  readonly steps = computed(() => this.t().onboarding.stepperLabels.map((label: string) => ({ label })));
 
   readonly relationOptions = [
     { value: 'Father', labelEn: 'Father', labelAr: 'أب' },

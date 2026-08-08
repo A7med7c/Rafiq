@@ -553,13 +553,13 @@
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
         </div>
         }
-        @if (!manualReviewMode() && rf.type !== 'general') {
+        @if (!manualReviewMode() && (rf.type === 'lab' || rf.type === 'imaging')) {
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.aiSummary }}</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
         </div>
         }
-        @if (!manualReviewMode() && rf.type !== 'general') {
+        @if (!manualReviewMode() && (rf.type === 'lab' || rf.type === 'imaging')) {
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.ocrText }}</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.ocrText" rows="5"></textarea>
@@ -931,6 +931,33 @@
       </button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="retryUpload()">
         <i class="fa-solid fa-rotate-right"></i> {{ t().records.tryAgain }}
+      </button>
+    </footer>
+  </div>
+</div>
+}
+
+<!-- ═══════════ DUPLICATE UPLOAD WARNING DIALOG ═══════════ -->
+@if (showDuplicateWarningDialog()) {
+<div class="modal-overlay" (click)="closeDuplicateWarningDialog()">
+  <div class="modal-card ai-fail-modal" (click)="$event.stopPropagation()">
+    <div class="ai-fail-body">
+      <div class="ai-fail-ico-wrap" style="color: var(--warning-color, #f59e0b); background: var(--warning-color-light, #fef3c7);">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="ai-fail-title">
+        {{ t().records.duplicateFoundTitle }}
+      </h3>
+      <p class="ai-fail-desc">
+        {{ t().records.duplicateFoundDesc.replace('{name}', duplicateWarningName()) }}
+      </p>
+    </div>
+    <footer class="modal-ftr ai-fail-ftr">
+      <button type="button" class="modal-btn ai-fail-cancel-btn" (click)="closeDuplicateWarningDialog()">
+        {{ t().records.cancelBtn }}
+      </button>
+      <button type="button" class="modal-btn modal-btn-primary" (click)="continueDuplicateUpload()">
+        {{ t().records.continueBtn }}
       </button>
     </footer>
   </div>

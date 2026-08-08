@@ -56,7 +56,7 @@ export class OnboardingStep4 implements OnInit {
   protected readonly l10n = inject(LocalizationService);
   protected readonly t = this.l10n.t;
 
-  readonly steps = computed(() => this.t().onboarding.stepperLabels.map(label => ({ label })));
+  readonly steps = computed(() => this.t().onboarding.stepperLabels.map((label: string) => ({ label })));
 
   step1: Step1Data | null = null;
   step2: Step2Data | null = null;
