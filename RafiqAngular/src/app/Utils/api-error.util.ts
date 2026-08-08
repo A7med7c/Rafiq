@@ -68,6 +68,9 @@ export function localizeKnownApiMessage(message: string, translations: any): str
     'An account with this phone number already exists.' : translations.login.phoneNumberAlreadyExist,
     'Google login successful.': translations.login?.googleLoginSuccess,
     'Invalid email / phone number or password.' : translations.login?.invalidEmailPassword,
+    'No laboratory tests could be extracted from the uploaded image.': translations.documentAnalysis?.noLabTestsExtracted ?? translations.records?.noLabTestsExtracted,
+    'The uploaded document is not a lab report. The uploaded image could not be identified as a valid document. Please upload a valid laboratory report image.' : 
+    translations.documentAnalysis?.noLabTestsExtracted ?? translations.records?.noLabTestsExtracted
   };
 
   if (map[normalized]) return map[normalized]!;

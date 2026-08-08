@@ -1,10 +1,10 @@
-<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
+﻿<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
 
   @if (mobileSidebarOpen()) {
   <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
   }
 
-  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <!-- â•â•â•â•â•â•â•â•â•â•â• SIDEBAR â•â•â•â•â•â•â•â•â•â•â• -->
   <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <div class="sb-top">
       <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
@@ -30,7 +30,8 @@
         <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
         <span>{{ t().sidebar.dashboard }}</span>
       </a>
-      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
+      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active"
+         [class.sb-link--processing]="analysisState.sidebarStatus() === 'processing'" [class.sb-link--completed]="analysisState.sidebarStatus() === 'completed'" [class.sb-link--failed]="analysisState.sidebarStatus() === 'failed'">
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
         <span>{{ t().sidebar.medicalRecords }}</span>
       </a>
@@ -74,7 +75,7 @@
     </div>
   </aside>
 
-  <!-- ═══════════ MAIN ═══════════ -->
+  <!-- â•â•â•â•â•â•â•â•â•â•â• MAIN â•â•â•â•â•â•â•â•â•â•â• -->
   <div class="dsh-main">
 
     <!-- HEADER -->
@@ -87,7 +88,7 @@
         <input type="text" class="hdr-search-inp" [attr.placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
-        <button type="button" class="hdr-bell" (click)="l10n.toggle()" title="English / عربي">
+        <button type="button" class="hdr-bell" (click)="l10n.toggle()" title="English / Ø¹Ø±Ø¨ÙŠ">
           <i class="fa-solid fa-globe"></i>
         </button>
         <button type="button" class="hdr-ask-btn" (click)="startNewConversation()">
@@ -142,7 +143,7 @@
       </div>
     </header>
 
-    <!-- ═══════════ CHAT BODY ═══════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â• CHAT BODY â•â•â•â•â•â•â•â•â•â•â• -->
     <div class="chat-wrap" [class.panel-collapsed]="rightPanelCollapsed()">
 
       @if (profileError()) {
@@ -154,7 +155,7 @@
 
       <!-- LEFT: conversation list -->
       <aside class="chat-list-panel">
-        <!-- Toggle button — always visible at the top-left corner of the sidebar -->
+        <!-- Toggle button â€” always visible at the top-left corner of the sidebar -->
         <button type="button" class="chat-panel-toggle"
           (click)="rightPanelCollapsed.set(!rightPanelCollapsed())"
           [attr.aria-label]="rightPanelCollapsed() ? t().aiAssistant.openConversations : t().aiAssistant.closeConversations">
@@ -163,7 +164,7 @@
              [class.fa-chevron-right]="rightPanelCollapsed()"></i>
         </button>
 
-        <!-- Scrollable content — fades out on collapse -->
+        <!-- Scrollable content â€” fades out on collapse -->
         <div class="chat-list-inner">
           <button type="button" class="chat-new-btn" (click)="startNewConversation()">
             <i class="fa-solid fa-plus"></i>
@@ -453,7 +454,7 @@
 
 </div><!-- /dsh -->
 
-<!-- ═══ DISLIKE REASON DIALOG ═══ -->
+<!-- â•â•â• DISLIKE REASON DIALOG â•â•â• -->
 @if (dislikeDialogOpen()) {
 <div class="dislike-overlay" (click)="cancelDislikeDialog()"></div>
 <div class="dislike-dialog" role="dialog" aria-modal="true">
@@ -504,3 +505,4 @@
   </div>
 </div>
 }
+

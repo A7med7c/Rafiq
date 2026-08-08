@@ -27,6 +27,7 @@ import { DashboardService, HealthSummaryDto } from '../../Services/dashboard.ser
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import { localizeKnownApiMessage } from '../../Utils/api-error.util';
+import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 
 type AddStep = 'choose' | 'create' | 'invite' | 'invited';
 
@@ -68,6 +69,7 @@ export class FamilyProfiles implements OnInit {
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly base = environment.apiUrl;
   readonly router = inject(Router);
+  readonly analysisState = inject(DocumentAnalysisStateService);
 
   // ─── Sidebar ────────────────────────────────────────────────
   readonly sidebarCollapsed = signal(false);

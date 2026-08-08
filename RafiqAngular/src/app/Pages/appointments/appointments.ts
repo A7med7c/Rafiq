@@ -24,6 +24,7 @@ import {
 } from '../../Modles/appointment.models';
 import { FamilyProfileBannerComponent } from '../../Components/family-profile-banner/family-profile-banner';
 import { localizeKnownApiMessage } from '../../Utils/api-error.util';
+import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 
 /** Maps each AppointmentType enum value to its key path in the i18n objects */
 const APPT_TYPE_KEYS: Record<AppointmentType, string> = {
@@ -88,6 +89,7 @@ export class Appointments implements OnInit, OnDestroy {
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly reviewTracking   = inject(ReviewTrackingService);
   private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
+  readonly analysisState = inject(DocumentAnalysisStateService);
 
   // ── Family-profile read-only gate ────────────────────────────────────────
   // Uses profileId from query param when present (direct link from family-profiles),

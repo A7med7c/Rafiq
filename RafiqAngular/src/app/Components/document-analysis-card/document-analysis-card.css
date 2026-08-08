@@ -252,6 +252,20 @@
   50%       { box-shadow: 0 0 0 6px rgba(14, 175, 215, 0);    }
 }
 
+.dac-chip--failed {
+  background: #DC2626;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.40);
+}
+
+.dac-chip__badge--failed {
+  background: #DC2626;
+}
+
+.dac-panel__badge--failed {
+  background: rgba(220, 38, 38, 0.25);
+  color: #fff;
+}
+
 /* Failed: red — matches --red / --red-lt */
 .dac-item__fail-ring {
   width: 34px;
@@ -288,7 +302,31 @@
   line-height: 1.3;
 }
 
-.dac-item--failed .dac-item__status { color: #DC2626; }
+.dac-item--failed {
+  background: #FEF2F2;
+  border-inline-start: 3px solid #EF4444;
+}
+.dac-item--failed:hover {
+  background: #FEE2E2;
+}
+.dac-item--failed .dac-item__title {
+  color: #991B1B;
+  font-weight: 600;
+}
+.dac-item--failed .dac-item__status {
+  color: #B91C1C;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.dac-item__failed-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
 .dac-item--ready  .dac-item__status { color: #0EAFD7; font-weight: 500; }
 
 /* ── Action buttons ────────────────────────────────────────────────────────── */
@@ -297,6 +335,8 @@
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 2px;
 }
 
 .dac-btn {
@@ -333,12 +373,37 @@
 }
 .dac-btn--view:hover { background: #E9EFF5; }
 
-/* Retry — orange (--orange / --orange-lt) */
+/* Retry — orange/amber in failed card */
 .dac-btn--retry {
   background: #FFF7ED;
-  color: #EA580C;
+  color: #C2410C;
+  border: 1px solid #FED7AA;
+  border-radius: var(--r-xs, 8px);
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
-.dac-btn--retry:not(:disabled):hover { background: #FFEDD5; }
+.dac-btn--retry:not(:disabled):hover {
+  background: #FFEDD5;
+  color: #9A3412;
+  border-color: #FDBA74;
+}
+
+/* Manual entry — blue in failed card */
+.dac-btn--manual {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+  border-radius: var(--r-xs, 8px);
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.dac-btn--manual:hover {
+  background: #DBEAFE;
+  color: #1E40AF;
+  border-color: #93C5FD;
+}
 
 /* Dismiss — ghost */
 .dac-btn--dismiss {

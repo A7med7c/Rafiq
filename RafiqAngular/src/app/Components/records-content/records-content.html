@@ -1310,4 +1310,28 @@
     </footer>
   </div>
 </div>
+}@if (showConfirmCloseModal()) {
+<div class="modal-overlay" style="z-index: 10000;" (click)="cancelConfirmClose()">
+  <div class="modal-card" style="max-width: 400px; text-align: center;" (click)="$event.stopPropagation()">
+    <header class="modal-hdr" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+      <h3 class="modal-title" style="color: red; background-color: white;">
+        <i class="fa-solid fa-triangle-exclamation" style="margin-inline-end: 8px;"></i>
+        {{ t().records.reviewConfirmCloseTitle }}
+      </h3>
+    </header>
+    <div class="modal-body" style="padding: 24px;">
+      <p style="color: var(--text-2); line-height: 1.6; margin: 0;">
+        {{ t().records.reviewConfirmCloseBody }}
+      </p>
+    </div>
+    <footer class="modal-ftr" style="justify-content: center; gap: 12px; background: transparent; border-top: none;">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="cancelConfirmClose()">
+        {{ t().records.continueReviewing }}
+      </button>
+      <button type="button" class="modal-btn modal-btn-primary" style="background-color: red; color: white;" (click)="forceCloseConfirmed()">
+        {{ t().records.close }}
+      </button>
+    </footer>
+  </div>
+</div>
 }

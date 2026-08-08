@@ -5,14 +5,21 @@
 <button
   type="button"
   class="dac-chip"
+  [class.dac-chip--failed]="activeCount() === 0 && failedCount() > 0"
   [style]="panelStyle"
   (click)="toggle()"
   [attr.aria-label]="l10n.t().documentAnalysis.panelTitle">
   <span class="dac-chip__ring" [class.dac-chip__ring--spinning]="activeCount() > 0">
-    <i class="fa-solid fa-file-waveform"></i>
+    @if (activeCount() > 0) {
+      <i class="fa-solid fa-file-waveform"></i>
+    } @else if (failedCount() > 0) {
+      <i class="fa-solid fa-triangle-exclamation"></i>
+    } @else {
+      <i class="fa-solid fa-check"></i>
+    }
   </span>
   @if (documents().length > 0) {
-    <span class="dac-chip__badge">{{ documents().length }}</span>
+    <span class="dac-chip__badge" [class.dac-chip__badge--failed]="failedCount() > 0">{{ documents().length }}</span>
   }
 </button>
 
@@ -32,6 +39,8 @@
       <span class="dac-panel__title">{{ l10n.t().documentAnalysis.panelTitle }}</span>
       @if (activeCount() > 0) {
         <span class="dac-panel__badge dac-panel__badge--active">{{ activeCount() }}</span>
+      } @else if (failedCount() > 0) {
+        <span class="dac-panel__badge dac-panel__badge--failed">{{ failedCount() }}</span>
       }
     </div>
     <button type="button" class="dac-panel__minimize" (click)="toggle()" aria-label="Minimize">
@@ -65,13 +74,17 @@
         }
       </div>
 
-      <!-- Centre: title + status label -->
+      <!-- Centre: title + status label + recovery actions -->
       <div class="dac-item__body">
         <p class="dac-item__title" [title]="displayTitle(doc)">{{ displayTitle(doc) }}</p>
         <p class="dac-item__status">{{ statusLabel(doc) }}</p>
+
+        @if (doc.status === 'Failed') {
+         
+        }
       </div>
 
-      <!-- Right: actions -->
+      <!-- Right: top dismiss / actions -->
       <div class="dac-item__actions">
         @if (doc.status === 'ReadyToReview') {
           <button type="button" class="dac-btn dac-btn--review" (click)="requestReview(doc)">
@@ -96,18 +109,6 @@
             <i class="fa-solid fa-xmark"></i>
           </button>
         } @else if (doc.status === 'Failed') {
-          @if (doc.uploadType === 'general') {
-            <button type="button" class="dac-btn dac-btn--retry"
-              [disabled]="retrying().has(doc.documentId)"
-              (click)="retry(doc)">
-              @if (retrying().has(doc.documentId)) {
-                <i class="fa-solid fa-circle-notch fa-spin"></i>
-              } @else {
-                <i class="fa-solid fa-rotate-right"></i>
-              }
-              {{ l10n.t().documentAnalysis.retry }}
-            </button>
-          }
           <button type="button" class="dac-btn dac-btn--dismiss" (click)="dismiss(doc)"
             [attr.aria-label]="l10n.t().documentAnalysis.dismiss">
             <i class="fa-solid fa-xmark"></i>

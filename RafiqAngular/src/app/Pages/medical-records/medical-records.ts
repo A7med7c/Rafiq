@@ -31,6 +31,8 @@ import { LocalizationService } from '../../Services/localization.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import { localizeKnownApiMessage } from '../../Utils/api-error.util';
+import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
+import { DocumentAnalysisCardComponent } from '../../Components/document-analysis-card/document-analysis-card';
 
 export type UploadCardKey = 'lab' | 'prescription' | 'imaging' | 'medicine' | 'general';
 type RecordTab = 'all' | UploadCardKey;
@@ -149,7 +151,10 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
 @Component({
   selector: 'app-medical-records',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent, AssistantAnchorDirective, FamilyProfileBannerComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RecordsContentComponent,    AssistantAnchorDirective,
+    FamilyProfileBannerComponent,
+    DocumentAnalysisCardComponent
+  ],
   templateUrl: './medical-records.html',
   styleUrl: './medical-records.css',
 })
@@ -172,6 +177,7 @@ export class MedicalRecords implements OnInit {
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
   private readonly base = environment.apiUrl;
+  readonly analysisState = inject(DocumentAnalysisStateService);
 
   readonly viewingProfile = toSignal<AccessibleProfileDto | null>(
     this.route.queryParamMap.pipe(

@@ -1,10 +1,10 @@
-<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
+﻿<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
 
   @if (mobileSidebarOpen()) {
   <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
   }
 
-  <!-- ════════════ SIDEBAR ════════════ -->
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â• SIDEBAR â•â•â•â•â•â•â•â•â•â•â•â• -->
   <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <div class="sb-top">
       <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
@@ -30,7 +30,8 @@
         <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
         <span>{{ t().sidebar.dashboard }}</span>
       </a>
-      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
+      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active"
+         [class.sb-link--processing]="analysisState.sidebarStatus() === 'processing'" [class.sb-link--completed]="analysisState.sidebarStatus() === 'completed'" [class.sb-link--failed]="analysisState.sidebarStatus() === 'failed'">
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
         <span>{{ t().sidebar.medicalRecords }}</span>
       </a>
@@ -74,7 +75,7 @@
     </div>
   </aside>
 
-  <!-- ════════════ MAIN ════════════ -->
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â• MAIN â•â•â•â•â•â•â•â•â•â•â•â• -->
   <div class="dsh-main">
 
     <!-- HEADER -->
@@ -87,7 +88,7 @@
         <input type="text" class="hdr-search-inp" [placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
-        <button type="button" class="hdr-bell" (click)="l10n.toggle()" title="English / عربي">
+        <button type="button" class="hdr-bell" (click)="l10n.toggle()" title="English / Ø¹Ø±Ø¨ÙŠ">
           <i class="fa-solid fa-globe"></i>
         </button>
         <button type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
@@ -134,7 +135,7 @@
     <!-- BODY -->
     <div class="dsh-body">
 
-      <!-- ── Title bar ── -->
+      <!-- â”€â”€ Title bar â”€â”€ -->
       <div class="fp-title-bar">
         <div class="fp-title-left">
           <div class="fp-title-ico">
@@ -165,7 +166,7 @@
         </div>
       </div>
 
-      <!-- ── Carousel ── -->
+      <!-- â”€â”€ Carousel â”€â”€ -->
       <div class="fp-carousel-section card">
         <button type="button" class="fp-nav-btn fp-nav-btn--left" (click)="scrollCarousel(-1)">
           <i class="fa-solid fa-chevron-left"></i>
@@ -225,7 +226,7 @@
         </button>
       </div>
 
-      <!-- ── Profile Detail Panel ── -->
+      <!-- â”€â”€ Profile Detail Panel â”€â”€ -->
       @if (selectedProfile()) {
       <div class="fp-detail-card card">
 
@@ -262,12 +263,12 @@
                 {{ formatDob(selectedDetail()!.dateOfBirth) }}
                 ({{ getAge(selectedDetail()!.dateOfBirth) }} {{ t().family.yrs }})
               </span>
-              <span class="fp-meta-sep">·</span>
+              <span class="fp-meta-sep">Â·</span>
               <span class="fp-meta-item">
                 <i class="fa-solid fa-person"></i>
                 {{ getGenderLabel(selectedDetail()!.gender) }}
               </span>
-              <span class="fp-meta-sep">·</span>
+              <span class="fp-meta-sep">Â·</span>
               <span class="fp-meta-item">
                 <i class="fa-solid fa-droplet"></i>
                 {{ formatBloodType(selectedDetail()!.bloodType) }}
@@ -409,7 +410,7 @@
         </div>
 
 
-        <!-- ─── Tab content ─── -->
+        <!-- â”€â”€â”€ Tab content â”€â”€â”€ -->
         <div class="fp-tab-content" [class.tab-animating]="tabAnimating()"
           [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
 
@@ -463,9 +464,9 @@
               <p class="fp-manage-meds-title">{{ t().family.medicalRecordsTab }}</p>
               <p class="fp-manage-meds-sub">
                 @if (selectedProfile()!.accessRole === 'Viewer') {
-                  {{ t().family.viewMedicalRecords }} — {{ selectedProfile()!.firstName }}
+                  {{ t().family.viewMedicalRecords }} â€” {{ selectedProfile()!.firstName }}
                 } @else {
-                  {{ t().family.manageMedicalRecords }} — {{ selectedProfile()!.firstName }}
+                  {{ t().family.manageMedicalRecords }} â€” {{ selectedProfile()!.firstName }}
                 }
               </p>
             </div>
@@ -491,9 +492,9 @@
               <p class="fp-manage-meds-title">{{ t().family.appointmentsTab }}</p>
               <p class="fp-manage-meds-sub">
                 @if (selectedProfile()!.accessRole === 'Viewer') {
-                  {{ t().family.viewAppointments }} — {{ selectedProfile()!.firstName }}
+                  {{ t().family.viewAppointments }} â€” {{ selectedProfile()!.firstName }}
                 } @else {
-                  {{ t().family.manageAppointments }} — {{ selectedProfile()!.firstName }}
+                  {{ t().family.manageAppointments }} â€” {{ selectedProfile()!.firstName }}
                 }
               </p>
             </div>
@@ -627,9 +628,9 @@
 </div><!-- /dsh -->
 
 
-<!-- ══════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      ADD FAMILY MEMBER MODAL
-══════════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 @if (showAddModal()) {
 <div class="fp-overlay" (click)="closeAddModal()">
   <div class="fp-modal" (click)="$event.stopPropagation()">
@@ -659,7 +660,7 @@
       </button>
     </div>
 
-    <!-- ─ Step: Choose ─ -->
+    <!-- â”€ Step: Choose â”€ -->
     @if (addStep() === 'choose') {
     <div class="fp-modal-body fp-choose-body">
       <div class="fp-choose-card" (click)="goToCreate()">
@@ -685,7 +686,7 @@
     </div>
     }
 
-    <!-- ─ Step: Create managed profile ─ -->
+    <!-- â”€ Step: Create managed profile â”€ -->
     @if (addStep() === 'create') {
     <div class="fp-modal-body">
       @if (errorMessage) {
@@ -837,7 +838,7 @@
     </div>
     }
 
-    <!-- ─ Step: Invite ─ -->
+    <!-- â”€ Step: Invite â”€ -->
     @if (addStep() === 'invite') {
     <div class="fp-modal-body">
       @if (errorMessage) {
@@ -894,7 +895,7 @@
     </div>
     }
 
-    <!-- ─ Step: Invited (success) ─ -->
+    <!-- â”€ Step: Invited (success) â”€ -->
     @if (addStep() === 'invited') {
     <div class="fp-modal-body fp-success-body">
       <div class="fp-success-ico">
@@ -915,9 +916,9 @@
 }
 
 
-<!-- ══════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      EDIT PROFILE MODAL
-══════════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 @if (showEditModal()) {
 <div class="fp-overlay" (click)="closeEditModal()">
   <div class="fp-modal fp-modal--wide" (click)="$event.stopPropagation()">
@@ -1076,9 +1077,9 @@
 }
 
 
-<!-- ══════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      INVITATIONS PANEL
-══════════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 @if (showInvitationsPanel()) {
 <div class="fp-overlay" (click)="showInvitationsPanel.set(false)">
   <div class="fp-modal fp-modal--wide" (click)="$event.stopPropagation()">
@@ -1125,7 +1126,7 @@
             </p>
             <p class="fp-inv-meta">
               {{ t().family.profileLabel }} {{ inv.profileFirstName }} {{ inv.profileLastName }}
-              · {{ t().family.roleLabel }} {{ inv.role }}
+              Â· {{ t().family.roleLabel }} {{ inv.role }}
             </p>
           </div>
           <div class="fp-inv-meta-right">
@@ -1176,7 +1177,7 @@
               }
             </p>
             <p class="fp-inv-meta">
-              {{ inv.granteeEmail }} · {{ t().family.profileLabel }} {{ inv.profileFirstName }} {{ inv.profileLastName }} · {{ t().family.roleLabel }} {{ inv.role
+              {{ inv.granteeEmail }} Â· {{ t().family.profileLabel }} {{ inv.profileFirstName }} {{ inv.profileLastName }} Â· {{ t().family.roleLabel }} {{ inv.role
               }}
             </p>
           </div>
@@ -1204,9 +1205,9 @@
 }
 
 
-<!-- ══════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      SUPERVISION SETTINGS MODAL
-══════════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 @if (showSupervisionModal()) {
 <div class="fp-sup-overlay" (click)="closeSupervisionModal()">
   <div class="fp-sup-modal" (click)="$event.stopPropagation()">
@@ -1245,7 +1246,7 @@
 
     <div class="fp-modal-body" style="padding:0">
 
-      <!-- ── Tab 1: People I Supervise ── -->
+      <!-- â”€â”€ Tab 1: People I Supervise â”€â”€ -->
       @if (supervisionTab() === 'supervising') {
       <div class="fp-sup-tab-body">
         <!-- Search -->
@@ -1315,7 +1316,7 @@
       </div>
       }
 
-      <!-- ── Tab 2: People Who Supervise Me ── -->
+      <!-- â”€â”€ Tab 2: People Who Supervise Me â”€â”€ -->
       @if (supervisionTab() === 'supervised') {
       <div class="fp-sup-tab-body">
         <!-- Search -->
@@ -1408,9 +1409,9 @@
 }
 
 
-<!-- ══════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      MODIFY ACCESS SUB-MODAL
-══════════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 @if (showModifyModal()) {
 <div class="fp-sup-overlay fp-sup-overlay--dim" (click)="closeModifyModal()">
   <div class="fp-sup-sub-modal" (click)="$event.stopPropagation()">
@@ -1461,9 +1462,9 @@
 }
 
 
-<!-- ══════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      REMOVE ACCESS CONFIRM MODAL
-══════════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 @if (showRemoveConfirm()) {
 <div class="fp-sup-overlay fp-sup-overlay--dim" (click)="closeRemoveConfirm()">
   <div class="fp-sup-confirm-modal" (click)="$event.stopPropagation()">
@@ -1498,9 +1499,9 @@
 }
 
 
-<!-- ══════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      DELETE FAMILY MEMBER CONFIRM MODAL (three-dot menu)
-══════════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 @if (showDeleteConfirm()) {
 <div class="fp-sup-overlay fp-sup-overlay--dim" (click)="closeDeleteConfirm()">
   <div class="fp-sup-confirm-modal" (click)="$event.stopPropagation()">
@@ -1525,3 +1526,4 @@
   </div>
 </div>
 }
+

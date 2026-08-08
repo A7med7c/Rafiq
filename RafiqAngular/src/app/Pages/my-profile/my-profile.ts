@@ -20,6 +20,7 @@ import { ApiResponse } from '../../Modles/api-response';
 import { map, switchMap } from 'rxjs';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
+import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 
 interface UpdateProfileBody {
   patientProfileId: string;
@@ -54,6 +55,7 @@ export class MyProfile implements OnInit {
   private readonly router             = inject(Router);
   private readonly elRef              = inject(ElementRef);
   private readonly http               = inject(HttpClient);
+  readonly analysisState              = inject(DocumentAnalysisStateService);
 
   // ── Sidebar / Header state ────────────────────────────────────────────────
   readonly sidebarCollapsed  = signal(false);
