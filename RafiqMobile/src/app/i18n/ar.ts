@@ -802,7 +802,9 @@ export const ar: Translations = {
     generalShouldBeImaging: 'دي أشعة — ارفعها في قسم الأشعات.',
     generalShouldBePrescription: 'دي روشتة — ارفعها في قسم الروشتات.',
     generalShouldBeMedicine: 'دي علبة دوا — امسحها ضوئيًا في قسم علبة الدوا.',
-    generalNotMedical: 'الصورة دي مش وثيقة طبية.'
+    generalNotMedical: 'الصورة دي مش وثيقة طبية.',
+    exactDocumentUploaded: 'المستند ده اترفع قبل كده للملف ده.',
+    externalServiceError: 'خدمة الذكاء الاصطناعي مش متاحة دلوقتي أو حجم الصورة كبير جدًا. جرب تاني أو دخل البيانات بنفسك.'
   },
 
   medications: {
