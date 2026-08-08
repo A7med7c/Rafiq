@@ -119,6 +119,9 @@
 </div>
 }
 
+<app-notification-permission-dialog></app-notification-permission-dialog>
+
+
 @if (notificationService.reminderModalOpen() && notificationService.activeReminder()) {
 <div class="reminder-modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: white; z-index: 9999;" (click)="notificationService.dismissReminder()">
   <div style="width: 100%; min-height: 100vh; background-color: #F8FAFC; display: flex; flex-direction: column;" (click)="$event.stopPropagation()">

@@ -23,6 +23,7 @@ import { AssistantAnchorDirective } from '../../core/assistant/directives/assist
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { TourEngineService } from '../../core/assistant/services/tour-engine.service';
 import { NotificationPermissionService, NotificationPermissionResult } from '../../Services/notification-permission.service';
+import { NotificationPermissionGuardService } from '../../Services/notification-permission-guard.service';
 
 const DEMO_TOUR_MEDICINE: UserMedicine = {
   id: 'demo-tour-med-1',
@@ -154,7 +155,7 @@ export class Medications implements OnInit, OnDestroy {
   private readonly fpSvc = inject(FamilyProfilesService);
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly reviewTracking = inject(ReviewTrackingService);
-  private readonly notificationPermissionService = inject(NotificationPermissionService);
+  private readonly notificationPermissionGuardService = inject(NotificationPermissionGuardService);
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {
@@ -1226,9 +1227,9 @@ export class Medications implements OnInit, OnDestroy {
 
   // ── Display helpers ───────────────────────────────────────────────────────
   formatTime(time: string): string {
-    // "08:00:00" → "08:00 AM"
     const [h, m] = time.split(':').map(Number);
-    const period = h >= 12 ? 'PM' : 'AM';
+    const isAr = this.l10n.lang() === 'ar';
+    const period = h >= 12 ? (isAr ? 'مساءً' : 'PM') : (isAr ? 'صباحاً' : 'AM');
     const hour = h % 12 || 12;
     return `${String(hour).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
   }
@@ -1415,10 +1416,19 @@ export class Medications implements OnInit, OnDestroy {
     this.editReminderIds.set([]);
   }
 
-  saveNewReminder(): void {
+  async saveNewReminder(): Promise<void> {
     if (!this.reminderFormValid) return;
     const medId = this.addReminderMedicineId();
     if (!medId) return;
+
+    // GUARD HERE
+    if (this.reminderForm.notificationsEnabled !== false) {
+      const hasPerm = await this.notificationPermissionGuardService.ensurePermission();
+      if (!hasPerm) {
+          this.toast(this.t().notificationPermission.medicationSavedNoNotifs || 'Reminders require notification permission.', 'error');
+          return;
+      }
+    }
 
     this.addReminderSaving.set(true);
     const f = this.reminderForm;
@@ -1445,12 +1455,6 @@ export class Medications implements OnInit, OnDestroy {
           this.confirmedReminderRepeat.set(f.repeatType);
           this.confirmedReminderEnd.set(f.repeatType === 'Once' ? '' : f.endDate);
           this.showReminderConfirmation.set(true);
-
-          this.notificationPermissionService.ensurePermission().then(result => {
-             if (result === NotificationPermissionResult.Denied || result === NotificationPermissionResult.PermanentlyDenied) {
-                 this.toast(this.t().notificationPermission.medicationSavedNoNotifs, 'error');
-             }
-          });
         },
         error: err => {
           this.toast(this.t().medications.saveReminderFailed, 'error');
@@ -1500,12 +1504,6 @@ export class Medications implements OnInit, OnDestroy {
             this.closeAddReminder();
             this.notifSvc.notifyReminderChanged();
             this.toast(this.t().medications.reminderUpdated.replace('{name}', medName), 'success');
-
-            this.notificationPermissionService.ensurePermission().then(result => {
-               if (result === NotificationPermissionResult.Denied || result === NotificationPermissionResult.PermanentlyDenied) {
-                   this.toast(this.t().notificationPermission.medicationSavedNoNotifs, 'error');
-               }
-            });
           },
           error: err => {
             this.toast(this.t().medications.updateReminderFailed, 'error');
@@ -1522,9 +1520,19 @@ export class Medications implements OnInit, OnDestroy {
   }
 
   // ── Toggle (pause/resume) all reminders for a medicine ───────────────────
-  toggleAllReminders(medId: string): void {
+  async toggleAllReminders(medId: string): Promise<void> {
     const reminders = this.getReminders(medId);
     if (reminders.length === 0) return;
+    
+    const isCurrentlyPaused = this.isPaused(medId);
+    // If currently paused, they are trying to resume/enable them. Check permissions.
+    if (isCurrentlyPaused) {
+      const hasPerm = await this.notificationPermissionGuardService.ensurePermission();
+      if (!hasPerm) {
+          this.toast(this.t().notificationPermission.medicationSavedNoNotifs || 'Reminders require notification permission.', 'error');
+          return;
+      }
+    }
 
     // Optimistic update
     const oldReminders = [...reminders];

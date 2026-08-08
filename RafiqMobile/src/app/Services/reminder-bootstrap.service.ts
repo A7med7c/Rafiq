@@ -75,6 +75,18 @@ export class ReminderBootstrapService {
   }
 
   /**
+   * Force an immediate sync and alarm schedule.
+   * Useful when a new reminder is created online and needs to be scheduled natively.
+   */
+  async forceSync(): Promise<void> {
+    if (!this.authSvc.isLoggedIn) return;
+    const profileId = await this.resolveProfileId();
+    if (!profileId) return;
+
+    await this.syncFromServer(profileId);
+  }
+
+  /**
    * Call after logout to allow the next login to re-run bootstrap.
    * Does not touch SQLite — OfflineReminderService.syncFromServer will diff
    * on the next bootstrap and remove any stale reminders.

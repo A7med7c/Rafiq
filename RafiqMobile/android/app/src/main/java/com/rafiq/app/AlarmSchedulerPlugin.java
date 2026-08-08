@@ -84,6 +84,9 @@ public class AlarmSchedulerPlugin extends Plugin {
         AlarmReceiver.scheduleAlarm(
             getContext(), reminderId, reminderType, title, body, scheduledAt, triggerAtMillis);
 
+        NativeReminderStore.saveAlarm(
+            getContext(), reminderId, reminderType, title, body, scheduledAt, triggerAtMillis);
+
         JSObject result = new JSObject();
         result.put("scheduled", true);
         result.put("reminderId", reminderId);
@@ -99,6 +102,8 @@ public class AlarmSchedulerPlugin extends Plugin {
         }
 
         AlarmReceiver.cancelAlarm(getContext(), reminderId);
+
+        NativeReminderStore.removeAlarm(getContext(), reminderId);
 
         JSObject result = new JSObject();
         result.put("cancelled", true);
