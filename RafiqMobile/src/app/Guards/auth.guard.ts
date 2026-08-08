@@ -1,29 +1,40 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
-import { map, of } from 'rxjs';
+import { CanActivateFn, Router, UrlTree } from '@angular/router';
+import { map, of, switchMap, Observable } from 'rxjs';
 import { AuthService } from '../Services/auth-service';
+import { HealthProfileService } from '../Services/health-profile.service';
 import { TokenStorageService } from '../Services/token-storage-service';
 
 export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
+  const healthProfileSvc = inject(HealthProfileService);
   const tokenStorage = inject(TokenStorageService);
   const router = inject(Router);
 
-  // Fast path: tokens in storage → user is authenticated (profile may not yet
-  // be loaded into currentUser, e.g. new user completing onboarding).
+  const checkProfile = (): Observable<boolean | UrlTree> => {
+    if (authService.currentUser?.role === 'Admin') {
+      return of(true);
+    }
+    return healthProfileSvc.hasProfile().pipe(
+      map((hasProfile) => {
+        if (hasProfile) {
+          return true;
+        }
+        return router.createUrlTree(['/onboarding/welcome']);
+      })
+    );
+  };
+
   if (tokenStorage.isLoggedIn()) {
-    return of(true);
+    return checkProfile();
   }
 
   return authService.initializeSession().pipe(
-    map((user) => {
-      // Allow through if we got a user object, OR if tokens appeared during the
-      // session init (e.g. the refresh succeeded and restored the tokens).
+    switchMap((user) => {
       if (user || tokenStorage.isLoggedIn()) {
-        return true;
+        return checkProfile();
       }
-
-      return router.createUrlTree(['/login']);
+      return of(router.createUrlTree(['/login']));
     })
   );
 };

@@ -47,6 +47,12 @@ const defaultUploadState = (): UploadState => ({
   indeterminate: false,
 });
 
+export interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'error';
+}
+
 export interface ReviewLabResult {
   id: string;
   testName: string;
@@ -170,6 +176,20 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly tabDirection = signal<'left' | 'right'>('left');
   readonly tabAnimating = signal(false);
   readonly mobileTabMenuOpen = signal(false);
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  private toastSeq = 0;
+  readonly toasts = signal<Toast[]>([]);
+
+  toast(message: string, type: 'success' | 'error' = 'success'): void {
+    const id = ++this.toastSeq;
+    this.toasts.update(t => [...t, { id, message, type }]);
+    setTimeout(() => this.toasts.update(t => t.filter(x => x.id !== id)), 4500);
+  }
+
+  dismissToast(id: number): void {
+    this.toasts.update(t => t.filter(x => x.id !== id));
+  }
 
   readonly lightboxUrl = signal<string | null>(null);
   readonly detailImageFailed = signal(false);
@@ -922,7 +942,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
           this.documentAnalysisState.failSyncUpload(tempId, v.imaging);
                   } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
           this.documentAnalysisState.failSyncUpload(tempId, v.prescription);
-                  } else if (errCode?.startsWith('UNREADABLE_DOCUMENT_')) {
+                  } else if (errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED' || err?.error?.message === 'This exact document has already been uploaded to this profile.') {
+          this.documentAnalysisState.failSyncUpload(tempId, (v as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.');
+        } else if (errCode?.startsWith('UNREADABLE_DOCUMENT_')) {
           this.documentAnalysisState.failSyncUpload(tempId, 'Document unreadable — enter manually.');
           this._failedFile = file;
           this._failedType = type;
@@ -930,7 +952,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
           this.aiFailIsUnreadable.set(true);
           this.showAiFailDialog.set(true);
         } else {
-          const reason = err?.error?.message || 'Analysis failed. Please try again.';
+          let reason = err?.error?.message || 'Analysis failed. Please try again.';
+          if (reason === 'The uploaded image does not appear to be a medical document.') {
+            reason = (v as any).generalNotMedical || 'This does not appear to be a medical document.';
+          } else if (reason === 'External service error' || reason === 'External service error.') {
+            reason = (v as any).externalServiceError || 'External service error. Please try again.';
+          }
           this.documentAnalysisState.failSyncUpload(tempId, reason);
           this._failedFile = file;
           this._failedType = type;
@@ -1076,10 +1103,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       const payload = {
         doctorName: rf.doctorName, patientName: rf.patientName,
         prescriptionDate: rf.prescriptionDate, imagePath: rf.imagePath,
-        medicines: rf.prescriptionMedicines.map(m => ({
-          medicineName: m.medicineName, dosage: m.dosage, frequency: m.frequency,
-          duration: m.duration, instructions: m.instructions,
-        })),
+        medicines: rf.prescriptionMedicines
+          .filter((_, i) => this.addedMedIndices().has(i))
+          .map(m => ({
+            medicineName: m.medicineName, dosage: m.dosage, frequency: m.frequency,
+            duration: m.duration, instructions: m.instructions,
+          })),
       };
       request$ = rf.mode === 'edit' && rf.recordId
         ? this.http.put(`${this.base}/prescriptions/${rf.recordId}`, payload)
@@ -1097,6 +1126,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
     request$.subscribe({
       next: (res: any) => {
+        const hasAddedMedicines = this.addedMedIndices().size > 0;
         this.reviewSaving.set(false);
         this.reviewForm.set(null);
         this._reviewFormSnapshot = null;
@@ -1106,16 +1136,18 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.manualReviewMode.set(false);
         this.manualImageUploading.set(false);
         this.reviewDateError.set(null);
-                this.loadData();
+        this.loadData();
 
-        if (rf.type === 'prescription' && rf.mode !== 'edit') {
-          this.openReminderPrompt('multi');
-        } else if (rf.mode !== 'edit') {
+        if (rf.mode !== 'edit') {
           const savedId = res?.data?.id ?? null;
           if (savedId) {
             this.savedRecordId.set(savedId);
             this.showScanSuccessScreen.set(true);
           }
+        }
+
+        if (rf.type === 'prescription' && rf.mode !== 'edit' && hasAddedMedicines) {
+          this.openReminderPrompt('multi');
         }
       },
       error: err => {
@@ -1148,6 +1180,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
         if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
           this.documentAnalysisState.failSyncUpload(tempId, v.medicine);
+        } else if (errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED' || err?.error?.message === 'This exact document has already been uploaded to this profile.') {
+          this.documentAnalysisState.failSyncUpload(tempId, (v as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.');
         } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
           this.documentAnalysisState.failSyncUpload(tempId, v.medicineUnreadable);
           this._failedFile = file;
@@ -1333,7 +1367,20 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       },
       error: err => {
         this.scanSaving.set(false);
-              },
+        let msg = err?.error?.message ?? 'Failed to save record.';
+        if (err?.error?.errors) {
+          const errors = err.error.errors;
+          if (Array.isArray(errors) && errors.length > 0) {
+            msg = errors[0];
+          } else if (typeof errors === 'object') {
+            const firstKey = Object.keys(errors)[0];
+            if (firstKey && Array.isArray(errors[firstKey]) && errors[firstKey].length > 0) {
+              msg = errors[firstKey][0];
+            }
+          }
+        }
+        this.toast(msg, 'error');
+      },
     });
   }
 

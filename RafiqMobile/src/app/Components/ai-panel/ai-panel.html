@@ -1,17 +1,9 @@
 @if (isPanelOpen()) {
   <div class="ai-panel-overlay" (click)="closePanel()"></div>
 
-  <!-- Floating Close Button -->
-  @if (isPanelOpen() && !minimized() && !isHomePage()) {
-    <button class="ai-floating-close" (click)="closePanel()" [title]="t().common.close">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-  }
-
   <div class="ai-panel"
     [attr.dir]="l10n.dir()"
     [class.ai-panel--minimized]="minimized()"
-    [class.ai-panel--hidden]="minimized() && !isHomePage()"
     [class.ai-panel--maximized]="maximized()"
     [class.ai-panel--dragging]="isDragging()"
     [style.animation]="_suppressAnimation() ? 'none' : null"
