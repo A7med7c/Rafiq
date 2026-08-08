@@ -91,21 +91,12 @@
         <!-- Blood Type -->
         <div class="field">
           <label class="field-label">{{ t().onboarding.step1.bloodTypeLabel }}</label>
-          <div #bloodTrigger class="input-shell select-shell" [class.invalid]="isInvalid('bloodType')" (click)="toggleDropdown(bloodTrigger)">
-            <span class="blood-drop-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C12 2 5 10.5 5 15a7 7 0 0 0 14 0C19 10.5 12 2 12 2Z"/>
-              </svg>
-            </span>
-            <div class="custom-select-trigger" [class.placeholder]="!getSelectedBloodTypeLabel()">
-              {{ getSelectedBloodTypeLabel() || t().onboarding.step1.selectBloodType }}
-            </div>
-            <span class="select-arrow" [class.open]="dropdownOpen">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </span>
-          </div>
+          <app-custom-select
+            formControlName="bloodType"
+            [options]="bloodTypeSelectOptions"
+            [placeholder]="t().onboarding.step1.selectBloodType"
+            [invalid]="isInvalid('bloodType')"
+          ></app-custom-select>
           @if (isInvalid('bloodType')) {
             <p class="field-error">{{ t().onboarding.step1.bloodTypeError }}</p>
           }
@@ -146,24 +137,3 @@
   </div> <!-- /onboarding-layout -->
 
 </div>
-
-<!-- Fixed-position dropdown portal (escapes all overflow:hidden and appears above mascot) -->
-@if (dropdownOpen) {
-  <div class="dropdown-portal"
-       [style.top.px]="dropdownTop"
-       [style.left.px]="dropdownLeft"
-       [style.width.px]="dropdownWidth">
-    @for (bt of bloodTypes; track bt.value) {
-      <div class="dropdown-portal-item"
-           [class.selected]="form.get('bloodType')?.value === bt.value"
-           (click)="selectBloodType(bt.value, $event)">
-        <span>{{ bt.label }}</span>
-        @if (form.get('bloodType')?.value === bt.value) {
-          <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-        }
-      </div>
-    }
-  </div>
-}

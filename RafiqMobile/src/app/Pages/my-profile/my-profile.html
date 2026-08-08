@@ -230,15 +230,19 @@
           </div>
           <div class="mp-field">
             <label class="mp-field-label">{{ t().myProfile.dateOfBirthLabel }}</label>
-            <input class="mp-field-input" type="date" [(ngModel)]="personalForm.dateOfBirth" name="dob" required>
+            <app-date-picker
+              [(ngModel)]="personalForm.dateOfBirth"
+              name="dob"
+            ></app-date-picker>
           </div>
           <div class="mp-field">
             <label class="mp-field-label">{{ t().myProfile.genderLabel }}</label>
-            <select class="mp-field-input" [(ngModel)]="personalForm.gender" name="gender">
-              <option value="">{{ t().myProfile.selectGender }}</option>
-              <option value="Male">{{ t().myProfile.male }}</option>
-              <option value="Female">{{ t().myProfile.female }}</option>
-            </select>
+            <app-custom-select
+              [(ngModel)]="personalForm.gender"
+              name="gender"
+              [options]="genderSelectOptions"
+              [placeholder]="t().myProfile.selectGender"
+            ></app-custom-select>
           </div>
           @if (personalFormError()) {
             <div class="mp-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ personalFormError() }}</div>

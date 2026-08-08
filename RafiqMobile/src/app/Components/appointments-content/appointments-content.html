@@ -197,10 +197,17 @@
       </div>
 
       <div class="appts-date-wrap">
-        <i class="fa-regular fa-calendar appts-date-ico"></i>
-        <input type="date" class="appts-date-inp" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event); onFilterChange()">
+        <app-date-picker
+          [ngModel]="dateFrom()"
+          (ngModelChange)="dateFrom.set($event); onFilterChange()"
+          [placeholder]="l10n.isRtl() ? 'من' : 'From'"
+        ></app-date-picker>
         <span class="appts-date-sep">—</span>
-        <input type="date" class="appts-date-inp" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event); onFilterChange()">
+        <app-date-picker
+          [ngModel]="dateTo()"
+          (ngModelChange)="dateTo.set($event); onFilterChange()"
+          [placeholder]="l10n.isRtl() ? 'إلى' : 'To'"
+        ></app-date-picker>
       </div>
 
       @if (searchQuery() || dateFrom() || dateTo()) {
@@ -560,22 +567,22 @@
         <div style="display: flex; gap: 12px; margin-bottom: 24px;">
           <div style="flex: 1;">
             <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 12px;">{{ t().appointments.dateLbl }} *</h3>
-            <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px;">
-              <input type="date"
-                style="border: none; background: transparent; font-size: 16px; font-weight: 600; color: #1E293B; width: 100%; outline: none; font-family: inherit;"
-                [min]="minDate" [ngModel]="fDate()" (ngModelChange)="fDate.set($event)" />
-            </div>
+            <app-date-picker
+              [ngModel]="fDate()"
+              (ngModelChange)="fDate.set($event)"
+              [invalid]="!!formErrors()['date']"
+            ></app-date-picker>
             @if (formErrors()['date']) {
               <p style="color: #EF4444; font-size: 13px; margin-top: 4px;">{{ formErrors()['date'] }}</p>
             }
           </div>
           <div style="flex: 1;">
             <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 12px;">{{ t().appointments.timeLbl }} *</h3>
-            <div style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 16px;">
-              <input type="time"
-                style="border: none; background: transparent; font-size: 16px; font-weight: 600; color: #1E293B; width: 100%; outline: none; font-family: inherit;"
-                [min]="minTime" [ngModel]="fTime()" (ngModelChange)="fTime.set($event)" />
-            </div>
+            <app-time-picker
+              [ngModel]="fTime()"
+              (ngModelChange)="fTime.set($event)"
+              [invalid]="!!formErrors()['time']"
+            ></app-time-picker>
             @if (formErrors()['time']) {
               <p style="color: #EF4444; font-size: 13px; margin-top: 4px;">{{ formErrors()['time'] }}</p>
             }

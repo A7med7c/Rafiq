@@ -9,10 +9,13 @@ import { TourEngineService } from '../../../core/assistant/services/tour-engine.
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
 
+import { CustomSelectComponent, SelectOption } from '../../../Components/ui/custom-select/custom-select';
+import { DatePickerComponent } from '../../../Components/ui/date-picker/date-picker';
+
 @Component({
   selector: 'app-onboarding-step1',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent, CustomSelectComponent, DatePickerComponent],
   templateUrl: './onboarding-step1.html',
   styleUrl: './onboarding-step1.css',
 })
@@ -25,19 +28,17 @@ export class OnboardingStep1 implements OnInit, OnDestroy {
   protected readonly t = this.l10n.t;
 
   private valueSub?: Subscription;
-  dropdownOpen = false;
-  dropdownTop = 0;
-  dropdownLeft = 0;
-  dropdownWidth = 0;
 
   readonly today = new Date().toISOString().slice(0, 10);
 
   readonly steps = computed(() => this.t().onboarding.stepperLabels.map((label: string) => ({ label })));
 
-  readonly genderOptions = [
-    { value: Gender.Male, labelEn: 'Male', labelAr: 'ذكر' },
-    { value: Gender.Female, labelEn: 'Female', labelAr: 'أنثى' }
-  ];
+  get genderSelectOptions(): SelectOption[] {
+    return [
+      { value: Gender.Male, label: this.l10n.isRtl() ? 'ذكر' : 'Male' },
+      { value: Gender.Female, label: this.l10n.isRtl() ? 'أنثى' : 'Female' }
+    ];
+  }
 
   readonly form: FormGroup = this.fb.group({
     dateOfBirth: ['', [Validators.required, this.notFutureDateValidator]],
@@ -65,43 +66,6 @@ export class OnboardingStep1 implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.valueSub?.unsubscribe();
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.select-shell') && !target.closest('.dropdown-portal')) {
-      this.dropdownOpen = false;
-    }
-  }
-
-  toggleDropdown(trigger: HTMLElement): void {
-    if (this.dropdownOpen) {
-      this.dropdownOpen = false;
-      return;
-    }
-    const rect = trigger.getBoundingClientRect();
-    this.dropdownTop = rect.bottom + 6;
-    this.dropdownLeft = rect.left;
-    this.dropdownWidth = rect.width;
-    this.dropdownOpen = true;
-  }
-
-  selectGender(val: number, event: Event): void {
-    event.stopPropagation();
-    this.form.get('gender')?.setValue(val);
-    this.form.get('gender')?.markAsTouched();
-    this.form.get('gender')?.markAsDirty();
-    this.saveState();
-    this.dropdownOpen = false;
-  }
-
-  getSelectedGenderLabel(): string {
-    const val = this.form.get('gender')?.value;
-    if (val === '' || val === null || val === undefined) return '';
-    const found = this.genderOptions.find(g => g.value === Number(val));
-    if (!found) return '';
-    return this.l10n.isRtl() ? found.labelAr : found.labelEn;
   }
 
   private saveState(): void {

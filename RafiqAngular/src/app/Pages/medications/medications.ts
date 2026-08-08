@@ -95,10 +95,13 @@ interface Dose {
   ids: string[];
 }
 
+import { TimePickerComponent } from '../../Components/ui/time-picker/time-picker';
+import { DatePickerComponent } from '../../Components/ui/date-picker/date-picker';
+
 @Component({
   selector: 'app-medications',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent, TimePickerComponent, DatePickerComponent],
   templateUrl: './medications.html',
   styleUrl: './medications.css',
 })

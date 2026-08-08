@@ -68,10 +68,13 @@ const blankForm = (): ApptForm => ({
   notes: '',
 });
 
+import { TimePickerComponent } from '../../Components/ui/time-picker/time-picker';
+import { DatePickerComponent } from '../../Components/ui/date-picker/date-picker';
+
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent, TimePickerComponent, DatePickerComponent],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
 })

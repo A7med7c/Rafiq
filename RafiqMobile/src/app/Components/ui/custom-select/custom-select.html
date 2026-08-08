@@ -1,0 +1,31 @@
+<div class="custom-select-wrapper" [class.disabled]="disabled" [class.invalid]="invalid">
+  <div class="custom-select-trigger" (click)="toggleDropdown()">
+    <span class="trigger-label" [class.placeholder]="!getSelectedLabel()">
+      {{ getSelectedLabel() || placeholder }}
+    </span>
+    <span class="trigger-caret" [class.open]="isOpen">
+      <i class="fa-solid fa-chevron-down"></i>
+    </span>
+  </div>
+
+  @if (isOpen) {
+    <div class="custom-select-menu">
+      @for (opt of options; track opt.value) {
+        <div
+          class="custom-select-item"
+          [class.selected]="selectedValue === opt.value"
+          (click)="selectOption(opt, $event)">
+          <div class="item-left">
+            @if (opt.icon) {
+              <i [class]="opt.icon" class="item-icon"></i>
+            }
+            <span class="item-text">{{ opt.label }}</span>
+          </div>
+          @if (selectedValue === opt.value) {
+            <i class="fa-solid fa-check check-icon"></i>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

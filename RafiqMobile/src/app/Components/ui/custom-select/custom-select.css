@@ -1,0 +1,131 @@
+.custom-select-wrapper {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.custom-select-wrapper.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  background: #ffffff;
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  border-radius: 14px;
+  box-sizing: border-box;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-select-trigger:hover {
+  border-color: #0EAFD7;
+}
+
+.custom-select-wrapper.invalid .custom-select-trigger {
+  border-color: #ef4444;
+}
+
+.trigger-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trigger-label.placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.trigger-caret {
+  color: #64748b;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  margin-inline-start: 8px;
+}
+
+.trigger-caret.open {
+  transform: rotate(180deg);
+  color: #0EAFD7;
+}
+
+.custom-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #ffffff;
+  border: 2px solid #0EAFD7;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(14, 175, 215, 0.18);
+  padding: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  animation: selectMenuIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes selectMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.custom-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.custom-select-item:hover {
+  background: #f0f9ff;
+  color: #0EAFD7;
+}
+
+.custom-select-item.selected {
+  background: #0EAFD7;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.item-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.check-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  margin-inline-start: 8px;
+}

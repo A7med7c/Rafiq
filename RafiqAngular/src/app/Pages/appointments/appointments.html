@@ -467,15 +467,19 @@
 
           <div class="appts-date-wrap">
 
-            <i class="fa-regular fa-calendar appts-date-ico"></i>
-
-            <input type="date" class="appts-date-inp" [ngModel]="dateFrom()"
-              (ngModelChange)="dateFrom.set($event); onFilterChange()">
+            <app-date-picker
+              [ngModel]="dateFrom()"
+              (ngModelChange)="dateFrom.set($event); onFilterChange()"
+              [placeholder]="l10n.isRtl() ? 'من' : 'From'"
+            ></app-date-picker>
 
             <span class="appts-date-sep">â€”</span>
 
-            <input type="date" class="appts-date-inp" [ngModel]="dateTo()"
-              (ngModelChange)="dateTo.set($event); onFilterChange()">
+            <app-date-picker
+              [ngModel]="dateTo()"
+              (ngModelChange)="dateTo.set($event); onFilterChange()"
+              [placeholder]="l10n.isRtl() ? 'إلى' : 'To'"
+            ></app-date-picker>
 
           </div>
 
@@ -875,16 +879,22 @@
       <div class="field-row-2">
         <div class="field-group">
           <label class="field-lbl">{{ this.t().appointments.dateLbl }} *</label>
-          <input type="date" class="field-inp" [class.field-inp--err]="formErrors()['date']" [min]="minDate"
-            [ngModel]="fDate()" (ngModelChange)="fDate.set($event)">
+          <app-date-picker
+            [ngModel]="fDate()"
+            (ngModelChange)="fDate.set($event)"
+            [invalid]="!!formErrors()['date']"
+          ></app-date-picker>
           @if (formErrors()['date']) {
           <p class="field-err">{{ formErrors()['date'] }}</p>
           }
         </div>
         <div class="field-group">
           <label class="field-lbl">{{ this.t().appointments.timeLbl }} *</label>
-          <input type="time" class="field-inp" [class.field-inp--err]="formErrors()['time']" [min]="minTime"
-            [ngModel]="fTime()" (ngModelChange)="fTime.set($event)">
+          <app-time-picker
+            [ngModel]="fTime()"
+            (ngModelChange)="fTime.set($event)"
+            [invalid]="!!formErrors()['time']"
+          ></app-time-picker>
           @if (formErrors()['time']) {
           <p class="field-err">{{ formErrors()['time'] }}</p>
           }

@@ -35,10 +35,13 @@ interface Toast {
   type: 'success' | 'error';
 }
 
+import { TimePickerComponent } from '../ui/time-picker/time-picker';
+import { DatePickerComponent } from '../ui/date-picker/date-picker';
+
 @Component({
   selector: 'app-appointments-content',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TimePickerComponent, DatePickerComponent],
   templateUrl: './appointments-content.html',
   styleUrl: '../../Pages/appointments/appointments.css',
   encapsulation: ViewEncapsulation.None
@@ -52,7 +55,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   private readonly notifSvc = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly l10n  = inject(LocalizationService);
+  protected readonly l10n  = inject(LocalizationService);
   readonly t = this.l10n.t;
 
   // ── Data ─────────────────────────────────────────────────────────────────

@@ -34,10 +34,13 @@ interface UpdateProfileBody {
   relationship: string | null;
 }
 
+import { CustomSelectComponent, SelectOption } from '../../Components/ui/custom-select/custom-select';
+import { DatePickerComponent } from '../../Components/ui/date-picker/date-picker';
+
 @Component({
   selector: 'app-my-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AssistantAnchorDirective, BottomNav],
+  imports: [CommonModule, FormsModule, RouterLink, AssistantAnchorDirective, BottomNav, CustomSelectComponent, DatePickerComponent],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',
 })
@@ -86,6 +89,13 @@ export class MyProfile implements OnInit {
   readonly emailOtpResending = signal(false);
   personalForm = { firstName: '', lastName: '', dateOfBirth: '', gender: '', phoneNumber: '', email: '' };
   emailOtpCode = '';
+
+  get genderSelectOptions(): SelectOption[] {
+    return [
+      { value: 'Male', label: this.l10n.isRtl() ? 'ذَكَر' : 'Male' },
+      { value: 'Female', label: this.l10n.isRtl() ? 'أُنْثَى' : 'Female' },
+    ];
+  }
   readonly personalSaving = signal(false);
   readonly personalFormError = signal<string | null>(null);
   readonly emailOtpError = signal<string | null>(null);

@@ -981,21 +981,13 @@
         @for (t of reminderForm.reminderTimes; track $index) {
         <div class="rm-time-field" [class.rm-time-field--error]="!!timeErrors[$index]">
           <div class="rm-time-row">
-            <span class="rm-time-badge" [class.rm-time-badge--error]="!!timeErrors[$index]">
-              <i class="fa-solid"
-                [class.fa-clock]="!timeErrors[$index]"
-                [class.fa-triangle-exclamation]="!!timeErrors[$index]"></i>
-            </span>
-            <input type="time"
-              class="rm-time-input"
-              [class.rm-field--error]="!!timeErrors[$index]"
-              [class.rm-field--valid]="!!t && !timeErrors[$index]"
-              [value]="t"
-              [min]="reminderForm.startDate === todayDate ? currentTimeHHMM : ''"
-              [attr.aria-label]="'Reminder time ' + ($index + 1)"
-              [attr.aria-invalid]="!!timeErrors[$index]"
-              [attr.aria-describedby]="timeErrors[$index] ? 'time-err-' + $index : null"
-              (change)="updateReminderTime($index, $any($event.target).value)" />
+            <div style="flex: 1;">
+              <app-time-picker
+                [ngModel]="t"
+                (ngModelChange)="updateReminderTime($index, $event)"
+                [invalid]="!!timeErrors[$index]"
+              ></app-time-picker>
+            </div>
             @if (reminderForm.reminderTimes.length > 1) {
             <button type="button" class="rm-remove-btn"
               (click)="removeReminderTime($index)"
@@ -1032,14 +1024,11 @@
           <label class="rm-section-title" for="rm-start-date">
             <i class="fa-regular fa-calendar"></i> {{ t().medications.startDate }}
           </label>
-          <input id="rm-start-date" type="date"
-            class="rm-time-input"
-            [class.rm-field--error]="reminderForm.startDate < todayDate"
-            [class.rm-field--valid]="reminderForm.startDate >= todayDate"
+          <app-date-picker
             [(ngModel)]="reminderForm.startDate"
-            [min]="todayDate"
-            [attr.aria-label]="t().medications.startDate"
-            (ngModelChange)="onReminderStartDateChange()" />
+            (ngModelChange)="onReminderStartDateChange()"
+            [invalid]="reminderForm.startDate < todayDate"
+          ></app-date-picker>
           @if (reminderForm.startDate && reminderForm.startDate < todayDate) {
           <p class="rm-field-error" role="alert">
             <i class="fa-solid fa-circle-exclamation"></i> {{ t().medications.startDateError }}
@@ -1050,15 +1039,11 @@
           <label class="rm-section-title" for="rm-end-date">
             <i class="fa-regular fa-calendar-check"></i> {{ t().medications.endDate }}
           </label>
-          <input id="rm-end-date" type="date"
-            class="rm-time-input"
-            [class.rm-field--error]="reminderForm.repeatType !== 'Once' && !!reminderForm.endDate && reminderForm.endDate < reminderForm.startDate"
-            [class.rm-field--valid]="reminderForm.repeatType !== 'Once' && !!reminderForm.endDate && reminderForm.endDate >= reminderForm.startDate"
-            [class.rm-date-locked]="reminderForm.repeatType === 'Once'"
+          <app-date-picker
             [(ngModel)]="reminderForm.endDate"
-            [min]="minEndDate"
             [disabled]="reminderForm.repeatType === 'Once'"
-            [attr.aria-label]="t().medications.endDate" />
+            [invalid]="reminderForm.repeatType !== 'Once' && !!reminderForm.endDate && reminderForm.endDate < reminderForm.startDate"
+          ></app-date-picker>
           @if (reminderForm.repeatType !== 'Once' && reminderForm.endDate && reminderForm.endDate < reminderForm.startDate) {
           <p class="rm-field-error" role="alert">
             <i class="fa-solid fa-circle-exclamation"></i> {{ t().medications.endDateError }}

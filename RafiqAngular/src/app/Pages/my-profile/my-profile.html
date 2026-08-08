@@ -306,15 +306,19 @@
             <div class="mp-form-row">
               <div class="mp-form-field">
                 <label>{{ t().myProfile.dateOfBirthLabel }}</label>
-                <input type="date" [(ngModel)]="personalForm.dateOfBirth" name="dateOfBirth">
+                <app-date-picker
+                  [(ngModel)]="personalForm.dateOfBirth"
+                  name="dateOfBirth"
+                ></app-date-picker>
               </div>
               <div class="mp-form-field">
                 <label>{{ t().myProfile.genderLabel }}</label>
-                <select [(ngModel)]="personalForm.gender" name="gender">
-                  <option value="">{{ t().myProfile.selectGender }}</option>
-                  <option value="Male">{{ t().myProfile.male }}</option>
-                  <option value="Female">{{ t().myProfile.female }}</option>
-                </select>
+                <app-custom-select
+                  [(ngModel)]="personalForm.gender"
+                  name="gender"
+                  [options]="genderSelectOptions"
+                  [placeholder]="t().myProfile.selectGender"
+                ></app-custom-select>
               </div>
             </div>
             <div class="mp-form-row">
