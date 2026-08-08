@@ -11,12 +11,14 @@ import {
 import { HealthProfileService } from './health-profile.service';
 import { ProfileSelectionService } from './profile-selection.service';
 import { UpcomingReminderDto } from './medication-reminders.service';
+import { LocalizationService } from './localization.service';
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentsService {
   private readonly http               = inject(HttpClient);
   private readonly healthProfileSvc   = inject(HealthProfileService);
   private readonly profileSelectSvc   = inject(ProfileSelectionService);
+  private readonly localization       = inject(LocalizationService);
   private readonly base               = `${environment.apiUrl}/appointments`;
 
   public lastHistoryTab: string = 'thisMonth';
@@ -57,8 +59,22 @@ export class AppointmentsService {
   getUpcomingForSync(profileId: string): Promise<UpcomingReminderDto[]> {
     return firstValueFrom(
       this.http
-        .get<ApiResponse<UpcomingReminderDto[]>>(`${this.base}/upcoming?profileId=${profileId}`)
-        .pipe(map(r => r.data ?? []))
+        .get<ApiResponse<AppointmentDto[]>>(`${this.base}/upcoming?profileId=${profileId}`)
+        .pipe(
+          map(r => r.data ?? []),
+          map(appts => appts.map(appt => {
+            const nc = this.localization.t().notifications;
+            return {
+              reminderId: appt.id,
+              title: appt.title,
+              body: appt.notes || nc.upcomingAppointmentBody.replace('{title}', appt.title).replace('{provider}', appt.provider),
+              reminderType: 'Appointment',
+              scheduledAt: appt.appointmentDateTime,
+              updatedAt: appt.updatedAt || appt.createdAt,
+              isDeleted: appt.status === 'Cancelled'
+            } as UpcomingReminderDto;
+          }))
+        )
     );
   }
 
