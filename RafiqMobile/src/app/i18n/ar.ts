@@ -1202,6 +1202,32 @@ export const ar: Translations = {
     statusLabel: 'الحالة',
   },
 
+  tour: {
+    step: 'الخطوة',
+    of: 'من',
+    skip: 'تخطي',
+    skipTour: 'تخطي الجولة',
+    previous: 'السابق',
+    previousStep: 'الخطوة السابقة',
+    next: 'التالي',
+    nextStep: 'الخطوة التالية',
+    finish: 'إنهاء الجولة',
+    mascotAria: 'رسالة رفيق',
+  },
+
+  notificationPermission: {
+    softPromptTitle: 'ابقَ على اطلاع',
+    softPromptDesc: 'قم بتفعيل الإشعارات لتلقي تذكيرات الأدوية والمواعيد. هذا سيساعدك على إدارة صحة عائلتك بفعالية.',
+    enableNotifications: 'تفعيل الإشعارات',
+    maybeLater: 'ربما لاحقاً',
+    deniedPromptTitle: 'الإشعارات معطلة',
+    deniedPromptDesc: 'لقد قمت بتعطيل الإشعارات بشكل دائم. افتح الإعدادات لتفعيلها إذا كنت ترغب في تلقي التذكيرات.',
+    openSettings: 'فتح الإعدادات',
+    cancel: 'إلغاء',
+    medicationSavedNoNotifs: 'تم حفظ الدواء بنجاح. الإشعارات معطلة، لذلك لن يتم إرسال تنبيهات التذكير حتى يتم تفعيل الإشعارات.',
+    appointmentSavedNoNotifs: 'تم حفظ تذكير الموعد. الإشعارات معطلة، لذلك لن يتم إرسال تنبيهات التذكير حتى يتم تفعيل الإشعارات.',
+  },
+
   onboarding: {
     stepperLabels: ['المعلومات الشخصية', 'المعلومات الجسدية', 'الطوارئ', 'الحساسية', 'الأمراض المزمنة', 'المراجعة'],
     welcome: {
@@ -1661,17 +1687,4 @@ export const ar: Translations = {
     contactsValidationFailed: 'فشل التحقق من بيانات جهات الاتصال.',
   },
 
-  tour: {
-    step: 'الخطوة',
-    of: 'من',
-    skip: 'تخطي',
-    skipTour: 'تخطي الجولة',
-    previous: 'السابق',
-    previousStep: 'الخطوة السابقة',
-    next: 'التالي',
-    nextStep: 'الخطوة التالية',
-    finish: 'إنهاء الجولة',
-    mascotAria: 'رسالة رفيق',
-  },
-
-};
+};

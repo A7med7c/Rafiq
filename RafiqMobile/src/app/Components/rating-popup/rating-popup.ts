@@ -68,7 +68,7 @@ export class RatingPopup {
       },
       error: err => {
         this.submitting.set(false);
-        const msg = err?.error?.message ?? err?.error?.title ?? null;
+        const msg = err?.error?.title ?? null;
         this.error.set(msg ?? this.t().ratingPopup.submitError);
       },
     });

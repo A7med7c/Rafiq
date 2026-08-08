@@ -1,0 +1,35 @@
+@if (isOpen()) {
+<div class="np-overlay" (click)="handleAction('cancel')"></div>
+
+<div class="np-card" role="dialog" aria-modal="true" aria-labelledby="np-title">
+  <button type="button" class="np-close" (click)="handleAction('cancel')" [attr.aria-label]="l10n.t().common.close">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+
+  <div class="np-icon-wrap">
+    <i class="fa-solid fa-bell"></i>
+  </div>
+  
+  @if (promptType() === 'soft') {
+    <h3 class="np-title" id="np-title">{{ l10n.t().notificationPermission.softPromptTitle }}</h3>
+    <p class="np-sub">{{ l10n.t().notificationPermission.softPromptDesc }}</p>
+
+    <button type="button" class="np-submit" (click)="handleAction('enable')">
+      {{ l10n.t().notificationPermission.enableNotifications }}
+    </button>
+    <button type="button" class="np-not-now" (click)="handleAction('later')">
+      {{ l10n.t().notificationPermission.maybeLater }}
+    </button>
+  } @else {
+    <h3 class="np-title" id="np-title">{{ l10n.t().notificationPermission.deniedPromptTitle }}</h3>
+    <p class="np-sub">{{ l10n.t().notificationPermission.deniedPromptDesc }}</p>
+
+    <button type="button" class="np-submit" (click)="handleAction('settings')">
+      <i class="fa-solid fa-gear"></i> {{ l10n.t().notificationPermission.openSettings }}
+    </button>
+    <button type="button" class="np-not-now" (click)="handleAction('cancel')">
+      {{ l10n.t().common.cancel }}
+    </button>
+  }
+</div>
+}

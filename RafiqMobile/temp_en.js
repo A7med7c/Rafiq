@@ -1,4 +1,4 @@
-export const en = {
+module.exports = {
   Validation: {
     TitleCannotBeEmpty: `Title cannot be empty.`,
     TitleCannotExceed255Characters: `Title cannot exceed 255 characters.`,
@@ -1672,19 +1672,5 @@ export const en = {
     finish: 'Finish Tour',
     mascotAria: 'Rafiq Message',
   },
-  
-  notificationPermission: {
-    softPromptTitle: 'Stay on Track',
-    softPromptDesc: 'Enable notifications to receive medication and appointment reminders. This helps you manage your family\'s health effectively.',
-    enableNotifications: 'Enable Notifications',
-    maybeLater: 'Maybe Later',
-    deniedPromptTitle: 'Notifications Disabled',
-    deniedPromptDesc: 'You have permanently disabled notifications. Open Settings to enable them if you wish to receive reminders.',
-    openSettings: 'Open Settings',
-    cancel: 'Cancel',
-    medicationSavedNoNotifs: 'Medication saved successfully. Notifications are disabled, so reminder alerts won\'t be delivered until notifications are enabled.',
-    appointmentSavedNoNotifs: 'Appointment reminder saved. Notifications are disabled, so reminder alerts won\'t be delivered until notifications are enabled.',
-  },
 };
 
-export type Translations = typeof en;
