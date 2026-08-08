@@ -182,6 +182,7 @@ export const en = {
     verifyEmailBeforeLogin: 'Please verify your email before logging in.',
     loginSuccess: 'Login successful.',
     googleLoginSuccess: 'Google login successful.',
+    unverifiedRedirectMessage: 'Your account is not verified. A verification code has been sent to your email.',
     noAccount: "Don't have an account?",
     signUp: 'Sign Up',
   },
@@ -218,6 +219,7 @@ export const en = {
     logIn: 'Log In',
     showPassword: 'Show password',
     hidePassword: 'Hide password',
+    accountCreatedSuccess: "Your account has been created successfully. We've sent a verification code to your email.",
   },
 
   forgotPassword: {
@@ -246,6 +248,7 @@ export const en = {
     passwordsNoMatch: 'Passwords do not match',
     resetting: 'Resetting...',
     resetPassword: 'Reset Password',
+    otpExpired: 'OTP has expired or maximum verification attempts have been reached',
     rememberedPassword: 'Remembered your password?',
     logIn: 'Log In',
     showPassword: 'Show password',
@@ -272,6 +275,10 @@ export const en = {
     alreadyVerified: 'Already verified?',
     logIn: 'Log In',
     seconds: 's',
+    emailRequired: 'Email is required.',
+    codeRequired: 'Verification code is required.',
+    successMessage: 'Your account has been verified successfully.',
+    resendSuccessMessage: 'Verification code resent successfully.',
   },
 
   dashboard: {
@@ -1633,6 +1640,37 @@ export const en = {
     appointments: 'Appointments',
     medications: 'Medications & Rem',
     profile: 'Profile',
+  },
+  familyErrors: {
+    createProfileFailed: 'Failed to create profile.',
+    sendInvitationFailed: 'Failed to send invitation.',
+    updateProfileFailed: 'Failed to update profile.',
+    updateAllergiesFailed: 'Failed to update allergies or medical conditions.',
+  },
+
+  validation: {
+    invalidEmailAddress: 'Invalid email address.',
+    weightBetween: 'Weight must be between 1 and 500.',
+    heightBetween: 'Height must be between 30 and 300.',
+    medicineNameRequired: 'Medicine name is required.',
+    dosageRequired: 'Dosage is required.',
+    frequencyRequired: 'Frequency is required.',
+    durationRequired: 'Duration is required.',
+    selectedTimePassed: 'The selected time has already passed.',
+    contactsValidationFailed: 'Contacts validation failed.',
+  },
+
+  tour: {
+    step: 'Step',
+    of: 'of',
+    skip: 'Skip',
+    skipTour: 'Skip Tour',
+    previous: 'Previous',
+    previousStep: 'Previous Step',
+    next: 'Next',
+    nextStep: 'Next Step',
+    finish: 'Finish Tour',
+    mascotAria: 'Rafiq Message',
   },
 };
 
