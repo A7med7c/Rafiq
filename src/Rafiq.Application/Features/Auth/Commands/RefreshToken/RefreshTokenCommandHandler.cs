@@ -82,6 +82,8 @@ public sealed class RefreshTokenCommandHandler(
             newRefreshToken,
             cancellationToken);
 
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
         var contacts = await emergencyContactRepository.GetAllByUserIdAsync(existingToken.UserId, cancellationToken);
         var hasEmergencyContacts = contacts.Any();
 
