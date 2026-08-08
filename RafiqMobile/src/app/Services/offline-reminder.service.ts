@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-import { LocalNotifications } from '@capacitor/local-notifications';
 import { SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
 import { MedicationReminderNotificationPayload, AppointmentReminderNotificationPayload } from './signalr.service';
 import { UpcomingReminderDto } from './medication-reminders.service';
@@ -114,7 +113,6 @@ export class OfflineReminderService {
       // (a) Server says deleted → cancel + remove
       if (item.isDeleted) {
         if (existing) {
-          await this.cancelNotification(existing.notificationId);
           await this.deleteRow(item.reminderId);
         }
         continue;
@@ -135,7 +133,6 @@ export class OfflineReminderService {
     // Step 3: remove local rows the server no longer returns
     for (const row of localMap.values()) {
       if (!serverIds.has(row.serverId)) {
-        await this.cancelNotification(row.notificationId);
         await this.deleteRow(row.serverId);
       }
     }
@@ -158,22 +155,11 @@ export class OfflineReminderService {
       if (fireAt > now) {
         const notificationId = this.stableId(row.serverId);
         if (row.notificationId !== notificationId) {
-          await this.cancelNotification(row.notificationId);
           await this.db.run(
             `UPDATE ${this.tableName} SET notificationId = ? WHERE serverId = ?`,
             [notificationId, row.serverId]
           );
         }
-
-        await LocalNotifications.schedule({
-          notifications: [{
-            id: notificationId,
-            title: row.title,
-            body: row.body,
-            schedule: { at: new Date(row.reminderTime) },
-            extra: { sourceId: row.serverId, action: row.type === 'reminder' ? 'open-reminder' : 'open-appointment' },
-          }],
-        });
       } else {
         // Past reminder — clean up
         await this.deleteRow(row.serverId);
@@ -211,21 +197,6 @@ export class OfflineReminderService {
     const existing = await this.loadOne(serverId);
     const notificationId = this.stableId(serverId);
 
-    // Cancel old notification before rescheduling
-    if (existing) {
-      await this.cancelNotification(notificationId);
-    }
-
-    await LocalNotifications.schedule({
-      notifications: [{
-        id: notificationId,
-        title,
-        body,
-        schedule: { at: new Date(reminderTime) },
-        extra: { sourceId: serverId, action: kind === 'reminder' ? 'open-reminder' : 'open-appointment' },
-      }],
-    });
-
     await this.db.run(
       `INSERT OR REPLACE INTO ${this.tableName}
          (serverId, notificationId, title, body, type, reminderTime, lastUpdated, status)
@@ -240,10 +211,6 @@ export class OfflineReminderService {
    */
   async removeReminder(serverId: string): Promise<void> {
     await this.init();
-    const existing = await this.loadOne(serverId);
-    if (existing) {
-      await this.cancelNotification(existing.notificationId);
-    }
     await this.deleteRow(serverId);
   }
 
@@ -261,19 +228,6 @@ export class OfflineReminderService {
 
   private async insertAndSchedule(item: UpcomingReminderDto): Promise<void> {
     const notificationId = this.stableId(item.reminderId);
-    const fireAt = new Date(item.scheduledAt);
-
-    if (fireAt.getTime() > Date.now()) {
-      await LocalNotifications.schedule({
-        notifications: [{
-          id: notificationId,
-          title: item.title,
-          body: item.body,
-          schedule: { at: fireAt },
-          extra: { sourceId: item.reminderId, action: item.reminderType === 'Medication' ? 'open-reminder' : 'open-appointment' },
-        }],
-      });
-    }
 
     await this.db.run(
       `INSERT INTO ${this.tableName}
@@ -287,20 +241,6 @@ export class OfflineReminderService {
 
   private async updateAndReschedule(existing: CachedReminder, item: UpcomingReminderDto): Promise<void> {
     const notificationId = this.stableId(item.reminderId);
-    await this.cancelNotification(existing.notificationId);
-
-    const fireAt = new Date(item.scheduledAt);
-    if (fireAt.getTime() > Date.now()) {
-      await LocalNotifications.schedule({
-        notifications: [{
-          id: notificationId,
-          title: item.title,
-          body: item.body,
-          schedule: { at: fireAt },
-          extra: { sourceId: item.reminderId, action: item.reminderType === 'Medication' ? 'open-reminder' : 'open-appointment' },
-        }],
-      });
-    }
 
     await this.db.run(
       `UPDATE ${this.tableName}
@@ -310,13 +250,6 @@ export class OfflineReminderService {
     );
   }
 
-  private async cancelNotification(notificationId: number): Promise<void> {
-    try {
-      await LocalNotifications.cancel({ notifications: [{ id: notificationId }] });
-    } catch {
-      // Notification may have already fired — safe to ignore
-    }
-  }
 
   private async deleteRow(serverId: string): Promise<void> {
     await this.db.run(`DELETE FROM ${this.tableName} WHERE serverId = ?`, [serverId]);
