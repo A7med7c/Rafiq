@@ -1,4 +1,5 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { Subject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../Environments/Environment';
 import { AuthService } from './auth-service';
@@ -21,6 +22,7 @@ export interface TrackedDocument {
   failureReason: string | null;
   reviewData?: any;
   enqueuedAt: Date;
+  profileId?: string;
 }
 
 export interface PendingReviewRequest {
@@ -43,6 +45,9 @@ export class DocumentAnalysisStateService {
   );
 
   readonly pendingReview = signal<PendingReviewRequest | null>(null);
+
+  private readonly _cancelRequested = new Subject<string>();
+  readonly cancelRequested$ = this._cancelRequested.asObservable();
 
   private pollInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -96,11 +101,11 @@ export class DocumentAnalysisStateService {
 
   // ── Sync upload tracking (lab / imaging / prescription) ──────────────────
 
-  trackSyncUpload(tempId: string, title: string, uploadType: UploadDocType): void {
+  trackSyncUpload(tempId: string, title: string, uploadType: UploadDocType, profileId?: string): void {
     const doc: TrackedDocument = {
       documentId: tempId, title, imagePath: '', uploadType,
       status: 'Pending', documentType: null, aiSummary: null,
-      failureReason: null, enqueuedAt: new Date(),
+      failureReason: null, enqueuedAt: new Date(), profileId,
     };
     this.trackedDocuments.update(docs => [...docs, doc]);
   }
@@ -123,11 +128,11 @@ export class DocumentAnalysisStateService {
 
   // ── Async tracking (general documents via Hangfire) ──────────────────────
 
-  trackDocument(documentId: string, title: string, imagePath: string): void {
+  trackDocument(documentId: string, title: string, imagePath: string, profileId?: string): void {
     const doc: TrackedDocument = {
       documentId, title, imagePath, uploadType: 'general',
       status: 'Pending', documentType: null, aiSummary: null,
-      failureReason: null, enqueuedAt: new Date(),
+      failureReason: null, enqueuedAt: new Date(), profileId,
     };
     this.trackedDocuments.update(docs => [...docs, doc]);
   }
@@ -138,6 +143,11 @@ export class DocumentAnalysisStateService {
     if (!doc.reviewData) return;
     this.pendingReview.set({ uploadType: doc.uploadType, data: doc.reviewData });
     this.dismiss(doc.documentId);
+  }
+
+  cancelAnalysis(documentId: string): void {
+    this._cancelRequested.next(documentId);
+    this.dismiss(documentId);
   }
 
   clearPendingReview(): void {

@@ -422,6 +422,7 @@ export const en = {
     uploadingImage: 'Uploading image...',
     imagePreviewUnavailable: 'Image preview unavailable',
     noImageAttachedReview: 'No image attached',
+    duplicateDocument: 'Duplicate Document',
     ocrText: 'OCR Text',
     addRow: 'Add Row',
     medicineName: 'Medicine Name',

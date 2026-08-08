@@ -13,10 +13,10 @@ import { ScanMedicineBoxResponse, AddUserMedicinePayload } from '../../Modles/da
 import { environment } from '../../Environments/Environment';
 import { PdfService } from '../../Services/pdf.service';
 import { HealthProfileService } from '../../Services/health-profile.service';
-import { of, forkJoin, Subscription } from 'rxjs';
+import { of, forkJoin, Subscription, Subject } from 'rxjs';
 import { LocalizationService } from '../../Services/localization.service';
 import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
-import { switchMap, map } from 'rxjs';
+import { switchMap, map, takeUntil } from 'rxjs';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { localizeKnownApiMessage } from '../../Utils/api-error.util';
 import { MedicalWarningCardComponent } from '../medical-warning-card/medical-warning-card';
@@ -162,9 +162,16 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   private readonly documentAnalysisState = inject(DocumentAnalysisStateService);
   private readonly base = environment.apiUrl;
 
+  readonly showDuplicateWarningDialog = signal(false);
+  readonly duplicateWarningName = signal('');
+  _duplicateFile: File | null = null;
+  _duplicateType: 'lab' | 'imaging' | 'prescription' | 'general' | 'medicine' | 'medicine-save' | null = null;
+  _duplicateDesc: string = '';
+
   readonly allRecords = signal<UnifiedMedicalRecord[]>([]);
   readonly loading = signal(true);
   readonly searchQuery = signal('');
+
   readonly activeTab = signal<RecordTab>('all');
   readonly selectedRecord = signal<UnifiedMedicalRecord | null>(null);
   readonly dropdownOpen = signal(false);
@@ -231,6 +238,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly uploadLoadingLabel = signal('');
   private _uploadSub: Subscription | null = null;
   private _pendingUploadType: 'lab' | 'imaging' | 'prescription' | 'general' | null = null;
+  private _destroy$ = new Subject<void>();
+  private activeUploads = new Map<string, { sub: Subscription, type: UploadCardKey | 'general' | 'medicine' }>();
   readonly reviewForm = signal<ReviewForm | null>(null);
   readonly reviewSaving = signal(false);
   readonly generalUploadFormOpen = signal(false);
@@ -329,6 +338,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this._destroy$.next();
+    this._destroy$.complete();
     const container = this._doc.querySelector('.dsh-body') as HTMLElement | null;
     if (container) container.style.overflowY = '';
     const sidebar = this._doc.querySelector('.dsh-sb') as HTMLElement | null;
@@ -409,7 +420,23 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     return pages;
   });
 
-  ngOnInit(): void { this.loadData(); }
+  ngOnInit(): void { 
+    this.loadData();
+    this.documentAnalysisState.cancelRequested$
+      .pipe(takeUntil(this._destroy$))
+      .subscribe(docId => {
+        const active = this.activeUploads.get(docId);
+        if (active) {
+          active.sub.unsubscribe();
+          if (active.type !== 'general') {
+            this.setUploading(active.type as any, false);
+          } else {
+             this.uploadLoading.set(false);
+          }
+          this.activeUploads.delete(docId);
+        }
+      });
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['profileId'] && !changes['profileId'].firstChange) {
@@ -781,7 +808,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.uploadGeneralAsync(file, this.generalUploadForm.description);
   }
 
-  private uploadGeneralAsync(file: File, description: string): void {
+  private uploadGeneralAsync(file: File, description: string, bypassDuplicate = false): void {
     const pid = this.profileId ? `?profileId=${this.profileId}` : '';
     const url = `${this.base}/documents/general/upload-async${pid}`;
 
@@ -792,9 +819,26 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     const form = new FormData();
     form.append('image', file);
     form.append('description', description.trim());
+    if (bypassDuplicate) form.append('bypassFamilyDuplicateCheck', 'true');
 
     this.http.post<{ data: { documentId: string; imagePath: string; title: string } }>(url, form).subscribe({
-      next: res => {
+      next: (res: any) => {
+        if (res && res.success === false) {
+           if (res.errorCode === 'DuplicateInFamily') {
+              this.uploadLoading.set(false);
+              this.setUploading('general', false);
+              this._duplicateFile = file;
+              this._duplicateType = 'general';
+              this._duplicateDesc = description;
+              this.duplicateWarningName.set(res.errorData?.existingProfileName ?? '');
+              this.showDuplicateWarningDialog.set(true);
+              return;
+           }
+           this.uploadLoading.set(false);
+           this.setUploading('general', false);
+           return;
+        }
+
         this.uploadLoading.set(false);
         this.setUploading('general', false);
         this.generalUploadFormOpen.set(false);
@@ -802,7 +846,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
         const d = res?.data;
         if (d?.documentId) {
-          this.documentAnalysisState.trackDocument(d.documentId, d.title, d.imagePath);
+          this.documentAnalysisState.trackDocument(d.documentId, d.title, d.imagePath, this.profileId);
         }
       },
       error: err => {
@@ -813,6 +857,32 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
+  confirmDuplicateUpload(): void {
+    if (!this._duplicateType) return;
+    this.showDuplicateWarningDialog.set(false);
+    
+    if (this._duplicateType === 'general' && this._duplicateFile) {
+       this.uploadGeneralAsync(this._duplicateFile, this._duplicateDesc, true);
+    } else if (this._duplicateType === 'medicine-save') {
+       this.saveScanResult(true);
+    } else if (this._duplicateType === 'medicine' && this._duplicateFile) {
+       this.startMedicineScan(this._duplicateFile, true);
+    } else if (this._duplicateFile) {
+       this.uploadAndReview(this._duplicateType as any, this._duplicateFile, true);
+    }
+    
+    this._duplicateFile = null;
+    this._duplicateType = null;
+    this._duplicateDesc = '';
+  }
+
+  cancelDuplicateUpload(): void {
+    this.showDuplicateWarningDialog.set(false);
+    this._duplicateFile = null;
+    this._duplicateType = null;
+    this._duplicateDesc = '';
+  }
+
   private extractFile(event: Event): File | null {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
@@ -820,7 +890,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     return file;
   }
 
-  private uploadAndReview(type: 'lab' | 'imaging' | 'prescription', file: File): void {
+  private uploadAndReview(type: 'lab' | 'imaging' | 'prescription', file: File, bypassDuplicate = false): void {
     const pid = this.profileId ? `?profileId=${this.profileId}` : '';
     const urls: Record<'lab' | 'imaging' | 'prescription', string> = {
       lab: `${this.base}/documents/upload/lab${pid}`,
@@ -834,24 +904,48 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     };
 
     const tempId = crypto.randomUUID();
-    // Add to floating card immediately — user can navigate away
-    this.documentAnalysisState.trackSyncUpload(tempId, cardTitles[type], type);
+    this.documentAnalysisState.trackSyncUpload(tempId, cardTitles[type], type, this.profileId);
     this.setUploading(type, true);
 
     const form = new FormData();
     form.append('image', file);
+    if (bypassDuplicate) form.append('bypassFamilyDuplicateCheck', 'true');
 
-    this.http.post<{ data: any }>(urls[type], form).subscribe({
+    const sub = this.http.post<any>(urls[type], form).subscribe({
       next: res => {
+        this.activeUploads.delete(tempId);
         this.setUploading(type, false);
-        const data = res?.data ?? (res as any);
-        // Floating card shows "Ready to Review" button; clicking it opens the modal
+        if (res && res.success === false) {
+           if (res.errorCode === 'DuplicateInFamily') {
+              this.documentAnalysisState.dismiss(tempId);
+              this._duplicateFile = file;
+              this._duplicateType = type;
+              this.duplicateWarningName.set(res.errorData?.existingProfileName ?? '');
+              this.showDuplicateWarningDialog.set(true);
+              return;
+           }
+           this.documentAnalysisState.failSyncUpload(tempId, res.message ?? 'Upload failed');
+           this.showToast(res.message ?? 'Upload failed', 'error');
+           return;
+        }
+
+        const data = res?.data ?? res;
         this.documentAnalysisState.completeWithReviewData(tempId, data);
       },
       error: err => {
+        this.activeUploads.delete(tempId);
         this.setUploading(type, false);
         const errCode = err?.error?.errorCode as string | undefined;
         const v = this.t().uploadValidation;
+        
+        if (errCode === 'DuplicateInFamily') {
+           this.documentAnalysisState.dismiss(tempId);
+           this._duplicateFile = file;
+           this._duplicateType = type;
+           this.duplicateWarningName.set(err?.error?.errorData?.existingProfileName ?? '');
+           this.showDuplicateWarningDialog.set(true);
+           return;
+        }
 
         if (errCode === 'WRONG_DOCUMENT_TYPE_LAB_REPORT') {
           this.documentAnalysisState.failSyncUpload(tempId, v.lab);
@@ -883,6 +977,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         }
       },
     });
+    this.activeUploads.set(tempId, { sub, type });
   }
 
   cancelUpload(): void {
@@ -1054,7 +1149,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         recommendedSpecialty: rf.recommendedSpecialty,
         confidenceScore: rf.confidenceScore,
         medicines: rf.prescriptionMedicines
-          .filter((_, i) => this.addedMedIndices().has(i))
+          .filter(m => m.medicineName.trim() !== '')
           .map(m => ({
             medicineName: m.medicineName, dosage: m.dosage, frequency: m.frequency,
             duration: m.duration, instructions: m.instructions,
@@ -1103,22 +1198,42 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  private startMedicineScan(file: File): void {
+  private startMedicineScan(file: File, bypassDuplicate = false): void {
     const tempId = crypto.randomUUID();
-    this.documentAnalysisState.trackSyncUpload(tempId, this.t().records.scanningMedicineBox, 'medicine');
+    this.documentAnalysisState.trackSyncUpload(tempId, this.t().records.scanningMedicineBox, 'medicine', this.profileId);
     this.setUploading('medicine', true);
     const form = new FormData();
     form.append('image', file);
+    if (bypassDuplicate) form.append('bypassFamilyDuplicateCheck', 'true');
 
-    this.http.post<{ data: ScanMedicineBoxResponse }>(`${this.base}/user-medicines/scan-box`, form).subscribe({
+    const sub = this.http.post<{ data: ScanMedicineBoxResponse }>(`${this.base}/user-medicines/scan-box`, form).subscribe({
       next: res => {
+        this.activeUploads.delete(tempId);
         this.setUploading('medicine', false);
+        if (res && (res as any).success === false) {
+           if ((res as any).errorCode === 'DuplicateInFamily') {
+              this._duplicateFile = file;
+              this._duplicateType = 'medicine';
+              this.duplicateWarningName.set((res as any).errorData?.existingProfileName ?? '');
+              this.showDuplicateWarningDialog.set(true);
+              return;
+           }
+        }
         const data = res?.data ?? (res as unknown as ScanMedicineBoxResponse);
         this.documentAnalysisState.completeWithReviewData(tempId, data);
       },
       error: err => {
+        this.activeUploads.delete(tempId);
         this.setUploading('medicine', false);
         const errCode = err?.error?.errorCode as string | undefined;
+        if (errCode === 'DuplicateInFamily') {
+           this.documentAnalysisState.dismiss(tempId);
+           this._duplicateFile = file;
+           this._duplicateType = 'medicine';
+           this.duplicateWarningName.set(err?.error?.errorData?.existingProfileName ?? '');
+           this.showDuplicateWarningDialog.set(true);
+           return;
+        }
         if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
           this.documentAnalysisState.failSyncUpload(tempId, this.t().uploadValidation.medicine);
         } else if (errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED' || err?.error?.message === 'This exact document has already been uploaded to this profile.') {
@@ -1131,6 +1246,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         }
       },
     });
+    this.activeUploads.set(tempId, { sub, type: 'medicine' });
   }
 
   cancelScanReview(): void {
@@ -1216,7 +1332,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     this.openReviewModal(reviewType, seedData[reviewType], 'create');
   }
 
-  saveScanResult(): void {
+  saveScanResult(bypassDuplicate = false): void {
     this.scanFormTouched.set(true);
     if (!this.scanForm.medicineName.trim()) return;
     if (this.manualMedicineImageUploading()) return;
@@ -1228,7 +1344,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     this.scanSaving.set(true);
-    const payload: AddUserMedicinePayload = {
+    const payload = {
       medicineName: this.scanForm.medicineName.trim(),
       dosage: this.scanForm.dosage.trim() || 'N/A',
       frequency: this.scanForm.frequency.trim() || 'As directed',
@@ -1236,6 +1352,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       notes: this.scanForm.notes.trim() || undefined,
       imagePath: this.scanForm.imagePath || undefined,
       source: this.scanSource(),
+      bypassFamilyDuplicateCheck: bypassDuplicate,
     };
 
     const mode = this.scanMode();
@@ -1255,6 +1372,15 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     request$.subscribe({
       next: (res: any) => {
         this.scanSaving.set(false);
+        if (res && res.success === false) {
+           if (res.errorCode === 'DuplicateInFamily') {
+              this._duplicateType = 'medicine-save';
+              this.duplicateWarningName.set(res.errorData?.existingProfileName ?? '');
+              this.showDuplicateWarningDialog.set(true);
+              return;
+           }
+        }
+        
         this.scanResult.set(null);
         this.scanMode.set('create');
         this.scanRecordId.set(null);
@@ -1267,14 +1393,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         if (res && res.message && res.message.includes('خلي بالك')) {
           alert(res.message);
         } else {
-          if (mode === 'edit' || !savedMedicineId) {
-            this.showToast(mode === 'edit' ? this.t().records.medicineUpdatedSuccess : this.t().records.medicineSavedSuccess, 'success');
-          }
+          this.showToast(mode === 'edit' ? this.t().records.medicineUpdatedSuccess : this.t().records.medicineSavedSuccess, 'success');
         }
         if (mode !== 'edit' && savedMedicineId) {
           this.openReminderPrompt('single', savedMedicineId);
-        } else {
-          void this.router.navigate(['/medications'], { queryParams: { tab: 'medications' } });
         }
       },
       error: err => {
@@ -1322,6 +1444,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
     const queryParams: Record<string, string> = { tab: 'medications' };
     if (mode === 'single' && medicineId) queryParams['medicineId'] = medicineId;
+    // If on a family profile, go back to owner's medications page
     this.router.navigate(['/medications'], { queryParams });
   }
 
@@ -1533,11 +1656,11 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     if (!type || !file) return;
     this.showAiFailDialog.set(false);
     if (type === 'medicine') {
-      this.startMedicineScan(file);
+      this.startMedicineScan(file, true);
     } else if (type === 'general') {
-      this.uploadGeneralAsync(file, this._failedDesc);
+      this.uploadGeneralAsync(file, this._failedDesc, true);
     } else {
-      this.uploadAndReview(type, file);
+      this.uploadAndReview(type, file, true);
     }
   }
 

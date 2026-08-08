@@ -1277,3 +1277,37 @@
   </div>
 </div>
 }
+
+<!-- ═══════════ DUPLICATE WARNING MODAL ═══════════ -->
+@if (showDuplicateWarningDialog()) {
+<div class="modal-overlay delete-overlay" (click)="cancelDuplicateUpload()">
+  <div class="modal-card delete-modal" (click)="$event.stopPropagation()">
+    <header class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico delete-modal-ico" style="background: #fff3cd; color: #856404;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div>
+          <h3 class="modal-title">{{ t().records.duplicateDocument || 'مستند مكرر' }}</h3>
+          <p class="modal-sub">{{ _duplicateFile?.name }}</p>
+        </div>
+      </div>
+      <button type="button" class="close-modal-btn" (click)="cancelDuplicateUpload()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+    <div class="modal-body delete-modal-body">
+      <p style="font-weight: 500; font-size: 16px;">
+        هذا المستند موجود بالفعل في السجل الطبي الخاص بـ <strong style="color: var(--primary-color);">{{ duplicateWarningName() }}</strong>.
+      </p>
+      <p style="margin-top: 8px; color: #666;">
+        هل أنت متأكد أنك تريد إضافته مرة أخرى هنا؟
+      </p>
+    </div>
+    <footer class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="cancelDuplicateUpload()">{{ t().records.cancelBtn || 'إلغاء' }}</button>
+      <button type="button" class="modal-btn modal-btn-primary" (click)="confirmDuplicateUpload()">
+        <i class="fa-solid fa-check"></i> نعم، أريد إضافته
+      </button>
+    </footer>
+  </div>
+</div>
+}

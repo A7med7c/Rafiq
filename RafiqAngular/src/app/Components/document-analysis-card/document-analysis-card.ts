@@ -106,10 +106,20 @@ export class DocumentAnalysisCardComponent {
     this.state.dismiss(doc.documentId);
   }
 
+  cancel(doc: TrackedDocument): void {
+    this.state.cancelAnalysis(doc.documentId);
+  }
+
   requestReview(doc: TrackedDocument): void {
     this.state.requestReview(doc);
+    const target = doc.profileId
+      ? `/medical-records?profileId=${doc.profileId}`
+      : '/medical-records';
     if (!this.router.url.startsWith('/medical-records')) {
-      void this.router.navigate(['/medical-records']);
+      void this.router.navigateByUrl(target);
+    } else if (doc.profileId) {
+      // Already on medical-records, but may be on wrong profile — re-navigate with profileId
+      void this.router.navigateByUrl(target);
     }
   }
 

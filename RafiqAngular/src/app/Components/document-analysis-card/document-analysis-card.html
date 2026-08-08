@@ -82,6 +82,11 @@
             [attr.aria-label]="l10n.t().documentAnalysis.dismiss">
             <i class="fa-solid fa-xmark"></i>
           </button>
+        } @else if (doc.status === 'Pending' || doc.status === 'Processing') {
+          <button type="button" class="dac-btn dac-btn--dismiss" (click)="cancel(doc)"
+            [attr.aria-label]="l10n.t().documentAnalysis.dismiss">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         } @else if (doc.status === 'Completed') {
           <button type="button" class="dac-btn dac-btn--view" (click)="viewDocument(doc)">
             {{ l10n.t().documentAnalysis.view }}
