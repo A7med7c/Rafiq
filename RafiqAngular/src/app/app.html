@@ -247,4 +247,66 @@
 
 <app-rafiq-assistant></app-rafiq-assistant>
 <app-rating-popup></app-rating-popup>
-<app-document-analysis-card></app-document-analysis-card>
+
+<!-- ══ GLOBAL AI ANALYSIS COMPLETION MODAL ══════════════════════════════════ -->
+@if (analysisState.completionModal()) {
+<div class="acm-overlay" (click)="onCompletionModalOverlayClick($event)">
+  <div class="acm-modal" role="dialog" aria-modal="true" aria-labelledby="acm-title">
+    <div class="acm-icon-wrap" aria-hidden="true">
+      <span class="acm-icon-ring">
+        <i class="fa-solid fa-file-waveform"></i>
+      </span>
+    </div>
+
+    <div class="acm-body">
+      <h2 class="acm-title" id="acm-title">{{ l10n.t().documentAnalysis.completionModalTitle }}</h2>
+      <!-- <p class="acm-subtitle">{{ analysisState.completionModal()!.title }}</p> -->
+      <p class="acm-desc">{{ l10n.t().documentAnalysis.completionModalBody }}</p>
+    </div>
+
+    <div class="acm-actions">
+      <button type="button" class="acm-btn acm-btn--primary" id="acm-review-btn"
+        (click)="onCompletionModalReview()">
+        <i class="fa-solid fa-pen-to-square"></i>
+        {{ l10n.t().documentAnalysis.completionModalReview }}
+      </button>
+      <button type="button" class="acm-btn acm-btn--secondary" id="acm-later-btn"
+        (click)="onCompletionModalLater()">
+        {{ l10n.t().documentAnalysis.completionModalLater }}
+      </button>
+    </div>
+
+    <button type="button" class="acm-close" (click)="onCompletionModalLater()"
+      [attr.aria-label]="l10n.t().common.close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+</div>
+}
+@if (analysisState.failureModal()) {
+<div class="acm-overlay" (click)="onFailureModalOverlayClick($event)">
+  <div class="acm-modal" role="dialog" aria-modal="true">
+    <div class="acm-body">
+      <div class="acm-icon" style="color: #DC2626;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div class="acm-content">
+        <h3 class="acm-title">{{ l10n.t().documentAnalysis.notifFailTitle || 'Analysis Failed' }}</h3>
+        <!-- <p class="acm-desc">{{ analysisState.sanitizeErrorMessage(analysisState.failureModal()?.failureReason) }}</p> -->
+      </div>
+    </div>
+    <div class="acm-actions">
+      <button type="button" class="acm-btn acm-btn--primary" (click)="onFailureModalRetry()">
+        <i class="fa-solid fa-rotate-right"></i>
+        {{ l10n.t().documentAnalysis.retry || 'Retry' }}
+      </button>
+      <button type="button" class="acm-btn acm-btn--secondary" (click)="onFailureModalGoToRecords()">
+        {{ l10n.t().errors.returnToMedicalRecords || 'Go to Medical Records' }}
+      </button>
+    </div>
+    <button type="button" class="acm-close" (click)="analysisState.dismissFailureModal()" [attr.aria-label]="l10n.t().common.close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+</div>
+}

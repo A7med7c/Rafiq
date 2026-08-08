@@ -21,6 +21,7 @@ import { AssistantAnchorDirective } from '../../core/assistant/directives/assist
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import { localizeKnownApiMessage } from '../../Utils/api-error.util';
+import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 
 type MedTab = 'schedule' | 'medications';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -139,6 +140,7 @@ export class Medications implements OnInit, OnDestroy {
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
+  readonly analysisState = inject(DocumentAnalysisStateService);
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {

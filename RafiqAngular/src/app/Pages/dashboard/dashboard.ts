@@ -17,6 +17,7 @@ import { MedicalReportService, ReportType } from '../../Services/medical-report.
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
+import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -39,6 +40,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private readonly medicalReportSvc   = inject(MedicalReportService);
   private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
   private readonly reviewTracking      = inject(ReviewTrackingService);
+  readonly analysisState = inject(DocumentAnalysisStateService);
 
   // ── Reactive effects ─────────────────────────────────────────────────────
   private readonly dashboardRefreshEffect = effect(() => {

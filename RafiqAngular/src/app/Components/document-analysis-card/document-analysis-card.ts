@@ -1,6 +1,6 @@
 import {
   Component, inject, computed, signal,
-  ChangeDetectionStrategy, HostListener, ElementRef,
+  ChangeDetectionStrategy, HostListener, ElementRef, effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -53,6 +53,9 @@ export class DocumentAnalysisCardComponent {
   protected readonly activeCount = computed(() =>
     this.documents().filter(d => d.status === 'Pending' || d.status === 'Processing').length
   );
+  protected readonly failedCount = computed(() =>
+    this.documents().filter(d => d.status === 'Failed').length
+  );
   protected readonly retrying    = signal<Set<string>>(new Set());
 
   // ── Drag state ────────────────────────────────────────────────────────────
@@ -61,6 +64,8 @@ export class DocumentAnalysisCardComponent {
   private dragStartX  = 0;
   private dragStartY  = 0;
   private posAtStart: DragPos = { x: 0, y: 0 };
+
+  constructor() {}
 
   // ── Panel/chip positioning ────────────────────────────────────────────────
 
@@ -129,29 +134,19 @@ export class DocumentAnalysisCardComponent {
   }
 
   retry(doc: TrackedDocument): void {
-    if (this.retrying().has(doc.documentId)) return;
-    this.retrying.update(s => { const n = new Set(s); n.add(doc.documentId); return n; });
+    this.state.retryAnalysis(doc);
+  }
 
-    this.http
-      .post<any>(`${environment.apiUrl}/documents/general/${doc.documentId}/retry`, {})
-      .subscribe({
-        next: () => {
-          this.state.trackedDocuments.update(docs =>
-            docs.map(d => d.documentId === doc.documentId
-              ? { ...d, status: 'Pending' as const, failureReason: null }
-              : d)
-          );
-          this.retrying.update(s => { const n = new Set(s); n.delete(doc.documentId); return n; });
-        },
-        error: () => {
-          this.retrying.update(s => { const n = new Set(s); n.delete(doc.documentId); return n; });
-          this.notif.showToast(
-            this.l10n.t().documentAnalysis.retryFailed,
-            this.l10n.t().documentAnalysis.retryFailedBody,
-            'error'
-          );
-        },
-      });
+  continueManually(doc: TrackedDocument): void {
+    this.state.requestManualEntry(doc);
+    const target = doc.profileId
+      ? `/medical-records?profileId=${doc.profileId}`
+      : '/medical-records';
+    if (!this.router.url.startsWith('/medical-records')) {
+      void this.router.navigateByUrl(target);
+    } else if (doc.profileId) {
+      void this.router.navigateByUrl(target);
+    }
   }
 
   typeIcon(type: string): string {
@@ -162,16 +157,44 @@ export class DocumentAnalysisCardComponent {
     const da = this.l10n.t().documentAnalysis;
     if (doc.status === 'Processing')    return da.statusProcessing;
     if (doc.status === 'Completed')     return da.statusCompleted;
-    if (doc.status === 'Failed')        return doc.failureReason ?? da.statusFailed;
     if (doc.status === 'ReadyToReview') return da.statusReadyToReview ?? 'Ready to review';
+    if (doc.status === 'Pending')       return da.statusPending;
+    if (doc.status === 'Failed') {
+      return this.state.sanitizeErrorMessage(doc.failureReason);
+    }
     return da.statusPending;
   }
 
   displayTitle(doc: TrackedDocument): string {
+    const da = this.l10n.t().documentAnalysis;
+    if (doc.status === 'Failed') {
+      const titles: Record<string, string> = {
+        lab: da.failedLabTitle || 'Lab Report Analysis Failed',
+        imaging: da.failedImagingTitle || 'Imaging Report Analysis Failed',
+        prescription: da.failedPrescriptionTitle || 'Prescription Analysis Failed',
+        medicine: da.failedMedicineTitle || 'Medicine Scan Failed',
+        general: da.failedGeneralTitle || 'Document Analysis Failed',
+      };
+      return titles[doc.uploadType] ?? (da.failedGeneralTitle || 'Document Analysis Failed');
+    }
+
     if (doc.uploadType === 'medicine' && doc.reviewData?.medicineName) {
       return doc.reviewData.medicineName;
     }
-    return doc.title;
+
+    if (doc.status === 'Pending' || doc.status === 'Processing') {
+      const recordsT = this.l10n.t().records;
+      const processingTitles: Record<string, string> = {
+        lab: recordsT?.analysingLab || da.statusProcessing,
+        imaging: recordsT?.analysingImaging || da.statusProcessing,
+        prescription: recordsT?.extractingPrescription || da.statusProcessing,
+        medicine: recordsT?.scanningMedicineBox || da.statusProcessing,
+        general: doc.title || da.statusProcessing,
+      };
+      return processingTitles[doc.uploadType] ?? (doc.title || da.statusProcessing);
+    }
+
+    return doc.title || da.statusCompleted;
   }
 
   protected trackByDocId(_: number, doc: TrackedDocument): string {

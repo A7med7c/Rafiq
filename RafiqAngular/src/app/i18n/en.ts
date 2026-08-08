@@ -312,6 +312,10 @@ export const en = {
   },
 
   records: {
+    reviewConfirmCloseTitle: 'Are you sure?',
+    reviewConfirmCloseBody: 'You haven\'t saved the analyzed result yet. If you close now, you may lose the extracted data you were reviewing.',
+    continueReviewing: 'Continue Reviewing',
+    close: 'Close',
     medicalWarning: 'Medical Warning',
     medicalAttentionRecommended: 'Medical Attention Recommended',
     medicalAttentionReason: 'Reason',
@@ -1473,7 +1477,10 @@ export const en = {
     review: 'Review',
     view: 'View in Records',
     retry: 'Retry',
+    manualEntry: 'Manual Entry',
+    continueManually: 'Continue Manually',
     dismiss: 'Dismiss',
+    close: 'Close',
     retryFailed: 'Retry Failed',
     retryFailedBody: 'Could not re-queue the document. Please try again.',
     uploadSuccess: 'Document Uploaded',
@@ -1482,6 +1489,53 @@ export const en = {
     analysisCompleteBody: 'has been analyzed successfully.',
     analysisFailed: 'Analysis Failed',
     analysisFailedBody: 'could not be analyzed.',
+    failedLabTitle: 'Lab Report Analysis',
+    failedImagingTitle: 'Imaging Report Analysis',
+    failedPrescriptionTitle: 'Prescription Analysis',
+    failedMedicineTitle: 'Medicine Scan',
+    failedGeneralTitle: 'Document Analysis',
+    noLabTestsExtracted: 'No laboratory tests could be extracted from the uploaded image.',
+    docAnalysisFailedDesc: 'We couldn\'t extract data from the file.',
+    // Global completion modal (shown when user navigated away)
+    completionModalTitle: '✓ Analysis Completed',
+    completionModalBody: 'Your medical document analysis is ready for review.',
+    completionModalReview: 'Review',
+    completionModalLater: 'I\'ll see it later',
+    notifFailTitle: 'Medical Analysis Failed',
+    notifFailBody: 'We couldn\'t analyze the document right now. An error occurred.',
+    // Notification bell entry
+    notifTitle: 'Medical analysis completed',
+    notifBodyLab: 'Your Lab Report is ready for review.',
+    notifBodyImaging: 'Your Imaging Report is ready for review.',
+    notifBodyPrescription: 'Your Prescription is ready for review.',
+    notifBodyGeneral: 'Your document is ready for review.',
+    notifBodyMedicine: 'Your medicine record is ready for review.',
+    // Sidebar indicator tooltip
+    sidebarIndicatorTip: 'Medical Records — analysis in progress',
+  },
+  medicalSpecialties: {
+    Cardiologist: 'Cardiologist',
+    Pulmonologist: 'Pulmonologist',
+    Endocrinologist: 'Endocrinologist',
+    Nephrologist: 'Nephrologist',
+    Neurologist: 'Neurologist',
+    OrthopedicSurgeon: 'Orthopedic Surgeon',
+    GeneralSurgeon: 'General Surgeon',
+    EntSpecialist: 'ENT Specialist',
+    Dermatologist: 'Dermatologist',
+    Gastroenterologist: 'Gastroenterologist',
+    Ophthalmologist: 'Ophthalmologist',
+    Urologist: 'Urologist',
+    Gynecologist: 'Gynecologist',
+    Hematologist: 'Hematologist',
+    Oncologist: 'Oncologist',
+    EmergencyDepartment: 'Emergency Department',
+  },
+  attentionLevels: {
+    Routine: 'Routine',
+    Soon: 'Soon',
+    Urgent: 'Urgent',
+    Emergency: 'Emergency',
   },
   tour: {
     step: 'Step',
@@ -1495,6 +1549,9 @@ export const en = {
     finish: 'Finish Tour',
     mascotAria: 'Rafiq Assistant Message',
   },
+  errors:{
+    returnToMedicalRecords:'Return to Medical Records'
+  }
 };
 
 export type Translations = typeof en;

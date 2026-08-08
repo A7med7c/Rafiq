@@ -178,11 +178,8 @@ export class NotificationService {
       const reminderEvents             = this.signalr.reminderEvents();
       const notificationEvents         = this.signalr.notificationEvents();
       const appointmentReminderEvents  = this.signalr.appointmentReminderEvents();
-      const docCompletedEvents         = this.signalr.documentAnalysisCompletedEvents();
-      const docFailedEvents            = this.signalr.documentAnalysisFailedEvents();
 
-      if (!reminderEvents.length && !notificationEvents.length && !appointmentReminderEvents.length
-          && !docCompletedEvents.length && !docFailedEvents.length) {
+      if (!reminderEvents.length && !notificationEvents.length && !appointmentReminderEvents.length) {
         return;
       }
 
@@ -196,22 +193,6 @@ export class NotificationService {
 
       if (appointmentReminderEvents.length) {
         this.ingestAppointmentReminderEvents(this.signalr.drainAppointmentReminderEvents());
-      }
-
-      if (docCompletedEvents.length) {
-        const events = this.signalr.drainDocumentAnalysisCompletedEvents();
-        const t = this.localization.t().documentAnalysis;
-        events.forEach(e => {
-          this.showToast(`${t.analysisComplete}: ${e.title}`, t.analysisCompleteBody, 'success');
-        });
-      }
-
-      if (docFailedEvents.length) {
-        const events = this.signalr.drainDocumentAnalysisFailedEvents();
-        const t = this.localization.t().documentAnalysis;
-        events.forEach(e => {
-          this.showToast(`${t.analysisFailed}: ${e.title}`, e.failureReason || t.analysisFailedBody, 'error');
-        });
       }
     });
   }
