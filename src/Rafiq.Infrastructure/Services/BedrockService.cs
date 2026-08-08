@@ -77,7 +77,7 @@ public sealed class BedrockService : IBedrockService
         {
             model_id   = modelId,
             messages   = new object[] { userMessage },
-            max_tokens = 2000
+            max_tokens = 4000
         };
 
         var json    = JsonSerializer.Serialize(requestBody);

@@ -32,7 +32,7 @@ export class OnboardingStep2 implements OnInit, OnDestroy {
   dropdownLeft = 0;
   dropdownWidth = 0;
 
-  readonly steps = computed(() => this.t().onboarding.stepperLabels.map(label => ({ label })));
+  readonly steps = computed(() => this.t().onboarding.stepperLabels.map((label: string) => ({ label })));
 
   readonly severityOptions = [
     { value: AllergySeverity.Severe,   label: 'Severe',   labelAr: 'شديدة' },

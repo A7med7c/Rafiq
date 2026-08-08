@@ -32,7 +32,7 @@ export class OnboardingStep3 implements OnInit, OnDestroy {
   dropdownLeft = 0;
   dropdownWidth = 0;
 
-  readonly steps = computed(() => this.t().onboarding.stepperLabels.map(label => ({ label })));
+  readonly steps = computed(() => this.t().onboarding.stepperLabels.map((label: string) => ({ label })));
 
   readonly statusOptions = [
     { value: DiseaseStatus.Active,     label: 'Active',     labelAr: 'نشط' },
