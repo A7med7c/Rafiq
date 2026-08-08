@@ -151,6 +151,11 @@
             [title]="t().aiAssistant.newConversation">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
+          <button type="button" class="ai-hdr-btn-clean"
+            (click)="closePanel()"
+            [title]="t().common.close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
       </header>
       }
@@ -348,7 +353,6 @@
               <i class="fa-solid fa-paper-plane"></i>
             </button>
           </div>
-          <p class="ai-composer-hint-new">Enter للإرسال • Shift+Enter لسطر جديد</p>
         }
       </div>
       }
