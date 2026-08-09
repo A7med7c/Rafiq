@@ -127,6 +127,9 @@
         <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
       </div>
 
+      <!-- ══════════ Medical Warning ══════════ -->
+      <app-medical-warning-card *ngIf="rec.requiresMedicalAttention" [data]="rec"></app-medical-warning-card>
+
       @if (rec.type === 'lab' && rec.rawRecord.results && rec.rawRecord.results.length > 0) {
       <div class="detail-section">
         <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> {{ t().records.completeLabResults }}</h4>

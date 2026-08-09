@@ -12,4 +12,6 @@ export interface ApiErrorBody {
   success?: boolean;
   message?: string;
   errors?: string[] | null;
+  errorCode?: string;
+  errorData?: any;
 }

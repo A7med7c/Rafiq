@@ -3,12 +3,13 @@ import {
   ChangeDetectionStrategy, HostListener, ElementRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DocumentAnalysisStateService, TrackedDocument } from '../../Services/document-analysis-state.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { NotificationService } from '../../Services/notification.service';
 import { environment } from '../../Environments/Environment';
+import { filter } from 'rxjs';
 
 const POS_KEY = 'rafiq_dac_pos';
 
@@ -47,13 +48,25 @@ export class DocumentAnalysisCardComponent {
   protected readonly notif  = inject(NotificationService);
   private   readonly el     = inject(ElementRef);
 
+  protected readonly currentUrl  = signal(this.router.url);
   protected readonly minimized   = signal(false);
   protected readonly documents   = this.state.trackedDocuments;
   protected readonly hasAny      = computed(() => this.documents().length > 0);
+  protected readonly isOnRecords = computed(() => this.currentUrl().startsWith('/medical-records'));
+  protected readonly shouldShowWidget = computed(() => this.hasAny() && this.isOnRecords() && !this.state.isReviewFormOpen());
+
   protected readonly activeCount = computed(() =>
     this.documents().filter(d => d.status === 'Pending' || d.status === 'Processing').length
   );
   protected readonly retrying    = signal<Set<string>>(new Set());
+
+  constructor() {
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd)
+    ).subscribe(e => {
+      this.currentUrl.set(e.urlAfterRedirects || e.url);
+    });
+  }
 
   // ── Drag state ────────────────────────────────────────────────────────────
   protected readonly dragPos   = signal<DragPos>(loadPos());
@@ -108,8 +121,13 @@ export class DocumentAnalysisCardComponent {
 
   requestReview(doc: TrackedDocument): void {
     this.state.requestReview(doc);
+    const target = doc.profileId
+      ? `/medical-records?profileId=${doc.profileId}`
+      : '/medical-records';
     if (!this.router.url.startsWith('/medical-records')) {
-      void this.router.navigate(['/medical-records']);
+      void this.router.navigateByUrl(target);
+    } else if (doc.profileId) {
+      void this.router.navigateByUrl(target);
     }
   }
 
@@ -119,24 +137,37 @@ export class DocumentAnalysisCardComponent {
   }
 
   retry(doc: TrackedDocument): void {
-    if (this.retrying().has(doc.documentId)) return;
-    this.retrying.update(s => { const n = new Set(s); n.add(doc.documentId); return n; });
+    this.state.retryAnalysis(doc);
+  }
 
-    this.http
-      .post<any>(`${environment.apiUrl}/documents/general/${doc.documentId}/retry`, {})
-      .subscribe({
-        next: () => {
-          this.state.trackedDocuments.update(docs =>
-            docs.map(d => d.documentId === doc.documentId
-              ? { ...d, status: 'Pending' as const, failureReason: null }
-              : d)
-          );
-          this.retrying.update(s => { const n = new Set(s); n.delete(doc.documentId); return n; });
-        },
-        error: () => {
-          this.retrying.update(s => { const n = new Set(s); n.delete(doc.documentId); return n; });
-                  },
-      });
+  continueManually(doc: TrackedDocument): void {
+    this.state.requestManualEntry(doc);
+    const target = doc.profileId
+      ? `/medical-records?profileId=${doc.profileId}`
+      : '/medical-records';
+    if (!this.router.url.startsWith('/medical-records')) {
+      void this.router.navigateByUrl(target);
+    } else if (doc.profileId) {
+      void this.router.navigateByUrl(target);
+    }
+  }
+
+  displayTitle(doc: TrackedDocument): string {
+    const da = this.l10n.t().documentAnalysis;
+    if (doc.status === 'Failed') {
+      const map: Record<string, string | undefined> = {
+        lab: da?.failedLabTitle,
+        imaging: da?.failedImagingTitle,
+        prescription: da?.failedPrescriptionTitle,
+        medicine: da?.failedMedicineTitle,
+        general: da?.failedGeneralTitle,
+      };
+      return map[doc.uploadType] ?? doc.title;
+    }
+    if (doc.status === 'InvalidDocument') {
+       return this.l10n.t().records.invalidFile;
+    }
+    return doc.title;
   }
 
   typeIcon(type: string): string {
@@ -148,6 +179,7 @@ export class DocumentAnalysisCardComponent {
     if (doc.status === 'Processing')    return da.statusProcessing;
     if (doc.status === 'Completed')     return da.statusCompleted;
     if (doc.status === 'Failed')        return doc.failureReason ?? da.statusFailed;
+    if (doc.status === 'InvalidDocument') return doc.failureReason ?? 'Invalid document uploaded.';
     if (doc.status === 'ReadyToReview') return da.statusReadyToReview ?? 'Ready to review';
     return da.statusPending;
   }

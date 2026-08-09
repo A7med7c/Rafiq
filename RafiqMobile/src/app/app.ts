@@ -17,6 +17,7 @@ import { ReminderBootstrapService } from './Services/reminder-bootstrap.service'
 import { AlarmSchedulerService } from './Services/alarm-scheduler.service';
 import { NotificationPermissionDialogComponent } from './Components/notification-permission-dialog/notification-permission-dialog';
 import { NotificationPermissionGuardService } from './Services/notification-permission-guard.service';
+import { DocumentAnalysisStateService } from './Services/document-analysis-state.service';
 
 @Component({
   selector: 'app-root',
@@ -31,6 +32,7 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
   readonly tourEngine = inject(TourEngineService);
   readonly aiChatService = inject(AiChatService);
   readonly authService = inject(AuthService);
+  readonly analysisState = inject(DocumentAnalysisStateService);
   private readonly router = inject(Router);
   private readonly reminderBootstrap = inject(ReminderBootstrapService);
   private readonly alarmScheduler = inject(AlarmSchedulerService);
@@ -40,6 +42,45 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
 
   readonly title = signal('RafiqAngular');
 
+  onCompletionModalReview(): void {
+    const modal = this.analysisState.completionModal();
+    if (!modal) return;
+    this.analysisState.acceptCompletionModal();
+    const target = modal.profileId
+      ? `/medical-records?profileId=${modal.profileId}`
+      : '/medical-records';
+    void this.router.navigateByUrl(target);
+  }
+
+  onCompletionModalLater(): void {
+    this.analysisState.dismissCompletionModal();
+  }
+
+  onFailureModalRetry(): void {
+    const doc = this.analysisState.failureModal();
+    if (!doc) return;
+    this.analysisState.retryAnalysis(doc);
+  }
+
+  onFailureModalGoToRecords(): void {
+    const doc = this.analysisState.failureModal();
+    this.analysisState.dismissFailureModal();
+    if (!doc) return;
+    const target = doc.profileId ? `/medical-records?profileId=${doc.profileId}` : '/medical-records';
+    void this.router.navigateByUrl(target);
+  }
+
+  onCompletionModalOverlayClick(e: MouseEvent): void {
+    if ((e.target as HTMLElement).classList.contains('acm-overlay')) {
+      this.onCompletionModalLater();
+    }
+  }
+
+  onFailureModalOverlayClick(e: MouseEvent): void {
+    if ((e.target as HTMLElement).classList.contains('acm-overlay')) {
+      this.analysisState.dismissFailureModal();
+    }
+  }
   /**
    * Handle for the appStateChange listener registered in ngOnInit. Native alarm
    * actions (Take Medicine tapped from AlarmActivity/notification) are recorded to

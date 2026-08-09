@@ -257,6 +257,7 @@
         <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> {{ t().records.aiSummary }}</h4>
         <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
       </div>
+      <app-medical-warning-card *ngIf="rec.requiresMedicalAttention" [data]="rec"></app-medical-warning-card>
       @if (rec.type === 'lab' && rec.rawRecord.results && rec.rawRecord.results.length > 0) {
       <div class="detail-section">
         <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> {{ t().records.completeLabResults }}</h4>
@@ -567,6 +568,9 @@
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.ocrText" rows="5"></textarea>
         </div>
         }
+
+        <!-- Medical Warning Card -->
+        <app-medical-warning-card class="scan-field--full" *ngIf="rf.requiresMedicalAttention" [data]="rf"></app-medical-warning-card>
       </div>
       @if (reviewDateError()) {
       <p class="scan-validation"><i class="fa-solid fa-triangle-exclamation"></i> {{ reviewDateError() }}</p>
@@ -918,10 +922,14 @@
         <i class="fa-solid fa-triangle-exclamation"></i>
       </div>
       <h3 class="ai-fail-title" id="ai-fail-title">
-        {{ aiFailIsUnreadable() ? t().records.aiUnreadableTitle : t().records.aiAnalysisFailed }}
+        {{ aiFailIsInvalidDocument() ? t().records.invalidFile : (aiFailIsUnreadable() ? t().records.aiUnreadableTitle : t().records.aiAnalysisFailed) }}
       </h3>
       <p class="ai-fail-desc" id="ai-fail-desc">
-        {{ aiFailIsUnreadable() ? t().records.aiUnreadableText : t().records.aiFailureText }}
+        @if (aiFailIsInvalidDocument()) {
+          {{ getInvalidDocumentMessage() }}
+        } @else {
+          {{ aiFailIsUnreadable() ? t().records.aiUnreadableText : t().records.aiFailureText }}
+        }
       </p>
     </div>
     <footer class="modal-ftr ai-fail-ftr">

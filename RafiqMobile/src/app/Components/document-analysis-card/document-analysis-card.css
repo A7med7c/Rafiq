@@ -340,6 +340,13 @@
 }
 .dac-btn--retry:not(:disabled):hover { background: #FFEDD5; }
 
+/* Manual Entry */
+.dac-btn--manual {
+  background: #F3E8FF;
+  color: #7E22CE;
+}
+.dac-btn--manual:not(:disabled):hover { background: #E9D5FF; }
+
 /* Dismiss — ghost */
 .dac-btn--dismiss {
   background: transparent;
