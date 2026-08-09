@@ -171,6 +171,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   _duplicateType: 'lab' | 'imaging' | 'prescription' | 'general' | 'medicine' | 'medicine-save' | null = null;
   _duplicateDesc: string = '';
 
+  readonly showSameProfileDuplicateDialog = signal(false);
+
   readonly allRecords = signal<UnifiedMedicalRecord[]>([]);
   readonly loading = signal(true);
   readonly searchQuery = signal('');
@@ -357,7 +359,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.selectedRecord() || this.deleteTarget() || this.reviewForm() ||
         this.generalUploadFormOpen() ||
         this.scanResult() || this.showReminderPromptModal() || this.lightboxUrl() ||
-        this.showAiFailDialog() || this.selectedWarningRecord()
+        this.showAiFailDialog() || this.selectedWarningRecord() ||
+        this.showDuplicateWarningDialog() || this.showSameProfileDuplicateDialog()
       );
       const container = this._doc.querySelector('.dsh-body') as HTMLElement | null;
       if (container) {
@@ -881,6 +884,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
               this.showDuplicateWarningDialog.set(true);
               return;
            }
+           if (res.errorCode === 'DUPLICATE_DOCUMENT' || res.errorCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+              this.uploadLoading.set(false);
+              this.setUploading('general', false);
+              this.showSameProfileDuplicateDialog.set(true);
+              return;
+           }
            this.uploadLoading.set(false);
            this.setUploading('general', false);
            return;
@@ -899,9 +908,18 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       error: err => {
         this.uploadLoading.set(false);
         this.setUploading('general', false);
-        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.uploadFailed), 'error');
+        const errCode = err?.error?.errorCode as string | undefined;
+        if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+          this.showSameProfileDuplicateDialog.set(true);
+        } else {
+          this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.uploadFailed), 'error');
+        }
       },
     });
+  }
+
+  closeSameProfileDuplicateDialog(): void {
+    this.showSameProfileDuplicateDialog.set(false);
   }
 
   confirmDuplicateUpload(): void {
@@ -1003,9 +1021,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
           this.documentAnalysisState.failSyncUpload(tempId, v.prescription);
           this.showToast(v.prescription, 'error');
-        } else if (errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED' || err?.error?.message === 'This exact document has already been uploaded to this profile.') {
-          this.documentAnalysisState.failSyncUpload(tempId, (v as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.');
-          this.showToast((v as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.', 'error');
+        } else if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+          this.documentAnalysisState.dismiss(tempId);
+          this.showSameProfileDuplicateDialog.set(true);
         } else if (errCode?.startsWith('UNREADABLE_DOCUMENT_')) {
           this.documentAnalysisState.failSyncUpload(tempId, 'Document unreadable — enter manually.');
           this._failedFile = file;
@@ -1315,9 +1333,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
           this.documentAnalysisState.failSyncUpload(tempId, this.t().uploadValidation.medicine);
           this.showToast(this.t().uploadValidation.medicine, 'error');
-        } else if (errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED' || err?.error?.message === 'This exact document has already been uploaded to this profile.') {
-          this.documentAnalysisState.failSyncUpload(tempId, (this.t().uploadValidation as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.');
-          this.showToast((this.t().uploadValidation as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.', 'error');
+        } else if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+          this.documentAnalysisState.dismiss(tempId);
+          this.showSameProfileDuplicateDialog.set(true);
         } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
           this.documentAnalysisState.failSyncUpload(tempId, this.t().uploadValidation.medicineUnreadable);
           this._failedFile = file;

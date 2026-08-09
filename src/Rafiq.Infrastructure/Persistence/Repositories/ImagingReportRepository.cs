@@ -46,7 +46,7 @@ public sealed class ImagingReportRepository : IImagingReportRepository
                  && r.BodyPart.ToLower() == bodyPart.ToLower(),
             cancellationToken);
 
-    public async Task<(Guid profileId, string profileName, bool isSameProfile)?> FindDuplicateByHashAsync(
+    public async Task<(Guid documentId, Guid profileId, string profileName, bool isSameProfile)?> FindDuplicateByHashAsync(
         string fileHash,
         Guid currentProfileId,
         Guid currentUserId,
@@ -54,11 +54,11 @@ public sealed class ImagingReportRepository : IImagingReportRepository
     {
         var sameProfile = await _context.ImagingReports
             .Where(r => r.FileHash == fileHash && r.UserHealthProfileId == currentProfileId && !r.IsDeleted)
-            .Select(r => new { r.UserHealthProfileId })
+            .Select(r => new { r.Id, r.UserHealthProfileId })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (sameProfile != null)
-            return (sameProfile.UserHealthProfileId, string.Empty, true);
+            return (sameProfile.Id, sameProfile.UserHealthProfileId, string.Empty, true);
 
         var familyDuplicate = await (from r in _context.ImagingReports
             join hpa in _context.HealthProfileAccesses on r.UserHealthProfileId equals hpa.UserHealthProfileId
@@ -67,11 +67,11 @@ public sealed class ImagingReportRepository : IImagingReportRepository
                && !r.IsDeleted
                && hpa.GranteeUserId == currentUserId
                && hpa.Status == Rafiq.Domain.Enums.AccessStatus.Active
-            select new { r.UserHealthProfileId, ProfileName = p.FirstName + " " + p.LastName })
+            select new { r.Id, r.UserHealthProfileId, ProfileName = p.FirstName + " " + p.LastName })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (familyDuplicate != null)
-            return (familyDuplicate.UserHealthProfileId, familyDuplicate.ProfileName, false);
+            return (familyDuplicate.Id, familyDuplicate.UserHealthProfileId, familyDuplicate.ProfileName, false);
 
         return null;
     }

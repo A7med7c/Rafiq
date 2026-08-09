@@ -25,7 +25,7 @@ public interface ILabReportRepository
     /// Searches for an existing lab report by its file hash, checking both the current profile
     /// and any other profile the current user has Active access to.
     /// </summary>
-    Task<(Guid profileId, string profileName, bool isSameProfile)?> FindDuplicateByHashAsync(
+    Task<(Guid documentId, Guid profileId, string profileName, bool isSameProfile)?> FindDuplicateByHashAsync(
         string fileHash,
         Guid currentProfileId,
         Guid currentUserId,

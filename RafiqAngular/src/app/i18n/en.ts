@@ -712,7 +712,9 @@ export const en = {
     generalShouldBePrescription: 'This is a prescription — upload it in the Prescriptions section.',
     generalShouldBeMedicine: 'This is a medicine box — scan it in the Medicine Box section.',
     generalNotMedical: 'This does not appear to be a medical document.',
-    exactDocumentUploaded: 'This exact document has already been uploaded to this profile.'
+    exactDocumentUploaded: 'This exact document has already been uploaded to this profile.',
+    sameProfileDuplicateTitle: 'Document Already Uploaded',
+    sameProfileDuplicateMessage: 'This exact document has already been uploaded to this profile. You cannot upload the same file twice.'
   },
 
   medications: {

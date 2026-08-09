@@ -723,7 +723,9 @@ export const ar: Translations = {
     generalShouldBePrescription: 'هذه روشتة — ارفعها في قسم الروشتات.',
     generalShouldBeMedicine: 'هذه علبة دواء — امسحها في قسم علبة الدوا.',
     generalNotMedical: 'الصورة دي مش وثيقة طبية.',
-    exactDocumentUploaded: 'تم رفع هذه الوثيقة بالفعل لهذا الملف الشخصي.'
+    exactDocumentUploaded: 'تم رفع هذه الوثيقة بالفعل لهذا الملف الشخصي.',
+    sameProfileDuplicateTitle: 'المستند محمّل بالفعل',
+    sameProfileDuplicateMessage: 'هذا المستند تم رفعه بالفعل لهذا الملف الشخصي. لا يمكنك رفع نفس الملف مرتين.'
   },
 
   medications: {

@@ -964,6 +964,26 @@
 </div>
 }
 
+<!-- ═══════════ SAME-PROFILE DUPLICATE DIALOG ═══════════ -->
+@if (showSameProfileDuplicateDialog()) {
+<div class="modal-overlay" (click)="closeSameProfileDuplicateDialog()">
+  <div class="modal-card ai-fail-modal" (click)="$event.stopPropagation()">
+    <div class="ai-fail-body">
+      <div class="ai-fail-ico-wrap" style="color: #c0392b; background: #fde8e8;">
+        <i class="fa-solid fa-ban"></i>
+      </div>
+      <h3 class="ai-fail-title">{{ t().uploadValidation.sameProfileDuplicateTitle }}</h3>
+      <p class="ai-fail-desc">{{ t().uploadValidation.sameProfileDuplicateMessage }}</p>
+    </div>
+    <footer class="modal-ftr ai-fail-ftr">
+      <button type="button" class="modal-btn modal-btn-primary" (click)="closeSameProfileDuplicateDialog()">
+        {{ t().common.close }}
+      </button>
+    </footer>
+  </div>
+</div>
+}
+
 <!-- ═══════════ TOASTS ═══════════ -->
 <div class="toast-container" aria-live="polite">
   @for (toast of toasts(); track toast.id) {

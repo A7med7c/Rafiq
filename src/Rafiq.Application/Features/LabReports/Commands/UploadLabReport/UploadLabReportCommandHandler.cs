@@ -71,7 +71,7 @@ public sealed class UploadLabReportCommandHandler(
             {
                 throw new DocumentValidationException("DUPLICATE_DOCUMENT", "This exact document has already been uploaded to this profile.");
             }
-            
+
             if (!request.BypassFamilyDuplicateCheck)
             {
                 return ApiResponse<LabReportResponseDto>.FailureResponse(
@@ -82,6 +82,43 @@ public sealed class UploadLabReportCommandHandler(
                         existingProfileId = duplicateCheck.ExistingProfileId,
                         existingProfileName = duplicateCheck.ExistingProfileName
                     });
+            }
+
+            // User confirmed — reuse existing document's AI data instead of re-running analysis
+            if (duplicateCheck.ExistingDocumentId.HasValue)
+            {
+                var source = await labReportRepository.GetByIdAsync(duplicateCheck.ExistingDocumentId.Value, cancellationToken)
+                    ?? throw new NotFoundException("LabReport", duplicateCheck.ExistingDocumentId.Value);
+
+                var reusePreview = new LabReportResponseDto
+                {
+                    Id = Guid.Empty,
+                    LabName = source.LabName,
+                    DoctorName = source.DoctorName,
+                    ReportDate = source.ReportDate.ToString("yyyy-MM-dd"),
+                    OCRText = source.OCRText,
+                    Summary = source.Description,
+                    ImageUrl = imageUrl,
+                    CreatedAt = DateTime.UtcNow,
+                    MedicalAttentionReason = source.MedicalAttentionReason,
+                    RecommendedSpecialty = source.RecommendedSpecialty,
+                    ConfidenceScore = source.ConfidenceScore,
+                    RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(source.ConfidenceScore),
+                    AttentionLevel = warningCalculator.ComputeAttentionLevel(source.ConfidenceScore).ToString(),
+                    Results = source.Results.Select(r => new LabResultResponseDto
+                    {
+                        Id = Guid.NewGuid(),
+                        TestName = r.TestName ?? string.Empty,
+                        Value = r.Value ?? string.Empty,
+                        Unit = r.Unit ?? string.Empty,
+                        NormalRange = r.NormalRange ?? string.Empty,
+                        Status = r.Status
+                    }).ToList()
+                };
+
+                return ApiResponse<LabReportResponseDto>.SuccessResponse(
+                    reusePreview,
+                    "Lab report analyzed successfully. Review before saving.");
             }
         }
         // ─────────────────────────────────────────────────────────────

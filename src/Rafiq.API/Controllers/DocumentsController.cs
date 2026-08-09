@@ -322,11 +322,12 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
         [FromQuery] Guid profileId,
         IFormFile image,
         [FromForm] string? description,
+        [FromForm] bool bypassFamilyDuplicateCheck,
         [FromHeader(Name = "Accept-Language")] string? language,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new UploadGeneralDocumentAsyncCommand(image, profileId, description, language ?? "en"),
+            new UploadGeneralDocumentAsyncCommand(image, profileId, description, language ?? "en", bypassFamilyDuplicateCheck),
             cancellationToken);
         return Ok(result);
     }

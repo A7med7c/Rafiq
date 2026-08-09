@@ -826,7 +826,9 @@ export const ar: Translations = {
     generalShouldBeMedicine: 'دي علبة دوا — امسحها ضوئيًا في قسم علبة الدوا.',
     generalNotMedical: 'الصورة دي مش وثيقة طبية.',
     exactDocumentUploaded: 'المستند ده اترفع قبل كده للملف ده.',
-    externalServiceError: 'خدمة الذكاء الاصطناعي مش متاحة دلوقتي أو حجم الصورة كبير جدًا. جرب تاني أو دخل البيانات بنفسك.'
+    externalServiceError: 'خدمة الذكاء الاصطناعي مش متاحة دلوقتي أو حجم الصورة كبير جدًا. جرب تاني أو دخل البيانات بنفسك.',
+    sameProfileDuplicateTitle: 'المستند محمّل بالفعل',
+    sameProfileDuplicateMessage: 'هذا المستند تم رفعه بالفعل لهذا الملف الشخصي. لا يمكنك رفع نفس الملف مرتين.'
   },
 
   medications: {
