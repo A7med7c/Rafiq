@@ -100,7 +100,24 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
     //   • Returns immediately on subsequent calls (bootstrapDone flag).
     //   • Concurrent calls share the same in-flight Promise.
     void this.reminderBootstrap.bootstrap();
-    void this.alarmScheduler.consumePendingNativeAction();
+    // consumePendingNativeAction first: if the user tapped "Take Medicine" from a
+    // native alarm while the app was killed, confirm it before checkMissedReminders
+    // reads isActionable — otherwise the log would still be actionable and the popup
+    // would appear for a dose the user already confirmed.
+    void this.alarmScheduler.consumePendingNativeAction()
+      .then(() => this.notificationService.checkMissedReminders())
+      .catch(e => console.error('[App] startup reminder check failed', e));
+
+    // On Android, check once per session whether the app is excluded from battery
+    // optimizations.  If not, open the system exemption dialog immediately so
+    // AlarmManager alarms survive the app being killed from Recents on OEM devices
+    // (Samsung OneUI, Xiaomi MIUI, etc. cancel alarms for non-exempt apps).
+    // Delayed 3 s so it doesn't compete with the splash / login animation.
+    if (Capacitor.getPlatform() === 'android') {
+      setTimeout(() => {
+        void this.alarmScheduler.checkAndRequestBatteryOptimization();
+      }, 3000);
+    }
 
     if (Capacitor.isNativePlatform()) {
       void CapacitorApp.addListener('appStateChange', ({ isActive }) => {
@@ -110,14 +127,18 @@ export class App implements OnInit, AfterViewInit, OnDestroy {
         // it resolves false in that case, so a plain app switch never triggers a refresh.
         this.alarmScheduler.consumePendingNativeAction()
           .then(actionConsumed => {
-            if (!actionConsumed) return;
-            // Reuse the existing reminder-data refresh signal (already consumed by
-            // dashboard.ts / medications.ts) so a dose confirmed while the app sat in
-            // the background is reflected immediately if either page is mounted —
-            // no new refresh mechanism, no extra API calls beyond what confirm already made.
-            this.notificationService.notifyReminderChanged();
+            if (actionConsumed) {
+              // Reuse the existing reminder-data refresh signal (already consumed by
+              // dashboard.ts / medications.ts) so a dose confirmed while the app sat in
+              // the background is reflected immediately if either page is mounted —
+              // no new refresh mechanism, no extra API calls beyond what confirm already made.
+              this.notificationService.notifyReminderChanged();
+            }
+            // Always check for reminders that became due while the app was in the
+            // background or killed — SignalR does not re-deliver missed events.
+            return this.notificationService.checkMissedReminders();
           })
-          .catch(e => console.error('[App] consumePendingNativeAction on resume failed', e));
+          .catch(e => console.error('[App] resume reminder check failed', e));
       }).then(handle => { this.appStateListener = handle; });
     }
   }

@@ -94,6 +94,11 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Lets the app request battery-optimization exemption directly via an intent
+         (ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS) so AlarmManager alarms are
+         not cancelled by OEM battery managers when the app is closed. Without this
+         permission the intent is silently rejected on Android 6+. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Exact alarms: USE_EXACT_ALARM (API 33+, no user grant needed) -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <!-- Fallback for API 31-32: requires user to grant from Settings -->

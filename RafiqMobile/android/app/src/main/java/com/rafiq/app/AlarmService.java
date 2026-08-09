@@ -194,6 +194,12 @@ public class AlarmService extends Service {
             .setContentTitle(title)
             .setContentText(body)
             .setContentIntent(pi)
+            // When this foreground notification replaces AlarmReceiver's heads-up
+            // (same notification ID), Android needs the fullScreenIntent to know it
+            // should still show AlarmActivity over the lock screen and present a
+            // heads-up banner on an active screen.  Without this, the replacement
+            // silently drops those behaviours even though AlarmReceiver set them.
+            .setFullScreenIntent(pi, true)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

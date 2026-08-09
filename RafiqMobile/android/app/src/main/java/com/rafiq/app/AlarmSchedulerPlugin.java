@@ -3,6 +3,10 @@ package com.rafiq.mobile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.getcapacitor.JSObject;
@@ -64,9 +68,10 @@ public class AlarmSchedulerPlugin extends Plugin {
 
         long triggerAtMillis;
         try {
-            // Parse ISO-8601 — java.time is available from API 26 (minSdk = 24 needs desugaring,
-            // but Capacitor projects include core library desugaring by default)
-            triggerAtMillis = java.time.Instant.parse(scheduledAt).toEpochMilli();
+            // OffsetDateTime handles both "Z" and "+00:00" UTC suffixes.
+            // Instant.parse() only accepts the "Z" form; the Angular layer sends "+00:00",
+            // which caused every alarm to be silently dropped with a parse exception.
+            triggerAtMillis = java.time.OffsetDateTime.parse(scheduledAt).toInstant().toEpochMilli();
         } catch (Exception e) {
             // Do not silently swallow — surface the exact reminder + value that failed.
             Log.e(AlarmDiagnostics.TAG, "scheduleAlarm parse FAILED reminderId=" + reminderId
@@ -185,6 +190,74 @@ public class AlarmSchedulerPlugin extends Plugin {
         JSObject result = new JSObject();
         result.put("completed", true);
         call.resolve(result);
+    }
+
+    /**
+     * Returns whether the app is currently excluded from battery optimizations.
+     *
+     * On Android 6+ (API 23+), OEM battery managers can cancel AlarmManager alarms
+     * when the app is killed unless the app is on the "unrestricted" battery list.
+     * This method lets Angular check the state so it can prompt the user once.
+     *
+     * Result: { isIgnoring: boolean }
+     */
+    @PluginMethod
+    public void checkBatteryOptimization(PluginCall call) {
+        JSObject result = new JSObject();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
+            boolean isIgnoring = pm != null
+                && pm.isIgnoringBatteryOptimizations(getContext().getPackageName());
+            result.put("isIgnoring", isIgnoring);
+        } else {
+            // Pre-API 23: battery optimization does not exist; always report exempt.
+            result.put("isIgnoring", true);
+        }
+        call.resolve(result);
+    }
+
+    /**
+     * Opens the system dialog asking the user to exclude this app from battery
+     * optimizations.  Requires android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+     * in the manifest (declared in AndroidManifest.xml).
+     *
+     * On Android < 6 (API 23) this is a no-op (battery optimization does not exist).
+     * Call checkBatteryOptimization() first and only call this when isIgnoring=false.
+     *
+     * Result: { requested: boolean }
+     */
+    @PluginMethod
+    public void requestBatteryOptimizationExemption(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                intent.setData(Uri.parse("package:" + getContext().getPackageName()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(intent);
+                JSObject result = new JSObject();
+                result.put("requested", true);
+                call.resolve(result);
+            } catch (Exception e) {
+                Log.w(AlarmDiagnostics.TAG, "requestBatteryOptimizationExemption failed, "
+                    + "falling back to app settings", e);
+                // Fallback: open app details settings so the user can find Battery
+                // manually. Some OEMs disable ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS.
+                try {
+                    Intent fallback = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    fallback.setData(Uri.parse("package:" + getContext().getPackageName()));
+                    fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    getContext().startActivity(fallback);
+                } catch (Exception ignored) {
+                }
+                JSObject result = new JSObject();
+                result.put("requested", false);
+                call.resolve(result);
+            }
+        } else {
+            JSObject result = new JSObject();
+            result.put("requested", false);
+            call.resolve(result);
+        }
     }
 
     private static boolean isBlank(String value) {

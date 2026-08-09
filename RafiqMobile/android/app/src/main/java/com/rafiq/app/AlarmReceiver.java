@@ -57,21 +57,20 @@ public class AlarmReceiver extends BroadcastReceiver {
         body = valueOrDefault(body, "Time for your reminder");
         reminderType = valueOrDefault(reminderType, "Medication");
 
-        // 1. Start foreground alarm service (sound + vibration)
-        Intent serviceIntent = new Intent(context, AlarmService.class);
-        serviceIntent.putExtra(AlarmActivity.EXTRA_REMINDER_ID, reminderId);
-        serviceIntent.putExtra(AlarmActivity.EXTRA_REMINDER_TYPE, reminderType);
-        serviceIntent.putExtra(AlarmActivity.EXTRA_TITLE, title);
-        serviceIntent.putExtra(AlarmActivity.EXTRA_BODY, body);
-        serviceIntent.putExtra(AlarmActivity.EXTRA_SCHEDULED_AT, scheduledAt);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent);
-        } else {
-            context.startService(serviceIntent);
-        }
-        Log.i(AlarmDiagnostics.TAG, "AlarmReceiver → AlarmService start requested for reminderId=" + reminderId);
-
-        // 2. Build full-screen intent → AlarmActivity over lock screen
+        // ── Step 1: Build and post the heads-up notification FIRST. ──────────────
+        //
+        // ORDERING IS CRITICAL: on Android 12+ (API 31+), startForegroundService()
+        // can throw ForegroundServiceStartNotAllowedException when the app process
+        // was killed and background-start restrictions are in effect.  Even though
+        // setAlarmClock() grants a temporary exemption, OEM battery managers
+        // (Samsung OneUI, Xiaomi MIUI, Oppo ColorOS, etc.) frequently override it
+        // for apps swiped from Recents.  If the notification were posted AFTER the
+        // service start (original order), an uncaught exception on that line would
+        // abort onReceive() before nm.notify() was ever reached — the user would
+        // get no notification at all.  Posting first guarantees the notification
+        // reaches the user regardless of whether AlarmService starts successfully.
+        //
+        // 1a. Build full-screen intent → AlarmActivity over the lock screen.
         Intent alarmIntent = new Intent(context, AlarmActivity.class);
         alarmIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         alarmIntent.putExtra(AlarmActivity.EXTRA_REMINDER_ID, reminderId);
@@ -85,10 +84,9 @@ public class AlarmReceiver extends BroadcastReceiver {
             : PendingIntent.FLAG_UPDATE_CURRENT;
         PendingIntent fullScreenPi = PendingIntent.getActivity(context, stableId(reminderId), alarmIntent, piFlags);
 
-        // 3. Post heads-up notification with full-screen intent + action buttons.
-        // Actions target AlarmActionReceiver directly (a BroadcastReceiver, not an
-        // Activity) so tapping them from the notification tray processes the action
-        // entirely in the background — the main Rafiq app UI is never opened.
+        // 1b. Build and post the notification. Actions target AlarmActionReceiver
+        //     directly so tapping them from the tray processes the action entirely
+        //     in the background — the main Rafiq app UI is never forced open.
         createHeadsUpChannel(context);
         boolean isAppointment = "Appointment".equalsIgnoreCase(reminderType);
         String takeLabel = isAppointment ? "I Attended" : "Taken";
@@ -100,13 +98,12 @@ public class AlarmReceiver extends BroadcastReceiver {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setFullScreenIntent(fullScreenPi, true)  // triggers lock-screen activity
+            .setFullScreenIntent(fullScreenPi, true)
             .setOngoing(true)
             .setAutoCancel(false)
             .addAction(0, takeLabel, AlarmActionReceiver.buildTakePendingIntent(context, reminderId, reminderType));
 
         if (!isAppointment) {
-            // Appointments have no escalation stages — only medication offers Snooze.
             builder.addAction(0, "Snooze 10 min",
                 AlarmActionReceiver.buildSnoozePendingIntent(context, reminderId, reminderType, title, body, scheduledAt));
         }
@@ -114,9 +111,38 @@ public class AlarmReceiver extends BroadcastReceiver {
         Notification notification = builder.build();
 
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        // Use reminderId hashCode as notification ID so each reminder has a unique notification
         if (nm != null) {
             nm.notify(stableId(reminderId), notification);
+            Log.i(AlarmDiagnostics.TAG, "AlarmReceiver: notification posted for reminderId=" + reminderId);
+        }
+
+        // ── Step 2: Start foreground alarm service (sound + vibration). ──────────
+        //
+        // Wrapped in try-catch so a background-start rejection (Android 12+ OEM
+        // restriction) does NOT abort onReceive() — the notification was already
+        // posted above, so the user will still see the reminder even if sound and
+        // vibration are unavailable.  AlarmService.startForeground() replaces the
+        // notification above with its own copy (same ID) once it starts, preserving
+        // the action buttons.
+        Intent serviceIntent = new Intent(context, AlarmService.class);
+        serviceIntent.putExtra(AlarmActivity.EXTRA_REMINDER_ID, reminderId);
+        serviceIntent.putExtra(AlarmActivity.EXTRA_REMINDER_TYPE, reminderType);
+        serviceIntent.putExtra(AlarmActivity.EXTRA_TITLE, title);
+        serviceIntent.putExtra(AlarmActivity.EXTRA_BODY, body);
+        serviceIntent.putExtra(AlarmActivity.EXTRA_SCHEDULED_AT, scheduledAt);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent);
+            } else {
+                context.startService(serviceIntent);
+            }
+            Log.i(AlarmDiagnostics.TAG, "AlarmReceiver → AlarmService start requested for reminderId=" + reminderId);
+        } catch (Exception e) {
+            // Background-start restriction prevented AlarmService from starting.
+            // The notification was already posted — the user will see the reminder
+            // without sound/vibration.  Log loudly so this is visible in logcat.
+            Log.w(AlarmDiagnostics.TAG, "AlarmReceiver: AlarmService start BLOCKED (background restriction) "
+                + "for reminderId=" + reminderId + " — notification is still visible", e);
         }
     }
 

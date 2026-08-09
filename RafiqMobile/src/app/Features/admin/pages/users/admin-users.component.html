@@ -37,8 +37,8 @@
     </select>
     <select [(ngModel)]="role" (ngModelChange)="applyFilters()" [attr.aria-label]="copy().allRoles">
       <option value="">{{ copy().allRoles }}</option>
-      <option value="User">User</option>
-      <option value="Admin">Admin</option>
+      <option value="User">{{ copy().roleUser }}</option>
+      <option value="Admin">{{ copy().roleAdmin }}</option>
     </select>
     <select [(ngModel)]="sort" (ngModelChange)="applyFilters()" [attr.aria-label]="copy().newest">
       <option value="createdAt-desc">{{ copy().newest }}</option>
@@ -52,7 +52,7 @@
     <div class="inline-error">
       <i class="fa-solid fa-circle-exclamation"></i>
       <span>{{ copy().loadError }}</span>
-      <button type="button" (click)="loadUsers(result()?.page ?? 1)">Retry</button>
+      <button type="button" (click)="loadUsers(result()?.page ?? 1)">{{ copy().retry }}</button>
     </div>
   }
 

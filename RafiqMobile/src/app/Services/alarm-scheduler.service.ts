@@ -250,4 +250,42 @@ export class AlarmSchedulerService {
 
     return false;
   }
+
+  /**
+   * Checks whether the app is excluded from battery optimizations and, if not,
+   * opens the system dialog asking the user to grant the exemption.
+   *
+   * Must be called from a user-interaction context (button tap, first-launch
+   * prompt) — Android will reject the dialog if launched without prior user
+   * engagement. Safe to call on non-Android platforms (returns immediately).
+   *
+   * Returns true when the app was already exempt or the dialog was launched,
+   * false when the check/request was skipped (non-Android, or API < 23).
+   */
+  async checkAndRequestBatteryOptimization(): Promise<boolean> {
+    if (!this.isAndroid) return false;
+    try {
+      const { isIgnoring } = await AlarmSchedulerPlugin.checkBatteryOptimization();
+      if (isIgnoring) return true; // already exempt — nothing to do
+      await AlarmSchedulerPlugin.requestBatteryOptimizationExemption();
+      return true;
+    } catch (e) {
+      console.warn('[AlarmSchedulerService] battery optimization check/request failed', e);
+      return false;
+    }
+  }
+
+  /**
+   * Returns true when the app is currently excluded from battery optimizations.
+   * Used by the UI to decide whether to show a persistent warning banner.
+   */
+  async isBatteryOptimizationIgnored(): Promise<boolean> {
+    if (!this.isAndroid) return true;
+    try {
+      const { isIgnoring } = await AlarmSchedulerPlugin.checkBatteryOptimization();
+      return isIgnoring;
+    } catch {
+      return true; // assume OK on error — don't block UI
+    }
+  }
 }

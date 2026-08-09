@@ -40,6 +40,14 @@ export interface PendingAlarmActionCompleteResult {
   completed: boolean;
 }
 
+export interface BatteryOptimizationResult {
+  isIgnoring: boolean;
+}
+
+export interface BatteryOptimizationExemptionResult {
+  requested: boolean;
+}
+
 /**
  * Capacitor plugin interface for native Android alarm scheduling.
  * On non-Android platforms (iOS, web) all methods resolve successfully
@@ -52,6 +60,10 @@ export interface AlarmSchedulerPluginInterface {
   dismissAlarm(options: { reminderId: string }): Promise<AlarmDismissResult>;
   consumePendingAction(): Promise<PendingAlarmActionResult>;
   completePendingAction(options: { reminderId: string; action: 'takeMedicine' | 'snooze' | 'dismiss' }): Promise<PendingAlarmActionCompleteResult>;
+  /** Returns whether the app is currently excluded from battery optimizations (Android 6+). */
+  checkBatteryOptimization(): Promise<BatteryOptimizationResult>;
+  /** Opens the system dialog to request battery optimization exemption (Android 6+). */
+  requestBatteryOptimizationExemption(): Promise<BatteryOptimizationExemptionResult>;
 }
 
 const AlarmSchedulerPlugin = registerPlugin<AlarmSchedulerPluginInterface>(

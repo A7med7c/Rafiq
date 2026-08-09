@@ -1,5 +1,6 @@
 import { Injectable, NgZone, computed, effect, inject, isDevMode, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth-service';
 import { AppointmentsService } from './appointments.service';
 import { MedicationRemindersService } from './medication-reminders.service';
@@ -8,6 +9,7 @@ import { NotificationSoundService } from './notification-sound.service';
 import { PersistedNotificationsService } from './persisted-notifications.service';
 import { LocalizationService } from './localization.service';
 import { ReminderBootstrapService } from './reminder-bootstrap.service';
+import { MedicationReminderLogDto } from '../Modles/medication-reminder.models';
 
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
@@ -263,6 +265,42 @@ export class NotificationService {
     this._notificationCenterOpen.update(isOpen => !isOpen);
   }
 
+  /**
+   * Checks whether any medications became due while the app was closed and
+   * surfaces them as in-app reminder popups.
+   *
+   * Called on startup (after consumePendingNativeAction resolves) and every
+   * time the app returns to the foreground.  SignalR does not re-deliver events
+   * missed during the killed period, so this is the only recovery path.
+   *
+   * The server's `isActionable` flag is authoritative: exactly one log per
+   * medicine per day is actionable at any moment, so calling this multiple times
+   * is safe — processedReminderIds deduplicates repeated calls for the same log.
+   */
+  async checkMissedReminders(): Promise<void> {
+    if (!this.authService.isLoggedIn) return;
+    try {
+      const logs = await firstValueFrom(this.medicationRemindersService.getToday());
+      const actionable = logs.filter((log: MedicationReminderLogDto) => log.isActionable);
+      for (const log of actionable) {
+        const payload: MedicationReminderNotificationPayload = {
+          reminderId:       log.id,
+          medicineId:       log.medicineReminderId,
+          medicineName:     log.medicineName,
+          genericName:      '',
+          strength:         '',
+          dosage:           log.dosage || '',
+          reminderTime:     log.reminderTime,
+          status:           log.status,
+          notificationText: '',
+        };
+        this.recordReminder(payload);
+      }
+    } catch (e) {
+      console.error('[NotificationService] checkMissedReminders failed', e);
+    }
+  }
+
   acknowledgeReminder(reminderId?: string): void {
     const queue = this._reminderQueue();
 
@@ -431,22 +469,36 @@ export class NotificationService {
       sourceId: reminder.reminderId,
     });
 
-    this._reminderQueue.update(queue => [...queue, reminder]);
+    // If the same medicine already has a stage queued (e.g. user missed the before-
+    // reminder and the due-reminder both arrive on reconnect), replace it so only
+    // the latest/most-urgent stage is shown — not one screen per stage.
+    this._reminderQueue.update(queue => {
+      const sameIdx = queue.findIndex(r => r.medicineId === reminder.medicineId);
+      if (sameIdx !== -1) {
+        const updated = [...queue];
+        updated[sameIdx] = reminder;
+        return updated;
+      }
+      return [...queue, reminder];
+    });
     this._reminderModalOpen.set(true);
 
-    // Android: the native AlarmManager alarm already owns this reminder — do not
-    // emit a competing immediate LocalNotifications reminder. Other platforms keep
-    // the LocalNotifications fallback.
-    if (!this.isAndroid) {
-      this.emitNativeNotification({
-        id: crypto.randomUUID(),
-        title: this.localization.t().notifications.medicationReminderToast,
-        body: `${reminder.medicineName} • ${reminder.reminderTime}`,
-        createdAt: new Date(),
-        sourceId: reminder.reminderId,
-        action: 'open-reminder'
-      });
-    }
+    // Post a system notification on all platforms so the Android notification bar
+    // shows an entry even when the app is open.  On Android, when AlarmManager
+    // also fires at the scheduled time, AlarmReceiver posts a notification at the
+    // same numeric ID (stableId = same 31-polynomial hash of reminderId).
+    // AlarmService's foreground notification owns that slot while the service runs,
+    // so this LocalNotifications call is a safe no-op in that window — no
+    // duplication.  When SignalR delivers missed reminders (AlarmService already
+    // stopped), this call succeeds and gives the user a proper system notification.
+    this.emitNativeNotification({
+      id: crypto.randomUUID(),
+      title: this.localization.t().notifications.medicationReminderToast,
+      body: `${reminder.medicineName} • ${reminder.reminderTime}`,
+      createdAt: new Date(),
+      sourceId: reminder.reminderId,
+      action: 'open-reminder'
+    });
 
     this.showBrowserReminderNotification(reminder);
     this.notificationSoundService.play();
