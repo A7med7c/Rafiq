@@ -19,7 +19,8 @@ public sealed class UploadLabReportCommandHandler(
     IUsageIntelligenceService usageIntelligence,
     IDuplicateDocumentDetector duplicateDetector,
     ILabReportRepository labReportRepository,
-    IMedicalWarningCalculator warningCalculator)
+    IMedicalWarningCalculator warningCalculator,
+    IPdfPageRenderer pdfPageRenderer)
     : IRequestHandler<UploadLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
     public async Task<ApiResponse<LabReportResponseDto>> Handle(
@@ -123,7 +124,16 @@ public sealed class UploadLabReportCommandHandler(
         }
         // ─────────────────────────────────────────────────────────────
 
-        var base64Image = Convert.ToBase64String(imageBytes);
+        var analysisBytes = imageBytes;
+        if (Path.GetExtension(request.Image.FileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            var rendered = pdfPageRenderer.RenderFirstPageAsJpeg(imageBytes);
+            if (rendered is null)
+                throw new BadRequestException("Could not process this PDF. Please upload a valid PDF or use an image instead.");
+            analysisBytes = rendered;
+        }
+
+        var base64Image = Convert.ToBase64String(analysisBytes);
 
         var extracted = await bedrockService.AnalyzeAsync<BedrockLabReportDto>(
             base64Image,
