@@ -135,10 +135,15 @@
         </div>
         }
 
-        <div class="ai-hero__actions" style="margin-top: 16px;">
+        <div class="ai-hero__actions">
           <button type="button" assistantAnchor="ai-summary-details-btn" class="ai-hero__btn ai-hero__btn--outline"
-            (click)="openAiPanel()" style="width: 100%;">
+            (click)="openAskAiDialog()">
             <i class="fa-solid fa-robot"></i> {{ t().dashboard.summaryViewFull }}
+          </button>
+
+          <button type="button" class="dash-download-btn" (click)="openDownloadFlow()">
+            <span>{{ l10n.isRtl() ? 'تحميل كل السجلات الطبية' : 'Download all medical records' }}</span>
+            <i class="fa-solid fa-download"></i>
           </button>
         </div>
       </div>
@@ -584,6 +589,48 @@
       <p class="report-gen-sub">{{ t().dashboard.generatingReportSub }}</p>
     </div>
     }
+  </div>
+</div>
+}
+
+<!-- ═══════════ ASK AI DIALOG ═══════════ -->
+@if (askAiDialogOpen()) {
+<div class="modal-backdrop" (click)="closeAskAiDialog()">
+  <div class="modal-box" [style.transform]="sheetDragY() ? 'translateY(' + sheetDragY() + 'px)' : null"
+    (click)="$event.stopPropagation()">
+    <div class="modal-sheet-handle" (touchstart)="onSheetTouchStart($event)" (touchmove)="onSheetTouchMove($event)"
+      (touchend)="onSheetTouchEnd(() => closeAskAiDialog())"></div>
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico-wrap"><i class="fa-solid fa-robot"></i></div>
+        <div>
+          <h2 class="modal-title">{{ t().dashboard.askAiTitle }}</h2>
+          <p class="modal-subtitle">{{ t().dashboard.askAiSubtitle }}</p>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" (click)="closeAskAiDialog()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="report-options">
+      <div class="report-option report-option--selected">
+        <div class="report-option-body">
+          <div class="report-option-title">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            {{ t().dashboard.askAiTitle }}
+          </div>
+          <p class="report-option-desc">{{ t().dashboard.askAiDesc }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" (click)="closeAskAiDialog()">{{ t().records.cancelBtn }}</button>
+      <button type="button" class="btn-primary" (click)="confirmAskAi()">
+        <i class="fa-solid fa-comment-dots"></i> {{ t().dashboard.askAiCta }}
+      </button>
+    </div>
   </div>
 </div>
 }

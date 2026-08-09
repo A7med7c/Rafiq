@@ -164,6 +164,9 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly reportTargetProfileName = signal<string | null>(null);
   private _reportSub: Subscription | null = null;
 
+  // ── Ask AI dialog (mobile bottom sheet, mirrors the medical report dialog) ─
+  readonly askAiDialogOpen = signal(false);
+
   // ── Bottom-sheet swipe-to-dismiss (shared across all dashboard modals) ─────
   readonly sheetDragY = signal(0);
   private sheetDragStartY: number | null = null;
@@ -343,6 +346,7 @@ export class Dashboard implements OnInit, OnDestroy {
           this.reportDialogOpen() ||
           this.familySummaryOpen() ||
           this.profilePickerOpen() ||
+          this.askAiDialogOpen() ||
           this.notifService.notificationCenterOpen()
         ) {
           setTimeout(checkAndPrompt, 2000);
@@ -491,6 +495,22 @@ export class Dashboard implements OnInit, OnDestroy {
 
   openAiPanel(): void {
     this.aiChatService.openPanel();
+  }
+
+  /** Entry-point from the hero card's "Ask AI for details" button — shows a small
+   *  mobile bottom sheet (same visual family as the medical report dialog) explaining
+   *  what the AI will do before handing off to the full-screen chat panel. */
+  openAskAiDialog(): void {
+    this.askAiDialogOpen.set(true);
+  }
+
+  closeAskAiDialog(): void {
+    this.askAiDialogOpen.set(false);
+  }
+
+  confirmAskAi(): void {
+    this.askAiDialogOpen.set(false);
+    this.openAiPanel();
   }
 
   openVoiceMode(): void {

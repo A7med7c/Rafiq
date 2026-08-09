@@ -380,6 +380,10 @@ export const en = {
     generatingReportSub: 'This may take a few seconds while the AI prepares your summary',
     selectProfileTitle: 'Select Profile',
     selectProfileDesc: 'Choose whose medical report to generate',
+    askAiTitle: 'Ask AI',
+    askAiSubtitle: 'Personalized health insights',
+    askAiDesc: "Rafiq's AI will review your health summary — conditions, allergies, medications, and recent lab results — and answer any questions you have about it.",
+    askAiCta: 'Start chat',
   },
 
   medicalRecordsPage: {
