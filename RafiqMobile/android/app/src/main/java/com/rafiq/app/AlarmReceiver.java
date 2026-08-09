@@ -85,9 +85,15 @@ public class AlarmReceiver extends BroadcastReceiver {
             : PendingIntent.FLAG_UPDATE_CURRENT;
         PendingIntent fullScreenPi = PendingIntent.getActivity(context, stableId(reminderId), alarmIntent, piFlags);
 
-        // 3. Post heads-up notification with full-screen intent
+        // 3. Post heads-up notification with full-screen intent + action buttons.
+        // Actions target AlarmActionReceiver directly (a BroadcastReceiver, not an
+        // Activity) so tapping them from the notification tray processes the action
+        // entirely in the background — the main Rafiq app UI is never opened.
         createHeadsUpChannel(context);
-        Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_HEADS_UP)
+        boolean isAppointment = "Appointment".equalsIgnoreCase(reminderType);
+        String takeLabel = isAppointment ? "I Attended" : "Taken";
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID_HEADS_UP)
             .setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
             .setContentTitle(title)
             .setContentText(body)
@@ -97,7 +103,15 @@ public class AlarmReceiver extends BroadcastReceiver {
             .setFullScreenIntent(fullScreenPi, true)  // triggers lock-screen activity
             .setOngoing(true)
             .setAutoCancel(false)
-            .build();
+            .addAction(0, takeLabel, AlarmActionReceiver.buildTakePendingIntent(context, reminderId, reminderType));
+
+        if (!isAppointment) {
+            // Appointments have no escalation stages — only medication offers Snooze.
+            builder.addAction(0, "Snooze 10 min",
+                AlarmActionReceiver.buildSnoozePendingIntent(context, reminderId, reminderType, title, body, scheduledAt));
+        }
+
+        Notification notification = builder.build();
 
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         // Use reminderId hashCode as notification ID so each reminder has a unique notification

@@ -158,9 +158,40 @@ export class AlarmSchedulerService {
     if (!action.hasAction || !action.reminderId) return;
 
     if (action.action === 'takeMedicine' && action.reminderType !== 'Appointment') {
-      await firstValueFrom(this.medicationReminders.confirm(action.reminderId));
-      await this.offlineReminders.removeReminder(action.reminderId);
-      await this.cancelAlarm(action.reminderId);
+      // action.reminderId is the MEDICATION CONFIG id (MedicineReminder.Id), shared by all
+      // 3 escalation-stage logs for today — it is NOT a MedicationReminderLog id. The backend
+      // confirm endpoint requires the per-stage LOG id (POST /medication-reminders/{logId}/confirm
+      // → ConfirmMedicationReminderCommand(ReminderLogId)). Resolve the correct actionable log
+      // via the existing /today endpoint before confirming; do not assume the alarm's own id
+      // is usable directly.
+      try {
+        const todayLogs = await firstValueFrom(this.medicationReminders.getToday());
+        const actionableLog = todayLogs.find(
+          l => l.medicineReminderId === action.reminderId && l.isActionable
+        );
+
+        if (actionableLog) {
+          await firstValueFrom(this.medicationReminders.confirm(actionableLog.id));
+        } else {
+          console.warn('[RafiqAlarm] Take Medicine: no actionable log found for reminderId='
+            + action.reminderId + ' — dose likely already resolved elsewhere');
+        }
+
+        // Confirmed (or already resolved by another path) — cancel every remaining native
+        // alarm belonging to this SAME dose (cancelAlarm cancels all occurrences that share
+        // this config-level reminderId; today's sync only ever schedules TODAY's stages, so
+        // this cannot reach a different day's occurrences or a different medication).
+        await this.offlineReminders.removeReminder(action.reminderId);
+        await this.cancelAlarm(action.reminderId);
+      } catch (e) {
+        // Do not cancel remaining stage alarms on a genuine failure — the dose was not
+        // actually confirmed server-side, so the escalation schedule must continue exactly
+        // as before. Still log loudly so this is visible instead of silently swallowed.
+        console.error('[RafiqAlarm] Take Medicine confirm FAILED reminderId=' + action.reminderId, e);
+      }
+
+      // Always clear the pending action, success or failure, so a transient error does not
+      // leave the same stale action re-processed on every future app open.
       await AlarmSchedulerPlugin.completePendingAction({
         reminderId: action.reminderId,
         action: 'takeMedicine',

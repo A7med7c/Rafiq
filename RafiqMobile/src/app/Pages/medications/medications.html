@@ -573,12 +573,22 @@
         
         @if (hasReminders(viewingMed()!.id)) {
           <div style="display: flex; flex-direction: column; gap: 8px;">
-            @for (rt of getSortedReminderTimes(viewingMed()!.id); track rt) {
+            @for (reminder of getSortedReminders(viewingMed()!.id); track reminder.id) {
               <div style="display: flex; justify-content: space-between; align-items: center; background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                 <span style="font-weight: 700; color: #1E293B; font-size: 15px;">
-                  {{ rt }}
+                  {{ formatTime(reminder.reminderTime) }}
                 </span>
-                <i class="fa-regular fa-bell" style="color: var(--blue, #0EAFD7); font-size: 18px;"></i>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                  <i class="fa-regular fa-bell" style="color: var(--blue, #0EAFD7); font-size: 18px;"></i>
+                  @if (!fpReadOnly()) {
+                    <button type="button" (click)="openEditReminder(reminder)" style="background: none; border: none; color: #64748B; font-size: 18px; padding: 0; display: flex; align-items: center; cursor: pointer;">
+                      <i class="fa-regular fa-pen-to-square"></i>
+                    </button>
+                    <button type="button" (click)="openDeleteReminder(reminder)" style="background: none; border: none; color: #EF4444; font-size: 18px; padding: 0; display: flex; align-items: center; cursor: pointer;">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  }
+                </div>
               </div>
             }
           </div>

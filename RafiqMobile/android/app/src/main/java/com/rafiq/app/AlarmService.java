@@ -42,10 +42,17 @@ public class AlarmService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         alarmIntent = intent;
-        android.util.Log.i(AlarmDiagnostics.TAG, "AlarmService.onStartCommand REACHED reminderId="
-            + (intent != null ? intent.getStringExtra(AlarmActivity.EXTRA_REMINDER_ID) : null));
+        String reminderId = intent != null ? intent.getStringExtra(AlarmActivity.EXTRA_REMINDER_ID) : null;
+        android.util.Log.i(AlarmDiagnostics.TAG, "AlarmService.onStartCommand REACHED reminderId=" + reminderId);
         createAlarmChannel();
-        startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification());
+        // Use the SAME notification id AlarmReceiver's heads-up notification used
+        // (stableId(reminderId), not a hardcoded constant). Android's notification id
+        // namespace is shared between NotificationManager.notify() and
+        // Service.startForeground() for the same app, so this REPLACES the heads-up
+        // notification instead of stacking a second, separate one — this was the cause
+        // of two Rafiq notifications appearing for a single reminder fire.
+        int notificationId = reminderId != null ? AlarmReceiver.stableId(reminderId) : FOREGROUND_NOTIFICATION_ID;
+        startForeground(notificationId, buildForegroundNotification());
         startSound();
         startVibration();
         return START_STICKY; // Restart if killed by OS (Doze recovery)
@@ -153,16 +160,20 @@ public class AlarmService extends Service {
     }
 
     private Notification buildForegroundNotification() {
-        // Tap → bring AlarmActivity to front
+        // Tap the notification body (not an action button) → bring AlarmActivity to front.
         Intent openIntent = new Intent(this, AlarmActivity.class);
         openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         String reminderId = null;
+        String reminderType = "Medication";
         String title = "Reminder";
         String body = "Tap to view your reminder";
+        String scheduledAt = null;
         if (alarmIntent != null) {
             reminderId = alarmIntent.getStringExtra(AlarmActivity.EXTRA_REMINDER_ID);
+            reminderType = valueOrDefault(alarmIntent.getStringExtra(AlarmActivity.EXTRA_REMINDER_TYPE), reminderType);
             title = valueOrDefault(alarmIntent.getStringExtra(AlarmActivity.EXTRA_TITLE), title);
             body = valueOrDefault(alarmIntent.getStringExtra(AlarmActivity.EXTRA_BODY), body);
+            scheduledAt = alarmIntent.getStringExtra(AlarmActivity.EXTRA_SCHEDULED_AT);
             openIntent.putExtras(alarmIntent);
         }
         int flags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
@@ -175,7 +186,10 @@ public class AlarmService extends Service {
             flags
         );
 
-        return new NotificationCompat.Builder(this, CHANNEL_ID_ALARM)
+        boolean isAppointment = "Appointment".equalsIgnoreCase(reminderType);
+        String takeLabel = isAppointment ? "I Attended" : "Taken";
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID_ALARM)
             .setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
             .setContentTitle(title)
             .setContentText(body)
@@ -183,8 +197,20 @@ public class AlarmService extends Service {
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .build();
+            .setCategory(NotificationCompat.CATEGORY_ALARM);
+
+        // This notification replaces AlarmReceiver's heads-up notification (same id) once
+        // the foreground service starts, so it carries the SAME actions — otherwise the
+        // buttons the user actually sees would disappear the moment the service starts.
+        if (reminderId != null) {
+            builder.addAction(0, takeLabel, AlarmActionReceiver.buildTakePendingIntent(this, reminderId, reminderType));
+            if (!isAppointment) {
+                builder.addAction(0, "Snooze 10 min",
+                    AlarmActionReceiver.buildSnoozePendingIntent(this, reminderId, reminderType, title, body, scheduledAt));
+            }
+        }
+
+        return builder.build();
     }
 
     private String valueOrDefault(String value, String fallback) {
