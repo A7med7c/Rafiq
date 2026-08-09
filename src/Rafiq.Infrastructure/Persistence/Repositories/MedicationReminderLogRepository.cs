@@ -54,6 +54,18 @@ public sealed class MedicationReminderLogRepository(RafiqDbContext context) : IM
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<MedicationReminderLog>> GetAllStatusesForDateAsync(
+        Guid userHealthProfileId,
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .Where(x => x.UserHealthProfileId == userHealthProfileId
+                        && x.ScheduledDate == date
+                        && !x.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<List<MedicationReminderLog>> GetPendingOtherLogsAsync(
         Guid medicineReminderId,
         DateOnly date,

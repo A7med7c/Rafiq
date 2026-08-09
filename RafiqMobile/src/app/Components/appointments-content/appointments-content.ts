@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { NotificationService } from '../../Services/notification.service';
+import { AlarmSchedulerService } from '../../Services/alarm-scheduler.service';
 import { LocalizationService } from '../../Services/localization.service';
 import { NotificationPermissionService, NotificationPermissionResult } from '../../Services/notification-permission.service';
 import { NotificationPermissionGuardService } from '../../Services/notification-permission-guard.service';
@@ -44,6 +45,7 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   private readonly apptSvc = inject(AppointmentsService);
   private readonly notifSvc = inject(NotificationService);
+  private readonly alarmScheduler = inject(AlarmSchedulerService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly l10n  = inject(LocalizationService);
@@ -549,7 +551,22 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
         }
         this.submitting.set(false);
         this.closeAddModal();
-        this.notifSvc.notifyAppointmentChanged();
+
+        if (id) {
+          // Update: the appointment keeps its id but its reminder time may have moved,
+          // producing a new occurrence key. Cancel this appointment's existing native
+          // alarm(s) FIRST, then trigger the resync so the old-time alarm is not left
+          // armed. Sequencing matters: cancelAlarm(id) clears ALL occurrences for this
+          // appointmentId, so it must complete before scheduleBatch re-arms the new time.
+          // Scoped to appointmentId (disjoint from medication's medicineReminderId) — it
+          // cannot affect medication alarms. No-op on non-Android.
+          void this.alarmScheduler.cancelAlarm(id)
+            .finally(() => this.notifSvc.notifyAppointmentChanged());
+        } else {
+          // Create: no prior alarm to clear — just schedule via resync.
+          this.notifSvc.notifyAppointmentChanged();
+        }
+
         this.appointmentChanged.emit();
       },
       error: err => {

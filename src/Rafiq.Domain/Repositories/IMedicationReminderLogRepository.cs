@@ -10,6 +10,17 @@ public interface IMedicationReminderLogRepository
     Task<bool> ExistsForDateAsync(Guid medicineReminderId, DateOnly date, CancellationToken cancellationToken = default);
     Task<List<MedicationReminderLog>> GetTodayByProfileIdAsync(Guid userHealthProfileId, DateOnly today, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns every persisted log for a profile on a date, in ANY status (including
+    /// Cancelled) — unlike <see cref="GetTodayByProfileIdAsync"/>, which excludes Cancelled.
+    /// Used by the read-only /upcoming preview to detect stages that have already reached
+    /// a terminal state so they are not re-surfaced for (re)scheduling.
+    /// </summary>
+    Task<List<MedicationReminderLog>> GetAllStatusesForDateAsync(
+        Guid userHealthProfileId,
+        DateOnly date,
+        CancellationToken cancellationToken = default);
+
 
     /// <summary>
     /// Returns all Pending logs that belong to the same dose occurrence as
