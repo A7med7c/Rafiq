@@ -824,7 +824,9 @@ export const en = {
     generalShouldBeMedicine: 'This is a medicine box — scan it in the Medicine Box section.',
     generalNotMedical: 'This does not appear to be a medical document.',
     exactDocumentUploaded: 'This exact document has already been uploaded to this profile.',
-    externalServiceError: 'The AI service is currently unavailable or the image is too large. Please try again or enter manually.'
+    externalServiceError: 'The AI service is currently unavailable or the image is too large. Please try again or enter manually.',
+    sameProfileDuplicateTitle: 'Document Already Uploaded',
+    sameProfileDuplicateMessage: 'This exact document has already been uploaded to this profile. You cannot upload the same file twice.'
   },
 
   medications: {

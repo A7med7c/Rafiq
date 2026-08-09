@@ -9,5 +9,6 @@ public sealed record UploadGeneralDocumentAsyncCommand(
     IFormFile Image,
     Guid ProfileId,
     string? Description,
-    string Language = "en")
+    string Language = "en",
+    bool BypassFamilyDuplicateCheck = false)
     : IRequest<ApiResponse<UploadGeneralDocumentAsyncResponseDto>>;

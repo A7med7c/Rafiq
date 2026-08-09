@@ -71,7 +71,7 @@ public sealed class UploadPrescriptionCommandHandler(
             {
                 throw new DocumentValidationException("DUPLICATE_DOCUMENT", "This exact document has already been uploaded to this profile.");
             }
-            
+
             if (!request.BypassFamilyDuplicateCheck)
             {
                 return ApiResponse<PrescriptionResponseDto>.FailureResponse(
@@ -82,6 +82,41 @@ public sealed class UploadPrescriptionCommandHandler(
                         existingProfileId = duplicateCheck.ExistingProfileId,
                         existingProfileName = duplicateCheck.ExistingProfileName
                     });
+            }
+
+            // User confirmed — reuse existing document's AI data instead of re-running analysis
+            if (duplicateCheck.ExistingDocumentId.HasValue)
+            {
+                var source = await prescriptionRepository.GetByIdAsync(duplicateCheck.ExistingDocumentId.Value, cancellationToken)
+                    ?? throw new NotFoundException("Prescription", duplicateCheck.ExistingDocumentId.Value);
+
+                var reusePreview = new PrescriptionResponseDto
+                {
+                    Id = Guid.Empty,
+                    DoctorName = source.DoctorName,
+                    PatientName = source.PatientName,
+                    PrescriptionDate = source.PrescriptionDate.ToString("yyyy-MM-dd"),
+                    ImagePath = imagePath,
+                    CreatedAt = DateTime.UtcNow,
+                    MedicalAttentionReason = source.MedicalAttentionReason,
+                    RecommendedSpecialty = source.RecommendedSpecialty,
+                    ConfidenceScore = source.ConfidenceScore,
+                    RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(source.ConfidenceScore),
+                    AttentionLevel = warningCalculator.ComputeAttentionLevel(source.ConfidenceScore).ToString(),
+                    Medicines = source.Medicines.Select(m => new PrescriptionMedicineResponseDto
+                    {
+                        Id = Guid.NewGuid(),
+                        MedicineName = m.MedicineName ?? string.Empty,
+                        Dosage = m.Dosage ?? string.Empty,
+                        Frequency = m.Frequency ?? string.Empty,
+                        Duration = m.Duration ?? string.Empty,
+                        Notes = m.Notes
+                    }).ToList()
+                };
+
+                return ApiResponse<PrescriptionResponseDto>.SuccessResponse(
+                    reusePreview,
+                    "Prescription analyzed successfully. Review before saving.");
             }
         }
         // ─────────────────────────────────────────────────────────────

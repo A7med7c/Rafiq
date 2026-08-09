@@ -1311,7 +1311,34 @@
     </footer>
   </div>
 </div>
-}@if (showConfirmCloseModal()) {
+}
+
+<!-- ═══════════ SAME-PROFILE DUPLICATE MODAL ═══════════ -->
+@if (showSameProfileDuplicateDialog()) {
+<div class="modal-overlay delete-overlay" (click)="closeSameProfileDuplicateDialog()">
+  <div class="modal-card delete-modal" (click)="$event.stopPropagation()">
+    <header class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico delete-modal-ico" style="background: #fde8e8; color: #c0392b;"><i class="fa-solid fa-ban"></i></div>
+        <div>
+          <h3 class="modal-title">{{ t().uploadValidation.sameProfileDuplicateTitle }}</h3>
+        </div>
+      </div>
+      <button type="button" class="close-modal-btn" (click)="closeSameProfileDuplicateDialog()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+    <div class="modal-body delete-modal-body">
+      <p style="font-size: 15px; line-height: 1.6;">{{ t().uploadValidation.sameProfileDuplicateMessage }}</p>
+    </div>
+    <footer class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-primary" (click)="closeSameProfileDuplicateDialog()">{{ t().common.close }}</button>
+    </footer>
+  </div>
+</div>
+}
+
+@if (showConfirmCloseModal()) {
 <div class="modal-overlay" style="z-index: 10000;" (click)="cancelConfirmClose()">
   <div class="modal-card" style="max-width: 400px; text-align: center;" (click)="$event.stopPropagation()">
     <header class="modal-hdr" style="justify-content: center; border-bottom: none; padding-bottom: 0;">

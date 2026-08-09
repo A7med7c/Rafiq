@@ -58,24 +58,9 @@ public sealed class AddUserMedicineCommandHandler(
                     currentUserId.Value,
                     cancellationToken);
 
-                if (duplicateCheck.IsDuplicate)
+                if (duplicateCheck.IsDuplicate && duplicateCheck.IsSameProfile)
                 {
-                    if (duplicateCheck.IsSameProfile)
-                    {
-                        throw new DocumentValidationException("DUPLICATE_DOCUMENT", "This exact document has already been uploaded to this profile.");
-                    }
-                    
-                    if (!request.BypassFamilyDuplicateCheck)
-                    {
-                        return ApiResponse<UserMedicineResponseDto>.FailureResponse(
-                            "This document already exists in another family member's profile.",
-                            errorCode: "DuplicateInFamily",
-                            errorData: new
-                            {
-                                existingProfileId = duplicateCheck.ExistingProfileId,
-                                existingProfileName = duplicateCheck.ExistingProfileName
-                            });
-                    }
+                    throw new DocumentValidationException("DUPLICATE_DOCUMENT", "This exact document has already been uploaded to this profile.");
                 }
 
                 fileHash = duplicateCheck.FileHash;

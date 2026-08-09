@@ -71,7 +71,7 @@ public sealed class UploadImagingReportCommandHandler(
             {
                 throw new DocumentValidationException("DUPLICATE_DOCUMENT", "This exact document has already been uploaded to this profile.");
             }
-            
+
             if (!request.BypassFamilyDuplicateCheck)
             {
                 return ApiResponse<ImagingReportResponseDto>.FailureResponse(
@@ -82,6 +82,38 @@ public sealed class UploadImagingReportCommandHandler(
                         existingProfileId = duplicateCheck.ExistingProfileId,
                         existingProfileName = duplicateCheck.ExistingProfileName
                     });
+            }
+
+            // User confirmed — reuse existing document's AI data instead of re-running analysis
+            if (duplicateCheck.ExistingDocumentId.HasValue)
+            {
+                var source = await imagingReportRepository.GetByIdAsync(duplicateCheck.ExistingDocumentId.Value, cancellationToken)
+                    ?? throw new NotFoundException("ImagingReport", duplicateCheck.ExistingDocumentId.Value);
+
+                var reportDateReuse = source.ReportDate;
+                var reusePreview = new ImagingReportResponseDto
+                {
+                    Id = Guid.Empty,
+                    ImagingType = source.ImagingType,
+                    BodyPart = source.BodyPart,
+                    Findings = source.Findings,
+                    Impression = source.Impression,
+                    DoctorName = source.DoctorName,
+                    ReportDate = reportDateReuse.ToString("yyyy-MM-dd"),
+                    ImageUrl = imageUrl,
+                    OCRText = source.OCRText,
+                    Summary = source.Description,
+                    MedicalAttentionReason = source.MedicalAttentionReason,
+                    RecommendedSpecialty = source.RecommendedSpecialty,
+                    ConfidenceScore = source.ConfidenceScore,
+                    RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(source.ConfidenceScore),
+                    AttentionLevel = warningCalculator.ComputeAttentionLevel(source.ConfidenceScore).ToString(),
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                return ApiResponse<ImagingReportResponseDto>.SuccessResponse(
+                    reusePreview,
+                    "Imaging report analyzed successfully. Review before saving.");
             }
         }
         // ─────────────────────────────────────────────────────────────

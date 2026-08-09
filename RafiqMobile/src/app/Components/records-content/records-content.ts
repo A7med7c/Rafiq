@@ -265,6 +265,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   _duplicateType: 'lab' | 'imaging' | 'prescription' | 'general' | 'medicine' | 'medicine-save' | null = null;
   _duplicateDesc: string = '';
 
+  readonly showSameProfileDuplicateDialog = signal(false);
+
+  closeSameProfileDuplicateDialog(): void {
+    this.showSameProfileDuplicateDialog.set(false);
+  }
+
   closeDuplicateWarningDialog(): void {
     this.showDuplicateWarningDialog.set(false);
     this._duplicateFile = null;
@@ -931,6 +937,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
               this.showDuplicateWarningDialog.set(true);
               return;
            }
+           if (res.errorCode === 'DUPLICATE_DOCUMENT' || res.errorCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+              this.uploadLoading.set(false);
+              this.setUploading('general', false);
+              this.showSameProfileDuplicateDialog.set(true);
+              return;
+           }
            this.uploadLoading.set(false);
            this.setUploading('general', false);
            return;
@@ -958,7 +970,13 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
            this.showDuplicateWarningDialog.set(true);
            return;
         }
-        
+        if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+           this.uploadLoading.set(false);
+           this.setUploading('general', false);
+           this.showSameProfileDuplicateDialog.set(true);
+           return;
+        }
+
         this.uploadLoading.set(false);
         this.setUploading('general', false);
       },
@@ -1029,8 +1047,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
           this.documentAnalysisState.failSyncUpload(tempId, v.imaging);
                   } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
           this.documentAnalysisState.failSyncUpload(tempId, v.prescription);
-                  } else if (errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED' || err?.error?.message === 'This exact document has already been uploaded to this profile.') {
-          this.documentAnalysisState.failSyncUpload(tempId, (v as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.');
+                  } else if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+          this.documentAnalysisState.dismiss(tempId);
+          this.showSameProfileDuplicateDialog.set(true);
         } else if (errCode?.startsWith('UNREADABLE_DOCUMENT_')) {
           this.documentAnalysisState.failSyncUpload(tempId, 'Document unreadable — enter manually.');
           this._failedFile = file;
@@ -1278,8 +1297,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
         if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
           this.documentAnalysisState.failSyncUpload(tempId, v.medicine);
-        } else if (errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED' || err?.error?.message === 'This exact document has already been uploaded to this profile.') {
-          this.documentAnalysisState.failSyncUpload(tempId, (v as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.');
+        } else if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+          this.documentAnalysisState.dismiss(tempId);
+          this.showSameProfileDuplicateDialog.set(true);
         } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
           this.documentAnalysisState.failSyncUpload(tempId, v.medicineUnreadable);
           this._failedFile = file;

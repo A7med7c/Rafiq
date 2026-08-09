@@ -14,6 +14,7 @@ public sealed class UploadGeneralDocumentAsyncCommandHandler(
     IFileStorageService fileStorageService,
     IGeneralDocumentRepository repository,
     IDocumentAnalysisJobService analysisJobService,
+    IDuplicateDocumentDetector duplicateDetector,
     IUnitOfWork unitOfWork)
     : IRequestHandler<UploadGeneralDocumentAsyncCommand, ApiResponse<UploadGeneralDocumentAsyncResponseDto>>
 {
@@ -38,37 +39,108 @@ public sealed class UploadGeneralDocumentAsyncCommandHandler(
         // Upload the file immediately
         using var memory = new MemoryStream();
         await request.Image.CopyToAsync(memory, cancellationToken);
+        var imageBytes = memory.ToArray();
         var fileName = $"{Guid.NewGuid()}{extension}";
         var imagePath = await fileStorageService.UploadFileAsync(
-            new MemoryStream(memory.ToArray()),
+            new MemoryStream(imageBytes),
             fileName,
             "general-documents",
             cancellationToken);
 
+        // ── Duplicate check ───────────────────────────────────────────
+        var duplicateCheck = await duplicateDetector.ComputeHashAndCheckAsync(
+            imageBytes,
+            imagePath,
+            request.ProfileId,
+            userId,
+            cancellationToken);
+
+        if (duplicateCheck.IsDuplicate)
+        {
+            if (duplicateCheck.IsSameProfile)
+            {
+                throw new DocumentValidationException("DUPLICATE_DOCUMENT", "This exact document has already been uploaded to this profile.");
+            }
+
+            if (!request.BypassFamilyDuplicateCheck)
+            {
+                return ApiResponse<UploadGeneralDocumentAsyncResponseDto>.FailureResponse(
+                    "This document already exists in another family member's profile.",
+                    errorCode: "DuplicateInFamily",
+                    errorData: new
+                    {
+                        existingProfileId = duplicateCheck.ExistingProfileId,
+                        existingProfileName = duplicateCheck.ExistingProfileName
+                    });
+            }
+
+            // User confirmed — copy AI data from existing document, skip background job
+            if (duplicateCheck.ExistingDocumentId.HasValue)
+            {
+                var source = await repository.GetByIdAsync(duplicateCheck.ExistingDocumentId.Value, cancellationToken);
+                if (source is not null && source.AnalysisStatus == GeneralDocumentStatus.Completed)
+                {
+                    var title = source.Title;
+                    var document = new GeneralDocument(
+                        userHealthProfileId: request.ProfileId,
+                        title: title,
+                        description: request.Description?.Trim() ?? string.Empty,
+                        imagePath: imagePath,
+                        fileHash: duplicateCheck.FileHash);
+
+                    document.Complete(
+                        title: source.Title,
+                        aiSummary: source.AiSummary,
+                        documentType: source.DocumentType,
+                        doctorName: source.DoctorName,
+                        hospitalOrClinic: source.HospitalOrClinic,
+                        documentDate: source.DocumentDate,
+                        ocrText: source.OcrText,
+                        medicalAttentionReason: source.MedicalAttentionReason,
+                        recommendedSpecialty: source.RecommendedSpecialty,
+                        confidenceScore: source.ConfidenceScore);
+
+                    await repository.AddAsync(document, cancellationToken);
+                    await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                    return ApiResponse<UploadGeneralDocumentAsyncResponseDto>.SuccessResponse(
+                        new UploadGeneralDocumentAsyncResponseDto
+                        {
+                            DocumentId = document.Id,
+                            ImagePath = imagePath,
+                            Title = title,
+                        },
+                        "Document uploaded. AI analysis has started.");
+                }
+            }
+        }
+        // ─────────────────────────────────────────────────────────────
+
         // Persist a Pending document record — AI fields will be filled by the background job
-        var title = Path.GetFileNameWithoutExtension(request.Image.FileName) is { Length: > 0 } n
+        var docTitle = Path.GetFileNameWithoutExtension(request.Image.FileName) is { Length: > 0 } n
             ? n
             : "Medical Document";
 
-        var document = new GeneralDocument(
+        var newDocument = new GeneralDocument(
             userHealthProfileId: request.ProfileId,
-            title: title,
+            title: docTitle,
             description: request.Description?.Trim() ?? string.Empty,
             imagePath: imagePath,
-            analysisStatus: GeneralDocumentStatus.Pending);
+            analysisStatus: GeneralDocumentStatus.Pending,
+            fileHash: duplicateCheck.FileHash);
 
-        await repository.AddAsync(document, cancellationToken);
+        await repository.AddAsync(newDocument, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Enqueue the Hangfire job — returns immediately
-        analysisJobService.EnqueueAnalysis(document.Id, userId, request.ProfileId, request.Language);
+        analysisJobService.EnqueueAnalysis(newDocument.Id, userId, request.ProfileId, request.Language);
 
         return ApiResponse<UploadGeneralDocumentAsyncResponseDto>.SuccessResponse(
             new UploadGeneralDocumentAsyncResponseDto
             {
-                DocumentId = document.Id,
+                DocumentId = newDocument.Id,
                 ImagePath = imagePath,
-                Title = title,
+                Title = docTitle,
             },
             "Document uploaded. AI analysis has started.");
     }

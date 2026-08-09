@@ -18,12 +18,14 @@ public interface IDuplicateDocumentDetector
 public class DuplicateCheckResult
 {
     public bool IsDuplicate { get; set; }
-    
+
     public bool IsSameProfile { get; set; }
-    
+
+    public Guid? ExistingDocumentId { get; set; }
+
     public string? ExistingProfileId { get; set; }
-    
+
     public string? ExistingProfileName { get; set; }
-    
+
     public string? FileHash { get; set; }
 }
