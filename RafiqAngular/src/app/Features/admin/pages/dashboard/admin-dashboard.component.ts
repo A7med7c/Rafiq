@@ -152,7 +152,25 @@ export class AdminDashboardComponent implements OnInit {
     this.loading.set(true);
     this.error.set(false);
     this.adminService.getDashboard().subscribe({
-      next: data => { this.dashboard.set(data); this.loading.set(false); },
+      next: data => {
+        let dashboardData = data;
+        if (this.l10n.lang() === 'ar' && dashboardData.userGrowth) {
+          const monthMap: Record<string, string> = {
+            'Jan': 'يناير', 'Feb': 'فبراير', 'Mar': 'مارس', 'Apr': 'أبريل',
+            'May': 'مايو', 'Jun': 'يونيو', 'Jul': 'يوليو', 'Aug': 'أغسطس',
+            'Sep': 'سبتمبر', 'Oct': 'أكتوبر', 'Nov': 'نوفمبر', 'Dec': 'ديسمبر'
+          };
+          dashboardData = {
+            ...dashboardData,
+            userGrowth: dashboardData.userGrowth.map(pt => ({
+              ...pt,
+              label: monthMap[pt.label] || pt.label
+            }))
+          };
+        }
+        this.dashboard.set(dashboardData);
+        this.loading.set(false);
+      },
       error: () => { this.error.set(true); this.loading.set(false); }
     });
   }
@@ -191,9 +209,14 @@ export class AdminDashboardComponent implements OnInit {
       const x2 = cx + R * Math.cos(end);
       const y2 = cy + R * Math.sin(end);
       const large = sweep > 180 ? 1 : 0;
+      let displayLabel = item.label;
+      if (this.l10n.lang() === 'ar') {
+        if (displayLabel.toLowerCase() === 'male') displayLabel = 'ذكر';
+        if (displayLabel.toLowerCase() === 'female') displayLabel = 'أنثى';
+      }
       const path = `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${R} ${R} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
       startAngle += sweep;
-      return { path, color: colors[idx % colors.length], label: item.label, value: item.value, pct: Math.round(pct * 100) };
+      return { path, color: colors[idx % colors.length], label: displayLabel, value: item.value, pct: Math.round(pct * 100) };
     });
   }
 
