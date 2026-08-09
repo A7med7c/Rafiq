@@ -26,7 +26,7 @@ export class AlarmSchedulerService {
   private readonly medicationReminders = inject(MedicationRemindersService);
   private readonly appointmentsSvc    = inject(AppointmentsService);
   private readonly offlineReminders = inject(OfflineReminderService);
-  private actionInFlight: Promise<void> | null = null;
+  private actionInFlight: Promise<boolean> | null = null;
 
   /**
    * Schedules (or reschedules) a native Android alarm for a single reminder.
@@ -131,8 +131,15 @@ export class AlarmSchedulerService {
     await Promise.allSettled(futures);
   }
 
-  async consumePendingNativeAction(): Promise<void> {
-    if (!this.isAndroid) return;
+  /**
+   * Resolves `true` when a pending native alarm action (Take Medicine / Confirm
+   * Attendance / Snooze) was actually found and processed, `false` when there was
+   * nothing to do. Callers (e.g. app.ts's appStateChange listener) use this to decide
+   * whether a UI refresh is warranted, instead of refreshing unconditionally on every
+   * app-foreground event.
+   */
+  async consumePendingNativeAction(): Promise<boolean> {
+    if (!this.isAndroid) return false;
     if (this.actionInFlight) return this.actionInFlight;
 
     this.actionInFlight = this._consumePendingNativeAction().finally(() => {
@@ -153,9 +160,9 @@ export class AlarmSchedulerService {
     return id === 0 ? 1 : id;
   }
 
-  private async _consumePendingNativeAction(): Promise<void> {
+  private async _consumePendingNativeAction(): Promise<boolean> {
     const action = await AlarmSchedulerPlugin.consumePendingAction();
-    if (!action.hasAction || !action.reminderId) return;
+    if (!action.hasAction || !action.reminderId) return false;
 
     if (action.action === 'takeMedicine' && action.reminderType !== 'Appointment') {
       // action.reminderId is the MEDICATION CONFIG id (MedicineReminder.Id), shared by all
@@ -196,7 +203,7 @@ export class AlarmSchedulerService {
         reminderId: action.reminderId,
         action: 'takeMedicine',
       });
-      return;
+      return true;
     }
 
     if (action.action === 'snooze' && action.reminderType !== 'Appointment') {
@@ -205,6 +212,7 @@ export class AlarmSchedulerService {
         reminderId: action.reminderId,
         action: 'snooze',
       });
+      return true;
     }
 
     // ── Appointment alarm actions ─────────────────────────────────────────────
@@ -226,7 +234,7 @@ export class AlarmSchedulerService {
         reminderId: action.reminderId,
         action: 'takeMedicine',
       });
-      return;
+      return true;
     }
 
     if (action.action === 'snooze' && action.reminderType === 'Appointment') {
@@ -237,7 +245,9 @@ export class AlarmSchedulerService {
         reminderId: action.reminderId,
         action: 'snooze',
       });
-      return;
+      return true;
     }
+
+    return false;
   }
 }
