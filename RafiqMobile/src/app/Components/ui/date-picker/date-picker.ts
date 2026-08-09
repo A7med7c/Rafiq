@@ -311,6 +311,39 @@ export class DatePickerComponent implements ControlValueAccessor, OnInit, OnDest
     const col = document.createElement('div');
     col.className = 'dp-col';
 
+    let accumulatedDelta = 0;
+    col.addEventListener('wheel', (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      accumulatedDelta += e.deltaY;
+      const threshold = 30;
+      if (Math.abs(accumulatedDelta) >= threshold) {
+        const dir = accumulatedDelta > 0 ? -1 : 1;
+        this.step(type, dir);
+        accumulatedDelta = 0;
+      }
+    }, { passive: false });
+
+    let startY = 0;
+    col.addEventListener('touchstart', (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        startY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+
+    col.addEventListener('touchmove', (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const currentY = e.touches[0].clientY;
+        const diffY = startY - currentY;
+        const threshold = 25;
+        if (Math.abs(diffY) >= threshold) {
+          const dir = diffY > 0 ? -1 : 1;
+          this.step(type, dir);
+          startY = currentY;
+        }
+      }
+    }, { passive: true });
+
     const upBtn = document.createElement('button');
     upBtn.type = 'button';
     upBtn.className = 'dp-arrow';
