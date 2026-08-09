@@ -10,6 +10,7 @@ import { LocalizationService } from './localization.service';
 import { ReminderBootstrapService } from './reminder-bootstrap.service';
 
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { Capacitor } from '@capacitor/core';
 
 export interface AppNotification {
   id: string;
@@ -62,6 +63,17 @@ export class NotificationService {
   private readonly notificationSoundService = inject(NotificationSoundService);
   private readonly persistedSvc = inject(PersistedNotificationsService);
   private readonly reminderBootstrap = inject(ReminderBootstrapService);
+
+  /**
+   * On Android the native AlarmManager pipeline (AlarmSchedulerPlugin →
+   * AlarmReceiver → AlarmService → AlarmActivity) owns scheduled medication /
+   * appointment reminders. We must NOT also fire an immediate LocalNotifications
+   * reminder here, or it competes with (and duplicates) the native alarm and
+   * masks it as a plain silent notification. LocalNotifications is still used for
+   * ordinary instant system/document notifications on all platforms, and remains
+   * the reminder fallback on web/iOS.
+   */
+  private readonly isAndroid = Capacitor.getPlatform() === 'android';
 
   private readonly localization = inject(LocalizationService);
 
@@ -451,14 +463,19 @@ export class NotificationService {
     this._reminderQueue.update(queue => [...queue, reminder]);
     this._reminderModalOpen.set(true);
 
-    this.emitNativeNotification({
-      id: crypto.randomUUID(),
-      title: this.localization.t().notifications.medicationReminderToast,
-      body: `${reminder.medicineName} • ${reminder.reminderTime}`,
-      createdAt: new Date(),
-      sourceId: reminder.reminderId,
-      action: 'open-reminder'
-    });
+    // Android: the native AlarmManager alarm already owns this reminder — do not
+    // emit a competing immediate LocalNotifications reminder. Other platforms keep
+    // the LocalNotifications fallback.
+    if (!this.isAndroid) {
+      this.emitNativeNotification({
+        id: crypto.randomUUID(),
+        title: this.localization.t().notifications.medicationReminderToast,
+        body: `${reminder.medicineName} • ${reminder.reminderTime}`,
+        createdAt: new Date(),
+        sourceId: reminder.reminderId,
+        action: 'open-reminder'
+      });
+    }
 
     this.showBrowserReminderNotification(reminder);
     this.notificationSoundService.play();
@@ -515,16 +532,22 @@ export class NotificationService {
     this._appointmentReminderQueue.update(q => [...q, event]);
     this._appointmentReminderModalOpen.set(true);
 
-    this.emitNativeNotification({
-      id: crypto.randomUUID(),
-      title: event.title,
-      body: event.notificationText || nc.appointmentWithProviderBody.replace('{title}', event.title).replace('{provider}', event.provider),
-      createdAt: new Date(),
-      sourceId: event.appointmentId,
-      action: 'open-appointment'
-    });
-
-
+    // Android: native AlarmManager alarm owns appointment reminders. Suppress the
+    // competing immediate LocalNotifications reminder; keep it on web/iOS.
+    if (!this.isAndroid) {
+      this.emitNativeNotification({
+        id: crypto.randomUUID(),
+        title: event.title,
+        body: event.notificationText || nc.appointmentWithProviderBody.replace('{title}', event.title).replace('{provider}', event.provider),
+        createdAt: new Date(),
+        sourceId: event.appointmentId,
+        action: 'open-appointment'
+      });
+    } else {
+      // Ensure appointment changes re-enter the native scheduling path so future
+      // occurrences stay mirrored in AlarmManager.
+      void this.reminderBootstrap.forceSync();
+    }
 
     this.notificationSoundService.play();
 

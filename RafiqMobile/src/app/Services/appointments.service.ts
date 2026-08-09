@@ -62,17 +62,27 @@ export class AppointmentsService {
         .get<ApiResponse<AppointmentDto[]>>(`${this.base}/upcoming?profileId=${profileId}`)
         .pipe(
           map(r => r.data ?? []),
-          map(appts => appts.map(appt => {
+          map(appts => appts.reduce<UpcomingReminderDto[]>((acc, appt) => {
             const nc = this.localization.t().notifications;
-            
-            let scheduledAt = appt.appointmentDateTime;
-            if (appt.reminderOffsetMinutes) {
-              const dt = new Date(appt.appointmentDateTime);
-              dt.setMinutes(dt.getMinutes() - appt.reminderOffsetMinutes);
-              scheduledAt = dt.toISOString();
+
+            // The native Java bridge parses scheduledAt with Instant.parse(), which
+            // requires a valid ISO-8601 instant (UTC offset). Always normalize to
+            // an absolute instant so the alarm never fails to schedule due to a
+            // missing offset. Skip + log any unparseable datetime rather than
+            // silently forwarding an invalid value across the bridge.
+            const baseMs = new Date(appt.appointmentDateTime).getTime();
+            if (Number.isNaN(baseMs)) {
+              console.error('[AppointmentsService] Skipping appointment with invalid appointmentDateTime', {
+                appointmentId: appt.id,
+                appointmentDateTime: appt.appointmentDateTime,
+              });
+              return acc;
             }
 
-            return {
+            const offsetMs = (appt.reminderOffsetMinutes ?? 0) * 60_000;
+            const scheduledAt = new Date(baseMs - offsetMs).toISOString();
+
+            acc.push({
               reminderId: appt.id,
               title: appt.title,
               body: appt.notes || nc.upcomingAppointmentBody.replace('{title}', appt.title).replace('{provider}', appt.provider),
@@ -80,8 +90,9 @@ export class AppointmentsService {
               scheduledAt: scheduledAt,
               updatedAt: appt.updatedAt || appt.createdAt,
               isDeleted: appt.status === 'Cancelled'
-            } as UpcomingReminderDto;
-          }))
+            } as UpcomingReminderDto);
+            return acc;
+          }, []))
         )
     );
   }

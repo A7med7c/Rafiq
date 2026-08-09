@@ -31,7 +31,8 @@ import androidx.core.app.NotificationCompat;
  */
 public class AlarmService extends Service {
 
-    public static final String CHANNEL_ID_ALARM = "rafiq_alarm_channel";
+    // v2: bumped so the channel is re-created cleanly alongside the reminder channel.
+    public static final String CHANNEL_ID_ALARM = "rafiq_alarm_channel_v2";
     static final int FOREGROUND_NOTIFICATION_ID = 9001;
 
     private MediaPlayer mediaPlayer;
@@ -41,6 +42,8 @@ public class AlarmService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         alarmIntent = intent;
+        android.util.Log.i(AlarmDiagnostics.TAG, "AlarmService.onStartCommand REACHED reminderId="
+            + (intent != null ? intent.getStringExtra(AlarmActivity.EXTRA_REMINDER_ID) : null));
         createAlarmChannel();
         startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification());
         startSound();
