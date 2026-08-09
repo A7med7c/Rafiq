@@ -23,6 +23,7 @@ public sealed class DocumentAnalysisJob(
     IUserNotificationRepository notificationRepository,
     IUnitOfWork unitOfWork,
     IBackgroundUserContext backgroundUserContext,
+    IPdfPageRenderer pdfPageRenderer,
     ILogger<DocumentAnalysisJob> logger)
 {
     // No automatic retries — a failed AI call should surface to the user, not re-run silently.
@@ -68,7 +69,20 @@ public sealed class DocumentAnalysisJob(
             // Read file from storage
             var imageBytes = await fileStorageService.GetFileBytesAsync(
                 document.ImagePath, timeoutCts.Token);
-            var base64 = Convert.ToBase64String(imageBytes);
+
+            var analysisBytes = imageBytes;
+            if (Path.GetExtension(document.ImagePath).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                var rendered = pdfPageRenderer.RenderFirstPageAsJpeg(imageBytes);
+                if (rendered is null)
+                {
+                    await FailDocumentAsync(document, "Could not read the PDF. Please ensure it's a valid file.", userIdStr, CancellationToken.None);
+                    return;
+                }
+                analysisBytes = rendered;
+            }
+
+            var base64 = Convert.ToBase64String(analysisBytes);
 
             // AI analysis
             var extracted = await bedrockService.AnalyzeAsync<BedrockGeneralDocumentDto>(

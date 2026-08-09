@@ -115,6 +115,7 @@ public static class DependencyInjection
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
         services.AddScoped<IDocumentUploadSessionRepository, DocumentUploadSessionRepository>();
         services.AddScoped<IDuplicateDocumentDetector, DuplicateDocumentDetector>();
+        services.AddScoped<IPdfPageRenderer, PdfPageRenderer>();
 
         services.Configure<TwilioSettings>(configuration.GetSection("TwilioSettings"));
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));

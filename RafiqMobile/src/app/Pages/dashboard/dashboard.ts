@@ -13,7 +13,7 @@ import { AppointmentDto, AppointmentStatus } from '../../Modles/appointment.mode
 import { catchError, of, Subscription } from 'rxjs';
 import { AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { HealthSummaryDto } from '../../Services/dashboard.service';
-import { MedicalReportService, ReportType } from '../../Services/medical-report.service';
+import { MedicalReportService } from '../../Services/medical-report.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
@@ -21,7 +21,7 @@ import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
 import { LanguageSwitcher } from '../../shared/language-switcher/language-switcher';
 import { environment } from '../../Environments/Environment';
 import { MedicationRemindersService } from '../../Services/medication-reminders.service';
-import { MedicationReminderLogDto } from '../../Modles/medication-reminder.models';
+import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
 import { DownloadService } from '../../Services/download.service';
 import { NotificationPermissionService, NotificationPermissionResult } from '../../Services/notification-permission.service';
 import { NotificationPermissionGuardService } from '../../Services/notification-permission-guard.service';
@@ -130,7 +130,7 @@ export class Dashboard implements OnInit, OnDestroy {
       });
     }
 
-    for (const r of this.reminders()) {
+    for (const r of this.foldedReminders()) {
       if (r.status === 'Cancelled' || r.status === 'Skipped') continue;
       const [h, m]  = (r.scheduledTime || '08:00').split(':').map(Number);
       const timeDate = new Date(); timeDate.setHours(h, m, 0, 0);
@@ -158,7 +158,6 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly profilePickerOpen       = signal(false);
   readonly reportDialogOpen        = signal(false);
   readonly reportCameFromPicker    = signal(false);
-  readonly selectedReportType      = signal<ReportType>('DoctorSummary');
   readonly reportGenerating        = signal(false);
   readonly reportTargetProfileId   = signal<string | null>(null);
   readonly reportTargetProfileName = signal<string | null>(null);
@@ -242,9 +241,54 @@ export class Dashboard implements OnInit, OnDestroy {
     return this.t().dashboard.summaryStatusGood;
   });
 
+  /**
+   * The backend intentionally returns up to 3 MedicationReminderLog escalation-stage
+   * records per dose (same medicineReminderId + scheduledDate). Folds them into one
+   * representative record per dose, mirroring medications.ts's foldLogsIntoDoses()
+   * status-resolution order, so the dashboard never shows one dose as 3 separate
+   * "Upcoming" reminders after only one stage has been confirmed/cancelled.
+   */
+  private foldReminderLogs(logs: MedicationReminderLogDto[]): MedicationReminderLogDto[] {
+    const groups = new Map<string, MedicationReminderLogDto[]>();
+    for (const log of logs) {
+      const key = `${log.medicineReminderId}|${log.scheduledDate}`;
+      const bucket = groups.get(key);
+      if (bucket) bucket.push(log);
+      else groups.set(key, [log]);
+    }
+
+    const folded: MedicationReminderLogDto[] = [];
+    for (const bucket of groups.values()) {
+      const ordered = [...bucket].sort((a, b) => a.reminderNumber - b.reminderNumber);
+      const anyLog = ordered[0];
+
+      const actionable = ordered.find(l => l.isActionable) ?? null;
+      const confirmed = ordered.find(l => l.status === 'Confirmed') ?? null;
+      const skipped = ordered.find(l => l.status === 'Skipped') ?? null;
+      const missed = ordered.find(l => l.status === 'Missed') ?? null;
+      const snoozed = ordered.find(l => l.status === 'Snoozed') ?? null;
+
+      let status: MedicationReminderStatus;
+      if (confirmed) status = 'Confirmed';
+      else if (skipped) status = 'Skipped';
+      else if (missed) status = 'Missed';
+      else if (snoozed && !actionable) status = 'Snoozed';
+      else if (actionable) status = actionable.status;
+      else if (ordered.every(l => l.status === 'Cancelled')) status = 'Cancelled';
+      else status = anyLog.status;
+
+      const representative = confirmed ?? actionable ?? anyLog;
+      folded.push({ ...representative, status });
+    }
+
+    return folded;
+  }
+
+  readonly foldedReminders = computed(() => this.foldReminderLogs(this.reminders()));
+
   // ── Medications today (soonest first) ───────────────────────────────────────
   readonly todaysReminders = computed(() => {
-    return [...this.reminders()]
+    return [...this.foldedReminders()]
       .filter(r => r.status !== 'Cancelled' && r.status !== 'Skipped')
       .sort((a, b) => (a.scheduledTime || '').localeCompare(b.scheduledTime || ''))
       .slice(0, 3);
@@ -603,7 +647,6 @@ export class Dashboard implements OnInit, OnDestroy {
   /** Called when the user picks a profile in the picker. */
   selectProfileAndContinue(profileId: string): void {
     this.profilePickerOpen.set(false);
-    this.selectedReportType.set('DoctorSummary');
     this.reportTargetProfileId.set(profileId);
     this.reportTargetProfileName.set(this.getProfileDisplayName(profileId));
     this.reportCameFromPicker.set(true);
@@ -658,14 +701,13 @@ export class Dashboard implements OnInit, OnDestroy {
     if (!profileId) return;
 
     this.reportGenerating.set(true);
-    this._reportSub = this.medicalReportSvc.generateReport(profileId, this.selectedReportType()).subscribe({
+    this._reportSub = this.medicalReportSvc.generateReport(profileId).subscribe({
       next: (blob) => {
         const name = this.reportTargetProfileName();
         const safeName = name
           ? '_' + name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_؀-ۿ-]/g, '')
           : '';
-        const typeLabel = this.selectedReportType() === 'DoctorSummary' ? 'Medical_Summary' : 'Medical_Record';
-        this.downloadSvc.download(blob, `${typeLabel}${safeName}.pdf`)
+        this.downloadSvc.download(blob, `Medical_File${safeName}.pdf`)
           .catch(err => console.error('Download failed', err));
         this._reportSub = null;
         this.reportGenerating.set(false);

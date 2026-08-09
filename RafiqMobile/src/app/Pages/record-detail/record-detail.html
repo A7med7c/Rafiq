@@ -39,7 +39,9 @@
       <!-- ══════════ Preview ══════════ -->
       @if (getRecordImageUrl(rec); as imageUrl) {
       <button type="button" class="view-document-card view-document-card--with-image" (click)="openLightbox(imageUrl)">
-        @if (!imageFailed()) {
+        @if (imageUrl.toLowerCase().includes('.pdf')) {
+        <div class="view-document-icon"><i class="fa-regular fa-file-pdf"></i></div>
+        } @else if (!imageFailed()) {
         <img [src]="imageUrl" alt="Original uploaded record" class="view-document-thumb"
           (error)="imageFailed.set(true)">
         } @else {

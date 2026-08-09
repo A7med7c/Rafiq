@@ -450,34 +450,178 @@ export class SpeechService {
    * Synthesizes text to speech and plays it through the speakers.
    *
    * Engine priority:
-   *  1. ElevenLabs (via backend proxy) — highest Arabic quality, used when configured.
-   *  2. Azure neural TTS (ar-EG-SalmaNeural via SSML) — automatic fallback.
+   *  1. Local Pre-recorded Tour MP3 Assets (zero latency, exact timing, zero API cost)
+   *  2. Offline Browser Web Speech API — fallback for tour text if MP3 is missing.
    *
-   * A generation counter guarantees only ONE synthesis is ever audible at a time,
-   * regardless of which engine produced it.
+   * External network APIs (ElevenLabs & Azure) are completely bypassed for local audio playback.
    */
-  speak(text: string, language: string = 'ar-EG'): Observable<void> {
+  speak(text: string, language: string = 'ar-EG', audioUrl?: string | string[]): Observable<void> {
     if (this.isMuted()) {
       this.stopSpeaking();
       return of(undefined);
     }
 
     // Kill any in-progress synthesizer immediately and claim a new generation.
-    // Any async step still in flight from a previous speak() call will see
-    // myGen !== this._speechGen and short-circuit with EMPTY, so there is
-    // never more than one synthesizer active at a time.
     this.stopSpeaking();
     const myGen = ++this._speechGen;
 
-    console.log(`${TAG} [tts-1] speak() gen=${myGen} language="${language}" text.length=${text?.length}`);
+    console.log(`${TAG} [tts-1] speak() gen=${myGen} language="${language}" audioUrl=${JSON.stringify(audioUrl)} text.length=${text?.length}`);
 
-    return this.speakWithElevenLabs(text, myGen).pipe(
-      catchError(err => {
-        if (myGen !== this._speechGen) return EMPTY;
-        console.warn(`${TAG} [tts-11l✗] ElevenLabs request failed, falling back to Azure TTS:`, err);
-        return this.speakWithAzure(text, language, myGen);
-      })
-    );
+    if (audioUrl) {
+      return this.speakWithLocalAudio(audioUrl, myGen).pipe(
+        catchError(err => {
+          if (myGen !== this._speechGen) return EMPTY;
+          console.warn(`${TAG} [tts-local-fallback] Local tour audio asset not found or play failed, using Browser Web Speech API (offline):`, err);
+          return this.speakWithBrowserTts(text, language, myGen);
+        })
+      );
+    }
+
+    return this.speakWithBrowserTts(text, language, myGen);
+  }
+
+  /**
+   * Plays pre-recorded local tour MP3 audio asset file(s).
+   * Completion fires when PLAYBACK ends (HTMLAudioElement 'ended' event).
+   */
+  private speakWithLocalAudio(audioUrls: string | string[], myGen: number): Observable<void> {
+    const urls = (Array.isArray(audioUrls) ? audioUrls : [audioUrls]).filter(Boolean);
+
+    if (!urls.length) {
+      return throwError(() => new Error('No local audio URLs provided.'));
+    }
+
+    return new Observable<void>(subscriber => {
+      let isCancelled = false;
+      let currentIndex = 0;
+      let currentAudio: HTMLAudioElement | null = null;
+
+      const cleanup = () => {
+        isCancelled = true;
+        if (currentAudio) {
+          try { currentAudio.pause(); } catch {}
+          currentAudio = null;
+        }
+        if (this.currentHtmlAudio) {
+          this.currentHtmlAudio = null;
+        }
+      };
+
+      this.notifyPlaybackStopped = () => {
+        if (isCancelled) return;
+        cleanup();
+        subscriber.next();
+        subscriber.complete();
+      };
+
+      const tryNextUrl = () => {
+        if (isCancelled || myGen !== this._speechGen) {
+          subscriber.complete();
+          return;
+        }
+
+        if (currentIndex >= urls.length) {
+          console.warn(`${TAG} [tts-local] All ${urls.length} candidate URLs failed to load/play.`);
+          subscriber.error(new Error('No matching local tour audio asset found on disk.'));
+          return;
+        }
+
+        const url = urls[currentIndex++];
+        console.log(`${TAG} [tts-local] Trying candidate [${currentIndex}/${urls.length}]: ${url}`);
+
+        let hasFailed = false;
+        const fail = (reason: any) => {
+          if (hasFailed || isCancelled) return;
+          hasFailed = true;
+          console.debug(`${TAG} [tts-local-try] Candidate ${url} not found, trying next...`);
+          tryNextUrl();
+        };
+
+        const audio = new Audio();
+        currentAudio = audio;
+        this.currentHtmlAudio = audio;
+
+        audio.onended = () => {
+          if (hasFailed || isCancelled) return;
+          if (myGen === this._speechGen) {
+            this.notifyPlaybackStopped = null;
+          }
+          console.log(`${TAG} [tts-local-SUCCESS] Playing local tour audio asset succeeded! (${url})`);
+          subscriber.next();
+          subscriber.complete();
+        };
+
+        audio.onerror = (e) => {
+          fail('Audio load error (404 or unsupported format)');
+        };
+
+        audio.src = url;
+        audio.load();
+
+        audio.play().catch(err => {
+          const isAutoplayBlocked = err?.name === 'NotAllowedError' || String(err).includes('interact');
+          if (isAutoplayBlocked) {
+            console.warn(`${TAG} [tts-local] Autoplay blocked by browser policy. Waiting for user interaction.`);
+
+            const resumeAudio = () => {
+              window.removeEventListener('click', resumeAudio);
+              window.removeEventListener('keydown', resumeAudio);
+              window.removeEventListener('touchstart', resumeAudio);
+              if (!isCancelled && currentAudio === audio && !hasFailed) {
+                audio.play().catch(e => fail(e));
+              }
+            };
+
+            window.addEventListener('click', resumeAudio, { once: true });
+            window.addEventListener('keydown', resumeAudio, { once: true });
+            window.addEventListener('touchstart', resumeAudio, { once: true });
+            return;
+          }
+
+          fail(err);
+        });
+      };
+
+      tryNextUrl();
+
+      return cleanup;
+    });
+  }
+
+  /**
+   * Offline Web Speech API fallback. Uses zero network calls and zero API keys.
+   */
+  private speakWithBrowserTts(text: string, language: string, myGen: number): Observable<void> {
+    return new Observable<void>(subscriber => {
+      if (myGen !== this._speechGen || typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        subscriber.complete();
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = language;
+      utterance.rate = 0.95;
+
+      utterance.onend = () => {
+        if (myGen === this._speechGen) {
+          subscriber.next();
+          subscriber.complete();
+        }
+      };
+
+      utterance.onerror = () => {
+        if (myGen === this._speechGen) {
+          subscriber.complete();
+        }
+      };
+
+      window.speechSynthesis.speak(utterance);
+
+      return () => {
+        window.speechSynthesis.cancel();
+      };
+    });
   }
 
   /**

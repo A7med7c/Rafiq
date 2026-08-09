@@ -870,7 +870,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     return this.getImageUrl(record.rawRecord?.imageUrl ?? record.rawRecord?.imagePath ?? null);
   }
 
-  openLightbox(url: string): void { this.lightboxUrl.set(url); }
+  openLightbox(url: string): void {
+    if (url.toLowerCase().includes('.pdf')) { window.open(url, '_system'); return; }
+    this.lightboxUrl.set(url);
+  }
   closeLightbox(): void { this.lightboxUrl.set(null); }
 
   startUploadFlow(type: string): void {

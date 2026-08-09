@@ -9,7 +9,7 @@
     (change)="onImagingFileSelected($event)">
   <input #medicineInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
     (change)="onMedicineFileSelected($event)">
-  <input #generalInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
+  <input #generalInput type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" style="display:none"
     (change)="onGeneralFileSelected($event)">
   <input #manualImageInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
     (change)="onManualImageSelected($event)">
@@ -465,7 +465,9 @@
     <div class="modal-body">
       @if (getRecordImageUrl(rec); as imageUrl) {
       <button type="button" class="view-document-card view-document-card--with-image" (click)="openLightbox(imageUrl)">
-        @if (!detailImageFailed()) {
+        @if (imageUrl.toLowerCase().includes('.pdf')) {
+        <div class="view-document-icon"><i class="fa-regular fa-file-pdf"></i></div>
+        } @else if (!detailImageFailed()) {
         <img [src]="imageUrl" alt="Original uploaded record" class="view-document-thumb"
           (error)="detailImageFailed.set(true)">
         } @else {

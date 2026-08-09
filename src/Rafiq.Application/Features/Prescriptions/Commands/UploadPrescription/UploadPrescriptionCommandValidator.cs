@@ -6,7 +6,7 @@ internal sealed class UploadPrescriptionCommandValidator
     : AbstractValidator<UploadPrescriptionCommand>
 {
     private static readonly string[] AllowedExtensions =
-        [".jpg", ".jpeg", ".png", ".webp", ".bmp"];
+        [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".pdf"];
 
     private const long MaxFileSizeBytes = 10 * 1024 * 1024; // 10 MB
 

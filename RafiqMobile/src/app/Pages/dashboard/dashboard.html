@@ -525,7 +525,7 @@
         <div class="modal-ico-wrap"><i class="fa-solid fa-file-medical"></i></div>
         <div>
           <h2 class="modal-title">{{ t().dashboard.medicalReport }}</h2>
-          <p class="modal-subtitle">{{ t().dashboard.chooseMedicalType }}</p>
+          <p class="modal-subtitle">{{ t().dashboard.completeHistory }}</p>
         </div>
       </div>
       <button type="button" class="modal-close-btn" (click)="reportGenerating() ? cancelReport() : closeReportDialog()">
@@ -535,27 +535,7 @@
 
     @if (!reportGenerating()) {
     <div class="report-options">
-      <label class="report-option" [class.report-option--selected]="selectedReportType() === 'DoctorSummary'"
-        (click)="selectedReportType.set('DoctorSummary')">
-        <div class="report-option-radio">
-          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'DoctorSummary'">
-          </div>
-        </div>
-        <div class="report-option-body">
-          <div class="report-option-title">
-            <i class="fa-solid fa-user-doctor"></i>
-            {{ t().dashboard.doctorSummary }}
-            <span class="report-option-badge">{{ t().dashboard.pagesRange }}</span>
-          </div>
-          <p class="report-option-desc">{{ t().dashboard.doctorSummaryDesc }}</p>
-        </div>
-      </label>
-      <label class="report-option" [class.report-option--selected]="selectedReportType() === 'CompleteHistory'"
-        (click)="selectedReportType.set('CompleteHistory')">
-        <div class="report-option-radio">
-          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'CompleteHistory'">
-          </div>
-        </div>
+      <div class="report-option report-option--selected">
         <div class="report-option-body">
           <div class="report-option-title">
             <i class="fa-solid fa-folder-open"></i>
@@ -563,7 +543,7 @@
           </div>
           <p class="report-option-desc">{{ t().dashboard.completeHistoryDesc }}</p>
         </div>
-      </label>
+      </div>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn-ghost" (click)="closeReportDialog()">{{ t().records.cancelBtn }}</button>
@@ -631,7 +611,7 @@
     <div class="modal-footer">
       <button type="button" class="btn-ghost" (click)="closeFamilySummary()">Close</button>
       <button type="button" class="btn-primary"
-        (click)="closeFamilySummary(); selectedReportType.set('DoctorSummary'); openReportDialog(familySummaryProfile()?.userHealthProfileId)">
+        (click)="closeFamilySummary(); openReportDialog(familySummaryProfile()?.userHealthProfileId)">
         <i class="fa-solid fa-file-medical"></i> Generate Report
       </button>
     </div>

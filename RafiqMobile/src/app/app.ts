@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnInit, AfterViewInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy, AfterViewInit, ViewChild, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { NotificationService } from './Services/notification.service';
 import { LocalizationService } from './Services/localization.service';
 import { AiChatService } from './Services/ai-chat.service';
@@ -24,7 +26,7 @@ import { DocumentAnalysisStateService } from './Services/document-analysis-state
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App implements OnInit, AfterViewInit {
+export class App implements OnInit, AfterViewInit, OnDestroy {
   readonly notificationService = inject(NotificationService);
   readonly l10n = inject(LocalizationService);
   readonly tourEngine = inject(TourEngineService);
@@ -79,6 +81,17 @@ export class App implements OnInit, AfterViewInit {
       this.analysisState.dismissFailureModal();
     }
   }
+  /**
+   * Handle for the appStateChange listener registered in ngOnInit. Native alarm
+   * actions (Take Medicine tapped from AlarmActivity/notification) are recorded to
+   * SharedPreferences and only reconciled with the backend by
+   * AlarmSchedulerService.consumePendingNativeAction() — ngOnInit alone only runs
+   * once per Angular bootstrap, so if the webview is still alive in the background
+   * when the user acts on the alarm, that reconciliation would otherwise never fire
+   * until the next cold start. Listening for the app returning to the foreground
+   * closes that gap without touching the native alarm pipeline itself.
+   */
+  private appStateListener: PluginListenerHandle | null = null;
 
   ngOnInit(): void {
     // Bootstrap offline reminders once per app start.
@@ -88,12 +101,36 @@ export class App implements OnInit, AfterViewInit {
     //   • Concurrent calls share the same in-flight Promise.
     void this.reminderBootstrap.bootstrap();
     void this.alarmScheduler.consumePendingNativeAction();
+
+    if (Capacitor.isNativePlatform()) {
+      void CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+        if (!isActive) return;
+        // consumePendingNativeAction() already de-dupes concurrent/redundant calls via
+        // its own actionInFlight guard, and is a safe no-op when nothing is pending —
+        // it resolves false in that case, so a plain app switch never triggers a refresh.
+        this.alarmScheduler.consumePendingNativeAction()
+          .then(actionConsumed => {
+            if (!actionConsumed) return;
+            // Reuse the existing reminder-data refresh signal (already consumed by
+            // dashboard.ts / medications.ts) so a dose confirmed while the app sat in
+            // the background is reflected immediately if either page is mounted —
+            // no new refresh mechanism, no extra API calls beyond what confirm already made.
+            this.notificationService.notifyReminderChanged();
+          })
+          .catch(e => console.error('[App] consumePendingNativeAction on resume failed', e));
+      }).then(handle => { this.appStateListener = handle; });
+    }
   }
 
   ngAfterViewInit(): void {
     if (this.permDialog) {
       this.notifPermGuard.registerGlobalDialog(this.permDialog);
     }
+  }
+
+  ngOnDestroy(): void {
+    void this.appStateListener?.remove();
+    this.appStateListener = null;
   }
 
   private static readonly PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/verify-account', '/welcome', '/tour'];
