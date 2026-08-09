@@ -337,19 +337,6 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       this.documentAnalysisState.clearManualEntryRequest();
     });
 
-    // When on medical records, if there is a completed document ready for review in global state, open the review modal
-    effect(() => {
-      const readyDoc = this.documentAnalysisState.trackedDocuments().find(d => d.status === 'ReadyToReview');
-      if (readyDoc?.reviewData && !this.reviewForm() && !this.showAiFailDialog() && !this.showDuplicateWarningDialog() && !this.scanResult()) {
-        if (readyDoc.uploadType === 'medicine') {
-          this.openMedicineReviewModal(readyDoc.reviewData as ScanMedicineBoxResponse);
-        } else {
-          this.openReviewModal(readyDoc.uploadType as any, readyDoc.reviewData);
-        }
-        this.documentAnalysisState.dismiss(readyDoc.documentId);
-      }
-    });
-
     // When on medical records, if there is a failed document in global state, open the existing failure dialog
     effect(() => {
       const failedDoc = this.documentAnalysisState.trackedDocuments().find(d => d.status === 'Failed');

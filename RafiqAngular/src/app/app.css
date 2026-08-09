@@ -984,7 +984,8 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0EAFD7 0%, #7C3AED 100%);
+  /* background: linear-gradient(135deg, #0EAFD7 0%, #7C3AED 100%); */
+  background-color: #0C9FCA;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1050,7 +1051,8 @@
 }
 
 .acm-btn--primary {
-  background: linear-gradient(135deg, #0EAFD7 0%, #7C3AED 100%);
+  /* background: linear-gradient(135deg, #0EAFD7 0%, #7C3AED 100%); */
+  background-color: var(--blue); 
   color: #fff;
   box-shadow: 0 4px 16px rgba(14, 175, 215, 0.3);
 }
