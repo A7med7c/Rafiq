@@ -1,5 +1,5 @@
 @if (tourEngine.isPlaying() && !isOnboardingPage()) {
-  @for (stepIndex of [tourEngine.currentStepIndex()]; track stepIndex) {
+  @let stepIndex = tourEngine.currentStepIndex();
 
     <!-- ══ Speech bubble — position is the single source of truth (floating-ui). ══ -->
     <article
@@ -100,6 +100,4 @@
         }
       </footer>
     </article>
-
-  }
 }

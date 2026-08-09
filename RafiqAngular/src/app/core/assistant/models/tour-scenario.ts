@@ -15,6 +15,9 @@ export interface TourStepVariant {
   /** Anchor name registered in AssistantAnchorRegistryService or DOM CSS selector */
   anchor?: string;
 
+  /** Optional direct audio URL for pre-recorded tour MP3 asset */
+  audioUrl?: string;
+
   /** Dynamic key-value parameters for localized speech string interpolation */
   speechParams?: Record<string, any>;
 }
@@ -25,6 +28,9 @@ export interface TourStepScenario {
 
   /** Anchor name registered in AssistantAnchorRegistryService or DOM CSS selector */
   anchor?: string;
+
+  /** Optional direct audio URL for pre-recorded tour MP3 asset */
+  audioUrl?: string;
 
   /** Route path to navigate to before executing this step (e.g. '/dashboard', '/appointments') */
   route?: string;
