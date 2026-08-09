@@ -23,5 +23,17 @@ export class MedicalWarningCardComponent {
 
   public loc = inject(LocalizationService);
   t = this.loc.t;
+
+  get localizedSpecialty(): string {
+    const raw = this.data.recommendedSpecialty;
+    if (!raw) return '';
+    return (this.t() as any).medicalSpecialties?.[raw] || raw;
+  }
+
+  get localizedAttentionLevel(): string {
+    const raw = this.data.attentionLevel;
+    if (!raw) return '';
+    return (this.t() as any).attentionLevels?.[raw] || raw;
+  }
 }
 

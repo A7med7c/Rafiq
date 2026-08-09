@@ -4,10 +4,10 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using Rafiq.Application.Common.Interfaces;
-using Rafiq.Application.Features.MedicalReport;
 using Rafiq.Application.Features.MedicalReport.DTOs;
 using Rafiq.Domain.Entities.Documents;
 using Rafiq.Domain.Entities.User;
+using Rafiq.Domain.Enums;
 
 namespace Rafiq.Infrastructure.Services.MedicalReport;
 
@@ -20,14 +20,17 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
     private static readonly string BorderColor = "#E5E7EB";
     private static readonly string White = "#FFFFFF";
 
+    private readonly string _webRootPath;
     private readonly bool _fontsRegistered;
 
     public MedicalReportPdfGenerator(IWebHostEnvironment env)
     {
+        _webRootPath = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
         QuestPDF.Settings.License = LicenseType.Community;
         if (!_fontsRegistered)
         {
-            var fontsDir = Path.Combine(env.WebRootPath, "fonts");
+            var fontsDir = Path.Combine(_webRootPath, "fonts");
             var regular = Path.Combine(fontsDir, "Amiri-Regular.ttf");
             var bold    = Path.Combine(fontsDir, "Amiri-Bold.ttf");
 
@@ -72,9 +75,7 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
                             .FontFamily("Amiri").Bold().FontSize(22).FontColor(White);
 
                         inner.Item()
-                            .Text(data.ReportType == ReportType.DoctorSummary
-                                ? "Doctor Summary Report"
-                                : "Complete Medical History")
+                            .Text("Complete Medical File")
                             .FontFamily("Amiri").FontSize(13).FontColor(White).Italic();
                     });
 
@@ -127,9 +128,8 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
             BuildLabReports(col, data);
             BuildImagingReports(col, data);
             BuildAppointments(col, data);
-
-            if (data.ReportType == ReportType.CompleteHistory)
-                BuildTimeline(col, data);
+            BuildGeneralDocuments(col, data);
+            BuildTimeline(col, data);
 
             if (data.AiClinicalSummary is not null)
                 BuildAiSummary(col, data.AiClinicalSummary);
@@ -268,10 +268,9 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
     {
         if (!data.Prescriptions.Any()) return;
 
-        var label = data.ReportType == ReportType.DoctorSummary ? "Recent Prescriptions" : "Prescriptions";
-        SectionHeader(col, label);
+        SectionHeader(col, "Prescriptions");
 
-        foreach (var p in data.Prescriptions)
+        foreach (var p in data.Prescriptions.OrderByDescending(x => x.PrescriptionDate))
         {
             col.Item().PaddingTop(6).Column(inner =>
             {
@@ -299,6 +298,10 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
                             TableRow(table, m.MedicineName, m.Dosage, m.Frequency, m.Duration);
                     });
                 }
+
+                var imgBytes = TryLoadImageBytes(p.ImagePath);
+                if (imgBytes != null)
+                    inner.Item().PaddingTop(4).MaxWidth(300).Image(imgBytes);
             });
         }
     }
@@ -308,10 +311,9 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
     {
         if (!data.LabReports.Any()) return;
 
-        var label = data.ReportType == ReportType.DoctorSummary ? "Recent Lab Reports" : "Lab Reports";
-        SectionHeader(col, label);
+        SectionHeader(col, "Lab Reports");
 
-        foreach (var lab in data.LabReports)
+        foreach (var lab in data.LabReports.OrderByDescending(l => l.ReportDate))
         {
             col.Item().PaddingTop(6).Column(inner =>
             {
@@ -352,6 +354,10 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
                         }
                     });
                 }
+
+                var imgBytes = TryLoadImageBytes(lab.ImageUrl);
+                if (imgBytes != null)
+                    inner.Item().PaddingTop(4).MaxWidth(300).Image(imgBytes);
             });
         }
     }
@@ -361,10 +367,9 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
     {
         if (!data.ImagingReports.Any()) return;
 
-        var label = data.ReportType == ReportType.DoctorSummary ? "Recent Imaging Reports" : "Imaging Reports";
-        SectionHeader(col, label);
+        SectionHeader(col, "Imaging Reports");
 
-        foreach (var img in data.ImagingReports)
+        foreach (var img in data.ImagingReports.OrderByDescending(i => i.ReportDate))
         {
             col.Item().PaddingTop(6).Column(inner =>
             {
@@ -379,6 +384,10 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
 
                 if (!string.IsNullOrWhiteSpace(img.Impression))
                     inner.Item().PaddingTop(2).Text("Impression: " + img.Impression).FontSize(9);
+
+                var imgBytes = TryLoadImageBytes(img.ImageUrl);
+                if (imgBytes != null)
+                    inner.Item().PaddingTop(4).MaxWidth(300).Image(imgBytes);
             });
         }
     }
@@ -388,8 +397,7 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
     {
         if (!data.Appointments.Any()) return;
 
-        var label = data.ReportType == ReportType.DoctorSummary ? "Upcoming Appointments" : "Appointments";
-        SectionHeader(col, label);
+        SectionHeader(col, "Appointments");
 
         col.Item().Table(table =>
         {
@@ -417,7 +425,92 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
         });
     }
 
-    // ── Timeline (Complete History only) ──────────────────────────────────────
+    // ── General Documents ─────────────────────────────────────────────────────
+    private void BuildGeneralDocuments(ColumnDescriptor col, MedicalReportDataDto data)
+    {
+        if (!data.GeneralDocuments.Any()) return;
+
+        SectionHeader(col, "Other Medical Documents");
+
+        foreach (var doc in data.GeneralDocuments.OrderByDescending(d => d.CreatedAt))
+        {
+            col.Item().PaddingTop(8).Column(inner =>
+            {
+                // Title + status badge
+                inner.Item().Row(row =>
+                {
+                    row.RelativeItem().Text(doc.Title).Bold().FontSize(10);
+
+                    var (statusLabel, statusColor) = doc.AnalysisStatus switch
+                    {
+                        GeneralDocumentStatus.Completed  => ("Analyzed",    "#10B981"),
+                        GeneralDocumentStatus.Processing => ("Processing",  "#F59E0B"),
+                        GeneralDocumentStatus.Pending    => ("Pending",     "#F59E0B"),
+                        GeneralDocumentStatus.Failed     => ("Failed",      "#EF4444"),
+                        _                                => ("Unknown",     MutedText)
+                    };
+
+                    row.ConstantItem(72).AlignRight().Element(c =>
+                        c.Background(statusColor).Padding(3)
+                         .Text(statusLabel).FontSize(8).FontColor(White).AlignCenter());
+                });
+
+                // Metadata
+                if (!string.IsNullOrWhiteSpace(doc.DocumentType))
+                    inner.Item().Text($"Type: {doc.DocumentType}").FontSize(9).FontColor(MutedText);
+                if (!string.IsNullOrWhiteSpace(doc.DoctorName))
+                    inner.Item().Text($"Doctor: {doc.DoctorName}").FontSize(9).FontColor(MutedText);
+                if (!string.IsNullOrWhiteSpace(doc.HospitalOrClinic))
+                    inner.Item().Text($"Hospital/Clinic: {doc.HospitalOrClinic}").FontSize(9).FontColor(MutedText);
+                if (!string.IsNullOrWhiteSpace(doc.DocumentDate))
+                    inner.Item().Text($"Date: {doc.DocumentDate}").FontSize(9).FontColor(MutedText);
+                if (!string.IsNullOrWhiteSpace(doc.Description))
+                    inner.Item().PaddingTop(2).Text(doc.Description).FontSize(9);
+
+                // AI summary
+                if (!string.IsNullOrWhiteSpace(doc.AiSummary))
+                {
+                    inner.Item().PaddingTop(4)
+                        .Background(LightBlue)
+                        .Border(1).BorderColor(Blue)
+                        .Padding(6)
+                        .Text("AI Summary: " + doc.AiSummary)
+                        .FontSize(9).Italic();
+                }
+                else if (doc.AnalysisStatus == GeneralDocumentStatus.Failed
+                         && !string.IsNullOrWhiteSpace(doc.FailureReason))
+                {
+                    inner.Item().PaddingTop(4)
+                        .Background("#FEF2F2")
+                        .Padding(4)
+                        .Text("Analysis failed: " + doc.FailureReason)
+                        .FontSize(9).FontColor("#EF4444");
+                }
+
+                // Original document image (always shown — the file is the record for non-analyzed docs)
+                var imgBytes = TryLoadImageBytes(doc.ImagePath);
+                if (imgBytes != null)
+                {
+                    inner.Item().PaddingTop(6)
+                        .Border(1).BorderColor(BorderColor)
+                        .MaxWidth(420)
+                        .Image(imgBytes);
+                }
+                else if (!string.IsNullOrWhiteSpace(doc.ImagePath))
+                {
+                    var ext = Path.GetExtension(doc.ImagePath).ToLowerInvariant();
+                    if (ext == ".pdf")
+                        inner.Item().PaddingTop(4)
+                            .Text("Original file: PDF document (not embeddable in report)")
+                            .FontSize(9).FontColor(MutedText).Italic();
+                }
+            });
+
+            col.Item().PaddingTop(6).BorderBottom(1).BorderColor(BorderColor);
+        }
+    }
+
+    // ── Timeline ──────────────────────────────────────────────────────────────
     private void BuildTimeline(ColumnDescriptor col, MedicalReportDataDto data)
     {
         var events = BuildTimelineEvents(data);
@@ -464,6 +557,9 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
         foreach (var a in data.Appointments.Where(x => x.Status != Domain.Enums.AppointmentStatus.Upcoming))
             events.Add((a.AppointmentDateTime, $"Appointment: {a.Title} — {a.Provider} ({a.Status})"));
 
+        foreach (var g in data.GeneralDocuments.Where(x => x.AnalysisStatus == GeneralDocumentStatus.Completed))
+            events.Add((g.CreatedAt, $"Document: {g.Title}" + (string.IsNullOrWhiteSpace(g.DocumentType) ? "" : $" ({g.DocumentType})")));
+
         return events;
     }
 
@@ -478,6 +574,24 @@ public sealed class MedicalReportPdfGenerator : IMedicalReportPdfGenerator
             .Padding(10)
             .Text(summary)
             .FontSize(10).Italic();
+    }
+
+    // ── Image loader ──────────────────────────────────────────────────────────
+    private byte[]? TryLoadImageBytes(string? relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath)) return null;
+        try
+        {
+            var abs = Path.Combine(_webRootPath, relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(abs)) return null;
+            var ext = Path.GetExtension(abs).ToLowerInvariant();
+            if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) return null;
+            return File.ReadAllBytes(abs);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

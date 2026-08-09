@@ -276,13 +276,13 @@
       <select class="aio__select" [value]="requestsQuery().feature ?? ''"
         (change)="onRequestFeatureChange($any($event.target).value)">
         <option value="">{{ copy().allFeatures }}</option>
-        <option value="Chat">Chat</option>
-        <option value="Voice">Voice</option>
-        <option value="LabOcr">Lab OCR</option>
-        <option value="ImagingOcr">Imaging OCR</option>
-        <option value="PrescriptionOcr">Prescription OCR</option>
-        <option value="GeneralDocOcr">General Doc OCR</option>
-        <option value="MedicineScan">Medicine Scan</option>
+        <option value="Chat">{{ copy().featureChat }}</option>
+        <option value="Voice">{{ copy().featureVoice }}</option>
+        <option value="LabOcr">{{ copy().featureLabOcr }}</option>
+        <option value="ImagingOcr">{{ copy().featureImagingOcr }}</option>
+        <option value="PrescriptionOcr">{{ copy().featurePrescriptionOcr }}</option>
+        <option value="GeneralDocOcr">{{ copy().featureGeneralDocOcr }}</option>
+        <option value="MedicineScan">{{ copy().featureMedicineScan }}</option>
       </select>
       <select class="aio__select" [value]="requestsQuery().status ?? ''"
         (change)="onRequestStatusChange($any($event.target).value)">

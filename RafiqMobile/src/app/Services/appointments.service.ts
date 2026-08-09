@@ -52,37 +52,24 @@ export class AppointmentsService {
   }
 
   /**
-   * GET /api/appointments/upcoming — returns the unified UpcomingReminderDto
-   * contract for offline sync. Separate from getUpcoming() which returns the
-   * domain-specific AppointmentDto used by the UI.
+   * GET /api/appointments/upcoming — the backend already returns the unified
+   * UpcomingReminderDto[] offline-sync contract for this route (see
+   * GetUpcomingAppointmentsQueryHandler): reminderId, reminderType='Appointment',
+   * a server-computed scheduledAt (= AppointmentDateTime − ReminderOffsetMinutes),
+   * updatedAt, isDeleted, etc. Consume it directly — exactly like
+   * MedicationRemindersService.getUpcomingReminders().
+   *
+   * NOTE: the previous implementation typed this response as AppointmentDto[] and
+   * re-derived scheduledAt from appt.appointmentDateTime. That field does not exist
+   * on the UpcomingReminderDto this endpoint returns, so `new Date(undefined)` was
+   * NaN and every appointment was dropped — which is why no appointment alarm was
+   * ever scheduled.
    */
   getUpcomingForSync(profileId: string): Promise<UpcomingReminderDto[]> {
     return firstValueFrom(
       this.http
-        .get<ApiResponse<AppointmentDto[]>>(`${this.base}/upcoming?profileId=${profileId}`)
-        .pipe(
-          map(r => r.data ?? []),
-          map(appts => appts.map(appt => {
-            const nc = this.localization.t().notifications;
-            
-            let scheduledAt = appt.appointmentDateTime;
-            if (appt.reminderOffsetMinutes) {
-              const dt = new Date(appt.appointmentDateTime);
-              dt.setMinutes(dt.getMinutes() - appt.reminderOffsetMinutes);
-              scheduledAt = dt.toISOString();
-            }
-
-            return {
-              reminderId: appt.id,
-              title: appt.title,
-              body: appt.notes || nc.upcomingAppointmentBody.replace('{title}', appt.title).replace('{provider}', appt.provider),
-              reminderType: 'Appointment',
-              scheduledAt: scheduledAt,
-              updatedAt: appt.updatedAt || appt.createdAt,
-              isDeleted: appt.status === 'Cancelled'
-            } as UpcomingReminderDto;
-          }))
-        )
+        .get<ApiResponse<UpcomingReminderDto[]>>(`${this.base}/upcoming?profileId=${profileId}`)
+        .pipe(map(r => r.data ?? []))
     );
   }
 

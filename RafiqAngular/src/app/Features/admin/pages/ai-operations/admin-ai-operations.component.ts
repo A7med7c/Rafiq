@@ -21,10 +21,8 @@ import { AdminService } from '../../services/admin.service';
 
 type Tab = 'overview' | 'conversations' | 'feedback' | 'performance' | 'usageIntelligence';
 
-// Predefined category values (must match backend validation)
 const FEEDBACK_CATEGORIES = [
-  'Hallucination', 'WrongMedicalAdvice', 'OcrIssue',
-  'VoiceRecognition', 'Performance', 'Bug', 'FeatureRequest', 'Other'
+  'WrongInfo', 'Harmful', 'NotHelpful', 'OffTopic', 'Other'
 ] as const;
 type FeedbackCategory = typeof FEEDBACK_CATEGORIES[number];
 
@@ -155,6 +153,94 @@ export class AdminAiOperationsComponent implements OnInit {
 
   // Per-item triage state (local edits before save)
   readonly triageEdits = signal<Record<string, { status: string; category: string; notes: string }>>({});
+
+  readonly feedbackStats = computed(() => {
+    const list = this.feedback();
+    const total = list.length;
+    if (total === 0) return null;
+
+    let thumbsUp = 0;
+    let thumbsDown = 0;
+    const categoryCounts: Record<string, number> = {};
+
+    for (const cat of FEEDBACK_CATEGORIES) {
+      categoryCounts[cat] = 0;
+    }
+    categoryCounts['Uncategorized'] = 0;
+
+    for (const item of list) {
+      if (item.reaction === 'ThumbsUp') {
+        thumbsUp++;
+      } else {
+        thumbsDown++;
+        const cat = item.category || 'Uncategorized';
+        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+      }
+    }
+
+    const categories = Object.entries(categoryCounts)
+      .map(([key, count]) => {
+        const pct = thumbsDown > 0 ? (count / thumbsDown) * 100 : 0;
+        return {
+          key,
+          label: key === 'Uncategorized' ? (this.copy() as any).uncategorized : this.categoryLabel(key),
+          count,
+          pct: Math.round(pct)
+        };
+      })
+      .filter(c => c.count > 0)
+      .sort((a, b) => b.count - a.count);
+
+    const positiveRate = total > 0 ? Math.round((thumbsUp / total) * 100) : 0;
+
+    return {
+      total,
+      thumbsUp,
+      thumbsDown,
+      positiveRate,
+      categories
+    };
+  });
+
+  // Palette for category donut segments
+  private readonly CAT_COLORS = [
+    '#3b82f6', // Blue
+    '#f43f5e', // Rose
+    '#10b981', // Emerald
+    '#8b5cf6', // Violet
+    '#f59e0b', // Amber
+    '#06b6d4', // Cyan
+    '#d946ef', // Fuchsia
+    '#84cc16'  // Lime
+  ];
+
+  readonly feedbackDonutSegments = computed(() => {
+    const stats = this.feedbackStats();
+    if (!stats || stats.thumbsDown === 0 || stats.categories.length === 0) return [];
+
+    const total = stats.thumbsDown;
+    const R = 18;            // ring radius (cx=cy=22 for viewBox 44x44)
+    const cx = 22; const cy = 22;
+    const circumference = 2 * Math.PI * R;
+    let cumPct = 0;
+
+    return stats.categories.map((cat, idx) => {
+      const pct  = cat.count / total;
+      const offset = circumference * (1 - cumPct);
+      const dash   = circumference * pct;
+      cumPct += pct;
+      return {
+        key:    cat.key,
+        label:  cat.label,
+        count:  cat.count,
+        pct:    cat.pct,
+        color:  this.CAT_COLORS[idx % this.CAT_COLORS.length],
+        strokeDasharray:  `${dash.toFixed(2)} ${circumference.toFixed(2)}`,
+        strokeDashoffset: offset.toFixed(2),
+        r: R, cx, cy, circumference
+      };
+    });
+  });
 
   // ── Performance ───────────────────────────────────────────────────────────
   readonly performance        = signal<AiPerformance | null>(null);
@@ -578,14 +664,11 @@ export class AdminAiOperationsComponent implements OnInit {
   categoryLabel(cat: string | null | undefined): string {
     if (!cat) return this.copy().uncategorized;
     const map: Record<string, keyof ReturnType<typeof this.copy>> = {
-      Hallucination:     'catHallucination',
-      WrongMedicalAdvice:'catWrongMedical',
-      OcrIssue:          'catOcrIssue',
-      VoiceRecognition:  'catVoice',
-      Performance:       'catPerformance',
-      Bug:               'catBug',
-      FeatureRequest:    'catFeatureRequest',
-      Other:             'catOther'
+      WrongInfo:     'catWrongInfo',
+      Harmful:       'catHarmful',
+      NotHelpful:    'catNotHelpful',
+      OffTopic:      'catOffTopic',
+      Other:         'catOther'
     };
     const key = map[cat];
     return key ? (this.copy()[key] as string) : cat;

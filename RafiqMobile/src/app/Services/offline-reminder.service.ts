@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-import { SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
+import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
 import { MedicationReminderNotificationPayload, AppointmentReminderNotificationPayload } from './signalr.service';
 import { UpcomingReminderDto } from './medication-reminders.service';
 
@@ -10,8 +10,9 @@ import { UpcomingReminderDto } from './medication-reminders.service';
  * we only reschedule a notification when the reminder actually changes.
  */
 export interface CachedReminder {
-  serverId: string;          // reminderId or appointmentId (PRIMARY KEY)
-  notificationId: number;    // Capacitor local notification ID — stable across syncs
+  occurrenceKey: string;     // `${serverId}|${reminderTime}` — PRIMARY KEY (occurrence-unique)
+  serverId: string;          // reminderId or appointmentId (shared across a reminder's occurrences)
+  notificationId: number;    // deterministic occurrence id — stable across syncs
   title: string;
   body: string;
   type: 'reminder' | 'appointment';
@@ -22,10 +23,27 @@ export interface CachedReminder {
 
 @Injectable({ providedIn: 'root' })
 export class OfflineReminderService {
-  private readonly sqlite = new SQLiteConnection(Capacitor);
+  // SQLiteConnection delegates every call to the object passed here; it MUST be
+  // the CapacitorSQLite plugin (which implements createConnection), NOT the
+  // Capacitor core object. Passing Capacitor core was the cause of
+  // "this.sqlite.createConnection is not a function".
+  private readonly sqlite = new SQLiteConnection(CapacitorSQLite);
   private db!: SQLiteDBConnection;
+  /**
+   * The @capacitor-community/sqlite native plugin is only available on native
+   * platforms. On web there is no native SQLite (jeep-sqlite is not bundled),
+   * so all cache operations become safe no-ops there. Native Android alarms —
+   * the only consumer of this cache — never run on web anyway.
+   */
+  private readonly isNative = Capacitor.isNativePlatform();
   private readonly dbName = 'offline_reminders';
-  private readonly tableName = 'reminders';
+  // v2: occurrence-keyed table. A medication reminder produces multiple daily
+  // occurrences that share one serverId; keying only by serverId collapsed them
+  // to a single row and a single alarm. The v2 table's PRIMARY KEY is the
+  // occurrence key (`${serverId}|${reminderTime}`) so every occurrence survives
+  // independently.
+  private readonly tableName = 'reminders_v2';
+  private readonly legacyTableName = 'reminders';
   private initialized = false;
   /** Guards against concurrent init() calls racing before initialized is set. */
   private initInFlight: Promise<void> | null = null;
@@ -39,6 +57,9 @@ export class OfflineReminderService {
   // ── Initialization ────────────────────────────────────────────────────────
 
   async init(): Promise<void> {
+    // Web: native SQLite is unavailable — skip so createConnection is never
+    // called. Cache reads/writes below become safe no-ops on web.
+    if (!this.isNative) return;
     if (this.initialized) return;
     // Concurrency guard: two concurrent callers share the same init Promise.
     if (this.initInFlight) return this.initInFlight;
@@ -55,7 +76,8 @@ export class OfflineReminderService {
       await this.db.open();
       await this.db.execute(`
         CREATE TABLE IF NOT EXISTS ${this.tableName} (
-          serverId       TEXT    PRIMARY KEY,
+          occurrenceKey  TEXT    PRIMARY KEY,
+          serverId       TEXT    NOT NULL,
           notificationId INTEGER NOT NULL,
           title          TEXT    NOT NULL,
           body           TEXT    NOT NULL,
@@ -64,7 +86,11 @@ export class OfflineReminderService {
           lastUpdated    TEXT    NOT NULL,
           status         TEXT    NOT NULL DEFAULT 'scheduled'
         );
+        CREATE INDEX IF NOT EXISTS idx_${this.tableName}_serverId ON ${this.tableName}(serverId);
       `);
+      // Drop the legacy serverId-keyed table so stale single-row-per-reminder
+      // entries can't shadow the new occurrence rows.
+      await this.db.execute(`DROP TABLE IF EXISTS ${this.legacyTableName};`);
       this.initialized = true;
     } catch (e) {
       console.error('[OfflineReminderService] init error', e);
@@ -100,40 +126,41 @@ export class OfflineReminderService {
   }
 
   private async _runSync(serverItems: UpcomingReminderDto[]): Promise<void> {
+    if (!this.isNative) return; // web: no native SQLite — nothing to persist
     await this.init();
 
     const local = await this.loadAll();
-    const localMap = new Map<string, CachedReminder>(local.map(r => [r.serverId, r]));
-    const serverIds = new Set<string>();
+    const localMap = new Map<string, CachedReminder>(local.map(r => [r.occurrenceKey, r]));
+    const serverKeys = new Set<string>();
 
     for (const item of serverItems) {
-      serverIds.add(item.reminderId);
-      const existing = localMap.get(item.reminderId);
-
-      // (a) Server says deleted → cancel + remove
+      // (a) Server says deleted → remove EVERY occurrence of this reminder.
       if (item.isDeleted) {
-        if (existing) {
-          await this.deleteRow(item.reminderId);
-        }
+        await this.deleteAllForServerId(item.reminderId);
         continue;
       }
 
+      const occurrenceKey = this.occurrenceKey(item.reminderId, item.scheduledAt);
+      serverKeys.add(occurrenceKey);
+      const existing = localMap.get(occurrenceKey);
+
       if (!existing) {
-        // (b) New reminder → insert + schedule
+        // (b) New occurrence → insert + schedule
         await this.insertAndSchedule(item);
-      } else if (existing.lastUpdated !== item.updatedAt || existing.reminderTime !== item.scheduledAt) {
-        // (c) Changed → update + reschedule using the SAME notificationId
-        await this.updateAndReschedule(existing, item);
-      } else if (existing.notificationId !== this.stableId(item.reminderId)) {
+      } else if (
+        existing.lastUpdated !== item.updatedAt ||
+        existing.notificationId !== this.stableId(occurrenceKey)
+      ) {
+        // (c) Changed → update the same occurrence row
         await this.updateAndReschedule(existing, item);
       }
       // (d) Unchanged → leave untouched
     }
 
-    // Step 3: remove local rows the server no longer returns
+    // Step 3: remove local occurrence rows the server no longer returns.
     for (const row of localMap.values()) {
-      if (!serverIds.has(row.serverId)) {
-        await this.deleteRow(row.serverId);
+      if (!serverKeys.has(row.occurrenceKey)) {
+        await this.deleteRow(row.occurrenceKey);
       }
     }
   }
@@ -145,6 +172,7 @@ export class OfflineReminderService {
    * reboot or app restart. Safe to call unconditionally on every startup.
    */
   async restoreScheduledReminders(): Promise<void> {
+    if (!this.isNative) return; // web: no native SQLite — nothing to restore
     await this.init();
 
     const rows = await this.loadAll();
@@ -153,16 +181,16 @@ export class OfflineReminderService {
     for (const row of rows) {
       const fireAt = new Date(row.reminderTime).getTime();
       if (fireAt > now) {
-        const notificationId = this.stableId(row.serverId);
+        const notificationId = this.stableId(row.occurrenceKey);
         if (row.notificationId !== notificationId) {
           await this.db.run(
-            `UPDATE ${this.tableName} SET notificationId = ? WHERE serverId = ?`,
-            [notificationId, row.serverId]
+            `UPDATE ${this.tableName} SET notificationId = ? WHERE occurrenceKey = ?`,
+            [notificationId, row.occurrenceKey]
           );
         }
       } else {
-        // Past reminder — clean up
-        await this.deleteRow(row.serverId);
+        // Past occurrence — clean up
+        await this.deleteRow(row.occurrenceKey);
       }
     }
   }
@@ -177,6 +205,7 @@ export class OfflineReminderService {
     payload: MedicationReminderNotificationPayload | AppointmentReminderNotificationPayload,
     kind: 'reminder' | 'appointment'
   ): Promise<void> {
+    if (!this.isNative) return; // web: no native SQLite
     await this.init();
 
     const serverId = kind === 'reminder'
@@ -193,33 +222,37 @@ export class OfflineReminderService {
       : (payload as AppointmentReminderNotificationPayload).appointmentDateTime;
     const now = new Date().toISOString();
 
-    // Check for existing row to reuse its notificationId
-    const existing = await this.loadOne(serverId);
-    const notificationId = this.stableId(serverId);
+    const occurrenceKey = this.occurrenceKey(serverId, reminderTime);
+    const notificationId = this.stableId(occurrenceKey);
 
     await this.db.run(
       `INSERT OR REPLACE INTO ${this.tableName}
-         (serverId, notificationId, title, body, type, reminderTime, lastUpdated, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'scheduled')`,
-      [serverId, notificationId, title, body, kind, reminderTime, now]
+         (occurrenceKey, serverId, notificationId, title, body, type, reminderTime, lastUpdated, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'scheduled')`,
+      [occurrenceKey, serverId, notificationId, title, body, kind, reminderTime, now]
     );
   }
 
   /**
-   * Cancels and removes a reminder. Called by SignalR cancellation handlers.
+   * Cancels and removes a reminder (all of its occurrences). Called by SignalR
+   * cancellation handlers and after an alarm action completes.
    * Preserved for backward compatibility.
    */
   async removeReminder(serverId: string): Promise<void> {
+    if (!this.isNative) return; // web: no native SQLite
     await this.init();
-    await this.deleteRow(serverId);
+    await this.deleteAllForServerId(serverId);
   }
 
+  /** Returns the distinct reminder ids (not occurrence keys) currently cached. */
   async getCachedReminderIds(): Promise<string[]> {
+    if (!this.isNative) return []; // web: no native SQLite — empty cache
     await this.init();
-    return (await this.loadAll()).map(row => row.serverId);
+    return [...new Set((await this.loadAll()).map(row => row.serverId))];
   }
 
   async getCachedReminders(): Promise<CachedReminder[]> {
+    if (!this.isNative) return []; // web: no native SQLite — empty cache
     await this.init();
     return this.loadAll();
   }
@@ -227,31 +260,37 @@ export class OfflineReminderService {
   // ── Private helpers ────────────────────────────────────────────────────────
 
   private async insertAndSchedule(item: UpcomingReminderDto): Promise<void> {
-    const notificationId = this.stableId(item.reminderId);
+    const occurrenceKey = this.occurrenceKey(item.reminderId, item.scheduledAt);
+    const notificationId = this.stableId(occurrenceKey);
 
     await this.db.run(
-      `INSERT INTO ${this.tableName}
-         (serverId, notificationId, title, body, type, reminderTime, lastUpdated, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'scheduled')`,
-      [item.reminderId, notificationId, item.title, item.body,
+      `INSERT OR REPLACE INTO ${this.tableName}
+         (occurrenceKey, serverId, notificationId, title, body, type, reminderTime, lastUpdated, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'scheduled')`,
+      [occurrenceKey, item.reminderId, notificationId, item.title, item.body,
        item.reminderType === 'Medication' ? 'reminder' : 'appointment',
        item.scheduledAt, item.updatedAt]
     );
   }
 
   private async updateAndReschedule(existing: CachedReminder, item: UpcomingReminderDto): Promise<void> {
-    const notificationId = this.stableId(item.reminderId);
+    const occurrenceKey = this.occurrenceKey(item.reminderId, item.scheduledAt);
+    const notificationId = this.stableId(occurrenceKey);
 
     await this.db.run(
       `UPDATE ${this.tableName}
           SET notificationId = ?, title = ?, body = ?, reminderTime = ?, lastUpdated = ?, status = 'scheduled'
-        WHERE serverId = ?`,
-      [notificationId, item.title, item.body, item.scheduledAt, item.updatedAt, item.reminderId]
+        WHERE occurrenceKey = ?`,
+      [notificationId, item.title, item.body, item.scheduledAt, item.updatedAt, occurrenceKey]
     );
   }
 
 
-  private async deleteRow(serverId: string): Promise<void> {
+  private async deleteRow(occurrenceKey: string): Promise<void> {
+    await this.db.run(`DELETE FROM ${this.tableName} WHERE occurrenceKey = ?`, [occurrenceKey]);
+  }
+
+  private async deleteAllForServerId(serverId: string): Promise<void> {
     await this.db.run(`DELETE FROM ${this.tableName} WHERE serverId = ?`, [serverId]);
   }
 
@@ -260,17 +299,15 @@ export class OfflineReminderService {
     return (result.values ?? []) as CachedReminder[];
   }
 
-  private async loadOne(serverId: string): Promise<CachedReminder | undefined> {
-    const result = await this.db.query(
-      `SELECT * FROM ${this.tableName} WHERE serverId = ?`, [serverId]
-    );
-    return result.values?.[0] as CachedReminder | undefined;
+  /** Deterministic occurrence key: one reminder id yields one row per fire time. */
+  private occurrenceKey(serverId: string, reminderTime: string): string {
+    return `${serverId}|${reminderTime}`;
   }
 
-  private stableId(serverId: string): number {
+  private stableId(source: string): number {
     let hash = 0;
-    for (let i = 0; i < serverId.length; i++) {
-      hash = Math.imul(31, hash) + serverId.charCodeAt(i);
+    for (let i = 0; i < source.length; i++) {
+      hash = Math.imul(31, hash) + source.charCodeAt(i);
       hash |= 0;
     }
 

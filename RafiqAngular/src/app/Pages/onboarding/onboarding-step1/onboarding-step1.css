@@ -157,7 +157,7 @@
 }
 
 @keyframes cardIn {
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 .step-indicator {
@@ -195,6 +195,13 @@ form {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  position: relative;
+  z-index: 1;
+}
+
+.field:focus-within,
+.field:has(.is-open) {
+  z-index: 10000;
 }
 
 .field-label {

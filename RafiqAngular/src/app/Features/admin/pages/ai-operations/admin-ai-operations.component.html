@@ -454,115 +454,245 @@
   ════════════════════════════════════════════════════════════════════ -->
   @if (activeTab() === 'feedback') {
 
-    <!-- Filters -->
-    <div class="aio__filters aio__filters--wrap">
-      <input class="aio__search" type="search" [placeholder]="copy().searchPlaceholder"
-        [value]="feedbackQuery().search ?? ''"
-        (input)="onFeedbackSearch($any($event.target).value)" />
-
-      <select class="aio__select" [value]="feedbackQuery().reaction ?? ''"
-        (change)="onFeedbackReactionChange($any($event.target).value)">
-        <option value="">{{ copy().allReactions }}</option>
-        <option value="ThumbsUp">😊 {{ copy().positive }}</option>
-        <option value="ThumbsDown">😞 {{ copy().negative }}</option>
-      </select>
-
-      <select class="aio__select" [value]="feedbackQuery().status ?? ''"
-        (change)="onFeedbackStatusChange($any($event.target).value)">
-        <option value="">{{ copy().allTriageStatuses }}</option>
-        <option value="New">{{ copy().statusNew }}</option>
-        <option value="Investigating">{{ copy().statusInvestigating }}</option>
-        <option value="Resolved">{{ copy().statusResolved }}</option>
-        <option value="Ignored">{{ copy().statusIgnored }}</option>
-      </select>
-
-      <select class="aio__select" [value]="feedbackQuery().category ?? ''"
-        (change)="onFeedbackCategoryChange($any($event.target).value)">
-        <option value="">{{ copy().allCategories }}</option>
-        <option value="Hallucination">{{ copy().catHallucination }}</option>
-        <option value="WrongMedicalAdvice">{{ copy().catWrongMedical }}</option>
-        <option value="OcrIssue">{{ copy().catOcrIssue }}</option>
-        <option value="VoiceRecognition">{{ copy().catVoice }}</option>
-        <option value="Performance">{{ copy().catPerformance }}</option>
-        <option value="Bug">{{ copy().catBug }}</option>
-        <option value="FeatureRequest">{{ copy().catFeatureRequest }}</option>
-        <option value="Other">{{ copy().catOther }}</option>
-      </select>
-
-      <div class="date-range">
-        <label class="date-range__label">{{ copy().dateFrom }}</label>
-        <input type="date" class="aio__input"
-          [ngModel]="feedbackDateFrom()"
-          (ngModelChange)="feedbackDateFrom.set($event)"
-          (change)="onDateFilterChange()" />
-        <label class="date-range__label">{{ copy().dateTo }}</label>
-        <input type="date" class="aio__input"
-          [ngModel]="feedbackDateTo()"
-          (ngModelChange)="feedbackDateTo.set($event)"
-          (change)="onDateFilterChange()" />
-      </div>
-    </div>
-
-    @if (feedbackLoading()) {
-      <div class="fb-list">
-        @for (i of [1,2,3,4,5]; track i) { <div class="row-skeleton" style="height:56px;border-radius:12px;"></div> }
-      </div>
-    } @else if (feedbackError()) {
-      <div class="aio__empty">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <p>{{ copy().loadError }}</p>
-        <button type="button" class="btn-retry" (click)="loadFeedback()">{{ copy().retry }}</button>
-      </div>
-    } @else if (feedback().length === 0) {
-      <div class="aio__empty">
-        <i class="fa-solid fa-star-half-stroke"></i>
-        <p>{{ copy().noFeedback }}</p>
-        <span class="aio__empty-sub">{{ copy().noFeedbackSub }}</span>
-      </div>
-    } @else {
-      <div class="fb-list">
-        @for (item of feedback(); track item.id) {
-          <article class="fb-row"
-            [class.fb-row--negative]="item.reaction === 'ThumbsDown'"
-            [class.fb-row--positive]="item.reaction === 'ThumbsUp'"
-            (click)="openFeedbackModal(item)"
-            role="button" tabindex="0"
-            (keydown.enter)="openFeedbackModal(item)">
-
-            <span class="fb-reaction-button" [class.fb-reaction-button--positive]="item.reaction === 'ThumbsUp'" [class.fb-reaction-button--negative]="item.reaction === 'ThumbsDown'">
-              <i class="fa-solid" [class.fa-thumbs-up]="item.reaction === 'ThumbsUp'" [class.fa-thumbs-down]="item.reaction === 'ThumbsDown'"></i>
+    <!-- 1. Stats Overview Row -->
+    @if (feedbackStats(); as stats) {
+      <div class="feedback-stats-grid">
+        <div class="feedback-stat-card">
+          <div class="feedback-stat-card__icon feedback-stat-card__icon--total">
+            <i class="fa-solid fa-comments"></i>
+          </div>
+          <div class="feedback-stat-card__info">
+            <span class="feedback-stat-card__label">{{ copy().totalFeedback }}</span>
+            <strong class="feedback-stat-card__value">{{ stats.total }}</strong>
+            <span class="feedback-stat-card__sub">
+              <span class="fb-up"><i class="fa-solid fa-thumbs-up"></i> {{ stats.thumbsUp }}</span>
+              <span class="fb-down" style="margin-inline-start: 10px;"><i class="fa-solid fa-thumbs-down"></i> {{ stats.thumbsDown }}</span>
             </span>
+          </div>
+        </div>
 
-            <div class="fb-user-col">
-              <span class="fb-user">{{ item.userName }}</span>
-              <span class="fb-email">{{ item.userEmail }}</span>
+        <div class="feedback-stat-card">
+          <div class="feedback-stat-card__icon feedback-stat-card__icon--positive">
+            <i class="fa-solid fa-face-smile"></i>
+          </div>
+          <div class="feedback-stat-card__info">
+            <span class="feedback-stat-card__label">{{ copy().satisfactionRate }}</span>
+            <strong class="feedback-stat-card__value">{{ stats.positiveRate }}%</strong>
+            <div class="feedback-stat-card__progress">
+              <div class="feedback-stat-card__progress-fill" [style.width.%]="stats.positiveRate"></div>
             </div>
+          </div>
+        </div>
 
-            @if (item.category) {
-              <span class="cat-badge">{{ categoryLabel(item.category) }}</span>
-            } @else {
-              <span class="cat-badge cat-badge--empty">{{ copy().uncategorized }}</span>
+        <div class="feedback-stat-card">
+          <div class="feedback-stat-card__icon feedback-stat-card__icon--alert">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div class="feedback-stat-card__info">
+            <span class="feedback-stat-card__label">{{ copy().mostCommonIssue }}</span>
+            <strong class="feedback-stat-card__value" style="font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;">
+              {{ stats.categories.length > 0 ? stats.categories[0].label : copy().noIssues }}
+            </strong>
+            <span class="feedback-stat-card__sub" *ngIf="stats.categories.length > 0">
+              {{ stats.categories[0].pct }}% {{ copy().pctOfNegativeFeedback }}
+            </span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- 2. Dual Column Layout: Main content vs Sidebar chart -->
+    <div class="feedback-content-layout">
+      
+      <!-- Main Content (Filters + List + Pagination) -->
+      <div class="feedback-main-col">
+        <!-- Filters -->
+        <div class="aio__filters aio__filters--wrap">
+          <input class="aio__search" type="search" [placeholder]="copy().searchPlaceholder"
+            [value]="feedbackQuery().search ?? ''"
+            (input)="onFeedbackSearch($any($event.target).value)" />
+
+          <select class="aio__select" [value]="feedbackQuery().reaction ?? ''"
+            (change)="onFeedbackReactionChange($any($event.target).value)">
+            <option value="">{{ copy().allReactions }}</option>
+            <option value="ThumbsUp">😊 {{ copy().positive }}</option>
+            <option value="ThumbsDown">😞 {{ copy().negative }}</option>
+          </select>
+
+          <select class="aio__select" [value]="feedbackQuery().status ?? ''"
+            (change)="onFeedbackStatusChange($any($event.target).value)">
+            <option value="">{{ copy().allTriageStatuses }}</option>
+            <option value="New">{{ copy().statusNew }}</option>
+            <option value="Investigating">{{ copy().statusInvestigating }}</option>
+            <option value="Resolved">{{ copy().statusResolved }}</option>
+            <option value="Ignored">{{ copy().statusIgnored }}</option>
+          </select>
+
+          <select class="aio__select" [value]="feedbackQuery().category ?? ''"
+            (change)="onFeedbackCategoryChange($any($event.target).value)">
+            <option value="">{{ copy().allCategories }}</option>
+            <option value="WrongInfo">{{ copy().catWrongInfo }}</option>
+            <option value="Harmful">{{ copy().catHarmful }}</option>
+            <option value="NotHelpful">{{ copy().catNotHelpful }}</option>
+            <option value="OffTopic">{{ copy().catOffTopic }}</option>
+            <option value="Other">{{ copy().catOther }}</option>
+          </select>
+
+          <div class="date-range">
+            <label class="date-range__label">{{ copy().dateFrom }}</label>
+            <input type="date" class="aio__input"
+              [ngModel]="feedbackDateFrom()"
+              (ngModelChange)="feedbackDateFrom.set($event)"
+              (change)="onDateFilterChange()" />
+            <label class="date-range__label">{{ copy().dateTo }}</label>
+            <input type="date" class="aio__input"
+              [ngModel]="feedbackDateTo()"
+              (ngModelChange)="feedbackDateTo.set($event)"
+              (change)="onDateFilterChange()" />
+          </div>
+        </div>
+
+        @if (feedbackLoading()) {
+          <div class="fb-list">
+            @for (i of [1,2,3,4,5]; track i) { <div class="row-skeleton" style="height:56px;border-radius:12px;"></div> }
+          </div>
+        } @else if (feedbackError()) {
+          <div class="aio__empty">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <p>{{ copy().loadError }}</p>
+            <button type="button" class="btn-retry" (click)="loadFeedback()">{{ copy().retry }}</button>
+          </div>
+        } @else if (feedback().length === 0) {
+          <div class="aio__empty">
+            <i class="fa-solid fa-star-half-stroke"></i>
+            <p>{{ copy().noFeedback }}</p>
+            <span class="aio__empty-sub">{{ copy().noFeedbackSub }}</span>
+          </div>
+        } @else {
+          <div class="fb-list">
+            @for (item of feedback(); track item.id) {
+              <article class="fb-row"
+                [class.fb-row--negative]="item.reaction === 'ThumbsDown'"
+                [class.fb-row--positive]="item.reaction === 'ThumbsUp'"
+                (click)="openFeedbackModal(item)"
+                role="button" tabindex="0"
+                (keydown.enter)="openFeedbackModal(item)">
+
+                <span class="fb-reaction-button" [class.fb-reaction-button--positive]="item.reaction === 'ThumbsUp'" [class.fb-reaction-button--negative]="item.reaction === 'ThumbsDown'">
+                  <i class="fa-solid" [class.fa-thumbs-up]="item.reaction === 'ThumbsUp'" [class.fa-thumbs-down]="item.reaction === 'ThumbsDown'"></i>
+                </span>
+
+                <div class="fb-user-col">
+                  <span class="fb-user">{{ item.userName }}</span>
+                  <span class="fb-email">{{ item.userEmail }}</span>
+                </div>
+
+                @if (item.category) {
+                  <span class="cat-badge">{{ categoryLabel(item.category) }}</span>
+                } @else {
+                  <span class="cat-badge cat-badge--empty">{{ copy().uncategorized }}</span>
+                }
+
+                <span class="fb-excerpt">{{ item.messageExcerpt }}</span>
+
+                <span class="pill {{ statusClass(item.triageStatus) }}">{{ statusLabel(item.triageStatus) }}</span>
+
+                <span class="fb-date">{{ formatDateShort(item.createdAt) }}</span>
+
+                <i class="fa-solid fa-arrow-up-right-from-square fb-open-icon"></i>
+              </article>
             }
+          </div>
 
-            <span class="fb-excerpt">{{ item.messageExcerpt }}</span>
-
-            <span class="pill {{ statusClass(item.triageStatus) }}">{{ statusLabel(item.triageStatus) }}</span>
-
-            <span class="fb-date">{{ formatDateShort(item.createdAt) }}</span>
-
-            <i class="fa-solid fa-arrow-up-right-from-square fb-open-icon"></i>
-          </article>
+          <div class="aio__pagination">
+            <button type="button" class="page-btn" [disabled]="feedbackPage() <= 1"
+              (click)="prevFeedbackPage()">{{ copy().previous }}</button>
+            <span class="page-info">{{ copy().page }} {{ feedbackPage() }} {{ copy().of }} {{ feedbackTotalPages() }}</span>
+            <button type="button" class="page-btn" [disabled]="feedbackPage() >= feedbackTotalPages()"
+              (click)="nextFeedbackPage()">{{ copy().next }}</button>
+          </div>
         }
       </div>
 
-      <div class="aio__pagination">
-        <button type="button" class="page-btn" [disabled]="feedbackPage() <= 1"
-          (click)="prevFeedbackPage()">{{ copy().previous }}</button>
-        <span class="page-info">{{ copy().page }} {{ feedbackPage() }} {{ copy().of }} {{ feedbackTotalPages() }}</span>
-        <button type="button" class="page-btn" [disabled]="feedbackPage() >= feedbackTotalPages()"
-          (click)="nextFeedbackPage()">{{ copy().next }}</button>
+      <!-- Sidebar (Chart Analysis) -->
+      <div class="fb-chart-panel">
+
+        <!-- Panel header -->
+        <div class="fb-chart-panel__head">
+          <div class="fb-chart-panel__title-row">
+            <span class="fb-chart-panel__icon"><i class="fa-solid fa-chart-pie"></i></span>
+            <div>
+              <h3 class="fb-chart-panel__title">{{ copy().negativeFeedbackAnalysis }}</h3>
+              <p class="fb-chart-panel__sub">{{ copy().negativeFeedbackAnalysisSub }}</p>
+            </div>
+          </div>
+        </div>
+
+        @if (feedbackDonutSegments().length > 0 && feedbackStats(); as stats) {
+
+          <!-- Donut SVG -->
+          <div class="fb-donut-wrap">
+            <svg class="fb-donut-svg" viewBox="0 0 44 44">
+              <!-- Track circle -->
+              <circle cx="22" cy="22" r="18" fill="none"
+                stroke="var(--admin-hover)" stroke-width="5"/>
+
+              <!-- Segments (painted in reverse so first segment is on top) -->
+              @for (seg of feedbackDonutSegments(); track seg.key) {
+                <circle
+                  cx="22" cy="22" r="18"
+                  fill="none"
+                  [attr.stroke]="seg.color"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  [attr.stroke-dasharray]="seg.strokeDasharray"
+                  [attr.stroke-dashoffset]="seg.strokeDashoffset"
+                  transform="rotate(-90 22 22)"
+                  class="fb-donut-arc"
+                />
+              }
+
+              <!-- Center label -->
+              <text x="22" y="19.5" text-anchor="middle" class="fb-donut-center-num">{{ stats.thumbsDown }}</text>
+              <text x="22" y="25.5" text-anchor="middle" class="fb-donut-center-lbl">{{ copy().negative }}</text>
+            </svg>
+          </div>
+
+          <!-- Legend rows -->
+          <div class="fb-donut-legend">
+            @for (seg of feedbackDonutSegments(); track seg.key) {
+              <div class="fb-donut-legend-row">
+                <span class="fb-donut-legend-dot" [style.background]="seg.color"></span>
+                <span class="fb-donut-legend-label">{{ seg.label }}</span>
+                <span class="fb-donut-legend-pct" [style.color]="seg.color">{{ seg.pct }}%</span>
+                <span class="fb-donut-legend-count">{{ seg.count }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Divider + summary footer -->
+          <div class="fb-chart-footer">
+            <div class="fb-chart-footer__item fb-chart-footer__item--good">
+              <i class="fa-solid fa-thumbs-up"></i>
+              <span>{{ stats.thumbsUp }} {{ copy().positive }}</span>
+            </div>
+            <div class="fb-chart-footer__divider"></div>
+            <div class="fb-chart-footer__item fb-chart-footer__item--bad">
+              <i class="fa-solid fa-thumbs-down"></i>
+              <span>{{ stats.thumbsDown }} {{ copy().negative }}</span>
+            </div>
+          </div>
+
+        } @else {
+          <div class="feedback-chart-empty">
+            <i class="fa-solid fa-face-smile"></i>
+            <p>{{ copy().noNegativeFeedbackToAnalyze }}</p>
+          </div>
+        }
+
       </div>
-    }
+
+    </div>
 
     <!-- ── Feedback Modal ──────────────────────────────────────────── -->
     @if (feedbackModalOpen()) {
@@ -652,13 +782,10 @@
                   [value]="triageEdit(item.id).category"
                   (change)="updateTriageEdit(item.id, 'category', $any($event.target).value)">
                   <option value="">— {{ copy().allCategories }}</option>
-                  <option value="Hallucination">{{ copy().catHallucination }}</option>
-                  <option value="WrongMedicalAdvice">{{ copy().catWrongMedical }}</option>
-                  <option value="OcrIssue">{{ copy().catOcrIssue }}</option>
-                  <option value="VoiceRecognition">{{ copy().catVoice }}</option>
-                  <option value="Performance">{{ copy().catPerformance }}</option>
-                  <option value="Bug">{{ copy().catBug }}</option>
-                  <option value="FeatureRequest">{{ copy().catFeatureRequest }}</option>
+                  <option value="WrongInfo">{{ copy().catWrongInfo }}</option>
+                  <option value="Harmful">{{ copy().catHarmful }}</option>
+                  <option value="NotHelpful">{{ copy().catNotHelpful }}</option>
+                  <option value="OffTopic">{{ copy().catOffTopic }}</option>
                   <option value="Other">{{ copy().catOther }}</option>
                 </select>
               </div>

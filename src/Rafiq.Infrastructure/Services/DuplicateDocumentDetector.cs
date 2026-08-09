@@ -50,13 +50,14 @@ public class DuplicateDocumentDetector : IDuplicateDocumentDetector
 
         // Check all 5 repositories for the hash
         var result = await CheckAcrossAllTypesAsync(fileHash, currentProfileId, currentUserId, cancellationToken);
-        
+
         if (result != null)
         {
             return new DuplicateCheckResult
             {
                 IsDuplicate = true,
                 IsSameProfile = result.Value.isSameProfile,
+                ExistingDocumentId = result.Value.documentId,
                 ExistingProfileId = result.Value.profileId.ToString(),
                 ExistingProfileName = result.Value.profileName,
                 FileHash = fileHash
@@ -80,7 +81,7 @@ public class DuplicateDocumentDetector : IDuplicateDocumentDetector
         };
     }
 
-    private async Task<(Guid profileId, string profileName, bool isSameProfile)?> CheckAcrossAllTypesAsync(
+    private async Task<(Guid documentId, Guid profileId, string profileName, bool isSameProfile)?> CheckAcrossAllTypesAsync(
         string fileHash,
         Guid currentProfileId,
         Guid currentUserId,

@@ -21,6 +21,7 @@ import { AssistantAnchorDirective } from '../../core/assistant/directives/assist
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import { localizeKnownApiMessage } from '../../Utils/api-error.util';
+import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 
 type MedTab = 'schedule' | 'medications';
 type MedSubTab = 'all' | 'with-reminder' | 'no-reminder' | 'paused';
@@ -94,10 +95,13 @@ interface Dose {
   ids: string[];
 }
 
+import { TimePickerComponent } from '../../Components/ui/time-picker/time-picker';
+import { DatePickerComponent } from '../../Components/ui/date-picker/date-picker';
+
 @Component({
   selector: 'app-medications',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent, TimePickerComponent, DatePickerComponent],
   templateUrl: './medications.html',
   styleUrl: './medications.css',
 })
@@ -139,6 +143,7 @@ export class Medications implements OnInit, OnDestroy {
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
+  readonly analysisState = inject(DocumentAnalysisStateService);
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {

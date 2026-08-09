@@ -1,5 +1,5 @@
 import { WebPlugin } from '@capacitor/core';
-import type { AlarmSchedulerPluginInterface, AlarmScheduleRequest, AlarmScheduleResult, AlarmCancelResult, AlarmDismissResult, PendingAlarmActionResult, PendingAlarmActionCompleteResult } from './alarm-scheduler-plugin';
+import type { AlarmSchedulerPluginInterface, AlarmScheduleRequest, AlarmScheduleResult, AlarmCancelResult, AlarmDismissResult, PendingAlarmActionResult, PendingAlarmActionCompleteResult, BatteryOptimizationResult, BatteryOptimizationExemptionResult } from './alarm-scheduler-plugin';
 
 /**
  * No-op web/iOS fallback for AlarmSchedulerPlugin.
@@ -29,5 +29,13 @@ export class AlarmSchedulerWeb extends WebPlugin implements AlarmSchedulerPlugin
 
   async completePendingAction(): Promise<PendingAlarmActionCompleteResult> {
     return { completed: true };
+  }
+
+  async checkBatteryOptimization(): Promise<BatteryOptimizationResult> {
+    return { isIgnoring: true };
+  }
+
+  async requestBatteryOptimizationExemption(): Promise<BatteryOptimizationExemptionResult> {
+    return { requested: false };
   }
 }

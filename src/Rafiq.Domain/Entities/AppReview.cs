@@ -25,7 +25,7 @@ public class AppReview : BaseEntity
     public string DisplayName { get; private set; } = null!;
     public int Stars { get; private set; }
     public string? Comment { get; private set; }
-    public bool IsVisible { get; private set; } = true;
+    public bool IsVisible { get; private set; } = false;
 
     public ReviewStatus Status { get; private set; } = ReviewStatus.Pending;
     public ReviewCategory Category { get; private set; } = ReviewCategory.General;

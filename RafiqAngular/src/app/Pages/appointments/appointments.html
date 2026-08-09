@@ -1,10 +1,10 @@
-<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
+﻿<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
 
   @if (mobileSidebarOpen()) {
   <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
   }
 
-  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <!-- â•â•â•â•â•â•â•â•â•â•â• SIDEBAR â•â•â•â•â•â•â•â•â•â•â• -->
   <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <div class="sb-top">
       <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
@@ -32,7 +32,8 @@
         <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
         <span>{{ t().sidebar.dashboard }}</span>
       </a>
-      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
+      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active"
+         [class.sb-link--processing]="analysisState.sidebarStatus() === 'processing'" [class.sb-link--completed]="analysisState.sidebarStatus() === 'completed'" [class.sb-link--failed]="analysisState.sidebarStatus() === 'failed'">
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
         <span>{{ t().sidebar.medicalRecords }}</span>
       </a>
@@ -76,7 +77,7 @@
     </div>
   </aside>
 
-  <!-- ═══════════ MAIN ═══════════ -->
+  <!-- â•â•â•â•â•â•â•â•â•â•â• MAIN â•â•â•â•â•â•â•â•â•â•â• -->
   <div class="dsh-main">
 
     <!-- HEADER -->
@@ -90,7 +91,7 @@
         <input type="text" class="hdr-search-inp" [placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
-        <button type="button" class="hdr-bell" (click)="l10n.toggle()" title="English / عربي">
+        <button type="button" class="hdr-bell" (click)="l10n.toggle()" title="English / Ø¹Ø±Ø¨ÙŠ">
           <i class="fa-solid fa-globe"></i>
         </button>
         <button type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
@@ -143,7 +144,7 @@
     <!-- BODY -->
     <div class="dsh-body">
 
-      <!-- ── Title Bar ── -->
+      <!-- â”€â”€ Title Bar â”€â”€ -->
       <div class="appts-title-bar">
         <div>
           <h1 class="appts-title">{{ t().appointments.title }}</h1>
@@ -161,10 +162,10 @@
         }
       </div>
 
-      <!-- ── Family profile context banner ── -->
+      <!-- â”€â”€ Family profile context banner â”€â”€ -->
       <app-family-profile-banner [profile]="viewingProfile()" [readOnly]="fpReadOnly()" />
 
-      <!-- ── Stat Cards ── -->
+      <!-- â”€â”€ Stat Cards â”€â”€ -->
       <div class="appointment-overview">
 
         <!-- ================= NEXT APPOINTMENT ================= -->
@@ -393,7 +394,7 @@
       </div>
 
 
-      <!-- ── Tab Bar ── -->
+      <!-- â”€â”€ Tab Bar â”€â”€ -->
 
       <div class="appts-toolbar">
 
@@ -466,15 +467,19 @@
 
           <div class="appts-date-wrap">
 
-            <i class="fa-regular fa-calendar appts-date-ico"></i>
+            <app-date-picker
+              [ngModel]="dateFrom()"
+              (ngModelChange)="dateFrom.set($event); onFilterChange()"
+              [placeholder]="l10n.isRtl() ? 'من' : 'From'"
+            ></app-date-picker>
 
-            <input type="date" class="appts-date-inp" [ngModel]="dateFrom()"
-              (ngModelChange)="dateFrom.set($event); onFilterChange()">
+            <span class="appts-date-sep">â€”</span>
 
-            <span class="appts-date-sep">—</span>
-
-            <input type="date" class="appts-date-inp" [ngModel]="dateTo()"
-              (ngModelChange)="dateTo.set($event); onFilterChange()">
+            <app-date-picker
+              [ngModel]="dateTo()"
+              (ngModelChange)="dateTo.set($event); onFilterChange()"
+              [placeholder]="l10n.isRtl() ? 'إلى' : 'To'"
+            ></app-date-picker>
 
           </div>
 
@@ -492,13 +497,12 @@
 
           <!-- Sort dropdown -->
           <div class="appts-sort-wrap">
-            <i class="fa-solid fa-arrow-down-wide-short appts-sort-ico"></i>
-            <select class="appts-sort-sel" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event); currentPage.set(1)">
-              <option value="recent">{{ t().appointments.newestFirst }}</option>
-              <option value="oldest">{{ t().appointments.oldestFirst }}</option>
-              <option value="az">{{ t().appointments.aToZ }}</option>
-              <option value="za">{{ t().appointments.zToA }}</option>
-            </select>
+            <app-custom-select
+              [ngModel]="sortBy()"
+              (ngModelChange)="sortBy.set($event); currentPage.set(1)"
+              [options]="sortOptions"
+              [placeholder]="t().appointments.newestFirst">
+            </app-custom-select>
           </div>
 
         </div>
@@ -507,7 +511,7 @@
 
 
 
-      <!-- ── Table ── -->
+      <!-- â”€â”€ Table â”€â”€ -->
       <div class="card appts-table-card" [class.tab-animating]="tabAnimating()" [class.tab-slide-left]="tabDirection() === 'left'" [class.tab-slide-right]="tabDirection() === 'right'">
 
         @if (loading()) {
@@ -761,7 +765,7 @@
   </div><!-- /dsh-main -->
 </div><!-- /dsh -->
 
-<!-- ═══════════ ADD / EDIT MODAL ═══════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â• ADD / EDIT MODAL â•â•â•â•â•â•â•â•â•â•â• -->
 @if (showAddModal()) {
 <div class="modal-overlay" (click)="closeAddModal()">
   <div class="modal-card appt-modal-card" (click)="$event.stopPropagation()">
@@ -792,7 +796,7 @@
     </div>
     }
 
-    <!-- ── STEP 1: Type Selection ── -->
+    <!-- â”€â”€ STEP 1: Type Selection â”€â”€ -->
     @if (formStep() === 1) {
     <div class="modal-body">
       <p class="type-select-hint">{{ t().appointments.selectType }}</p>
@@ -835,7 +839,7 @@
     </div>
     }
 
-    <!-- ── STEP 2: Details ── -->
+    <!-- â”€â”€ STEP 2: Details â”€â”€ -->
     @if (formStep() === 2) {
     <div class="modal-body">
 
@@ -874,16 +878,22 @@
       <div class="field-row-2">
         <div class="field-group">
           <label class="field-lbl">{{ this.t().appointments.dateLbl }} *</label>
-          <input type="date" class="field-inp" [class.field-inp--err]="formErrors()['date']" [min]="minDate"
-            [ngModel]="fDate()" (ngModelChange)="fDate.set($event)">
+          <app-date-picker
+            [ngModel]="fDate()"
+            (ngModelChange)="fDate.set($event)"
+            [invalid]="!!formErrors()['date']"
+          ></app-date-picker>
           @if (formErrors()['date']) {
           <p class="field-err">{{ formErrors()['date'] }}</p>
           }
         </div>
         <div class="field-group">
           <label class="field-lbl">{{ this.t().appointments.timeLbl }} *</label>
-          <input type="time" class="field-inp" [class.field-inp--err]="formErrors()['time']" [min]="minTime"
-            [ngModel]="fTime()" (ngModelChange)="fTime.set($event)">
+          <app-time-picker
+            [ngModel]="fTime()"
+            (ngModelChange)="fTime.set($event)"
+            [invalid]="!!formErrors()['time']"
+          ></app-time-picker>
           @if (formErrors()['time']) {
           <p class="field-err">{{ formErrors()['time'] }}</p>
           }
@@ -958,7 +968,7 @@
 </div>
 }
 
-<!-- ═══════════ VIEW DETAILS MODAL ═══════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â• VIEW DETAILS MODAL â•â•â•â•â•â•â•â•â•â•â• -->
 @if (showViewModal() && viewingAppt(); as a) {
 <div class="modal-overlay" (click)="closeView()">
   <div class="modal-card" (click)="$event.stopPropagation()">
@@ -1025,7 +1035,7 @@
 </div>
 }
 
-<!-- ═══════════ DELETE CONFIRM MODAL ═══════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â• DELETE CONFIRM MODAL â•â•â•â•â•â•â•â•â•â•â• -->
 @if (showDeleteModal()) {
 <div class="modal-overlay" (click)="closeDelete()">
   <div class="modal-card modal-card-sm" (click)="$event.stopPropagation()">
@@ -1054,7 +1064,7 @@
 </div>
 }
 
-<!-- ═══════════ CANCEL CONFIRM MODAL ═══════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â• CANCEL CONFIRM MODAL â•â•â•â•â•â•â•â•â•â•â• -->
 @if (showCancelModal()) {
 <div class="modal-overlay" (click)="closeCancel()">
   <div class="modal-card modal-card-sm" (click)="$event.stopPropagation()">
@@ -1083,7 +1093,7 @@
 </div>
 }
 
-<!-- ═══════════ TOASTS ═══════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â• TOASTS â•â•â•â•â•â•â•â•â•â•â• -->
 <div class="toast-container">
   @for (t of toasts(); track t.id) {
   <div class="toast" [class.toast--success]="t.type === 'success'" [class.toast--error]="t.type === 'error'">
@@ -1096,3 +1106,4 @@
   </div>
   }
 </div>
+

@@ -1,10 +1,10 @@
-<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
+﻿<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
 
   @if (mobileSidebarOpen()) {
   <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
   }
 
-  <!-- ════════════ SIDEBAR ════════════ -->
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â• SIDEBAR â•â•â•â•â•â•â•â•â•â•â•â• -->
   <aside class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <div class="sb-top">
       <button type="button" class="sb-logo" routerLink="/" aria-label="Go to home">
@@ -32,7 +32,8 @@
         <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
         <span>{{ t().sidebar.dashboard }}</span>
       </a>
-      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
+      <a class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active"
+         [class.sb-link--processing]="analysisState.sidebarStatus() === 'processing'" [class.sb-link--completed]="analysisState.sidebarStatus() === 'completed'" [class.sb-link--failed]="analysisState.sidebarStatus() === 'failed'">
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
         <span>{{ t().sidebar.medicalRecords }}</span>
       </a>
@@ -72,7 +73,7 @@
     </div>
   </aside>
 
-  <!-- ════════════ MAIN ════════════ -->
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â• MAIN â•â•â•â•â•â•â•â•â•â•â•â• -->
   <div class="dsh-main">
 
     <!-- HEADER -->
@@ -86,7 +87,7 @@
         <input type="text" class="hdr-search-inp" [placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
-        <button type="button" class="hdr-bell" (click)="l10n.toggle()" title="English / عربي">
+        <button type="button" class="hdr-bell" (click)="l10n.toggle()" title="English / Ø¹Ø±Ø¨ÙŠ">
           <i class="fa-solid fa-globe"></i>
         </button>
         <button type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
@@ -157,7 +158,7 @@
 
       <div class="mp-grid">
 
-        <!-- ══ Hero Card ══════════════════════════════════════════════════════ -->
+        <!-- â•â• Hero Card â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div class="mp-hero-card">
           <div class="mp-hero-main">
             <div class="mp-hero-avatar">
@@ -216,7 +217,7 @@
         </div>
 
         <div class="mp-row">
-        <!-- ══ Personal Information ═══════════════════════════════════════════ -->
+        <!-- â•â• Personal Information â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div class="mp-card" assistantAnchor="profile-personal-info">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-blue">
@@ -286,7 +287,7 @@
             </div>
             <div class="mp-info-row">
               <span class="mp-info-lbl"><span class="mp-info-ico mp-ico-blue"><i class="fa-solid fa-phone"></i></span> {{ t().myProfile.phone }}</span>
-              <span class="mp-info-val">{{ authService.currentUser?.phoneNumber || '—' }}</span>
+              <span class="mp-info-val">{{ authService.currentUser?.phoneNumber || 'â€”' }}</span>
             </div>
           </div>
           } @else {
@@ -305,15 +306,19 @@
             <div class="mp-form-row">
               <div class="mp-form-field">
                 <label>{{ t().myProfile.dateOfBirthLabel }}</label>
-                <input type="date" [(ngModel)]="personalForm.dateOfBirth" name="dateOfBirth">
+                <app-date-picker
+                  [(ngModel)]="personalForm.dateOfBirth"
+                  name="dateOfBirth"
+                ></app-date-picker>
               </div>
               <div class="mp-form-field">
                 <label>{{ t().myProfile.genderLabel }}</label>
-                <select [(ngModel)]="personalForm.gender" name="gender">
-                  <option value="">{{ t().myProfile.selectGender }}</option>
-                  <option value="Male">{{ t().myProfile.male }}</option>
-                  <option value="Female">{{ t().myProfile.female }}</option>
-                </select>
+                <app-custom-select
+                  [(ngModel)]="personalForm.gender"
+                  name="gender"
+                  [options]="genderSelectOptions"
+                  [placeholder]="t().myProfile.selectGender"
+                ></app-custom-select>
               </div>
             </div>
             <div class="mp-form-row">
@@ -344,7 +349,7 @@
           }
         </div>
 
-        <!-- ══ Health Information ══════════════════════════════════════════════ -->
+        <!-- â•â• Health Information â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div class="mp-card" assistantAnchor="profile-health-info">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-teal">
@@ -371,12 +376,12 @@
             <div class="mp-info-row mp-info-row--stack">
               <span class="mp-info-ico mp-info-ico--lg mp-ico-teal"><i class="fa-solid fa-ruler-vertical"></i></span>
               <span class="mp-info-lbl-stack">{{ t().myProfile.height }}</span>
-              <span class="mp-info-val mp-info-val--lg">{{ profile()?.height ? profile()!.height + ' ' + t().common.cm : '—' }}</span>
+              <span class="mp-info-val mp-info-val--lg">{{ profile()?.height ? profile()!.height + ' ' + t().common.cm : 'â€”' }}</span>
             </div>
             <div class="mp-info-row mp-info-row--stack">
               <span class="mp-info-ico mp-info-ico--lg mp-ico-teal"><i class="fa-solid fa-weight-scale"></i></span>
               <span class="mp-info-lbl-stack">{{ t().myProfile.weight }}</span>
-              <span class="mp-info-val mp-info-val--lg">{{ profile()?.weight ? profile()!.weight + ' ' + t().common.kg : '—' }}</span>
+              <span class="mp-info-val mp-info-val--lg">{{ profile()?.weight ? profile()!.weight + ' ' + t().common.kg : 'â€”' }}</span>
             </div>
           </div>
           } @else {
@@ -384,17 +389,12 @@
             <div class="mp-form-row mp-form-row--3">
               <div class="mp-form-field">
                 <label>{{ t().myProfile.bloodType }}</label>
-                <select [(ngModel)]="healthForm.bloodType" name="bloodType">
-                  <option value="">{{ t().myProfile.selectBloodType }}</option>
-                  <option value="APositive">A+</option>
-                  <option value="ANegative">A-</option>
-                  <option value="BPositive">B+</option>
-                  <option value="BNegative">B-</option>
-                  <option value="ABPositive">AB+</option>
-                  <option value="ABNegative">AB-</option>
-                  <option value="OPositive">O+</option>
-                  <option value="ONegative">O-</option>
-                </select>
+                <app-custom-select
+                  [(ngModel)]="healthForm.bloodType"
+                  name="bloodType"
+                  [options]="bloodTypeSelectOptions"
+                  [placeholder]="t().myProfile.selectBloodType">
+                </app-custom-select>
               </div>
               <div class="mp-form-field">
                 <label>{{ t().myProfile.heightCm }}</label>
@@ -416,7 +416,7 @@
         </div>
         </div><!-- end mp-row: Personal + Health -->
 
-        <!-- ══ Allergies + Chronic Diseases ═════════════════════════════════════ -->
+        <!-- â•â• Allergies + Chronic Diseases â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div class="mp-row">
         <div class="mp-card" assistantAnchor="profile-allergies">
           <div class="mp-card-head">
@@ -466,11 +466,12 @@
               </div>
               <div class="mp-form-field">
                 <label>{{ t().myProfile.severity }}</label>
-                <select [(ngModel)]="newAllergy.severity">
-                  <option value="Mild">{{ t().myProfile.mild }}</option>
-                  <option value="Moderate">{{ t().myProfile.moderate }}</option>
-                  <option value="Severe">{{ t().myProfile.severe }}</option>
-                </select>
+                <app-custom-select
+                  [(ngModel)]="newAllergy.severity"
+                  name="severity"
+                  [options]="severitySelectOptions"
+                  [placeholder]="t().myProfile.severity">
+                </app-custom-select>
               </div>
             </div>
             <div class="mp-form-actions">
@@ -483,7 +484,7 @@
           }
         </div>
 
-        <!-- ══ Chronic Diseases ═══════════════════════════════════════════════ -->
+        <!-- â•â• Chronic Diseases â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div class="mp-card" assistantAnchor="profile-chronic-diseases">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-green">
@@ -533,17 +534,22 @@
               </div>
               <div class="mp-form-field">
                 <label>{{ t().myProfile.status }}</label>
-                <select [(ngModel)]="newDisease.status">
-                  <option value="Active">{{ t().myProfile.active }}</option>
-                  <option value="Controlled">{{ t().myProfile.controlled }}</option>
-                  <option value="Resolved">{{ t().myProfile.resolved }}</option>
-                </select>
+                <app-custom-select
+                  [(ngModel)]="newDisease.status"
+                  name="status"
+                  [options]="statusSelectOptions"
+                  [placeholder]="t().myProfile.status">
+                </app-custom-select>
               </div>
             </div>
             <div class="mp-form-row">
               <div class="mp-form-field">
                 <label>{{ t().myProfile.diagnosedAt }}</label>
-                <input type="date" [(ngModel)]="newDisease.diagnosedAt">
+                <app-date-picker
+                  [(ngModel)]="newDisease.diagnosedAt"
+                  name="diagnosedAt"
+                  [placeholder]="t().myProfile.diagnosedAt">
+                </app-date-picker>
               </div>
             </div>
             <div class="mp-form-actions">
@@ -558,7 +564,7 @@
         </div><!-- end mp-row -->
 
         <div class="mp-row">
-        <!-- ══ Emergency Contacts ═════════════════════════════════════════════ -->
+        <!-- â•â• Emergency Contacts â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div class="mp-card" assistantAnchor="profile-emergency-contacts">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-teal">
@@ -641,7 +647,7 @@
           }
         </div>
 
-        <!-- ══ Danger Zone ════════════════════════════════════════════════════ -->
+        <!-- â•â• Danger Zone â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div class="mp-card mp-card--danger">
           <div class="mp-card-head">
             <div class="mp-card-ico mp-ico-red">
@@ -664,7 +670,7 @@
         </div>
         </div><!-- end mp-row: Emergency + Danger -->
 
-        <!-- ══ Trust Footer ═══════════════════════════════════════════════════ -->
+        <!-- â•â• Trust Footer â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div class="mp-trust-bar">
           <div class="mp-trust-left">
             <i class="fa-solid fa-shield-halved"></i>
@@ -683,7 +689,7 @@
 
 </div><!-- end dsh -->
 
-<!-- ════════════ PHOTO MODAL ════════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â• PHOTO MODAL â•â•â•â•â•â•â•â•â•â•â•â• -->
 @if (photoModalOpen()) {
 <div class="photo-modal-backdrop" (click)="closePhotoModal()">
   <div class="photo-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
@@ -716,7 +722,7 @@
 </div>
 }
 
-<!-- ════════════ DELETE ACCOUNT MODAL ════════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â• DELETE ACCOUNT MODAL â•â•â•â•â•â•â•â•â•â•â•â• -->
 @if (deleteModalOpen()) {
 <div class="mp-modal-backdrop" (click)="closeDeleteModal()">
   <div class="mp-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
@@ -738,3 +744,4 @@
   </div>
 </div>
 }
+

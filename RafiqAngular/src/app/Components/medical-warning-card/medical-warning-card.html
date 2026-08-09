@@ -11,16 +11,16 @@
     </div>
     <div class="warning-row">
       <span class="warning-label">{{ t().records.recommendedSpecialty }}:</span>
-      <span class="warning-value">{{ data.recommendedSpecialty || '-' }}</span>
+      <span class="warning-value">{{ localizedSpecialty || '-' }}</span>
     </div>
     <div class="warning-row">
       <span class="warning-label">{{ t().records.priorityLevel }}:</span>
-      <span class="warning-value priority-{{ data.attentionLevel?.toLowerCase() }}">{{ data.attentionLevel }}</span>
+      <span class="warning-value priority-{{ data.attentionLevel?.toLowerCase() }}">{{ localizedAttentionLevel }}</span>
     </div>
-    <div class="warning-row">
+    <!-- <div class="warning-row">
       <span class="warning-label">{{ t().records.aiConfidence }}:</span>
-      <span class="warning-value">{{ data.confidenceScore }}%</span>
-    </div>
+      <span class="warning-value">{{ (data.confidenceScore || 0) * 100 | number:'1.0-0' }}%</span>
+    </div> -->
   </div>
   <div class="warning-footer">
     <p class="disclaimer"><i class="fa-solid fa-circle-info"></i> {{ t().records.disclaimer }}</p>

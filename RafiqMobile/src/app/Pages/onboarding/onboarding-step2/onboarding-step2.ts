@@ -8,11 +8,12 @@ import { LocalizationService } from '../../../Services/localization.service';
 import { TourEngineService } from '../../../core/assistant/services/tour-engine.service';
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
+import { CustomSelectComponent } from '../../../Components/ui/custom-select/custom-select';
 
 @Component({
   selector: 'app-onboarding-step2',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent, CustomSelectComponent],
   templateUrl: './onboarding-step2.html',
   styleUrl: './onboarding-step2.css',
 })
@@ -32,7 +33,7 @@ export class OnboardingStep2 implements OnInit, OnDestroy {
   dropdownLeft = 0;
   dropdownWidth = 0;
 
-  readonly steps = computed(() => this.t().onboarding.stepperLabels.map(label => ({ label })));
+  readonly steps = computed(() => this.t().onboarding.stepperLabels.map((label: string) => ({ label })));
 
   readonly severityOptions = [
     { value: AllergySeverity.Severe,   label: 'Severe',   labelAr: 'شديدة' },

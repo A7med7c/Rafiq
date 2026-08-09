@@ -5,6 +5,7 @@ import { MedicationRemindersService, UpcomingReminderDto } from './medication-re
 import { AppointmentsService } from './appointments.service';
 import { OfflineReminderService } from './offline-reminder.service';
 import { AuthService } from './auth-service';
+import { TokenStorageService } from './token-storage-service';
 import { ProfileSelectionService } from './profile-selection.service';
 import { HealthProfileService } from './health-profile.service';
 import { AlarmSchedulerService } from './alarm-scheduler.service';
@@ -35,6 +36,7 @@ export class ReminderBootstrapService {
   private readonly appointmentSvc  = inject(AppointmentsService);
   private readonly offlineSvc      = inject(OfflineReminderService);
   private readonly authSvc         = inject(AuthService);
+  private readonly tokenStorage    = inject(TokenStorageService);
   private readonly profileSvc      = inject(ProfileSelectionService);
   private readonly healthProfileSvc = inject(HealthProfileService);
   private readonly alarmScheduler  = inject(AlarmSchedulerService);
@@ -44,6 +46,33 @@ export class ReminderBootstrapService {
    * Prevents re-running restore + sync on every route change or lifecycle call.
    */
   private bootstrapDone = false;
+
+  /**
+   * Tracks the last observed auth identity so we only react to real transitions
+   * (login / logout / account switch) rather than every BehaviorSubject replay.
+   */
+  private lastAuthUserId: string | null = null;
+
+  constructor() {
+    // Deterministic login/logout re-entry. On a cold start with a valid stored
+    // token, app.ts also calls bootstrap() (idempotent). This subscription covers
+    // the "logged in AFTER app startup" and "logged out" transitions.
+    this.authSvc.currentUser$.subscribe(user => {
+      const nextId = user?.userId ?? null;
+      if (nextId === this.lastAuthUserId) return;
+      const previous = this.lastAuthUserId;
+      this.lastAuthUserId = nextId;
+
+      if (nextId) {
+        // New login (or account switch) → allow a fresh bootstrap run.
+        if (previous && previous !== nextId) this.reset();
+        void this.bootstrap();
+      } else {
+        // Logout → allow the next login to re-run bootstrap.
+        this.reset();
+      }
+    });
+  }
 
   /**
    * In-flight bootstrap Promise. Concurrent callers share this instead of
@@ -79,7 +108,9 @@ export class ReminderBootstrapService {
    * Useful when a new reminder is created online and needs to be scheduled natively.
    */
   async forceSync(): Promise<void> {
-    if (!this.authSvc.isLoggedIn) return;
+    // Deterministic: never evaluate auth before token hydration has settled.
+    await this.tokenStorage.initialize();
+    if (!(await this.tokenStorage.isLoggedInAsync())) return;
     const profileId = await this.resolveProfileId();
     if (!profileId) return;
 
@@ -98,9 +129,16 @@ export class ReminderBootstrapService {
   // ── Private ───────────────────────────────────────────────────────────────
 
   private async _run(): Promise<void> {
+    // ── Safeguard 0: Wait for token hydration (fixes cold-start auth race) ──
+    // TokenStorageService hydrates its in-memory cache asynchronously from
+    // SecureStorage. Evaluating isLoggedIn before that settles can wrongly
+    // report "not authenticated" on a cold start and permanently skip native
+    // alarm scheduling. Awaiting the existing initialization mechanism makes
+    // the auth check deterministic — no arbitrary delays.
+    await this.tokenStorage.initialize();
+
     // ── Safeguard 3: Auth check ─────────────────────────────────────────
-    // Use the existing AuthService — do not change login logic.
-    if (!this.authSvc.isLoggedIn) {
+    if (!(await this.tokenStorage.isLoggedInAsync())) {
       return; // Not authenticated; do nothing.
     }
 
@@ -111,20 +149,43 @@ export class ReminderBootstrapService {
       return; // No profile — cannot sync reminder data.
     }
 
-    // ── Step 1: Restore persisted notifications (no network required) ──
-    await this.offlineSvc.restoreScheduledReminders();
-    await this.alarmScheduler.scheduleCachedBatch(await this.offlineSvc.getCachedReminders());
+    // A cache or sync failure must not silently swallow the whole bootstrap, and
+    // must never let us falsely mark success. We track health and only mark the
+    // bootstrap done when scheduling actually ran, so a later trigger (login,
+    // forceSync, SignalR change) can retry instead of being permanently
+    // short-circuited by the idempotency guard.
+    let healthy = true;
 
-    // ── Step 2: Sync from backend when online ──────────────────────────
-    const network = await Network.getStatus();
-    if (network.connected) {
-      await this.syncFromServer(profileId);
+    // ── Step 1: Restore cached alarms (no network required) ────────────
+    // Isolated so a cache failure cannot block the authoritative server sync.
+    try {
+      await this.offlineSvc.restoreScheduledReminders();
+      const cached = await this.offlineSvc.getCachedReminders();
+      console.info('[RafiqAlarm] bootstrap: restoring', cached.length, 'cached occurrence(s)');
+      await this.alarmScheduler.scheduleCachedBatch(cached);
+    } catch (e) {
+      healthy = false;
+      // Real (e.g. native Android SQLite) failure — surface it, do not hide it.
+      console.error('[RafiqAlarm] bootstrap: cache restore failed — cached native alarms NOT scheduled', e);
     }
 
-    // Mark done regardless of network state.
-    // restoreScheduledReminders always runs; sync only runs when online.
-    // Marking done here prevents both from being repeated on subsequent calls.
-    this.bootstrapDone = true;
+    // ── Step 2: Sync from backend when online — schedules fresh native alarms ──
+    const network = await Network.getStatus();
+    console.info('[RafiqAlarm] bootstrap: network.connected =', network.connected);
+    if (network.connected) {
+      try {
+        await this.syncFromServer(profileId);
+      } catch (e) {
+        healthy = false;
+        console.error('[RafiqAlarm] bootstrap: server sync failed — native alarms NOT scheduled', e);
+      }
+    }
+
+    // Only mark done when nothing failed. Never claim success (and never block
+    // future retries) if scheduling did not actually complete.
+    if (healthy) {
+      this.bootstrapDone = true;
+    }
   }
 
   private async syncFromServer(profileId: string): Promise<void> {

@@ -509,7 +509,9 @@ export class TourEngineService {
     }
 
     this._isSpeaking.set(true);
-    this.activeSpeechSub = this.speechService.speak(textToSpeak, lang).subscribe({
+    const audioCandidates = this.resolveTourAudioCandidates(step, lang);
+
+    this.activeSpeechSub = this.speechService.speak(textToSpeak, lang, audioCandidates).subscribe({
       next: () => {
         this._isSpeaking.set(false);
         this.avatarService.setState('idle');
@@ -522,6 +524,212 @@ export class TourEngineService {
         this.handleStepCompletion(step);
       },
     });
+  }
+
+  private resolveTourAudioCandidates(step: TourStepScenario, lang: string): string[] {
+    const isEn = lang.startsWith('en') || (step.speechLanguage && step.speechLanguage.startsWith('en'));
+    const folder = isEn ? 'en' : 'ar';
+    const candidates: string[] = [];
+    const rawStepId = step.id || '';
+
+    const addCandidate = (path: string) => {
+      if (!path) return;
+      const clean = path.replace(/^\/+/, '');
+      candidates.push(`/${clean}`);
+    };
+
+    if (step.audioUrl) {
+      addCandidate(step.audioUrl);
+    }
+
+    if (!rawStepId) {
+      return Array.from(new Set(candidates));
+    }
+
+    // Strip trailing '-en' to normalize lookup across languages
+    const cleanStepId = rawStepId.replace(/-en$/, '');
+
+    const effective = this._effectiveStep();
+    const anchor = effective?.anchor || '';
+    const isPopulated = anchor.includes('populated') || rawStepId.includes('populated');
+
+    // ── 1. EXACT MAPPER (Guarantees candidate #1 hit with ZERO 404s) ─────
+    let exactFile = '';
+
+    switch (cleanStepId) {
+      // ONBOARDING TOUR
+      case 'onboarding-welcome-step':
+      case 'onboarding-welcome':
+        exactFile = isEn ? 'onboarding-welcome-step-en.mp3' : 'onboarding-welcome.mp3';
+        break;
+      case 'onboarding-step1-guide':
+      case 'onboarding-step1':
+        exactFile = isEn ? 'onboarding-step1-guide-en.mp3' : 'onboarding-step1.mp3';
+        break;
+      case 'onboarding-step2-guide':
+      case 'onboarding-step2':
+        exactFile = isEn ? 'onboarding-step2-guide-en.mp3' : 'onboarding-step2.mp3';
+        break;
+      case 'onboarding-step3-guide':
+      case 'onboarding-step3':
+        exactFile = isEn ? 'onboarding-step3-guide-en.mp3' : 'onboarding-step3.mp3';
+        break;
+      case 'onboarding-step4-guide':
+      case 'onboarding-step4':
+        exactFile = isEn ? 'onboarding-step4-guide-en.mp3' : 'onboarding-step4.mp3';
+        break;
+      case 'onboarding-emergency-guide':
+      case 'onboarding-emergency':
+        exactFile = isEn ? 'onboarding-emergency-guide-en.mp3' : 'onboarding-emergency.mp3';
+        break;
+
+      // WELCOME / DASHBOARD TOUR
+      case 'welcome-greeting':
+      case 'dash-welcome':
+        exactFile = isEn ? 'welcome-greeting-en.mp3' : 'welcome-greeting.mp3';
+        break;
+      case 'ai-health-summary':
+      case 'dash-ai-summary':
+        exactFile = isEn ? 'ai-health-summary-en.mp3' : 'ai-health-summary.mp3';
+        break;
+      case 'upcoming-appointment':
+      case 'dash-upcoming-appt':
+        exactFile = isPopulated
+          ? (isEn ? 'upcoming-appointment-populated-en.mp3' : 'upcoming-appointment-populated.mp3')
+          : (isEn ? 'upcoming-appointment-empty-en.mp3' : 'upcoming-appointment-empty.mp3');
+        break;
+      case 'dash-family':
+      case 'family-overview':
+        exactFile = isPopulated
+          ? (isEn ? 'family-overview-populated-en.mp3' : 'family-overview-populated.mp3')
+          : (isEn ? 'family-overview-empty-en.mp3' : 'family-overview-empty.mp3');
+        if (!exactFile) exactFile = isEn ? 'dashboard-nav-family-en.mp3' : 'dashboard-nav-family.mp3';
+        break;
+      case 'welcome-recent-records':
+      case 'dash-recent-records':
+        exactFile = isEn ? 'welcome-recent-records-en.mp3' : 'welcome-recent-records.mp3';
+        break;
+      case 'welcome-medications-reminders':
+      case 'dash-medications':
+        exactFile = isEn ? 'welcome-medications-reminders-en.mp3' : 'welcome-medications-reminders.mp3';
+        break;
+      case 'welcome-today-schedule':
+      case 'dash-schedule':
+        exactFile = isEn ? 'welcome-today-schedule-en.mp3' : 'welcome-today-schedule.mp3';
+        break;
+      case 'ask-ai-button-intro':
+        exactFile = isEn ? 'ask-ai-button-intro-en.mp3' : 'ask-ai-button-intro.mp3';
+        break;
+      case 'ask-ai-finish':
+      case 'dash-ask-ai':
+        exactFile = isEn ? 'ask-ai-finish-en.mp3' : 'ask-ai-finish.mp3';
+        break;
+
+      // DASHBOARD NAV STEPS
+      case 'dashboard-nav-dashboard':
+        exactFile = isEn ? 'dashboard-nav-dashboard-en.mp3' : 'dashboard-nav-dashboard.mp3';
+        break;
+      case 'dashboard-nav-records':
+        exactFile = isEn ? 'dashboard-nav-records-en.mp3' : 'dashboard-nav-records.mp3';
+        break;
+      case 'dashboard-nav-appointments':
+        exactFile = isEn ? 'dashboard-nav-appointments-en.mp3' : 'dashboard-nav-appointments.mp3';
+        break;
+      case 'dashboard-nav-medications':
+        exactFile = isEn ? 'dashboard-nav-medications-en.mp3' : 'dashboard-nav-medications.mp3';
+        break;
+      case 'dashboard-nav-family':
+        exactFile = isEn ? 'dashboard-nav-family-en.mp3' : 'dashboard-nav-family.mp3';
+        break;
+      case 'dashboard-nav-profile':
+        exactFile = isEn ? 'dashboard-nav-profile-en.mp3' : 'dashboard-nav-profile.mp3';
+        break;
+
+      // MEDICAL RECORDS TOUR
+      case 'mr-general':
+      case 'medical-records-general':
+        exactFile = isEn ? 'medical-records-general-en.mp3' : 'medical-records-general.mp3';
+        break;
+      case 'mr-add':
+      case 'medical-records-add':
+        exactFile = isEn ? 'medical-records-add-en.mp3' : 'medical-records-add.mp3';
+        break;
+      case 'mr-lab':
+      case 'medical-records-lab':
+        exactFile = isEn ? 'medical-records-lab-en.mp3' : 'medical-records-lab.mp3';
+        break;
+      case 'mr-prescription':
+      case 'medical-records-prescription':
+        exactFile = isEn ? 'medical-records-prescription-en.mp3' : 'medical-records-prescription.mp3';
+        break;
+      case 'mr-imaging':
+      case 'medical-records-imaging':
+        exactFile = isEn ? 'medical-records-imaging-en.mp3' : 'medical-records-imaging.mp3';
+        break;
+      case 'mr-medicine':
+      case 'medical-records-medicine':
+        exactFile = isEn ? 'medical-records-medicine-en.mp3' : 'medical-records-medicine.mp3';
+        break;
+
+      // APPOINTMENTS TOUR
+      case 'appt-add':
+      case 'appointments-step':
+        exactFile = isEn ? 'appointments-step-en.mp3' : 'appointments-step.mp3';
+        break;
+
+      // MEDICATIONS TOUR
+      case 'med-main':
+      case 'medications-step':
+        exactFile = isPopulated
+          ? (isEn ? 'medications-step-populated-en.mp3' : 'medications-step-populated.mp3')
+          : (isEn ? 'medications-step-empty-en.mp3' : 'medications-step-empty.mp3');
+        break;
+
+      // FAMILY PROFILES TOUR
+      case 'family-main':
+      case 'family-profiles-step':
+        exactFile = isEn ? 'family-profiles-step-en.mp3' : 'family-profiles-step.mp3';
+        break;
+
+      // MY PROFILE TOUR
+      case 'profile-personal':
+      case 'profile-personal-info-step':
+        exactFile = isEn ? 'profile-personal-info-step-en.mp3' : 'profile-personal-info-step.mp3';
+        break;
+      case 'profile-health':
+      case 'profile-health-info-step':
+        exactFile = isEn ? 'profile-health-info-step-en.mp3' : 'profile-health-info-step.mp3';
+        break;
+      case 'profile-allergies':
+      case 'profile-allergies-step':
+        exactFile = isEn ? 'profile-allergies-step-en.mp3' : 'profile-allergies-step.mp3';
+        break;
+      case 'profile-chronic':
+      case 'profile-chronic-step':
+        exactFile = isEn ? 'profile-chronic-step-en.mp3' : 'profile-chronic-step.mp3';
+        break;
+      case 'profile-emergency':
+      case 'profile-emergency-step':
+        exactFile = isEn ? 'profile-emergency-step-en.mp3' : 'profile-emergency-step.mp3';
+        break;
+
+      case 'system-status':
+        exactFile = isEn ? 'system-status-en.mp3' : 'system-status.mp3';
+        break;
+    }
+
+    if (exactFile) {
+      addCandidate(`assets/audio/tours/${folder}/${exactFile}`);
+    }
+
+    // Secondary fallback candidate list
+    addCandidate(`assets/audio/tours/${folder}/${rawStepId}.mp3`);
+    addCandidate(`assets/audio/tours/${folder}/${cleanStepId}.mp3`);
+    if (isEn && !cleanStepId.endsWith('-en')) {
+      addCandidate(`assets/audio/tours/${folder}/${cleanStepId}-en.mp3`);
+    }
+
+    return Array.from(new Set(candidates));
   }
 
   private handleStepCompletion(step: TourStepScenario, customDelayMs?: number): void {

@@ -174,7 +174,7 @@
 }
 
 @keyframes cardIn {
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 .form-title {
@@ -311,7 +311,7 @@
 
 @keyframes dropdownIn {
   from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 .custom-dropdown-item {
@@ -579,7 +579,7 @@
 
 @keyframes dropdownIn {
   from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 .dropdown-portal-item {

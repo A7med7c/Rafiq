@@ -3,8 +3,8 @@
   <!-- ── Page header ──────────────────────────────────────────────────── -->
   <header class="dash__head">
     <div>
-      <h1>Dashboard</h1>
-      <p>Welcome back! <span>Here's what's happening on your platform today.</span></p>
+      <h1>{{ copy().title }}</h1>
+      <p>{{ copy().welcomeBack }} <span>{{ copy().subtitle }}</span></p>
     </div>
     <div class="dash__head-actions">
       <span class="date-badge">
@@ -66,7 +66,7 @@
                 <i class="fa-solid" [class.fa-arrow-trend-up]="card.growth >= 0" [class.fa-arrow-trend-down]="card.growth < 0"></i>
                 {{ card.growth | number:'1.0-1' }}%
               </span>
-              <small>vs last 30 days</small>
+              <small>{{ copy().vsLastMonth }}</small>
             </div>
           }
         </article>
@@ -103,7 +103,7 @@
             <h2>{{ copy().userGrowth }}</h2>
             <p>{{ copy().lastSixMonths }}</p>
           </div>
-          <span class="panel-tag">Last 30 Days</span>
+          <span class="panel-tag">{{ copy().last30Days }}</span>
         </div>
 
         @if ((data.userGrowth || []).length > 1) {
@@ -169,7 +169,7 @@
         <div class="panel__head">
           <div>
             <h2>{{ copy().genderDistribution }}</h2>
-            <p>{{ data.totalProfiles | number }} profiles</p>
+            <p>{{ data.totalProfiles | number }} {{ copy().profiles }}</p>
           </div>
         </div>
 
@@ -205,16 +205,16 @@
       <article class="panel panel--table" style="flex:1.3">
         <div class="panel__head">
           <h2>{{ copy().recentUsers }}</h2>
-          <a routerLink="/admin/users" class="view-all-link">View All <i class="fa-solid fa-arrow-right"></i></a>
+          <a routerLink="/admin/users" class="view-all-link">{{ copy().viewAll }} <i class="fa-solid fa-arrow-right"></i></a>
         </div>
         <div class="data-table-wrap">
           <table class="data-table">
             <thead>
               <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Joined</th>
-                <th>Profile</th>
+                <th>{{ copy().colUser }}</th>
+                <th>{{ copy().colEmail }}</th>
+                <th>{{ copy().colJoined }}</th>
+                <th>{{ copy().colProfile }}</th>
               </tr>
             </thead>
             <tbody>
@@ -230,7 +230,7 @@
                   <td class="text-muted">{{ formatDate(user.createdAt) }}</td>
                   <td>
                     <span class="status-pill" [class.status-pill--active]="user.isActive" [class.status-pill--inactive]="!user.isActive">
-                      {{ user.isActive ? 'Active' : 'Inactive' }}
+                      {{ user.isActive ? copy().active : copy().inactive }}
                     </span>
                   </td>
                 </tr>
@@ -251,7 +251,7 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>User</th>
+                <th>{{ copy().colUser }}</th>
                 <th>{{ aiCopy().reason }}</th>
                 <th></th>
               </tr>

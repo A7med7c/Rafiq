@@ -19,7 +19,8 @@ public sealed class UploadLabReportCommandHandler(
     IUsageIntelligenceService usageIntelligence,
     IDuplicateDocumentDetector duplicateDetector,
     ILabReportRepository labReportRepository,
-    IMedicalWarningCalculator warningCalculator)
+    IMedicalWarningCalculator warningCalculator,
+    IPdfPageRenderer pdfPageRenderer)
     : IRequestHandler<UploadLabReportCommand, ApiResponse<LabReportResponseDto>>
 {
     public async Task<ApiResponse<LabReportResponseDto>> Handle(
@@ -71,7 +72,7 @@ public sealed class UploadLabReportCommandHandler(
             {
                 throw new DocumentValidationException("DUPLICATE_DOCUMENT", "This exact document has already been uploaded to this profile.");
             }
-            
+
             if (!request.BypassFamilyDuplicateCheck)
             {
                 return ApiResponse<LabReportResponseDto>.FailureResponse(
@@ -83,10 +84,56 @@ public sealed class UploadLabReportCommandHandler(
                         existingProfileName = duplicateCheck.ExistingProfileName
                     });
             }
+
+            // User confirmed — reuse existing document's AI data instead of re-running analysis
+            if (duplicateCheck.ExistingDocumentId.HasValue)
+            {
+                var source = await labReportRepository.GetByIdAsync(duplicateCheck.ExistingDocumentId.Value, cancellationToken)
+                    ?? throw new NotFoundException("LabReport", duplicateCheck.ExistingDocumentId.Value);
+
+                var reusePreview = new LabReportResponseDto
+                {
+                    Id = Guid.Empty,
+                    LabName = source.LabName,
+                    DoctorName = source.DoctorName,
+                    ReportDate = source.ReportDate.ToString("yyyy-MM-dd"),
+                    OCRText = source.OCRText,
+                    Summary = source.Description,
+                    ImageUrl = imageUrl,
+                    CreatedAt = DateTime.UtcNow,
+                    MedicalAttentionReason = source.MedicalAttentionReason,
+                    RecommendedSpecialty = source.RecommendedSpecialty,
+                    ConfidenceScore = source.ConfidenceScore,
+                    RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(source.ConfidenceScore),
+                    AttentionLevel = warningCalculator.ComputeAttentionLevel(source.ConfidenceScore).ToString(),
+                    Results = source.Results.Select(r => new LabResultResponseDto
+                    {
+                        Id = Guid.NewGuid(),
+                        TestName = r.TestName ?? string.Empty,
+                        Value = r.Value ?? string.Empty,
+                        Unit = r.Unit ?? string.Empty,
+                        NormalRange = r.NormalRange ?? string.Empty,
+                        Status = r.Status
+                    }).ToList()
+                };
+
+                return ApiResponse<LabReportResponseDto>.SuccessResponse(
+                    reusePreview,
+                    "Lab report analyzed successfully. Review before saving.");
+            }
         }
         // ─────────────────────────────────────────────────────────────
 
-        var base64Image = Convert.ToBase64String(imageBytes);
+        var analysisBytes = imageBytes;
+        if (Path.GetExtension(request.Image.FileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            var rendered = pdfPageRenderer.RenderFirstPageAsJpeg(imageBytes);
+            if (rendered is null)
+                throw new BadRequestException("Could not process this PDF. Please upload a valid PDF or use an image instead.");
+            analysisBytes = rendered;
+        }
+
+        var base64Image = Convert.ToBase64String(analysisBytes);
 
         var extracted = await bedrockService.AnalyzeAsync<BedrockLabReportDto>(
             base64Image,

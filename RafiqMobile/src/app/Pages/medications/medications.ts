@@ -24,6 +24,9 @@ import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { TourEngineService } from '../../core/assistant/services/tour-engine.service';
 import { NotificationPermissionService, NotificationPermissionResult } from '../../Services/notification-permission.service';
 import { NotificationPermissionGuardService } from '../../Services/notification-permission-guard.service';
+import { AlarmSchedulerService } from '../../Services/alarm-scheduler.service';
+import { OfflineReminderService } from '../../Services/offline-reminder.service';
+import { ReminderBootstrapService } from '../../Services/reminder-bootstrap.service';
 
 const DEMO_TOUR_MEDICINE: UserMedicine = {
   id: 'demo-tour-med-1',
@@ -110,10 +113,13 @@ interface Dose {
   ids: string[];
 }
 
+import { TimePickerComponent } from '../../Components/ui/time-picker/time-picker';
+import { DatePickerComponent } from '../../Components/ui/date-picker/date-picker';
+
 @Component({
   selector: 'app-medications',
   standalone: true,
-  imports: [CommonModule, FormsModule, AssistantAnchorDirective, FamilyProfileBannerComponent, BottomNav, MobileHeader],
+  imports: [CommonModule, FormsModule, AssistantAnchorDirective, FamilyProfileBannerComponent, BottomNav, MobileHeader, TimePickerComponent, DatePickerComponent],
   templateUrl: './medications.html',
   styleUrl: './medications.css',
 })
@@ -156,6 +162,9 @@ export class Medications implements OnInit, OnDestroy {
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly reviewTracking = inject(ReviewTrackingService);
   private readonly notificationPermissionGuardService = inject(NotificationPermissionGuardService);
+  private readonly alarmScheduler = inject(AlarmSchedulerService);
+  private readonly offlineReminders = inject(OfflineReminderService);
+  private readonly reminderBootstrapSvc = inject(ReminderBootstrapService);
 
   private readonly medicationRefreshEffect = effect(() => {
     if (this.notifSvc.reminderDataRefreshTick() === 0) {
@@ -1160,6 +1169,10 @@ export class Medications implements OnInit, OnDestroy {
         // elsewhere (duplicate click, stale dialog, race with another tab).  Refresh from
         // the server so the display reflects the actual persisted state.
         if (!res.success) {
+          // Whatever path already resolved this dose may not have cancelled THIS device's
+          // local native alarms (e.g. a race with the alarm-screen action). Cancelling here
+          // is a safe no-op if they were already cancelled.
+          this.cancelNativeAlarmsForDose(log.medicineReminderId);
           this.toast(this.t().medications.alreadyUpdated.replace('{name}', log.medicineName), 'success');
           this.loadSchedule();
           return;
@@ -1196,6 +1209,11 @@ export class Medications implements OnInit, OnDestroy {
           })
         );
 
+        // In-app confirm bypasses the alarm screen entirely, so nothing else has told
+        // AlarmManager the remaining escalation stages for this dose are moot. Cancel them
+        // now — mirrors what the native "Take Medicine" action already does.
+        this.cancelNativeAlarmsForDose(log.medicineReminderId);
+
         this.reviewTracking.trackAction();
         this.toast(this.t().medications.markedTaken.replace('{name}', log.medicineName), 'success');
         this.notifSvc.push({
@@ -1215,6 +1233,18 @@ export class Medications implements OnInit, OnDestroy {
         this.confirming.set(false);
       },
     });
+  }
+
+  /**
+   * Cancels every native AlarmManager alarm for a dose's remaining escalation stages.
+   * Scoped to the config-level medicineReminderId, so it only ever affects THIS dose's
+   * stages — never a different medication or a different day's occurrence — since only
+   * today's stages are ever scheduled locally at any given time. No-op on non-Android
+   * platforms (both calls guard internally).
+   */
+  private cancelNativeAlarmsForDose(medicineReminderId: string): void {
+    void this.offlineReminders.removeReminder(medicineReminderId);
+    void this.alarmScheduler.cancelAlarm(medicineReminderId);
   }
 
   // ── Toast ─────────────────────────────────────────────────────────────────
@@ -1349,6 +1379,11 @@ export class Medications implements OnInit, OnDestroy {
       .map(r => this.formatTime(r.reminderTime));
   }
 
+  getSortedReminders(medId: string): MedicineReminder[] {
+    return [...this.getReminders(medId)]
+      .sort((a, b) => a.reminderTime.localeCompare(b.reminderTime));
+  }
+
   isPaused(medId: string): boolean {
     const reminders = this.getReminders(medId);
     return reminders.length > 0 && reminders.every(r => !r.isEnabled);
@@ -1387,24 +1422,25 @@ export class Medications implements OnInit, OnDestroy {
     this.showAddReminderModal.set(true);
   }
 
-  openEditReminder(med: UserMedicine): void {
-    const reminders = this.getReminders(med.id);
-    const first = reminders[0];
-    if (!first) return;
+  openEditReminder(reminder: MedicineReminder): void {
     const today = Medications.localToday();
     this.reminderForm = {
-      reminderTimes: reminders.map(r => r.reminderTime.substring(0, 5)),
-      repeatType: (first.repeatType as RepeatOption) ?? 'Daily',
-      startDate: first.startDate?.slice(0, 10) ?? today,
-      endDate: first.endDate?.slice(0, 10) ?? today,
+      reminderTimes: [reminder.reminderTime.substring(0, 5)],
+      repeatType: (reminder.repeatType as RepeatOption) ?? 'Daily',
+      startDate: reminder.startDate?.slice(0, 10) ?? today,
+      endDate: reminder.endDate?.slice(0, 10) ?? today,
       notificationsEnabled: true,
       notes: '',
     };
     this.editMode.set(true);
-    this.editReminderIds.set(reminders.map(r => r.id));
-    this.addReminderMedicineId.set(med.id);
-    this.addReminderMedicineName.set(med.medicineName);
+    this.editReminderIds.set([reminder.id]);
+    this.addReminderMedicineId.set(reminder.userMedicineId);
+    
+    const med = this.medicines().find(m => m.id === reminder.userMedicineId);
+    this.addReminderMedicineName.set(med?.medicineName ?? 'Medicine');
+    
     this.showAddReminderModal.set(true);
+    this.closeMedView();
   }
 
   closeAddReminder(): void {
@@ -1443,7 +1479,8 @@ export class Medications implements OnInit, OnDestroy {
 
     const doCreate = () => {
       this.medSvc.createReminder(medId, payload).subscribe({
-        next: () => {
+        next: async () => {
+          await this.reminderBootstrapSvc.forceSync();
           this.addReminderSaving.set(false);
           this.closeAddReminder();
           this.notifSvc.notifyReminderChanged();
@@ -1500,10 +1537,13 @@ export class Medications implements OnInit, OnDestroy {
 
       if (operations.length > 0) {
         forkJoin(operations).subscribe({
-          next: () => {
+          next: async () => {
+            await this.reminderBootstrapSvc.forceSync();
             this.closeAddReminder();
             this.notifSvc.notifyReminderChanged();
             this.toast(this.t().medications.reminderUpdated.replace('{name}', medName), 'success');
+            this.loadAllMedicineReminders();
+            this.loadSchedule();
           },
           error: err => {
             this.toast(this.t().medications.updateReminderFailed, 'error');
@@ -1560,10 +1600,12 @@ export class Medications implements OnInit, OnDestroy {
   }
 
   // ── Delete Reminder confirm modal ─────────────────────────────────────────
-  openDeleteReminder(medId: string, medName: string): void {
-    this.deleteReminderMedId.set(medId);
-    this.deleteReminderMedName.set(medName);
+  openDeleteReminder(reminder: MedicineReminder): void {
+    this.deleteReminderMedId.set(reminder.id);
+    const med = this.medicines().find(m => m.id === reminder.userMedicineId);
+    this.deleteReminderMedName.set(med?.medicineName ?? 'Medicine');
     this.showDeleteReminderModal.set(true);
+    this.closeMedView();
   }
 
   closeDeleteReminder(): void {
@@ -1574,28 +1616,23 @@ export class Medications implements OnInit, OnDestroy {
   }
 
   confirmDeleteReminder(): void {
-    const medId = this.deleteReminderMedId();
-    if (!medId) return;
-    const reminders = this.getReminders(medId);
-    if (reminders.length === 0) { this.closeDeleteReminder(); return; }
+    const reminderId = this.deleteReminderMedId();
+    if (!reminderId) return;
 
     this.deletingReminder.set(true);
     const medName = this.deleteReminderMedName();
 
-    // Optimistic update
-    const oldReminders = [...reminders];
-    this.medicineReminders.update(rec => ({ ...rec, [medId]: [] }));
-
-    forkJoin(reminders.map(r => this.medSvc.deleteReminder(r.id))).subscribe({
-      next: () => {
+    this.medSvc.deleteReminder(reminderId).subscribe({
+      next: async () => {
+        await this.reminderBootstrapSvc.forceSync();
         this.deletingReminder.set(false);
         this.closeDeleteReminder();
         this.notifSvc.notifyReminderChanged();
         this.toast(this.t().medications.remindersDeleted.replace('{name}', medName), 'success');
+        this.loadAllMedicineReminders();
+        this.loadSchedule();
       },
       error: err => {
-        // Revert on error
-        this.medicineReminders.update(rec => ({ ...rec, [medId]: oldReminders }));
         this.toast(this.t().medications.deleteRemindersFailed, 'error');
         this.deletingReminder.set(false);
       },

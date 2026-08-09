@@ -1,0 +1,8 @@
+<div class="date-picker-wrapper" [class.disabled]="disabled" [class.invalid]="invalid" [class.is-open]="isOpen">
+  <div class="date-picker-trigger" (click)="togglePopover()">
+    <i class="fa-regular fa-calendar calendar-icon"></i>
+    <span class="trigger-text" [class.placeholder]="!getDisplayValue()">
+      {{ getDisplayValue() || placeholder }}
+    </span>
+  </div>
+</div>

@@ -18,6 +18,7 @@ public sealed class GenerateMedicalReportQueryHandler(
     IImagingReportRepository imagingReportRepository,
     IAppointmentRepository appointmentRepository,
     IEmergencyContactRepository emergencyContactRepository,
+    IGeneralDocumentRepository generalDocumentRepository,
     IAiChatService aiChatService,
     IMedicalReportPdfGenerator pdfGenerator)
     : IRequestHandler<GenerateMedicalReportQuery, ApiResponse<byte[]>>
@@ -40,33 +41,16 @@ public sealed class GenerateMedicalReportQueryHandler(
         var userId = currentUserService.UserId
             ?? throw new Domain.Exceptions.UnauthorizedException("User not authenticated.");
 
-        var isDoctorSummary = request.ReportType == ReportType.DoctorSummary;
-
-        var allMedicines      = await medicineRepository.GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
-        var allPrescriptions  = await prescriptionRepository.GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
-        var allLabReports     = await labReportRepository.GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
-        var allImagingReports = await imagingReportRepository.GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
-        var allAppointments   = await appointmentRepository.GetAllByUserHealthProfileIdAsync(request.ProfileId, cancellationToken);
+        var medicines         = await medicineRepository.GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
+        var prescriptions     = await prescriptionRepository.GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
+        var labReports        = await labReportRepository.GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
+        var imagingReports    = await imagingReportRepository.GetAllByProfileIdAsync(request.ProfileId, cancellationToken);
+        var appointments      = await appointmentRepository.GetAllByUserHealthProfileIdAsync(request.ProfileId, cancellationToken);
         var emergencyContacts = await emergencyContactRepository.GetAllByUserIdAsync(userId, cancellationToken);
-
-        var medicines     = allMedicines;
-        var prescriptions = isDoctorSummary
-            ? (IReadOnlyList<Domain.Entities.Documents.Prescription>)allPrescriptions.OrderByDescending(p => p.PrescriptionDate).Take(3).ToList()
-            : allPrescriptions;
-        var labReports = isDoctorSummary
-            ? (IReadOnlyList<Domain.Entities.Documents.LabReport>)allLabReports.OrderByDescending(l => l.ReportDate).Take(5).ToList()
-            : allLabReports;
-        var imagingReports = isDoctorSummary
-            ? (IReadOnlyList<Domain.Entities.Documents.ImagingReport>)allImagingReports.OrderByDescending(i => i.ReportDate).Take(3).ToList()
-            : allImagingReports;
-        var appointments = isDoctorSummary
-            ? (IReadOnlyList<Domain.Entities.Documents.Appointment>)allAppointments
-                .Where(a => a.Status == Domain.Enums.AppointmentStatus.Upcoming && a.AppointmentDateTime > DateTime.UtcNow)
-                .OrderBy(a => a.AppointmentDateTime).Take(5).ToList()
-            : allAppointments;
+        var generalDocuments  = await generalDocumentRepository.GetAllByUserIdAsync(request.ProfileId, cancellationToken);
 
         var aiSummary = await TryGenerateAiSummaryAsync(
-            profile, allMedicines, allLabReports, allImagingReports, cancellationToken);
+            profile, medicines, labReports, imagingReports, cancellationToken);
 
         var reportData = new MedicalReportDataDto(
             profile,
@@ -76,8 +60,8 @@ public sealed class GenerateMedicalReportQueryHandler(
             imagingReports,
             appointments,
             emergencyContacts,
+            generalDocuments,
             aiSummary,
-            request.ReportType,
             DateTime.UtcNow);
 
         var pdfBytes = pdfGenerator.Generate(reportData);

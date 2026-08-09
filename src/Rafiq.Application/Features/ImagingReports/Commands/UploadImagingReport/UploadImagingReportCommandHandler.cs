@@ -19,7 +19,8 @@ public sealed class UploadImagingReportCommandHandler(
     IUsageIntelligenceService usageIntelligence,
     IDuplicateDocumentDetector duplicateDetector,
     IImagingReportRepository imagingReportRepository,
-    IMedicalWarningCalculator warningCalculator)
+    IMedicalWarningCalculator warningCalculator,
+    IPdfPageRenderer pdfPageRenderer)
     : IRequestHandler<UploadImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
 {
     public async Task<ApiResponse<ImagingReportResponseDto>> Handle(
@@ -71,7 +72,7 @@ public sealed class UploadImagingReportCommandHandler(
             {
                 throw new DocumentValidationException("DUPLICATE_DOCUMENT", "This exact document has already been uploaded to this profile.");
             }
-            
+
             if (!request.BypassFamilyDuplicateCheck)
             {
                 return ApiResponse<ImagingReportResponseDto>.FailureResponse(
@@ -83,10 +84,51 @@ public sealed class UploadImagingReportCommandHandler(
                         existingProfileName = duplicateCheck.ExistingProfileName
                     });
             }
+
+            // User confirmed — reuse existing document's AI data instead of re-running analysis
+            if (duplicateCheck.ExistingDocumentId.HasValue)
+            {
+                var source = await imagingReportRepository.GetByIdAsync(duplicateCheck.ExistingDocumentId.Value, cancellationToken)
+                    ?? throw new NotFoundException("ImagingReport", duplicateCheck.ExistingDocumentId.Value);
+
+                var reportDateReuse = source.ReportDate;
+                var reusePreview = new ImagingReportResponseDto
+                {
+                    Id = Guid.Empty,
+                    ImagingType = source.ImagingType,
+                    BodyPart = source.BodyPart,
+                    Findings = source.Findings,
+                    Impression = source.Impression,
+                    DoctorName = source.DoctorName,
+                    ReportDate = reportDateReuse.ToString("yyyy-MM-dd"),
+                    ImageUrl = imageUrl,
+                    OCRText = source.OCRText,
+                    Summary = source.Description,
+                    MedicalAttentionReason = source.MedicalAttentionReason,
+                    RecommendedSpecialty = source.RecommendedSpecialty,
+                    ConfidenceScore = source.ConfidenceScore,
+                    RequiresMedicalAttention = warningCalculator.RequiresMedicalAttention(source.ConfidenceScore),
+                    AttentionLevel = warningCalculator.ComputeAttentionLevel(source.ConfidenceScore).ToString(),
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                return ApiResponse<ImagingReportResponseDto>.SuccessResponse(
+                    reusePreview,
+                    "Imaging report analyzed successfully. Review before saving.");
+            }
         }
         // ─────────────────────────────────────────────────────────────
 
-        var base64Image = Convert.ToBase64String(imageBytes);
+        var analysisBytes = imageBytes;
+        if (Path.GetExtension(request.Image.FileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            var rendered = pdfPageRenderer.RenderFirstPageAsJpeg(imageBytes);
+            if (rendered is null)
+                throw new BadRequestException("Could not process this PDF. Please upload a valid PDF or use an image instead.");
+            analysisBytes = rendered;
+        }
+
+        var base64Image = Convert.ToBase64String(analysisBytes);
 
         var extracted = await bedrockService.AnalyzeAsync<BedrockImagingReportDto>(
             base64Image,

@@ -9,11 +9,12 @@ import { PdfService } from '../../Services/pdf.service';
 import { environment } from '../../Environments/Environment';
 import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
 import { MobileHeader } from '../../shared/mobile-header/mobile-header';
+import { MedicalWarningCardComponent } from '../../Components/medical-warning-card/medical-warning-card';
 
 @Component({
   selector: 'app-record-detail',
   standalone: true,
-  imports: [CommonModule, BottomNav, MobileHeader],
+  imports: [CommonModule, BottomNav, MobileHeader, MedicalWarningCardComponent],
   templateUrl: './record-detail.html',
   styleUrl: './record-detail.css',
 })
@@ -94,7 +95,10 @@ export class RecordDetail implements OnInit {
     return this.getImageUrl(record.rawRecord?.imageUrl ?? record.rawRecord?.imagePath ?? null);
   }
 
-  openLightbox(url: string): void { this.lightboxUrl.set(url); }
+  openLightbox(url: string): void {
+    if (url.toLowerCase().includes('.pdf')) { window.open(url, '_system'); return; }
+    this.lightboxUrl.set(url);
+  }
   closeLightbox(): void { this.lightboxUrl.set(null); }
 
   downloadRecord(): void {

@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { LocalizationService } from '../../Services/localization.service';
 import { AiChatService } from '../../Services/ai-chat.service';
+import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 
 @Component({
   selector: 'app-bottom-nav',
@@ -14,4 +15,5 @@ export class BottomNav {
   protected readonly l10n = inject(LocalizationService);
   protected readonly t    = this.l10n.t;
   protected readonly aiChatService = inject(AiChatService);
+  protected readonly analysisState = inject(DocumentAnalysisStateService);
 }

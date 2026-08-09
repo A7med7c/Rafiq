@@ -196,7 +196,9 @@
     <div class="modal-body">
       @if (getRecordImageUrl(rec); as imageUrl) {
       <button type="button" class="view-document-card view-document-card--with-image" (click)="openLightbox(imageUrl)">
-        @if (!detailImageFailed()) {
+        @if (imageUrl.toLowerCase().includes('.pdf')) {
+        <div class="view-document-icon"><i class="fa-regular fa-file-pdf"></i></div>
+        } @else if (!detailImageFailed()) {
         <img [src]="imageUrl" alt="Original uploaded record" class="view-document-thumb"
           (error)="detailImageFailed.set(true)">
         } @else {
@@ -255,6 +257,7 @@
         <h4 class="detail-h4"><i class="fa-solid fa-robot"></i> {{ t().records.aiSummary }}</h4>
         <p class="detail-summary-text">{{ rec.summary || '-' }}</p>
       </div>
+      <app-medical-warning-card *ngIf="rec.requiresMedicalAttention" [data]="rec"></app-medical-warning-card>
       @if (rec.type === 'lab' && rec.rawRecord.results && rec.rawRecord.results.length > 0) {
       <div class="detail-section">
         <h4 class="detail-h4"><i class="fa-solid fa-flask"></i> {{ t().records.completeLabResults }}</h4>
@@ -482,7 +485,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.reportDate }}</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.reportDate" name="reportDate" [placeholder]="t().records.reportDate"></app-date-picker>
         </div>
         }
         @if (rf.type === 'imaging') {
@@ -500,7 +503,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.reportDate }}</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.reportDate" name="reportDate" [placeholder]="t().records.reportDate"></app-date-picker>
         </div>
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.findings }}</label>
@@ -522,7 +525,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">Prescription Date</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.prescriptionDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.prescriptionDate" name="prescriptionDate" [placeholder]="t().records.prescription"></app-date-picker>
         </div>
         }
         @if (rf.type === 'general') {
@@ -545,7 +548,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.documentDate }}</label>
-          <input type="text" class="scan-input" [(ngModel)]="rf.documentDate">
+          <app-date-picker [(ngModel)]="rf.documentDate" name="documentDate" [placeholder]="t().records.documentDate"></app-date-picker>
         </div>
         }
         <div class="scan-field scan-field--full">
@@ -553,18 +556,21 @@
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
         </div>
         }
-        @if (!manualReviewMode() && rf.type !== 'general') {
+        @if (!manualReviewMode() && (rf.type === 'lab' || rf.type === 'imaging')) {
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.aiSummary }}</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.summary" rows="3"></textarea>
         </div>
         }
-        @if (!manualReviewMode() && rf.type !== 'general') {
+        @if (!manualReviewMode() && (rf.type === 'lab' || rf.type === 'imaging')) {
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.ocrText }}</label>
           <textarea class="scan-input scan-textarea" [(ngModel)]="rf.ocrText" rows="5"></textarea>
         </div>
         }
+
+        <!-- Medical Warning Card -->
+        <app-medical-warning-card class="scan-field--full" *ngIf="rf.requiresMedicalAttention" [data]="rf"></app-medical-warning-card>
       </div>
       @if (reviewDateError()) {
       <p class="scan-validation"><i class="fa-solid fa-triangle-exclamation"></i> {{ reviewDateError() }}</p>
@@ -916,10 +922,14 @@
         <i class="fa-solid fa-triangle-exclamation"></i>
       </div>
       <h3 class="ai-fail-title" id="ai-fail-title">
-        {{ aiFailIsUnreadable() ? t().records.aiUnreadableTitle : t().records.aiAnalysisFailed }}
+        {{ aiFailIsInvalidDocument() ? t().records.invalidFile : (aiFailIsUnreadable() ? t().records.aiUnreadableTitle : t().records.aiAnalysisFailed) }}
       </h3>
       <p class="ai-fail-desc" id="ai-fail-desc">
-        {{ aiFailIsUnreadable() ? t().records.aiUnreadableText : t().records.aiFailureText }}
+        @if (aiFailIsInvalidDocument()) {
+          {{ getInvalidDocumentMessage() }}
+        } @else {
+          {{ aiFailIsUnreadable() ? t().records.aiUnreadableText : t().records.aiFailureText }}
+        }
       </p>
     </div>
     <footer class="modal-ftr ai-fail-ftr">
@@ -931,6 +941,53 @@
       </button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="retryUpload()">
         <i class="fa-solid fa-rotate-right"></i> {{ t().records.tryAgain }}
+      </button>
+    </footer>
+  </div>
+</div>
+}
+
+<!-- ═══════════ DUPLICATE UPLOAD WARNING DIALOG ═══════════ -->
+@if (showDuplicateWarningDialog()) {
+<div class="modal-overlay" (click)="closeDuplicateWarningDialog()">
+  <div class="modal-card ai-fail-modal" (click)="$event.stopPropagation()">
+    <div class="ai-fail-body">
+      <div class="ai-fail-ico-wrap" style="color: var(--warning-color, #f59e0b); background: var(--warning-color-light, #fef3c7);">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="ai-fail-title">
+        {{ t().records.duplicateFoundTitle }}
+      </h3>
+      <p class="ai-fail-desc">
+        {{ t().records.duplicateFoundDesc.replace('{name}', duplicateWarningName()) }}
+      </p>
+    </div>
+    <footer class="modal-ftr ai-fail-ftr">
+      <button type="button" class="modal-btn ai-fail-cancel-btn" (click)="closeDuplicateWarningDialog()">
+        {{ t().records.cancelBtn }}
+      </button>
+      <button type="button" class="modal-btn modal-btn-primary" (click)="continueDuplicateUpload()">
+        {{ t().records.continueBtn }}
+      </button>
+    </footer>
+  </div>
+</div>
+}
+
+<!-- ═══════════ SAME-PROFILE DUPLICATE DIALOG ═══════════ -->
+@if (showSameProfileDuplicateDialog()) {
+<div class="modal-overlay" (click)="closeSameProfileDuplicateDialog()">
+  <div class="modal-card ai-fail-modal" (click)="$event.stopPropagation()">
+    <div class="ai-fail-body">
+      <div class="ai-fail-ico-wrap" style="color: #c0392b; background: #fde8e8;">
+        <i class="fa-solid fa-ban"></i>
+      </div>
+      <h3 class="ai-fail-title">{{ t().uploadValidation.sameProfileDuplicateTitle }}</h3>
+      <p class="ai-fail-desc">{{ t().uploadValidation.sameProfileDuplicateMessage }}</p>
+    </div>
+    <footer class="modal-ftr ai-fail-ftr">
+      <button type="button" class="modal-btn modal-btn-primary" (click)="closeSameProfileDuplicateDialog()">
+        {{ t().common.close }}
       </button>
     </footer>
   </div>

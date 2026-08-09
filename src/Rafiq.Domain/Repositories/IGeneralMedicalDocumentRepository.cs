@@ -27,7 +27,7 @@ public interface IGeneralDocumentRepository
         string title,
         CancellationToken cancellationToken = default);
         
-    Task<(Guid profileId, string profileName, bool isSameProfile)?> FindDuplicateByHashAsync(
+    Task<(Guid documentId, Guid profileId, string profileName, bool isSameProfile)?> FindDuplicateByHashAsync(
         string fileHash,
         Guid currentProfileId,
         Guid currentUserId,

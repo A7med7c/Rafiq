@@ -207,6 +207,31 @@ body.rafiq-tour-speaking .driver-active-element {
   50% { box-shadow: 0 0 0 5px rgba(14, 175, 215, .95), 0 0 0 15px rgba(14, 175, 215, 0); }
 }
 
+/* ═══════════════════════════════════════════════
+   CUSTOM UI POPOVERS Z-INDEX OVERLAYS
+   ═══════════════════════════════════════════════ */
+.date-picker-wrapper.is-open,
+.time-picker-wrapper.is-open,
+.custom-select-wrapper.is-open {
+  position: relative !important;
+  z-index: 999999 !important;
+}
+
+.date-picker-popover,
+.time-picker-popover,
+.custom-select-popover,
+.custom-select-menu {
+  z-index: 9999999 !important;
+}
+
+.embedded-assistant-guide,
+.ob-guide,
+.ob-guide__bubble,
+.ob-guide__mascot {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
 .tour-skip-button {
   position: fixed;
   top: 18px;

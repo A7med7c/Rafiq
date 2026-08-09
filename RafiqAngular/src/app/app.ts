@@ -8,12 +8,12 @@ import { AiPanel } from './Components/ai-panel/ai-panel';
 import { RafiqAssistantComponent } from './Components/rafiq-assistant/rafiq-assistant';
 import { TourEngineService } from './core/assistant/services/tour-engine.service';
 import { RatingPopup } from './Components/rating-popup/rating-popup';
-import { DocumentAnalysisCardComponent } from './Components/document-analysis-card/document-analysis-card';
+import { DocumentAnalysisStateService } from './Services/document-analysis-state.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, AiPanel, RafiqAssistantComponent, RatingPopup, DocumentAnalysisCardComponent],
+  imports: [CommonModule, RouterOutlet, AiPanel, RafiqAssistantComponent, RatingPopup],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -22,6 +22,7 @@ export class App {
   readonly l10n = inject(LocalizationService);
   readonly tourEngine = inject(TourEngineService);
   readonly aiChatService = inject(AiChatService);
+  readonly analysisState = inject(DocumentAnalysisStateService);
   private readonly router = inject(Router);
   readonly title = signal('RafiqAngular');
 
@@ -60,8 +61,59 @@ export class App {
     }
   }
 
+  // ── Global AI analysis completion modal ──────────────────────────────────
+
+  onCompletionModalReview(): void {
+    const modal = this.analysisState.completionModal();
+    if (!modal) return;
+    // Set pendingReview → records-content will pick it up via effect
+    this.analysisState.acceptCompletionModal();
+    const target = modal.profileId
+      ? `/medical-records?profileId=${modal.profileId}`
+      : '/medical-records';
+    void this.router.navigateByUrl(target);
+  }
+
+  onCompletionModalLater(): void {
+    this.analysisState.dismissCompletionModal();
+  }
+
+  onFailureModalRetry(): void {
+    const doc = this.analysisState.failureModal();
+    if (!doc) return;
+    this.analysisState.retryAnalysis(doc);
+  }
+
+  onFailureModalGoToRecords(): void {
+    const doc = this.analysisState.failureModal();
+    this.analysisState.dismissFailureModal();
+    if (!doc) return;
+    const target = doc.profileId ? `/medical-records?profileId=${doc.profileId}` : '/medical-records';
+    void this.router.navigateByUrl(target);
+  }
+
+  onCompletionModalOverlayClick(e: MouseEvent): void {
+    if ((e.target as HTMLElement).classList.contains('acm-overlay')) {
+      this.onCompletionModalLater();
+    }
+  }
+
+  onFailureModalOverlayClick(e: MouseEvent): void {
+    if ((e.target as HTMLElement).classList.contains('acm-overlay')) {
+      this.analysisState.dismissFailureModal();
+    }
+  }
+
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.analysisState.failureModal()) {
+      this.analysisState.dismissFailureModal();
+      return;
+    }
+    if (this.analysisState.completionModal()) {
+      this.analysisState.dismissCompletionModal();
+      return;
+    }
     if (this.notificationService.notificationCenterOpen()) {
       this.notificationService.closeNotificationCenter();
     }

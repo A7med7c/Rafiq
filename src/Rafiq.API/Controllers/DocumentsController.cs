@@ -37,11 +37,12 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> UploadLabReport(
         [FromQuery] Guid profileId,
         [FromHeader(Name = "Accept-Language")] string? language,
+        [FromForm] bool bypassFamilyDuplicateCheck,
         IFormFile image,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new UploadLabReportCommand(profileId, image, language ?? "en"),
+            new UploadLabReportCommand(profileId, image, language ?? "en", bypassFamilyDuplicateCheck),
             cancellationToken);
 
         return Ok(result);
@@ -141,11 +142,12 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> UploadImagingReport(
         [FromQuery] Guid profileId,
         [FromHeader(Name = "Accept-Language")] string? language,
+        [FromForm] bool bypassFamilyDuplicateCheck,
         IFormFile image,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new UploadImagingReportCommand(profileId, image, language ?? "en"),
+            new UploadImagingReportCommand(profileId, image, language ?? "en", bypassFamilyDuplicateCheck),
             cancellationToken);
 
         return Ok(result);
@@ -320,11 +322,12 @@ public sealed class DocumentsController(IMediator mediator) : ControllerBase
         [FromQuery] Guid profileId,
         IFormFile image,
         [FromForm] string? description,
+        [FromForm] bool bypassFamilyDuplicateCheck,
         [FromHeader(Name = "Accept-Language")] string? language,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new UploadGeneralDocumentAsyncCommand(image, profileId, description, language ?? "en"),
+            new UploadGeneralDocumentAsyncCommand(image, profileId, description, language ?? "en", bypassFamilyDuplicateCheck),
             cancellationToken);
         return Ok(result);
     }

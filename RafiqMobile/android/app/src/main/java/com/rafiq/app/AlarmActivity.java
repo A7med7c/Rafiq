@@ -2,7 +2,6 @@ package com.rafiq.mobile;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -32,13 +31,13 @@ public class AlarmActivity extends Activity {
     public static final String ACTION_DISMISS       = "dismiss";
     public static final String EXTRA_SNOOZE_MINUTES = "snoozeMinutes";
 
-    private static final long SNOOZE_DELAY_MILLIS = 10 * 60 * 1000L;
-    private static final int SNOOZE_MINUTES = 10;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         enableOverLockScreen();
         super.onCreate(savedInstanceState);
+        android.util.Log.i(AlarmDiagnostics.TAG, "AlarmActivity LAUNCHED reminderId="
+            + getIntent().getStringExtra(EXTRA_REMINDER_ID)
+            + " type=" + getIntent().getStringExtra(EXTRA_REMINDER_TYPE));
         renderAlarmUi();
     }
 
@@ -114,73 +113,37 @@ public class AlarmActivity extends Activity {
         setContentView(root);
     }
 
+    /**
+     * "Take Medicine" / "Confirm Attendance" — processed entirely natively via
+     * AlarmActionReceiver, same as the outer notification's action button. The main
+     * Rafiq app UI is never opened; the backend confirmation is reconciled the next
+     * time the app is naturally opened (see AlarmActionReceiver's class doc).
+     */
     private void takeMedicine() {
         Intent current = getIntent();
-        stopAlarmAndNotification(current.getStringExtra(EXTRA_REMINDER_ID));
-
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(getPackageName());
-        if (launchIntent != null) {
-            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            launchIntent.putExtra(EXTRA_ALARM_ACTION, ACTION_TAKE_MEDICINE);
-            launchIntent.putExtra(EXTRA_REMINDER_ID, current.getStringExtra(EXTRA_REMINDER_ID));
-            launchIntent.putExtra(EXTRA_REMINDER_TYPE, current.getStringExtra(EXTRA_REMINDER_TYPE));
-            startActivity(launchIntent);
-        }
-
+        AlarmActionReceiver.handleTake(
+            this,
+            current.getStringExtra(EXTRA_REMINDER_ID),
+            current.getStringExtra(EXTRA_REMINDER_TYPE));
         finish();
     }
 
+    /** "Snooze 10 min" — processed entirely natively, no app launch. */
     private void snooze() {
         Intent current = getIntent();
-        String reminderId = current.getStringExtra(EXTRA_REMINDER_ID);
-        stopAlarmAndNotification(reminderId);
-
-        if (reminderId != null) {
-            long triggerAtMillis = System.currentTimeMillis() + SNOOZE_DELAY_MILLIS;
-            NativeReminderStore.updateSnooze(this, reminderId, triggerAtMillis);
-            current.putExtra(EXTRA_ALARM_ACTION, ACTION_SNOOZE);
-            current.putExtra(EXTRA_SNOOZE_MINUTES, SNOOZE_MINUTES);
-            AlarmSchedulerPlugin.recordAlarmAction(this, current);
-            AlarmReceiver.scheduleAlarm(
-                this,
-                reminderId,
-                current.getStringExtra(EXTRA_REMINDER_TYPE),
-                current.getStringExtra(EXTRA_TITLE),
-                current.getStringExtra(EXTRA_BODY),
-                java.time.Instant.ofEpochMilli(triggerAtMillis).toString(),
-                triggerAtMillis
-            );
-            launchAngularAction(current);
-        }
-
+        AlarmActionReceiver.handleSnooze(
+            this,
+            current.getStringExtra(EXTRA_REMINDER_ID),
+            current.getStringExtra(EXTRA_REMINDER_TYPE),
+            current.getStringExtra(EXTRA_TITLE),
+            current.getStringExtra(EXTRA_BODY),
+            current.getStringExtra(EXTRA_SCHEDULED_AT));
         finish();
-    }
-
-    private void launchAngularAction(Intent current) {
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(getPackageName());
-        if (launchIntent == null) return;
-
-        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        launchIntent.putExtra(EXTRA_ALARM_ACTION, current.getStringExtra(EXTRA_ALARM_ACTION));
-        launchIntent.putExtra(EXTRA_REMINDER_ID, current.getStringExtra(EXTRA_REMINDER_ID));
-        launchIntent.putExtra(EXTRA_REMINDER_TYPE, current.getStringExtra(EXTRA_REMINDER_TYPE));
-        launchIntent.putExtra(EXTRA_SNOOZE_MINUTES, current.getIntExtra(EXTRA_SNOOZE_MINUTES, 0));
-        startActivity(launchIntent);
     }
 
     private void dismissOnly() {
-        stopAlarmAndNotification(getIntent().getStringExtra(EXTRA_REMINDER_ID));
+        AlarmActionReceiver.stopAlarmAndNotification(this, getIntent().getStringExtra(EXTRA_REMINDER_ID));
         finish();
-    }
-
-    private void stopAlarmAndNotification(String reminderId) {
-        stopService(new Intent(this, AlarmService.class));
-
-        NotificationManager notificationManager =
-            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (notificationManager != null && reminderId != null) {
-            notificationManager.cancel(AlarmReceiver.stableId(reminderId));
-        }
     }
 
     private Button actionButton(String text, int backgroundColor, int textColor) {

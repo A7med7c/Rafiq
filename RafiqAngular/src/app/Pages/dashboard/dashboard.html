@@ -1,10 +1,10 @@
-<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
+﻿<div class="dsh" [class.sb-collapsed]="sidebarCollapsed()">
 
   @if (mobileSidebarOpen()) {
   <div class="sb-backdrop" (click)="toggleMobileSidebar()"></div>
   }
 
-  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <!-- â•â•â•â•â•â•â•â•â•â•â• SIDEBAR â•â•â•â•â•â•â•â•â•â•â• -->
   <aside assistantAnchor="sidebar-panel" class="dsh-sb" [class.sb-mobile-open]="mobileSidebarOpen()">
     <!-- Logo -->
     <div class="sb-top">
@@ -34,7 +34,8 @@
         <span class="sb-ico"><i class="fa-solid fa-gauge-high"></i></span>
         <span>{{ t().sidebar.dashboard }}</span>
       </a>
-      <a assistantAnchor="medical-records-nav" class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active">
+      <a assistantAnchor="medical-records-nav" class="sb-link" routerLink="/medical-records" routerLinkActive="sb-active"
+         [class.sb-link--processing]="analysisState.sidebarStatus() === 'processing'" [class.sb-link--completed]="analysisState.sidebarStatus() === 'completed'" [class.sb-link--failed]="analysisState.sidebarStatus() === 'failed'">
         <span class="sb-ico"><i class="fa-regular fa-folder-open"></i></span>
         <span>{{ t().sidebar.medicalRecords }}</span>
       </a>
@@ -60,7 +61,7 @@
 
     <!-- Help Card -->
     <div class="sb-help">
-      <!-- Greeting bubble — appears on load and after inactivity -->
+      <!-- Greeting bubble â€” appears on load and after inactivity -->
       @if (robotBubbleVisible()) {
       <div class="sb-robot-bubble" role="status">
         <i class="fa-solid fa-comment-dots sb-robot-bubble-ico"></i>
@@ -92,7 +93,7 @@
     </div>
   </aside>
 
-  <!-- ═══════════ MAIN ═══════════ -->
+  <!-- â•â•â•â•â•â•â•â•â•â•â• MAIN â•â•â•â•â•â•â•â•â•â•â• -->
   <div class="dsh-main">
 
     <!-- HEADER -->
@@ -106,7 +107,7 @@
         <input type="text" class="hdr-search-inp" [placeholder]="t().header.searchPlaceholder" readonly>
       </div>
       <div class="hdr-right">
-        <button type="button" class="hdr-bell" (click)="l10n.toggle()" title="English / عربي">
+        <button type="button" class="hdr-bell" (click)="l10n.toggle()" title="English / Ø¹Ø±Ø¨ÙŠ">
           <i class="fa-solid fa-globe"></i>
         </button>
         <button assistantAnchor="ask-ai-button" type="button" class="hdr-ask-btn" (click)="aiChatService.openPanel()">
@@ -164,7 +165,7 @@
     <!-- SCROLLABLE CONTENT -->
     <div class="dsh-body">
 
-      <!-- ── GREETING ROW ── -->
+      <!-- â”€â”€ GREETING ROW â”€â”€ -->
       <div class="greeting-row">
         <div class="greeting-left">
           <h1 class="greeting-h1">{{ greeting }}, {{ displayName }}! 👋</h1>
@@ -184,7 +185,7 @@
         </button>
       </div>
 
-      <!-- ── MIDDLE ROW: AI + STATUS + APPOINTMENT ── -->
+      <!-- â”€â”€ MIDDLE ROW: AI + STATUS + APPOINTMENT â”€â”€ -->
       <div class="mid-row">
 
         <!-- AI Health Summary -->
@@ -216,7 +217,7 @@
             } @else if (!healthSummary()?.hasData) {
             <p class="ai-body ai-body--empty">{{ t().dashboard.aiSummaryEmpty }}</p>
             } @else {
-            <!-- ── Structured summary ── -->
+            <!-- â”€â”€ Structured summary â”€â”€ -->
             <div class="hs-grid">
 
               @if (healthSummary()!.overallStatusNote) {
@@ -420,7 +421,7 @@
 
       </div><!-- /mid-row -->
 
-      <!-- ── FAMILY OVERVIEW ── -->
+      <!-- â”€â”€ FAMILY OVERVIEW â”€â”€ -->
       <div assistantAnchor="family-overview-section" class="family-section">
         <div class="section-hdr">
           <span class="section-title">{{ t().dashboard.familyOverview }}</span>
@@ -493,7 +494,7 @@
         </div>
       </div>
 
-      <!-- ── BOTTOM ROW: Records + Meds + Schedule ── -->
+      <!-- â”€â”€ BOTTOM ROW: Records + Meds + Schedule â”€â”€ -->
       <div class="bot-row">
 
         <!-- Recent Medical Records -->
@@ -533,7 +534,7 @@
                 <p class="rec-name">{{ rec.title }}</p>
                 <p class="rec-meta">
                   {{ rec.date }}
-                  @if (rec.source) { <span>· {{ rec.source }}</span> }
+                  @if (rec.source) { <span>Â· {{ rec.source }}</span> }
                 </p>
               </div>
               <span class="pill pill-green-sm rec-status">{{ rec.status }}</span>
@@ -586,7 +587,7 @@
               </div>
               <div class="med-info">
                 <p class="med-name">{{ rem.medicineName }} <span class="med-dose">{{ rem.dosage }}</span></p>
-                <p class="med-freq">1 tablet · {{ rem.frequency }}</p>
+                <p class="med-freq">1 tablet Â· {{ rem.frequency }}</p>
               </div>
               <div class="med-next">
                 <i class="fa-regular fa-bell med-bell"></i>
@@ -644,7 +645,7 @@
 
       </div><!-- /bot-row -->
 
-      <!-- ── FOOTER HEALTH TIP ── -->
+      <!-- â”€â”€ FOOTER HEALTH TIP â”€â”€ -->
       <div class="tip-bar">
         <div class="tip-ico-wrap">
           <i class="fa-solid fa-lightbulb tip-ico"></i>
@@ -653,14 +654,14 @@
           <strong>{{ t().dashboard.healthTip }}</strong>
           {{ t().dashboard.healthTipText }}
         </p>
-        <a href="#" class="tip-link">{{ t().dashboard.learnMore }} →</a>
+        <a href="#" class="tip-link">{{ t().dashboard.learnMore }} â†’</a>
       </div>
 
     </div><!-- /dsh-body -->
   </div><!-- /dsh-main -->
 </div><!-- /dsh -->
 
-<!-- ═══════════ PROFILE PICKER DIALOG ═══════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â• PROFILE PICKER DIALOG â•â•â•â•â•â•â•â•â•â•â• -->
 @if (profilePickerOpen()) {
 <div class="modal-backdrop" (click)="profilePickerOpen.set(false)">
   <div class="modal-box" (click)="$event.stopPropagation()">
@@ -704,7 +705,7 @@
 </div>
 }
 
-<!-- ═══════════ MEDICAL REPORT DIALOG ═══════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â• MEDICAL REPORT DIALOG â•â•â•â•â•â•â•â•â•â•â• -->
 @if (reportDialogOpen()) {
 <div class="modal-backdrop" (click)="closeReportDialog()">
   <div class="modal-box" (click)="$event.stopPropagation()">
@@ -721,7 +722,7 @@
         </div>
         <div>
           <h2 class="modal-title">{{t().dashboard.medicalReport}}</h2>
-          <p class="modal-subtitle">{{t().dashboard.chooseMedicalType}}</p>
+          <p class="modal-subtitle">{{t().dashboard.completeHistory}}</p>
         </div>
       </div>
       <button type="button" class="modal-close-btn"
@@ -732,28 +733,7 @@
 
     @if (!reportGenerating()) {
     <div class="report-options">
-      <label class="report-option" [class.report-option--selected]="selectedReportType() === 'DoctorSummary'"
-        (click)="selectedReportType.set('DoctorSummary')">
-        <div class="report-option-radio">
-          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'DoctorSummary'">
-          </div>
-        </div>
-        <div class="report-option-body">
-          <div class="report-option-title">
-            <i class="fa-solid fa-user-doctor"></i>
-            {{ t().dashboard.doctorSummary }}
-            <span class="report-option-badge">{{t().dashboard.pagesRange}}</span>
-          </div>
-          <p class="report-option-desc">{{t().dashboard.doctorSummaryDesc}}</p>
-        </div>
-      </label>
-
-      <label class="report-option" [class.report-option--selected]="selectedReportType() === 'CompleteHistory'"
-        (click)="selectedReportType.set('CompleteHistory')">
-        <div class="report-option-radio">
-          <div class="report-option-dot" [class.report-option-dot--active]="selectedReportType() === 'CompleteHistory'">
-          </div>
-        </div>
+      <div class="report-option report-option--selected">
         <div class="report-option-body">
           <div class="report-option-title">
             <i class="fa-solid fa-folder-open"></i>
@@ -761,7 +741,7 @@
           </div>
           <p class="report-option-desc">{{t().dashboard.completeHistoryDesc}}</p>
         </div>
-      </label>
+      </div>
     </div>
 
     <div class="modal-footer">
@@ -787,7 +767,7 @@
 </div>
 }
 
-<!-- ═══════════ FAMILY SUMMARY MODAL ═══════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â• FAMILY SUMMARY MODAL â•â•â•â•â•â•â•â•â•â•â• -->
 @if (familySummaryOpen()) {
 <div class="modal-backdrop" (click)="closeFamilySummary()">
   <div class="modal-box" (click)="$event.stopPropagation()">
@@ -830,10 +810,11 @@
     <div class="modal-footer">
       <button type="button" class="btn-ghost" (click)="closeFamilySummary()">{{ t().common.close }}</button>
       <button type="button" class="btn-primary"
-        (click)="closeFamilySummary(); selectedReportType.set('DoctorSummary'); openReportDialog(familySummaryProfile()!.userHealthProfileId)">
+        (click)="closeFamilySummary(); openReportDialog(familySummaryProfile()!.userHealthProfileId)">
         <i class="fa-solid fa-file-medical"></i> {{ t().dashboard.generateAndDown }}
       </button>
     </div>
   </div>
 </div>
 }
+

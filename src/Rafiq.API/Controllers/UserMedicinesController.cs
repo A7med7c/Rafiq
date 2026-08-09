@@ -109,7 +109,8 @@ public sealed class UserMedicinesController(
                 body.Duration,
                 body.Notes,
                 body.ImagePath,
-                body.Source),
+                body.Source,
+                body.BypassFamilyDuplicateCheck),
             cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
     }
@@ -198,7 +199,8 @@ public sealed record AddUserMedicineBody(
     string Duration,
     string? Notes,
     string? ImagePath,
-    MedicineSource Source);
+    MedicineSource Source,
+    bool BypassFamilyDuplicateCheck = false);
 
 /// <summary>Request body for adding medicines from a prescription.</summary>
 public sealed record AddFromPrescriptionBody(List<Guid> PrescriptionMedicineIds);

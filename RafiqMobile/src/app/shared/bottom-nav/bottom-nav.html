@@ -3,8 +3,20 @@
     <i class="fa-solid fa-house bn-ico"></i>
     <span class="bn-label">{{ t().bottomNav.home }}</span>
   </a>
-  <a class="bn-item" routerLink="/medical-records" routerLinkActive="bn-item--active">
-    <i class="fa-solid fa-file-waveform bn-ico"></i>
+  <a class="bn-item" routerLink="/medical-records" routerLinkActive="bn-item--active"
+     [class.bn-item--processing]="analysisState.sidebarStatus() === 'processing'"
+     [class.bn-item--completed]="analysisState.sidebarStatus() === 'completed'"
+     [class.bn-item--failed]="analysisState.sidebarStatus() === 'failed'">
+    <div class="bn-ico-wrap">
+      <i class="fa-solid fa-file-waveform bn-ico"></i>
+      @if (analysisState.sidebarStatus() === 'processing') {
+        <span class="bn-indicator bn-indicator--processing" aria-hidden="true"></span>
+      } @else if (analysisState.sidebarStatus() === 'completed') {
+        <span class="bn-indicator bn-indicator--completed" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+      } @else if (analysisState.sidebarStatus() === 'failed') {
+        <span class="bn-indicator bn-indicator--failed" aria-hidden="true"><i class="fa-solid fa-circle-exclamation"></i></span>
+      }
+    </div>
     <span class="bn-label">{{ t().bottomNav.records }}</span>
   </a>
   <a class="bn-item" routerLink="/appointments" routerLinkActive="bn-item--active">

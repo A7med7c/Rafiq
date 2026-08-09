@@ -9,10 +9,12 @@ import { TourEngineService } from '../../../core/assistant/services/tour-engine.
 import { AssistantAnchorDirective } from '../../../core/assistant/directives/assistant-anchor.directive';
 import { AvatarEngineComponent } from '../../../Components/avatar-engine/avatar-engine';
 
+import { CustomSelectComponent, SelectOption } from '../../../Components/ui/custom-select/custom-select';
+
 @Component({
   selector: 'app-onboarding-step1b',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent],
+  imports: [CommonModule, ReactiveFormsModule, AssistantAnchorDirective, AvatarEngineComponent, CustomSelectComponent],
   templateUrl: './onboarding-step1b.html',
   styleUrl: './onboarding-step1b.css',
 })
@@ -25,14 +27,10 @@ export class OnboardingStep1b implements OnInit, OnDestroy {
   protected readonly t         = this.l10n.t;
 
   private valueSub?: Subscription;
-  dropdownOpen = false;
-  dropdownTop = 0;
-  dropdownLeft = 0;
-  dropdownWidth = 0;
 
-  readonly steps = computed(() => this.t().onboarding.stepperLabels.map(label => ({ label })));
+  readonly steps = computed(() => this.t().onboarding.stepperLabels.map((label: string) => ({ label })));
 
-  readonly bloodTypes = [
+  readonly bloodTypeSelectOptions: SelectOption[] = [
     { value: BloodType.APositive,  label: 'A+'  },
     { value: BloodType.ANegative,  label: 'A-'  },
     { value: BloodType.BPositive,  label: 'B+'  },
@@ -69,42 +67,6 @@ export class OnboardingStep1b implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.valueSub?.unsubscribe();
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.select-shell') && !target.closest('.dropdown-portal')) {
-      this.dropdownOpen = false;
-    }
-  }
-
-  toggleDropdown(trigger: HTMLElement): void {
-    if (this.dropdownOpen) {
-      this.dropdownOpen = false;
-      return;
-    }
-    const rect = trigger.getBoundingClientRect();
-    this.dropdownTop = rect.bottom + 6;
-    this.dropdownLeft = rect.left;
-    this.dropdownWidth = rect.width;
-    this.dropdownOpen = true;
-  }
-
-  selectBloodType(val: number, event: Event): void {
-    event.stopPropagation();
-    this.form.get('bloodType')?.setValue(val);
-    this.form.get('bloodType')?.markAsTouched();
-    this.form.get('bloodType')?.markAsDirty();
-    this.saveState();
-    this.dropdownOpen = false;
-  }
-
-  getSelectedBloodTypeLabel(): string {
-    const val = this.form.get('bloodType')?.value;
-    if (val === '' || val === null || val === undefined) return '';
-    const found = this.bloodTypes.find(b => b.value === Number(val));
-    return found ? found.label : '';
   }
 
   private saveState(): void {

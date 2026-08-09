@@ -1,5 +1,6 @@
 import { Injectable, NgZone, computed, effect, inject, isDevMode, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth-service';
 import { AppointmentsService } from './appointments.service';
 import { MedicationRemindersService } from './medication-reminders.service';
@@ -8,8 +9,10 @@ import { NotificationSoundService } from './notification-sound.service';
 import { PersistedNotificationsService } from './persisted-notifications.service';
 import { LocalizationService } from './localization.service';
 import { ReminderBootstrapService } from './reminder-bootstrap.service';
+import { MedicationReminderLogDto } from '../Modles/medication-reminder.models';
 
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { Capacitor } from '@capacitor/core';
 
 export interface AppNotification {
   id: string;
@@ -62,6 +65,17 @@ export class NotificationService {
   private readonly notificationSoundService = inject(NotificationSoundService);
   private readonly persistedSvc = inject(PersistedNotificationsService);
   private readonly reminderBootstrap = inject(ReminderBootstrapService);
+
+  /**
+   * On Android the native AlarmManager pipeline (AlarmSchedulerPlugin →
+   * AlarmReceiver → AlarmService → AlarmActivity) owns scheduled medication /
+   * appointment reminders. We must NOT also fire an immediate LocalNotifications
+   * reminder here, or it competes with (and duplicates) the native alarm and
+   * masks it as a plain silent notification. LocalNotifications is still used for
+   * ordinary instant system/document notifications on all platforms, and remains
+   * the reminder fallback on web/iOS.
+   */
+  private readonly isAndroid = Capacitor.getPlatform() === 'android';
 
   private readonly localization = inject(LocalizationService);
 
@@ -186,11 +200,8 @@ export class NotificationService {
       const reminderEvents             = this.signalr.reminderEvents();
       const notificationEvents         = this.signalr.notificationEvents();
       const appointmentReminderEvents  = this.signalr.appointmentReminderEvents();
-      const docCompletedEvents         = this.signalr.documentAnalysisCompletedEvents();
-      const docFailedEvents            = this.signalr.documentAnalysisFailedEvents();
 
-      if (!reminderEvents.length && !notificationEvents.length && !appointmentReminderEvents.length
-          && !docCompletedEvents.length && !docFailedEvents.length) {
+      if (!reminderEvents.length && !notificationEvents.length && !appointmentReminderEvents.length) {
         return;
       }
 
@@ -204,32 +215,6 @@ export class NotificationService {
 
       if (appointmentReminderEvents.length) {
         this.ingestAppointmentReminderEvents(this.signalr.drainAppointmentReminderEvents());
-      }
-
-      if (docCompletedEvents.length) {
-        const events = this.signalr.drainDocumentAnalysisCompletedEvents();
-        const t = this.localization.t().documentAnalysis;
-        events.forEach(e => {
-          this.emitNativeNotification({
-            id: crypto.randomUUID(),
-            title: `${t.analysisComplete}: ${e.title}`,
-            body: t.analysisCompleteBody,
-            createdAt: new Date(),
-          });
-        });
-      }
-
-      if (docFailedEvents.length) {
-        const events = this.signalr.drainDocumentAnalysisFailedEvents();
-        const t = this.localization.t().documentAnalysis;
-        events.forEach(e => {
-          this.emitNativeNotification({
-            id: crypto.randomUUID(),
-            title: `${t.analysisFailed}: ${e.title}`,
-            body: e.failureReason || t.analysisFailedBody,
-            createdAt: new Date(),
-          });
-        });
       }
     });
   }
@@ -278,6 +263,42 @@ export class NotificationService {
 
   toggleNotificationCenter(): void {
     this._notificationCenterOpen.update(isOpen => !isOpen);
+  }
+
+  /**
+   * Checks whether any medications became due while the app was closed and
+   * surfaces them as in-app reminder popups.
+   *
+   * Called on startup (after consumePendingNativeAction resolves) and every
+   * time the app returns to the foreground.  SignalR does not re-deliver events
+   * missed during the killed period, so this is the only recovery path.
+   *
+   * The server's `isActionable` flag is authoritative: exactly one log per
+   * medicine per day is actionable at any moment, so calling this multiple times
+   * is safe — processedReminderIds deduplicates repeated calls for the same log.
+   */
+  async checkMissedReminders(): Promise<void> {
+    if (!this.authService.isLoggedIn) return;
+    try {
+      const logs = await firstValueFrom(this.medicationRemindersService.getToday());
+      const actionable = logs.filter((log: MedicationReminderLogDto) => log.isActionable);
+      for (const log of actionable) {
+        const payload: MedicationReminderNotificationPayload = {
+          reminderId:       log.id,
+          medicineId:       log.medicineReminderId,
+          medicineName:     log.medicineName,
+          genericName:      '',
+          strength:         '',
+          dosage:           log.dosage || '',
+          reminderTime:     log.reminderTime,
+          status:           log.status,
+          notificationText: '',
+        };
+        this.recordReminder(payload);
+      }
+    } catch (e) {
+      console.error('[NotificationService] checkMissedReminders failed', e);
+    }
   }
 
   acknowledgeReminder(reminderId?: string): void {
@@ -448,9 +469,28 @@ export class NotificationService {
       sourceId: reminder.reminderId,
     });
 
-    this._reminderQueue.update(queue => [...queue, reminder]);
+    // If the same medicine already has a stage queued (e.g. user missed the before-
+    // reminder and the due-reminder both arrive on reconnect), replace it so only
+    // the latest/most-urgent stage is shown — not one screen per stage.
+    this._reminderQueue.update(queue => {
+      const sameIdx = queue.findIndex(r => r.medicineId === reminder.medicineId);
+      if (sameIdx !== -1) {
+        const updated = [...queue];
+        updated[sameIdx] = reminder;
+        return updated;
+      }
+      return [...queue, reminder];
+    });
     this._reminderModalOpen.set(true);
 
+    // Post a system notification on all platforms so the Android notification bar
+    // shows an entry even when the app is open.  On Android, when AlarmManager
+    // also fires at the scheduled time, AlarmReceiver posts a notification at the
+    // same numeric ID (stableId = same 31-polynomial hash of reminderId).
+    // AlarmService's foreground notification owns that slot while the service runs,
+    // so this LocalNotifications call is a safe no-op in that window — no
+    // duplication.  When SignalR delivers missed reminders (AlarmService already
+    // stopped), this call succeeds and gives the user a proper system notification.
     this.emitNativeNotification({
       id: crypto.randomUUID(),
       title: this.localization.t().notifications.medicationReminderToast,
@@ -515,16 +555,22 @@ export class NotificationService {
     this._appointmentReminderQueue.update(q => [...q, event]);
     this._appointmentReminderModalOpen.set(true);
 
-    this.emitNativeNotification({
-      id: crypto.randomUUID(),
-      title: event.title,
-      body: event.notificationText || nc.appointmentWithProviderBody.replace('{title}', event.title).replace('{provider}', event.provider),
-      createdAt: new Date(),
-      sourceId: event.appointmentId,
-      action: 'open-appointment'
-    });
-
-
+    // Android: native AlarmManager alarm owns appointment reminders. Suppress the
+    // competing immediate LocalNotifications reminder; keep it on web/iOS.
+    if (!this.isAndroid) {
+      this.emitNativeNotification({
+        id: crypto.randomUUID(),
+        title: event.title,
+        body: event.notificationText || nc.appointmentWithProviderBody.replace('{title}', event.title).replace('{provider}', event.provider),
+        createdAt: new Date(),
+        sourceId: event.appointmentId,
+        action: 'open-appointment'
+      });
+    } else {
+      // Ensure appointment changes re-enter the native scheduling path so future
+      // occurrences stay mirrored in AlarmManager.
+      void this.reminderBootstrap.forceSync();
+    }
 
     this.notificationSoundService.play();
 

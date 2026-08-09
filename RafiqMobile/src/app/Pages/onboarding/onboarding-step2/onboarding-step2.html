@@ -124,14 +124,10 @@
                   />
                 </div>
 
-                <div class="severity-field">
-                  <div #sevTrigger class="severity-shell" [ngClass]="getSeverityClass(getSeverityValue($index))" (click)="toggleSeverityDropdown($index, sevTrigger)">
-                    <span class="severity-label">{{ getSeverityLabel(getSeverityValue($index)) }}</span>
-                    <svg class="severity-arrow" [class.open]="openDropdownIndex === $index" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                  </div>
-                </div>
+                <app-custom-select
+                  formControlName="severity"
+                  [options]="severityOptions"
+                ></app-custom-select>
 
                 <button type="button" class="delete-btn" (click)="removeAllergy($index)" [attr.aria-label]="t().onboarding.step2.removeAllergy">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

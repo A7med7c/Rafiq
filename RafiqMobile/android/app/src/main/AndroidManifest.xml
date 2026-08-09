@@ -23,7 +23,13 @@
             </intent-filter>
         </activity>
 
-        <!-- Full-screen alarm activity shown over the lock screen -->
+        <!-- Full-screen alarm activity shown over the lock screen.
+             Uses AppTheme.NoActionBar, NOT AppTheme.NoActionBarLaunch: the Launch theme
+             extends Theme.SplashScreen with android:background=@drawable/splash (the app
+             launch logo), which is only meant for MainActivity's initial frame. Using it here
+             made the splash logo bleed through/overlap the alarm screen's own programmatic
+             content. NoActionBar has no action bar and no background image, so the activity's
+             own dark navy background (set in renderAlarmUi()) renders cleanly. -->
         <activity
             android:name=".AlarmActivity"
             android:exported="false"
@@ -32,7 +38,7 @@
             android:turnScreenOn="true"
             android:excludeFromRecents="true"
             android:taskAffinity=""
-            android:theme="@style/AppTheme.NoActionBarLaunch" />
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <!-- Foreground service: looping alarm sound + vibration -->
         <service
@@ -48,6 +54,13 @@
                 <action android:name="com.rafiq.mobile.FIRE_ALARM" />
             </intent-filter>
         </receiver>
+
+        <!-- BroadcastReceiver: handles Taken/I Attended/Snooze from the outer system
+             notification and from AlarmActivity's buttons, entirely natively — never
+             opens MainActivity. Explicit-component only, no intent-filter needed. -->
+        <receiver
+            android:name=".AlarmActionReceiver"
+            android:exported="false" />
 
         <!-- BroadcastReceiver: re-schedules alarms after device reboot -->
         <receiver
@@ -81,6 +94,11 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Lets the app request battery-optimization exemption directly via an intent
+         (ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS) so AlarmManager alarms are
+         not cancelled by OEM battery managers when the app is closed. Without this
+         permission the intent is silently rejected on Android 6+. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Exact alarms: USE_EXACT_ALARM (API 33+, no user grant needed) -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <!-- Fallback for API 31-32: requires user to grant from Settings -->

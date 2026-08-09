@@ -57,7 +57,7 @@ export class AdminUsersComponent implements OnInit {
       { label: this.copy().total, value: data.totalUsers, icon: 'fa-users', tone: 'cyan' },
       { label: this.copy().active, value: data.activeUsers, icon: 'fa-user-check', tone: 'green' },
       { label: this.copy().inactive, value: data.totalUsers - data.activeUsers, icon: 'fa-user-lock', tone: 'orange' },
-      { label: 'New This Month', value: data.newRegistrationsThisMonth, icon: 'fa-user-plus', tone: 'purple' }
+      { label: this.copy().newThisMonth, value: data.newRegistrationsThisMonth, icon: 'fa-user-plus', tone: 'purple' }
     ];
   });
 
@@ -162,6 +162,12 @@ export class AdminUsersComponent implements OnInit {
 
   fullName(user: AdminUser): string {
     return `${user.firstName} ${user.lastName}`.trim();
+  }
+
+  getRoleLabel(role: string): string {
+    if (role === 'Admin') return this.copy().roleAdmin;
+    if (role === 'User') return this.copy().roleUser;
+    return role;
   }
 
   formatDate(value: string): string {

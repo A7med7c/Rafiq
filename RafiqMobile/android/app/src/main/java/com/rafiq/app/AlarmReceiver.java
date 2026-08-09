@@ -8,9 +8,14 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
+import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
+
+import java.util.List;
 
 /**
  * BroadcastReceiver fired by AlarmManager at the exact scheduled reminder time.
@@ -27,7 +32,10 @@ import androidx.core.app.NotificationCompat;
 public class AlarmReceiver extends BroadcastReceiver {
 
     public static final String ACTION_FIRE_ALARM = "com.rafiq.mobile.FIRE_ALARM";
-    static final String CHANNEL_ID_HEADS_UP = "rafiq_reminder_channel";
+    // v2 channel: the original channel may already be persisted on-device without
+    // an alarm sound. A new channel id forces Android to create it fresh with the
+    // correct high-importance + alarm-sound configuration.
+    static final String CHANNEL_ID_HEADS_UP = "rafiq_reminder_channel_v2";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -41,24 +49,28 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         if (isBlank(reminderId)) return;
 
+        Log.i(AlarmDiagnostics.TAG, "AlarmReceiver.onReceive REACHED reminderId=" + reminderId
+            + " type=" + reminderType + " scheduledAt=" + scheduledAt
+            + " occId=" + AlarmDiagnostics.occurrenceId(reminderId, scheduledAt));
+
         title = valueOrDefault(title, "Reminder");
         body = valueOrDefault(body, "Time for your reminder");
         reminderType = valueOrDefault(reminderType, "Medication");
 
-        // 1. Start foreground alarm service (sound + vibration)
-        Intent serviceIntent = new Intent(context, AlarmService.class);
-        serviceIntent.putExtra(AlarmActivity.EXTRA_REMINDER_ID, reminderId);
-        serviceIntent.putExtra(AlarmActivity.EXTRA_REMINDER_TYPE, reminderType);
-        serviceIntent.putExtra(AlarmActivity.EXTRA_TITLE, title);
-        serviceIntent.putExtra(AlarmActivity.EXTRA_BODY, body);
-        serviceIntent.putExtra(AlarmActivity.EXTRA_SCHEDULED_AT, scheduledAt);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent);
-        } else {
-            context.startService(serviceIntent);
-        }
-
-        // 2. Build full-screen intent → AlarmActivity over lock screen
+        // ── Step 1: Build and post the heads-up notification FIRST. ──────────────
+        //
+        // ORDERING IS CRITICAL: on Android 12+ (API 31+), startForegroundService()
+        // can throw ForegroundServiceStartNotAllowedException when the app process
+        // was killed and background-start restrictions are in effect.  Even though
+        // setAlarmClock() grants a temporary exemption, OEM battery managers
+        // (Samsung OneUI, Xiaomi MIUI, Oppo ColorOS, etc.) frequently override it
+        // for apps swiped from Recents.  If the notification were posted AFTER the
+        // service start (original order), an uncaught exception on that line would
+        // abort onReceive() before nm.notify() was ever reached — the user would
+        // get no notification at all.  Posting first guarantees the notification
+        // reaches the user regardless of whether AlarmService starts successfully.
+        //
+        // 1a. Build full-screen intent → AlarmActivity over the lock screen.
         Intent alarmIntent = new Intent(context, AlarmActivity.class);
         alarmIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         alarmIntent.putExtra(AlarmActivity.EXTRA_REMINDER_ID, reminderId);
@@ -72,24 +84,65 @@ public class AlarmReceiver extends BroadcastReceiver {
             : PendingIntent.FLAG_UPDATE_CURRENT;
         PendingIntent fullScreenPi = PendingIntent.getActivity(context, stableId(reminderId), alarmIntent, piFlags);
 
-        // 3. Post heads-up notification with full-screen intent
+        // 1b. Build and post the notification. Actions target AlarmActionReceiver
+        //     directly so tapping them from the tray processes the action entirely
+        //     in the background — the main Rafiq app UI is never forced open.
         createHeadsUpChannel(context);
-        Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_HEADS_UP)
+        boolean isAppointment = "Appointment".equalsIgnoreCase(reminderType);
+        String takeLabel = isAppointment ? "I Attended" : "Taken";
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID_HEADS_UP)
             .setSmallIcon(android.R.drawable.ic_lock_silent_mode_off)
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setFullScreenIntent(fullScreenPi, true)  // triggers lock-screen activity
+            .setFullScreenIntent(fullScreenPi, true)
             .setOngoing(true)
             .setAutoCancel(false)
-            .build();
+            .addAction(0, takeLabel, AlarmActionReceiver.buildTakePendingIntent(context, reminderId, reminderType));
+
+        if (!isAppointment) {
+            builder.addAction(0, "Snooze 10 min",
+                AlarmActionReceiver.buildSnoozePendingIntent(context, reminderId, reminderType, title, body, scheduledAt));
+        }
+
+        Notification notification = builder.build();
 
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        // Use reminderId hashCode as notification ID so each reminder has a unique notification
         if (nm != null) {
             nm.notify(stableId(reminderId), notification);
+            Log.i(AlarmDiagnostics.TAG, "AlarmReceiver: notification posted for reminderId=" + reminderId);
+        }
+
+        // ── Step 2: Start foreground alarm service (sound + vibration). ──────────
+        //
+        // Wrapped in try-catch so a background-start rejection (Android 12+ OEM
+        // restriction) does NOT abort onReceive() — the notification was already
+        // posted above, so the user will still see the reminder even if sound and
+        // vibration are unavailable.  AlarmService.startForeground() replaces the
+        // notification above with its own copy (same ID) once it starts, preserving
+        // the action buttons.
+        Intent serviceIntent = new Intent(context, AlarmService.class);
+        serviceIntent.putExtra(AlarmActivity.EXTRA_REMINDER_ID, reminderId);
+        serviceIntent.putExtra(AlarmActivity.EXTRA_REMINDER_TYPE, reminderType);
+        serviceIntent.putExtra(AlarmActivity.EXTRA_TITLE, title);
+        serviceIntent.putExtra(AlarmActivity.EXTRA_BODY, body);
+        serviceIntent.putExtra(AlarmActivity.EXTRA_SCHEDULED_AT, scheduledAt);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent);
+            } else {
+                context.startService(serviceIntent);
+            }
+            Log.i(AlarmDiagnostics.TAG, "AlarmReceiver → AlarmService start requested for reminderId=" + reminderId);
+        } catch (Exception e) {
+            // Background-start restriction prevented AlarmService from starting.
+            // The notification was already posted — the user will see the reminder
+            // without sound/vibration.  Log loudly so this is visible in logcat.
+            Log.w(AlarmDiagnostics.TAG, "AlarmReceiver: AlarmService start BLOCKED (background restriction) "
+                + "for reminderId=" + reminderId + " — notification is still visible", e);
         }
     }
 
@@ -126,11 +179,18 @@ public class AlarmReceiver extends BroadcastReceiver {
             ? PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
             : PendingIntent.FLAG_UPDATE_CURRENT;
 
+        // Occurrence-unique request code: multiple daily occurrences of one
+        // reminder each get their own AlarmManager entry instead of overwriting.
+        int occId = AlarmDiagnostics.occurrenceId(reminderId, scheduledAt);
+
         PendingIntent pi = PendingIntent.getBroadcast(
-            context, stableId(reminderId), intent, piFlags);
+            context, occId, intent, piFlags);
 
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (am == null) return;
+        if (am == null) {
+            Log.e(AlarmDiagnostics.TAG, "AlarmManager unavailable; cannot schedule reminderId=" + reminderId);
+            return;
+        }
 
         Intent showIntent = new Intent(context, AlarmActivity.class);
         showIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -140,8 +200,9 @@ public class AlarmReceiver extends BroadcastReceiver {
         showIntent.putExtra(AlarmActivity.EXTRA_BODY, body);
         showIntent.putExtra(AlarmActivity.EXTRA_SCHEDULED_AT, scheduledAt);
         PendingIntent showPi = PendingIntent.getActivity(
-            context, stableId(reminderId), showIntent, piFlags);
+            context, occId, showIntent, piFlags);
 
+        boolean scheduled = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             AlarmManager.AlarmClockInfo alarmClockInfo =
                 new AlarmManager.AlarmClockInfo(triggerAtMillis, showPi);
@@ -151,29 +212,48 @@ public class AlarmReceiver extends BroadcastReceiver {
         } else {
             am.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi);
         }
+
+        Log.i(AlarmDiagnostics.TAG, "AlarmReceiver.scheduleAlarm reminderId=" + reminderId
+            + " type=" + reminderType + " scheduledAt=" + scheduledAt
+            + " occId=" + occId + " triggerAtMillis=" + triggerAtMillis
+            + " setAlarmClock=" + scheduled);
     }
 
     /**
-     * Cancels a previously scheduled alarm for a reminder.
+     * Cancels EVERY scheduled occurrence for a reminder. The occurrence fire
+     * times are read back from NativeReminderStore so each occurrence's
+     * PendingIntent (keyed by reminderId + scheduledAt) is cancelled.
      */
     public static void cancelAlarm(Context context, String reminderId) {
         if (isBlank(reminderId)) return;
 
-        Intent intent = new Intent(context, AlarmReceiver.class);
-        intent.setAction(ACTION_FIRE_ALARM);
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
         int piFlags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
             ? PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_NO_CREATE
             : PendingIntent.FLAG_NO_CREATE;
 
-        PendingIntent pi = PendingIntent.getBroadcast(
-            context, stableId(reminderId), intent, piFlags);
+        List<String> scheduledAts = NativeReminderStore.getScheduledAtsForReminder(context, reminderId);
+        // Always include a null-scheduledAt fallback so a legacy/plain entry is cleared too.
+        scheduledAts.add(null);
 
-        if (pi != null) {
-            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            if (am != null) am.cancel(pi);
-            pi.cancel();
+        int cancelled = 0;
+        for (String scheduledAt : scheduledAts) {
+            Intent intent = new Intent(context, AlarmReceiver.class);
+            intent.setAction(ACTION_FIRE_ALARM);
+
+            int occId = AlarmDiagnostics.occurrenceId(reminderId, scheduledAt);
+            PendingIntent pi = PendingIntent.getBroadcast(context, occId, intent, piFlags);
+            if (pi != null) {
+                if (am != null) am.cancel(pi);
+                pi.cancel();
+                cancelled++;
+            }
         }
+
+        NativeReminderStore.removeAllForReminder(context, reminderId);
+        Log.i(AlarmDiagnostics.TAG, "AlarmReceiver.cancelAlarm reminderId=" + reminderId
+            + " cancelledOccurrences=" + cancelled);
     }
 
     private static void createHeadsUpChannel(Context context) {
@@ -188,6 +268,19 @@ public class AlarmReceiver extends BroadcastReceiver {
             );
             channel.setDescription("Medication and appointment reminders");
             channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{ 0, 1000, 500, 1000 });
+
+            // Alarm sound with USAGE_ALARM attributes so the channel itself is
+            // audible even if the AlarmService MediaPlayer is unavailable.
+            Uri alarmSound = android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI;
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
+            if (alarmSound != null) {
+                channel.setSound(alarmSound, audioAttributes);
+            }
             nm.createNotificationChannel(channel);
         }
     }

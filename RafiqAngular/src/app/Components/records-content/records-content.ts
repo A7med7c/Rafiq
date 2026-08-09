@@ -117,7 +117,7 @@ export interface Toast {
   type: 'success' | 'error';
 }
 
-const PAGE_SIZE = 2;
+const PAGE_SIZE = 5;
 const FILTER_SORT_STORAGE_KEY = 'rafiq-medical-records-sort';
 
 const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
@@ -129,10 +129,13 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
   sortBy
 });
 
+import { CustomSelectComponent, SelectOption } from '../ui/custom-select/custom-select';
+import { DatePickerComponent } from '../ui/date-picker/date-picker';
+
 @Component({
   selector: 'app-records-content',
   standalone: true,
-  imports: [CommonModule, FormsModule, AssistantAnchorDirective, MedicalWarningCardComponent],
+  imports: [CommonModule, FormsModule, AssistantAnchorDirective, MedicalWarningCardComponent, CustomSelectComponent, DatePickerComponent],
   templateUrl: './records-content.html',
   styleUrl: '../../Pages/medical-records/medical-records.css',
   encapsulation: ViewEncapsulation.None,
@@ -167,6 +170,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   _duplicateFile: File | null = null;
   _duplicateType: 'lab' | 'imaging' | 'prescription' | 'general' | 'medicine' | 'medicine-save' | null = null;
   _duplicateDesc: string = '';
+
+  readonly showSameProfileDuplicateDialog = signal(false);
 
   readonly allRecords = signal<UnifiedMedicalRecord[]>([]);
   readonly loading = signal(true);
@@ -241,6 +246,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   private _destroy$ = new Subject<void>();
   private activeUploads = new Map<string, { sub: Subscription, type: UploadCardKey | 'general' | 'medicine' }>();
   readonly reviewForm = signal<ReviewForm | null>(null);
+  readonly showConfirmCloseModal = signal(false);
+  private _confirmCloseTarget: 'review' | 'scan' | 'general' | null = null;
   readonly reviewSaving = signal(false);
   readonly generalUploadFormOpen = signal(false);
   generalUploadForm: GeneralUploadForm = this.emptyGeneralUploadForm();
@@ -319,12 +326,41 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       this.documentAnalysisState.clearPendingReview();
     });
 
+    // Open manual entry modal when "Manual Entry" is clicked on a failed card
+    effect(() => {
+      const req = this.documentAnalysisState.manualEntryRequest();
+      if (!req) return;
+      this.openManualEntry(req.uploadType);
+      if (req.imagePath) {
+        if (req.uploadType === 'medicine') {
+          this.scanForm.imagePath = req.imagePath;
+        } else {
+          const rf = this.reviewForm();
+          if (rf) this.reviewForm.set({ ...rf, imagePath: req.imagePath });
+        }
+      }
+      this.documentAnalysisState.clearManualEntryRequest();
+    });
+
+    // When on medical records, if there is a failed document in global state, open the existing failure dialog
+    effect(() => {
+      const failedDoc = this.documentAnalysisState.trackedDocuments().find(d => d.status === 'Failed');
+      if (failedDoc && !this.showAiFailDialog() && !this.showDuplicateWarningDialog() && !this.reviewForm()) {
+        this._failedFile = failedDoc.rawFile ?? null;
+        this._failedType = failedDoc.uploadType;
+        this._failedDesc = failedDoc.rawDesc ?? '';
+        this.aiFailIsUnreadable.set(failedDoc.failureReason?.toLowerCase().includes('unreadable') ?? false);
+        this.showAiFailDialog.set(true);
+      }
+    });
+
     effect(() => {
       const open = !!(
         this.selectedRecord() || this.deleteTarget() || this.reviewForm() ||
         this.generalUploadFormOpen() ||
         this.scanResult() || this.showReminderPromptModal() || this.lightboxUrl() ||
-        this.showAiFailDialog() || this.selectedWarningRecord()
+        this.showAiFailDialog() || this.selectedWarningRecord() ||
+        this.showDuplicateWarningDialog() || this.showSameProfileDuplicateDialog()
       );
       const container = this._doc.querySelector('.dsh-body') as HTMLElement | null;
       if (container) {
@@ -767,7 +803,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     return this.getImageUrl(record.rawRecord?.imageUrl ?? record.rawRecord?.imagePath ?? null);
   }
 
-  openLightbox(url: string): void { this.lightboxUrl.set(url); }
+  openLightbox(url: string): void {
+    if (url.toLowerCase().includes('.pdf')) { window.open(url, '_blank'); return; }
+    this.lightboxUrl.set(url);
+  }
   closeLightbox(): void { this.lightboxUrl.set(null); }
 
   triggerUpload(type: string): void {
@@ -798,6 +837,20 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   cancelGeneralUpload(): void {
     if (this.uploadLoading()) return;
+    if (this.generalUploadFormOpen()) {
+      // General upload has text/file fields
+      const isDirty = this.generalUploadForm.file !== null || this.generalUploadForm.description.trim() !== '';
+      if (isDirty) {
+        this._confirmCloseTarget = 'general';
+        this.showConfirmCloseModal.set(true);
+        return;
+      }
+    }
+    this.forceCloseGeneralUpload();
+  }
+
+  private forceCloseGeneralUpload(): void {
+    this.showConfirmCloseModal.set(false);
     this.generalUploadForm = this.emptyGeneralUploadForm();
     this.generalUploadFormOpen.set(false);
   }
@@ -834,6 +887,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
               this.showDuplicateWarningDialog.set(true);
               return;
            }
+           if (res.errorCode === 'DUPLICATE_DOCUMENT' || res.errorCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+              this.uploadLoading.set(false);
+              this.setUploading('general', false);
+              this.showSameProfileDuplicateDialog.set(true);
+              return;
+           }
            this.uploadLoading.set(false);
            this.setUploading('general', false);
            return;
@@ -846,15 +905,24 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
         const d = res?.data;
         if (d?.documentId) {
-          this.documentAnalysisState.trackDocument(d.documentId, d.title, d.imagePath, this.profileId);
+          this.documentAnalysisState.trackDocument(d.documentId, d.title, d.imagePath, this.profileId, file, description);
         }
       },
       error: err => {
         this.uploadLoading.set(false);
         this.setUploading('general', false);
-        this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.uploadFailed), 'error');
+        const errCode = err?.error?.errorCode as string | undefined;
+        if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+          this.showSameProfileDuplicateDialog.set(true);
+        } else {
+          this.showToast(this.localizeApiMessage(err?.error?.message ?? this.t().records.uploadFailed), 'error');
+        }
       },
     });
+  }
+
+  closeSameProfileDuplicateDialog(): void {
+    this.showSameProfileDuplicateDialog.set(false);
   }
 
   confirmDuplicateUpload(): void {
@@ -904,7 +972,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     };
 
     const tempId = crypto.randomUUID();
-    this.documentAnalysisState.trackSyncUpload(tempId, cardTitles[type], type, this.profileId);
+    this.documentAnalysisState.trackSyncUpload(tempId, cardTitles[type], type, this.profileId, file);
     this.setUploading(type, true);
 
     const form = new FormData();
@@ -956,9 +1024,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
           this.documentAnalysisState.failSyncUpload(tempId, v.prescription);
           this.showToast(v.prescription, 'error');
-        } else if (errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED' || err?.error?.message === 'This exact document has already been uploaded to this profile.') {
-          this.documentAnalysisState.failSyncUpload(tempId, (v as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.');
-          this.showToast((v as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.', 'error');
+        } else if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+          this.documentAnalysisState.dismiss(tempId);
+          this.showSameProfileDuplicateDialog.set(true);
         } else if (errCode?.startsWith('UNREADABLE_DOCUMENT_')) {
           this.documentAnalysisState.failSyncUpload(tempId, 'Document unreadable — enter manually.');
           this._failedFile = file;
@@ -1084,6 +1152,37 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   cancelReview(): void {
+    const rf = this.reviewForm();
+    if (rf) {
+      const isUnsaved = (rf.mode === 'create') || (rf.mode === 'edit' && this._reviewFormSnapshot !== null && this.snapshotReviewForm(rf) !== this._reviewFormSnapshot);
+      if (isUnsaved) {
+        this._confirmCloseTarget = 'review';
+        this.showConfirmCloseModal.set(true);
+        return;
+      }
+    }
+    this.forceCloseReview();
+  }
+
+  cancelConfirmClose(): void {
+    this.showConfirmCloseModal.set(false);
+    this._confirmCloseTarget = null;
+  }
+
+  forceCloseConfirmed(): void {
+    if (this._confirmCloseTarget === 'review') {
+      this.forceCloseReview();
+    } else if (this._confirmCloseTarget === 'scan') {
+      this.forceCloseScanReview();
+    } else if (this._confirmCloseTarget === 'general') {
+      this.forceCloseGeneralUpload();
+    }
+    this.showConfirmCloseModal.set(false);
+    this._confirmCloseTarget = null;
+  }
+
+  private forceCloseReview(): void {
+    this.showConfirmCloseModal.set(false);
     this.reviewSaving.set(false);
     this.reviewForm.set(null);
     this._reviewFormSnapshot = null;
@@ -1200,7 +1299,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   private startMedicineScan(file: File, bypassDuplicate = false): void {
     const tempId = crypto.randomUUID();
-    this.documentAnalysisState.trackSyncUpload(tempId, this.t().records.scanningMedicineBox, 'medicine', this.profileId);
+    this.documentAnalysisState.trackSyncUpload(tempId, this.t().records.scanningMedicineBox, 'medicine', this.profileId, file);
     this.setUploading('medicine', true);
     const form = new FormData();
     form.append('image', file);
@@ -1236,13 +1335,25 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         }
         if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
           this.documentAnalysisState.failSyncUpload(tempId, this.t().uploadValidation.medicine);
-        } else if (errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED' || err?.error?.message === 'This exact document has already been uploaded to this profile.') {
-          this.documentAnalysisState.failSyncUpload(tempId, (this.t().uploadValidation as any).exactDocumentUploaded || 'This exact document has already been uploaded to this profile.');
+          this.showToast(this.t().uploadValidation.medicine, 'error');
+        } else if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+          this.documentAnalysisState.dismiss(tempId);
+          this.showSameProfileDuplicateDialog.set(true);
         } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
           this.documentAnalysisState.failSyncUpload(tempId, this.t().uploadValidation.medicineUnreadable);
+          this._failedFile = file;
+          this._failedType = 'medicine';
+          this._failedDesc = '';
+          this.aiFailIsUnreadable.set(true);
+          this.showAiFailDialog.set(true);
         } else {
           const reason = err?.error?.message || 'Analysis failed. Please try again.';
           this.documentAnalysisState.failSyncUpload(tempId, reason);
+          this._failedFile = file;
+          this._failedType = 'medicine';
+          this._failedDesc = '';
+          this.aiFailIsUnreadable.set(false);
+          this.showAiFailDialog.set(true);
         }
       },
     });
@@ -1250,6 +1361,19 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   cancelScanReview(): void {
+    if (this.scanResult()) {
+      const isUnsaved = (this.scanMode() === 'create') || (this.scanMode() === 'edit' && this._scanFormSnapshot !== null && this.snapshotScanForm(this.scanForm) !== this._scanFormSnapshot);
+      if (isUnsaved) {
+        this._confirmCloseTarget = 'scan';
+        this.showConfirmCloseModal.set(true);
+        return;
+      }
+    }
+    this.forceCloseScanReview();
+  }
+
+  private forceCloseScanReview(): void {
+    this.showConfirmCloseModal.set(false);
     this.scanResult.set(null);
     this.scanMode.set('create');
     this.scanRecordId.set(null);
@@ -1639,6 +1763,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   closeAiFailDialog(): void {
     this.showAiFailDialog.set(false);
     this.aiFailIsUnreadable.set(false);
+    const failedDoc = this.documentAnalysisState.trackedDocuments().find(d => d.status === 'Failed');
+    if (failedDoc) {
+      this.documentAnalysisState.dismiss(failedDoc.documentId);
+    }
     this._failedFile = null;
     this._failedType = null;
     this._failedDesc = '';
@@ -1646,6 +1774,10 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
   continueManually(): void {
     const type = this._failedType;
+    const failedDoc = this.documentAnalysisState.trackedDocuments().find(d => d.status === 'Failed');
+    if (failedDoc) {
+      this.documentAnalysisState.dismiss(failedDoc.documentId);
+    }
     this.closeAiFailDialog();
     if (type) this.openManualEntry(type);
   }
@@ -1653,8 +1785,16 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   retryUpload(): void {
     const type = this._failedType;
     const file = this._failedFile;
-    if (!type || !file) return;
+    const failedDoc = this.documentAnalysisState.trackedDocuments().find(d => d.status === 'Failed');
     this.showAiFailDialog.set(false);
+    if (failedDoc) {
+      this.documentAnalysisState.retryAnalysis(failedDoc);
+      this._failedFile = null;
+      this._failedType = null;
+      this._failedDesc = '';
+      return;
+    }
+    if (!type || !file) return;
     if (type === 'medicine') {
       this.startMedicineScan(file, true);
     } else if (type === 'general') {
@@ -1662,6 +1802,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     } else {
       this.uploadAndReview(type, file, true);
     }
+    this._failedFile = null;
+    this._failedType = null;
+    this._failedDesc = '';
   }
 
   openWarningModal(record: any) {

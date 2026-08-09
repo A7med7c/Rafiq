@@ -1,0 +1,8 @@
+<div class="time-picker-wrapper" [class.disabled]="disabled" [class.invalid]="invalid" [class.is-open]="isOpen">
+  <div class="time-picker-trigger" (click)="togglePopover()">
+    <span class="trigger-text" [class.placeholder]="!getDisplayValue()">
+      {{ getDisplayValue() || placeholder }}
+    </span>
+    <i class="fa-regular fa-clock clock-icon"></i>
+  </div>
+</div>

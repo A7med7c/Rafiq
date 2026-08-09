@@ -24,6 +24,7 @@ import {
 } from '../../Modles/appointment.models';
 import { FamilyProfileBannerComponent } from '../../Components/family-profile-banner/family-profile-banner';
 import { localizeKnownApiMessage } from '../../Utils/api-error.util';
+import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 
 /** Maps each AppointmentType enum value to its key path in the i18n objects */
 const APPT_TYPE_KEYS: Record<AppointmentType, string> = {
@@ -67,14 +68,26 @@ const blankForm = (): ApptForm => ({
   notes: '',
 });
 
+import { TimePickerComponent } from '../../Components/ui/time-picker/time-picker';
+import { DatePickerComponent } from '../../Components/ui/date-picker/date-picker';
+import { CustomSelectComponent, SelectOption } from '../../Components/ui/custom-select/custom-select';
+
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, FamilyProfileBannerComponent, TimePickerComponent, DatePickerComponent, CustomSelectComponent],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
 })
 export class Appointments implements OnInit, OnDestroy {
+  get sortOptions(): SelectOption[] {
+    return [
+      { value: 'recent', label: this.t().appointments.newestFirst },
+      { value: 'oldest', label: this.t().appointments.oldestFirst },
+      { value: 'az', label: this.t().appointments.aToZ },
+      { value: 'za', label: this.t().appointments.zToA },
+    ];
+  }
   private readonly authSvc        = inject(AuthService);
   protected readonly profileCache = inject(ProfileCacheService);
   private readonly apptSvc   = inject(AppointmentsService);
@@ -88,6 +101,7 @@ export class Appointments implements OnInit, OnDestroy {
   private readonly profileSelectSvc = inject(ProfileSelectionService);
   private readonly reviewTracking   = inject(ReviewTrackingService);
   private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
+  readonly analysisState = inject(DocumentAnalysisStateService);
 
   // ── Family-profile read-only gate ────────────────────────────────────────
   // Uses profileId from query param when present (direct link from family-profiles),

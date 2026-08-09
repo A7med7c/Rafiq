@@ -230,15 +230,19 @@
           </div>
           <div class="mp-field">
             <label class="mp-field-label">{{ t().myProfile.dateOfBirthLabel }}</label>
-            <input class="mp-field-input" type="date" [(ngModel)]="personalForm.dateOfBirth" name="dob" required>
+            <app-date-picker
+              [(ngModel)]="personalForm.dateOfBirth"
+              name="dob"
+            ></app-date-picker>
           </div>
           <div class="mp-field">
             <label class="mp-field-label">{{ t().myProfile.genderLabel }}</label>
-            <select class="mp-field-input" [(ngModel)]="personalForm.gender" name="gender">
-              <option value="">{{ t().myProfile.selectGender }}</option>
-              <option value="Male">{{ t().myProfile.male }}</option>
-              <option value="Female">{{ t().myProfile.female }}</option>
-            </select>
+            <app-custom-select
+              [(ngModel)]="personalForm.gender"
+              name="gender"
+              [options]="genderSelectOptions"
+              [placeholder]="t().myProfile.selectGender"
+            ></app-custom-select>
           </div>
           @if (personalFormError()) {
             <div class="mp-error-bar"><i class="fa-solid fa-circle-exclamation"></i> {{ personalFormError() }}</div>
@@ -314,17 +318,12 @@
           <div class="mp-form-row">
             <div class="mp-field">
               <label class="mp-field-label">{{ t().myProfile.bloodType }}</label>
-              <select class="mp-field-input" [(ngModel)]="healthForm.bloodType" name="bloodType">
-                <option value="">{{ t().myProfile.selectBloodType }}</option>
-                <option value="APositive">A+</option>
-                <option value="ANegative">A-</option>
-                <option value="BPositive">B+</option>
-                <option value="BNegative">B-</option>
-                <option value="ABPositive">AB+</option>
-                <option value="ABNegative">AB-</option>
-                <option value="OPositive">O+</option>
-                <option value="ONegative">O-</option>
-              </select>
+              <app-custom-select
+                [(ngModel)]="healthForm.bloodType"
+                name="bloodType"
+                [options]="bloodTypeSelectOptions"
+                [placeholder]="t().myProfile.selectBloodType">
+              </app-custom-select>
             </div>
           </div>
           <div class="mp-form-row">
@@ -384,11 +383,12 @@
           </div>
           <div class="mp-field">
             <label class="mp-field-label">{{ t().myProfile.severity }}</label>
-            <select class="mp-field-input" [(ngModel)]="newAllergy.severity" name="allergySeverity">
-              <option value="Mild">{{ t().myProfile.mild }}</option>
-              <option value="Moderate">{{ t().myProfile.moderate }}</option>
-              <option value="Severe">{{ t().myProfile.severe }}</option>
-            </select>
+            <app-custom-select
+              [(ngModel)]="newAllergy.severity"
+              name="allergySeverity"
+              [options]="severitySelectOptions"
+              [placeholder]="t().myProfile.severity">
+            </app-custom-select>
           </div>
           <div class="mp-form-actions">
             <button type="button" class="mp-btn-ghost" (click)="cancelAddAllergy()" [disabled]="allergySaving()">{{ t().myProfile.cancelBtn }}</button>
@@ -434,15 +434,20 @@
           <div class="mp-form-row">
             <div class="mp-field">
               <label class="mp-field-label">{{ t().myProfile.status }}</label>
-              <select class="mp-field-input" [(ngModel)]="newDisease.status" name="newDisease.status">
-                <option value="Active">{{ t().myProfile.active }}</option>
-                <option value="Controlled">{{ t().myProfile.controlled }}</option>
-                <option value="Resolved">{{ t().myProfile.resolved }}</option>
-              </select>
+              <app-custom-select
+                [(ngModel)]="newDisease.status"
+                name="newDisease.status"
+                [options]="statusSelectOptions"
+                [placeholder]="t().myProfile.status">
+              </app-custom-select>
             </div>
             <div class="mp-field">
               <label class="mp-field-label">{{ t().myProfile.diagnosedAt }}</label>
-              <input class="mp-field-input" type="date" [(ngModel)]="newDisease.diagnosedAt" name="newDisease.diagnosedAt">
+              <app-date-picker
+                [(ngModel)]="newDisease.diagnosedAt"
+                name="newDisease.diagnosedAt"
+                [placeholder]="t().myProfile.diagnosedAt">
+              </app-date-picker>
             </div>
           </div>
           <div class="mp-form-actions">

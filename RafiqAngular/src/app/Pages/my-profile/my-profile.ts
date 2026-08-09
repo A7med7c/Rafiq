@@ -20,6 +20,7 @@ import { ApiResponse } from '../../Modles/api-response';
 import { map, switchMap } from 'rxjs';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
+import { DocumentAnalysisStateService } from '../../Services/document-analysis-state.service';
 
 interface UpdateProfileBody {
   patientProfileId: string;
@@ -33,10 +34,13 @@ interface UpdateProfileBody {
   relationship: string | null;
 }
 
+import { CustomSelectComponent, SelectOption } from '../../Components/ui/custom-select/custom-select';
+import { DatePickerComponent } from '../../Components/ui/date-picker/date-picker';
+
 @Component({
   selector: 'app-my-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, AssistantAnchorDirective, CustomSelectComponent, DatePickerComponent],
   templateUrl: './my-profile.html',
   styleUrl: './my-profile.css',
 })
@@ -54,6 +58,7 @@ export class MyProfile implements OnInit {
   private readonly router             = inject(Router);
   private readonly elRef              = inject(ElementRef);
   private readonly http               = inject(HttpClient);
+  readonly analysisState              = inject(DocumentAnalysisStateService);
 
   // ── Sidebar / Header state ────────────────────────────────────────────────
   readonly sidebarCollapsed  = signal(false);
@@ -78,6 +83,44 @@ export class MyProfile implements OnInit {
   readonly emailOtpResending = signal(false);
   personalForm = { firstName: '', lastName: '', dateOfBirth: '', gender: '', phoneNumber: '', email: '' };
   emailOtpCode = '';
+
+  get genderSelectOptions(): SelectOption[] {
+    return [
+      { value: 'Male', label: this.l10n.isRtl() ? 'ذَكَر' : 'Male' },
+      { value: 'Female', label: this.l10n.isRtl() ? 'أُنْثَى' : 'Female' },
+    ];
+  }
+
+  get bloodTypeSelectOptions(): SelectOption[] {
+    return [
+      { value: 'APositive', label: 'A+' },
+      { value: 'ANegative', label: 'A-' },
+      { value: 'BPositive', label: 'B+' },
+      { value: 'BNegative', label: 'B-' },
+      { value: 'ABPositive', label: 'AB+' },
+      { value: 'ABNegative', label: 'AB-' },
+      { value: 'OPositive', label: 'O+' },
+      { value: 'ONegative', label: 'O-' },
+    ];
+  }
+
+  get severitySelectOptions(): SelectOption[] {
+    const isRtl = this.l10n.isRtl();
+    return [
+      { value: 'Mild', label: isRtl ? 'خفيف' : 'Mild' },
+      { value: 'Moderate', label: isRtl ? 'متوسط' : 'Moderate' },
+      { value: 'Severe', label: isRtl ? 'شديد' : 'Severe' },
+    ];
+  }
+
+  get statusSelectOptions(): SelectOption[] {
+    const isRtl = this.l10n.isRtl();
+    return [
+      { value: 'Active', label: isRtl ? 'نشط' : 'Active' },
+      { value: 'Controlled', label: isRtl ? 'تحت السيطرة' : 'Controlled' },
+      { value: 'Resolved', label: isRtl ? 'متعافي / منتهي' : 'Resolved' },
+    ];
+  }
   readonly personalSaving = signal(false);
   readonly personalFormError = signal<string | null>(null);
   readonly emailOtpError     = signal<string | null>(null);

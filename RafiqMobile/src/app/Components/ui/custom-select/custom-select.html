@@ -1,0 +1,10 @@
+<div class="custom-select-wrapper" [class.disabled]="disabled" [class.invalid]="invalid" [class.is-open]="isOpen">
+  <div class="custom-select-trigger" (click)="toggleDropdown()">
+    <span class="trigger-label" [class.placeholder]="!getSelectedLabel()">
+      {{ getSelectedLabel() || placeholder }}
+    </span>
+    <span class="trigger-caret" [class.open]="isOpen">
+      <i class="fa-solid fa-chevron-down"></i>
+    </span>
+  </div>
+</div>

@@ -1,4 +1,4 @@
-@if (hasAny()) {
+@if (shouldShowWidget()) {
 
 <!-- ══ MINIMIZED CHIP ══════════════════════════════════════════════════════ -->
 @if (minimized()) {
@@ -44,7 +44,7 @@
     @for (doc of documents(); track trackByDocId($index, doc)) {
     <li class="dac-item"
         [class.dac-item--completed]="doc.status === 'Completed'"
-        [class.dac-item--failed]="doc.status === 'Failed'"
+        [class.dac-item--failed]="doc.status === 'Failed' || doc.status === 'InvalidDocument'"
         [class.dac-item--ready]="doc.status === 'ReadyToReview'">
 
       <!-- Left: status icon -->
@@ -67,13 +67,18 @@
 
       <!-- Centre: title + status label -->
       <div class="dac-item__body">
-        <p class="dac-item__title" [title]="doc.title">{{ doc.title }}</p>
+        <p class="dac-item__title" [title]="displayTitle(doc)">{{ displayTitle(doc) }}</p>
         <p class="dac-item__status">{{ statusLabel(doc) }}</p>
       </div>
 
       <!-- Right: actions -->
       <div class="dac-item__actions">
-        @if (doc.status === 'ReadyToReview') {
+        @if (doc.status === 'Pending' || doc.status === 'Processing') {
+          <button type="button" class="dac-btn dac-btn--dismiss" (click)="dismiss(doc)"
+            [attr.aria-label]="l10n.t().documentAnalysis.dismiss">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        } @else if (doc.status === 'ReadyToReview') {
           <button type="button" class="dac-btn dac-btn--review" (click)="requestReview(doc)">
             <i class="fa-solid fa-pen-to-square"></i>
             {{ l10n.t().documentAnalysis.review }}
@@ -87,18 +92,25 @@
             <i class="fa-solid fa-xmark"></i>
           </button>
         } @else if (doc.status === 'Failed') {
-          @if (doc.uploadType === 'general') {
-            <button type="button" class="dac-btn dac-btn--retry"
-              [disabled]="retrying().has(doc.documentId)"
-              (click)="retry(doc)">
-              @if (retrying().has(doc.documentId)) {
-                <i class="fa-solid fa-circle-notch fa-spin"></i>
-              } @else {
-                <i class="fa-solid fa-rotate-right"></i>
-              }
-              {{ l10n.t().documentAnalysis.retry }}
-            </button>
-          }
+          <!-- <button type="button" class="dac-btn dac-btn--retry"
+            [disabled]="retrying().has(doc.documentId)"
+            (click)="retry(doc)">
+            @if (retrying().has(doc.documentId)) {
+              <i class="fa-solid fa-circle-notch fa-spin"></i>
+            } @else {
+              <i class="fa-solid fa-rotate-right"></i>
+            }
+            {{ l10n.t().documentAnalysis.retry }}
+          </button> -->
+          <!-- <button type="button" class="dac-btn dac-btn--manual" (click)="continueManually(doc)"> -->
+            <!-- <i class="fa-solid fa-pen"></i> -->
+            <!-- {{ l10n.t().documentAnalysis.manualEntry }} -->
+          <!-- </button> -->
+          <button type="button" class="dac-btn dac-btn--dismiss" (click)="dismiss(doc)"
+            [attr.aria-label]="l10n.t().documentAnalysis.dismiss">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        } @else if (doc.status === 'InvalidDocument') {
           <button type="button" class="dac-btn dac-btn--dismiss" (click)="dismiss(doc)"
             [attr.aria-label]="l10n.t().documentAnalysis.dismiss">
             <i class="fa-solid fa-xmark"></i>

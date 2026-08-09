@@ -26,7 +26,7 @@ export class AlarmSchedulerService {
   private readonly medicationReminders = inject(MedicationRemindersService);
   private readonly appointmentsSvc    = inject(AppointmentsService);
   private readonly offlineReminders = inject(OfflineReminderService);
-  private actionInFlight: Promise<void> | null = null;
+  private actionInFlight: Promise<boolean> | null = null;
 
   /**
    * Schedules (or reschedules) a native Android alarm for a single reminder.
@@ -46,8 +46,19 @@ export class AlarmSchedulerService {
 
     try {
       await AlarmSchedulerPlugin.scheduleAlarm(request);
+      console.info('[RafiqAlarm] scheduled native alarm', {
+        reminderId: reminder.reminderId,
+        reminderType: reminder.reminderType,
+        scheduledAt: reminder.scheduledAt,
+      });
     } catch (e) {
-      console.error('[AlarmSchedulerService] scheduleAlarm error', e);
+      // Do not swallow — include the exact reminder + scheduledAt that failed.
+      console.error('[RafiqAlarm] scheduleAlarm FAILED', {
+        reminderId: reminder.reminderId,
+        reminderType: reminder.reminderType,
+        scheduledAt: reminder.scheduledAt,
+        error: e,
+      });
     }
   }
 
@@ -86,11 +97,9 @@ export class AlarmSchedulerService {
   async scheduleBatch(reminders: UpcomingReminderDto[]): Promise<void> {
     if (!this.isAndroid) return;
 
-    const futures = reminders
-      .filter(r => !r.isDeleted)
-      .map(r => this.scheduleAlarm(r));
-
-    await Promise.allSettled(futures);
+    const active = reminders.filter(r => !r.isDeleted);
+    console.info('[RafiqAlarm] scheduleBatch scheduling', active.length, 'native alarm(s)');
+    await Promise.allSettled(active.map(r => this.scheduleAlarm(r)));
   }
 
   async scheduleCachedBatch(reminders: CachedReminder[]): Promise<void> {
@@ -122,8 +131,15 @@ export class AlarmSchedulerService {
     await Promise.allSettled(futures);
   }
 
-  async consumePendingNativeAction(): Promise<void> {
-    if (!this.isAndroid) return;
+  /**
+   * Resolves `true` when a pending native alarm action (Take Medicine / Confirm
+   * Attendance / Snooze) was actually found and processed, `false` when there was
+   * nothing to do. Callers (e.g. app.ts's appStateChange listener) use this to decide
+   * whether a UI refresh is warranted, instead of refreshing unconditionally on every
+   * app-foreground event.
+   */
+  async consumePendingNativeAction(): Promise<boolean> {
+    if (!this.isAndroid) return false;
     if (this.actionInFlight) return this.actionInFlight;
 
     this.actionInFlight = this._consumePendingNativeAction().finally(() => {
@@ -144,19 +160,50 @@ export class AlarmSchedulerService {
     return id === 0 ? 1 : id;
   }
 
-  private async _consumePendingNativeAction(): Promise<void> {
+  private async _consumePendingNativeAction(): Promise<boolean> {
     const action = await AlarmSchedulerPlugin.consumePendingAction();
-    if (!action.hasAction || !action.reminderId) return;
+    if (!action.hasAction || !action.reminderId) return false;
 
     if (action.action === 'takeMedicine' && action.reminderType !== 'Appointment') {
-      await firstValueFrom(this.medicationReminders.confirm(action.reminderId));
-      await this.offlineReminders.removeReminder(action.reminderId);
-      await this.cancelAlarm(action.reminderId);
+      // action.reminderId is the MEDICATION CONFIG id (MedicineReminder.Id), shared by all
+      // 3 escalation-stage logs for today — it is NOT a MedicationReminderLog id. The backend
+      // confirm endpoint requires the per-stage LOG id (POST /medication-reminders/{logId}/confirm
+      // → ConfirmMedicationReminderCommand(ReminderLogId)). Resolve the correct actionable log
+      // via the existing /today endpoint before confirming; do not assume the alarm's own id
+      // is usable directly.
+      try {
+        const todayLogs = await firstValueFrom(this.medicationReminders.getToday());
+        const actionableLog = todayLogs.find(
+          l => l.medicineReminderId === action.reminderId && l.isActionable
+        );
+
+        if (actionableLog) {
+          await firstValueFrom(this.medicationReminders.confirm(actionableLog.id));
+        } else {
+          console.warn('[RafiqAlarm] Take Medicine: no actionable log found for reminderId='
+            + action.reminderId + ' — dose likely already resolved elsewhere');
+        }
+
+        // Confirmed (or already resolved by another path) — cancel every remaining native
+        // alarm belonging to this SAME dose (cancelAlarm cancels all occurrences that share
+        // this config-level reminderId; today's sync only ever schedules TODAY's stages, so
+        // this cannot reach a different day's occurrences or a different medication).
+        await this.offlineReminders.removeReminder(action.reminderId);
+        await this.cancelAlarm(action.reminderId);
+      } catch (e) {
+        // Do not cancel remaining stage alarms on a genuine failure — the dose was not
+        // actually confirmed server-side, so the escalation schedule must continue exactly
+        // as before. Still log loudly so this is visible instead of silently swallowed.
+        console.error('[RafiqAlarm] Take Medicine confirm FAILED reminderId=' + action.reminderId, e);
+      }
+
+      // Always clear the pending action, success or failure, so a transient error does not
+      // leave the same stale action re-processed on every future app open.
       await AlarmSchedulerPlugin.completePendingAction({
         reminderId: action.reminderId,
         action: 'takeMedicine',
       });
-      return;
+      return true;
     }
 
     if (action.action === 'snooze' && action.reminderType !== 'Appointment') {
@@ -165,6 +212,7 @@ export class AlarmSchedulerService {
         reminderId: action.reminderId,
         action: 'snooze',
       });
+      return true;
     }
 
     // ── Appointment alarm actions ─────────────────────────────────────────────
@@ -186,18 +234,58 @@ export class AlarmSchedulerService {
         reminderId: action.reminderId,
         action: 'takeMedicine',
       });
-      return;
+      return true;
     }
 
     if (action.action === 'snooze' && action.reminderType === 'Appointment') {
-      // AlarmActivity.snooze() already re-scheduled the native alarm and
-      // updated the SQLite reminderTime via NativeReminderStore.updateSnooze.
+      // AlarmActivity.snooze() already re-scheduled the native alarm as a new
+      // occurrence and persisted it via NativeReminderStore.saveAlarm.
       // Just clear the SharedPreferences pending action.
       await AlarmSchedulerPlugin.completePendingAction({
         reminderId: action.reminderId,
         action: 'snooze',
       });
-      return;
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Checks whether the app is excluded from battery optimizations and, if not,
+   * opens the system dialog asking the user to grant the exemption.
+   *
+   * Must be called from a user-interaction context (button tap, first-launch
+   * prompt) — Android will reject the dialog if launched without prior user
+   * engagement. Safe to call on non-Android platforms (returns immediately).
+   *
+   * Returns true when the app was already exempt or the dialog was launched,
+   * false when the check/request was skipped (non-Android, or API < 23).
+   */
+  async checkAndRequestBatteryOptimization(): Promise<boolean> {
+    if (!this.isAndroid) return false;
+    try {
+      const { isIgnoring } = await AlarmSchedulerPlugin.checkBatteryOptimization();
+      if (isIgnoring) return true; // already exempt — nothing to do
+      await AlarmSchedulerPlugin.requestBatteryOptimizationExemption();
+      return true;
+    } catch (e) {
+      console.warn('[AlarmSchedulerService] battery optimization check/request failed', e);
+      return false;
+    }
+  }
+
+  /**
+   * Returns true when the app is currently excluded from battery optimizations.
+   * Used by the UI to decide whether to show a persistent warning banner.
+   */
+  async isBatteryOptimizationIgnored(): Promise<boolean> {
+    if (!this.isAndroid) return true;
+    try {
+      const { isIgnoring } = await AlarmSchedulerPlugin.checkBatteryOptimization();
+      return isIgnoring;
+    } catch {
+      return true; // assume OK on error — don't block UI
     }
   }
 }

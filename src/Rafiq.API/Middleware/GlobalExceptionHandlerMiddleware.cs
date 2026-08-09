@@ -50,8 +50,8 @@ public sealed class GlobalExceptionHandlerMiddleware
             ForbiddenException forbiddenException => (HttpStatusCode.Forbidden, forbiddenException.Message, new[] { forbiddenException.Message }, (string?)null),
             NotFoundException notFoundException => (HttpStatusCode.NotFound, notFoundException.Message, new[] { notFoundException.Message }, (string?)null),
             ConflictException conflictException => (HttpStatusCode.Conflict, conflictException.Message, new[] { conflictException.Message }, (string?)null),
-            ExternalServiceException externalServiceException => (HttpStatusCode.BadGateway, "External service error.", new[] { externalServiceException.Message }, (string?)null),
-            _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.", new[] { "An unexpected error occurred." }, (string?)null)
+            ExternalServiceException externalServiceException => (HttpStatusCode.BadGateway, externalServiceException.Message, new[] { externalServiceException.Message }, (string?)null),
+            _ => (HttpStatusCode.InternalServerError, exception.Message, new[] { exception.Message }, (string?)null)
         };
 
         if (statusCode == HttpStatusCode.InternalServerError)

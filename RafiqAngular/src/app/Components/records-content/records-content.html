@@ -9,7 +9,7 @@
     (change)="onImagingFileSelected($event)">
   <input #medicineInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
     (change)="onMedicineFileSelected($event)">
-  <input #generalInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
+  <input #generalInput type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" style="display:none"
     (change)="onGeneralFileSelected($event)">
   <input #manualImageInput type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none"
     (change)="onManualImageSelected($event)">
@@ -249,21 +249,22 @@
                 <div class="date-filter-grid">
                   <label class="date-filter-field">
                     <span>{{ t().records.fromDate }}</span>
-                    <input type="date" [ngModel]="draftFilters().fromDate" (ngModelChange)="updateDraftFilter('fromDate', $event)">
+                    <app-date-picker [ngModel]="draftFilters().fromDate" (ngModelChange)="updateDraftFilter('fromDate', $event)" [placeholder]="t().records.fromDate"></app-date-picker>
                   </label>
                   <label class="date-filter-field">
                     <span>{{ t().records.toDate }}</span>
-                    <input type="date" [ngModel]="draftFilters().toDate" (ngModelChange)="updateDraftFilter('toDate', $event)">
+                    <app-date-picker [ngModel]="draftFilters().toDate" (ngModelChange)="updateDraftFilter('toDate', $event)" [placeholder]="t().records.toDate"></app-date-picker>
                   </label>
                 </div>
               </div>
               <div class="filter-section">
                 <p class="filter-section-title">{{ t().records.sortBy }}</p>
-                <select class="sort-select" [ngModel]="draftFilters().sortBy" (ngModelChange)="updateDraftFilter('sortBy', $event)">
-                  @for (item of sortOptions; track item.value) {
-                  <option [value]="item.value">{{ item.label }}</option>
-                  }
-                </select>
+                <app-custom-select
+                  [ngModel]="draftFilters().sortBy"
+                  (ngModelChange)="updateDraftFilter('sortBy', $event)"
+                  [options]="sortOptions"
+                  [placeholder]="t().records.sortBy">
+                </app-custom-select>
               </div>
             </div>
           </div>
@@ -464,7 +465,9 @@
     <div class="modal-body">
       @if (getRecordImageUrl(rec); as imageUrl) {
       <button type="button" class="view-document-card view-document-card--with-image" (click)="openLightbox(imageUrl)">
-        @if (!detailImageFailed()) {
+        @if (imageUrl.toLowerCase().includes('.pdf')) {
+        <div class="view-document-icon"><i class="fa-regular fa-file-pdf"></i></div>
+        } @else if (!detailImageFailed()) {
         <img [src]="imageUrl" alt="Original uploaded record" class="view-document-thumb"
           (error)="detailImageFailed.set(true)">
         } @else {
@@ -775,7 +778,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.reportDate }}</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.reportDate" name="reportDate" [placeholder]="t().records.reportDate"></app-date-picker>
         </div>
         }
         @if (rf.type === 'imaging') {
@@ -793,7 +796,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.reportDate }}</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.reportDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.reportDate" name="reportDate" [placeholder]="t().records.reportDate"></app-date-picker>
         </div>
         <div class="scan-field scan-field--full">
           <label class="scan-label">{{ t().records.findings }}</label>
@@ -815,7 +818,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.prescriptionDate }}</label>
-          <input type="date" class="scan-input" [(ngModel)]="rf.prescriptionDate" [max]="todayStr">
+          <app-date-picker [(ngModel)]="rf.prescriptionDate" name="prescriptionDate" [placeholder]="t().records.prescriptionDate"></app-date-picker>
         </div>
         }
         @if (rf.type === 'general') {
@@ -838,7 +841,7 @@
         </div>
         <div class="scan-field">
           <label class="scan-label">{{ t().records.documentDate }}</label>
-          <input type="text" class="scan-input" [(ngModel)]="rf.documentDate">
+          <app-date-picker [(ngModel)]="rf.documentDate" name="documentDate" [placeholder]="t().records.documentDate"></app-date-picker>
         </div>
         }
       }
@@ -1306,6 +1309,57 @@
       <button type="button" class="modal-btn modal-btn-secondary" (click)="cancelDuplicateUpload()">{{ t().records.cancelBtn || 'إلغاء' }}</button>
       <button type="button" class="modal-btn modal-btn-primary" (click)="confirmDuplicateUpload()">
         <i class="fa-solid fa-check"></i> نعم، أريد إضافته
+      </button>
+    </footer>
+  </div>
+</div>
+}
+
+<!-- ═══════════ SAME-PROFILE DUPLICATE MODAL ═══════════ -->
+@if (showSameProfileDuplicateDialog()) {
+<div class="modal-overlay delete-overlay" (click)="closeSameProfileDuplicateDialog()">
+  <div class="modal-card delete-modal" (click)="$event.stopPropagation()">
+    <header class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-ico delete-modal-ico" style="background: #fde8e8; color: #c0392b;"><i class="fa-solid fa-ban"></i></div>
+        <div>
+          <h3 class="modal-title">{{ t().uploadValidation.sameProfileDuplicateTitle }}</h3>
+        </div>
+      </div>
+      <button type="button" class="close-modal-btn" (click)="closeSameProfileDuplicateDialog()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+    <div class="modal-body delete-modal-body">
+      <p style="font-size: 15px; line-height: 1.6;">{{ t().uploadValidation.sameProfileDuplicateMessage }}</p>
+    </div>
+    <footer class="modal-ftr">
+      <button type="button" class="modal-btn modal-btn-primary" (click)="closeSameProfileDuplicateDialog()">{{ t().common.close }}</button>
+    </footer>
+  </div>
+</div>
+}
+
+@if (showConfirmCloseModal()) {
+<div class="modal-overlay" style="z-index: 10000;" (click)="cancelConfirmClose()">
+  <div class="modal-card" style="max-width: 400px; text-align: center;" (click)="$event.stopPropagation()">
+    <header class="modal-hdr" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+      <h3 class="modal-title" style="color: red; background-color: white;">
+        <i class="fa-solid fa-triangle-exclamation" style="margin-inline-end: 8px;"></i>
+        {{ t().records.reviewConfirmCloseTitle }}
+      </h3>
+    </header>
+    <div class="modal-body" style="padding: 24px;">
+      <p style="color: var(--text-2); line-height: 1.6; margin: 0;">
+        {{ t().records.reviewConfirmCloseBody }}
+      </p>
+    </div>
+    <footer class="modal-ftr" style="justify-content: center; gap: 12px; background: transparent; border-top: none;">
+      <button type="button" class="modal-btn modal-btn-secondary" (click)="cancelConfirmClose()">
+        {{ t().records.continueReviewing }}
+      </button>
+      <button type="button" class="modal-btn modal-btn-primary" style="background-color: red; color: white;" (click)="forceCloseConfirmed()">
+        {{ t().records.close }}
       </button>
     </footer>
   </div>
