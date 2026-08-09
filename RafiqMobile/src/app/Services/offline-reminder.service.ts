@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-import { SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
+import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
 import { MedicationReminderNotificationPayload, AppointmentReminderNotificationPayload } from './signalr.service';
 import { UpcomingReminderDto } from './medication-reminders.service';
 
@@ -23,8 +23,19 @@ export interface CachedReminder {
 
 @Injectable({ providedIn: 'root' })
 export class OfflineReminderService {
-  private readonly sqlite = new SQLiteConnection(Capacitor);
+  // SQLiteConnection delegates every call to the object passed here; it MUST be
+  // the CapacitorSQLite plugin (which implements createConnection), NOT the
+  // Capacitor core object. Passing Capacitor core was the cause of
+  // "this.sqlite.createConnection is not a function".
+  private readonly sqlite = new SQLiteConnection(CapacitorSQLite);
   private db!: SQLiteDBConnection;
+  /**
+   * The @capacitor-community/sqlite native plugin is only available on native
+   * platforms. On web there is no native SQLite (jeep-sqlite is not bundled),
+   * so all cache operations become safe no-ops there. Native Android alarms —
+   * the only consumer of this cache — never run on web anyway.
+   */
+  private readonly isNative = Capacitor.isNativePlatform();
   private readonly dbName = 'offline_reminders';
   // v2: occurrence-keyed table. A medication reminder produces multiple daily
   // occurrences that share one serverId; keying only by serverId collapsed them
@@ -46,6 +57,9 @@ export class OfflineReminderService {
   // ── Initialization ────────────────────────────────────────────────────────
 
   async init(): Promise<void> {
+    // Web: native SQLite is unavailable — skip so createConnection is never
+    // called. Cache reads/writes below become safe no-ops on web.
+    if (!this.isNative) return;
     if (this.initialized) return;
     // Concurrency guard: two concurrent callers share the same init Promise.
     if (this.initInFlight) return this.initInFlight;
@@ -112,6 +126,7 @@ export class OfflineReminderService {
   }
 
   private async _runSync(serverItems: UpcomingReminderDto[]): Promise<void> {
+    if (!this.isNative) return; // web: no native SQLite — nothing to persist
     await this.init();
 
     const local = await this.loadAll();
@@ -157,6 +172,7 @@ export class OfflineReminderService {
    * reboot or app restart. Safe to call unconditionally on every startup.
    */
   async restoreScheduledReminders(): Promise<void> {
+    if (!this.isNative) return; // web: no native SQLite — nothing to restore
     await this.init();
 
     const rows = await this.loadAll();
@@ -189,6 +205,7 @@ export class OfflineReminderService {
     payload: MedicationReminderNotificationPayload | AppointmentReminderNotificationPayload,
     kind: 'reminder' | 'appointment'
   ): Promise<void> {
+    if (!this.isNative) return; // web: no native SQLite
     await this.init();
 
     const serverId = kind === 'reminder'
@@ -222,17 +239,20 @@ export class OfflineReminderService {
    * Preserved for backward compatibility.
    */
   async removeReminder(serverId: string): Promise<void> {
+    if (!this.isNative) return; // web: no native SQLite
     await this.init();
     await this.deleteAllForServerId(serverId);
   }
 
   /** Returns the distinct reminder ids (not occurrence keys) currently cached. */
   async getCachedReminderIds(): Promise<string[]> {
+    if (!this.isNative) return []; // web: no native SQLite — empty cache
     await this.init();
     return [...new Set((await this.loadAll()).map(row => row.serverId))];
   }
 
   async getCachedReminders(): Promise<CachedReminder[]> {
+    if (!this.isNative) return []; // web: no native SQLite — empty cache
     await this.init();
     return this.loadAll();
   }

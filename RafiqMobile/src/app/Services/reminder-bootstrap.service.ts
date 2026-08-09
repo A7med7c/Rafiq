@@ -149,23 +149,43 @@ export class ReminderBootstrapService {
       return; // No profile — cannot sync reminder data.
     }
 
-    // ── Step 1: Restore persisted notifications (no network required) ──
-    await this.offlineSvc.restoreScheduledReminders();
-    const cached = await this.offlineSvc.getCachedReminders();
-    console.info('[RafiqAlarm] bootstrap: restoring', cached.length, 'cached occurrence(s)');
-    await this.alarmScheduler.scheduleCachedBatch(cached);
+    // A cache or sync failure must not silently swallow the whole bootstrap, and
+    // must never let us falsely mark success. We track health and only mark the
+    // bootstrap done when scheduling actually ran, so a later trigger (login,
+    // forceSync, SignalR change) can retry instead of being permanently
+    // short-circuited by the idempotency guard.
+    let healthy = true;
 
-    // ── Step 2: Sync from backend when online ──────────────────────────
+    // ── Step 1: Restore cached alarms (no network required) ────────────
+    // Isolated so a cache failure cannot block the authoritative server sync.
+    try {
+      await this.offlineSvc.restoreScheduledReminders();
+      const cached = await this.offlineSvc.getCachedReminders();
+      console.info('[RafiqAlarm] bootstrap: restoring', cached.length, 'cached occurrence(s)');
+      await this.alarmScheduler.scheduleCachedBatch(cached);
+    } catch (e) {
+      healthy = false;
+      // Real (e.g. native Android SQLite) failure — surface it, do not hide it.
+      console.error('[RafiqAlarm] bootstrap: cache restore failed — cached native alarms NOT scheduled', e);
+    }
+
+    // ── Step 2: Sync from backend when online — schedules fresh native alarms ──
     const network = await Network.getStatus();
     console.info('[RafiqAlarm] bootstrap: network.connected =', network.connected);
     if (network.connected) {
-      await this.syncFromServer(profileId);
+      try {
+        await this.syncFromServer(profileId);
+      } catch (e) {
+        healthy = false;
+        console.error('[RafiqAlarm] bootstrap: server sync failed — native alarms NOT scheduled', e);
+      }
     }
 
-    // Mark done regardless of network state.
-    // restoreScheduledReminders always runs; sync only runs when online.
-    // Marking done here prevents both from being repeated on subsequent calls.
-    this.bootstrapDone = true;
+    // Only mark done when nothing failed. Never claim success (and never block
+    // future retries) if scheduling did not actually complete.
+    if (healthy) {
+      this.bootstrapDone = true;
+    }
   }
 
   private async syncFromServer(profileId: string): Promise<void> {
