@@ -165,6 +165,12 @@ export class SignalRService {
     });
 
     this.connection.on('AppointmentReminderDue', (payload: AppointmentReminderNotificationPayload) => {
+      console.log('[APPOINTMENT DEBUG] AppointmentReminderDue RECEIVED', {
+        timestamp: new Date().toISOString(),
+        appointmentId: payload.appointmentId,
+        payload
+      });
+      console.log('[DEBUG] SignalRService received AppointmentReminderDue', payload);
       this.appointmentReminderEvents.update((currentQueue) => [...currentQueue, payload]);
     });
 

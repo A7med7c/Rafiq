@@ -304,14 +304,21 @@ a {
   color: var(--text);
 }
 
-/* ── AI hero action buttons ── */
+/* ── AI hero action buttons ──
+   Stacked full-width on all screens: two side-by-side flex:1 buttons squeezed the
+   Arabic label onto 2-3 lines inside a pill radius, reading as a broken circular
+   badge on narrow phones. Full-width rows keep each label on one line and give
+   both buttons a comfortable ≥44px tap target regardless of screen width. */
 .ai-hero__actions {
   display: flex;
+  flex-direction: column;
   gap: 10px;
+  margin-top: 16px;
 }
 
 .ai-hero__btn {
-  flex: 1;
+  flex: none;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -322,6 +329,7 @@ a {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .ai-hero__btn--ghost {
@@ -1916,7 +1924,6 @@ a {
   background: var(--white);
   color: #0284C7;
   border: 1px solid #0284C7;
-  border-radius: 99px;
 }
 
 .ai-hero__btn--teal {
@@ -2122,4 +2129,31 @@ a {
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.dash-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px dashed var(--blue);
+  background-color: var(--white);
+  color: var(--blue);
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.dash-download-btn:active {
+  background-color: var(--blue-lt);
+}
+
+.dash-download-btn i {
+  font-size: 16px;
 }

@@ -118,4 +118,37 @@ export class App {
       this.notificationService.closeNotificationCenter();
     }
   }
+
+  // Helpers for appointment modal localization
+  appointmentTypeLabel(type: string | undefined): string {
+    if (!type) return '';
+    const backendToKey: Record<string, string> = {
+      "Lab / Blood Test": "lab",
+      "Doctor Visit": "doctor",
+      "Vaccination": "vaccination",
+      "Imaging / Radiology": "imaging",
+      "Therapy Session": "therapy",
+      "Dental Checkup": "dental",
+      "Other": "other",
+      "Follow-up Visit": "followUp"
+    };
+    const key = backendToKey[type] ?? type;
+    const translated = (this.l10n.t().appointments as Record<string, string>)[key];
+    return translated ?? type;
+  }
+
+  formatApptDateTime(dt: string | undefined): string {
+    if (!dt) return '';
+    const date = new Date(dt);
+    const locale = this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US';
+    const dateStr = date.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
+    const timeStr = date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', hour12: true });
+    return `${dateStr}, ${timeStr}`;
+  }
+
+  formatApptMessage(provider: string | undefined, dt: string | undefined): string {
+    const time = dt ? new Date(dt).toLocaleTimeString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+    const tmpl = this.l10n.t().notifications.appointmentReminderBody as string;
+    return tmpl.replace('{provider}', provider ?? '').replace('{time}', time);
+  }
 }

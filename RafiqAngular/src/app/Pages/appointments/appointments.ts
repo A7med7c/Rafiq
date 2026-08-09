@@ -794,21 +794,29 @@ nextPage() {
 
   // ── Display helpers ───────────────────────────────────────────────────────
   formatDate(dt: string): string {
-    return new Date(dt).toLocaleDateString('en-US', {
+    const locale = this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US';
+    return new Date(dt).toLocaleDateString(locale, {
       weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
     });
   }
 
   formatTime(dt: string): string {
-    return new Date(dt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const locale = this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US';
+    return new Date(dt).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', hour12: true });
   }
 
   relativeDate(dt: string): string {
-    const diff = Math.ceil((new Date(dt).getTime() - Date.now()) / 86_400_000);
-    if (diff < 0)  return `${Math.abs(diff)}d ago`;
-    if (diff === 0) return 'Today';
-    if (diff === 1) return 'Tomorrow';
-    return `In ${diff} days`;
+    const d = new Date(dt);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const apptDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diff = Math.round((apptDay.getTime() - today.getTime()) / 86_400_000);
+
+    const isAr = this.l10n.lang() === 'ar';
+    if (diff < 0) return isAr ? `منذ ${Math.abs(diff)} يوم` : `${Math.abs(diff)}d ago`;
+    if (diff === 0) return this.t().aiAssistant.today;
+    if (diff === 1) return isAr ? 'بكره' : 'Tomorrow';
+    return isAr ? `بعد ${diff} أيام` : `In ${diff} days`;
   }
 
   typeLabel(a: AppointmentDto): string {
@@ -884,8 +892,10 @@ protected appointmentTypeLabel(type: string): string {
 
   reminderLabel(mins: number | null | undefined): string {
     if (!mins) return '—';
-    const map: Record<number, string> = { 15: '15 min', 30: '30 min', 60: '1 hr', 120: '2 hrs', 1440: '1 day' };
-    return (map[mins] ?? `${mins} min`) + ' before';
+    if (this.l10n.lang() === 'ar') {
+      return `قبلها بـ ${mins} دقيقة`;
+    }
+    return `${mins} min before`;
   }
 
   isLastRow(index: number): boolean {

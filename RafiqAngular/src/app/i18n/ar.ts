@@ -1269,6 +1269,7 @@ export const ar: Translations = {
     couldNotConfirmAppointment: 'تعذّر تأكيد الموعد',
     couldNotConfirmApptBody: 'تعذّر تأكيد {title}. يرجى المحاولة مرة أخرى.',
     appointmentReminder: 'تذكير موعد',
+    appointmentReminderBody: 'عندك موعد مع {provider} الساعة {time}.',
     medicationReminderToast: 'تذكير دواء',
   },
 

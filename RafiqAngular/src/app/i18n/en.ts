@@ -1267,6 +1267,7 @@ export const en = {
     couldNotConfirmApptBody: 'We could not confirm {title}. Please try again.',
 
     appointmentReminder: 'Appointment Reminder',
+    appointmentReminderBody: 'You have an appointment with {provider} at {time}.',
     medicationReminderToast: 'Medication Reminder',
   },
 
