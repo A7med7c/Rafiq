@@ -37,8 +37,8 @@
     </select>
     <select [(ngModel)]="role" (ngModelChange)="applyFilters()" [attr.aria-label]="copy().allRoles">
       <option value="">{{ copy().allRoles }}</option>
-      <option value="User">User</option>
-      <option value="Admin">Admin</option>
+      <option value="User">{{ copy().roleUser }}</option>
+      <option value="Admin">{{ copy().roleAdmin }}</option>
     </select>
     <select [(ngModel)]="sort" (ngModelChange)="applyFilters()" [attr.aria-label]="copy().newest">
       <option value="createdAt-desc">{{ copy().newest }}</option>
@@ -98,7 +98,7 @@
                       </div>
                     </div>
                   </td>
-                  <td><span class="role-badge" [class.role-badge--admin]="user.role === 'Admin'">{{ user.role }}</span></td>
+                  <td><span class="role-badge" [class.role-badge--admin]="user.role === 'Admin'">{{ getRoleLabel(user.role) }}</span></td>
                   <td><time>{{ formatDate(user.createdAt) }}</time></td>
                   <td>
                     <span class="profile-state" [class.profile-state--missing]="!user.hasHealthProfile">
