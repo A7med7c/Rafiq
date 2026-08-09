@@ -22,10 +22,15 @@ public sealed class AppointmentReminderScheduler(
         // user entered it). Compare against DateTime.Now (also local) so the delay is always
         // correct regardless of whether the server runs in UTC or a different timezone.
         var reminderTime = appointment.AppointmentDateTime.AddMinutes(-appointment.ReminderOffsetMinutes.Value);
-        var delay = reminderTime - DateTime.Now;
+        var delay = reminderTime - DateTime.UtcNow;
 
         if (delay <= TimeSpan.Zero)
+        {
+            Console.WriteLine($"[DEBUG] AppointmentReminderScheduler: delay is {delay}, returning null.");
             return null;
+        }
+
+        Console.WriteLine($"[DEBUG] AppointmentReminderScheduler: Scheduling job for {delay.TotalMinutes} minutes from now.");
 
         return backgroundJobClient.Schedule<AppointmentReminderJob>(
             job => job.ExecuteAsync(appointment.Id),

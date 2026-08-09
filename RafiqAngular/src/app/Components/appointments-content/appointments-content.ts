@@ -609,21 +609,29 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   // ── Display helpers ───────────────────────────────────────────────────────
   formatDate(dt: string): string {
-    return new Date(dt).toLocaleDateString('en-US', {
+    const locale = this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US';
+    return new Date(dt).toLocaleDateString(locale, {
       weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
     });
   }
 
   formatTime(dt: string): string {
-    return new Date(dt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const locale = this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US';
+    return new Date(dt).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', hour12: true });
   }
 
   relativeDate(dt: string): string {
-    const diff = Math.ceil((new Date(dt).getTime() - Date.now()) / 86_400_000);
-    if (diff < 0) return `${Math.abs(diff)}d ago`;
-    if (diff === 0) return 'Today';
-    if (diff === 1) return 'Tomorrow';
-    return `In ${diff} days`;
+    const d = new Date(dt);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const apptDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diff = Math.round((apptDay.getTime() - today.getTime()) / 86_400_000);
+
+    const isAr = this.l10n.lang() === 'ar';
+    if (diff < 0) return isAr ? `منذ ${Math.abs(diff)} يوم` : `${Math.abs(diff)}d ago`;
+    if (diff === 0) return this.t().aiAssistant.today;
+    if (diff === 1) return isAr ? 'بكره' : 'Tomorrow';
+    return isAr ? `بعد ${diff} أيام` : `In ${diff} days`;
   }
 
   typeLabel(a: AppointmentDto): string {
@@ -631,6 +639,17 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     const key = APPT_TYPE_KEYS[a.appointmentType];
     if (!key) return APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
     return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+  }
+
+  displayTitle(a: AppointmentDto): string {
+    const defaultEngTitles = [
+      "Lab / Blood Test", "Doctor Visit", "Vaccination", "Imaging / Radiology",
+      "Therapy Session", "Dental Checkup", "Other", "Follow-up Visit"
+    ];
+    if (defaultEngTitles.includes(a.title)) {
+      return this.typeLabel(a);
+    }
+    return a.title;
   }
 
   /** Returns the translated label for a type enum value (used in the type-picker grid) */
@@ -665,7 +684,10 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   reminderLabel(mins: number | null | undefined): string {
     if (!mins) return '—';
-    return `${mins} ${this.t().appointments.minutesBefore}`;
+    if (this.l10n.lang() === 'ar') {
+      return `قبلها بـ ${mins} دقيقة`;
+    }
+    return `${mins} min before`;
   }
 
   private localizeApiMessage(message: string): string {

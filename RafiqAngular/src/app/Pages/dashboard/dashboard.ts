@@ -417,7 +417,11 @@ export class Dashboard implements OnInit, OnDestroy {
   formatApptDate(dt: string): string {
     const d    = new Date(dt);
     const now  = new Date();
-    const diff = Math.ceil((d.getTime() - now.getTime()) / 86_400_000);
+    
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const apptDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diff = Math.round((apptDay.getTime() - today.getTime()) / 86_400_000);
+    
     const time = d.toLocaleTimeString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     if (diff === 0) return `${this.t().aiAssistant.today}, ${time}`;
     if (diff === 1) return `${this.t().appointments.nextAppointment}, ${time}`;
@@ -425,7 +429,13 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   formatApptRelative(dt: string): string {
-    const diff = Math.ceil((new Date(dt).getTime() - Date.now()) / 86_400_000);
+    const d = new Date(dt);
+    const now = new Date();
+    
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const apptDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diff = Math.round((apptDay.getTime() - today.getTime()) / 86_400_000);
+    
     if (diff <= 0) return this.t().aiAssistant.today;
     if (diff === 1) return this.l10n.lang() === 'ar' ? 'بكره' : 'Tomorrow';
     return this.l10n.lang() === 'ar' ? `بعد ${diff} أيام` : `In ${diff} days`;

@@ -526,7 +526,15 @@ export class NotificationService {
   }
 
   private recordAppointmentReminder(event: AppointmentReminderNotificationPayload): void {
+    console.log('[APPOINTMENT DEBUG] recordAppointmentReminder ENTERED', {
+      event,
+      currentQueue: this._appointmentReminderQueue(),
+      currentActive: this.activeAppointmentReminder(),
+      currentModalState: this._appointmentReminderModalOpen()
+    });
+    console.log('[DEBUG] recordAppointmentReminder executing for:', event.appointmentId);
     if (this.processedReminderIds.has(event.appointmentId)) {
+      console.warn('[DEBUG] Aborting: event.appointmentId already in processedReminderIds');
       return;
     }
 
@@ -541,21 +549,22 @@ export class NotificationService {
       sourceId: event.appointmentId,
     });
 
-    this._appointmentReminderQueue.update(q => [...q, event]);
+    console.log('[APPOINTMENT DEBUG] BEFORE ngZone.run');
+    this.ngZone.run(() => {
+      console.log('[APPOINTMENT DEBUG] INSIDE ngZone.run');
+      this._appointmentReminderQueue.update(q => [...q, event]);
+      this._appointmentReminderModalOpen.set(true);
+    });
+    console.log('[APPOINTMENT DEBUG] AFTER ngZone.run');
 
-    // Create a persistent toast (no auto-dismiss timer) so the "Confirm Attendance"
-    // button remains visible until the user acts or explicitly closes it.
-    const persistentToast: NotificationToast = {
-      id: crypto.randomUUID(),
-      title: event.title,
-      body: event.notificationText || `${event.title} with ${event.provider}`,
-      type: 'info',
-      createdAt: new Date(),
-      sourceId: event.appointmentId,
-      action: 'open-appointment',
-    };
-    this._toasts.update(list => [persistentToast, ...list]);
+    console.log('[APPOINTMENT DEBUG] AFTER STATE UPDATES', {
+      appointmentReminderQueue: this._appointmentReminderQueue(),
+      activeAppointmentReminder: this.activeAppointmentReminder(),
+      appointmentReminderModalOpen: this._appointmentReminderModalOpen()
+    });
 
+    this.showBrowserAppointmentNotification(event);
+    console.log('[DEBUG] Attempting audio playback');
     this.notificationSoundService.play();
 
     if (isDevMode()) {
@@ -573,6 +582,29 @@ export class NotificationService {
 
     this._notifications.update(list => [entry, ...list]);
     return entry;
+  }
+
+  private showBrowserAppointmentNotification(reminder: AppointmentReminderNotificationPayload): void {
+    const key = this.browserNotificationKey(reminder.appointmentId);
+
+    if (this.browserNotificationKeys.has(key)) {
+      return;
+    }
+
+    const entry: BrowserNotificationItem = {
+      id: crypto.randomUUID(),
+      title: reminder.title,
+      body: reminder.notificationText || `Upcoming appointment: ${reminder.title} with ${reminder.provider}`,
+      createdAt: new Date(),
+      sourceId: reminder.appointmentId,
+    };
+
+    this.browserNotificationKeys.add(key);
+
+    if (this.canShowBrowserNotifications()) {
+      this.emitBrowserNotification(entry);
+      return;
+    }
   }
 
   private showBrowserReminderNotification(reminder: MedicationReminderNotificationPayload): void {

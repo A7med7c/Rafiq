@@ -19,29 +19,6 @@
       <i class="fa-solid fa-xmark"></i>
     </button>
   </div>
-  } @else if (toast.action === 'open-appointment' && toast.sourceId) {
-  <div class="toast" role="alert">
-    <span class="toast__icon">
-      <i class="fa-solid fa-calendar-check"></i>
-    </span>
-    <span class="toast__body">
-      <span class="toast__title">{{ toast.title }}</span>
-      <span class="toast__message">{{ toast.body }}</span>
-    </span>
-    <button type="button" class="reminder-btn reminder-btn--primary"
-      (click)="notificationService.acknowledgeAppointmentReminder(toast.sourceId!)"
-      [disabled]="notificationService.confirmingAppointment()">
-      @if (notificationService.confirmingAppointment()) {
-      <i class="fa-solid fa-circle-notch fa-spin"></i>
-      } @else {
-      {{ l10n.t().notifications.confirmAttendance }}
-      }
-    </button>
-    <button type="button" class="toast-close" (click)="notificationService.dismissToast(toast.id)"
-      [attr.aria-label]="l10n.t().notifications.dismissToast">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-  </div>
   } @else {
   <div class="toast" [class.toast--success]="toast.type === 'success'" [class.toast--error]="toast.type === 'error'">
     <span class="toast__icon">
@@ -242,6 +219,66 @@
   </section>
 </div>
 }
+
+@if (notificationService.appointmentReminderModalOpen() && notificationService.activeAppointmentReminder()) {
+<div class="reminder-modal-overlay" (click)="notificationService.dismissAppointmentReminder()">
+  <section class="reminder-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true"
+    aria-labelledby="appointment-modal-title">
+    <header class="reminder-modal__header">
+      <div class="reminder-modal__icon" aria-hidden="true">
+        <i class="fa-solid fa-calendar-check"></i>
+      </div>
+      <div class="reminder-modal__heading">
+        <p class="reminder-modal__eyebrow">{{ l10n.t().notifications.appointmentReminder }}</p>
+        <h2 class="reminder-modal__title" id="appointment-modal-title">
+          {{ appointmentTypeLabel(notificationService.activeAppointmentReminder()!.title) }}
+        </h2>
+      </div>
+      <button type="button" class="reminder-modal__close" (click)="notificationService.dismissAppointmentReminder()"
+        [attr.aria-label]="l10n.t().notifications.dismissReminder">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+
+    <div class="reminder-modal__body">
+      <dl class="reminder-details">
+        <div class="reminder-details__row">
+          <dt>{{ l10n.t().appointments.provider }}</dt>
+          <dd>{{ notificationService.activeAppointmentReminder()!.provider }}</dd>
+        </div>
+        <div class="reminder-details__row">
+          <dt>{{ l10n.t().appointments.dateTime }}</dt>
+          <dd>{{ formatApptDateTime(notificationService.activeAppointmentReminder()!.appointmentDateTime) }}</dd>
+        </div>
+      </dl>
+
+      <p class="reminder-modal__message">
+        {{ formatApptMessage(notificationService.activeAppointmentReminder()!.provider, notificationService.activeAppointmentReminder()!.appointmentDateTime) }}
+      </p>
+    </div>
+
+    <footer class="reminder-modal__footer">
+      <button type="button" class="reminder-btn reminder-btn--primary"
+        (click)="notificationService.acknowledgeAppointmentReminder(notificationService.activeAppointmentReminder()!.appointmentId)" [disabled]="notificationService.confirmingAppointment()">
+        @if (notificationService.confirmingAppointment()) {
+        <i class="fa-solid fa-circle-notch fa-spin"></i> {{ l10n.t().notifications.confirming }}
+        } @else {
+        {{ l10n.t().notifications.confirmAttendance }}
+        }
+      </button>
+      <button type="button" class="reminder-btn reminder-btn--secondary"
+        (click)="notificationService.remindAppointmentLater()" [disabled]="notificationService.confirmingAppointment()">
+        {{ l10n.t().notifications.remindMeLater }}
+      </button>
+      <button type="button" class="reminder-btn reminder-btn--ghost"
+        (click)="notificationService.dismissAppointmentReminder()" [disabled]="notificationService.confirmingAppointment()">
+        {{ l10n.t().notifications.dismiss }}
+      </button>
+    </footer>
+  </section>
+</div>
+}
+
 
 <app-ai-panel></app-ai-panel>
 
