@@ -821,3 +821,171 @@
   from { opacity: 0; transform: scale(0.6); }
   to   { opacity: 1; transform: scale(1); }
 }
+
+/* ═══════════ GLOBAL AI ANALYSIS COMPLETION & FAILURE MODALS ═══════════ */
+.acm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: acm-overlay-in 200ms ease-out;
+}
+
+@keyframes acm-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.acm-modal {
+  position: relative;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.22);
+  padding: 40px 36px 36px;
+  width: min(100%, 440px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  animation: acm-modal-in 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes acm-modal-in {
+  from { opacity: 0; transform: scale(0.82) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.acm-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.acm-icon-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: #0C9FCA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 28px;
+  box-shadow: 0 8px 24px rgba(14, 175, 215, 0.35);
+  animation: acm-icon-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both;
+}
+
+@keyframes acm-icon-pop {
+  from { transform: scale(0); }
+  to   { transform: scale(1); }
+}
+
+.acm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.acm-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.acm-subtitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0EAFD7;
+  margin: 0;
+}
+
+.acm-desc {
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.acm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.acm-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: transform 120ms, box-shadow 120ms, background 120ms;
+  font-family: inherit;
+}
+
+.acm-btn--primary {
+  background-color: var(--blue, #0EAFD7);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(14, 175, 215, 0.3);
+}
+
+.acm-btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(14, 175, 215, 0.4);
+}
+
+.acm-btn--primary:active {
+  transform: translateY(0);
+}
+
+.acm-btn--secondary {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.acm-btn--secondary:hover {
+  background: #E5E7EB;
+}
+
+.acm-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #F3F4F6;
+  color: #6B7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 120ms, color 120ms;
+}
+
+.acm-close:hover {
+  background: #E5E7EB;
+  color: #111827;
+}
+
+/* RTL support */
+[dir="rtl"] .acm-close { right: auto; left: 14px; }
+[dir="rtl"] .acm-modal { text-align: right; }
+[dir="rtl"] .acm-body  { align-items: flex-start; }

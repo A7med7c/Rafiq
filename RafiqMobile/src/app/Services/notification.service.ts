@@ -198,11 +198,8 @@ export class NotificationService {
       const reminderEvents             = this.signalr.reminderEvents();
       const notificationEvents         = this.signalr.notificationEvents();
       const appointmentReminderEvents  = this.signalr.appointmentReminderEvents();
-      const docCompletedEvents         = this.signalr.documentAnalysisCompletedEvents();
-      const docFailedEvents            = this.signalr.documentAnalysisFailedEvents();
 
-      if (!reminderEvents.length && !notificationEvents.length && !appointmentReminderEvents.length
-          && !docCompletedEvents.length && !docFailedEvents.length) {
+      if (!reminderEvents.length && !notificationEvents.length && !appointmentReminderEvents.length) {
         return;
       }
 
@@ -216,32 +213,6 @@ export class NotificationService {
 
       if (appointmentReminderEvents.length) {
         this.ingestAppointmentReminderEvents(this.signalr.drainAppointmentReminderEvents());
-      }
-
-      if (docCompletedEvents.length) {
-        const events = this.signalr.drainDocumentAnalysisCompletedEvents();
-        const t = this.localization.t().documentAnalysis;
-        events.forEach(e => {
-          this.emitNativeNotification({
-            id: crypto.randomUUID(),
-            title: `${t.analysisComplete}: ${e.title}`,
-            body: t.analysisCompleteBody,
-            createdAt: new Date(),
-          });
-        });
-      }
-
-      if (docFailedEvents.length) {
-        const events = this.signalr.drainDocumentAnalysisFailedEvents();
-        const t = this.localization.t().documentAnalysis;
-        events.forEach(e => {
-          this.emitNativeNotification({
-            id: crypto.randomUUID(),
-            title: `${t.analysisFailed}: ${e.title}`,
-            body: e.failureReason || t.analysisFailedBody,
-            createdAt: new Date(),
-          });
-        });
       }
     });
   }

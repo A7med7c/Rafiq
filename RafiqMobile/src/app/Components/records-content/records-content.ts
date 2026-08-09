@@ -53,6 +53,10 @@ export interface Toast {
   type: 'success' | 'error';
 }
 
+import { CustomSelectComponent, SelectOption } from '../ui/custom-select/custom-select';
+import { DatePickerComponent } from '../ui/date-picker/date-picker';
+import { MedicalWarningCardComponent } from '../medical-warning-card/medical-warning-card';
+
 export interface ReviewLabResult {
   id: string;
   testName: string;
@@ -91,6 +95,11 @@ export interface ReviewForm {
     duration: string;
     instructions: string;
   }>;
+  requiresMedicalAttention?: boolean;
+  medicalAttentionReason?: string;
+  recommendedSpecialty?: string;
+  attentionLevel?: string;
+  confidenceScore?: number;
   rawResponse: any;
 }
 
@@ -125,13 +134,10 @@ const defaultFilters = (sortBy: SortOption = 'newest'): RecordFilters => ({
   sortBy,
 });
 
-import { CustomSelectComponent, SelectOption } from '../ui/custom-select/custom-select';
-import { DatePickerComponent } from '../ui/date-picker/date-picker';
-
 @Component({
   selector: 'app-records-content',
   standalone: true,
-  imports: [CommonModule, FormsModule, AssistantAnchorDirective, CustomSelectComponent, DatePickerComponent],
+  imports: [CommonModule, FormsModule, AssistantAnchorDirective, DatePickerComponent, MedicalWarningCardComponent],
   templateUrl: './records-content.html',
   styleUrl: '../../Pages/medical-records/medical-records.css',
   encapsulation: ViewEncapsulation.None,
@@ -198,6 +204,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   readonly detailImageFailed = signal(false);
   readonly reviewImageFailed = signal(false);
   readonly scanImageFailed = signal(false);
+  readonly aiFailIsInvalidDocument = signal(false);
 
   readonly appliedFilters = signal<RecordFilters>(defaultFilters(this.getSavedSortOption()));
   readonly draftFilters = signal<RecordFilters>(defaultFilters(this.getSavedSortOption()));
@@ -345,6 +352,12 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   private readonly _doc = inject(DOCUMENT);
 
   constructor() {
+    // Keep DocumentAnalysisStateService aware of when the review form is open
+    // so the floating toast can hide itself and not occlude the form.
+    effect(() => {
+      this.documentAnalysisState.isReviewFormOpen.set(this.reviewForm() !== null);
+    });
+
     // Open review modal when the floating card's "Review" button is clicked
     effect(() => {
       const review = this.documentAnalysisState.pendingReview();
@@ -355,6 +368,34 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         this.openReviewModal(review.uploadType as any, review.data);
       }
       this.documentAnalysisState.clearPendingReview();
+    });
+
+    // Open manual entry modal when "Manual Entry" is clicked on a failed card
+    effect(() => {
+      const req = this.documentAnalysisState.manualEntryRequest();
+      if (!req) return;
+      this.openManualEntry(req.uploadType);
+      if (req.imagePath) {
+        if (req.uploadType === 'medicine') {
+          this.scanForm.imagePath = req.imagePath;
+        } else {
+          const rf = this.reviewForm();
+          if (rf) this.reviewForm.set({ ...rf, imagePath: req.imagePath });
+        }
+      }
+      this.documentAnalysisState.clearManualEntryRequest();
+    });
+
+    // When on medical records, if there is a failed document in global state, open the existing failure dialog
+    effect(() => {
+      const failedDoc = this.documentAnalysisState.trackedDocuments().find(d => d.status === 'Failed');
+      if (failedDoc && !this.showAiFailDialog() && !this.showDuplicateWarningDialog() && !this.showSameProfileDuplicateDialog() && !this.reviewForm()) {
+        this._failedFile = failedDoc.rawFile ?? null;
+        this._failedType = failedDoc.uploadType;
+        this._failedDesc = failedDoc.rawDesc ?? '';
+        this.aiFailIsUnreadable.set(failedDoc.failureReason?.toLowerCase().includes('unreadable') ?? false);
+        this.showAiFailDialog.set(true);
+      }
     });
 
     effect(() => {
@@ -955,7 +996,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
         const d = res?.data;
         if (d?.documentId) {
-          this.documentAnalysisState.trackDocument(d.documentId, d.title, d.imagePath, this.profileId);
+          this.documentAnalysisState.trackDocument(d.documentId, d.title, d.imagePath, this.profileId, file, description);
         }
       },
       error: err => {
@@ -998,7 +1039,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
 
     const tempId = crypto.randomUUID();
     // Add to floating card immediately — user can navigate away
-    this.documentAnalysisState.trackSyncUpload(tempId, cardTitles[type], type, this.profileId);
+    this.documentAnalysisState.trackSyncUpload(tempId, cardTitles[type], type, this.profileId, file);
     this.setUploading(type, true);
 
     const form = new FormData();
@@ -1018,7 +1059,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
               this.showDuplicateWarningDialog.set(true);
               return;
            }
-           this.documentAnalysisState.failSyncUpload(tempId, res.message ?? 'Upload failed');
+           const reason = this.documentAnalysisState.sanitizeErrorMessage(res.message ?? 'Upload failed');
+           this.documentAnalysisState.failSyncUpload(tempId, reason);
            return;
         }
 
@@ -1042,12 +1084,27 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         const v = this.t().uploadValidation;
 
         if (errCode === 'WRONG_DOCUMENT_TYPE_LAB_REPORT') {
-          this.documentAnalysisState.failSyncUpload(tempId, v.lab);
-                  } else if (errCode === 'WRONG_DOCUMENT_TYPE_IMAGING_REPORT') {
-          this.documentAnalysisState.failSyncUpload(tempId, v.imaging);
-                  } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
-          this.documentAnalysisState.failSyncUpload(tempId, v.prescription);
-                  } else if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
+          this.documentAnalysisState.failSyncUpload(tempId, v.lab, 'InvalidDocument');
+          this._failedFile = file;
+          this._failedType = type;
+          this._failedDesc = '';
+          this.aiFailIsInvalidDocument.set(true);
+          this.showAiFailDialog.set(true);
+        } else if (errCode === 'WRONG_DOCUMENT_TYPE_IMAGING_REPORT') {
+          this.documentAnalysisState.failSyncUpload(tempId, v.imaging, 'InvalidDocument');
+          this._failedFile = file;
+          this._failedType = type;
+          this._failedDesc = '';
+          this.aiFailIsInvalidDocument.set(true);
+          this.showAiFailDialog.set(true);
+        } else if (errCode === 'WRONG_DOCUMENT_TYPE_PRESCRIPTION') {
+          this.documentAnalysisState.failSyncUpload(tempId, v.prescription, 'InvalidDocument');
+          this._failedFile = file;
+          this._failedType = type;
+          this._failedDesc = '';
+          this.aiFailIsInvalidDocument.set(true);
+          this.showAiFailDialog.set(true);
+        } else if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
           this.documentAnalysisState.dismiss(tempId);
           this.showSameProfileDuplicateDialog.set(true);
         } else if (errCode?.startsWith('UNREADABLE_DOCUMENT_')) {
@@ -1058,12 +1115,13 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
           this.aiFailIsUnreadable.set(true);
           this.showAiFailDialog.set(true);
         } else {
-          let reason = err?.error?.message || 'Analysis failed. Please try again.';
-          if (reason === 'The uploaded image does not appear to be a medical document.') {
-            reason = (v as any).generalNotMedical || 'This does not appear to be a medical document.';
-          } else if (reason === 'External service error' || reason === 'External service error.') {
-            reason = (v as any).externalServiceError || 'External service error. Please try again.';
+          let rawReason = err?.error?.message || 'Analysis failed. Please try again.';
+          if (rawReason === 'The uploaded image does not appear to be a medical document.') {
+            rawReason = (v as any).generalNotMedical || 'This does not appear to be a medical document.';
+          } else if (rawReason === 'External service error' || rawReason === 'External service error.') {
+            rawReason = (v as any).externalServiceError || 'External service error. Please try again.';
           }
+          const reason = this.documentAnalysisState.sanitizeErrorMessage(rawReason);
           this.documentAnalysisState.failSyncUpload(tempId, reason);
           this._failedFile = file;
           this._failedType = type;
@@ -1119,6 +1177,11 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         duration: m.duration ?? '',
         instructions: m.instructions ?? m.notes ?? '',
       })),
+      requiresMedicalAttention: data.requiresMedicalAttention ?? false,
+      medicalAttentionReason: data.medicalAttentionReason ?? '',
+      recommendedSpecialty: data.recommendedSpecialty ?? '',
+      attentionLevel: data.attentionLevel ?? '',
+      confidenceScore: data.confidenceScore ?? 0,
       rawResponse: data,
     };
     this.reviewImageFailed.set(false);
@@ -1191,6 +1254,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       const payload = {
         labName: rf.labName, doctorName: rf.doctorName, reportDate: rf.reportDate,
         summary: rf.summary, ocrText: rf.ocrText, imageUrl: rf.imagePath,
+        medicalAttentionReason: rf.medicalAttentionReason,
+        recommendedSpecialty: rf.recommendedSpecialty,
+        confidenceScore: rf.confidenceScore,
         results: rf.results.map(r => ({ testName: r.testName, value: r.value, unit: r.unit, normalRange: r.normalRange, status: r.status })),
       };
       request$ = rf.mode === 'edit' && rf.recordId
@@ -1201,6 +1267,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         imagingType: rf.imagingType, bodyPart: rf.bodyPart, findings: rf.findings,
         impression: rf.impression, doctorName: rf.doctorName, reportDate: rf.reportDate,
         summary: rf.summary, ocrText: rf.ocrText, imageUrl: rf.imagePath,
+        medicalAttentionReason: rf.medicalAttentionReason,
+        recommendedSpecialty: rf.recommendedSpecialty,
+        confidenceScore: rf.confidenceScore,
       };
       request$ = rf.mode === 'edit' && rf.recordId
         ? this.http.put(`${this.base}/documents/imaging/${rf.recordId}`, payload)
@@ -1209,6 +1278,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
       const payload = {
         doctorName: rf.doctorName, patientName: rf.patientName,
         prescriptionDate: rf.prescriptionDate, imagePath: rf.imagePath,
+        medicalAttentionReason: rf.medicalAttentionReason,
+        recommendedSpecialty: rf.recommendedSpecialty,
+        confidenceScore: rf.confidenceScore,
         medicines: rf.prescriptionMedicines
           .filter((_, i) => this.addedMedIndices().has(i))
           .map(m => ({
@@ -1224,6 +1296,9 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         title: rf.title, description: rf.description, aiSummary: rf.summary, imagePath: rf.imagePath,
         documentType: rf.documentType, doctorName: rf.doctorName, hospitalOrClinic: rf.hospitalOrClinic,
         documentDate: rf.documentDate, ocrText: rf.ocrText,
+        medicalAttentionReason: rf.medicalAttentionReason,
+        recommendedSpecialty: rf.recommendedSpecialty,
+        confidenceScore: rf.confidenceScore,
       };
       request$ = rf.mode === 'edit' && rf.recordId
         ? this.http.put(`${this.base}/documents/general/${rf.recordId}`, payload)
@@ -1267,7 +1342,7 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
    *  The user is free to navigate away; a "Ready to Review" notification appears when done. */
   private startMedicineScan(file: File, bypassDuplicate = false): void {
     const tempId = crypto.randomUUID();
-    this.documentAnalysisState.trackSyncUpload(tempId, this.t().records.scanningMedicineBox, 'medicine', this.profileId);
+    this.documentAnalysisState.trackSyncUpload(tempId, this.t().records.scanningMedicineBox, 'medicine', this.profileId, file);
     this.setUploading('medicine', true);
 
     const form = new FormData();
@@ -1296,11 +1371,16 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
         const v = this.t().uploadValidation;
 
         if (errCode === 'WRONG_DOCUMENT_TYPE_MEDICINE_BOX') {
-          this.documentAnalysisState.failSyncUpload(tempId, v.medicine);
+          this.documentAnalysisState.failSyncUpload(tempId, v.medicine, 'InvalidDocument');
+          this._failedFile = file;
+          this._failedType = 'medicine';
+          this._failedDesc = '';
+          this.aiFailIsInvalidDocument.set(true);
+          this.showAiFailDialog.set(true);
         } else if (errCode === 'DUPLICATE_DOCUMENT' || errCode === 'EXACT_DOCUMENT_ALREADY_UPLOADED') {
           this.documentAnalysisState.dismiss(tempId);
           this.showSameProfileDuplicateDialog.set(true);
-        } else if (errCode === 'UNREADABLE_DOCUMENT_MEDICINE_BOX') {
+        } else if (errCode?.startsWith('UNREADABLE_DOCUMENT_MEDICINE_BOX')) {
           this.documentAnalysisState.failSyncUpload(tempId, v.medicineUnreadable);
           this._failedFile = file;
           this._failedType = 'medicine';
@@ -1308,7 +1388,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
           this.aiFailIsUnreadable.set(true);
           this.showAiFailDialog.set(true);
         } else {
-          const reason = err?.error?.message || 'Analysis failed. Please try again.';
+          const rawReason = err?.error?.message || 'Analysis failed. Please try again.';
+          const reason = this.documentAnalysisState.sanitizeErrorMessage(rawReason);
           this.documentAnalysisState.failSyncUpload(tempId, reason);
           this._failedFile = file;
           this._failedType = 'medicine';
@@ -1699,13 +1780,27 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   closeAiFailDialog(): void {
     this.showAiFailDialog.set(false);
     this.aiFailIsUnreadable.set(false);
+    this.aiFailIsInvalidDocument.set(false);
+    const failedDoc = this.documentAnalysisState.trackedDocuments().find(d => d.status === 'Failed' || d.status === 'InvalidDocument');
+    if (failedDoc) {
+      this.documentAnalysisState.dismiss(failedDoc.documentId);
+    }
     this._failedFile = null;
     this._failedType = null;
     this._failedDesc = '';
   }
 
+  getInvalidDocumentMessage(): string {
+    const failedDoc = this.documentAnalysisState.trackedDocuments().find(d => d.status === 'InvalidDocument');
+    return failedDoc?.failureReason ?? this.t().records.invalidFile;
+  }
+
   continueManually(): void {
     const type = this._failedType;
+    const failedDoc = this.documentAnalysisState.trackedDocuments().find(d => d.status === 'Failed' || d.status === 'InvalidDocument');
+    if (failedDoc) {
+      this.documentAnalysisState.dismiss(failedDoc.documentId);
+    }
     this.closeAiFailDialog();
     if (type) this.openManualEntry(type);
   }
@@ -1713,8 +1808,16 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
   retryUpload(): void {
     const type = this._failedType;
     const file = this._failedFile;
-    if (!type || !file) return;
+    const failedDoc = this.documentAnalysisState.trackedDocuments().find(d => d.status === 'Failed' || d.status === 'InvalidDocument');
     this.showAiFailDialog.set(false);
+    if (failedDoc) {
+      this.documentAnalysisState.retryAnalysis(failedDoc);
+      this._failedFile = null;
+      this._failedType = null;
+      this._failedDesc = '';
+      return;
+    }
+    if (!type || !file) return;
     if (type === 'medicine') {
       this.startMedicineScan(file, true);
     } else if (type === 'general') {
@@ -1722,5 +1825,8 @@ export class RecordsContentComponent implements OnInit, OnChanges, OnDestroy {
     } else {
       this.uploadAndReview(type, file, true);
     }
+    this._failedFile = null;
+    this._failedType = null;
+    this._failedDesc = '';
   }
 }
