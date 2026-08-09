@@ -13,7 +13,7 @@ import { AppointmentDto, AppointmentStatus } from '../../Modles/appointment.mode
 import { catchError, of, Subscription } from 'rxjs';
 import { AccessibleProfileDto } from '../../Services/family-profiles.service';
 import { HealthSummaryDto } from '../../Services/dashboard.service';
-import { MedicalReportService, ReportType } from '../../Services/medical-report.service';
+import { MedicalReportService } from '../../Services/medical-report.service';
 import { AssistantAnchorDirective } from '../../core/assistant/directives/assistant-anchor.directive';
 import { AssistantOrchestratorService } from '../../core/assistant/services/assistant-orchestrator.service';
 import { ReviewTrackingService } from '../../Services/review-tracking.service';
@@ -158,7 +158,6 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly profilePickerOpen       = signal(false);
   readonly reportDialogOpen        = signal(false);
   readonly reportCameFromPicker    = signal(false);
-  readonly selectedReportType      = signal<ReportType>('DoctorSummary');
   readonly reportGenerating        = signal(false);
   readonly reportTargetProfileId   = signal<string | null>(null);
   readonly reportTargetProfileName = signal<string | null>(null);
@@ -603,7 +602,6 @@ export class Dashboard implements OnInit, OnDestroy {
   /** Called when the user picks a profile in the picker. */
   selectProfileAndContinue(profileId: string): void {
     this.profilePickerOpen.set(false);
-    this.selectedReportType.set('DoctorSummary');
     this.reportTargetProfileId.set(profileId);
     this.reportTargetProfileName.set(this.getProfileDisplayName(profileId));
     this.reportCameFromPicker.set(true);
@@ -658,14 +656,13 @@ export class Dashboard implements OnInit, OnDestroy {
     if (!profileId) return;
 
     this.reportGenerating.set(true);
-    this._reportSub = this.medicalReportSvc.generateReport(profileId, this.selectedReportType()).subscribe({
+    this._reportSub = this.medicalReportSvc.generateReport(profileId).subscribe({
       next: (blob) => {
         const name = this.reportTargetProfileName();
         const safeName = name
           ? '_' + name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_؀-ۿ-]/g, '')
           : '';
-        const typeLabel = this.selectedReportType() === 'DoctorSummary' ? 'Medical_Summary' : 'Medical_Record';
-        this.downloadSvc.download(blob, `${typeLabel}${safeName}.pdf`)
+        this.downloadSvc.download(blob, `Medical_File${safeName}.pdf`)
           .catch(err => console.error('Download failed', err));
         this._reportSub = null;
         this.reportGenerating.set(false);

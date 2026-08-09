@@ -11,6 +11,6 @@ public sealed record MedicalReportDataDto(
     IReadOnlyList<ImagingReport> ImagingReports,
     IReadOnlyList<Appointment> Appointments,
     IReadOnlyList<EmergencyContact> EmergencyContacts,
+    IReadOnlyList<GeneralDocument> GeneralDocuments,
     string? AiClinicalSummary,
-    ReportType ReportType,
     DateTime GeneratedAt);

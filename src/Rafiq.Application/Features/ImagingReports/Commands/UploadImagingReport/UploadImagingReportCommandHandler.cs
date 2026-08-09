@@ -19,7 +19,8 @@ public sealed class UploadImagingReportCommandHandler(
     IUsageIntelligenceService usageIntelligence,
     IDuplicateDocumentDetector duplicateDetector,
     IImagingReportRepository imagingReportRepository,
-    IMedicalWarningCalculator warningCalculator)
+    IMedicalWarningCalculator warningCalculator,
+    IPdfPageRenderer pdfPageRenderer)
     : IRequestHandler<UploadImagingReportCommand, ApiResponse<ImagingReportResponseDto>>
 {
     public async Task<ApiResponse<ImagingReportResponseDto>> Handle(
@@ -118,7 +119,16 @@ public sealed class UploadImagingReportCommandHandler(
         }
         // ─────────────────────────────────────────────────────────────
 
-        var base64Image = Convert.ToBase64String(imageBytes);
+        var analysisBytes = imageBytes;
+        if (Path.GetExtension(request.Image.FileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            var rendered = pdfPageRenderer.RenderFirstPageAsJpeg(imageBytes);
+            if (rendered is null)
+                throw new BadRequestException("Could not process this PDF. Please upload a valid PDF or use an image instead.");
+            analysisBytes = rendered;
+        }
+
+        var base64Image = Convert.ToBase64String(analysisBytes);
 
         var extracted = await bedrockService.AnalyzeAsync<BedrockImagingReportDto>(
             base64Image,
