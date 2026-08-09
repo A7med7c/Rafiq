@@ -3,6 +3,7 @@ package com.rafiq.mobile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -67,6 +68,9 @@ public class AlarmSchedulerPlugin extends Plugin {
             // but Capacitor projects include core library desugaring by default)
             triggerAtMillis = java.time.Instant.parse(scheduledAt).toEpochMilli();
         } catch (Exception e) {
+            // Do not silently swallow — surface the exact reminder + value that failed.
+            Log.e(AlarmDiagnostics.TAG, "scheduleAlarm parse FAILED reminderId=" + reminderId
+                + " scheduledAt=" + scheduledAt, e);
             call.reject("Invalid scheduledAt format: " + scheduledAt);
             return;
         }
@@ -81,11 +85,17 @@ public class AlarmSchedulerPlugin extends Plugin {
             return;
         }
 
+        String occurrenceKey = AlarmDiagnostics.occurrenceKey(reminderId, scheduledAt);
+        int occId = AlarmDiagnostics.occurrenceId(reminderId, scheduledAt);
+
+        Log.i(AlarmDiagnostics.TAG, "Plugin.scheduleAlarm reminderId=" + reminderId
+            + " type=" + reminderType + " scheduledAt=" + scheduledAt + " occId=" + occId);
+
         AlarmReceiver.scheduleAlarm(
             getContext(), reminderId, reminderType, title, body, scheduledAt, triggerAtMillis);
 
         NativeReminderStore.saveAlarm(
-            getContext(), reminderId, reminderType, title, body, scheduledAt, triggerAtMillis);
+            getContext(), occurrenceKey, reminderId, reminderType, title, body, scheduledAt, triggerAtMillis);
 
         JSObject result = new JSObject();
         result.put("scheduled", true);
@@ -101,9 +111,9 @@ public class AlarmSchedulerPlugin extends Plugin {
             return;
         }
 
+        // Cancels every occurrence PendingIntent and clears the NativeReminderStore
+        // entries for this reminder in one pass.
         AlarmReceiver.cancelAlarm(getContext(), reminderId);
-
-        NativeReminderStore.removeAlarm(getContext(), reminderId);
 
         JSObject result = new JSObject();
         result.put("cancelled", true);

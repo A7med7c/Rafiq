@@ -46,8 +46,19 @@ export class AlarmSchedulerService {
 
     try {
       await AlarmSchedulerPlugin.scheduleAlarm(request);
+      console.info('[RafiqAlarm] scheduled native alarm', {
+        reminderId: reminder.reminderId,
+        reminderType: reminder.reminderType,
+        scheduledAt: reminder.scheduledAt,
+      });
     } catch (e) {
-      console.error('[AlarmSchedulerService] scheduleAlarm error', e);
+      // Do not swallow — include the exact reminder + scheduledAt that failed.
+      console.error('[RafiqAlarm] scheduleAlarm FAILED', {
+        reminderId: reminder.reminderId,
+        reminderType: reminder.reminderType,
+        scheduledAt: reminder.scheduledAt,
+        error: e,
+      });
     }
   }
 
@@ -86,11 +97,9 @@ export class AlarmSchedulerService {
   async scheduleBatch(reminders: UpcomingReminderDto[]): Promise<void> {
     if (!this.isAndroid) return;
 
-    const futures = reminders
-      .filter(r => !r.isDeleted)
-      .map(r => this.scheduleAlarm(r));
-
-    await Promise.allSettled(futures);
+    const active = reminders.filter(r => !r.isDeleted);
+    console.info('[RafiqAlarm] scheduleBatch scheduling', active.length, 'native alarm(s)');
+    await Promise.allSettled(active.map(r => this.scheduleAlarm(r)));
   }
 
   async scheduleCachedBatch(reminders: CachedReminder[]): Promise<void> {
@@ -190,8 +199,8 @@ export class AlarmSchedulerService {
     }
 
     if (action.action === 'snooze' && action.reminderType === 'Appointment') {
-      // AlarmActivity.snooze() already re-scheduled the native alarm and
-      // updated the SQLite reminderTime via NativeReminderStore.updateSnooze.
+      // AlarmActivity.snooze() already re-scheduled the native alarm as a new
+      // occurrence and persisted it via NativeReminderStore.saveAlarm.
       // Just clear the SharedPreferences pending action.
       await AlarmSchedulerPlugin.completePendingAction({
         reminderId: action.reminderId,

@@ -39,6 +39,9 @@ public class AlarmActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         enableOverLockScreen();
         super.onCreate(savedInstanceState);
+        android.util.Log.i(AlarmDiagnostics.TAG, "AlarmActivity LAUNCHED reminderId="
+            + getIntent().getStringExtra(EXTRA_REMINDER_ID)
+            + " type=" + getIntent().getStringExtra(EXTRA_REMINDER_TYPE));
         renderAlarmUi();
     }
 
@@ -137,19 +140,25 @@ public class AlarmActivity extends Activity {
 
         if (reminderId != null) {
             long triggerAtMillis = System.currentTimeMillis() + SNOOZE_DELAY_MILLIS;
-            NativeReminderStore.updateSnooze(this, reminderId, triggerAtMillis);
+            String reminderType = current.getStringExtra(EXTRA_REMINDER_TYPE);
+            String title = current.getStringExtra(EXTRA_TITLE);
+            String body = current.getStringExtra(EXTRA_BODY);
+            String newScheduledAt = java.time.Instant.ofEpochMilli(triggerAtMillis).toString();
+
+            // The snoozed alarm is a NEW occurrence (its scheduledAt changed), so it
+            // gets its own occurrence key. Remove the fired occurrence's stored entry
+            // and persist the snoozed one so it survives reboot.
+            String firedScheduledAt = current.getStringExtra(EXTRA_SCHEDULED_AT);
+            NativeReminderStore.removeAlarm(this, AlarmDiagnostics.occurrenceKey(reminderId, firedScheduledAt));
+            NativeReminderStore.saveAlarm(this,
+                AlarmDiagnostics.occurrenceKey(reminderId, newScheduledAt),
+                reminderId, reminderType, title, body, newScheduledAt, triggerAtMillis);
+
             current.putExtra(EXTRA_ALARM_ACTION, ACTION_SNOOZE);
             current.putExtra(EXTRA_SNOOZE_MINUTES, SNOOZE_MINUTES);
             AlarmSchedulerPlugin.recordAlarmAction(this, current);
             AlarmReceiver.scheduleAlarm(
-                this,
-                reminderId,
-                current.getStringExtra(EXTRA_REMINDER_TYPE),
-                current.getStringExtra(EXTRA_TITLE),
-                current.getStringExtra(EXTRA_BODY),
-                java.time.Instant.ofEpochMilli(triggerAtMillis).toString(),
-                triggerAtMillis
-            );
+                this, reminderId, reminderType, title, body, newScheduledAt, triggerAtMillis);
             launchAngularAction(current);
         }
 
