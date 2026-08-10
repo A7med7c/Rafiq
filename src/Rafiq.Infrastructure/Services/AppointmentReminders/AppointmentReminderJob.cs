@@ -8,6 +8,7 @@ using Rafiq.Domain.Enums;
 using Rafiq.Domain.Repositories;
 using Rafiq.Infrastructure.Persistence.Identity;
 using Rafiq.Infrastructure.Services.Notifications;
+using Rafiq.Domain.Entities.User;
 
 namespace Rafiq.Infrastructure.Services.AppointmentReminders;
 
@@ -16,6 +17,7 @@ public sealed class AppointmentReminderJob(
     INotificationService notificationService,
     IWhatsAppService whatsAppService,
     IEmergencyContactRepository emergencyContactRepository,
+    IHealthProfileAccessRepository healthProfileAccessRepository,
     UserManager<ApplicationUser> userManager,
     IDateTimeProvider dateTimeProvider,
     IOptions<WhatsAppSettings> whatsAppOptions,
@@ -49,13 +51,6 @@ public sealed class AppointmentReminderJob(
         }
 
         var profile = appointment.UserHealthProfile;
-        if (profile?.UserId is null)
-        {
-            logger.LogWarning(
-                "Profile {ProfileId} has no associated user. Skipping appointment reminder notification.",
-                appointment.UserHealthProfileId);
-            return;
-        }
 
         var utcTime = DateTime.SpecifyKind(appointment.AppointmentDateTime, DateTimeKind.Utc);
         var localTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, dateTimeProvider.ReminderTimeZone);
@@ -74,29 +69,40 @@ public sealed class AppointmentReminderJob(
             CustomType = appointment.CustomType,
         };
 
-        await notificationService.SendAppointmentReminderAsync(
-            profile.UserId.ToString()!,
-            payload,
-            CancellationToken.None);
+        var signalRRecipients = new HashSet<Guid>();
+        if (profile.UserId.HasValue)
+        {
+            signalRRecipients.Add(profile.UserId.Value);
+        }
 
-        logger.LogInformation(
-            "Sent appointment reminder for {AppointmentId} to user {UserId}.",
-            appointmentId, profile.UserId);
+        var familyMembers = await healthProfileAccessRepository.GetActiveMembersAsync(appointment.UserHealthProfileId, CancellationToken.None);
+        foreach (var member in familyMembers)
+        {
+            if (member.Role == AccessRole.Owner || member.Role == AccessRole.Manager)
+            {
+                signalRRecipients.Add(member.GranteeUserId);
+            }
+        }
 
-        await SendWhatsAppRemindersSafeAsync(appointment, profile.UserId.Value);
+        foreach (var recipientId in signalRRecipients)
+        {
+            await notificationService.SendAppointmentReminderAsync(
+                recipientId.ToString(),
+                payload,
+                CancellationToken.None);
+
+            logger.LogInformation(
+                "Sent appointment reminder for {AppointmentId} to user {UserId}.",
+                appointmentId, recipientId);
+        }
+
+        await SendWhatsAppRemindersSafeAsync(appointment, profile.UserId, familyMembers);
     }
 
-    private async Task SendWhatsAppRemindersSafeAsync(Appointment appointment, Guid userId)
+    private async Task SendWhatsAppRemindersSafeAsync(Appointment appointment, Guid? patientUserId, IReadOnlyList<HealthProfileAccess> familyMembers)
     {
         try
         {
-            var user = await userManager.FindByIdAsync(userId.ToString());
-            if (string.IsNullOrEmpty(user?.PhoneNumber))
-            {
-                logger.LogWarning("No phone number found for user {UserId}. Skipping WhatsApp appointment reminders.", userId);
-                return;
-            }
-
             var patientName = $"{appointment.UserHealthProfile.FirstName} {appointment.UserHealthProfile.LastName}";
             var utcTime = DateTime.SpecifyKind(appointment.AppointmentDateTime, DateTimeKind.Utc);
             var localTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, dateTimeProvider.ReminderTimeZone);
@@ -105,22 +111,69 @@ public sealed class AppointmentReminderJob(
             var templateName = whatsAppOptions.Value.AppointmentReminderTemplate;
             var familyTemplateName = whatsAppOptions.Value.FamilyAppointmentReminderTemplate;
 
+            var notifiedPhoneNumbers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             // Send to patient
-            await SendSafeAsync(
-                user.PhoneNumber, 
-                templateName, 
-                [patientName, appointment.Provider, appointmentDate, appointmentTime], 
-                "patient");
+            if (patientUserId.HasValue)
+            {
+                var user = await userManager.FindByIdAsync(patientUserId.Value.ToString());
+                if (user != null && !string.IsNullOrWhiteSpace(user.PhoneNumber))
+                {
+                    await SendSafeAsync(
+                        user.PhoneNumber, 
+                        templateName, 
+                        [patientName, appointment.Provider, appointmentDate, appointmentTime], 
+                        "patient");
+                    notifiedPhoneNumbers.Add(user.PhoneNumber);
+                }
+            }
+
+            // Send to eligible Family Members
+            foreach (var member in familyMembers)
+            {
+                if (member.Role == AccessRole.Owner || member.Role == AccessRole.Manager)
+                {
+                    var familyUser = await userManager.FindByIdAsync(member.GranteeUserId.ToString());
+                    if (familyUser != null && !string.IsNullOrWhiteSpace(familyUser.PhoneNumber))
+                    {
+                        if (notifiedPhoneNumbers.Contains(familyUser.PhoneNumber))
+                            continue;
+
+                        var familyMemberName = $"{familyUser.FirstName} {familyUser.LastName}".Trim();
+                        if (string.IsNullOrWhiteSpace(familyMemberName))
+                            familyMemberName = "Family Member";
+
+                        await SendSafeAsync(
+                            familyUser.PhoneNumber, 
+                            familyTemplateName, 
+                            [familyMemberName, patientName, appointment.Provider, appointmentDate, appointmentTime], 
+                            $"family member ({member.Role}) '{familyMemberName}'");
+
+                        notifiedPhoneNumbers.Add(familyUser.PhoneNumber);
+                    }
+                }
+            }
 
             // Send to emergency contacts
-            var emergencyContacts = await emergencyContactRepository.GetAllByUserIdAsync(userId, CancellationToken.None);
-            foreach (var contact in emergencyContacts)
+            if (patientUserId.HasValue)
             {
-                await SendSafeAsync(
-                    contact.PhoneNumber, 
-                    familyTemplateName, 
-                    [contact.Name, patientName, appointment.Provider, appointmentDate, appointmentTime], 
-                    $"emergency contact '{contact.Name}'");
+                var emergencyContacts = await emergencyContactRepository.GetAllByUserIdAsync(patientUserId.Value, CancellationToken.None);
+                foreach (var contact in emergencyContacts)
+                {
+                    if (!string.IsNullOrWhiteSpace(contact.PhoneNumber))
+                    {
+                        if (notifiedPhoneNumbers.Contains(contact.PhoneNumber))
+                            continue;
+
+                        await SendSafeAsync(
+                            contact.PhoneNumber, 
+                            familyTemplateName, 
+                            [contact.Name, patientName, appointment.Provider, appointmentDate, appointmentTime], 
+                            $"emergency contact '{contact.Name}'");
+
+                        notifiedPhoneNumbers.Add(contact.PhoneNumber);
+                    }
+                }
             }
         }
         catch (Exception ex)
