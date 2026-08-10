@@ -113,7 +113,7 @@ public sealed class AppointmentRepository(RafiqDbContext context) : IAppointment
     appointment.AppointmentDateTime,
     DateTimeKind.Utc);
 
-            if (appointment.AppointmentDateTime <= now)
+            if (appointmentUtc.AddHours(24) <= now)
             {
                 appointment.MarkAsMissed();
 

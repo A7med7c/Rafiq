@@ -42,4 +42,18 @@ public sealed class AppointmentReminderScheduler(
         if (!string.IsNullOrEmpty(jobId))
             backgroundJobClient.Delete(jobId);
     }
+
+    public string? ScheduleSnoozedReminder(Appointment appointment, int snoozeMinutes)
+    {
+        if (appointment.Status != AppointmentStatus.Upcoming)
+            return null;
+
+        var delay = TimeSpan.FromMinutes(snoozeMinutes);
+
+        Console.WriteLine($"[DEBUG] AppointmentReminderScheduler: Scheduling snoozed job for {delay.TotalMinutes} minutes from now.");
+
+        return backgroundJobClient.Schedule<AppointmentReminderJob>(
+            job => job.ExecuteAsync(appointment.Id),
+            delay);
+    }
 }

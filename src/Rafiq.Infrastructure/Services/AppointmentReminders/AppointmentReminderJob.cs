@@ -57,11 +57,14 @@ public sealed class AppointmentReminderJob(
             return;
         }
 
-        var appointmentTimeStr = appointment.AppointmentDateTime.ToString("h:mm tt");
+        var utcTime = DateTime.SpecifyKind(appointment.AppointmentDateTime, DateTimeKind.Utc);
+        var localTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, dateTimeProvider.ReminderTimeZone);
+        var appointmentTimeStr = localTime.ToString("h:mm tt");
         var notificationText = $"You have an appointment with {appointment.Provider} at {appointmentTimeStr}.";
 
         var payload = new AppointmentReminderNotificationPayload
         {
+            NotificationId = Guid.NewGuid().ToString(),
             AppointmentId = appointment.Id.ToString(),
             Title = appointment.Title,
             Provider = appointment.Provider,
