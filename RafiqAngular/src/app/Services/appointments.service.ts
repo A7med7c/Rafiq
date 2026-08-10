@@ -7,6 +7,7 @@ import {
   AppointmentDto,
   CreateAppointmentRequest,
   UpdateAppointmentRequest,
+  AppointmentType
 } from '../Modles/appointment.models';
 import { HealthProfileService } from './health-profile.service';
 import { ProfileSelectionService } from './profile-selection.service';
@@ -24,13 +25,27 @@ export class AppointmentsService {
     return this.healthProfileSvc.getMyProfile().pipe(map(r => r.data.id));
   }
 
+  private parseAppt(dto: AppointmentDto): AppointmentDto {
+    if (typeof dto.appointmentType === 'string') {
+      const num = Number(dto.appointmentType);
+      if (!isNaN(num)) {
+        dto.appointmentType = num as AppointmentType;
+      } else if (dto.appointmentType in AppointmentType) {
+        dto.appointmentType = (AppointmentType as any)[dto.appointmentType];
+      } else {
+        dto.appointmentType = AppointmentType.Other;
+      }
+    }
+    return dto;
+  }
+
   getAll(overrideProfileId?: string): Observable<AppointmentDto[]> {
     const pid$ = overrideProfileId ? of(overrideProfileId) : this.getCurrentProfileId();
     return pid$.pipe(
       switchMap(pid =>
         this.http.get<ApiResponse<AppointmentDto[]>>(`${this.base}?profileId=${pid}`)
       ),
-      map(r => r.data ?? []),
+      map(r => (r.data ?? []).map(d => this.parseAppt(d))),
     );
   }
 
@@ -42,7 +57,7 @@ export class AppointmentsService {
           `${this.base}/upcoming?profileId=${pid}`
         )
       ),
-      map(r => r.data ?? []),
+      map(r => (r.data ?? []).map(d => this.parseAppt(d))),
     );
   }
 
@@ -52,14 +67,14 @@ export class AppointmentsService {
       switchMap(pid =>
         this.http.post<ApiResponse<AppointmentDto>>(`${this.base}?profileId=${pid}`, body)
       ),
-      map(r => r.data),
+      map(r => this.parseAppt(r.data)),
     );
   }
 
   update(id: string, body: UpdateAppointmentRequest): Observable<AppointmentDto> {
     return this.http
       .put<ApiResponse<AppointmentDto>>(`${this.base}/${id}`, body)
-      .pipe(map(r => r.data));
+      .pipe(map(r => this.parseAppt(r.data)));
   }
 
   delete(id: string): Observable<unknown> {
@@ -69,13 +84,13 @@ export class AppointmentsService {
   complete(id: string): Observable<AppointmentDto> {
     return this.http
       .patch<ApiResponse<AppointmentDto>>(`${this.base}/${id}/complete`, {})
-      .pipe(map(r => r.data));
+      .pipe(map(r => this.parseAppt(r.data)));
   }
 
   cancel(id: string): Observable<AppointmentDto> {
     return this.http
       .patch<ApiResponse<AppointmentDto>>(`${this.base}/${id}/cancel`, {})
-      .pipe(map(r => r.data));
+      .pipe(map(r => this.parseAppt(r.data)));
   }
 
   snooze(id: string, snoozeMinutes: number): Observable<unknown> {

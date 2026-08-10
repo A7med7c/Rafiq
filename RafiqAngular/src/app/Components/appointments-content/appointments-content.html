@@ -444,7 +444,7 @@
           @if (editingId()) { {{ t().appointments.editAppointmentTitle }} } @else { {{ t().appointments.addAppointmentTitle }} }
         </h2>
         @if (!editingId()) {
-          <p class="modal-hdr-sub">{{ t().appointments.step }} {{ formStep() }} of 2</p>
+          <p class="modal-hdr-sub">{{ t().appointments.step }} {{ formStep() }} {{ l10n.isRtl() ? 'من' : 'of' }} 2</p>
         }
       </div>
       <button type="button" class="close-modal-btn" (click)="closeAddModal()">

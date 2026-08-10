@@ -370,10 +370,19 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
   closeAddModal(): void { this.showAddModal.set(false); }
 
   selectType(t: AppointmentType): void {
+    const oldType = this.fType();
     this.fType.set(t);
-    if (!this.editingId() && !this.fTitle()) {
-      this.fTitle.set(APPOINTMENT_TYPE_LABELS[t]);
+    
+    if (!this.editingId()) {
+      const currentTitle = this.fTitle();
+      const oldDefaultTitleEn = oldType ? APPOINTMENT_TYPE_LABELS[oldType] : '';
+      const oldDefaultTitleLoc = oldType ? this.typeLabelForType(oldType) : '';
+      
+      if (!currentTitle || currentTitle === oldDefaultTitleEn || currentTitle === oldDefaultTitleLoc) {
+        this.fTitle.set(this.typeLabelForType(t));
+      }
     }
+    
     this.formErrors.update(e => ({ ...e, appointmentType: '' }));
   }
 
@@ -637,11 +646,20 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
     return isAr ? `بعد ${diff} أيام` : `In ${diff} days`;
   }
 
+  private getApptTypeValue(t: any): AppointmentType {
+    if (typeof t === 'number') return t as AppointmentType;
+    if (typeof t === 'string') {
+      const num = Number(t);
+      if (!isNaN(num)) return num;
+      if (t in AppointmentType) return (AppointmentType as any)[t];
+    }
+    return AppointmentType.Other;
+  }
+
   typeLabel(a: AppointmentDto): string {
-    if (a.appointmentType === AppointmentType.Other && a.customType) return a.customType;
-    const key = APPT_TYPE_KEYS[a.appointmentType];
-    if (!key) return APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
-    return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[a.appointmentType] ?? 'Other';
+    const tVal = this.getApptTypeValue(a.appointmentType);
+    if (tVal === AppointmentType.Other && a.customType) return a.customType;
+    return this.typeLabelForType(tVal);
   }
 
   displayTitle(a: AppointmentDto): string {
@@ -657,13 +675,24 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   /** Returns the translated label for a type enum value (used in the type-picker grid) */
   typeLabelForType(type: AppointmentType): string {
-    const key = APPT_TYPE_KEYS[type];
-    if (!key) return APPOINTMENT_TYPE_LABELS[type] ?? '';
-    return key.split('.').reduce((obj: any, part) => obj?.[part], this.t()) ?? APPOINTMENT_TYPE_LABELS[type] ?? '';
+    const tVal = this.getApptTypeValue(type);
+    const tAppts = this.t().appointments;
+    switch (tVal) {
+      case AppointmentType.DoctorVisit: return tAppts.doctor;
+      case AppointmentType.LabTest: return tAppts.lab;
+      case AppointmentType.Imaging: return tAppts.imaging;
+      case AppointmentType.Vaccination: return tAppts.vaccination;
+      case AppointmentType.Dentist: return tAppts.dental;
+      case AppointmentType.Therapy: return tAppts.therapy;
+      case AppointmentType.FollowUp: return tAppts.followUp;
+      case AppointmentType.Other: return tAppts.other;
+      default: return APPOINTMENT_TYPE_LABELS[tVal] ?? '';
+    }
   }
 
   typeIcon(t: AppointmentType): string {
-    return APPOINTMENT_TYPE_ICONS[t] ?? 'fa-calendar';
+    const tVal = this.getApptTypeValue(t);
+    return APPOINTMENT_TYPE_ICONS[tVal] ?? 'fa-calendar';
   }
 
   statusLabel(s: AppointmentStatus): string {
