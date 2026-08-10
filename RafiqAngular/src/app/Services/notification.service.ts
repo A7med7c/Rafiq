@@ -469,7 +469,18 @@ export class NotificationService {
       sourceId: reminder.reminderId,
     });
 
-    this._reminderQueue.update(queue => [...queue, reminder]);
+    // If the same medicine already has a stage queued (e.g. user missed the before-
+    // reminder and the due-reminder both arrive on reconnect), replace it so only
+    // the latest/most-urgent stage is shown — not one screen per stage.
+    this._reminderQueue.update(queue => {
+      const sameIdx = queue.findIndex(r => r.medicineId === reminder.medicineId);
+      if (sameIdx !== -1) {
+        const updated = [...queue];
+        updated[sameIdx] = reminder;
+        return updated;
+      }
+      return [...queue, reminder];
+    });
     this._reminderModalOpen.set(true);
     this.showToast(
       this.localization.t().notifications.medicationReminderToast,

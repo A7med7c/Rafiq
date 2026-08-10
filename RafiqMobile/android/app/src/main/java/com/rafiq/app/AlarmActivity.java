@@ -6,16 +6,23 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import java.util.Locale;
 
 /**
  * Native full-screen alarm activity shown over the lock screen when a reminder fires.
+ * Styled matching Rafiq's design system (Cyan #0EAFD7, Green #16A34A, Dark Glassmorphism Card).
+ * Fully supports Arabic & English based on content text or system/app locale.
  */
 public class AlarmActivity extends Activity {
 
@@ -60,65 +67,152 @@ public class AlarmActivity extends Activity {
         }
     }
 
+    private boolean isArabicText(String text) {
+        if (text == null) return false;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c >= 0x0600 && c <= 0x06FF) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void renderAlarmUi() {
         Intent intent = getIntent();
         String title = valueOrDefault(intent.getStringExtra(EXTRA_TITLE), "Reminder");
         String body = valueOrDefault(intent.getStringExtra(EXTRA_BODY), "Time for your reminder");
         String reminderType = valueOrDefault(intent.getStringExtra(EXTRA_REMINDER_TYPE), "Medication");
+        boolean isAppointment = reminderType.equalsIgnoreCase("Appointment");
+        boolean isArabic = isArabicText(title) || isArabicText(body) || Locale.getDefault().getLanguage().startsWith("ar");
 
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setGravity(Gravity.CENTER);
-        root.setPadding(dp(28), dp(32), dp(28), dp(32));
-        root.setBackgroundColor(Color.rgb(9, 23, 37));
+        String typeLabel;
+        String primaryActionLabel;
+        String snoozeLabel;
+        String dismissLabel;
 
+        if (isArabic) {
+            typeLabel = isAppointment ? "تَنْبِيه المَوْعِد" : "تَنْبِيه الدَّواء";
+            primaryActionLabel = isAppointment ? "تَأْكِيد الحُضُور" : "أَخَذْتُ الدَّواء";
+            snoozeLabel = "تَأْجِيل ١٠ دَقائِق";
+            dismissLabel = "إِلْغاء";
+        } else {
+            typeLabel = isAppointment ? "APPOINTMENT REMINDER" : "MEDICATION REMINDER";
+            primaryActionLabel = isAppointment ? "Confirm Attendance" : "Take Medicine";
+            snoozeLabel = "Snooze 10 min";
+            dismissLabel = "Dismiss";
+        }
+
+        // 1. Root Screen Container with Dark Gradient Background
+        RelativeLayout root = new RelativeLayout(this);
+        root.setPadding(dp(20), dp(36), dp(20), dp(36));
+
+        GradientDrawable bgGradient = new GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            new int[]{Color.rgb(10, 22, 38), Color.rgb(5, 11, 20)}
+        );
+        root.setBackground(bgGradient);
+
+        // 2. Glassmorphism Card Container
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER_HORIZONTAL);
+        card.setPadding(dp(24), dp(28), dp(24), dp(24));
+
+        GradientDrawable cardBg = new GradientDrawable();
+        cardBg.setShape(GradientDrawable.RECTANGLE);
+        cardBg.setColor(Color.rgb(19, 35, 55)); // #132337 dark navy card
+        cardBg.setCornerRadius(dp(24));
+        cardBg.setStroke(dp(1), Color.rgb(29, 53, 84)); // #1D3554 subtle border
+        card.setBackground(cardBg);
+
+        // 3. Circular Icon Badge Header
+        TextView iconBadge = new TextView(this);
+        iconBadge.setText(isAppointment ? "📅" : "💊");
+        iconBadge.setTextSize(30);
+        iconBadge.setGravity(Gravity.CENTER);
+
+        GradientDrawable badgeBg = new GradientDrawable();
+        badgeBg.setShape(GradientDrawable.OVAL);
+        badgeBg.setColor(isAppointment ? Color.rgb(14, 175, 215) : Color.rgb(22, 163, 74));
+        badgeBg.setAlpha(45);
+        iconBadge.setBackground(badgeBg);
+
+        LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(dp(68), dp(68));
+        badgeParams.gravity = Gravity.CENTER_HORIZONTAL;
+        badgeParams.bottomMargin = dp(16);
+        card.addView(iconBadge, badgeParams);
+
+        // 4. Type Header Label
         TextView typeView = new TextView(this);
-        typeView.setText(reminderType.equalsIgnoreCase("Appointment") ? "Appointment Reminder" : "Medication Reminder");
-        typeView.setTextColor(Color.rgb(130, 204, 221));
-        typeView.setTextSize(16);
+        typeView.setText(typeLabel);
+        typeView.setTextColor(Color.rgb(14, 175, 215)); // #0EAFD7 Rafiq Cyan
+        typeView.setTextSize(14);
+        typeView.setTypeface(getCustomTypeface(true));
         typeView.setGravity(Gravity.CENTER);
-        root.addView(typeView, matchWrap());
+        card.addView(typeView, matchWrap());
 
+        // 5. Main Title Text (e.g. "تحليل أو فحص دم")
         TextView titleView = new TextView(this);
         titleView.setText(title);
         titleView.setTextColor(Color.WHITE);
-        titleView.setTextSize(30);
-        titleView.setTypeface(Typeface.DEFAULT_BOLD);
+        titleView.setTextSize(24);
+        titleView.setTypeface(getCustomTypeface(true));
         titleView.setGravity(Gravity.CENTER);
-        titleView.setPadding(0, dp(16), 0, dp(8));
-        root.addView(titleView, matchWrap());
+        titleView.setPadding(0, dp(12), 0, dp(6));
+        card.addView(titleView, matchWrap());
 
+        // 6. Body Subtitle (e.g. "Kff — 8/9/2026 6:38 PM")
         TextView bodyView = new TextView(this);
         bodyView.setText(body);
-        bodyView.setTextColor(Color.rgb(223, 232, 240));
-        bodyView.setTextSize(18);
+        bodyView.setTextColor(Color.rgb(156, 163, 175)); // #9CA3AF Muted Gray
+        bodyView.setTextSize(15);
+        bodyView.setTypeface(getCustomTypeface(false));
         bodyView.setGravity(Gravity.CENTER);
-        bodyView.setPadding(0, 0, 0, dp(36));
-        root.addView(bodyView, matchWrap());
+        bodyView.setPadding(0, 0, 0, dp(28));
+        card.addView(bodyView, matchWrap());
 
-        String primaryActionLabel = reminderType.equalsIgnoreCase("Appointment")
-            ? "Confirm Attendance" : "Take Medicine";
-        Button takeButton = actionButton(primaryActionLabel, Color.rgb(21, 128, 61), Color.WHITE);
+        // 7. Action Buttons
+        Button takeButton = createRoundedButton(
+            primaryActionLabel,
+            Color.rgb(22, 163, 74), // #16A34A Rafiq Green
+            Color.rgb(21, 128, 61), // Pressed Green
+            Color.WHITE,
+            14
+        );
         takeButton.setOnClickListener(v -> takeMedicine());
-        root.addView(takeButton, buttonLayout());
+        card.addView(takeButton, buttonLayout(dp(10)));
 
-        Button snoozeButton = actionButton("Snooze 10 min", Color.rgb(37, 99, 235), Color.WHITE);
+        Button snoozeButton = createRoundedButton(
+            snoozeLabel,
+            Color.rgb(14, 175, 215), // #0EAFD7 Rafiq Cyan
+            Color.rgb(9, 147, 182),  // Pressed Cyan
+            Color.WHITE,
+            14
+        );
         snoozeButton.setOnClickListener(v -> snooze());
-        root.addView(snoozeButton, buttonLayout());
+        card.addView(snoozeButton, buttonLayout(dp(10)));
 
-        Button dismissButton = actionButton("Dismiss", Color.rgb(51, 65, 85), Color.WHITE);
+        Button dismissButton = createBorderedButton(
+            dismissLabel,
+            Color.rgb(30, 41, 59),  // #1E293B Dark Slate
+            Color.rgb(51, 65, 85),  // #334155 Border & Pressed
+            Color.rgb(226, 232, 240), // #E2E8F0 Text
+            14
+        );
         dismissButton.setOnClickListener(v -> dismissOnly());
-        root.addView(dismissButton, buttonLayout());
+        card.addView(dismissButton, buttonLayout(0));
+
+        RelativeLayout.LayoutParams cardParams = new RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.MATCH_PARENT,
+            RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+        root.addView(card, cardParams);
 
         setContentView(root);
     }
 
-    /**
-     * "Take Medicine" / "Confirm Attendance" — processed entirely natively via
-     * AlarmActionReceiver, same as the outer notification's action button. The main
-     * Rafiq app UI is never opened; the backend confirmation is reconciled the next
-     * time the app is naturally opened (see AlarmActionReceiver's class doc).
-     */
     private void takeMedicine() {
         Intent current = getIntent();
         AlarmActionReceiver.handleTake(
@@ -128,7 +222,6 @@ public class AlarmActivity extends Activity {
         finish();
     }
 
-    /** "Snooze 10 min" — processed entirely natively, no app launch. */
     private void snooze() {
         Intent current = getIntent();
         AlarmActionReceiver.handleSnooze(
@@ -146,23 +239,75 @@ public class AlarmActivity extends Activity {
         finish();
     }
 
-    private Button actionButton(String text, int backgroundColor, int textColor) {
+    private Typeface getCustomTypeface(boolean isBold) {
+        try {
+            String fontPath = isBold ? "public/Amiri-Bold.ttf" : "public/Amiri-Regular.ttf";
+            return Typeface.createFromAsset(getAssets(), fontPath);
+        } catch (Exception ignored) {
+            return Typeface.create("sans-serif-medium", isBold ? Typeface.BOLD : Typeface.NORMAL);
+        }
+    }
+
+    private Button createRoundedButton(String text, int normalColor, int pressedColor, int textColor, int cornerRadiusDp) {
         Button button = new Button(this);
         button.setText(text);
         button.setTextColor(textColor);
-        button.setTextSize(18);
-        button.setTypeface(Typeface.DEFAULT_BOLD);
-        button.setBackgroundColor(backgroundColor);
+        button.setTextSize(16);
+        button.setTypeface(getCustomTypeface(true));
         button.setAllCaps(false);
+
+        GradientDrawable normalBg = new GradientDrawable();
+        normalBg.setShape(GradientDrawable.RECTANGLE);
+        normalBg.setColor(normalColor);
+        normalBg.setCornerRadius(dp(cornerRadiusDp));
+
+        GradientDrawable pressedBg = new GradientDrawable();
+        pressedBg.setShape(GradientDrawable.RECTANGLE);
+        pressedBg.setColor(pressedColor);
+        pressedBg.setCornerRadius(dp(cornerRadiusDp));
+
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{android.R.attr.state_pressed}, pressedBg);
+        states.addState(new int[]{}, normalBg);
+
+        button.setBackground(states);
         return button;
     }
 
-    private LinearLayout.LayoutParams buttonLayout() {
+    private Button createBorderedButton(String text, int backgroundColor, int strokeColor, int textColor, int cornerRadiusDp) {
+        Button button = new Button(this);
+        button.setText(text);
+        button.setTextColor(textColor);
+        button.setTextSize(16);
+        button.setTypeface(getCustomTypeface(true));
+        button.setAllCaps(false);
+
+        GradientDrawable normalBg = new GradientDrawable();
+        normalBg.setShape(GradientDrawable.RECTANGLE);
+        normalBg.setColor(backgroundColor);
+        normalBg.setCornerRadius(dp(cornerRadiusDp));
+        normalBg.setStroke(dp(1), strokeColor);
+
+        GradientDrawable pressedBg = new GradientDrawable();
+        pressedBg.setShape(GradientDrawable.RECTANGLE);
+        pressedBg.setColor(strokeColor);
+        pressedBg.setCornerRadius(dp(cornerRadiusDp));
+        pressedBg.setStroke(dp(1), strokeColor);
+
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{android.R.attr.state_pressed}, pressedBg);
+        states.addState(new int[]{}, normalBg);
+
+        button.setBackground(states);
+        return button;
+    }
+
+    private LinearLayout.LayoutParams buttonLayout(int bottomMarginDp) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
-            dp(56)
+            dp(52)
         );
-        params.setMargins(0, dp(8), 0, dp(8));
+        params.setMargins(0, 0, 0, dp(bottomMarginDp));
         return params;
     }
 

@@ -13,4 +13,14 @@ public interface IWhatsAppService
         string templateName,
         List<string> bodyParameters,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Sends a normal WhatsApp text message via the Facebook Graph API.
+    /// </summary>
+    /// <param name="recipientPhoneNumber">Recipient in any Egyptian format; normalised internally.</param>
+    /// <param name="messageText">The raw text body of the message.</param>
+    Task SendTextMessageAsync(
+        string recipientPhoneNumber,
+        string messageText,
+        CancellationToken cancellationToken);
 }

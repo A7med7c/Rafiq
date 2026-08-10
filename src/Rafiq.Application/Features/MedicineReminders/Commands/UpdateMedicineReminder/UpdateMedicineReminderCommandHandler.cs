@@ -49,7 +49,7 @@ public sealed class UpdateMedicineReminderCommandHandler(
         }
 
         var today = dateTimeProvider.Today;
-        var staleLogs = await logRepository.GetPendingAndOverdueLogsAsync(reminder.Id, today, cancellationToken);
+        var staleLogs = await logRepository.GetNonCancelledLogsForDateAsync(reminder.Id, today, cancellationToken);
 
         foreach (var staleLog in staleLogs)
         {

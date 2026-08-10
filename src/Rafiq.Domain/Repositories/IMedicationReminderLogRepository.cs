@@ -49,6 +49,16 @@ public interface IMedicationReminderLogRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Returns all non-cancelled logs for a medicine reminder on a given date.
+    /// Used by the update flow to cancel existing logs from an old schedule,
+    /// ensuring fresh logs and Hangfire jobs can be scheduled for the new time.
+    /// </summary>
+    Task<List<MedicationReminderLog>> GetNonCancelledLogsForDateAsync(
+        Guid medicineReminderId,
+        DateOnly date,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Returns all Stage-3 (ReminderNumber == 3) logs in Sent status whose SentAt
     /// is older than <paramref name="cutoff"/> and that have no Confirmed sibling log
     /// for the same (MedicineReminderId, ScheduledDate) occurrence.

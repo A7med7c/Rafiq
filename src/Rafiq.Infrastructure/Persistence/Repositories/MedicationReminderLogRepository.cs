@@ -93,6 +93,18 @@ public sealed class MedicationReminderLogRepository(RafiqDbContext context) : IM
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<MedicationReminderLog>> GetNonCancelledLogsForDateAsync(
+        Guid medicineReminderId,
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.MedicationReminderLogs
+            .Where(x => x.MedicineReminderId == medicineReminderId
+                        && x.ScheduledDate == date
+                        && x.Status != MedicationReminderStatus.Cancelled)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<List<MedicationReminderLog>> GetSentStage3LogsOlderThanAsync(
         DateTime cutoff,
         CancellationToken cancellationToken = default)

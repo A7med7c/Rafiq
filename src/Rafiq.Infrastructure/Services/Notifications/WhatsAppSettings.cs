@@ -11,6 +11,9 @@ public sealed class WhatsAppSettings
     /// <summary>Template sent to the patient at dose time (stage 2 reminder).</summary>
     public string PrimaryReminderTemplate { get; set; } = "medicine_now_reminder";
 
+    /// <summary>Template sent to family members at dose time (stage 2 family reminder).</summary>
+    public string FamilyReminderTemplate { get; set; } = "emergency";
+
     /// <summary>Template sent to the patient and emergency contacts after a missed dose.</summary>
     public string EscalationTemplate { get; set; } = "emergency_reminder";
 
