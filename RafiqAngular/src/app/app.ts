@@ -139,7 +139,8 @@ export class App {
 
   formatApptDateTime(dt: string | undefined): string {
     if (!dt) return '';
-    const date = new Date(dt);
+    const normalizedDt = dt.endsWith('Z') ? dt : `${dt}Z`;
+    const date = new Date(normalizedDt);
     const locale = this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US';
     const dateStr = date.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
     const timeStr = date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -147,7 +148,7 @@ export class App {
   }
 
   formatApptMessage(provider: string | undefined, dt: string | undefined): string {
-    const time = dt ? new Date(dt).toLocaleTimeString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+    const time = dt ? new Date(dt.endsWith('Z') ? dt : `${dt}Z`).toLocaleTimeString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
     const tmpl = this.l10n.t().notifications.appointmentReminderBody as string;
     return tmpl.replace('{provider}', provider ?? '').replace('{time}', time);
   }

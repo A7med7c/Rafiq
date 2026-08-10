@@ -687,8 +687,39 @@ export class AppointmentsContentComponent implements OnInit, OnChanges, OnDestro
 
   reminderLabel(mins: number | null | undefined): string {
     if (!mins) return '—';
-    if (this.l10n.lang() === 'ar') {
-      return `قبلها بـ ${mins} دقيقة`;
+    
+    const isAr = this.l10n.lang() === 'ar';
+    const t = this.t().appointments;
+
+    if (mins === 15) return t.reminder15MinBefore || (isAr ? '15 دقيقة قبل' : '15 min before');
+    if (mins === 30) return t.reminder30MinBefore || (isAr ? '30 دقيقة قبل' : '30 min before');
+    if (mins === 60) return t.reminder1HourBefore || (isAr ? 'ساعة قبل' : '1 hour before');
+    if (mins === 120) return t.reminder2HoursBefore || (isAr ? 'ساعتين قبل' : '2 hours before');
+    if (mins === 1440) return t.reminder1DayBefore || (isAr ? 'يوم قبل' : '1 day before');
+
+    if (mins >= 60 && mins % 60 === 0) {
+      const hours = mins / 60;
+      if (hours >= 24 && hours % 24 === 0) {
+        const days = hours / 24;
+        if (isAr) {
+          if (days === 1) return 'يوم قبل';
+          if (days === 2) return 'يومين قبل';
+          if (days > 2 && days <= 10) return `${days} أيام قبل`;
+          return `${days} يوماً قبل`;
+        }
+        return `${days} day${days > 1 ? 's' : ''} before`;
+      }
+      if (isAr) {
+        if (hours === 1) return 'ساعة قبل';
+        if (hours === 2) return 'ساعتين قبل';
+        if (hours > 2 && hours <= 10) return `${hours} ساعات قبل`;
+        return `${hours} ساعة قبل`;
+      }
+      return `${hours} hour${hours > 1 ? 's' : ''} before`;
+    }
+
+    if (isAr) {
+      return `${mins} دقيقة قبل`;
     }
     return `${mins} min before`;
   }

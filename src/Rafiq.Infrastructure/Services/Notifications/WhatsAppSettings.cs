@@ -16,4 +16,7 @@ public sealed class WhatsAppSettings
 
     /// <summary>Template sent to the patient when an appointment reminder fires.</summary>
     public string AppointmentReminderTemplate { get; set; } = "appointments";
+
+    /// <summary>Template sent to emergency contacts when an appointment reminder fires.</summary>
+    public string FamilyAppointmentReminderTemplate { get; set; } = "family_appointment";
 }

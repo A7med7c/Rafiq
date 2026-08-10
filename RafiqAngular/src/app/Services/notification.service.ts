@@ -59,7 +59,7 @@ interface StoredAppNotification {
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  private static readonly snoozeDelayMs = 10 * 60 * 1000;
+  private static readonly snoozeDelayMs = 60 * 1000;
 
   private readonly authService = inject(AuthService);
   private readonly signalr = inject(SignalRService);
@@ -175,9 +175,9 @@ export class NotificationService {
     });
 
     effect(() => {
-      const reminderEvents             = this.signalr.reminderEvents();
-      const notificationEvents         = this.signalr.notificationEvents();
-      const appointmentReminderEvents  = this.signalr.appointmentReminderEvents();
+      const reminderEvents = this.signalr.reminderEvents();
+      const notificationEvents = this.signalr.notificationEvents();
+      const appointmentReminderEvents = this.signalr.appointmentReminderEvents();
 
       if (!reminderEvents.length && !notificationEvents.length && !appointmentReminderEvents.length) {
         return;
@@ -502,7 +502,7 @@ export class NotificationService {
     });
 
     const displayTitle = isAr ? (event.titleAr ?? notification.title) : notification.title;
-    const displayBody  = isAr ? (event.bodyAr  ?? notification.body)  : notification.body;
+    const displayBody = isAr ? (event.bodyAr ?? notification.body) : notification.body;
     this.showToast(displayTitle, displayBody, 'info');
   }
 
