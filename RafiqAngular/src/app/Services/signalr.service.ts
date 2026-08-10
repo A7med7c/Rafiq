@@ -23,6 +23,7 @@ export interface NotificationEventPayload {
 }
 
 export interface AppointmentReminderNotificationPayload {
+  notificationId: string;
   appointmentId: string;
   title: string;
   provider: string;

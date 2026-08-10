@@ -18,6 +18,7 @@ namespace Rafiq.Application.Common.Interfaces
 
     public class AppointmentReminderNotificationPayload
     {
+        public string NotificationId { get; set; } = string.Empty;
         public string AppointmentId { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Provider { get; set; } = string.Empty;

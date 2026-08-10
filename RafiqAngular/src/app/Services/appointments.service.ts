@@ -77,4 +77,9 @@ export class AppointmentsService {
       .patch<ApiResponse<AppointmentDto>>(`${this.base}/${id}/cancel`, {})
       .pipe(map(r => r.data));
   }
+
+  snooze(id: string, snoozeMinutes: number): Observable<unknown> {
+    return this.http
+      .post(`${this.base}/${id}/snooze`, { snoozeMinutes });
+  }
 }

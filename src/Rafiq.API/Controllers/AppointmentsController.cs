@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rafiq.Application.Features.Appointments.Commands.CreateAppointment;
 using Rafiq.Application.Features.Appointments.Commands.DeleteAppointment;
+using Rafiq.Application.Features.Appointments.Commands.SnoozeAppointmentReminder;
 using Rafiq.Application.Features.Appointments.Commands.UpdateAppointment;
 using Rafiq.Application.Features.Appointments.Commands.CompleteAppointment;
 using Rafiq.Application.Features.Appointments.Commands.CancelAppointment;
@@ -108,6 +109,19 @@ public sealed class AppointmentsController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(new CancelAppointmentCommand(id), cancellationToken);
         return Ok(result);
     }
+
+    [HttpPost("{id:guid}/snooze")]
+    public async Task<IActionResult> Snooze(
+        Guid id,
+        [FromBody] SnoozeAppointmentRequest body,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new SnoozeAppointmentReminderCommand(id, body.SnoozeMinutes),
+            cancellationToken);
+
+        return Ok(result);
+    }
 }
 
 public sealed record CreateAppointmentRequest(
@@ -127,3 +141,5 @@ public sealed record UpdateAppointmentRequest(
     DateTime AppointmentDateTime,
     int? ReminderOffsetMinutes,
     string? Notes);
+
+public sealed record SnoozeAppointmentRequest(int SnoozeMinutes);

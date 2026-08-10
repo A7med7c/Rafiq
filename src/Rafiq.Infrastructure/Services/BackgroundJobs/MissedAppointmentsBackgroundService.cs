@@ -35,8 +35,8 @@ public class MissedAppointmentsBackgroundService(
         var appointmentRepository = scope.ServiceProvider.GetRequiredService<IAppointmentRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        // An appointment is missed if 3 hours have passed since its start time.
-        var referenceTime = DateTime.UtcNow.AddHours(-3);
+        // An appointment is missed if 24 hours have passed since its start time.
+        var referenceTime = DateTime.UtcNow.AddHours(-24);
         
         var expiredAppointments = await appointmentRepository.GetExpiredUpcomingAppointmentsAsync(referenceTime, cancellationToken);
 

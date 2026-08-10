@@ -282,7 +282,7 @@
         <h3 class="m-section__title">{{ t().dashboard.medicationsToday }}</h3>
         <a routerLink="/medications" class="m-section__link">{{ t().dashboard.viewAll }}</a>
       </div>
-      <div class="m-card">
+      <div class="m-card" style="padding: 16px;">
         @if (remindersLoading()) {
         <div class="skl-list">
           @for (s of [1,2,3]; track s) {
@@ -296,28 +296,45 @@
           </div>
           }
         </div>
-        } @else if (todaysReminders().length === 0) {
+        } @else if (dashboardMedications().length === 0) {
         <div class="m-empty">
           <i class="fa-solid fa-bell m-empty__ico"></i>
           <p class="m-empty__title">{{ t().dashboard.noRemindersSet }}</p>
           <p class="m-empty__sub">{{ t().dashboard.noMedicationToday }}</p>
         </div>
         } @else {
-        <ul class="med-timeline">
-          @for (rem of todaysReminders(); track rem.id; let last = $last) {
-          <li class="med-tl-item">
-            <span class="med-tl-time">{{ formatTime(rem.scheduledTime) }}</span>
-            <div class="med-tl-col">
-              <div class="med-tl-dot med-tl-dot--{{ getMedStatus(rem) }}"></div>
-              @if (!last) { <div class="med-tl-line"></div> }
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          @for (med of dashboardMedications(); track med.id; let i = $index) {
+          <div style="background: var(--white, #ffffff); border: 1px solid var(--border, #E2E8F0); border-radius: 12px; padding: 16px; position: relative;">
+            
+            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+              <div style="width: 48px; height: 48px; border-radius: 50%; background-color: var(--orange-lt, #FFEDD5); color: var(--orange, #F97316); display: flex; justify-content: center; align-items: center; font-size: 20px; flex-shrink: 0;">
+                <i class="fa-solid fa-pills"></i>
+              </div>
+              
+              <div style="flex: 1;">
+                <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text, #1E293B);">{{ med.medicineName }}</h4>
+                <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-2, #64748B);">{{ med.dosage }}</p>
+                @if (med.frequency) {
+                <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-2, #64748B);">{{ med.frequency }}</p>
+                }
+              </div>
+              
+              <div style="background-color: var(--blue-lt, #E0F2FE); color: var(--blue, #0EAFD7); padding: 4px 12px; border-radius: 20px; display: flex; align-items: center; gap: 6px; height: fit-content; font-size: 13px; font-weight: 600;">
+                <i class="fa-regular fa-bell"></i>
+                <span dir="ltr">Next: {{ med.reminderTimeText }}</span>
+              </div>
             </div>
-            <div class="med-tl-body">
-              <span class="med-tl-name">{{ rem.medicineName }}</span>
-              <span class="med-tl-badge med-tl-badge--{{ getMedStatus(rem) }}">{{ getMedStatusText(rem) }}</span>
-            </div>
-          </li>
+
+            <div style="border-top: 1px dashed var(--border, #E2E8F0); margin: 0 -16px 12px -16px;"></div>
+
+            <button type="button" style="width: 100%; background: none; border: none; color: var(--blue, #0EAFD7); font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; cursor: pointer;">
+              <i class="fa-solid fa-plus"></i>
+              {{ t().dashboard.addReminderBtn || 'إضافة تذكيرة' }}
+            </button>
+          </div>
           }
-        </ul>
+        </div>
         }
       </div>
     </section>

@@ -74,8 +74,11 @@ public class Appointment : BaseEntity
 
     public void MarkAsCompleted()
     {
-        if (Status != AppointmentStatus.Upcoming)
-            throw new Rafiq.Domain.Exceptions.BadRequestException("Only upcoming appointments can be marked as completed.");
+        if (Status == AppointmentStatus.Completed)
+            return;
+
+        if (Status == AppointmentStatus.Cancelled)
+            throw new Rafiq.Domain.Exceptions.BadRequestException("Cancelled appointments cannot be marked as completed.");
 
         Status = AppointmentStatus.Completed;
     }

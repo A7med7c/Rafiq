@@ -1550,7 +1550,7 @@ export const ar: Translations = {
     finish: 'إنهاء الجولة',
     mascotAria: 'رسالة رفيق',
   },
-  errors:{
-    returnToMedicalRecords:'العودة للسجلات الطبية'
+  errors: {
+    returnToMedicalRecords: 'العودة للسجلات الطبية'
   }
 };
