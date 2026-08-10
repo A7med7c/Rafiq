@@ -8,7 +8,7 @@ import { AiChatService } from '../../Services/ai-chat.service';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { NotificationService } from '../../Services/notification.service';
 import { LocalizationService } from '../../Services/localization.service';
-import { MedicalRecord, ReminderDisplayItem } from '../../Modles/dashboard.models';
+import { MedicalRecord, ReminderDisplayItem, UserMedicine } from '../../Modles/dashboard.models';
 import { AppointmentDto, AppointmentStatus } from '../../Modles/appointment.models';
 import { catchError, of, Subscription } from 'rxjs';
 import { AccessibleProfileDto } from '../../Services/family-profiles.service';
@@ -20,7 +20,7 @@ import { ReviewTrackingService } from '../../Services/review-tracking.service';
 import { BottomNav } from '../../shared/bottom-nav/bottom-nav';
 import { LanguageSwitcher } from '../../shared/language-switcher/language-switcher';
 import { environment } from '../../Environments/Environment';
-import { MedicationRemindersService } from '../../Services/medication-reminders.service';
+import { MedicationRemindersService, UpcomingReminderDto } from '../../Services/medication-reminders.service';
 import { MedicationReminderLogDto, MedicationReminderStatus } from '../../Modles/medication-reminder.models';
 import { DownloadService } from '../../Services/download.service';
 import { NotificationPermissionService, NotificationPermissionResult } from '../../Services/notification-permission.service';
@@ -76,6 +76,8 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly records          = signal<MedicalRecord[]>([]);
   readonly activeRecordMenuId = signal<string | null>(null);
   readonly reminders        = signal<MedicationReminderLogDto[]>([]);
+  readonly userMedicines    = signal<UserMedicine[]>([]);
+  readonly upcomingReminders = signal<UpcomingReminderDto[]>([]);
   readonly recordsLoading   = signal(true);
   readonly remindersLoading = signal(true);
   readonly sidebarCollapsed  = signal(false);
@@ -299,6 +301,57 @@ export class Dashboard implements OnInit, OnDestroy {
 
   readonly nextReminder = computed(() => this.todaysReminders()[0] ?? null);
 
+  readonly dashboardMedications = computed(() => {
+    const meds = this.userMedicines();
+    const upcomings = this.upcomingReminders();
+    
+    return meds.map(med => {
+      const occurrences = upcomings.filter(u => u.entityId === med.id && u.reminderType === 'Medication');
+      const validOccurrences = occurrences.filter(u => u.status === 'Pending' || u.status === 'Sent' || u.status === 'Overdue');
+      validOccurrences.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+      
+      let reminderTimeText = '';
+      if (validOccurrences.length > 0) {
+        const nextOccur = validOccurrences[0];
+        const nextDate = new Date(nextOccur.scheduledAt);
+        reminderTimeText = nextDate.toLocaleTimeString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+        
+        const todayStr = new Date().toDateString();
+        if (nextDate.toDateString() !== todayStr) {
+           const diff = Math.ceil((nextDate.getTime() - new Date().getTime()) / 86400000);
+           const dayText = diff === 1 
+             ? (this.l10n.lang() === 'ar' ? 'غداً' : 'Tomorrow') 
+             : nextDate.toLocaleDateString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' });
+           reminderTimeText = `${dayText}, ${reminderTimeText}`;
+        }
+      } else {
+        reminderTimeText = this.t().dashboard.noUpcomingAppointments || 'No reminders';
+      }
+      
+      console.log('[MedicationNextDebug]', {
+        medicationId: med.id,
+        medicineName: med.medicineName,
+        allOccurrences: occurrences,
+        validOccurrences,
+        nextOccurrence: validOccurrences[0] ?? null,
+        scheduledAt: validOccurrences.length > 0 ? validOccurrences[0].scheduledAt : null,
+        displayedNextTime: reminderTimeText
+      });
+      
+      return {
+        id: med.id,
+        medicineName: med.medicineName,
+        dosage: med.dosage,
+        frequency: med.frequency,
+        reminderTimeText
+      };
+    });
+  });
+
   // ── Computed ─────────────────────────────────────────────────────────────
   readonly familyAvatars = computed(() => this.familyProfiles().slice(0, 4));
 
@@ -460,6 +513,13 @@ export class Dashboard implements OnInit, OnDestroy {
       error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
     });
 
+    this.medRemindersSvc.getUserMedicines().subscribe({
+      next: d => { this.userMedicines.set(d); },
+      error: () => { this.userMedicines.set([]); },
+    });
+
+    this.medRemindersSvc.getUpcomingReminders().then(d => this.upcomingReminders.set(d)).catch(() => this.upcomingReminders.set([]));
+
     this.apptService.getAll().pipe(
       catchError(() => { this.hasLoadError.set(true); return of([] as AppointmentDto[]); })
     ).subscribe(data => {
@@ -484,6 +544,7 @@ export class Dashboard implements OnInit, OnDestroy {
       next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
       error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
     });
+    this.medRemindersSvc.getUpcomingReminders().then(d => this.upcomingReminders.set(d)).catch(() => this.upcomingReminders.set([]));
   }
 
   private loadAppointmentData(): void {
@@ -798,6 +859,11 @@ export class Dashboard implements OnInit, OnDestroy {
     if (rem.status === 'Confirmed') return isAr ? 'تم التناول' : 'Taken';
     if (rem.status === 'Missed') return isAr ? 'لم يتم' : 'Missed';
     return isAr ? 'قادم' : 'Upcoming';
+  }
+
+  getMedicineFrequency(medicineName: string): string {
+    const med = this.userMedicines().find(m => m.medicineName === medicineName);
+    return med?.frequency || '';
   }
 
   formatTime(timeStr: string): string {

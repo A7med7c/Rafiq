@@ -8,7 +8,8 @@ import { AiChatService } from '../../Services/ai-chat.service';
 import { AppointmentsService } from '../../Services/appointments.service';
 import { NotificationService } from '../../Services/notification.service';
 import { LocalizationService } from '../../Services/localization.service';
-import { MedicalRecord, ReminderDisplayItem } from '../../Modles/dashboard.models';
+import { MedicalRecord, ReminderDisplayItem, UserMedicine } from '../../Modles/dashboard.models';
+import { MedicationRemindersService, UpcomingReminderDto } from '../../Services/medication-reminders.service';
 import { AppointmentDto, AppointmentStatus } from '../../Modles/appointment.models';
 import { catchError, of, Subscription } from 'rxjs';
 import { AccessibleProfileDto } from '../../Services/family-profiles.service';
@@ -40,6 +41,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private readonly medicalReportSvc   = inject(MedicalReportService);
   private readonly assistantOrchestrator = inject(AssistantOrchestratorService);
   private readonly reviewTracking      = inject(ReviewTrackingService);
+  private readonly medRemindersSvc     = inject(MedicationRemindersService);
   readonly analysisState = inject(DocumentAnalysisStateService);
 
   // ── Reactive effects ─────────────────────────────────────────────────────
@@ -64,7 +66,52 @@ export class Dashboard implements OnInit, OnDestroy {
 
   // ── State signals ────────────────────────────────────────────────────────
   readonly records          = signal<MedicalRecord[]>([]);
-  readonly reminders        = signal<ReminderDisplayItem[]>([]);
+  readonly userMedicines    = signal<UserMedicine[]>([]);
+  readonly upcomingReminders = signal<UpcomingReminderDto[]>([]);
+  
+  readonly reminders = computed(() => {
+    const meds = this.userMedicines();
+    const upcomings = this.upcomingReminders();
+    const todayStr = new Date().toDateString();
+
+    return meds.map(med => {
+      const occurrences = upcomings.filter(u => u.entityId === med.id && u.reminderType === 'Medication');
+      
+      const validOccurrences = occurrences.filter(u => u.status === 'Pending' || u.status === 'Sent' || u.status === 'Overdue');
+      let reminderTimeText = '';
+      
+      if (validOccurrences.length > 0) {
+        const nextOccur = validOccurrences[0];
+        const nextDate = new Date(nextOccur.scheduledAt);
+        reminderTimeText = nextDate.toLocaleTimeString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+
+        if (nextDate.toDateString() !== todayStr) {
+           const diff = Math.ceil((nextDate.getTime() - new Date().getTime()) / 86400000);
+           const dayText = diff === 1 
+             ? (this.l10n.lang() === 'ar' ? 'غداً' : 'Tomorrow') 
+             : nextDate.toLocaleDateString(this.l10n.lang() === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' });
+           reminderTimeText = `${dayText}, ${reminderTimeText}`;
+        }
+      } else {
+        reminderTimeText = this.t().dashboard.noUpcomingAppointments || 'No reminders';
+      }
+      
+      return {
+        id: med.id,
+        medicineName: med.medicineName,
+        dosage: med.dosage,
+        frequency: med.frequency,
+        reminderTime: reminderTimeText,
+        isEnabled: true,
+        repeatType: med.frequency,
+      } as ReminderDisplayItem;
+    });
+  });
+
   readonly recordsLoading   = signal(true);
   readonly remindersLoading = signal(true);
   readonly sidebarCollapsed  = signal(false);
@@ -300,10 +347,11 @@ export class Dashboard implements OnInit, OnDestroy {
       error: () => { this.records.set([]); this.recordsLoading.set(false); this.hasLoadError.set(true); },
     });
 
-    this.dashboardService.getMedicinesForSelf().subscribe({
-      next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
-      error: () => { this.reminders.set([]); this.remindersLoading.set(false); this.hasLoadError.set(true); },
+    this.medRemindersSvc.getUserMedicines().subscribe({
+      next: d => { this.userMedicines.set(d); this.remindersLoading.set(false); },
+      error: () => { this.userMedicines.set([]); this.remindersLoading.set(false); this.hasLoadError.set(true); },
     });
+    this.medRemindersSvc.getUpcomingReminders().then(d => this.upcomingReminders.set(d)).catch(() => this.upcomingReminders.set([]));
 
     this.apptService.getAll().pipe(
       catchError(() => { this.hasLoadError.set(true); return of([] as AppointmentDto[]); })
@@ -325,10 +373,11 @@ export class Dashboard implements OnInit, OnDestroy {
 
   private loadReminderData(): void {
     this.remindersLoading.set(true);
-    this.dashboardService.getMedicinesForSelf().subscribe({
-      next: d => { this.reminders.set(d); this.remindersLoading.set(false); },
-      error: () => { this.reminders.set([]); this.remindersLoading.set(false); },
+    this.medRemindersSvc.getUserMedicines().subscribe({
+      next: d => { this.userMedicines.set(d); this.remindersLoading.set(false); },
+      error: () => { this.userMedicines.set([]); this.remindersLoading.set(false); },
     });
+    this.medRemindersSvc.getUpcomingReminders().then(d => this.upcomingReminders.set(d)).catch(() => this.upcomingReminders.set([]));
   }
 
   private loadAppointmentData(): void {

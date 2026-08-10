@@ -66,11 +66,14 @@ export class MedicationRemindersService {
    * Read-only. Returns today's upcoming reminder occurrences mapped to the
    * shared UpcomingReminderDto contract for offline sync.
    */
-  getUpcomingReminders(profileId: string): Promise<UpcomingReminderDto[]> {
+  getUpcomingReminders(profileId?: string): Promise<UpcomingReminderDto[]> {
+    const pid$ = profileId ? of(profileId) : this.profileId$;
     return firstValueFrom(
-      this.http
-        .get<ApiResponse<UpcomingReminderDto[]>>(`${this.base}/upcoming?profileId=${profileId}`)
-        .pipe(map(r => r.data ?? []))
+      pid$.pipe(
+        switchMap(pid => this.http.get<ApiResponse<UpcomingReminderDto[]>>(`${this.base}/upcoming?profileId=${pid}`)),
+        map(r => r.data ?? []),
+        catchError(() => of([] as UpcomingReminderDto[]))
+      )
     );
   }
 

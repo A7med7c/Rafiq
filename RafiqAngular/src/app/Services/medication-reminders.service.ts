@@ -14,6 +14,19 @@ export interface AllergyCheckResult {
   explanation?: string;
 }
 
+export interface UpcomingReminderDto {
+  reminderId: string;
+  entityId: string;
+  reminderType: 'Medication' | 'Appointment';
+  title: string;
+  body: string;
+  scheduledAt: string;
+  status: string;
+  updatedAt: string;
+  isDeleted: boolean;
+  payload?: unknown;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MedicationRemindersService {
   private readonly http             = inject(HttpClient);
@@ -38,6 +51,15 @@ export class MedicationRemindersService {
       ),
       map(r => r.data ?? []),
     );
+  }
+
+  async getUpcomingReminders(profileId?: string): Promise<UpcomingReminderDto[]> {
+    const pid = profileId ?? await new Promise<string>(resolve => {
+      this.profileId$.subscribe(id => resolve(id));
+    });
+    
+    const response = await this.http.get<ApiResponse<UpcomingReminderDto[]>>(`${this.base}/upcoming?profileId=${pid}`).toPromise();
+    return response?.data ?? [];
   }
 
   getById(id: string): Observable<MedicationReminderLogDto> {
